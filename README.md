@@ -34,6 +34,12 @@ Requirements:
 - GitHub CLI authenticated with `gh auth login`, or a `GITHUB_TOKEN`/`GH_TOKEN`
   with Project and repo access
 
+For local `gh` auth, grant GitHub Projects scopes once:
+
+```bash
+gh auth refresh --scopes project,read:project
+```
+
 Clone and test:
 
 ```bash

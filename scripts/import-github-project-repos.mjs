@@ -9,25 +9,30 @@ import {
   parseGitHubRepositoryUrl,
   parseRepositoryList
 } from "../src/index.js";
+import {
+  assertGitHubProjectScopes,
+  createGraphqlClient,
+  formatGitHubAuthError,
+  missingGitHubAuthMessage,
+  resolveGitHubAuth
+} from "./lib/github-auth.mjs";
 
 const execFileAsync = promisify(execFile);
 const args = parseArgs(process.argv.slice(2));
 const interactive = input.isTTY && output.isTTY && !args.flags.has("no-input");
-const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN ?? (await readGhToken());
+const auth = await resolveGitHubAuth();
 
-if (!token) {
-  console.error(`Missing GitHub authentication.
-
-Set GITHUB_TOKEN/GH_TOKEN or authenticate the local GitHub CLI with:
-  gh auth login
-`);
+if (!auth?.token) {
+  console.error(missingGitHubAuthMessage());
   process.exit(2);
 }
 
-const graphql = createGraphqlClient({ token });
+const { token } = auth;
+const graphql = createGraphqlClient(auth);
 const prompts = interactive ? createInterface({ input, output }) : null;
 
 try {
+  await assertGitHubProjectScopes(auth);
   const localRepository = await readLocalGitHubRepository();
   const owner = await promptRequired({
     provided: process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG ?? args.options.owner,
@@ -76,6 +81,11 @@ try {
         (result.duplicates ? `, skipped ${result.duplicates} duplicates` : "")
     );
   }
+} catch (error) {
+  const authMessage = formatGitHubAuthError(error, auth);
+  if (!authMessage) throw error;
+  console.error(authMessage);
+  process.exitCode = 2;
 } finally {
   prompts?.close();
 }
@@ -147,38 +157,4 @@ async function readLocalGitHubRepository() {
   } catch {
     return null;
   }
-}
-
-async function readGhToken() {
-  try {
-    const { stdout } = await execFileAsync("gh", ["auth", "token"]);
-    return stdout.trim();
-  } catch {
-    return undefined;
-  }
-}
-
-function createGraphqlClient({ token }) {
-  return async function graphql(query, variables = {}) {
-    const response = await fetch("https://api.github.com/graphql", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        "User-Agent": "ski-stack"
-      },
-      body: JSON.stringify({ query, variables })
-    });
-
-    if (!response.ok) {
-      throw new Error(`GitHub GraphQL request failed: ${response.status}`);
-    }
-
-    const payload = await response.json();
-    if (payload.errors?.length) {
-      throw new Error(payload.errors.map((error) => error.message).join("; "));
-    }
-
-    return payload.data;
-  };
 }
