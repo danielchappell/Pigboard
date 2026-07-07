@@ -37,7 +37,37 @@ The issue or PR body should carry the task envelope:
 - Verification
 - Links and context
 
-## 3. Run A Worker
+## 3. Preview A Worker Claim
+
+Use the non-sticky prompt-only claim command:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+SKI_WORKER_TYPE=implementer \
+npm run claim:github
+```
+
+By default, the command claims the first ready item, prints the worker prompt,
+then releases the lease so the item is not left stuck. This is not read-only:
+it still writes lease fields, increments `Attempts`, and records
+`Last Worker Run`.
+
+To keep the lease for a manual or external worker run:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+SKI_WORKER_TYPE=implementer \
+npm run claim:github -- --hold
+```
+
+This command does not yet call a model. It proves the adapter can locate work,
+write lease fields, load the right role card, and assemble the handoff prompt.
+
+## 4. Runtime Shape
 
 The runtime shape is:
 
@@ -51,10 +81,11 @@ webhook or poll
   -> adapter.release(...)
 ```
 
-The repository currently has the adapter and dispatcher primitives. The next
-slice is a CLI entrypoint that wires those primitives to a real model runner.
+The repository currently has the adapter, dispatcher primitives, and a safe
+claim/print CLI. The next slice is a runner that sends the generated prompt to a
+real model or Codex thread and writes the result back through the adapter.
 
-## 4. Recommended First Pool
+## 5. Recommended First Pool
 
 Start small:
 
@@ -66,7 +97,7 @@ Start small:
 Do not run many implementers against the same repository until the worktree and
 branch allocation policy is encoded.
 
-## 5. Exit Conditions
+## 6. Exit Conditions
 
 A worker must end each run by doing one of:
 
@@ -74,4 +105,3 @@ A worker must end each run by doing one of:
 - return the item to an earlier status with findings
 - mark `Blocked` with the exact blocker
 - mark `Done` only when the item itself is complete
-
