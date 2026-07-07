@@ -222,6 +222,7 @@ export async function setupGitHubProject({
 
   const adapter = adapterFactory({
     owner: resolvedOwner.login,
+    ownerType: resolvedOwner.type,
     projectNumber: project.number
   });
   const provision = await provisionGitHubProject({ adapter, apply: true });

@@ -1,100 +1,96 @@
-export const PROJECT_QUERY = `
-  query SkiStackProject($owner: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
-    organization(login: $owner) {
-      projectV2(number: $projectNumber) {
+const PROJECT_SELECTION = `
+  projectV2(number: $projectNumber) {
+    id
+    fields(first: 100) {
+      nodes {
+        __typename
+        ... on ProjectV2Field {
+          id
+          name
+          dataType
+        }
+        ... on ProjectV2SingleSelectField {
+          id
+          name
+          dataType
+          options {
+            id
+            name
+            color
+            description
+          }
+        }
+      }
+    }
+    items(first: $itemsFirst, after: $after) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
         id
-        fields(first: 100) {
-          nodes {
-            __typename
-            ... on ProjectV2Field {
-              id
-              name
-              dataType
+        isArchived
+        content {
+          __typename
+          ... on DraftIssue {
+            id
+            title
+            body
+          }
+          ... on Issue {
+            id
+            title
+            body
+            url
+            number
+            repository {
+              nameWithOwner
             }
-            ... on ProjectV2SingleSelectField {
-              id
-              name
-              dataType
-              options {
-                id
-                name
-                color
-                description
-              }
+          }
+          ... on PullRequest {
+            id
+            title
+            body
+            url
+            number
+            repository {
+              nameWithOwner
             }
           }
         }
-        items(first: $itemsFirst, after: $after) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
+        fieldValues(first: 100) {
           nodes {
-            id
-            isArchived
-            content {
-              __typename
-              ... on DraftIssue {
-                id
-                title
-                body
-              }
-              ... on Issue {
-                id
-                title
-                body
-                url
-                number
-                repository {
-                  nameWithOwner
-                }
-              }
-              ... on PullRequest {
-                id
-                title
-                body
-                url
-                number
-                repository {
-                  nameWithOwner
+            __typename
+            ... on ProjectV2ItemFieldSingleSelectValue {
+              name
+              optionId
+              field {
+                ... on ProjectV2FieldCommon {
+                  name
                 }
               }
             }
-            fieldValues(first: 100) {
-              nodes {
-                __typename
-                ... on ProjectV2ItemFieldSingleSelectValue {
+            ... on ProjectV2ItemFieldTextValue {
+              text
+              field {
+                ... on ProjectV2FieldCommon {
                   name
-                  optionId
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
                 }
-                ... on ProjectV2ItemFieldTextValue {
-                  text
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
+              }
+            }
+            ... on ProjectV2ItemFieldDateValue {
+              date
+              field {
+                ... on ProjectV2FieldCommon {
+                  name
                 }
-                ... on ProjectV2ItemFieldDateValue {
-                  date
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldNumberValue {
-                  number
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
+              }
+            }
+            ... on ProjectV2ItemFieldNumberValue {
+              number
+              field {
+                ... on ProjectV2FieldCommon {
+                  name
                 }
               }
             }
@@ -102,107 +98,21 @@ export const PROJECT_QUERY = `
         }
       }
     }
+  }
+`;
+
+export const ORGANIZATION_PROJECT_QUERY = `
+  query SkiStackOrganizationProject($owner: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
+    organization(login: $owner) {
+      ${PROJECT_SELECTION}
+    }
+  }
+`;
+
+export const USER_PROJECT_QUERY = `
+  query SkiStackUserProject($owner: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
     user(login: $owner) {
-      projectV2(number: $projectNumber) {
-        id
-        fields(first: 100) {
-          nodes {
-            __typename
-            ... on ProjectV2Field {
-              id
-              name
-              dataType
-            }
-            ... on ProjectV2SingleSelectField {
-              id
-              name
-              dataType
-              options {
-                id
-                name
-                color
-                description
-              }
-            }
-          }
-        }
-        items(first: $itemsFirst, after: $after) {
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-          nodes {
-            id
-            isArchived
-            content {
-              __typename
-              ... on DraftIssue {
-                id
-                title
-                body
-              }
-              ... on Issue {
-                id
-                title
-                body
-                url
-                number
-                repository {
-                  nameWithOwner
-                }
-              }
-              ... on PullRequest {
-                id
-                title
-                body
-                url
-                number
-                repository {
-                  nameWithOwner
-                }
-              }
-            }
-            fieldValues(first: 100) {
-              nodes {
-                __typename
-                ... on ProjectV2ItemFieldSingleSelectValue {
-                  name
-                  optionId
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldTextValue {
-                  text
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldDateValue {
-                  date
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-                ... on ProjectV2ItemFieldNumberValue {
-                  number
-                  field {
-                    ... on ProjectV2FieldCommon {
-                      name
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      ${PROJECT_SELECTION}
     }
   }
 `;

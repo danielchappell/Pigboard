@@ -23,6 +23,50 @@ test("GitHubProjectsAdapter lists ready items from project fields", async () => 
   assert.equal(ready[0].contentId, "ISSUE_1");
 });
 
+test("GitHubProjectsAdapter can load a user-owned project", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([userProjectResponse()]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    owner: "danielchappell",
+    ownerType: "User",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 1);
+  assert.match(calls[0].query, /user\(login: \$owner\)/);
+  assert.doesNotMatch(calls[0].query, /organization\(login: \$owner\)/);
+});
+
+test("GitHubProjectsAdapter auto-falls back from organization to user owner", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([
+    {
+      errors: [
+        {
+          message: "Could not resolve to an Organization with the login of 'danielchappell'."
+        }
+      ]
+    },
+    userProjectResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    owner: "danielchappell",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 1);
+  assert.match(calls[0].query, /organization\(login: \$owner\)/);
+  assert.match(calls[1].query, /user\(login: \$owner\)/);
+});
+
 test("GitHubProjectsAdapter can filter ready items by repository", async () => {
   const { fetchImpl } = createGraphqlMock([projectResponse()]);
   const adapter = new GitHubProjectsAdapter({
@@ -221,6 +265,13 @@ function projectResponse() {
       }
     }
   };
+}
+
+function userProjectResponse() {
+  const response = projectResponse();
+  response.data.user = response.data.organization;
+  response.data.organization = undefined;
+  return response;
 }
 
 function field(id, name, dataType) {

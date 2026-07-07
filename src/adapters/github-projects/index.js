@@ -13,7 +13,8 @@ import {
 import {
   ADD_COMMENT_MUTATION,
   CLEAR_FIELD_MUTATION,
-  PROJECT_QUERY,
+  ORGANIZATION_PROJECT_QUERY,
+  USER_PROJECT_QUERY,
   UPDATE_FIELD_MUTATION
 } from "./graphql.js";
 
@@ -35,7 +36,8 @@ export class GitHubProjectsAdapter {
     fetchImpl = globalThis.fetch,
     now = () => new Date(),
     itemsFirst = 100,
-    repositories = []
+    repositories = [],
+    ownerType = organization ? "Organization" : "auto"
   }) {
     if (!token) throw new Error("token is required");
     const projectOwner = owner ?? organization;
@@ -51,6 +53,8 @@ export class GitHubProjectsAdapter {
     this.now = now;
     this.itemsFirst = itemsFirst;
     this.repositories = normalizeRepositoryFilter(repositories);
+    this.ownerType = normalizeOwnerType(ownerType);
+    this.detectedOwnerType = this.ownerType === "auto" ? null : this.ownerType;
     this.projectModel = null;
     this.claims = new Map();
   }
@@ -88,14 +92,7 @@ export class GitHubProjectsAdapter {
     let projectModel = null;
 
     do {
-      const data = await this.graphql(PROJECT_QUERY, {
-        owner: this.owner,
-        projectNumber: Number(this.projectNumber),
-        itemsFirst: this.itemsFirst,
-        after
-      });
-
-      const project = data?.organization?.projectV2 ?? data?.user?.projectV2;
+      const project = await this.loadProjectPage(after);
       if (!project) {
         throw new AdapterError(`GitHub Project not found: ${this.owner}/${this.projectNumber}`, {
           code: "GITHUB_PROJECT_NOT_FOUND"
@@ -113,6 +110,35 @@ export class GitHubProjectsAdapter {
 
     this.projectModel = projectModel;
     return { projectModel, items: allItems };
+  }
+
+  async loadProjectPage(after) {
+    const candidates = this.detectedOwnerType
+      ? [this.detectedOwnerType]
+      : ownerTypeCandidates(this.ownerType);
+    const errors = [];
+
+    for (const ownerType of candidates) {
+      try {
+        const data = await this.graphql(projectQueryForOwnerType(ownerType), {
+          owner: this.owner,
+          projectNumber: Number(this.projectNumber),
+          itemsFirst: this.itemsFirst,
+          after
+        });
+        const project = projectFromOwnerData(data, ownerType);
+        if (project) {
+          this.detectedOwnerType = ownerType;
+          return project;
+        }
+      } catch (error) {
+        if (!isOwnerKindMismatch(error)) throw error;
+        errors.push(error);
+      }
+    }
+
+    if (errors.length && candidates.length === errors.length) throw errors[errors.length - 1];
+    return null;
   }
 
   async listReady(workerType) {
@@ -282,4 +308,32 @@ function normalizeRepositoryFilter(repositories) {
       .map((value) => String(value).trim().toLowerCase())
       .filter(Boolean)
   );
+}
+
+function normalizeOwnerType(ownerType) {
+  if (!ownerType) return "auto";
+  const normalized = String(ownerType).toLowerCase();
+  if (normalized === "user") return "User";
+  if (normalized === "organization" || normalized === "org") return "Organization";
+  if (normalized === "auto") return "auto";
+  throw new Error(`Unsupported GitHub Project owner type: ${ownerType}`);
+}
+
+function ownerTypeCandidates(ownerType) {
+  if (ownerType === "User") return ["User"];
+  if (ownerType === "Organization") return ["Organization"];
+  return ["Organization", "User"];
+}
+
+function projectQueryForOwnerType(ownerType) {
+  return ownerType === "User" ? USER_PROJECT_QUERY : ORGANIZATION_PROJECT_QUERY;
+}
+
+function projectFromOwnerData(data, ownerType) {
+  return ownerType === "User" ? data?.user?.projectV2 : data?.organization?.projectV2;
+}
+
+function isOwnerKindMismatch(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Could not resolve to an (Organization|User) with the login/i.test(message);
 }

@@ -64,10 +64,11 @@ try {
     title,
     repositories,
     importOpenItems,
-    adapterFactory: ({ owner: resolvedOwner, projectNumber }) =>
+    adapterFactory: ({ owner: resolvedOwner, ownerType: resolvedOwnerType, projectNumber }) =>
       new GitHubProjectsAdapter({
         token,
         owner: resolvedOwner,
+        ownerType: resolvedOwnerType,
         projectNumber,
         itemsFirst: 1
       })
