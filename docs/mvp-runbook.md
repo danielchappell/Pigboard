@@ -79,6 +79,15 @@ npm run claim:github -- --hold
 This command does not yet call a model. It proves the adapter can locate work,
 write lease fields, load the right role card, and assemble the handoff prompt.
 
+If you keep a lease, release it later with the printed claim id:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run release:github -- 'ski.<claim-payload>'
+```
+
 ## 4. Runtime Shape
 
 The runtime shape is:

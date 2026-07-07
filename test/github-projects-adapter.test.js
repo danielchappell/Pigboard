@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { GitHubProjectsAdapter, Status, WorkerType } from "../src/index.js";
+import { createClaimId, GitHubProjectsAdapter, parseClaimId, Status, WorkerType } from "../src/index.js";
 
 test("GitHubProjectsAdapter lists ready items from project fields", async () => {
   const { fetchImpl } = createGraphqlMock([projectResponse()]);
@@ -44,6 +44,11 @@ test("GitHubProjectsAdapter claims by writing lease fields", async () => {
   assert.equal(result.claimed, true);
   assert.equal(result.claim.owner, "worker-1");
   assert.equal(result.claim.expiresAt, "2026-07-07T12:30:00.000Z");
+  assert.deepEqual(parseClaimId(result.claim.id), {
+    itemId: "PVTI_item_1",
+    workerId: "worker-1",
+    expiresAt: "2026-07-07T12:30:00.000Z"
+  });
 
   const updates = calls.slice(1).map((call) => call.variables.input);
   assert.deepEqual(
@@ -53,7 +58,30 @@ test("GitHubProjectsAdapter claims by writing lease fields", async () => {
   assert.equal(updates[0].value.text, "worker-1");
   assert.equal(updates[1].value.text, "2026-07-07T12:30:00.000Z");
   assert.equal(updates[2].value.number, 1);
-  assert.match(updates[3].value.text, /^PVTI_item_1:worker-1:/);
+  assert.match(updates[3].value.text, /^ski\./);
+});
+
+test("GitHubProjectsAdapter releases a claim from a fresh process", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse(), mutationResponse()]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+  const claimId = createClaimId({
+    itemId: "PVTI_item_1",
+    workerId: "worker-1",
+    expiresAt: "2026-07-07T12:30:00.000Z"
+  });
+
+  await adapter.release(claimId);
+
+  const clears = calls.slice(1).map((call) => call.variables.input);
+  assert.deepEqual(
+    clears.map((clear) => clear.fieldId),
+    ["field_lease_owner", "field_lease_expires"]
+  );
 });
 
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {
@@ -221,4 +249,3 @@ function numberValue(fieldName, number) {
     number
   };
 }
-

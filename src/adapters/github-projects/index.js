@@ -1,4 +1,5 @@
 import { AdapterError } from "../../core/adapter-contract.js";
+import { createClaimId, parseClaimId } from "../../core/claims.js";
 import { Status } from "../../core/status.js";
 import {
   buildProjectModel,
@@ -128,7 +129,7 @@ export class GitHubProjectsAdapter {
     }
 
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
-    const claimId = `${itemId}:${workerId}:${now.getTime()}`;
+    const claimId = createClaimId({ itemId, workerId, expiresAt });
 
     await this.setTextField(projectModel, itemId, FieldName.LEASE_OWNER, workerId);
     await this.setTextField(projectModel, itemId, FieldName.LEASE_EXPIRES, expiresAt);
@@ -151,8 +152,7 @@ export class GitHubProjectsAdapter {
   }
 
   async heartbeat(claimId) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const projectModel = await this.ensureProjectModel();
     await this.setTextField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES, claim.expiresAt);
   }
@@ -178,8 +178,7 @@ export class GitHubProjectsAdapter {
   }
 
   async release(claimId) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
 
     const projectModel = await this.ensureProjectModel();
     await this.clearField(projectModel, claim.itemId, FieldName.LEASE_OWNER);
@@ -188,8 +187,7 @@ export class GitHubProjectsAdapter {
   }
 
   async fail(claimId, reason) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
 
     await this.appendEvent(claim.itemId, {
       type: "worker_failed",

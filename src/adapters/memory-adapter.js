@@ -1,4 +1,5 @@
 import { Status, readyStatusForWorker } from "../core/status.js";
+import { createClaimId, parseClaimId } from "../core/claims.js";
 
 export class MemoryQueueAdapter {
   constructor(items = [], { now = () => new Date() } = {}) {
@@ -27,8 +28,8 @@ export class MemoryQueueAdapter {
       return { claimed: false, reason: "leased" };
     }
 
-    const claimId = `${itemId}:${workerId}:${now.getTime()}`;
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
+    const claimId = createClaimId({ itemId, workerId, expiresAt });
     item.leaseOwner = workerId;
     item.leaseExpiresAt = expiresAt;
     item.attempts = (item.attempts ?? 0) + 1;
@@ -59,8 +60,7 @@ export class MemoryQueueAdapter {
   }
 
   async release(claimId) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const item = this.items.get(claim.itemId);
     if (item && item.leaseOwner === claim.workerId) {
       delete item.leaseOwner;
@@ -70,8 +70,7 @@ export class MemoryQueueAdapter {
   }
 
   async fail(claimId, reason) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     await this.appendEvent(claim.itemId, {
       type: "worker_failed",
       actor: claim.workerId,
