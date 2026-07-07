@@ -21,6 +21,7 @@ export {
   applyImportedItemDefaults,
   copyGitHubProject,
   createGitHubProject,
+  DEFAULT_GITHUB_PROJECT_TEMPLATE_ID,
   enrollRepositoriesInGitHubProject,
   listOpenRepositoryItems,
   normalizeRepositoryName,

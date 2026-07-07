@@ -4,6 +4,7 @@ import { createInterface } from "node:readline/promises";
 import { promisify } from "node:util";
 
 import {
+  DEFAULT_GITHUB_PROJECT_TEMPLATE_ID,
   formatProvisioningPlan,
   GitHubProjectsAdapter,
   parseGitHubRepositoryUrl,
@@ -47,12 +48,17 @@ try {
     hint: "blank uses the authenticated GitHub user"
   });
   const ownerType = process.env.GITHUB_OWNER_TYPE ?? args.options["owner-type"] ?? "auto";
-  const templateProjectId = await promptValue({
-    provided: process.env.SKI_TEMPLATE_PROJECT_ID ?? args.options["template-project-id"],
-    label: "Template Project ID",
-    defaultValue: "",
-    hint: "blank creates a plain Project"
-  });
+  const templateProjectId = args.flags.has("no-template")
+    ? ""
+    : await promptValue({
+        provided:
+          process.env.SKI_TEMPLATE_PROJECT_ID ??
+          args.options["template-project-id"] ??
+          DEFAULT_GITHUB_PROJECT_TEMPLATE_ID,
+        label: "Template Project ID",
+        defaultValue: DEFAULT_GITHUB_PROJECT_TEMPLATE_ID,
+        hint: "press Enter to use bundled Kanban template"
+      });
   const repositories = await promptRepositories({
     provided: [process.env.SKI_REPOSITORIES, args.options.repo, args.options.repos],
     localRepository
@@ -192,7 +198,7 @@ function printKanbanSummary({ createdFromTemplate, repositories }) {
   } else {
     console.log("- Switch the Project view layout to Board.");
     console.log("- Set the board column field to Status.");
-    console.log("- Show Inbox, Planning, Architecture, Grooming, Implementation, QA, Review, Babysit, Blocked, and Done.");
+    console.log("- Show Todo, Planning, Architecture, Grooming, Implementation, QA, Review, Babysit, Blocked, and Done.");
   }
   console.log("- Move cards into a worker column to start work.");
   if (repositories.length) {

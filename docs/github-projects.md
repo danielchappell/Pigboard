@@ -26,7 +26,7 @@ Provision this field set:
 ## Status Values
 
 ```text
-Inbox
+Todo
 Planning
 Architecture
 Grooming
@@ -46,10 +46,11 @@ The preferred queue view is a board named `Queue Board` with `Status` as the
 column field. Moving a card into `Implementation`, `QA`, `Review`, or `Babysit`
 is the operator signal that the corresponding worker may claim it.
 
-GitHub does not expose public Project view create/update mutations. To fully
-automate the Kanban layout, copy from a preconfigured Ski Stack template Project
-with `SKI_TEMPLATE_PROJECT_ID` or `--template-project-id`. Without a template,
-setup provisions the fields and prints the manual board configuration steps.
+GitHub does not expose public Project view create/update mutations. Setup copies
+the bundled Ski Stack template Project by default to automate the Kanban layout.
+Custom installs can override it with `SKI_TEMPLATE_PROJECT_ID` or
+`--template-project-id`. Without a template, setup provisions the fields and
+prints the manual board configuration steps.
 
 ## Webhook Handling
 

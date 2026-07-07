@@ -61,14 +61,15 @@ By default, this runs interactively. It uses the authenticated GitHub user from
 enroll. If you run it from a cloned GitHub repo, it offers `remote.origin.url` as
 the first repo.
 
-For a prebuilt Kanban view, copy from a Ski Stack template Project:
+By default, setup copies the bundled Ski Stack Kanban template so the Project has
+`Queue Board` and `All Items` views. To force a plain API-created Project:
 
 ```bash
-SKI_TEMPLATE_PROJECT_ID=PROJECT_ID \
-npm run setup:github-project
+npm run setup:github-project -- --no-template
 ```
 
-Without a template, setup still creates/provisions the Project and prints the
+Custom installations can override the template with `SKI_TEMPLATE_PROJECT_ID` or
+`--template-project-id`. Without a template, setup still creates/provisions the
 manual GitHub view steps: switch to Board layout and use `Status` as the column
 field.
 

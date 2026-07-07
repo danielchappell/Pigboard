@@ -1,5 +1,5 @@
 export const Status = Object.freeze({
-  INBOX: "Inbox",
+  TODO: "Todo",
   PLANNING: "Planning",
   ARCHITECTURE: "Architecture",
   GROOMING: "Grooming",

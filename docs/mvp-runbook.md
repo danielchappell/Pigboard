@@ -20,14 +20,15 @@ The setup command is interactive by default. It creates the Project at the
 GitHub user/org level, prompts for repos to enroll, and can import the current
 open issues and PRs from those repos into the Project.
 
-For a prebuilt Kanban board, provide a template Project id:
+By default, setup copies the bundled Ski Stack Kanban template. To force a plain
+API-created Project:
 
 ```bash
-SKI_TEMPLATE_PROJECT_ID=PROJECT_ID \
-npm run setup:github-project
+npm run setup:github-project -- --no-template
 ```
 
-If no template is provided, setup prints the manual GitHub view steps: switch to
+Custom installations can override the template with `SKI_TEMPLATE_PROJECT_ID`.
+If no template is used, setup prints the manual GitHub view steps: switch to
 Board layout and set the column field to `Status`.
 
 To import another repo into an existing Project later:

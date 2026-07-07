@@ -13,6 +13,7 @@ import { Status } from "../../core/status.js";
 import { provisionGitHubProject } from "./provision.js";
 
 const REPOSITORY_LIST_SEPARATOR = /[\s,]+/;
+export const DEFAULT_GITHUB_PROJECT_TEMPLATE_ID = "PVT_kwHOAFTxNM4Bcv6K";
 
 export async function resolveProjectOwner({ graphql, owner, ownerType = "auto" }) {
   if (!owner) {
@@ -184,7 +185,7 @@ export async function applyImportedItemDefaults({
   projectId,
   projectModel,
   itemId,
-  status = Status.INBOX,
+  status = Status.TODO,
   priority = "P3"
 }) {
   if (!projectId) throw new Error("projectId is required");

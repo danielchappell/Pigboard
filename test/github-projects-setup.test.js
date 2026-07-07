@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   copyGitHubProject,
   createGitHubProject,
+  DEFAULT_GITHUB_PROJECT_TEMPLATE_ID,
   enrollRepositoriesInGitHubProject,
   parseGitHubRepositoryUrl,
   parseRepositoryList,
@@ -107,6 +108,10 @@ test("copyGitHubProject sends template id, owner id, and title", async () => {
     includeDraftIssues: false
   });
   assert.equal(project.id, "PROJECT_1");
+});
+
+test("DEFAULT_GITHUB_PROJECT_TEMPLATE_ID points to the canonical template", () => {
+  assert.equal(DEFAULT_GITHUB_PROJECT_TEMPLATE_ID, "PVT_kwHOAFTxNM4Bcv6K");
 });
 
 test("setupGitHubProject copies from a template when provided", async () => {
@@ -264,9 +269,9 @@ test("enrollRepositoriesInGitHubProject can import open issues and PRs", async (
       value: call.input.value.singleSelectOptionId
     })),
     [
-      { itemId: "PVTI_ISSUE_1", fieldId: "field_status", value: "status_inbox" },
+      { itemId: "PVTI_ISSUE_1", fieldId: "field_status", value: "status_todo" },
       { itemId: "PVTI_ISSUE_1", fieldId: "field_priority", value: "priority_p3" },
-      { itemId: "PVTI_PR_1", fieldId: "field_status", value: "status_inbox" },
+      { itemId: "PVTI_PR_1", fieldId: "field_status", value: "status_todo" },
       { itemId: "PVTI_PR_1", fieldId: "field_priority", value: "priority_p3" }
     ]
   );
@@ -287,7 +292,7 @@ function defaultProjectModel() {
     id: "PROJECT_1",
     fields: new Map([
       singleSelectField("Status", "field_status", [
-        [Status.INBOX, "status_inbox"],
+        [Status.TODO, "status_todo"],
         [Status.PLANNING, "status_planning"],
         [Status.ARCHITECTURE, "status_architecture"],
         [Status.GROOMING, "status_grooming"],
