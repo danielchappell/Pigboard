@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createGitHubProject, resolveProjectOwner } from "../src/index.js";
+import {
+  createGitHubProject,
+  enrollRepositoriesInGitHubProject,
+  parseGitHubRepositoryUrl,
+  parseRepositoryList,
+  resolveProjectOwner
+} from "../src/index.js";
 
 test("resolveProjectOwner defaults to the authenticated viewer", async () => {
   const owner = await resolveProjectOwner({
@@ -69,3 +75,68 @@ test("createGitHubProject sends owner id and title", async () => {
   assert.equal(project.number, 12);
 });
 
+test("parseRepositoryList accepts names and GitHub remotes", () => {
+  assert.deepEqual(
+    parseRepositoryList([
+      "acme/app, acme/api",
+      "git@github.com:acme/docs.git",
+      "https://github.com/acme/site.git"
+    ]),
+    ["acme/app", "acme/api", "acme/docs", "acme/site"]
+  );
+  assert.equal(parseGitHubRepositoryUrl("ssh://git@github.com/acme/worker.git"), "acme/worker");
+});
+
+test("enrollRepositoriesInGitHubProject can import open issues and PRs", async () => {
+  const calls = [];
+  const results = await enrollRepositoriesInGitHubProject({
+    projectId: "PROJECT_1",
+    repositories: ["acme/app"],
+    importOpenItems: true,
+    graphql: async (_query, variables) => {
+      calls.push(variables);
+      if (variables.input?.contentId) {
+        return {
+          addProjectV2ItemById: {
+            item: {
+              id: `PVTI_${variables.input.contentId}`
+            }
+          }
+        };
+      }
+      if (variables.first) {
+        return {
+          repository: {
+            issues: {
+              nodes: [{ id: "ISSUE_1", title: "Issue", number: 1, url: "https://example.test/i/1" }]
+            },
+            pullRequests: {
+              nodes: [{ id: "PR_1", title: "PR", number: 2, url: "https://example.test/p/2" }]
+            }
+          }
+        };
+      }
+      return {
+        repository: {
+          id: "REPO_1",
+          name: "app",
+          nameWithOwner: "acme/app",
+          owner: { login: "acme" },
+          url: "https://github.com/acme/app"
+        }
+      };
+    }
+  });
+
+  assert.equal(results.length, 1);
+  assert.equal(results[0].repository.nameWithOwner, "acme/app");
+  assert.deepEqual(results[0].imported, {
+    issues: 1,
+    pullRequests: 1,
+    total: 2
+  });
+  assert.deepEqual(
+    calls.filter((call) => call.input?.projectId).map((call) => call.input.contentId),
+    ["ISSUE_1", "PR_1"]
+  );
+});

@@ -47,17 +47,23 @@ npm test
 Create a GitHub Project and provision the Ski Stack fields/options:
 
 ```bash
-npm run setup:github-project -- --title "Ski Stack Queue"
+npm run setup:github-project
 ```
 
-By default, this uses the authenticated GitHub user from `gh auth token`.
+By default, this runs interactively. It uses the authenticated GitHub user from
+`gh auth token`, asks for the Project title, and prompts for repositories to
+enroll. If you run it from a cloned GitHub repo, it offers `remote.origin.url` as
+the first repo.
 
-To create under an organization:
+GitHub Projects are user/org-level boards. One Project can contain issues and
+PRs from many repos, and workers can later filter by repo.
+
+For repeatable setup, the same command still accepts env/flags:
 
 ```bash
 GITHUB_OWNER=your-org \
 GITHUB_OWNER_TYPE=organization \
-npm run setup:github-project -- --title "Delivery Queue"
+npm run setup:github-project -- --title "Delivery Queue" --repo your-org/app --repo your-org/api
 ```
 
 The command prints:
@@ -66,8 +72,17 @@ The command prints:
 - Project number
 - `GITHUB_OWNER`
 - `GITHUB_PROJECT_NUMBER`
+- `SKI_REPOSITORIES`, when repos were selected
 
 Use those values for the worker commands.
+
+Add or import more repos into an existing Project later:
+
+```bash
+GITHUB_OWNER=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run import:github-repos
+```
 
 ## Check Or Repair A Project
 
@@ -111,6 +126,19 @@ GITHUB_PROJECT_NUMBER=1 \
 SKI_WORKER_TYPE=implementer \
 npm run claim:github -- --hold
 ```
+
+Limit a worker to one or more repos in the shared Project:
+
+```bash
+GITHUB_OWNER=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+SKI_WORKER_TYPE=qa \
+SKI_REPOSITORIES=your-org/app,your-org/api \
+npm run claim:github -- --hold
+```
+
+Leave `SKI_REPOSITORIES` unset for a worker that can pull from any repo in the
+Project.
 
 After a human or external model completes the prompt, apply the JSON result:
 

@@ -2,6 +2,11 @@
 
 GitHub Projects is the first queue backend for Ski Stack.
 
+GitHub Projects are owned by a user or organization, not by a single repo. A
+single Project can hold issues and PRs from multiple repos. Ski Stack treats the
+Project as the shared queue and uses each item's linked `owner/repo` as worker
+partitioning metadata.
+
 ## Project Fields
 
 Provision this field set:
@@ -67,6 +72,19 @@ fields. The GitHub adapter therefore uses best-effort leases:
 This is acceptable for an MVP and for small worker pools. For hard concurrency,
 use a transactional queue adapter and treat GitHub Projects as the human-facing
 mirror.
+
+## Repository Partitioning
+
+Use `SKI_REPOSITORIES` to restrict a worker to one or more repos in the shared
+Project:
+
+```bash
+SKI_REPOSITORIES=owner/app,owner/api
+```
+
+Leave `SKI_REPOSITORIES` unset when a worker can claim from any repo in the
+Project. Do not mirror repo identity into labels unless a downstream integration
+needs it; the linked issue or PR already carries the repository.
 
 ## Labels
 

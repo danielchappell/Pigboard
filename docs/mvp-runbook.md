@@ -7,7 +7,20 @@ This runbook describes the first useful GitHub Projects-backed worker loop.
 Create a GitHub Project with the Ski Stack fields/options:
 
 ```bash
-npm run setup:github-project -- --title "Ski Stack Queue"
+npm run setup:github-project
+```
+
+The setup command is interactive by default. It creates the Project at the
+GitHub user/org level, prompts for repos to enroll, and can import the current
+open issues and PRs from those repos into the Project.
+
+To import another repo into an existing Project later:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_OWNER=your-owner \
+GITHUB_PROJECT_NUMBER=1 \
+npm run import:github-repos
 ```
 
 Or choose an existing GitHub Project and preview the fields Ski Stack needs:
@@ -84,6 +97,20 @@ GITHUB_PROJECT_NUMBER=1 \
 SKI_WORKER_TYPE=implementer \
 npm run claim:github
 ```
+
+To restrict a worker to a subset of repos on the shared Project:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_OWNER=your-owner \
+GITHUB_PROJECT_NUMBER=1 \
+SKI_WORKER_TYPE=implementer \
+SKI_REPOSITORIES=your-owner/app,your-owner/api \
+npm run claim:github
+```
+
+Leave `SKI_REPOSITORIES` unset for a worker that can claim from any repo on the
+Project.
 
 By default, the command claims the first ready item, prints the worker prompt,
 then releases the lease so the item is not left stuck. This is not read-only:

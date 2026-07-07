@@ -16,6 +16,7 @@ const projectNumber = process.env.GITHUB_PROJECT_NUMBER;
 const workerType = process.env.SKI_WORKER_TYPE;
 const workerId = process.env.SKI_WORKER_ID ?? `${hostname()}:${process.pid}:${workerType ?? "worker"}`;
 const leaseSeconds = Number(process.env.SKI_LEASE_SECONDS ?? 1800);
+const repositories = process.env.SKI_REPOSITORIES;
 
 if (!token || !owner || !projectNumber || !workerType) {
   console.error(`Missing required environment.
@@ -29,6 +30,7 @@ Required:
 Optional:
   SKI_WORKER_ID
   SKI_LEASE_SECONDS
+  SKI_REPOSITORIES       Comma-separated owner/repo allow-list for this worker
 
 Flags:
   --hold    Keep the lease after printing the prompt. By default, the lease is released.
@@ -39,7 +41,8 @@ Flags:
 const adapter = new GitHubProjectsAdapter({
   token,
   owner,
-  projectNumber
+  projectNumber,
+  repositories
 });
 
 const ready = await adapter.listReady(workerType);

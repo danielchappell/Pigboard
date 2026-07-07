@@ -10,6 +10,7 @@
     "apply:github": "node scripts/apply-github-worker-result.mjs",
     "check:github-project": "node scripts/check-github-project.mjs",
     "claim:github": "node scripts/claim-github-worker.mjs",
+    "import:github-repos": "node scripts/import-github-project-repos.mjs",
     "provision:github-project": "node scripts/provision-github-project.mjs",
     "release:github": "node scripts/release-github-claim.mjs",
     "schema:github-projects": "node scripts/print-github-project-schema.mjs",

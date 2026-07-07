@@ -245,6 +245,53 @@ export const CREATE_PROJECT_MUTATION = `
   }
 `;
 
+export const RESOLVE_REPOSITORY_QUERY = `
+  query SkiStackResolveRepository($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      id
+      name
+      nameWithOwner
+      url
+      owner {
+        login
+      }
+    }
+  }
+`;
+
+export const REPOSITORY_OPEN_ITEMS_QUERY = `
+  query SkiStackRepositoryOpenItems($owner: String!, $name: String!, $first: Int!) {
+    repository(owner: $owner, name: $name) {
+      issues(first: $first, states: OPEN, orderBy: { field: CREATED_AT, direction: ASC }) {
+        nodes {
+          id
+          title
+          number
+          url
+        }
+      }
+      pullRequests(first: $first, states: OPEN, orderBy: { field: CREATED_AT, direction: ASC }) {
+        nodes {
+          id
+          title
+          number
+          url
+        }
+      }
+    }
+  }
+`;
+
+export const ADD_PROJECT_ITEM_MUTATION = `
+  mutation SkiStackAddProjectItem($input: AddProjectV2ItemByIdInput!) {
+    addProjectV2ItemById(input: $input) {
+      item {
+        id
+      }
+    }
+  }
+`;
+
 export const UPDATE_FIELD_MUTATION = `
   mutation SkiStackUpdateProjectField($input: UpdateProjectV2ItemFieldValueInput!) {
     updateProjectV2ItemFieldValue(input: $input) {

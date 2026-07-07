@@ -34,7 +34,8 @@ export class GitHubProjectsAdapter {
     projectNumber,
     fetchImpl = globalThis.fetch,
     now = () => new Date(),
-    itemsFirst = 100
+    itemsFirst = 100,
+    repositories = []
   }) {
     if (!token) throw new Error("token is required");
     const projectOwner = owner ?? organization;
@@ -49,6 +50,7 @@ export class GitHubProjectsAdapter {
     this.fetchImpl = fetchImpl;
     this.now = now;
     this.itemsFirst = itemsFirst;
+    this.repositories = normalizeRepositoryFilter(repositories);
     this.projectModel = null;
     this.claims = new Map();
   }
@@ -117,6 +119,7 @@ export class GitHubProjectsAdapter {
     const { items } = await this.loadProjectItems();
     const now = this.now();
     return items
+      .filter((item) => this.matchesRepositoryFilter(item))
       .filter((item) => isReadyForWorker(item, workerType, now))
       .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
   }
@@ -241,6 +244,12 @@ export class GitHubProjectsAdapter {
       }
     });
   }
+
+  matchesRepositoryFilter(item) {
+    if (!this.repositories.size) return true;
+    if (!item.repository) return false;
+    return this.repositories.has(item.repository.toLowerCase());
+  }
 }
 
 function formatEventComment(event) {
@@ -264,4 +273,13 @@ function formatEventComment(event) {
   }
 
   return lines.join("\n");
+}
+
+function normalizeRepositoryFilter(repositories) {
+  const values = Array.isArray(repositories) ? repositories : String(repositories ?? "").split(",");
+  return new Set(
+    values
+      .map((value) => String(value).trim().toLowerCase())
+      .filter(Boolean)
+  );
 }

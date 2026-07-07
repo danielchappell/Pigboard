@@ -23,6 +23,22 @@ test("GitHubProjectsAdapter lists ready items from project fields", async () => 
   assert.equal(ready[0].contentId, "ISSUE_1");
 });
 
+test("GitHubProjectsAdapter can filter ready items by repository", async () => {
+  const { fetchImpl } = createGraphqlMock([projectResponse()]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    repositories: "acme/other",
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 0);
+});
+
 test("GitHubProjectsAdapter claims by writing lease fields", async () => {
   const { fetchImpl, calls } = createGraphqlMock([
     projectResponse(),

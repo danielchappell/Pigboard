@@ -17,7 +17,14 @@ export {
   provisionGitHubProject
 } from "./provisioners/github-projects/provision.js";
 export {
+  addProjectItem,
   createGitHubProject,
+  enrollRepositoriesInGitHubProject,
+  listOpenRepositoryItems,
+  normalizeRepositoryName,
+  parseGitHubRepositoryUrl,
+  parseRepositoryList,
+  resolveGitHubRepository,
   resolveProjectOwner,
   setupGitHubProject
 } from "./provisioners/github-projects/setup.js";
