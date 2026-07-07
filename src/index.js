@@ -11,3 +11,8 @@ export {
   formatValidationReport,
   validateGitHubProjectSchema
 } from "./provisioners/github-projects/validate.js";
+export {
+  formatProvisioningPlan,
+  planGitHubProjectProvisioning,
+  provisionGitHubProject
+} from "./provisioners/github-projects/provision.js";

@@ -22,7 +22,8 @@ export function buildProjectModel(project) {
       id: field.id,
       name: field.name,
       dataType: field.dataType,
-      options: new Map((field.options ?? []).map((option) => [option.name, option.id]))
+      options: new Map((field.options ?? []).map((option) => [option.name, option.id])),
+      optionsList: field.options ?? []
     });
   }
 
@@ -111,4 +112,3 @@ export function isReadyForWorker(item, workerType, now = new Date()) {
 export function priorityRank(priority = "P3") {
   return { P0: 0, P1: 1, P2: 2, P3: 3 }[priority] ?? 99;
 }
-

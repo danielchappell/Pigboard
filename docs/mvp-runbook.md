@@ -4,7 +4,8 @@ This runbook describes the first useful GitHub Projects-backed worker loop.
 
 ## 1. Configure The Project
 
-Create or choose an organization-level GitHub Project. Add the fields from:
+Create or choose an organization-level GitHub Project. Preview the fields Ski
+Stack needs:
 
 ```bash
 npm run schema:github-projects
@@ -19,6 +20,24 @@ Minimum required fields:
 - `Lease Expires`
 - `Attempts`
 - `Last Worker Run`
+
+Preview missing live Project fields/options:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run provision:github-project
+```
+
+Apply missing fields/options:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run provision:github-project -- --apply
+```
 
 Then validate the live Project:
 

@@ -18,6 +18,8 @@ export const PROJECT_QUERY = `
               options {
                 id
                 name
+                color
+                description
               }
             }
           }
@@ -113,6 +115,34 @@ export const UPDATE_FIELD_MUTATION = `
   }
 `;
 
+export const CREATE_PROJECT_FIELD_MUTATION = `
+  mutation SkiStackCreateProjectField($input: CreateProjectV2FieldInput!) {
+    createProjectV2Field(input: $input) {
+      projectV2Field {
+        ... on ProjectV2FieldCommon {
+          id
+          name
+          dataType
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_PROJECT_FIELD_MUTATION = `
+  mutation SkiStackUpdateProjectField($input: UpdateProjectV2FieldInput!) {
+    updateProjectV2Field(input: $input) {
+      projectV2Field {
+        ... on ProjectV2FieldCommon {
+          id
+          name
+          dataType
+        }
+      }
+    }
+  }
+`;
+
 export const CLEAR_FIELD_MUTATION = `
   mutation SkiStackClearProjectField($input: ClearProjectV2ItemFieldValueInput!) {
     clearProjectV2ItemFieldValue(input: $input) {
@@ -135,4 +165,3 @@ export const ADD_COMMENT_MUTATION = `
     }
   }
 `;
-
