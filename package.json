@@ -1,0 +1,17 @@
+{
+  "name": "ski-stack",
+  "version": "0.1.0",
+  "description": "Flat skills plus queue-driven agent workers for project-management-backed delivery loops.",
+  "type": "module",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test",
+    "schema:github-projects": "node scripts/print-github-project-schema.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
+
