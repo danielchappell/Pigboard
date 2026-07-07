@@ -88,6 +88,32 @@ GITHUB_PROJECT_NUMBER=1 \
 npm run release:github -- 'ski.<claim-payload>'
 ```
 
+After an external worker or human completes the prompt, apply its result with:
+
+```bash
+cat result.json | \
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run apply:github -- 'ski.<claim-payload>'
+```
+
+Result JSON shape:
+
+```json
+{
+  "outcome": "completed",
+  "nextStatus": "QA",
+  "summary": "Implemented the scoped adapter behavior.",
+  "evidence": ["npm test"],
+  "blocker": null
+}
+```
+
+`blocked` and `needs-human` move the item to `Blocked`. `failed` uses the
+adapter failure path, records a failure event, moves the item to `Blocked`, and
+releases the claim.
+
 ## 4. Runtime Shape
 
 The runtime shape is:
@@ -102,9 +128,9 @@ webhook or poll
   -> adapter.release(...)
 ```
 
-The repository currently has the adapter, dispatcher primitives, and a safe
-claim/print CLI. The next slice is a runner that sends the generated prompt to a
-real model or Codex thread and writes the result back through the adapter.
+The repository currently has the adapter, dispatcher primitives, a safe
+claim/print CLI, and an apply-result CLI. The next slice is a runner that sends
+the generated prompt to a real model or Codex thread automatically.
 
 ## 5. Recommended First Pool
 
