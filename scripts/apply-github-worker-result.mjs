@@ -3,17 +3,17 @@ import { readFile } from "node:fs/promises";
 import { applyWorkerResult, GitHubProjectsAdapter } from "../src/index.js";
 
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
-const organization = process.env.GITHUB_ORG;
+const owner = process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG;
 const projectNumber = process.env.GITHUB_PROJECT_NUMBER;
 const claimId = process.env.SKI_CLAIM_ID ?? process.argv[2];
 const resultFile = process.env.SKI_RESULT_FILE ?? process.argv[3];
 
-if (!token || !organization || !projectNumber || !claimId) {
+if (!token || !owner || !projectNumber || !claimId) {
   console.error(`Missing required input.
 
 Required environment:
   GITHUB_TOKEN or GH_TOKEN
-  GITHUB_ORG
+  GITHUB_OWNER
   GITHUB_PROJECT_NUMBER
 
 Claim id:
@@ -28,7 +28,7 @@ Result:
 const result = JSON.parse(await readResultInput(resultFile));
 const adapter = new GitHubProjectsAdapter({
   token,
-  organization,
+  owner,
   projectNumber,
   itemsFirst: 1
 });
@@ -47,4 +47,3 @@ async function readResultInput(filePath) {
   }
   return input;
 }
-

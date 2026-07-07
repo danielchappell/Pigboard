@@ -1,6 +1,6 @@
 export const PROJECT_QUERY = `
-  query SkiStackProject($organization: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
-    organization(login: $organization) {
+  query SkiStackProject($owner: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
+    organization(login: $owner) {
       projectV2(number: $projectNumber) {
         id
         fields(first: 100) {
@@ -100,6 +100,146 @@ export const PROJECT_QUERY = `
             }
           }
         }
+      }
+    }
+    user(login: $owner) {
+      projectV2(number: $projectNumber) {
+        id
+        fields(first: 100) {
+          nodes {
+            __typename
+            ... on ProjectV2Field {
+              id
+              name
+              dataType
+            }
+            ... on ProjectV2SingleSelectField {
+              id
+              name
+              dataType
+              options {
+                id
+                name
+                color
+                description
+              }
+            }
+          }
+        }
+        items(first: $itemsFirst, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            isArchived
+            content {
+              __typename
+              ... on DraftIssue {
+                id
+                title
+                body
+              }
+              ... on Issue {
+                id
+                title
+                body
+                url
+                number
+                repository {
+                  nameWithOwner
+                }
+              }
+              ... on PullRequest {
+                id
+                title
+                body
+                url
+                number
+                repository {
+                  nameWithOwner
+                }
+              }
+            }
+            fieldValues(first: 100) {
+              nodes {
+                __typename
+                ... on ProjectV2ItemFieldSingleSelectValue {
+                  name
+                  optionId
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldTextValue {
+                  text
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldDateValue {
+                  date
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+                ... on ProjectV2ItemFieldNumberValue {
+                  number
+                  field {
+                    ... on ProjectV2FieldCommon {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const RESOLVE_PROJECT_OWNER_QUERY = `
+  query SkiStackResolveProjectOwner($owner: String!) {
+    organization(login: $owner) {
+      id
+      login
+      __typename
+    }
+    user(login: $owner) {
+      id
+      login
+      __typename
+    }
+  }
+`;
+
+export const VIEWER_QUERY = `
+  query SkiStackViewer {
+    viewer {
+      id
+      login
+      __typename
+    }
+  }
+`;
+
+export const CREATE_PROJECT_MUTATION = `
+  mutation SkiStackCreateProject($input: CreateProjectV2Input!) {
+    createProjectV2(input: $input) {
+      projectV2 {
+        id
+        number
+        title
+        url
       }
     }
   }

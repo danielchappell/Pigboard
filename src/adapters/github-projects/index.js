@@ -29,6 +29,7 @@ export {
 export class GitHubProjectsAdapter {
   constructor({
     token,
+    owner,
     organization,
     projectNumber,
     fetchImpl = globalThis.fetch,
@@ -36,12 +37,14 @@ export class GitHubProjectsAdapter {
     itemsFirst = 100
   }) {
     if (!token) throw new Error("token is required");
-    if (!organization) throw new Error("organization is required");
+    const projectOwner = owner ?? organization;
+    if (!projectOwner) throw new Error("owner is required");
     if (!projectNumber) throw new Error("projectNumber is required");
     if (!fetchImpl) throw new Error("fetch implementation is required");
 
     this.token = token;
-    this.organization = organization;
+    this.owner = projectOwner;
+    this.organization = projectOwner;
     this.projectNumber = projectNumber;
     this.fetchImpl = fetchImpl;
     this.now = now;
@@ -84,15 +87,15 @@ export class GitHubProjectsAdapter {
 
     do {
       const data = await this.graphql(PROJECT_QUERY, {
-        organization: this.organization,
+        owner: this.owner,
         projectNumber: Number(this.projectNumber),
         itemsFirst: this.itemsFirst,
         after
       });
 
-      const project = data?.organization?.projectV2;
+      const project = data?.organization?.projectV2 ?? data?.user?.projectV2;
       if (!project) {
-        throw new AdapterError(`GitHub Project not found: ${this.organization}/${this.projectNumber}`, {
+        throw new AdapterError(`GitHub Project not found: ${this.owner}/${this.projectNumber}`, {
           code: "GITHUB_PROJECT_NOT_FOUND"
         });
       }

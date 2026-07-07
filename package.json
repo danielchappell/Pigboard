@@ -12,7 +12,8 @@
     "claim:github": "node scripts/claim-github-worker.mjs",
     "provision:github-project": "node scripts/provision-github-project.mjs",
     "release:github": "node scripts/release-github-claim.mjs",
-    "schema:github-projects": "node scripts/print-github-project-schema.mjs"
+    "schema:github-projects": "node scripts/print-github-project-schema.mjs",
+    "setup:github-project": "node scripts/setup-github-project.mjs"
   },
   "engines": {
     "node": ">=20"

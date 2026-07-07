@@ -4,8 +4,13 @@ This runbook describes the first useful GitHub Projects-backed worker loop.
 
 ## 1. Configure The Project
 
-Create or choose an organization-level GitHub Project. Preview the fields Ski
-Stack needs:
+Create a GitHub Project with the Ski Stack fields/options:
+
+```bash
+npm run setup:github-project -- --title "Ski Stack Queue"
+```
+
+Or choose an existing GitHub Project and preview the fields Ski Stack needs:
 
 ```bash
 npm run schema:github-projects
@@ -25,7 +30,7 @@ Preview missing live Project fields/options:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 npm run provision:github-project
 ```
@@ -34,7 +39,7 @@ Apply missing fields/options:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 npm run provision:github-project -- --apply
 ```
@@ -43,7 +48,7 @@ Then validate the live Project:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 npm run check:github-project
 ```
@@ -74,7 +79,7 @@ Use the non-sticky prompt-only claim command:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 SKI_WORKER_TYPE=implementer \
 npm run claim:github
@@ -89,7 +94,7 @@ To keep the lease for a manual or external worker run:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 SKI_WORKER_TYPE=implementer \
 npm run claim:github -- --hold
@@ -102,7 +107,7 @@ If you keep a lease, release it later with the printed claim id:
 
 ```bash
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 npm run release:github -- 'ski.<claim-payload>'
 ```
@@ -112,7 +117,7 @@ After an external worker or human completes the prompt, apply its result with:
 ```bash
 cat result.json | \
 GITHUB_TOKEN=... \
-GITHUB_ORG=your-org \
+GITHUB_OWNER=your-owner \
 GITHUB_PROJECT_NUMBER=1 \
 npm run apply:github -- 'ski.<claim-payload>'
 ```

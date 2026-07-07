@@ -11,18 +11,18 @@ const args = new Set(process.argv.slice(2));
 const holdLease = args.has("--hold");
 
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
-const organization = process.env.GITHUB_ORG;
+const owner = process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG;
 const projectNumber = process.env.GITHUB_PROJECT_NUMBER;
 const workerType = process.env.SKI_WORKER_TYPE;
 const workerId = process.env.SKI_WORKER_ID ?? `${hostname()}:${process.pid}:${workerType ?? "worker"}`;
 const leaseSeconds = Number(process.env.SKI_LEASE_SECONDS ?? 1800);
 
-if (!token || !organization || !projectNumber || !workerType) {
+if (!token || !owner || !projectNumber || !workerType) {
   console.error(`Missing required environment.
 
 Required:
   GITHUB_TOKEN or GH_TOKEN
-  GITHUB_ORG
+  GITHUB_OWNER
   GITHUB_PROJECT_NUMBER
   SKI_WORKER_TYPE
 
@@ -38,7 +38,7 @@ Flags:
 
 const adapter = new GitHubProjectsAdapter({
   token,
-  organization,
+  owner,
   projectNumber
 });
 
@@ -82,4 +82,3 @@ async function readWorkerRole(type) {
     throw error;
   }
 }
-

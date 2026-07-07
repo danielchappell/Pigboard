@@ -1,16 +1,16 @@
 import { GitHubProjectsAdapter, parseClaimId } from "../src/index.js";
 
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
-const organization = process.env.GITHUB_ORG;
+const owner = process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG;
 const projectNumber = process.env.GITHUB_PROJECT_NUMBER;
 const claimId = process.env.SKI_CLAIM_ID ?? process.argv[2];
 
-if (!token || !organization || !projectNumber || !claimId) {
+if (!token || !owner || !projectNumber || !claimId) {
   console.error(`Missing required input.
 
 Required environment:
   GITHUB_TOKEN or GH_TOKEN
-  GITHUB_ORG
+  GITHUB_OWNER
   GITHUB_PROJECT_NUMBER
 
 Claim id:
@@ -22,11 +22,10 @@ Claim id:
 const claim = parseClaimId(claimId);
 const adapter = new GitHubProjectsAdapter({
   token,
-  organization,
+  owner,
   projectNumber,
   itemsFirst: 1
 });
 
 await adapter.release(claimId);
 console.log(`Released claim for ${claim.itemId} held by ${claim.workerId}.`);
-

@@ -16,3 +16,8 @@ export {
   planGitHubProjectProvisioning,
   provisionGitHubProject
 } from "./provisioners/github-projects/provision.js";
+export {
+  createGitHubProject,
+  resolveProjectOwner,
+  setupGitHubProject
+} from "./provisioners/github-projects/setup.js";
