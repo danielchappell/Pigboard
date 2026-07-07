@@ -33,6 +33,6 @@ test("formatGitHubAuthError suggests refreshing gh Projects scopes", () => {
     { source: "gh" }
   );
 
-  assert.match(message, /gh auth refresh --scopes project,read:project/);
+  assert.match(message, /gh auth refresh --scopes project/);
   assert.match(message, /Current token source: gh/);
 });

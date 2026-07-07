@@ -37,7 +37,7 @@ Requirements:
 For local `gh` auth, grant GitHub Projects scopes once:
 
 ```bash
-gh auth refresh --scopes project,read:project
+gh auth refresh --scopes project
 ```
 
 Clone and test:

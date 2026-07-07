@@ -2,7 +2,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
-const REQUIRED_PROJECT_SCOPES = ["project", "read:project"];
+const REQUIRED_PROJECT_SCOPES = ["project"];
 
 export class GitHubProjectScopeError extends Error {
   constructor({ source, scopes = [], message }) {
@@ -103,7 +103,7 @@ export function formatGitHubAuthError(error, auth) {
     lines.push(
       "Refresh your local GitHub CLI auth, then rerun the setup command:",
       "",
-      "  gh auth refresh --scopes project,read:project",
+      "  gh auth refresh --scopes project",
       "  npm run setup:github-project"
     );
   } else {
@@ -111,7 +111,6 @@ export function formatGitHubAuthError(error, auth) {
       `Update ${source ?? "your token"} to include these scopes:`,
       "",
       "  project",
-      "  read:project",
       "",
       "Then rerun the setup command."
     );
@@ -127,7 +126,7 @@ Set GITHUB_TOKEN/GH_TOKEN or authenticate the local GitHub CLI with:
   gh auth login
 
 For GitHub Projects setup, the token also needs:
-  gh auth refresh --scopes project,read:project
+  gh auth refresh --scopes project
 `;
 }
 

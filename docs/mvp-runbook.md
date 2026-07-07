@@ -7,7 +7,7 @@ This runbook describes the first useful GitHub Projects-backed worker loop.
 Make sure local GitHub auth has Projects scopes:
 
 ```bash
-gh auth refresh --scopes project,read:project
+gh auth refresh --scopes project
 ```
 
 Create a GitHub Project with the Ski Stack fields/options:
