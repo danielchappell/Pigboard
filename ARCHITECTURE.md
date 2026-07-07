@@ -58,6 +58,13 @@ GitHub currently marks Projects webhooks as public preview. Treat them as a wake
 signal, not the source of truth. On every event, reload the item via GraphQL
 before deciding whether to run a worker.
 
+GitHub Projects field writes are not transactional. The adapter implements a
+best-effort lease by reading item state, writing lease fields, and keeping claim
+metadata in the running process. That is enough for the MVP and low-collision
+worker pools. For strict multi-worker concurrency, put a transactional queue
+adapter, such as Postgres, behind the same contract and mirror status back into
+GitHub Projects for humans.
+
 ## Worker Roles
 
 The initial worker pool:
@@ -73,4 +80,3 @@ The initial worker pool:
 
 These are role cards. A runtime can map them to Codex, Claude, another agent
 runner, or a human.
-

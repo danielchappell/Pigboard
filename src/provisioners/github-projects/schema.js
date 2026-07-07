@@ -18,7 +18,7 @@ export const githubProjectsSchema = Object.freeze({
       options: ["P0", "P1", "P2", "P3"]
     },
     { name: "Lease Owner", type: "text" },
-    { name: "Lease Expires", type: "date" },
+    { name: "Lease Expires", type: "text" },
     { name: "Attempts", type: "number" },
     { name: "Last Worker Run", type: "text" },
     { name: "PR", type: "text" },
@@ -35,4 +35,3 @@ export const githubProjectsSchema = Object.freeze({
     "ski:blocked"
   ]
 });
-

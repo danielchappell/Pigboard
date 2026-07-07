@@ -12,7 +12,7 @@ Provision this field set:
 | Worker Type | Single select | Which worker should claim it |
 | Priority | Single select | Dispatch ordering |
 | Lease Owner | Text | Current worker id |
-| Lease Expires | Date | Lease timeout |
+| Lease Expires | Text | Lease timeout as an ISO timestamp |
 | Attempts | Number | Claim/run count |
 | Last Worker Run | Text | Last runtime run id |
 | PR | Text | Linked PR URL or number |
@@ -53,6 +53,21 @@ Subscribe a GitHub App or organization webhook to:
 Project webhooks should only wake the dispatcher. The adapter must reload state
 from GitHub before claiming.
 
+## Lease Semantics
+
+GitHub Projects does not provide an atomic compare-and-set update for project
+fields. The GitHub adapter therefore uses best-effort leases:
+
+1. Reload the Project item.
+2. Skip it if `Lease Expires` is still in the future.
+3. Write `Lease Owner`, `Lease Expires`, `Attempts`, and `Last Worker Run`.
+4. Run the worker.
+5. Clear the lease fields on release.
+
+This is acceptable for an MVP and for small worker pools. For hard concurrency,
+use a transactional queue adapter and treat GitHub Projects as the human-facing
+mirror.
+
 ## Labels
 
 Labels are optional mirrors. Prefer Project fields as the source of truth.
@@ -69,4 +84,3 @@ ski:review
 ski:babysit
 ski:blocked
 ```
-

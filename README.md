@@ -67,11 +67,11 @@ This is the first clean skeleton:
 - Core queue contract and statuses
 - In-memory adapter for runtime tests
 - Dispatcher loop with claim/release/fail behavior
-- GitHub Projects field schema and webhook parser scaffolding
+- GitHub Projects field schema, webhook parser, field mapping, and GraphQL
+  list/claim/transition/comment operations
 - New flat worker role cards
 - Reused Scuba Stack engineering skills, minus the old mandatory orchestration
   layer
 
-The next step is implementing the full GitHub Projects GraphQL adapter and
-provisioner.
-
+The next step is a CLI or service entrypoint that runs a real worker against the
+GitHub Projects adapter.
