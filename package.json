@@ -7,6 +7,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node --test",
+    "check:github-project": "node scripts/check-github-project.mjs",
     "claim:github": "node scripts/claim-github-worker.mjs",
     "schema:github-projects": "node scripts/print-github-project-schema.mjs"
   },

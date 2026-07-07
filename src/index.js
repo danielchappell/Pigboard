@@ -5,3 +5,7 @@ export { GitHubProjectsAdapter, parseGitHubWebhook } from "./adapters/github-pro
 export { QueueDispatcher } from "./runtime/dispatcher.js";
 export { buildWorkerPrompt } from "./runtime/prompt.js";
 export { githubProjectsSchema } from "./provisioners/github-projects/schema.js";
+export {
+  formatValidationReport,
+  validateGitHubProjectSchema
+} from "./provisioners/github-projects/validate.js";

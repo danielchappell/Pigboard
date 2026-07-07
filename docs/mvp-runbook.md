@@ -20,6 +20,18 @@ Minimum required fields:
 - `Attempts`
 - `Last Worker Run`
 
+Then validate the live Project:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_ORG=your-org \
+GITHUB_PROJECT_NUMBER=1 \
+npm run check:github-project
+```
+
+The command exits nonzero and prints the missing fields/options if the Project
+is not ready.
+
 ## 2. Configure Work Items
 
 Every runnable item needs:
