@@ -100,9 +100,8 @@ export function normalizeProjectItem(node) {
 }
 
 export function isReadyForWorker(item, workerType, now = new Date()) {
-  if (item.workerType !== workerType) return false;
-
   const readyStatus = readyStatusForWorker(workerType);
+  if (item.workerType && item.workerType !== workerType) return false;
   if (item.status !== Status.READY && item.status !== readyStatus) return false;
 
   if (!item.leaseExpiresAt) return true;

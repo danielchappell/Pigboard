@@ -65,6 +65,7 @@ try {
   const results = await enrollRepositoriesInGitHubProject({
     graphql,
     projectId: projectModel.id,
+    projectModel,
     repositories,
     importOpenItems
   });

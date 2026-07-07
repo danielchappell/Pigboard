@@ -83,6 +83,57 @@ test("GitHubProjectsAdapter can filter ready items by repository", async () => {
   assert.equal(ready.length, 0);
 });
 
+test("GitHubProjectsAdapter infers worker type from status when Worker Type is blank", async () => {
+  const { fetchImpl } = createGraphqlMock([projectResponse({ workerType: null })]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 1);
+  assert.equal(ready[0].status, Status.IMPLEMENTATION);
+  assert.equal(ready[0].workerType, undefined);
+});
+
+test("GitHubProjectsAdapter does not claim another worker status", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse({ status: Status.QA, workerType: null })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 0);
+});
+
+test("GitHubProjectsAdapter treats Worker Type as an override", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse({ status: Status.IMPLEMENTATION, workerType: WorkerType.QA })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.IMPLEMENTER);
+
+  assert.equal(ready.length, 0);
+});
+
 test("GitHubProjectsAdapter claims by writing lease fields", async () => {
   const { fetchImpl, calls } = createGraphqlMock([
     projectResponse(),
@@ -208,7 +259,10 @@ function mutationResponse() {
   return { data: {} };
 }
 
-function projectResponse() {
+function projectResponse({
+  status = Status.IMPLEMENTATION,
+  workerType = WorkerType.IMPLEMENTER
+} = {}) {
   return {
     data: {
       organization: {
@@ -250,13 +304,15 @@ function projectResponse() {
                 },
                 fieldValues: {
                   nodes: [
-                    singleSelectValue("Status", Status.IMPLEMENTATION, "status_implementation"),
-                    singleSelectValue("Worker Type", WorkerType.IMPLEMENTER, "worker_implementer"),
+                    singleSelectValue("Status", status, optionIdForStatus(status)),
+                    workerType
+                      ? singleSelectValue("Worker Type", workerType, optionIdForWorkerType(workerType))
+                      : null,
                     singleSelectValue("Priority", "P1", "priority_p1"),
                     textValue("Lease Owner", ""),
                     textValue("Lease Expires", "2026-07-07T11:30:00.000Z"),
                     numberValue("Attempts", 0)
-                  ]
+                  ].filter(Boolean)
                 }
               }
             ]
@@ -265,6 +321,14 @@ function projectResponse() {
       }
     }
   };
+}
+
+function optionIdForStatus(status) {
+  return `status_${status.toLowerCase().replaceAll(" ", "_")}`;
+}
+
+function optionIdForWorkerType(workerType) {
+  return `worker_${workerType.replaceAll("-", "_")}`;
 }
 
 function userProjectResponse() {

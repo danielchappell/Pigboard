@@ -1,11 +1,15 @@
 import {
   ADD_PROJECT_ITEM_MUTATION,
+  COPY_PROJECT_MUTATION,
   CREATE_PROJECT_MUTATION,
   REPOSITORY_OPEN_ITEMS_QUERY,
   RESOLVE_PROJECT_OWNER_QUERY,
   RESOLVE_REPOSITORY_QUERY,
+  UPDATE_FIELD_MUTATION,
   VIEWER_QUERY
 } from "../../adapters/github-projects/graphql.js";
+import { FieldName, fieldId, singleSelectOptionId } from "../../adapters/github-projects/fields.js";
+import { Status } from "../../core/status.js";
 import { provisionGitHubProject } from "./provision.js";
 
 const REPOSITORY_LIST_SEPARATOR = /[\s,]+/;
@@ -55,6 +59,29 @@ export async function createGitHubProject({ graphql, ownerId, title }) {
   });
 
   return data.createProjectV2.projectV2;
+}
+
+export async function copyGitHubProject({
+  graphql,
+  ownerId,
+  title,
+  templateProjectId,
+  includeDraftIssues = false
+}) {
+  if (!ownerId) throw new Error("ownerId is required");
+  if (!title) throw new Error("title is required");
+  if (!templateProjectId) throw new Error("templateProjectId is required");
+
+  const data = await graphql(COPY_PROJECT_MUTATION, {
+    input: {
+      projectId: templateProjectId,
+      ownerId,
+      title,
+      includeDraftIssues
+    }
+  });
+
+  return data.copyProjectV2.projectV2;
 }
 
 export function parseRepositoryList(value) {
@@ -152,9 +179,40 @@ export async function addProjectItem({ graphql, projectId, contentId }) {
   return data.addProjectV2ItemById.item;
 }
 
+export async function applyImportedItemDefaults({
+  graphql,
+  projectId,
+  projectModel,
+  itemId,
+  status = Status.INBOX,
+  priority = "P3"
+}) {
+  if (!projectId) throw new Error("projectId is required");
+  if (!projectModel) throw new Error("projectModel is required");
+  if (!itemId) throw new Error("itemId is required");
+
+  await setSingleSelectField({
+    graphql,
+    projectId,
+    projectModel,
+    itemId,
+    fieldName: FieldName.STATUS,
+    optionName: status
+  });
+  await setSingleSelectField({
+    graphql,
+    projectId,
+    projectModel,
+    itemId,
+    fieldName: FieldName.PRIORITY,
+    optionName: priority
+  });
+}
+
 export async function enrollRepositoriesInGitHubProject({
   graphql,
   projectId,
+  projectModel,
   repositories = [],
   importOpenItems = false,
   importFirst = 50
@@ -181,18 +239,26 @@ export async function enrollRepositoriesInGitHubProject({
         first: importFirst
       });
       for (const issue of openItems.issues) {
-        const imported = await tryAddProjectItem({ graphql, projectId, contentId: issue.id });
-        if (imported) result.imported.issues += 1;
-        else result.duplicates += 1;
+        const item = await tryAddProjectItem({ graphql, projectId, contentId: issue.id });
+        if (item) {
+          await applyImportedItemDefaults({ graphql, projectId, projectModel, itemId: item.id });
+          result.imported.issues += 1;
+        } else {
+          result.duplicates += 1;
+        }
       }
       for (const pullRequest of openItems.pullRequests) {
-        const imported = await tryAddProjectItem({
+        const item = await tryAddProjectItem({
           graphql,
           projectId,
           contentId: pullRequest.id
         });
-        if (imported) result.imported.pullRequests += 1;
-        else result.duplicates += 1;
+        if (item) {
+          await applyImportedItemDefaults({ graphql, projectId, projectModel, itemId: item.id });
+          result.imported.pullRequests += 1;
+        } else {
+          result.duplicates += 1;
+        }
       }
       result.imported.total = result.imported.issues + result.imported.pullRequests;
     }
@@ -209,16 +275,24 @@ export async function setupGitHubProject({
   owner,
   ownerType,
   title,
+  templateProjectId,
   repositories = [],
   importOpenItems = false,
   importFirst = 50
 }) {
   const resolvedOwner = await resolveProjectOwner({ graphql, owner, ownerType });
-  const project = await createGitHubProject({
-    graphql,
-    ownerId: resolvedOwner.id,
-    title
-  });
+  const project = templateProjectId
+    ? await copyGitHubProject({
+        graphql,
+        ownerId: resolvedOwner.id,
+        title,
+        templateProjectId
+      })
+    : await createGitHubProject({
+        graphql,
+        ownerId: resolvedOwner.id,
+        title
+      });
 
   const adapter = adapterFactory({
     owner: resolvedOwner.login,
@@ -226,9 +300,11 @@ export async function setupGitHubProject({
     projectNumber: project.number
   });
   const provision = await provisionGitHubProject({ adapter, apply: true });
+  const projectModel = (await adapter.loadProjectItems()).projectModel;
   const enrolledRepositories = await enrollRepositoriesInGitHubProject({
     graphql,
     projectId: project.id,
+    projectModel,
     repositories,
     importOpenItems,
     importFirst
@@ -237,6 +313,7 @@ export async function setupGitHubProject({
   return {
     owner: resolvedOwner,
     project,
+    createdFromTemplate: Boolean(templateProjectId),
     provision,
     repositories: enrolledRepositories
   };
@@ -244,12 +321,24 @@ export async function setupGitHubProject({
 
 async function tryAddProjectItem({ graphql, projectId, contentId }) {
   try {
-    await addProjectItem({ graphql, projectId, contentId });
-    return true;
+    return await addProjectItem({ graphql, projectId, contentId });
   } catch (error) {
-    if (isDuplicateProjectItemError(error)) return false;
+    if (isDuplicateProjectItemError(error)) return null;
     throw error;
   }
+}
+
+async function setSingleSelectField({ graphql, projectId, projectModel, itemId, fieldName, optionName }) {
+  await graphql(UPDATE_FIELD_MUTATION, {
+    input: {
+      projectId,
+      itemId,
+      fieldId: fieldId(projectModel, fieldName),
+      value: {
+        singleSelectOptionId: singleSelectOptionId(projectModel, fieldName, optionName)
+      }
+    }
+  });
 }
 
 function isDuplicateProjectItemError(error) {

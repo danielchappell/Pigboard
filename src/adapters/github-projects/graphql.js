@@ -155,6 +155,19 @@ export const CREATE_PROJECT_MUTATION = `
   }
 `;
 
+export const COPY_PROJECT_MUTATION = `
+  mutation SkiStackCopyProject($input: CopyProjectV2Input!) {
+    copyProjectV2(input: $input) {
+      projectV2 {
+        id
+        number
+        title
+        url
+      }
+    }
+  }
+`;
+
 export const RESOLVE_REPOSITORY_QUERY = `
   query SkiStackResolveRepository($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {

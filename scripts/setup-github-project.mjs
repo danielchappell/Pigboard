@@ -47,6 +47,12 @@ try {
     hint: "blank uses the authenticated GitHub user"
   });
   const ownerType = process.env.GITHUB_OWNER_TYPE ?? args.options["owner-type"] ?? "auto";
+  const templateProjectId = await promptValue({
+    provided: process.env.SKI_TEMPLATE_PROJECT_ID ?? args.options["template-project-id"],
+    label: "Template Project ID",
+    defaultValue: "",
+    hint: "blank creates a plain Project"
+  });
   const repositories = await promptRepositories({
     provided: [process.env.SKI_REPOSITORIES, args.options.repo, args.options.repos],
     localRepository
@@ -62,6 +68,7 @@ try {
     owner: owner || undefined,
     ownerType,
     title,
+    templateProjectId: templateProjectId || undefined,
     repositories,
     importOpenItems,
     adapterFactory: ({ owner: resolvedOwner, ownerType: resolvedOwnerType, projectNumber }) =>
@@ -78,10 +85,12 @@ try {
   console.log(`URL: ${result.project.url}`);
   console.log(`Owner: ${result.owner.login} (${result.owner.type})`);
   console.log(`Project number: ${result.project.number}`);
+  if (result.createdFromTemplate) console.log("Template: copied");
   console.log("");
   console.log(formatProvisioningPlan(result.provision.plan));
   if (result.provision.applied) console.log("Applied Ski Stack Project fields/options.");
   printRepositorySummary(result.repositories, importOpenItems);
+  printKanbanSummary({ createdFromTemplate: result.createdFromTemplate, repositories });
   console.log("");
   console.log("Worker environment:");
   console.log(`GITHUB_OWNER=${result.owner.login}`);
@@ -172,6 +181,23 @@ async function readLocalGitHubRepository() {
     return parseGitHubRepositoryUrl(stdout.trim());
   } catch {
     return null;
+  }
+}
+
+function printKanbanSummary({ createdFromTemplate, repositories }) {
+  console.log("");
+  console.log("Kanban queue:");
+  if (createdFromTemplate) {
+    console.log("- Copied template views. Use Queue Board as the default Status board.");
+  } else {
+    console.log("- Switch the Project view layout to Board.");
+    console.log("- Set the board column field to Status.");
+    console.log("- Show Inbox, Planning, Architecture, Grooming, Implementation, QA, Review, Babysit, Blocked, and Done.");
+  }
+  console.log("- Move cards into a worker column to start work.");
+  if (repositories.length) {
+    console.log("- Repo filters:");
+    for (const repository of repositories) console.log(`  repo:${repository}`);
   }
 }
 

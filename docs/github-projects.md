@@ -14,7 +14,7 @@ Provision this field set:
 | Field | Type | Purpose |
 | --- | --- | --- |
 | Status | Single select | Queue state |
-| Worker Type | Single select | Which worker should claim it |
+| Worker Type | Single select | Optional override routing |
 | Priority | Single select | Dispatch ordering |
 | Lease Owner | Text | Current worker id |
 | Lease Expires | Text | Lease timeout as an ISO timestamp |
@@ -39,6 +39,17 @@ Blocked
 Done
 Canceled
 ```
+
+## Kanban View
+
+The preferred queue view is a board named `Queue Board` with `Status` as the
+column field. Moving a card into `Implementation`, `QA`, `Review`, or `Babysit`
+is the operator signal that the corresponding worker may claim it.
+
+GitHub does not expose public Project view create/update mutations. To fully
+automate the Kanban layout, copy from a preconfigured Ski Stack template Project
+with `SKI_TEMPLATE_PROJECT_ID` or `--template-project-id`. Without a template,
+setup provisions the fields and prints the manual board configuration steps.
 
 ## Webhook Handling
 

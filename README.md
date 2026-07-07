@@ -61,6 +61,17 @@ By default, this runs interactively. It uses the authenticated GitHub user from
 enroll. If you run it from a cloned GitHub repo, it offers `remote.origin.url` as
 the first repo.
 
+For a prebuilt Kanban view, copy from a Ski Stack template Project:
+
+```bash
+SKI_TEMPLATE_PROJECT_ID=PROJECT_ID \
+npm run setup:github-project
+```
+
+Without a template, setup still creates/provisions the Project and prints the
+manual GitHub view steps: switch to Board layout and use `Status` as the column
+field.
+
 GitHub Projects are user/org-level boards. One Project can contain issues and
 PRs from many repos, and workers can later filter by repo.
 
@@ -120,9 +131,11 @@ Put an issue or PR into the Project with:
 
 - `Status`: one of `Planning`, `Architecture`, `Grooming`, `Implementation`,
   `QA`, `Review`, or `Babysit`
-- `Worker Type`: `planner`, `architect`, `groomer`, `implementer`, `qa`,
-  `reviewer`, `pr-babysitter`, or `researcher`
 - `Priority`: `P0`, `P1`, `P2`, or `P3`
+
+Moving a card into a worker column makes it claimable. `Worker Type` is optional
+override routing when a card in a shared status should be claimed by only one
+worker type.
 
 Claim the next item for a worker and print the prompt:
 

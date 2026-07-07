@@ -20,6 +20,16 @@ The setup command is interactive by default. It creates the Project at the
 GitHub user/org level, prompts for repos to enroll, and can import the current
 open issues and PRs from those repos into the Project.
 
+For a prebuilt Kanban board, provide a template Project id:
+
+```bash
+SKI_TEMPLATE_PROJECT_ID=PROJECT_ID \
+npm run setup:github-project
+```
+
+If no template is provided, setup prints the manual GitHub view steps: switch to
+Board layout and set the column field to `Status`.
+
 To import another repo into an existing Project later:
 
 ```bash
@@ -38,7 +48,7 @@ npm run schema:github-projects
 Minimum required fields:
 
 - `Status`
-- `Worker Type`
+- `Worker Type` (optional override routing)
 - `Priority`
 - `Lease Owner`
 - `Lease Expires`
@@ -81,8 +91,10 @@ Every runnable item needs:
 
 - `Status`: the column that matches the worker, such as `Implementation`, `QA`,
   `Review`, or `Babysit`
-- `Worker Type`: `implementer`, `qa`, `reviewer`, etc.
 - `Priority`: `P0` through `P3`
+
+`Worker Type` is optional. Leave it blank for the normal Kanban flow where
+Status selects the worker. Fill it only to force a specific worker type.
 
 The issue or PR body should carry the task envelope:
 

@@ -18,6 +18,8 @@ export {
 } from "./provisioners/github-projects/provision.js";
 export {
   addProjectItem,
+  applyImportedItemDefaults,
+  copyGitHubProject,
   createGitHubProject,
   enrollRepositoriesInGitHubProject,
   listOpenRepositoryItems,
