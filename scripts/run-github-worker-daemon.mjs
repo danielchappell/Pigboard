@@ -176,7 +176,7 @@ function normalizeRepositories(value) {
 }
 
 function policyForRepository({ config, repository, token }) {
-  const policy = repository ? config.repositories?.[repository] : config.repoPolicy;
+  const policy = repository ? config.repositories?.[repository] ?? config.repoPolicy : config.repoPolicy;
   if (!policy) return undefined;
   return {
     ...policy,

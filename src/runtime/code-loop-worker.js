@@ -315,6 +315,10 @@ export class GitHubCodeLoopWorker {
     }
 
     await this.verifyOrThrow(claimId);
+    if (this.workerType !== WorkerType.IMPLEMENTER) {
+      await this.rejectNonImplementerDiff({ worktree, ignoredPaths });
+    }
+    await this.verifyOrThrow(claimId);
     if (
       this.workerType === WorkerType.PR_BABYSITTER &&
       result.outcome === "completed" &&
@@ -329,6 +333,17 @@ export class GitHubCodeLoopWorker {
       workerType: this.workerType,
       result
     });
+  }
+
+  async rejectNonImplementerDiff({ worktree, ignoredPaths }) {
+    const dirty = await this.hasDiffImpl({
+      worktreePath: worktree.worktreePath,
+      execFileImpl: this.execFileImpl,
+      ignoredPaths
+    });
+    if (dirty) {
+      throw new Error(`${this.workerType} produced a worktree diff; v1 does not persist non-implementer edits`);
+    }
   }
 
   async verifyOrThrow(claimId) {

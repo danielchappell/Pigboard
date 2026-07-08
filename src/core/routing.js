@@ -27,7 +27,7 @@ export const NONCLAIMABLE_STATUSES = new Set([
 const COMPLETED_TRANSITIONS = Object.freeze({
   [WorkerType.IMPLEMENTER]: new Set([Status.REVIEW]),
   [WorkerType.REVIEWER]: new Set([Status.IMPLEMENTATION, Status.BABYSIT]),
-  [WorkerType.PR_BABYSITTER]: new Set([Status.IMPLEMENTATION, Status.REVIEW, Status.DONE])
+  [WorkerType.PR_BABYSITTER]: new Set([Status.IMPLEMENTATION, Status.REVIEW, Status.BABYSIT, Status.DONE])
 });
 
 export function resolvedWorkerTypeForItem(item) {

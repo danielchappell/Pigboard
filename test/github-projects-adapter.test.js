@@ -428,6 +428,101 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
   assert.equal(verified.reason, "pr_changed");
 });
 
+test("GitHubProjectsAdapter requires approvals on the current PR head before Done", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrDoneFetchImpl({
+    responses,
+    reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "b".repeat(40) }]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForDoneForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "not_approved");
+});
+
+test("GitHubProjectsAdapter rejects unmergeable PRs before Done", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrDoneFetchImpl({
+    responses,
+    pullRequest: pullRequestResponse({ mergeable: false, mergeable_state: "dirty" }),
+    reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) }]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForDoneForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "not_mergeable");
+});
+
 test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming next ready item", async () => {
   const response = projectResponse({
     status: Status.REVIEW,
@@ -577,6 +672,63 @@ function createGraphqlMock(responses) {
         json: async () => response
       };
     }
+  };
+}
+
+function createPrDoneFetchImpl({
+  responses,
+  pullRequest = pullRequestResponse(),
+  reviews = [],
+  status = { total_count: 0, state: "success" },
+  checkRuns = { total_count: 0, check_runs: [] }
+}) {
+  return async (url, options) => {
+    const requestUrl = String(url);
+    if (requestUrl.endsWith("/repos/acme/repo/pulls/42")) {
+      return {
+        ok: true,
+        json: async () => pullRequest
+      };
+    }
+    if (requestUrl.endsWith("/repos/acme/repo/pulls/42/reviews?per_page=100")) {
+      return {
+        ok: true,
+        json: async () => reviews
+      };
+    }
+    if (requestUrl.includes("/repos/acme/repo/commits/") && requestUrl.endsWith("/status")) {
+      return {
+        ok: true,
+        json: async () => status
+      };
+    }
+    if (requestUrl.includes("/repos/acme/repo/commits/") && requestUrl.endsWith("/check-runs?per_page=100")) {
+      return {
+        ok: true,
+        json: async () => checkRuns
+      };
+    }
+    const response = responses.shift();
+    if (!response) throw new Error(`No mocked GraphQL response left for ${requestUrl}`);
+    return {
+      ok: true,
+      json: async () => response
+    };
+  };
+}
+
+function pullRequestResponse(overrides = {}) {
+  return {
+    number: 42,
+    html_url: "https://github.com/acme/repo/pull/42",
+    state: "open",
+    draft: false,
+    merged: false,
+    mergeable: true,
+    mergeable_state: "clean",
+    base: { ref: "main", sha: "b".repeat(40) },
+    head: { ref: "feature", sha: "a".repeat(40) },
+    ...overrides
   };
 }
 

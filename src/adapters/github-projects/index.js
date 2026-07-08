@@ -437,6 +437,8 @@ export class GitHubProjectsAdapter {
     if (state.draft) return { ready: false, reason: "draft" };
     if (!state.approved) return { ready: false, reason: "not_approved" };
     if (!state.checksClean) return { ready: false, reason: "checks_not_clean" };
+    const mergeabilityReason = mergeabilityFailureReason(state);
+    if (mergeabilityReason) return { ready: false, reason: mergeabilityReason };
     return { ready: true };
   }
 
@@ -575,8 +577,10 @@ export class GitHubProjectsAdapter {
       draft: pr.draft === true,
       merged: pr.merged === true,
       headSha: pr.head?.sha,
-      approved: hasCurrentApproval(reviews),
-      checksClean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns)
+      approved: hasCurrentApproval(reviews, pr.head?.sha),
+      checksClean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns),
+      mergeable: pr.mergeable,
+      mergeableState: pr.mergeable_state
     };
   }
 
@@ -627,15 +631,29 @@ function parsePullRequestReference(url) {
   return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
 }
 
-function hasCurrentApproval(reviews) {
+function hasCurrentApproval(reviews, headSha) {
+  if (!headSha) return false;
   const latestByAuthor = new Map();
   for (const review of Array.isArray(reviews) ? reviews : []) {
+    if (review.commit_id !== headSha) continue;
     const author = review.user?.login;
     if (!author || !review.state) continue;
     latestByAuthor.set(author, review.state);
   }
   const states = [...latestByAuthor.values()];
   return states.includes("APPROVED") && !states.includes("CHANGES_REQUESTED");
+}
+
+function mergeabilityFailureReason(state) {
+  if (state.mergeable === false) return "not_mergeable";
+  const mergeableState = String(state.mergeableState ?? "").toLowerCase();
+  if (["dirty", "blocked", "unknown", "behind"].includes(mergeableState)) {
+    return `mergeability_${mergeableState}`;
+  }
+  if (state.mergeable !== true && !["clean", "unstable", "has_hooks"].includes(mergeableState)) {
+    return "mergeability_unknown";
+  }
+  return null;
 }
 
 function areStatusChecksClean(status) {

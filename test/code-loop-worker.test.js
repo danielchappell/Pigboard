@@ -858,6 +858,63 @@ test("pr-babysitter cannot mark Done when live PR state is not ready", async () 
   assert.equal(adapter.getItem("item-live-not-ready").status, Status.BLOCKED);
 });
 
+test("pr-babysitter no-op can stay in Babysit while waiting", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-waiting-babysit",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    result: {
+      outcome: "no-op",
+      nextStatus: Status.BABYSIT,
+      summary: "Still waiting for checks."
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.error, undefined);
+  assert.equal(adapter.getItem("item-waiting-babysit").status, Status.BABYSIT);
+});
+
+test("reviewer dirty worktrees block instead of discarding edits", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-dirty-reviewer",
+      title: "Review queue adapter",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER
+    })
+  ]);
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "No blocking findings."
+    },
+    hasDiffImpl: async () => true
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /reviewer produced a worktree diff/);
+  assert.equal(adapter.getItem("item-dirty-reviewer").status, Status.BLOCKED);
+});
+
 test("pr-babysitter blocks Done without approved-and-clean flag", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
@@ -886,7 +943,7 @@ test("pr-babysitter blocks Done without approved-and-clean flag", async () => {
   assert.equal(adapter.getItem("item-4").status, Status.BLOCKED);
 });
 
-function workerWithCodexResult({ root, adapter, workerType, result }) {
+function workerWithCodexResult({ root, adapter, workerType, result, hasDiffImpl = async () => false }) {
   return new GitHubCodeLoopWorker({
     adapter,
     workerType,
@@ -904,6 +961,7 @@ function workerWithCodexResult({ root, adapter, workerType, result }) {
       await writeFile(outputPath, JSON.stringify(result));
       return { stdout: "", stderr: "" };
     },
+    hasDiffImpl,
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });
