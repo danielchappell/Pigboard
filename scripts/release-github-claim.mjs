@@ -27,5 +27,5 @@ const adapter = new GitHubProjectsAdapter({
   itemsFirst: 1
 });
 
-await adapter.release(claimId);
+await adapter.releaseClaim(claimId);
 console.log(`Released claim for ${claim.itemId} held by ${claim.workerId}.`);

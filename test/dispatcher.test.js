@@ -22,7 +22,7 @@ test("dispatcher claims one ready item and transitions it", async () => {
     leaseSeconds: 60,
     runWorker: async () => ({
       outcome: "completed",
-      nextStatus: Status.QA,
+      nextStatus: Status.REVIEW,
       summary: "Implemented",
       evidence: ["unit test"]
     })
@@ -30,7 +30,7 @@ test("dispatcher claims one ready item and transitions it", async () => {
 
   const result = await dispatcher.runOnce();
   assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("1").status, Status.QA);
+  assert.equal(adapter.getItem("1").status, Status.REVIEW);
   assert.equal(adapter.events.length, 1);
   assert.equal(adapter.events[0].outcome, "completed");
 });
@@ -78,12 +78,12 @@ test("dispatcher claims items in a worker-specific status column", async () => {
     workerType: WorkerType.IMPLEMENTER,
     runWorker: async () => ({
       outcome: "completed",
-      nextStatus: Status.QA,
+      nextStatus: Status.REVIEW,
       summary: "Built it"
     })
   });
 
   const result = await dispatcher.runOnce();
   assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("3").status, Status.QA);
+  assert.equal(adapter.getItem("3").status, Status.REVIEW);
 });

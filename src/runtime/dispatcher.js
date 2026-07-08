@@ -1,4 +1,4 @@
-import { Status } from "../core/status.js";
+import { applyWorkerResult } from "./apply-result.js";
 
 export class QueueDispatcher {
   constructor({ adapter, workerId, workerType, runWorker, leaseSeconds = 1800 }) {
@@ -18,7 +18,15 @@ export class QueueDispatcher {
     const readyItems = await this.adapter.listReady(this.workerType);
 
     for (const item of readyItems) {
-      const claimResult = await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
+      const claimResult =
+        typeof this.adapter.claimReadyForWorker === "function"
+          ? await this.adapter.claimReadyForWorker({
+              itemId: item.id,
+              workerType: this.workerType,
+              workerId: this.workerId,
+              leaseSeconds: this.leaseSeconds
+            })
+          : await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
       if (!claimResult.claimed) continue;
 
       const { claim } = claimResult;
@@ -30,25 +38,19 @@ export class QueueDispatcher {
           workerType: this.workerType
         });
 
-        await this.adapter.appendEvent(item.id, {
-          type: "worker_result",
-          actor: this.workerId,
-          outcome: result.outcome,
-          body: result.summary ?? "",
-          evidence: result.evidence ?? [],
-          blocker: result.blocker ?? null
+        await applyWorkerResult({
+          adapter: this.adapter,
+          claimId: claim.id,
+          workerType: this.workerType,
+          result
         });
-
-        if (result.outcome === "blocked" || result.outcome === "needs-human") {
-          await this.adapter.transition(item.id, Status.BLOCKED);
-        } else if (result.nextStatus) {
-          await this.adapter.transition(item.id, result.nextStatus);
-        }
-
-        await this.adapter.release(claim.id);
         return { ran: true, itemId: item.id, result };
       } catch (error) {
-        await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+        if (typeof this.adapter.failClaim === "function") {
+          await this.adapter.failClaim(claim.id, error instanceof Error ? error.message : String(error));
+        } else {
+          await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+        }
         return { ran: true, itemId: item.id, error };
       }
     }
@@ -56,4 +58,3 @@ export class QueueDispatcher {
     return { ran: false };
   }
 }
-

@@ -1,0 +1,45 @@
+{
+  "github": {
+    "owner": "your-github-user-or-org",
+    "ownerType": "auto",
+    "projectNumber": 1,
+    "repositories": ["owner/repo"]
+  },
+  "repositories": {
+    "owner/repo": {
+      "repository": "owner/repo",
+      "cwd": "/absolute/path/to/local/repo",
+      "defaultBaseBranch": "main",
+      "setupCommands": [],
+      "verifyCommands": ["npm test"],
+      "setupNetwork": "off",
+      "verifyNetwork": "off",
+      "allowPushBranches": true,
+      "allowCreatePr": true,
+      "allowPrComments": true,
+      "allowPrReviewComments": true,
+      "allowMerge": false,
+      "doneWhenApprovedAndClean": false
+    }
+  },
+  "slots": [
+    {
+      "type": "implementer",
+      "count": 1,
+      "repository": "owner/repo",
+      "leaseSeconds": 1800
+    },
+    {
+      "type": "reviewer",
+      "count": 1,
+      "repository": "owner/repo",
+      "leaseSeconds": 1800
+    },
+    {
+      "type": "pr-babysitter",
+      "count": 1,
+      "repository": "owner/repo",
+      "leaseSeconds": 1800
+    }
+  ]
+}

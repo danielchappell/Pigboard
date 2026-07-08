@@ -173,17 +173,26 @@ test("GitHubProjectsAdapter claims by writing lease fields", async () => {
 });
 
 test("GitHubProjectsAdapter releases a claim from a fresh process", async () => {
-  const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse(), mutationResponse()]);
-  const adapter = new GitHubProjectsAdapter({
-    token: "test-token",
-    organization: "acme",
-    projectNumber: 7,
-    fetchImpl
-  });
   const claimId = createClaimId({
     itemId: "PVTI_item_1",
     workerId: "worker-1",
     expiresAt: "2026-07-07T12:30:00.000Z"
+  });
+  const { fetchImpl, calls } = createGraphqlMock([
+    projectResponse({
+      leaseOwner: "worker-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: claimId
+    }),
+    mutationResponse(),
+    mutationResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
   });
 
   await adapter.release(claimId);
@@ -261,7 +270,10 @@ function mutationResponse() {
 
 function projectResponse({
   status = Status.IMPLEMENTATION,
-  workerType = WorkerType.IMPLEMENTER
+  workerType = WorkerType.IMPLEMENTER,
+  leaseOwner = "",
+  leaseExpiresAt = "2026-07-07T11:30:00.000Z",
+  lastWorkerRun = ""
 } = {}) {
   return {
     data: {
@@ -309,9 +321,10 @@ function projectResponse({
                       ? singleSelectValue("Worker Type", workerType, optionIdForWorkerType(workerType))
                       : null,
                     singleSelectValue("Priority", "P1", "priority_p1"),
-                    textValue("Lease Owner", ""),
-                    textValue("Lease Expires", "2026-07-07T11:30:00.000Z"),
-                    numberValue("Attempts", 0)
+                    textValue("Lease Owner", leaseOwner),
+                    textValue("Lease Expires", leaseExpiresAt),
+                    numberValue("Attempts", 0),
+                    lastWorkerRun ? textValue("Last Worker Run", lastWorkerRun) : null
                   ].filter(Boolean)
                 }
               }

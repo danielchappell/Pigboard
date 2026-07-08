@@ -53,6 +53,10 @@ const PROJECT_SELECTION = `
             body
             url
             number
+            baseRefName
+            baseRefOid
+            headRefName
+            headRefOid
             repository {
               nameWithOwner
             }

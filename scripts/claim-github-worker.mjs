@@ -45,16 +45,17 @@ const adapter = new GitHubProjectsAdapter({
   repositories
 });
 
-const ready = await adapter.listReady(workerType);
-if (ready.length === 0) {
-  console.log(`No ready items for worker type: ${workerType}`);
-  process.exit(0);
-}
-
-const item = ready[0];
-const claimResult = await adapter.claim(item.id, workerId, leaseSeconds);
+const claimResult = await adapter.claimReadyForWorker({
+  workerType,
+  workerId,
+  leaseSeconds
+});
 if (!claimResult.claimed) {
-  console.error(`Could not claim ${item.id}: ${claimResult.reason}`);
+  if (claimResult.reason === "none_ready") {
+    console.log(`No ready items for worker type: ${workerType}`);
+    process.exit(0);
+  }
+  console.error(`Could not claim item: ${claimResult.reason}`);
   process.exit(3);
 }
 
@@ -68,7 +69,7 @@ const prompt = buildWorkerPrompt({
 console.log(prompt);
 
 if (!holdLease) {
-  await adapter.release(claimResult.claim.id);
+  await adapter.releaseClaim(claimResult.claim.id);
   console.error(`\nReleased lease ${claimResult.claim.id}. Re-run with --hold to keep the claim.`);
 } else {
   console.error(`\nHolding lease ${claimResult.claim.id} until ${claimResult.claim.expiresAt}.`);

@@ -1,5 +1,7 @@
 import { AdapterError } from "../../core/adapter-contract.js";
-import { createClaimId, parseClaimId } from "../../core/claims.js";
+import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../../core/claims.js";
+import { formatPublicEventComment } from "../../core/public-output.js";
+import { resolvedWorkerTypeForItem } from "../../core/routing.js";
 import { Status } from "../../core/status.js";
 import {
   buildProjectModel,
@@ -183,10 +185,115 @@ export class GitHubProjectsAdapter {
     };
   }
 
+  async claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context = {} }) {
+    if (!workerType) throw new Error("workerType is required");
+    if (!workerId) throw new Error("workerId is required");
+    if (!leaseSeconds) throw new Error("leaseSeconds is required");
+
+    const { projectModel, items } = await this.loadProjectItems();
+    const ready = items
+      .filter((item) => this.matchesRepositoryFilter(item))
+      .filter((item) => isReadyForWorker(item, workerType, this.now()))
+      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+    const item = itemId ? ready.find((candidate) => candidate.id === itemId) : ready[0];
+    if (!item) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
+
+    const now = this.now();
+    const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
+    const claimId = createClaimV2Id({
+      itemId: item.id,
+      workerId,
+      attemptId: context.attemptId ?? `${workerId}:${Number(item.attempts ?? 0) + 1}`,
+      runId: context.runId ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      expiresAt,
+      resolvedWorkerType: resolvedWorkerTypeForItem(item) ?? workerType,
+      claimedStatus: item.status,
+      claimedWorkerType: item.workerType,
+      repository: item.repository ?? context.repository ?? "unknown/unknown",
+      contentType: item.contentType ?? context.contentType ?? "Unknown",
+      issueNumber: item.contentType === "Issue" ? item.number : undefined,
+      pullRequestNumber: item.contentType === "PullRequest" ? item.number : undefined,
+      prUrl: item.contentType === "PullRequest" ? item.url : context.prUrl,
+      baseRef: item.baseRef,
+      baseSha: item.baseSha,
+      headRef: item.headRef,
+      headSha: item.headSha,
+      claimedAt: now.toISOString(),
+      ...context
+    });
+
+    try {
+      await this.setTextField(projectModel, item.id, FieldName.LAST_WORKER_RUN, claimId);
+      await this.setTextField(projectModel, item.id, FieldName.LEASE_OWNER, workerId);
+      await this.setTextField(projectModel, item.id, FieldName.LEASE_EXPIRES, expiresAt);
+      await this.setNumberField(projectModel, item.id, FieldName.ATTEMPTS, Number(item.attempts ?? 0) + 1);
+    } catch (error) {
+      await this.rollbackClaimAttempt(projectModel, item.id, { claimId, workerId, expiresAt });
+      throw error;
+    }
+
+    this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
+
+    return {
+      claimed: true,
+      claim: { id: claimId, itemId: item.id, owner: workerId, expiresAt },
+      item: {
+        ...item,
+        leaseOwner: workerId,
+        leaseExpiresAt: expiresAt,
+        attempts: Number(item.attempts ?? 0) + 1,
+        lastWorkerRun: claimId
+      }
+    };
+  }
+
   async heartbeat(claimId) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const projectModel = await this.ensureProjectModel();
     await this.setTextField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES, claim.expiresAt);
+  }
+
+  async verifyClaim(claimId, { requireHeadSha = false, allowStatusChanged = false } = {}) {
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    const { items } = await this.loadProjectItems();
+    const item = items.find((candidate) => candidate.id === claim.itemId);
+    if (!item) return { active: false, reason: "missing" };
+    if (item.leaseOwner !== claim.workerId) return { active: false, reason: "owner_mismatch" };
+    if (item.lastWorkerRun && item.lastWorkerRun !== claimId) return { active: false, reason: "run_mismatch" };
+    if (!item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= this.now()) {
+      return { active: false, reason: "expired" };
+    }
+    if (isClaimV2(claim)) {
+      if (!allowStatusChanged && item.status !== claim.claimedStatus) {
+        return { active: false, reason: "status_changed" };
+      }
+      if ((item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
+        return { active: false, reason: "worker_type_changed" };
+      }
+      if ((item.repository ?? "unknown/unknown") !== claim.repository) {
+        return { active: false, reason: "repository_changed" };
+      }
+      if (claim.pullRequestNumber && item.number !== claim.pullRequestNumber) {
+        return { active: false, reason: "pr_changed" };
+      }
+      if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
+      if (requireHeadSha && item.headSha && item.headSha !== claim.headSha) {
+        return { active: false, reason: "head_drift" };
+      }
+      if (requireHeadSha && item.baseSha && claim.baseSha && item.baseSha !== claim.baseSha) {
+        return { active: false, reason: "base_drift" };
+      }
+    }
+    return { active: true, claim, item };
+  }
+
+  async extendClaim(claimId, leaseSeconds) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { extended: false, reason: "CLAIM_LOST" };
+    const expiresAt = new Date(this.now().getTime() + leaseSeconds * 1000).toISOString();
+    const projectModel = await this.ensureProjectModel();
+    await this.setTextField(projectModel, verified.claim.itemId, FieldName.LEASE_EXPIRES, expiresAt);
+    return { extended: true, expiresAt };
   }
 
   async appendEvent(itemId, event) {
@@ -204,30 +311,77 @@ export class GitHubProjectsAdapter {
     });
   }
 
+  async appendEventForClaim(claimId, event) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { appended: false, reason: verified.reason };
+    await this.appendEvent(verified.claim.itemId, event);
+    return { appended: true };
+  }
+
   async transition(itemId, status) {
     const projectModel = await this.ensureProjectModel();
     await this.setSingleSelectField(projectModel, itemId, FieldName.STATUS, status);
   }
 
+  async transitionForClaim(claimId, status) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { transitioned: false, reason: verified.reason };
+    await this.transition(verified.claim.itemId, status);
+    return { transitioned: true };
+  }
+
+  async setFieldForClaim(claimId, fieldName, value) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { updated: false, reason: verified.reason };
+    const projectModel = await this.ensureProjectModel();
+    if (typeof value === "number") await this.setNumberField(projectModel, verified.claim.itemId, fieldName, value);
+    else await this.setTextField(projectModel, verified.claim.itemId, fieldName, value);
+    return { updated: true };
+  }
+
+  async clearWorkerTypeForClaim(claimId) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { cleared: false, reason: verified.reason };
+    const projectModel = await this.ensureProjectModel();
+    await this.clearField(projectModel, verified.claim.itemId, FieldName.WORKER_TYPE);
+    return { cleared: true };
+  }
+
   async release(claimId) {
-    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    return this.releaseClaim(claimId);
+  }
+
+  async releaseClaim(claimId) {
+    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
+    if (!verified.active) return { released: false, reason: verified.reason };
+    const claim = verified.claim;
 
     const projectModel = await this.ensureProjectModel();
     await this.clearField(projectModel, claim.itemId, FieldName.LEASE_OWNER);
     await this.clearField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES);
     this.claims.delete(claimId);
+    return { released: true };
   }
 
   async fail(claimId, reason) {
-    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    return this.failClaim(claimId, reason);
+  }
 
-    await this.appendEvent(claim.itemId, {
+  async failClaim(claimId, reason) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { failed: false, reason: verified.reason };
+    const claim = verified.claim;
+
+    const appended = await this.appendEventForClaim(claimId, {
       type: "worker_failed",
       actor: claim.workerId,
       body: reason
     });
-    await this.transition(claim.itemId, Status.BLOCKED);
-    await this.release(claimId);
+    if (appended?.appended === false) return { failed: false, reason: appended.reason };
+    const transitioned = await this.transitionForClaim(claimId, Status.BLOCKED);
+    if (transitioned?.transitioned === false) return { failed: false, reason: transitioned.reason };
+    await this.releaseClaim(claimId);
+    return { failed: true };
   }
 
   async ensureProjectModel() {
@@ -271,6 +425,15 @@ export class GitHubProjectsAdapter {
     });
   }
 
+  async rollbackClaimAttempt(projectModel, itemId, { claimId, workerId, expiresAt }) {
+    const { items } = await this.loadProjectItems();
+    const item = items.find((candidate) => candidate.id === itemId);
+    if (!item) return;
+    if (item.lastWorkerRun === claimId) await this.clearField(projectModel, itemId, FieldName.LAST_WORKER_RUN);
+    if (item.leaseOwner === workerId) await this.clearField(projectModel, itemId, FieldName.LEASE_OWNER);
+    if (item.leaseExpiresAt === expiresAt) await this.clearField(projectModel, itemId, FieldName.LEASE_EXPIRES);
+  }
+
   matchesRepositoryFilter(item) {
     if (!this.repositories.size) return true;
     if (!item.repository) return false;
@@ -279,26 +442,16 @@ export class GitHubProjectsAdapter {
 }
 
 function formatEventComment(event) {
-  const lines = [
-    "## Ski Stack Worker Event",
-    "",
-    `Type: ${event.type ?? "worker_event"}`,
-    `Actor: ${event.actor ?? "unknown"}`,
-    event.outcome ? `Outcome: ${event.outcome}` : null,
-    "",
-    event.body ?? ""
-  ].filter((line) => line !== null);
-
-  if (event.evidence?.length) {
-    lines.push("", "Evidence:");
-    for (const evidence of event.evidence) lines.push(`- ${evidence}`);
-  }
-
-  if (event.blocker) {
-    lines.push("", `Blocker: ${event.blocker}`);
-  }
-
-  return lines.join("\n");
+  return formatPublicEventComment(
+    event?.publicOutput ?? {
+      runId: event.runId ?? event.claimId ?? "manual",
+      workerType: event.workerType ?? event.actor ?? "worker",
+      outcome: event.outcome ?? event.type ?? "worker_event",
+      nextStatus: event.nextStatus,
+      summary: event.body ?? event.summary ?? "",
+      evidence: event.evidence ?? []
+    }
+  );
 }
 
 function normalizeRepositoryFilter(repositories) {

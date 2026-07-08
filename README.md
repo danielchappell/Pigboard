@@ -48,6 +48,30 @@ cd ski-stack
 npm test
 ```
 
+## Development Map
+
+Ski Stack is intentionally small and dependency-light. For most local work,
+start with:
+
+```bash
+npm test
+```
+
+Key areas:
+
+- `agents/` and `skills/` are reusable instruction assets.
+- `src/core/` owns statuses, worker types, claim ids, and adapter contracts.
+- `src/runtime/` owns dispatch, prompt assembly, and worker-result application.
+- `src/adapters/github-projects/` contains GitHub Projects queue behavior.
+- `src/provisioners/github-projects/` contains Project setup, validation, and
+  field provisioning.
+- `scripts/` exposes the CLI workflows described below.
+
+Live GitHub commands use the current token and Project env. Claim commands are
+not read-only: they can write lease fields, increment attempts, and update the
+last worker run. Use mocked tests for adapter behavior unless you are
+intentionally validating a real Project.
+
 ## Create A GitHub Project
 
 Create a GitHub Project and provision the Ski Stack fields/options:
@@ -177,15 +201,82 @@ GITHUB_PROJECT_NUMBER=1 \
 npm run release:github -- 'ski.<claim-payload>'
 ```
 
+## Local Worker Daemon
+
+V1 can auto-run only the code loop workers:
+
+- `implementer` claims `Implementation` and advances completed diffs to
+  `Review`.
+- `reviewer` claims `Review` and advances clean PRs to `Babysit`, or routes
+  findings back to `Implementation`.
+- `pr-babysitter` claims `Babysit`, watches CI/review state, and can mark
+  `Done` only when the result explicitly says the PR is approved and clean.
+
+`planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual for v1.
+
+The daemon uses local ChatGPT-authenticated Codex, not API-key billing. Startup
+runs `codex login status` and fails if local ChatGPT auth cannot be verified.
+It also runs a Codex isolation smoke check before accepting work.
+
+Create a worker config:
+
+```bash
+cp ski.workers.example.json ski.workers.json
+```
+
+Edit `ski.workers.json` so each repo entry has the local checkout path and the
+commands that are safe to run before/after Codex. Repo commands are run with a
+scrubbed environment and network denied.
+
+Start the daemon:
+
+```bash
+GITHUB_TOKEN=... \
+GITHUB_OWNER=your-user-or-org \
+GITHUB_PROJECT_NUMBER=1 \
+GITHUB_WEBHOOK_SECRET=change-me \
+SKI_WORKER_CONFIG=./ski.workers.json \
+npm run daemon:github
+```
+
+By default the daemon listens locally at:
+
+```text
+http://127.0.0.1:8787/webhooks/github
+```
+
+For real GitHub webhooks, expose that endpoint through your tunnel and register
+the public tunnel URL in GitHub with the same `GITHUB_WEBHOOK_SECRET`. If you
+are only testing locally without GitHub, `-- --insecure-local-webhook` is
+allowed on loopback only.
+
+Each worker slot can restrict the repos it claims with `repository` or
+`repositories`. Leave the allow-list empty only for a worker that can pull from
+any enrolled repo in the shared Project.
+
+Full Codex streams stay local under `SKI_RUN_LOG_DIR` or
+`~/.ski-stack/runs`. GitHub only receives concise sanitized status/evidence.
+
+Retrieve local logs:
+
+```bash
+npm run logs:github -- --issue "Build webhook worker" --latest
+npm run logs:github -- --pr 42 --worker reviewer
+npm run logs:github -- --status Review --tail 60
+npm run logs:github -- --run run-id --json
+```
+
 ## Runtime Shape
 
 ```text
 GitHub Project
-  -> adapter lists ready items
-  -> worker claims one item with a lease
-  -> role card + issue body become the worker prompt
-  -> worker result is appended as evidence
-  -> Project status advances or blocks
+  -> GitHub webhook wakes the local daemon
+  -> adapter lists ready items by Status and repo partition
+  -> worker claims one item with a v2 lease envelope
+  -> daemon prepares an isolated worktree
+  -> Codex runs locally and writes a structured result
+  -> daemon verifies the claim before every GitHub mutation
+  -> Project status advances or blocks with sanitized evidence
 ```
 
 GitHub Projects is the first integration. The adapter boundary is intentionally

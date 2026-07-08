@@ -1,4 +1,4 @@
-import { Status, readyStatusForWorker } from "../../core/status.js";
+import { isReadyForWorkerType } from "../../core/routing.js";
 
 export const FieldName = Object.freeze({
   STATUS: "Status",
@@ -86,6 +86,10 @@ export function normalizeProjectItem(node) {
     url: content.url,
     number: content.number,
     repository: content.repository?.nameWithOwner,
+    baseRef: content.baseRefName,
+    baseSha: content.baseRefOid,
+    headRef: content.headRefName,
+    headSha: content.headRefOid,
     status: fields[FieldName.STATUS],
     workerType: fields[FieldName.WORKER_TYPE],
     priority: fields[FieldName.PRIORITY],
@@ -100,12 +104,7 @@ export function normalizeProjectItem(node) {
 }
 
 export function isReadyForWorker(item, workerType, now = new Date()) {
-  const readyStatus = readyStatusForWorker(workerType);
-  if (item.workerType && item.workerType !== workerType) return false;
-  if (item.status !== Status.READY && item.status !== readyStatus) return false;
-
-  if (!item.leaseExpiresAt) return true;
-  return new Date(item.leaseExpiresAt) <= now;
+  return isReadyForWorkerType(item, workerType, now);
 }
 
 export function priorityRank(priority = "P3") {

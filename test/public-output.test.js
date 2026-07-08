@@ -1,0 +1,40 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { formatPublicEventComment, PublicOutputRejectedError, sanitizePublicOutput } from "../src/index.js";
+
+test("public output sanitizer keeps concise GitHub-safe evidence", () => {
+  const safe = sanitizePublicOutput({
+    runId: "run-1",
+    workerType: "reviewer",
+    outcome: "completed",
+    nextStatus: "Babysit",
+    summary: "No blocking findings.",
+    evidence: ["npm test", "PR checks are green"],
+    prUrl: "https://github.com/acme/repo/pull/42"
+  });
+
+  assert.deepEqual(safe.evidence, ["npm test", "PR checks are green"]);
+  assert.equal(safe.prUrl, "https://github.com/acme/repo/pull/42");
+  assert.match(formatPublicEventComment(safe), /Outcome: completed/);
+});
+
+test("public output sanitizer rejects secrets, local paths, and stream artifacts", () => {
+  for (const summary of [
+    "GITHUB_TOKEN=ghp_1234567890123456",
+    "See /Users/joseph/.codex/auth.json",
+    "Full stream is in stream.jsonl"
+  ]) {
+    assert.throws(
+      () =>
+        sanitizePublicOutput({
+          runId: "run-1",
+          workerType: "implementer",
+          outcome: "blocked",
+          summary
+        }),
+      PublicOutputRejectedError
+    );
+  }
+});
+
