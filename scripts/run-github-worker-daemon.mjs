@@ -39,6 +39,7 @@ const workers = createWorkers({
 const dirty = new Set(workers.keys());
 const inFlight = new Set();
 let draining = false;
+let drainRequested = false;
 
 const server = createGitHubWebhookServer({
   secret,
@@ -64,6 +65,7 @@ setInterval(() => {
 await drain();
 
 function requestDrain() {
+  drainRequested = true;
   drain().catch((error) => console.error(error));
 }
 
@@ -71,24 +73,27 @@ async function drain() {
   if (draining) return;
   draining = true;
   try {
-    while (dirty.size) {
-      const batch = [];
-      for (const key of [...dirty]) {
-        if (inFlight.has(key)) continue;
-        const worker = workers.get(key);
-        dirty.delete(key);
-        if (!worker) continue;
-        inFlight.add(key);
-        batch.push(runWorkerSlot(key, worker));
+    do {
+      drainRequested = false;
+      while (dirty.size) {
+        const batch = [];
+        for (const key of [...dirty]) {
+          if (inFlight.has(key)) continue;
+          const worker = workers.get(key);
+          dirty.delete(key);
+          if (!worker) continue;
+          inFlight.add(key);
+          batch.push(runWorkerSlot(key, worker));
+        }
+        if (!batch.length) break;
+        const results = await Promise.all(batch);
+        const ranAny = results.some((result) => result?.ran);
+        for (const result of results) {
+          if (result?.ran) dirty.add(result.key);
+        }
+        if (!ranAny) break;
       }
-      if (!batch.length) break;
-      const results = await Promise.all(batch);
-      const ranAny = results.some((result) => result?.ran);
-      for (const result of results) {
-        if (result?.ran) dirty.add(result.key);
-      }
-      if (!ranAny) break;
-    }
+    } while (drainRequested || dirty.size);
   } finally {
     draining = false;
   }
@@ -122,7 +127,8 @@ function createWorkers({ config, adapterConfig }) {
       }
       const repositories = repository ? [repository] : [];
       for (let index = 0; index < count; index += 1) {
-        const key = `${slot.type}:${safeKey(slot.name ?? repository ?? "all")}:${index}`;
+        const partitionName = slot.name ? `${slot.name}:${repository ?? "all"}` : repository ?? "all";
+        const key = `${slot.type}:${safeKey(partitionName)}:${index}`;
         const adapter = new GitHubProjectsAdapter({
           ...adapterConfig,
           repositories

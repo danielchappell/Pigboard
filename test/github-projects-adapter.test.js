@@ -400,6 +400,75 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
   assert.equal(verified.reason, "pr_changed");
 });
 
+test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming next ready item", async () => {
+  const response = projectResponse({
+    status: Status.REVIEW,
+    workerType: WorkerType.REVIEWER,
+    prUrl: "404"
+  });
+  const firstNode = response.data.organization.projectV2.items.nodes[0];
+  const secondNode = structuredClone(firstNode);
+  secondNode.id = "PVTI_item_2";
+  secondNode.content = {
+    ...secondNode.content,
+    id: "ISSUE_2",
+    title: "Review second PR",
+    number: 2,
+    url: "https://github.com/acme/repo/issues/2"
+  };
+  secondNode.fieldValues.nodes = secondNode.fieldValues.nodes.map((fieldValue) =>
+    fieldValue.field?.name === "PR" ? textValue("PR", "42") : fieldValue
+  );
+  response.data.organization.projectV2.items.nodes.push(secondNode);
+
+  const responses = [response, mutationResponse(), mutationResponse(), mutationResponse(), mutationResponse()];
+  const metadataCalls = [];
+  const fetchImpl = async (url, options) => {
+    const requestUrl = String(url);
+    if (requestUrl.endsWith("/repos/acme/repo/pulls/404")) {
+      metadataCalls.push(404);
+      return {
+        ok: false,
+        status: 404,
+        json: async () => ({})
+      };
+    }
+    if (requestUrl.endsWith("/repos/acme/repo/pulls/42")) {
+      metadataCalls.push(42);
+      return {
+        ok: true,
+        json: async () => ({
+          number: 42,
+          html_url: "https://github.com/acme/repo/pull/42",
+          base: { ref: "main", sha: "b".repeat(40) },
+          head: { ref: "feature", sha: "a".repeat(40) }
+        })
+      };
+    }
+    return {
+      ok: true,
+      json: async () => responses.shift()
+    };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, true);
+  assert.equal(result.item.id, "PVTI_item_2");
+  assert.deepEqual(metadataCalls, [404, 42]);
+});
+
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {
   const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse()]);
   const adapter = new GitHubProjectsAdapter({

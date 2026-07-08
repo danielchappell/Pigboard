@@ -195,9 +195,23 @@ export class GitHubProjectsAdapter {
       .filter((item) => this.matchesRepositoryFilter(item))
       .filter((item) => isReadyForWorker(item, workerType, this.now()))
       .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
-    const item = itemId ? ready.find((candidate) => candidate.id === itemId) : ready[0];
-    if (!item) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
+    const candidates = itemId ? ready.filter((candidate) => candidate.id === itemId) : ready;
+    if (!candidates.length) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
 
+    const skipped = [];
+    for (const item of candidates) {
+      try {
+        return await this.claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context });
+      } catch (error) {
+        if (itemId || !isPullRequestMetadataError(error)) throw error;
+        skipped.push({ itemId: item.id, reason: error.message });
+      }
+    }
+
+    return { claimed: false, reason: skipped.length ? "pr_metadata_failed" : "none_ready", skipped };
+  }
+
+  async claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context }) {
     const now = this.now();
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
     const pullRequest = await this.resolveClaimPullRequest({ item, context });
@@ -581,4 +595,8 @@ function projectFromOwnerData(data, ownerType) {
 function isOwnerKindMismatch(error) {
   const message = error instanceof Error ? error.message : String(error);
   return /Could not resolve to an (Organization|User) with the login/i.test(message);
+}
+
+function isPullRequestMetadataError(error) {
+  return error?.code === "GITHUB_PR_METADATA_HTTP";
 }

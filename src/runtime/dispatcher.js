@@ -46,10 +46,14 @@ export class QueueDispatcher {
         });
         return { ran: true, itemId: item.id, result };
       } catch (error) {
+        let failed;
         if (typeof this.adapter.failClaim === "function") {
-          await this.adapter.failClaim(claim.id, error instanceof Error ? error.message : String(error));
+          failed = await this.adapter.failClaim(claim.id, error instanceof Error ? error.message : String(error));
         } else {
-          await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+          failed = await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+        }
+        if (failed?.failed === false && typeof this.adapter.releaseClaim === "function") {
+          await this.adapter.releaseClaim(claim.id);
         }
         return { ran: true, itemId: item.id, error };
       }

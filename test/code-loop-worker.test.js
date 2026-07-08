@@ -220,7 +220,7 @@ test("stale worker-type reroutes release without blocking the item", async () =>
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-partial",
-    repoPolicy: { cwd: root, allowCreatePr: false },
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -242,6 +242,8 @@ test("stale worker-type reroutes release without blocking the item", async () =>
     },
     hasDiffImpl: async () => true,
     commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });
@@ -252,6 +254,109 @@ test("stale worker-type reroutes release without blocking the item", async () =>
   assert.match(result.error.message, /worker_type_changed/);
   assert.equal(adapter.getItem("item-partial-failure").status, Status.REVIEW);
   assert.equal(adapter.getItem("item-partial-failure").leaseOwner, undefined);
+});
+
+test("implementer blocks instead of advancing to Review without PR creation", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-no-pr",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-no-pr",
+    repoPolicy: { cwd: root, allowCreatePr: false },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /requires allowCreatePr/);
+  assert.equal(adapter.getItem("item-no-pr").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-no-pr").leaseOwner, undefined);
+});
+
+test("worker fails the claim even when local failure logging fails", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-log-fail",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-log-fail",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.QA,
+          summary: "Wrong transition."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    writeRunArtifactsImpl: async () => {
+      throw new Error("disk full");
+    },
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /complete to Review/);
+  assert.equal(adapter.getItem("item-log-fail").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-log-fail").leaseOwner, undefined);
 });
 
 test("issue-backed reviewer work requires PR metadata instead of falling back to issue number", async () => {
@@ -325,7 +430,7 @@ test("worker prompt uses resolved worker type when Worker Type field is blank", 
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-blank",
-    repoPolicy: { cwd: root, allowCreatePr: false },
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -349,6 +454,8 @@ test("worker prompt uses resolved worker type when Worker Type field is blank", 
     },
     hasDiffImpl: async () => true,
     commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });
@@ -384,7 +491,7 @@ test("worker extends the claim while a run is active", async () => {
     workerId: "impl-heartbeat",
     leaseSeconds: 60,
     claimHeartbeatMs: 1,
-    repoPolicy: { cwd: root, allowCreatePr: false },
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -407,6 +514,8 @@ test("worker extends the claim while a run is active", async () => {
     },
     hasDiffImpl: async () => true,
     commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });

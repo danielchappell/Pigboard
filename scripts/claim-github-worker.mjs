@@ -61,7 +61,10 @@ if (!claimResult.claimed) {
 
 const workerRole = await readWorkerRole(workerType);
 const prompt = buildWorkerPrompt({
-  item: claimResult.item,
+  item: {
+    ...claimResult.item,
+    workerType: claimResult.item.workerType ?? workerType
+  },
   claim: claimResult.claim,
   workerRole
 });

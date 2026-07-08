@@ -133,14 +133,18 @@ export class GitHubCodeLoopWorker {
         summary: message,
         blocker: message
       };
-      await this.writeRunArtifactsImpl({
-        rootDir: this.runLogDir,
-        runId: safePathSegment(parsedClaim.runId ?? claim.id),
-        stream: codexOutput.stdout ?? "",
-        stderr: codexOutput.stderr ?? "",
-        result: failedResult,
-        metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result: failedResult })
-      });
+      try {
+        await this.writeRunArtifactsImpl({
+          rootDir: this.runLogDir,
+          runId: safePathSegment(parsedClaim.runId ?? claim.id),
+          stream: codexOutput.stdout ?? "",
+          stderr: codexOutput.stderr ?? "",
+          result: failedResult,
+          metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result: failedResult })
+        });
+      } catch {
+        // Claim failure must still be recorded even if local logging is unavailable.
+      }
       await this.failClaimAfterError(claim.id, message);
       return { ran: true, itemId: item.id, error };
     } finally {
@@ -196,6 +200,9 @@ export class GitHubCodeLoopWorker {
     if (this.workerType === WorkerType.IMPLEMENTER) {
       if (result.outcome !== "completed" || result.nextStatus !== Status.REVIEW) {
         throw new Error("implementer must complete to Review in v1");
+      }
+      if (!this.repoPolicy.allowCreatePr) {
+        throw new Error("implementer requires allowCreatePr to advance to Review in v1");
       }
       if (!(await this.hasDiffImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl }))) {
         throw new Error("implementer produced no diff");
