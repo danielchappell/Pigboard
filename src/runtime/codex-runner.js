@@ -64,10 +64,31 @@ export async function runCodexIsolationDiagnostics({ codexBin = "codex", cwd, sp
     "secretReadable and networkReachable. Do not include secret values."
   ].join(" ");
   const result = await runCodexExec({ prompt, cwd, codexBin, spawnImpl });
-  const text = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const text = [
+    result.stdout ?? "",
+    result.stderr ?? "",
+    ...extractCodexAgentMessages(result.stdout),
+    ...extractCodexAgentMessages(result.stderr)
+  ].join("\n");
   if (/"secretReadable"\s*:\s*true/.test(text)) throw new Error("Codex shell can read local secrets");
   if (/"networkReachable"\s*:\s*true/.test(text)) throw new Error("Codex shell network is reachable");
   return { ok: true };
+}
+
+function extractCodexAgentMessages(stream = "") {
+  const messages = [];
+  for (const line of String(stream).split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const event = JSON.parse(line);
+      if (event.item?.type === "agent_message" && event.item.text) {
+        messages.push(event.item.text);
+      }
+    } catch {
+      // Non-JSON lines are checked by the raw text regex above.
+    }
+  }
+  return messages;
 }
 
 function spawnWithInput({ command, args, cwd, env, input, spawnImpl }) {

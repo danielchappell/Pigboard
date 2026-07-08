@@ -3,7 +3,7 @@ import { mkdir, rm } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { promisify } from "node:util";
 
-import { buildDaemonGitEnv } from "./command-env.js";
+import { buildDaemonGitEnv, buildRepoCommandEnv } from "./command-env.js";
 import { assertCredentialFreeWorktree } from "./worktree-safety.js";
 
 const execFileAsync = promisify(execFile);
@@ -54,7 +54,9 @@ export async function createPullRequestWorktree({
     env: buildDaemonGitEnv({ githubToken })
   });
   if (expectedHeadSha) {
-    const { stdout } = await execFileImpl("git", ["-C", repoPath, "rev-parse", "FETCH_HEAD"]);
+    const { stdout } = await execFileImpl("git", ["-C", repoPath, "rev-parse", "FETCH_HEAD"], {
+      env: buildRepoCommandEnv()
+    });
     if (stdout.trim() !== expectedHeadSha) {
       throw new Error("pull request head drifted after claim");
     }
@@ -68,14 +70,17 @@ export async function createPullRequestWorktree({
 }
 
 export async function hasDiff({ worktreePath, execFileImpl = execFileAsync }) {
-  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "status", "--porcelain"]);
+  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "status", "--porcelain"], {
+    env: buildRepoCommandEnv()
+  });
   return stdout.trim().length > 0;
 }
 
 export async function commitAll({ worktreePath, message, execFileImpl = execFileAsync }) {
-  await execFileImpl("git", ["-C", worktreePath, "add", "-A"]);
-  await execFileImpl("git", ["-C", worktreePath, "commit", "-m", message]);
-  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "rev-parse", "HEAD"]);
+  const env = buildRepoCommandEnv();
+  await execFileImpl("git", ["-C", worktreePath, "add", "-A"], { env });
+  await execFileImpl("git", ["-C", worktreePath, "commit", "--no-verify", "-m", message], { env });
+  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "rev-parse", "HEAD"], { env });
   return stdout.trim();
 }
 

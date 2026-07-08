@@ -15,6 +15,7 @@ export async function runRepoCommands({
     throw new Error("Scoped repo-command network policies are not implemented in v1");
   }
   await assertCredentialFreeWorktree(cwd);
+  if (!commands.length) return [];
   const wrapper = await resolveNetworkOffWrapper();
   const results = [];
   for (const command of commands) {

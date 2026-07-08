@@ -37,7 +37,12 @@ export function buildDaemonGitEnv({ baseEnv = process.env, githubToken, tmpdir }
     allow: ["PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL", "HOME"],
     tmpdir
   });
-  if (githubToken) env.GITHUB_TOKEN = githubToken;
+  env.GIT_TERMINAL_PROMPT = "0";
+  if (githubToken) {
+    env.GIT_CONFIG_COUNT = "1";
+    env.GIT_CONFIG_KEY_0 = "http.https://github.com/.extraheader";
+    env.GIT_CONFIG_VALUE_0 = `AUTHORIZATION: basic ${Buffer.from(`x-access-token:${githubToken}`).toString("base64")}`;
+  }
   return env;
 }
 

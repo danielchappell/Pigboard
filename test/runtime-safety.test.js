@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { EventEmitter } from "node:events";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -6,11 +7,19 @@ import test from "node:test";
 
 import {
   createPullRequestWorktree,
+  assertCredentialFreeWorktree,
   inspectGitConfigText,
   parseCodexLoginStatus,
+  runCodexIsolationDiagnostics,
+  runRepoCommands,
   WorktreeSafetyError
 } from "../src/index.js";
-import { assertNoDeniedEnv, buildCodexRunnerEnv, buildRepoCommandEnv } from "../src/runtime/command-env.js";
+import {
+  assertNoDeniedEnv,
+  buildCodexRunnerEnv,
+  buildDaemonGitEnv,
+  buildRepoCommandEnv
+} from "../src/runtime/command-env.js";
 
 test("Codex auth parser distinguishes ChatGPT local auth from API-key auth", () => {
   assert.deepEqual(parseCodexLoginStatus("Signed in with ChatGPT account joseph@example.com"), {
@@ -48,6 +57,18 @@ test("repo and Codex runner env builders strip secret-bearing variables", () => 
   assert.throws(() => assertNoDeniedEnv({ PATH: "/bin", GITHUB_TOKEN: "ghp_test" }), /GITHUB_TOKEN/);
 });
 
+test("daemon git env wires HTTPS auth without exposing GITHUB_TOKEN", () => {
+  const env = buildDaemonGitEnv({
+    baseEnv: { PATH: "/bin", GITHUB_TOKEN: "ignored" },
+    githubToken: "gho_tokenvalue123456"
+  });
+
+  assert.equal(env.GITHUB_TOKEN, undefined);
+  assert.equal(env.GIT_TERMINAL_PROMPT, "0");
+  assert.equal(env.GIT_CONFIG_KEY_0, "http.https://github.com/.extraheader");
+  assert.match(env.GIT_CONFIG_VALUE_0, /^AUTHORIZATION: basic /);
+});
+
 test("worktree safety rejects credential-bearing git config", () => {
   assert.throws(
     () =>
@@ -64,6 +85,59 @@ test("worktree safety rejects credential-bearing git config", () => {
           helper = osxkeychain
       `),
     /credential-bearing/
+  );
+  assert.throws(
+    () =>
+      inspectGitConfigText(`
+        [remote "origin"]
+          url = https://ghp_abcdefghijklmnop@github.com/acme/repo.git
+      `),
+    /embedded credentials/
+  );
+});
+
+test("worktree safety follows gitdir and common config paths", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worktree-config-"));
+  const worktree = join(root, "worktree");
+  const gitDir = join(root, ".git", "worktrees", "worktree");
+  await mkdir(worktree, { recursive: true });
+  await mkdir(gitDir, { recursive: true });
+  await writeFile(join(worktree, ".git"), `gitdir: ${gitDir}\n`);
+  await writeFile(join(gitDir, "commondir"), "../..\n");
+  await writeFile(join(root, ".git", "config"), "[credential]\n  helper = store\n");
+
+  await assert.rejects(() => assertCredentialFreeWorktree(worktree), /credential-bearing/);
+});
+
+test("repo commands skip network wrapper lookup when command list is empty", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-empty-commands-"));
+  const results = await runRepoCommands({
+    commands: [],
+    cwd: root,
+    spawnImpl: () => {
+      throw new Error("spawn should not run");
+    }
+  });
+
+  assert.deepEqual(results, []);
+});
+
+test("Codex isolation diagnostics parse escaped agent-message JSON", async () => {
+  await assert.rejects(
+    () =>
+      runCodexIsolationDiagnostics({
+        cwd: "/tmp",
+        spawnImpl: fakeCodexSpawn(
+          `${JSON.stringify({
+            type: "item.completed",
+            item: {
+              type: "agent_message",
+              text: JSON.stringify({ secretReadable: true, networkReachable: false })
+            }
+          })}\n`
+        )
+      }),
+    /local secrets/
   );
 });
 
@@ -120,3 +194,17 @@ test("pull request worktree creation checks out the claimed head", async () => {
   assert.equal(result.worktreePath.endsWith("acme_repo/run-1"), true);
   assert.equal(calls.some((args) => args.includes(expectedHeadSha)), true);
 });
+
+function fakeCodexSpawn(stdoutText) {
+  return () => {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.stdin = { end: () => {} };
+    queueMicrotask(() => {
+      child.stdout.emit("data", stdoutText);
+      child.emit("close", 0);
+    });
+    return child;
+  };
+}

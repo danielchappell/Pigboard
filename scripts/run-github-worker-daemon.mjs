@@ -36,6 +36,8 @@ const workers = createWorkers({
   }
 });
 const dirty = new Set(workers.keys());
+const inFlight = new Set();
+let draining = false;
 
 const server = createGitHubWebhookServer({
   secret,
@@ -45,7 +47,7 @@ const server = createGitHubWebhookServer({
     for (const [key, worker] of workers) {
       if (event.kind === "project" || matchesWorkerRepository(worker, event.repository)) dirty.add(key);
     }
-    drain().catch((error) => console.error(error));
+    requestDrain();
   }
 });
 
@@ -55,20 +57,41 @@ server.listen(port, host, () => {
 
 setInterval(() => {
   for (const key of workers.keys()) dirty.add(key);
-  drain().catch((error) => console.error(error));
+  requestDrain();
 }, Number(process.env.SKI_RECONCILE_SECONDS ?? 600) * 1000).unref();
 
 await drain();
 
+function requestDrain() {
+  drain().catch((error) => console.error(error));
+}
+
 async function drain() {
-  for (const key of [...dirty]) {
-    const worker = workers.get(key);
-    if (!worker) {
-      dirty.delete(key);
-      continue;
+  if (draining) return;
+  draining = true;
+  try {
+    while (dirty.size) {
+      let ranAny = false;
+      for (const key of [...dirty]) {
+        if (inFlight.has(key)) continue;
+        const worker = workers.get(key);
+        dirty.delete(key);
+        if (!worker) continue;
+        inFlight.add(key);
+        try {
+          const result = await worker.runOnce();
+          if (result.ran) {
+            ranAny = true;
+            dirty.add(key);
+          }
+        } finally {
+          inFlight.delete(key);
+        }
+      }
+      if (!ranAny) break;
     }
-    const result = await worker.runOnce();
-    if (!result.ran) dirty.delete(key);
+  } finally {
+    draining = false;
   }
 }
 
@@ -78,25 +101,30 @@ function createWorkers({ config, adapterConfig }) {
     if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
     if (slot.observeOnly) continue;
     const slotRepositories = repositoriesForSlot({ slot, config });
-    const primaryRepository = slot.repository ?? slotRepositories[0];
-    const repoPolicy = config.repositories?.[primaryRepository] ?? config.repoPolicy;
-    if (!repoPolicy?.cwd) throw new Error(`Missing repo policy cwd for worker ${slot.type}`);
+    const partitions = slotRepositories.length ? slotRepositories : [null];
     const count = Number(slot.count ?? 1);
-    for (let index = 0; index < count; index += 1) {
-      const key = `${slot.type}:${index}`;
-      const adapter = new GitHubProjectsAdapter({
-        ...adapterConfig,
-        repositories: slotRepositories
-      });
-      const worker = new GitHubCodeLoopWorker({
-        adapter,
-        workerType: slot.type,
-        workerId: slot.workerId ?? `${key}:${process.pid}`,
-        leaseSeconds: Number(slot.leaseSeconds ?? process.env.SKI_LEASE_SECONDS ?? 1800),
-        repoPolicy
-      });
-      worker.allowedRepositories = new Set(slotRepositories.map((repo) => repo.toLowerCase()));
-      workers.set(key, worker);
+    for (const repository of partitions) {
+      const repoPolicy = policyForRepository({ config, repository, token: adapterConfig.token });
+      if (!repoPolicy?.cwd) {
+        throw new Error(`Missing repo policy cwd for worker ${slot.type}${repository ? ` on ${repository}` : ""}`);
+      }
+      const repositories = repository ? [repository] : [];
+      for (let index = 0; index < count; index += 1) {
+        const key = `${slot.type}:${safeKey(slot.name ?? repository ?? "all")}:${index}`;
+        const adapter = new GitHubProjectsAdapter({
+          ...adapterConfig,
+          repositories
+        });
+        const worker = new GitHubCodeLoopWorker({
+          adapter,
+          workerType: slot.type,
+          workerId: slot.workerId ?? `${key}:${process.pid}`,
+          leaseSeconds: Number(slot.leaseSeconds ?? process.env.SKI_LEASE_SECONDS ?? 1800),
+          repoPolicy
+        });
+        worker.allowedRepositories = new Set(repositories.map((repo) => repo.toLowerCase()));
+        workers.set(key, worker);
+      }
     }
   }
   return workers;
@@ -120,6 +148,20 @@ function repositoriesForSlot({ slot, config }) {
 function normalizeRepositories(value) {
   const repositories = Array.isArray(value) ? value : String(value ?? "").split(",");
   return repositories.map((repo) => String(repo).trim()).filter(Boolean);
+}
+
+function policyForRepository({ config, repository, token }) {
+  const policy = (repository ? config.repositories?.[repository] : undefined) ?? config.repoPolicy;
+  if (!policy) return undefined;
+  return {
+    ...policy,
+    repository: policy.repository ?? repository,
+    githubToken: policy.githubToken ?? token
+  };
+}
+
+function safeKey(value) {
+  return String(value).replace(/[^A-Za-z0-9_.-]+/g, "_");
 }
 
 async function loadWorkerConfig(path) {

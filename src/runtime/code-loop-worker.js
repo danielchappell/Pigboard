@@ -44,7 +44,8 @@ export class GitHubCodeLoopWorker {
     createPullRequestWorktreeImpl = createPullRequestWorktree,
     cleanupWorktreeImpl = cleanupWorktree,
     assertCredentialFreeWorktreeImpl = assertCredentialFreeWorktree,
-    ensurePullRequestImpl = ensurePullRequest
+    ensurePullRequestImpl = ensurePullRequest,
+    claimHeartbeatMs
   }) {
     if (!adapter) throw new Error("adapter is required");
     if (!workerType) throw new Error("workerType is required");
@@ -68,6 +69,7 @@ export class GitHubCodeLoopWorker {
     this.cleanupWorktreeImpl = cleanupWorktreeImpl;
     this.assertCredentialFreeWorktreeImpl = assertCredentialFreeWorktreeImpl;
     this.ensurePullRequestImpl = ensurePullRequestImpl;
+    this.claimHeartbeatMs = claimHeartbeatMs;
   }
 
   async runOnce() {
@@ -82,6 +84,7 @@ export class GitHubCodeLoopWorker {
     const parsedClaim = await this.verifyOrThrow(claim.id);
     let worktree;
     let codexOutput = { stdout: "", stderr: "" };
+    const claimExtender = this.startClaimExtender(claim.id);
     try {
       worktree = await this.prepareWorktree({ item, claim: parsedClaim });
       await this.runRepoCommandsImpl({
@@ -94,7 +97,11 @@ export class GitHubCodeLoopWorker {
       const runId = safePathSegment(parsedClaim.runId ?? claim.id);
       const resultPath = join(this.runLogDir, runId, "worker-result.json");
       await mkdir(join(this.runLogDir, runId), { recursive: true });
-      const prompt = buildWorkerPrompt({ item, claim, workerRole: this.repoPolicy.workerRole });
+      const promptItem = {
+        ...item,
+        workerType: parsedClaim.resolvedWorkerType ?? this.workerType
+      };
+      const prompt = buildWorkerPrompt({ item: promptItem, claim, workerRole: this.repoPolicy.workerRole });
       const codex = await this.runCodexExecImpl({
         prompt,
         cwd: worktree.worktreePath,
@@ -134,6 +141,7 @@ export class GitHubCodeLoopWorker {
       await this.adapter.failClaim(claim.id, message);
       return { ran: true, itemId: item.id, error };
     } finally {
+      claimExtender.stop();
       if (worktree) {
         await this.cleanupWorktreeImpl({
           repoPath: this.repoPolicy.cwd,
@@ -252,6 +260,19 @@ export class GitHubCodeLoopWorker {
     });
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
     return verified.claim;
+  }
+
+  startClaimExtender(claimId) {
+    const intervalMs = this.claimHeartbeatMs ?? Math.max(60_000, Math.floor((this.leaseSeconds * 1000) / 3));
+    const timer = setInterval(() => {
+      this.adapter.extendClaim?.(claimId, this.leaseSeconds).catch(() => {
+        // The next guarded mutation will detect and report a lost claim.
+      });
+    }, intervalMs);
+    timer.unref?.();
+    return {
+      stop: () => clearInterval(timer)
+    };
   }
 }
 

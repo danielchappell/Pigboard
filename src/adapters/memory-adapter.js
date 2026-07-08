@@ -54,7 +54,10 @@ export class MemoryQueueAdapter {
     if (item) item.leaseExpiresAt = claim.expiresAt;
   }
 
-  async verifyClaim(claimId, { allowStatusChanged = false, requireHeadSha = false } = {}) {
+  async verifyClaim(
+    claimId,
+    { allowStatusChanged = false, allowWorkerTypeChanged = false, requireHeadSha = false } = {}
+  ) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const item = this.items.get(claim.itemId);
     if (!item) return { active: false, reason: "missing" };
@@ -67,7 +70,7 @@ export class MemoryQueueAdapter {
       if (!allowStatusChanged && item.status !== claim.claimedStatus) {
         return { active: false, reason: "status_changed" };
       }
-      if ((item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
+      if (!allowWorkerTypeChanged && (item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
         return { active: false, reason: "worker_type_changed" };
       }
       if ((item.repository ?? "unknown/unknown") !== claim.repository) {
@@ -127,7 +130,7 @@ export class MemoryQueueAdapter {
   }
 
   async clearWorkerTypeForClaim(claimId) {
-    const verified = await this.verifyClaim(claimId);
+    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
     if (!verified.active) return { cleared: false, reason: verified.reason };
     const item = this.items.get(verified.claim.itemId);
     delete item.workerType;
@@ -140,7 +143,10 @@ export class MemoryQueueAdapter {
 
   async releaseClaim(claimId) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
-    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
+    const verified = await this.verifyClaim(claimId, {
+      allowStatusChanged: true,
+      allowWorkerTypeChanged: true
+    });
     if (!verified.active) return { released: false, reason: verified.reason };
     const item = this.items.get(claim.itemId);
     if (item && item.leaseOwner === claim.workerId) {

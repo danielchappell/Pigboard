@@ -1,6 +1,6 @@
 import { AdapterError } from "../../core/adapter-contract.js";
 import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../../core/claims.js";
-import { formatPublicEventComment } from "../../core/public-output.js";
+import { formatPublicEventComment, formatWithheldPublicEvent } from "../../core/public-output.js";
 import { resolvedWorkerTypeForItem } from "../../core/routing.js";
 import { Status } from "../../core/status.js";
 import {
@@ -200,6 +200,7 @@ export class GitHubProjectsAdapter {
 
     const now = this.now();
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
+    const pullRequest = await this.resolveClaimPullRequest({ item, context });
     const claimId = createClaimV2Id({
       itemId: item.id,
       workerId,
@@ -212,12 +213,12 @@ export class GitHubProjectsAdapter {
       repository: item.repository ?? context.repository ?? "unknown/unknown",
       contentType: item.contentType ?? context.contentType ?? "Unknown",
       issueNumber: item.contentType === "Issue" ? item.number : undefined,
-      pullRequestNumber: item.contentType === "PullRequest" ? item.number : undefined,
-      prUrl: item.contentType === "PullRequest" ? item.url : context.prUrl,
-      baseRef: item.baseRef,
-      baseSha: item.baseSha,
-      headRef: item.headRef,
-      headSha: item.headSha,
+      pullRequestNumber: pullRequest?.number,
+      prUrl: pullRequest?.url,
+      baseRef: pullRequest?.baseRef,
+      baseSha: pullRequest?.baseSha,
+      headRef: pullRequest?.headRef,
+      headSha: pullRequest?.headSha,
       claimedAt: now.toISOString(),
       ...context
     });
@@ -253,7 +254,10 @@ export class GitHubProjectsAdapter {
     await this.setTextField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES, claim.expiresAt);
   }
 
-  async verifyClaim(claimId, { requireHeadSha = false, allowStatusChanged = false } = {}) {
+  async verifyClaim(
+    claimId,
+    { requireHeadSha = false, allowStatusChanged = false, allowWorkerTypeChanged = false } = {}
+  ) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const { items } = await this.loadProjectItems();
     const item = items.find((candidate) => candidate.id === claim.itemId);
@@ -267,13 +271,13 @@ export class GitHubProjectsAdapter {
       if (!allowStatusChanged && item.status !== claim.claimedStatus) {
         return { active: false, reason: "status_changed" };
       }
-      if ((item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
+      if (!allowWorkerTypeChanged && (item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
         return { active: false, reason: "worker_type_changed" };
       }
       if ((item.repository ?? "unknown/unknown") !== claim.repository) {
         return { active: false, reason: "repository_changed" };
       }
-      if (claim.pullRequestNumber && item.number !== claim.pullRequestNumber) {
+      if (item.contentType === "PullRequest" && claim.pullRequestNumber && item.number !== claim.pullRequestNumber) {
         return { active: false, reason: "pr_changed" };
       }
       if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
@@ -340,7 +344,7 @@ export class GitHubProjectsAdapter {
   }
 
   async clearWorkerTypeForClaim(claimId) {
-    const verified = await this.verifyClaim(claimId);
+    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
     if (!verified.active) return { cleared: false, reason: verified.reason };
     const projectModel = await this.ensureProjectModel();
     await this.clearField(projectModel, verified.claim.itemId, FieldName.WORKER_TYPE);
@@ -352,7 +356,10 @@ export class GitHubProjectsAdapter {
   }
 
   async releaseClaim(claimId) {
-    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
+    const verified = await this.verifyClaim(claimId, {
+      allowStatusChanged: true,
+      allowWorkerTypeChanged: true
+    });
     if (!verified.active) return { released: false, reason: verified.reason };
     const claim = verified.claim;
 
@@ -439,10 +446,66 @@ export class GitHubProjectsAdapter {
     if (!item.repository) return false;
     return this.repositories.has(item.repository.toLowerCase());
   }
+
+  async resolveClaimPullRequest({ item, context = {} }) {
+    if (context.pullRequestNumber || context.prUrl || context.headSha) {
+      return {
+        number: context.pullRequestNumber,
+        url: context.prUrl,
+        baseRef: context.baseRef,
+        baseSha: context.baseSha,
+        headRef: context.headRef,
+        headSha: context.headSha
+      };
+    }
+
+    if (item.contentType === "PullRequest") {
+      return {
+        number: item.number,
+        url: item.url,
+        baseRef: item.baseRef,
+        baseSha: item.baseSha,
+        headRef: item.headRef,
+        headSha: item.headSha
+      };
+    }
+
+    if (!item.pullRequestNumber && !item.prUrl) return null;
+    const repository = item.repository;
+    if (!repository) return { number: item.pullRequestNumber, url: item.prUrl };
+    const number = item.pullRequestNumber ?? parsePullRequestNumber(item.prUrl);
+    if (!number) return { url: item.prUrl };
+    return this.fetchPullRequestMetadata({ repository, number });
+  }
+
+  async fetchPullRequestMetadata({ repository, number }) {
+    const response = await this.fetchImpl(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "ski-stack"
+      }
+    });
+    if (!response.ok) {
+      throw new AdapterError(`GitHub pull request metadata request failed: ${response.status}`, {
+        code: "GITHUB_PR_METADATA_HTTP"
+      });
+    }
+    const pr = await response.json();
+    return {
+      number: pr.number,
+      url: pr.html_url,
+      baseRef: pr.base?.ref,
+      baseSha: pr.base?.sha,
+      headRef: pr.head?.ref,
+      headSha: pr.head?.sha
+    };
+  }
 }
 
 function formatEventComment(event) {
-  return formatPublicEventComment(
+  const output =
     event?.publicOutput ?? {
       runId: event.runId ?? event.claimId ?? "manual",
       workerType: event.workerType ?? event.actor ?? "worker",
@@ -450,8 +513,21 @@ function formatEventComment(event) {
       nextStatus: event.nextStatus,
       summary: event.body ?? event.summary ?? "",
       evidence: event.evidence ?? []
-    }
-  );
+    };
+  try {
+    return formatPublicEventComment(output);
+  } catch {
+    return formatWithheldPublicEvent({
+      runId: output.runId,
+      workerType: output.workerType,
+      outcome: output.outcome
+    });
+  }
+}
+
+function parsePullRequestNumber(url) {
+  const match = String(url ?? "").match(/\/pull\/(\d+)(?:\b|$)/);
+  return match ? Number(match[1]) : undefined;
 }
 
 function normalizeRepositoryFilter(repositories) {

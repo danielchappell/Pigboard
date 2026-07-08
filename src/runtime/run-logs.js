@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export function defaultRunLogDir(env = process.env) {
@@ -58,8 +58,7 @@ function transcriptFromStream(stream, { result, metadata }) {
 async function appendIndex(rootDir, entry) {
   await mkdir(rootDir, { recursive: true });
   const indexPath = join(rootDir, "index.jsonl");
-  const existing = await readOptional(indexPath);
-  await writeFile(indexPath, `${existing}${JSON.stringify(entry)}\n`);
+  await appendFile(indexPath, `${JSON.stringify(entry)}\n`);
 }
 
 async function readOptional(path) {

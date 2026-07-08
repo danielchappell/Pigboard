@@ -58,6 +58,15 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
       args: [status],
       falseKey: "transitioned"
     });
+    if (result.preserveWorkerType !== true && typeof adapter.clearWorkerTypeForClaim === "function") {
+      await guardedCall({
+        adapter,
+        claimAwareMethod: "clearWorkerTypeForClaim",
+        legacyMethod: "clearWorkerType",
+        claimId,
+        falseKey: "cleared"
+      });
+    }
   }
   await guardedCall({
     adapter,

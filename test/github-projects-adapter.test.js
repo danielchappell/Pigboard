@@ -204,6 +204,61 @@ test("GitHubProjectsAdapter releases a claim from a fresh process", async () => 
   );
 });
 
+test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claims", async () => {
+  const calls = [];
+  const responses = [
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      prUrl: "https://github.com/acme/repo/pull/42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
+      return {
+        ok: true,
+        json: async () => ({
+          number: 42,
+          html_url: "https://github.com/acme/repo/pull/42",
+          base: { ref: "main", sha: "b".repeat(40) },
+          head: { ref: "feature", sha: "a".repeat(40) }
+        })
+      };
+    }
+    const call = JSON.parse(options.body);
+    calls.push(call);
+    return {
+      ok: true,
+      json: async () => responses.shift()
+    };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, true);
+  const claim = parseClaimId(result.claim.id);
+  assert.equal(claim.pullRequestNumber, 42);
+  assert.equal(claim.prUrl, "https://github.com/acme/repo/pull/42");
+  assert.equal(claim.headSha, "a".repeat(40));
+  assert.equal(claim.baseSha, "b".repeat(40));
+});
+
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {
   const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse()]);
   const adapter = new GitHubProjectsAdapter({
@@ -246,6 +301,27 @@ test("GitHubProjectsAdapter appends worker events as comments", async () => {
   assert.match(commentInput.body, /- npm test/);
 });
 
+test("GitHubProjectsAdapter withholds unsafe public event output", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse()]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  await adapter.appendEvent("PVTI_item_1", {
+    type: "worker_failed",
+    actor: "worker-1",
+    outcome: "failed",
+    body: "failed in /tmp/ski-secret"
+  });
+
+  const commentInput = calls[1].variables.input;
+  assert.match(commentInput.body, /output withheld locally/);
+  assert.doesNotMatch(commentInput.body, /\/tmp\/ski-secret/);
+});
+
 function createGraphqlMock(responses) {
   const calls = [];
 
@@ -273,7 +349,8 @@ function projectResponse({
   workerType = WorkerType.IMPLEMENTER,
   leaseOwner = "",
   leaseExpiresAt = "2026-07-07T11:30:00.000Z",
-  lastWorkerRun = ""
+  lastWorkerRun = "",
+  prUrl = ""
 } = {}) {
   return {
     data: {
@@ -286,17 +363,23 @@ function projectResponse({
                 ["status_ready", Status.READY],
                 ["status_implementation", Status.IMPLEMENTATION],
                 ["status_qa", Status.QA],
+                ["status_review", Status.REVIEW],
+                ["status_babysit", Status.BABYSIT],
+                ["status_done", Status.DONE],
                 ["status_blocked", Status.BLOCKED]
               ]),
               singleSelectField("field_worker_type", "Worker Type", [
                 ["worker_implementer", WorkerType.IMPLEMENTER],
-                ["worker_qa", WorkerType.QA]
+                ["worker_qa", WorkerType.QA],
+                ["worker_reviewer", WorkerType.REVIEWER],
+                ["worker_pr_babysitter", WorkerType.PR_BABYSITTER]
               ]),
               singleSelectField("field_priority", "Priority", [["priority_p1", "P1"]]),
               field("field_lease_owner", "Lease Owner", "TEXT"),
               field("field_lease_expires", "Lease Expires", "TEXT"),
               field("field_attempts", "Attempts", "NUMBER"),
-              field("field_last_worker_run", "Last Worker Run", "TEXT")
+              field("field_last_worker_run", "Last Worker Run", "TEXT"),
+              field("field_pr", "PR", "TEXT")
             ]
           },
           items: {
@@ -324,7 +407,8 @@ function projectResponse({
                     textValue("Lease Owner", leaseOwner),
                     textValue("Lease Expires", leaseExpiresAt),
                     numberValue("Attempts", 0),
-                    lastWorkerRun ? textValue("Last Worker Run", lastWorkerRun) : null
+                    lastWorkerRun ? textValue("Last Worker Run", lastWorkerRun) : null,
+                    prUrl ? textValue("PR", prUrl) : null
                   ].filter(Boolean)
                 }
               }

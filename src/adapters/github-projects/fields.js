@@ -86,6 +86,8 @@ export function normalizeProjectItem(node) {
     url: content.url,
     number: content.number,
     repository: content.repository?.nameWithOwner,
+    prUrl: fields[FieldName.PR],
+    pullRequestNumber: parseGitHubPullRequestNumber(fields[FieldName.PR]),
     baseRef: content.baseRefName,
     baseSha: content.baseRefOid,
     headRef: content.headRefName,
@@ -101,6 +103,11 @@ export function normalizeProjectItem(node) {
     optionIds,
     raw: node
   };
+}
+
+function parseGitHubPullRequestNumber(url) {
+  const match = String(url ?? "").match(/\/pull\/(\d+)(?:\b|$)/);
+  return match ? Number(match[1]) : undefined;
 }
 
 export function isReadyForWorker(item, workerType, now = new Date()) {

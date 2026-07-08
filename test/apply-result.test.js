@@ -39,8 +39,41 @@ test("applyWorkerResult appends evidence, transitions, and releases", async () =
 
   assert.deepEqual(result, { itemId: "item-1", status: Status.REVIEW, released: true });
   assert.equal(adapter.getItem("item-1").status, Status.REVIEW);
+  assert.equal(adapter.getItem("item-1").workerType, undefined);
   assert.equal(adapter.getItem("item-1").leaseOwner, undefined);
   assert.equal(adapter.events[0].body, "Built adapter");
+});
+
+test("applyWorkerResult preserves Worker Type only when requested", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-preserve",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      repository: "owner/repo",
+      contentType: "Issue"
+    }
+  ]);
+  const { claim } = await adapter.claimReadyForWorker({
+    itemId: "item-preserve",
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "worker-1",
+    leaseSeconds: 60
+  });
+
+  await applyWorkerResult({
+    adapter,
+    claimId: claim.id,
+    workerType: WorkerType.IMPLEMENTER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.REVIEW,
+      summary: "Built adapter",
+      preserveWorkerType: true
+    }
+  });
+
+  assert.equal(adapter.getItem("item-preserve").workerType, WorkerType.IMPLEMENTER);
 });
 
 test("applyWorkerResult blocks needs-human outcomes", async () => {

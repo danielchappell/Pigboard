@@ -1,8 +1,8 @@
 import { readFile, stat } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 
 const SECRET_URL_PATTERN = /https?:\/\/[^/\s:@]+:[^/\s@]+@/i;
-const TOKEN_PATTERN = /\b(?:x-access-token|ghp_|github_pat_|gho_|ghu_|ghs_|ghr_)\b/i;
+const TOKEN_PATTERN = /\b(?:x-access-token|ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{12,}/i;
 const UNSAFE_GIT_CONFIG_PATTERN =
   /(?:credential\.|^\s*\[credential\b|http\..*\.extraheader|core\.sshcommand|url\..*\.insteadof|include(?:if)?\.path|remote\..*\.pushurl|lfs\..*\.url)/im;
 
@@ -19,8 +19,7 @@ export async function assertCredentialFreeWorktree(worktree, { allowSubmodules =
   await assertPathExists(worktree);
 
   const files = [join(worktree, ".gitmodules")];
-  const gitConfigPath = await resolveGitConfigPath(worktree);
-  if (gitConfigPath) files.push(gitConfigPath);
+  files.push(...(await resolveGitConfigPaths(worktree)));
 
   for (const file of files) {
     const text = await readOptionalFile(file);
@@ -43,20 +42,31 @@ export function inspectGitConfigText(text, file = "git config") {
   }
 }
 
-async function resolveGitConfigPath(worktree) {
+async function resolveGitConfigPaths(worktree) {
   const dotGit = join(worktree, ".git");
   const dotGitText = await readOptionalFile(dotGit);
   if (dotGitText?.startsWith("gitdir:")) {
-    const gitDir = dotGitText.slice("gitdir:".length).trim();
-    return join(worktree, gitDir, "config");
+    const gitDir = resolveGitPath(worktree, dotGitText.slice("gitdir:".length).trim());
+    const paths = [join(gitDir, "config")];
+    const commonDirText = (await readOptionalFile(join(gitDir, "commondir"))).trim();
+    if (commonDirText) {
+      paths.push(join(resolveGitPath(gitDir, commonDirText), "config"));
+    } else if (dirname(gitDir).endsWith("worktrees")) {
+      paths.push(join(dirname(dirname(gitDir)), "config"));
+    }
+    return [...new Set(paths)];
   }
   try {
     const info = await stat(dotGit);
-    if (info.isDirectory()) return join(dotGit, "config");
+    if (info.isDirectory()) return [join(dotGit, "config")];
   } catch {
-    return null;
+    return [];
   }
-  return null;
+  return [];
+}
+
+function resolveGitPath(base, value) {
+  return isAbsolute(value) ? value : resolve(base, value);
 }
 
 async function readOptionalFile(path) {

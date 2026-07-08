@@ -85,6 +85,115 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
   assert.deepEqual(calls, { setup: 1, verify: 1, logs: 1, cleanup: 1 });
 });
 
+test("worker prompt uses resolved worker type when Worker Type field is blank", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-blank-worker",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-blank",
+    repoPolicy: { cwd: root, allowCreatePr: false },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ prompt, outputPath }) => {
+      assert.match(prompt, /`implementer` stage/);
+      assert.doesNotMatch(prompt, /`undefined` stage/);
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+});
+
+test("worker extends the claim while a run is active", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-heartbeat",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  let extensions = 0;
+  const originalExtend = adapter.extendClaim.bind(adapter);
+  adapter.extendClaim = async (...args) => {
+    extensions += 1;
+    return originalExtend(...args);
+  };
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-heartbeat",
+    leaseSeconds: 60,
+    claimHeartbeatMs: 1,
+    repoPolicy: { cwd: root, allowCreatePr: false },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(extensions > 0, true);
+});
+
 test("reviewer transitions clean PRs to Babysit", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
