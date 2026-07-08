@@ -77,7 +77,14 @@ export async function hasDiff({ worktreePath, execFileImpl = execFileAsync }) {
 }
 
 export async function commitAll({ worktreePath, message, execFileImpl = execFileAsync }) {
-  const env = buildRepoCommandEnv();
+  const env = buildRepoCommandEnv({
+    extraEnv: {
+      GIT_AUTHOR_NAME: "Ski Stack Worker",
+      GIT_AUTHOR_EMAIL: "ski-stack@users.noreply.github.com",
+      GIT_COMMITTER_NAME: "Ski Stack Worker",
+      GIT_COMMITTER_EMAIL: "ski-stack@users.noreply.github.com"
+    }
+  });
   await execFileImpl("git", ["-C", worktreePath, "add", "-A"], { env });
   await execFileImpl("git", ["-C", worktreePath, "commit", "--no-verify", "-m", message], { env });
   const { stdout } = await execFileImpl("git", ["-C", worktreePath, "rev-parse", "HEAD"], { env });

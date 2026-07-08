@@ -19,6 +19,7 @@ import { runRepoCommands } from "./repo-commands.js";
 import { defaultRunLogDir, writeRunArtifacts } from "./run-logs.js";
 import { assertCredentialFreeWorktree } from "./worktree-safety.js";
 import { buildWorkerPrompt } from "./prompt.js";
+import { parseClaimId } from "../core/claims.js";
 import { formatPublicEventComment } from "../core/public-output.js";
 import { Status, WorkerType } from "../core/status.js";
 
@@ -81,11 +82,13 @@ export class GitHubCodeLoopWorker {
     if (!claimResult.claimed) return { ran: false, reason: claimResult.reason };
 
     const { claim, item } = claimResult;
-    const parsedClaim = await this.verifyOrThrow(claim.id);
+    let parsedClaim = parseClaimId(claim.id);
     let worktree;
     let codexOutput = { stdout: "", stderr: "" };
-    const claimExtender = this.startClaimExtender(claim.id);
+    let claimExtender;
     try {
+      parsedClaim = await this.verifyOrThrow(claim.id);
+      claimExtender = this.startClaimExtender(claim.id);
       worktree = await this.prepareWorktree({ item, claim: parsedClaim });
       await this.runRepoCommandsImpl({
         commands: this.repoPolicy.setupCommands ?? [],
@@ -138,10 +141,10 @@ export class GitHubCodeLoopWorker {
         result: failedResult,
         metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result: failedResult })
       });
-      await this.adapter.failClaim(claim.id, message);
+      await this.failClaimAfterError(claim.id, message);
       return { ran: true, itemId: item.id, error };
     } finally {
-      claimExtender.stop();
+      claimExtender?.stop();
       if (worktree) {
         await this.cleanupWorktreeImpl({
           repoPath: this.repoPolicy.cwd,
@@ -209,7 +212,7 @@ export class GitHubCodeLoopWorker {
         execFileImpl: this.execFileImpl
       });
       await this.verifyOrThrow(claimId);
-      if (this.repoPolicy.allowPushBranches) {
+      if (this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr) {
         await this.verifyOrThrow(claimId);
         await this.execFileImpl("git", ["-C", worktree.worktreePath, "push", "-u", "origin", worktree.branchName], {
           env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
@@ -260,6 +263,14 @@ export class GitHubCodeLoopWorker {
     });
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
     return verified.claim;
+  }
+
+  async failClaimAfterError(claimId, message) {
+    if (typeof this.adapter.failClaim !== "function") return;
+    await this.adapter.failClaim(claimId, message, {
+      allowStatusChanged: true,
+      allowWorkerTypeChanged: true
+    });
   }
 
   startClaimExtender(claimId) {

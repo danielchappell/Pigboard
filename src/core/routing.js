@@ -7,7 +7,12 @@ export const AUTO_RUN_WORKER_TYPES = new Set([
 ]);
 
 export const WORKER_TYPE_BY_STATUS = Object.freeze({
+  [Status.PLANNING]: WorkerType.PLANNER,
+  [Status.ARCHITECTURE]: WorkerType.ARCHITECT,
+  [Status.GROOMING]: WorkerType.GROOMER,
+  [Status.READY]: WorkerType.RESEARCHER,
   [Status.IMPLEMENTATION]: WorkerType.IMPLEMENTER,
+  [Status.QA]: WorkerType.QA,
   [Status.REVIEW]: WorkerType.REVIEWER,
   [Status.BABYSIT]: WorkerType.PR_BABYSITTER
 });

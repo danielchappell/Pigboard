@@ -1,5 +1,5 @@
 import { parseClaimId } from "../core/claims.js";
-import { statusForResult, validateWorkerTransition } from "../core/routing.js";
+import { isAutoRunnableWorker, statusForResult, validateWorkerTransition } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
 export async function applyWorkerResult({ adapter, claimId, result, workerType }) {
@@ -10,7 +10,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
   const claim = parseClaimId(claimId);
   const resolvedWorkerType = workerType ?? claim.resolvedWorkerType;
 
-  if (resolvedWorkerType) {
+  if (resolvedWorkerType && isAutoRunnableWorker(resolvedWorkerType)) {
     validateWorkerTransition({ workerType: resolvedWorkerType, result });
   }
 

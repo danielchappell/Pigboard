@@ -281,6 +281,18 @@ export class GitHubProjectsAdapter {
         return { active: false, reason: "pr_changed" };
       }
       if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
+      if (requireHeadSha && item.contentType !== "PullRequest" && claim.pullRequestNumber) {
+        const pullRequest = await this.fetchPullRequestMetadata({
+          repository: claim.repository,
+          number: claim.pullRequestNumber
+        });
+        if (pullRequest.headSha && pullRequest.headSha !== claim.headSha) {
+          return { active: false, reason: "head_drift" };
+        }
+        if (pullRequest.baseSha && claim.baseSha && pullRequest.baseSha !== claim.baseSha) {
+          return { active: false, reason: "base_drift" };
+        }
+      }
       if (requireHeadSha && item.headSha && item.headSha !== claim.headSha) {
         return { active: false, reason: "head_drift" };
       }
@@ -374,20 +386,19 @@ export class GitHubProjectsAdapter {
     return this.failClaim(claimId, reason);
   }
 
-  async failClaim(claimId, reason) {
-    const verified = await this.verifyClaim(claimId);
+  async failClaim(claimId, reason, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { failed: false, reason: verified.reason };
     const claim = verified.claim;
 
-    const appended = await this.appendEventForClaim(claimId, {
+    await this.appendEvent(claim.itemId, {
       type: "worker_failed",
       actor: claim.workerId,
       body: reason
     });
-    if (appended?.appended === false) return { failed: false, reason: appended.reason };
-    const transitioned = await this.transitionForClaim(claimId, Status.BLOCKED);
-    if (transitioned?.transitioned === false) return { failed: false, reason: transitioned.reason };
-    await this.releaseClaim(claimId);
+    await this.transition(claim.itemId, Status.BLOCKED);
+    const released = await this.releaseClaim(claimId);
+    if (released?.released === false) return { failed: false, reason: released.reason };
     return { failed: true };
   }
 
@@ -526,7 +537,9 @@ function formatEventComment(event) {
 }
 
 function parsePullRequestNumber(url) {
-  const match = String(url ?? "").match(/\/pull\/(\d+)(?:\b|$)/);
+  const value = String(url ?? "").trim();
+  if (/^\d+$/.test(value)) return Number(value);
+  const match = value.match(/\/pull\/(\d+)(?:\b|$)/);
   return match ? Number(match[1]) : undefined;
 }
 

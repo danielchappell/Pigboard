@@ -107,6 +107,38 @@ test("applyWorkerResult blocks needs-human outcomes", async () => {
   assert.equal(adapter.getItem("item-2").status, Status.BLOCKED);
 });
 
+test("applyWorkerResult allows manual worker completed transitions", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-manual",
+      status: Status.QA,
+      workerType: WorkerType.QA,
+      repository: "owner/repo",
+      contentType: "Issue"
+    }
+  ]);
+  const { claim } = await adapter.claimReadyForWorker({
+    itemId: "item-manual",
+    workerType: WorkerType.QA,
+    workerId: "qa-1",
+    leaseSeconds: 60
+  });
+
+  await applyWorkerResult({
+    adapter,
+    claimId: claim.id,
+    workerType: WorkerType.QA,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.REVIEW,
+      summary: "QA complete"
+    }
+  });
+
+  assert.equal(adapter.getItem("item-manual").status, Status.REVIEW);
+  assert.equal(adapter.getItem("item-manual").leaseOwner, undefined);
+});
+
 test("applyWorkerResult uses fail path for failed outcomes", async () => {
   const adapter = new MemoryQueueAdapter([
     {

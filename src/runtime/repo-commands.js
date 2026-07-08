@@ -9,14 +9,16 @@ export async function runRepoCommands({
   cwd,
   network = "off",
   env = buildRepoCommandEnv({ baseEnv: process.env }),
-  spawnImpl = spawn
+  spawnImpl = spawn,
+  platform = process.platform,
+  accessImpl = access
 }) {
   if (network !== "off") {
     throw new Error("Scoped repo-command network policies are not implemented in v1");
   }
   await assertCredentialFreeWorktree(cwd);
   if (!commands.length) return [];
-  const wrapper = await resolveNetworkOffWrapper();
+  const wrapper = await resolveNetworkOffWrapper({ platform, accessImpl });
   const results = [];
   for (const command of commands) {
     const result = await runShellCommand({ command, cwd, env, spawnImpl, wrapper });
@@ -26,17 +28,30 @@ export async function runRepoCommands({
   return results;
 }
 
-async function resolveNetworkOffWrapper() {
-  if (process.platform === "darwin") {
+async function resolveNetworkOffWrapper({ platform = process.platform, accessImpl = access } = {}) {
+  if (platform === "darwin") {
     const sandboxExec = "/usr/bin/sandbox-exec";
     try {
-      await access(sandboxExec);
+      await accessImpl(sandboxExec);
       return {
         command: sandboxExec,
         args: ["-p", "(version 1) (allow default) (deny network*)", "/bin/sh", "-lc"]
       };
     } catch {
       // Fall through to fail closed.
+    }
+  }
+  if (platform === "linux") {
+    for (const unshare of ["/usr/bin/unshare", "/bin/unshare"]) {
+      try {
+        await accessImpl(unshare);
+        return {
+          command: unshare,
+          args: ["-n", "/bin/sh", "-lc"]
+        };
+      } catch {
+        // Try the next common location.
+      }
     }
   }
   throw new Error("No supported network-off wrapper available for repo commands");

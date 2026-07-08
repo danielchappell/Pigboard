@@ -27,5 +27,9 @@ const adapter = new GitHubProjectsAdapter({
   itemsFirst: 1
 });
 
-await adapter.releaseClaim(claimId);
+const result = await adapter.releaseClaim(claimId);
+if (result?.released === false) {
+  console.error(`Claim was not released: ${result.reason ?? "unknown reason"}`);
+  process.exit(1);
+}
 console.log(`Released claim for ${claim.itemId} held by ${claim.workerId}.`);

@@ -20,7 +20,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       number: 12
     }
   ]);
-  const calls = { setup: 0, verify: 0, logs: 0, cleanup: 0 };
+  const calls = { setup: 0, verify: 0, logs: 0, cleanup: 0, push: 0 };
   const worker = new GitHubCodeLoopWorker({
     adapter,
     workerType: WorkerType.IMPLEMENTER,
@@ -59,6 +59,10 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
     },
     hasDiffImpl: async () => true,
     commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async (_command, args) => {
+      if (args.includes("push")) calls.push += 1;
+      return { stdout: "", stderr: "" };
+    },
     ensurePullRequestImpl: async ({ title, body }) => {
       assert.equal(title, "Ski Stack: Build thing");
       assert.match(body, /Outcome: completed/);
@@ -82,7 +86,153 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
   assert.match(adapter.events[0].evidence.at(-2), /^Commit a{40}$/);
   assert.equal(adapter.events[0].evidence.at(-1), "PR https://github.com/acme/repo/pull/42");
   assert.equal(adapter.getItem("item-1").fields.PR, "https://github.com/acme/repo/pull/42");
-  assert.deepEqual(calls, { setup: 1, verify: 1, logs: 1, cleanup: 1 });
+  assert.deepEqual(calls, { setup: 1, verify: 1, logs: 1, cleanup: 1, push: 1 });
+});
+
+test("initial claim verification failures write artifacts and fail the item", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-missing-head",
+      title: "Review missing PR metadata",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "PullRequest",
+      number: 42
+    }
+  ]);
+  let logged = false;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-missing-head",
+    repoPolicy: { cwd: root },
+    runLogDir: join(root, "runs"),
+    writeRunArtifactsImpl: async () => {
+      logged = true;
+      return { runDir: join(root, "runs", "run") };
+    },
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /missing_head_sha/);
+  assert.equal(logged, true);
+  assert.equal(adapter.getItem("item-missing-head").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-missing-head").leaseOwner, undefined);
+});
+
+test("PR creation implies pushing the generated branch", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-push-for-pr",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const pushes = [];
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-push",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async (_command, args) => {
+      if (args.includes("push")) pushes.push(args);
+      return { stdout: "", stderr: "" };
+    },
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(pushes.length, 1);
+});
+
+test("partial result-application failures block and release claims", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-partial-failure",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  adapter.clearWorkerTypeForClaim = async () => ({ cleared: false, reason: "worker_type_changed" });
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-partial",
+    repoPolicy: { cwd: root, allowCreatePr: false },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /worker_type_changed/);
+  assert.equal(adapter.getItem("item-partial-failure").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-partial-failure").leaseOwner, undefined);
 });
 
 test("worker prompt uses resolved worker type when Worker Type field is blank", async () => {

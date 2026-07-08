@@ -117,6 +117,24 @@ test("GitHubProjectsAdapter does not claim another worker status", async () => {
   assert.equal(ready.length, 0);
 });
 
+test("GitHubProjectsAdapter infers manual worker types from status when Worker Type is blank", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse({ status: Status.QA, workerType: null })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.QA);
+
+  assert.equal(ready.length, 1);
+  assert.equal(ready[0].status, Status.QA);
+});
+
 test("GitHubProjectsAdapter treats Worker Type as an override", async () => {
   const { fetchImpl } = createGraphqlMock([
     projectResponse({ status: Status.IMPLEMENTATION, workerType: WorkerType.QA })
@@ -210,7 +228,7 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
     projectResponse({
       status: Status.REVIEW,
       workerType: WorkerType.REVIEWER,
-      prUrl: "https://github.com/acme/repo/pull/42"
+      prUrl: "42"
     }),
     mutationResponse(),
     mutationResponse(),
@@ -257,6 +275,69 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
   assert.equal(claim.prUrl, "https://github.com/acme/repo/pull/42");
   assert.equal(claim.headSha, "a".repeat(40));
   assert.equal(claim.baseSha, "b".repeat(40));
+});
+
+test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verification", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  let metadataCalls = 0;
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
+      metadataCalls += 1;
+      return {
+        ok: true,
+        json: async () => ({
+          number: 42,
+          html_url: "https://github.com/acme/repo/pull/42",
+          base: { ref: "main", sha: "b".repeat(40) },
+          head: { ref: "feature", sha: (metadataCalls === 1 ? "a" : "c").repeat(40) }
+        })
+      };
+    }
+    const response = responses.shift();
+    return {
+      ok: true,
+      json: async () => response
+    };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      leaseOwner: "reviewer-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyClaim(result.claim.id, { requireHeadSha: true });
+
+  assert.equal(verified.active, false);
+  assert.equal(verified.reason, "head_drift");
 });
 
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {

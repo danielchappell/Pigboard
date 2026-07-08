@@ -106,7 +106,9 @@ export function normalizeProjectItem(node) {
 }
 
 function parseGitHubPullRequestNumber(url) {
-  const match = String(url ?? "").match(/\/pull\/(\d+)(?:\b|$)/);
+  const value = String(url ?? "").trim();
+  if (/^\d+$/.test(value)) return Number(value);
+  const match = value.match(/\/pull\/(\d+)(?:\b|$)/);
   return match ? Number(match[1]) : undefined;
 }
 

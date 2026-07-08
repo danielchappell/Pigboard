@@ -6,6 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 
 import {
+  commitAll,
   createPullRequestWorktree,
   assertCredentialFreeWorktree,
   inspectGitConfigText,
@@ -40,6 +41,7 @@ test("repo and Codex runner env builders strip secret-bearing variables", () => 
   const baseEnv = {
     PATH: "/bin",
     HOME: "/Users/joseph",
+    CODEX_HOME: "/Users/joseph/.codex",
     OPENAI_API_KEY: "sk-test",
     GITHUB_TOKEN: "ghp_test",
     GH_CONFIG_DIR: "/tmp/gh",
@@ -52,9 +54,32 @@ test("repo and Codex runner env builders strip secret-bearing variables", () => 
   });
   assert.deepEqual(buildCodexRunnerEnv({ baseEnv }), {
     PATH: "/bin",
+    HOME: "/Users/joseph",
+    CODEX_HOME: "/Users/joseph/.codex",
     LANG: "en_US.UTF-8"
   });
   assert.throws(() => assertNoDeniedEnv({ PATH: "/bin", GITHUB_TOKEN: "ghp_test" }), /GITHUB_TOKEN/);
+});
+
+test("repo commands use Linux network namespace wrapper when available", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-linux-commands-"));
+  const calls = [];
+  const results = await runRepoCommands({
+    commands: ["echo ok"],
+    cwd: root,
+    platform: "linux",
+    accessImpl: async (path) => {
+      assert.equal(path, "/usr/bin/unshare");
+    },
+    spawnImpl: (command, args) => {
+      calls.push({ command, args });
+      return fakeCommandSpawn({ stdoutText: "ok\n" });
+    }
+  });
+
+  assert.equal(calls[0].command, "/usr/bin/unshare");
+  assert.deepEqual(calls[0].args, ["-n", "/bin/sh", "-lc", "echo ok"]);
+  assert.equal(results[0].stdout, "ok\n");
 });
 
 test("daemon git env wires HTTPS auth without exposing GITHUB_TOKEN", () => {
@@ -195,6 +220,28 @@ test("pull request worktree creation checks out the claimed head", async () => {
   assert.equal(calls.some((args) => args.includes(expectedHeadSha)), true);
 });
 
+test("automated commits use scrubbed env with explicit identity", async () => {
+  const envs = [];
+  const execFileImpl = async (_command, args, options = {}) => {
+    envs.push({ args, env: options.env });
+    if (args.includes("rev-parse")) return { stdout: `${"a".repeat(40)}\n`, stderr: "" };
+    return { stdout: "", stderr: "" };
+  };
+
+  const sha = await commitAll({
+    worktreePath: "/tmp/worktree",
+    message: "Test commit",
+    execFileImpl
+  });
+
+  const commitEnv = envs.find((call) => call.args.includes("commit")).env;
+  assert.equal(sha, "a".repeat(40));
+  assert.equal(commitEnv.GIT_AUTHOR_NAME, "Ski Stack Worker");
+  assert.equal(commitEnv.GIT_COMMITTER_EMAIL, "ski-stack@users.noreply.github.com");
+  assert.equal(commitEnv.HOME, undefined);
+  assert.equal(commitEnv.GITHUB_TOKEN, undefined);
+});
+
 function fakeCodexSpawn(stdoutText) {
   return () => {
     const child = new EventEmitter();
@@ -207,4 +254,16 @@ function fakeCodexSpawn(stdoutText) {
     });
     return child;
   };
+}
+
+function fakeCommandSpawn({ stdoutText = "", stderrText = "", code = 0 } = {}) {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  queueMicrotask(() => {
+    if (stdoutText) child.stdout.emit("data", stdoutText);
+    if (stderrText) child.stderr.emit("data", stderrText);
+    child.emit("close", code);
+  });
+  return child;
 }

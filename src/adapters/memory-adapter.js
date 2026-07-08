@@ -161,18 +161,17 @@ export class MemoryQueueAdapter {
     return this.failClaim(claimId, reason);
   }
 
-  async failClaim(claimId, reason) {
-    const verified = await this.verifyClaim(claimId);
+  async failClaim(claimId, reason, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { failed: false, reason: verified.reason };
-    const appended = await this.appendEventForClaim(claimId, {
+    await this.appendEvent(verified.claim.itemId, {
       type: "worker_failed",
       actor: verified.claim.workerId,
       body: reason
     });
-    if (appended?.appended === false) return { failed: false, reason: appended.reason };
-    const transitioned = await this.transitionForClaim(claimId, Status.BLOCKED);
-    if (transitioned?.transitioned === false) return { failed: false, reason: transitioned.reason };
-    await this.release(claimId);
+    await this.transition(verified.claim.itemId, Status.BLOCKED);
+    const released = await this.releaseClaim(claimId);
+    if (released?.released === false) return { failed: false, reason: released.reason };
     return { failed: true };
   }
 

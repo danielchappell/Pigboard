@@ -5,7 +5,7 @@ const DENY_ENV_PATTERNS = [
   /^GH_/,
   /^GITHUB_/,
   /^OPENAI_/,
-  /^CODEX_/,
+  /^CODEX_(?!HOME$)/,
   /^SSH_/,
   /^GIT_(?:ASKPASS|SSH|CONFIG|CREDENTIAL)/,
   /^NPM_TOKEN$/,
@@ -26,7 +26,7 @@ export function buildCodexRunnerEnv({ baseEnv = process.env, extraEnv = {}, tmpd
   return buildScrubbedEnv({
     baseEnv,
     extraEnv,
-    allow: ["PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL"],
+    allow: ["PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL", "HOME", "CODEX_HOME"],
     tmpdir
   });
 }
