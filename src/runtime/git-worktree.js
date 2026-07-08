@@ -32,7 +32,6 @@ export async function createImplementationWorktree({
   await execFileImpl("git", ["-C", repoPath, "worktree", "add", "-B", safeBranchName, worktreePath, `origin/${baseBranch}`], {
     env: buildDaemonGitEnv({ githubToken })
   });
-  await rewriteCredentialFreeRemote({ worktreePath, repository, execFileImpl });
   await assertCredentialFreeWorktree(worktreePath);
   return { worktreePath, branchName: safeBranchName };
 }
@@ -64,7 +63,6 @@ export async function createPullRequestWorktree({
   await execFileImpl("git", ["-C", repoPath, "worktree", "add", "--detach", worktreePath, expectedHeadSha ?? "FETCH_HEAD"], {
     env: buildDaemonGitEnv({ githubToken })
   });
-  await rewriteCredentialFreeRemote({ worktreePath, repository, execFileImpl });
   await assertCredentialFreeWorktree(worktreePath);
   return { worktreePath };
 }
@@ -98,11 +96,6 @@ export async function cleanupWorktree({ repoPath, worktreePath, keep = false, ex
   } catch {
     await rm(worktreePath, { recursive: true, force: true });
   }
-}
-
-async function rewriteCredentialFreeRemote({ worktreePath, repository, execFileImpl }) {
-  await execFileImpl("git", ["-C", worktreePath, "remote", "set-url", "origin", `https://github.com/${repository}.git`]);
-  await execFileImpl("git", ["-C", worktreePath, "remote", "set-url", "--push", "origin", `https://github.com/${repository}.git`]);
 }
 
 function safePathSegment(value) {

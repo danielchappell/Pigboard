@@ -3,8 +3,9 @@ const DEFAULT_MAX_EVIDENCE_ITEMS = 8;
 
 const UNSAFE_PATTERNS = [
   /\b[A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|ACCESS_KEY|API_KEY)[A-Z0-9_]*\s*[:=]\s*\S+/i,
+  /\bsk-[A-Za-z0-9_-]{12,}/,
   /\b(?:sk|ghp|github_pat|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{12,}/,
-  /(?:^|[\s(["'`])\/(?:Users|home|private|tmp|var|opt|etc|root)\//,
+  /(?:^|[\s(["'`])\/(?:Users|home|workspace|private|tmp|var|opt|etc|root)\//,
   /[A-Za-z]:\\(?:Users|Windows|ProgramData|Temp)\\/i,
   /\b(?:file|vscode|cursor):\/\//i,
   /\b(?:stream\.jsonl|stderr\.log|metadata\.json|transcript\.md|auth\.json)\b/i,

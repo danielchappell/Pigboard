@@ -41,6 +41,7 @@ export {
 } from "./runtime/git-worktree.js";
 export { findRuns, readRunTranscript, writeRunArtifacts } from "./runtime/run-logs.js";
 export { runRepoCommands } from "./runtime/repo-commands.js";
+export { runSettledWorkerSlot } from "./runtime/worker-slot.js";
 export { assertCredentialFreeWorktree, inspectGitConfigText, WorktreeSafetyError } from "./runtime/worktree-safety.js";
 export { githubProjectsSchema } from "./provisioners/github-projects/schema.js";
 export {

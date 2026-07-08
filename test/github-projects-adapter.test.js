@@ -340,6 +340,66 @@ test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verif
   assert.equal(verified.reason, "head_drift");
 });
 
+test("GitHubProjectsAdapter rejects issue-backed claims when the PR field changes", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
+      return {
+        ok: true,
+        json: async () => ({
+          number: 42,
+          html_url: "https://github.com/acme/repo/pull/42",
+          base: { ref: "main", sha: "b".repeat(40) },
+          head: { ref: "feature", sha: "a".repeat(40) }
+        })
+      };
+    }
+    return {
+      ok: true,
+      json: async () => responses.shift()
+    };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "43"
+    })
+  );
+
+  const verified = await adapter.verifyClaim(result.claim.id, { requireHeadSha: true });
+
+  assert.equal(verified.active, false);
+  assert.equal(verified.reason, "pr_changed");
+});
+
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {
   const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse()]);
   const adapter = new GitHubProjectsAdapter({

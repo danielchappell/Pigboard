@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { GitHubCodeLoopWorker, MemoryQueueAdapter, Status, WorkerType } from "../src/index.js";
+import { GitHubCodeLoopWorker, MemoryQueueAdapter, runSettledWorkerSlot, Status, WorkerType } from "../src/index.js";
 
 test("implementer runs Codex, commits a non-empty diff, logs locally, and transitions to Review", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
@@ -180,6 +180,25 @@ test("PR creation implies pushing the generated branch", async () => {
 
   assert.equal(result.ran, true);
   assert.equal(pushes.length, 1);
+  assert.deepEqual(pushes[0].slice(-2), ["https://github.com/acme/repo.git", "HEAD:ski/12-run"]);
+});
+
+test("settled worker slots report failures without throwing", async () => {
+  const errors = [];
+  const result = await runSettledWorkerSlot({
+    key: "implementer:acme_repo:0",
+    worker: {
+      runOnce: async () => {
+        throw new Error("claim lookup failed");
+      }
+    },
+    onError: (error) => errors.push(error.message)
+  });
+
+  assert.equal(result.key, "implementer:acme_repo:0");
+  assert.equal(result.ran, false);
+  assert.match(result.error.message, /claim lookup failed/);
+  assert.deepEqual(errors, ["claim lookup failed"]);
 });
 
 test("stale worker-type reroutes release without blocking the item", async () => {

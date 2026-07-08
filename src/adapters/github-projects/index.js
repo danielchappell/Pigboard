@@ -280,6 +280,9 @@ export class GitHubProjectsAdapter {
       if (item.contentType === "PullRequest" && claim.pullRequestNumber && item.number !== claim.pullRequestNumber) {
         return { active: false, reason: "pr_changed" };
       }
+      if (item.contentType !== "PullRequest" && claim.pullRequestNumber && item.pullRequestNumber !== claim.pullRequestNumber) {
+        return { active: false, reason: "pr_changed" };
+      }
       if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
       if (requireHeadSha && item.contentType !== "PullRequest" && claim.pullRequestNumber) {
         const pullRequest = await this.fetchPullRequestMetadata({

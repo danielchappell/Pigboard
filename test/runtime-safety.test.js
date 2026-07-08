@@ -7,6 +7,7 @@ import test from "node:test";
 
 import {
   commitAll,
+  createImplementationWorktree,
   createPullRequestWorktree,
   assertCredentialFreeWorktree,
   inspectGitConfigText,
@@ -252,6 +253,32 @@ test("pull request worktree creation checks out the claimed head", async () => {
 
   assert.equal(result.worktreePath.endsWith("acme_repo/run-1"), true);
   assert.equal(calls.some((args) => args.includes(expectedHeadSha)), true);
+});
+
+test("worktree creation does not rewrite shared remotes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worktrees-"));
+  const calls = [];
+  const execFileImpl = async (_command, args) => {
+    calls.push(args);
+    if (args.includes("worktree") && args.includes("add")) {
+      const worktreePath = args.at(-2);
+      await mkdir(join(worktreePath, ".git"), { recursive: true });
+      await writeFile(join(worktreePath, ".git", "config"), "[remote \"origin\"]\n  url = https://github.com/acme/repo.git\n");
+    }
+    return { stdout: "", stderr: "" };
+  };
+
+  await createImplementationWorktree({
+    repoPath: root,
+    repository: "acme/repo",
+    baseBranch: "main",
+    branchName: "ski/12-run",
+    runId: "run-1",
+    worktreeRoot: root,
+    execFileImpl
+  });
+
+  assert.equal(calls.some((args) => args.includes("remote") && args.includes("set-url")), false);
 });
 
 test("automated commits use scrubbed env with explicit identity", async () => {

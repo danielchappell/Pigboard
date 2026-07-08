@@ -6,6 +6,7 @@ import {
   GitHubCodeLoopWorker,
   GitHubProjectsAdapter,
   runCodexIsolationDiagnostics,
+  runSettledWorkerSlot,
   WorkerType
 } from "../src/index.js";
 
@@ -95,7 +96,7 @@ async function drain() {
 
 async function runWorkerSlot(key, worker) {
   try {
-    return { key, ...(await worker.runOnce()) };
+    return await runSettledWorkerSlot({ key, worker });
   } finally {
     inFlight.delete(key);
   }

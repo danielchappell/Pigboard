@@ -213,10 +213,14 @@ export class GitHubCodeLoopWorker {
       });
       await this.verifyOrThrow(claimId);
       if (this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr) {
-        await this.verifyOrThrow(claimId);
-        await this.execFileImpl("git", ["-C", worktree.worktreePath, "push", "-u", "origin", worktree.branchName], {
-          env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
-        });
+        const claim = await this.verifyOrThrow(claimId);
+        await this.execFileImpl(
+          "git",
+          ["-C", worktree.worktreePath, "push", `https://github.com/${claim.repository}.git`, `HEAD:${worktree.branchName}`],
+          {
+            env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
+          }
+        );
       }
       result.evidence = [...(result.evidence ?? []), `Commit ${commitSha}`];
       if (this.repoPolicy.allowCreatePr) {

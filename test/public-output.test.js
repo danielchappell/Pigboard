@@ -22,7 +22,10 @@ test("public output sanitizer keeps concise GitHub-safe evidence", () => {
 test("public output sanitizer rejects secrets, local paths, and stream artifacts", () => {
   for (const summary of [
     "GITHUB_TOKEN=ghp_1234567890123456",
+    "OPENAI_API_KEY=sk-proj-abcdefghijklmnopqrstuvwxyz",
+    "Raw key sk-proj-abcdefghijklmnopqrstuvwxyz leaked",
     "See /Users/joseph/.codex/auth.json",
+    "See /workspace/ski-stack/stream.jsonl",
     "Full stream is in stream.jsonl"
   ]) {
     assert.throws(
@@ -37,4 +40,3 @@ test("public output sanitizer rejects secrets, local paths, and stream artifacts
     );
   }
 });
-
