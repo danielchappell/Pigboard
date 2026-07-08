@@ -188,6 +188,24 @@ test("worktree safety follows gitdir and common config paths", async () => {
   await assert.rejects(() => assertCredentialFreeWorktree(worktree), /credential-bearing/);
 });
 
+test("worktree safety inspects per-worktree git config", async () => {
+  const linkedRoot = await mkdtemp(join(tmpdir(), "ski-linked-worktree-config-"));
+  const linkedWorktree = join(linkedRoot, "worktree");
+  const linkedGitDir = join(linkedRoot, ".git", "worktrees", "worktree");
+  await mkdir(linkedWorktree, { recursive: true });
+  await mkdir(linkedGitDir, { recursive: true });
+  await writeFile(join(linkedWorktree, ".git"), `gitdir: ${linkedGitDir}\n`);
+  await writeFile(join(linkedGitDir, "config.worktree"), "[http \"https://github.com/\"]\n  extraheader = AUTHORIZATION: basic abc123\n");
+
+  await assert.rejects(() => assertCredentialFreeWorktree(linkedWorktree), /credential-bearing/);
+
+  const directoryRoot = await mkdtemp(join(tmpdir(), "ski-dir-worktree-config-"));
+  await mkdir(join(directoryRoot, ".git"), { recursive: true });
+  await writeFile(join(directoryRoot, ".git", "config.worktree"), "[credential]\n  helper = store\n");
+
+  await assert.rejects(() => assertCredentialFreeWorktree(directoryRoot), /credential-bearing/);
+});
+
 test("repo commands skip network wrapper lookup when command list is empty", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-empty-commands-"));
   const results = await runRepoCommands({

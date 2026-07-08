@@ -242,17 +242,36 @@ export class GitHubCodeLoopWorker {
       if (!(await this.hasDiffImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl, ignoredPaths }))) {
         throw new Error("implementer produced no diff");
       }
+      let commitIgnoredPaths = ignoredPaths;
+      let untrackedBeforeVerify = [];
+      const verifyCommands = this.repoPolicy.verifyCommands ?? [];
+      if (verifyCommands.length) {
+        untrackedBeforeVerify = await this.listUntrackedFilesImpl({
+          worktreePath: worktree.worktreePath,
+          execFileImpl: this.execFileImpl
+        });
+      }
       await this.runRepoCommandsImpl({
-        commands: this.repoPolicy.verifyCommands ?? [],
+        commands: verifyCommands,
         cwd: worktree.worktreePath,
         network: this.repoPolicy.verifyNetwork ?? "off"
       });
+      if (verifyCommands.length) {
+        const untrackedAfterVerify = await this.listUntrackedFilesImpl({
+          worktreePath: worktree.worktreePath,
+          execFileImpl: this.execFileImpl
+        });
+        commitIgnoredPaths = combineIgnoredPaths(
+          ignoredPaths,
+          untrackedAfterVerify.filter((path) => !untrackedBeforeVerify.includes(path))
+        );
+      }
       await this.verifyOrThrow(claimId);
       const commitSha = await this.commitAllImpl({
         worktreePath: worktree.worktreePath,
         message: `Ski Stack ${this.workerType} ${new Date().toISOString()}`,
         execFileImpl: this.execFileImpl,
-        ignoredPaths
+        ignoredPaths: commitIgnoredPaths
       });
       await this.verifyOrThrow(claimId);
       if (this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr) {
@@ -296,6 +315,14 @@ export class GitHubCodeLoopWorker {
     }
 
     await this.verifyOrThrow(claimId);
+    if (
+      this.workerType === WorkerType.PR_BABYSITTER &&
+      result.outcome === "completed" &&
+      result.nextStatus === Status.DONE &&
+      result.doneWhenApprovedAndClean === true
+    ) {
+      await this.verifyPullRequestDoneState(claimId);
+    }
     return applyWorkerResult({
       adapter: this.adapter,
       claimId,
@@ -315,13 +342,23 @@ export class GitHubCodeLoopWorker {
   async failClaimAfterError(claimId, message) {
     if (typeof this.adapter.failClaim !== "function") return;
     const claimLostReason = String(message ?? "").match(/^claim lost: ([a-z_]+)/)?.[1];
-    if (claimLostReason === "status_changed" || claimLostReason === "worker_type_changed") {
+    if (isClaimDriftReason(claimLostReason)) {
       await this.adapter.releaseClaim?.(claimId);
       return;
     }
     const failed = await this.adapter.failClaim(claimId, message);
     if (failed?.failed === false && isClaimDriftReason(failed.reason)) {
       await this.adapter.releaseClaim?.(claimId);
+    }
+  }
+
+  async verifyPullRequestDoneState(claimId) {
+    if (typeof this.adapter.verifyPullRequestReadyForDoneForClaim !== "function") {
+      throw new Error("adapter cannot verify live PR state before Done");
+    }
+    const verified = await this.adapter.verifyPullRequestReadyForDoneForClaim(claimId);
+    if (verified?.ready !== true) {
+      throw new Error(`pr-babysitter cannot mark Done: ${verified?.reason ?? "pr_not_ready"}`);
     }
   }
 
@@ -361,6 +398,10 @@ function safePublicEventComment(output) {
       outcome: output.outcome
     });
   }
+}
+
+function combineIgnoredPaths(...pathGroups) {
+  return [...new Set(pathGroups.flat().filter(Boolean))];
 }
 
 function isClaimDriftReason(reason) {

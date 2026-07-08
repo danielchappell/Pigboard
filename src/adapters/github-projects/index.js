@@ -419,6 +419,27 @@ export class GitHubProjectsAdapter {
     return { failed: true };
   }
 
+  async verifyPullRequestReadyForDoneForClaim(claimId) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
+    if (!verified.active) return { ready: false, reason: verified.reason };
+    const claim = verified.claim;
+    const item = verified.item;
+    const number = claim.pullRequestNumber ?? (item.contentType === "PullRequest" ? item.number : undefined);
+    const repository = claim.repository ?? item.repository;
+    if (!repository || !number) return { ready: false, reason: "missing_pr" };
+
+    const state = await this.fetchPullRequestDoneState({ repository, number });
+    if (claim.headSha && state.headSha && claim.headSha !== state.headSha) {
+      return { ready: false, reason: "head_drift" };
+    }
+    if (state.merged) return { ready: true, reason: "merged" };
+    if (state.state !== "open") return { ready: false, reason: "pr_not_open" };
+    if (state.draft) return { ready: false, reason: "draft" };
+    if (!state.approved) return { ready: false, reason: "not_approved" };
+    if (!state.checksClean) return { ready: false, reason: "checks_not_clean" };
+    return { ready: true };
+  }
+
   async ensureProjectModel() {
     if (this.projectModel) return this.projectModel;
     const { projectModel } = await this.loadProjectItems();
@@ -513,20 +534,10 @@ export class GitHubProjectsAdapter {
   }
 
   async fetchPullRequestMetadata({ repository, number }) {
-    const response = await this.fetchImpl(`https://api.github.com/repos/${repository}/pulls/${number}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: "application/vnd.github+json",
-        "User-Agent": "ski-stack"
-      }
+    const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      errorCode: "GITHUB_PR_METADATA_HTTP",
+      errorMessage: "GitHub pull request metadata request failed"
     });
-    if (!response.ok) {
-      throw new AdapterError(`GitHub pull request metadata request failed: ${response.status}`, {
-        code: "GITHUB_PR_METADATA_HTTP"
-      });
-    }
-    const pr = await response.json();
     return {
       number: pr.number,
       url: pr.html_url,
@@ -535,6 +546,55 @@ export class GitHubProjectsAdapter {
       headRef: pr.head?.ref,
       headSha: pr.head?.sha
     };
+  }
+
+  async fetchPullRequestDoneState({ repository, number }) {
+    const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      errorCode: "GITHUB_PR_METADATA_HTTP",
+      errorMessage: "GitHub pull request metadata request failed"
+    });
+    const [reviews, status, checkRuns] = await Promise.all([
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}/reviews?per_page=100`, {
+        errorCode: "GITHUB_PR_REVIEWS_HTTP",
+        errorMessage: "GitHub pull request reviews request failed"
+      }),
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/status`, {
+        errorCode: "GITHUB_PR_STATUS_HTTP",
+        errorMessage: "GitHub pull request status request failed"
+      }),
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/check-runs?per_page=100`, {
+        errorCode: "GITHUB_PR_CHECKS_HTTP",
+        errorMessage: "GitHub pull request checks request failed"
+      })
+    ]);
+
+    return {
+      number: pr.number,
+      url: pr.html_url,
+      state: pr.state,
+      draft: pr.draft === true,
+      merged: pr.merged === true,
+      headSha: pr.head?.sha,
+      approved: hasCurrentApproval(reviews),
+      checksClean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns)
+    };
+  }
+
+  async fetchGitHubJson(url, { errorCode, errorMessage }) {
+    const response = await this.fetchImpl(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "ski-stack"
+      }
+    });
+    if (!response.ok) {
+      throw new AdapterError(`${errorMessage}: ${response.status}`, {
+        code: errorCode
+      });
+    }
+    return response.json();
   }
 }
 
@@ -565,6 +625,28 @@ function parsePullRequestReference(url) {
   if (/^\d+$/.test(value)) return { number: Number(value) };
   const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:\b|$)/);
   return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
+}
+
+function hasCurrentApproval(reviews) {
+  const latestByAuthor = new Map();
+  for (const review of Array.isArray(reviews) ? reviews : []) {
+    const author = review.user?.login;
+    if (!author || !review.state) continue;
+    latestByAuthor.set(author, review.state);
+  }
+  const states = [...latestByAuthor.values()];
+  return states.includes("APPROVED") && !states.includes("CHANGES_REQUESTED");
+}
+
+function areStatusChecksClean(status) {
+  if (!status || Number(status.total_count ?? 0) === 0) return true;
+  return status.state === "success";
+}
+
+function areCheckRunsClean(checkRuns) {
+  const runs = Array.isArray(checkRuns?.check_runs) ? checkRuns.check_runs : [];
+  if (!runs.length) return true;
+  return runs.every((run) => run.status === "completed" && ["success", "skipped", "neutral"].includes(run.conclusion));
 }
 
 function normalizeRepositoryFilter(repositories) {

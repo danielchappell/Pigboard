@@ -21,6 +21,11 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
     }
   ]);
   const calls = { setup: 0, verify: 0, reset: 0, listUntracked: 0, logs: 0, cleanup: 0, push: 0 };
+  const untrackedSnapshots = [
+    ["package-lock.json"],
+    ["package-lock.json", "src/worker-output.js"],
+    ["package-lock.json", "src/worker-output.js", "coverage/lcov.info"]
+  ];
   const worker = new GitHubCodeLoopWorker({
     adapter,
     workerType: WorkerType.IMPLEMENTER,
@@ -49,7 +54,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
     },
     listUntrackedFilesImpl: async () => {
       calls.listUntracked += 1;
-      return ["package-lock.json"];
+      return untrackedSnapshots.shift() ?? [];
     },
     assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
     runCodexExecImpl: async ({ outputPath }) => {
@@ -69,7 +74,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       return true;
     },
     commitAllImpl: async ({ ignoredPaths }) => {
-      assert.deepEqual(ignoredPaths, ["package-lock.json"]);
+      assert.deepEqual(ignoredPaths, ["package-lock.json", "coverage/lcov.info"]);
       return "a".repeat(40);
     },
     execFileImpl: async (_command, args) => {
@@ -99,7 +104,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
   assert.match(adapter.events[0].evidence.at(-2), /^Commit a{40}$/);
   assert.equal(adapter.events[0].evidence.at(-1), "PR https://github.com/acme/repo/pull/42");
   assert.equal(adapter.getItem("item-1").fields.PR, "https://github.com/acme/repo/pull/42");
-  assert.deepEqual(calls, { setup: 1, verify: 1, reset: 1, listUntracked: 1, logs: 1, cleanup: 1, push: 1 });
+  assert.deepEqual(calls, { setup: 1, verify: 1, reset: 1, listUntracked: 3, logs: 1, cleanup: 1, push: 1 });
 });
 
 test("initial claim verification failures write artifacts and fail the item", async () => {
@@ -226,6 +231,36 @@ test("generic worker failures release instead of blocking after claim drift", as
 
   assert.equal(adapter.getItem("item-drifted").status, Status.REVIEW);
   assert.equal(adapter.getItem("item-drifted").leaseOwner, undefined);
+});
+
+test("stale PR snapshot failures release instead of blocking", async () => {
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-head-drift",
+      title: "Review queue adapter",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER
+    })
+  ]);
+  const claimResult = await adapter.claimReadyForWorker({
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-drift",
+    leaseSeconds: 1800
+  });
+  adapter.failClaim = async () => {
+    throw new Error("stale PR snapshots should not fail the item");
+  };
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-drift",
+    repoPolicy: { cwd: await mkdtemp(join(tmpdir(), "ski-worker-")) }
+  });
+
+  await worker.failClaimAfterError(claimResult.claim.id, "claim lost: head_drift");
+
+  assert.equal(adapter.getItem("item-head-drift").status, Status.REVIEW);
+  assert.equal(adapter.getItem("item-head-drift").leaseOwner, undefined);
 });
 
 test("unsafe PR body output falls back to withheld public text", async () => {
@@ -769,6 +804,11 @@ test("pr-babysitter requires explicit approved-and-clean flag to mark Done", asy
       workerType: WorkerType.PR_BABYSITTER
     })
   ]);
+  let doneVerifications = 0;
+  adapter.verifyPullRequestReadyForDoneForClaim = async () => {
+    doneVerifications += 1;
+    return { ready: true };
+  };
   const worker = workerWithCodexResult({
     root,
     adapter,
@@ -785,6 +825,37 @@ test("pr-babysitter requires explicit approved-and-clean flag to mark Done", asy
 
   assert.equal(result.ran, true);
   assert.equal(adapter.getItem("item-3").status, Status.DONE);
+  assert.equal(doneVerifications, 1);
+});
+
+test("pr-babysitter cannot mark Done when live PR state is not ready", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-live-not-ready",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.verifyPullRequestReadyForDoneForClaim = async () => ({ ready: false, reason: "checks_not_clean" });
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.DONE,
+      summary: "Approved and checks are clean.",
+      doneWhenApprovedAndClean: true
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /checks_not_clean/);
+  assert.equal(adapter.getItem("item-live-not-ready").status, Status.BLOCKED);
 });
 
 test("pr-babysitter blocks Done without approved-and-clean flag", async () => {

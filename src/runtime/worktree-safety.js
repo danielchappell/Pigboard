@@ -70,7 +70,7 @@ async function resolveGitConfigPaths(worktree) {
   const dotGitText = await readOptionalFile(dotGit);
   if (dotGitText?.startsWith("gitdir:")) {
     const gitDir = resolveGitPath(worktree, dotGitText.slice("gitdir:".length).trim());
-    const paths = [join(gitDir, "config")];
+    const paths = [join(gitDir, "config"), join(gitDir, "config.worktree")];
     const commonDirText = (await readOptionalFile(join(gitDir, "commondir"))).trim();
     if (commonDirText) {
       paths.push(join(resolveGitPath(gitDir, commonDirText), "config"));
@@ -81,7 +81,7 @@ async function resolveGitConfigPaths(worktree) {
   }
   try {
     const info = await stat(dotGit);
-    if (info.isDirectory()) return [join(dotGit, "config")];
+    if (info.isDirectory()) return [join(dotGit, "config"), join(dotGit, "config.worktree")];
   } catch {
     return [];
   }
