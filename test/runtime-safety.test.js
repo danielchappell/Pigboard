@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -220,6 +220,42 @@ test("Codex isolation diagnostics parse escaped agent-message JSON", async () =>
   );
 });
 
+test("Codex isolation diagnostics fail closed without explicit safe booleans", async () => {
+  await assert.rejects(
+    () =>
+      runCodexIsolationDiagnostics({
+        cwd: "/tmp",
+        spawnImpl: fakeCodexSpawn(
+          `${JSON.stringify({
+            type: "item.completed",
+            item: {
+              type: "agent_message",
+              text: "network was unavailable"
+            }
+          })}\n`
+        )
+      }),
+    /did not report safe booleans/
+  );
+});
+
+test("Codex exec streams full output to files while keeping a bounded tail", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-codex-stream-"));
+  const result = await runCodexExec({
+    prompt: "Return JSON",
+    cwd: root,
+    streamPath: join(root, "stream.jsonl"),
+    stderrPath: join(root, "stderr.log"),
+    maxBufferedOutputBytes: 10,
+    spawnImpl: () => fakeCommandSpawn({ stdoutText: "1234567890abcdef", stderrText: "stderr-abcdef" })
+  });
+
+  assert.equal(await readFile(join(root, "stream.jsonl"), "utf8"), "1234567890abcdef");
+  assert.equal(await readFile(join(root, "stderr.log"), "utf8"), "stderr-abcdef");
+  assert.equal(result.stdout, "7890abcdef");
+  assert.equal(result.stderr, "err-abcdef");
+});
+
 test("pull request worktree creation rejects claimed head drift", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worktrees-"));
   const calls = [];
@@ -273,7 +309,8 @@ test("pull request worktree creation checks out the claimed head", async () => {
 
   assert.equal(result.worktreePath.endsWith("acme_repo/run-1"), true);
   assert.equal(calls.some((args) => args.includes(expectedHeadSha)), true);
-  assert.equal(calls.some((args) => args.at(-1) === "main"), true);
+  assert.equal(calls.some((args) => args.at(-1) === "+refs/heads/main:refs/ski-stack/run-1/base"), true);
+  assert.equal(calls.some((args) => args.includes("FETCH_HEAD")), false);
 });
 
 test("worktree creation does not rewrite shared remotes", async () => {
@@ -299,6 +336,10 @@ test("worktree creation does not rewrite shared remotes", async () => {
     execFileImpl
   });
 
+  const fetchCall = calls.find((args) => args.includes("fetch"));
+  assert.equal(fetchCall.includes("origin"), false);
+  assert.equal(fetchCall.includes("https://github.com/acme/repo.git"), true);
+  assert.equal(fetchCall.at(-1), "+refs/heads/main:refs/ski-stack/run-1/base");
   assert.equal(calls.some((args) => args.includes("remote") && args.includes("set-url")), false);
 });
 
@@ -306,6 +347,7 @@ test("automated commits use scrubbed env with explicit identity", async () => {
   const envs = [];
   const execFileImpl = async (_command, args, options = {}) => {
     envs.push({ args, env: options.env });
+    if (args.includes("diff")) return { stdout: "src/file.js\n", stderr: "" };
     if (args.includes("rev-parse")) return { stdout: `${"a".repeat(40)}\n`, stderr: "" };
     return { stdout: "", stderr: "" };
   };

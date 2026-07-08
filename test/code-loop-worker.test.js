@@ -20,7 +20,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       number: 12
     }
   ]);
-  const calls = { setup: 0, verify: 0, logs: 0, cleanup: 0, push: 0 };
+  const calls = { setup: 0, verify: 0, reset: 0, listUntracked: 0, logs: 0, cleanup: 0, push: 0 };
   const worker = new GitHubCodeLoopWorker({
     adapter,
     workerType: WorkerType.IMPLEMENTER,
@@ -44,6 +44,13 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       if (commands.includes("npm test")) calls.verify += 1;
       return [];
     },
+    resetTrackedChangesImpl: async () => {
+      calls.reset += 1;
+    },
+    listUntrackedFilesImpl: async () => {
+      calls.listUntracked += 1;
+      return ["package-lock.json"];
+    },
     assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
     runCodexExecImpl: async ({ outputPath }) => {
       await writeFile(
@@ -57,8 +64,14 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       );
       return { stdout: "", stderr: "" };
     },
-    hasDiffImpl: async () => true,
-    commitAllImpl: async () => "a".repeat(40),
+    hasDiffImpl: async ({ ignoredPaths }) => {
+      assert.deepEqual(ignoredPaths, ["package-lock.json"]);
+      return true;
+    },
+    commitAllImpl: async ({ ignoredPaths }) => {
+      assert.deepEqual(ignoredPaths, ["package-lock.json"]);
+      return "a".repeat(40);
+    },
     execFileImpl: async (_command, args) => {
       if (args.includes("push")) calls.push += 1;
       return { stdout: "", stderr: "" };
@@ -86,7 +99,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
   assert.match(adapter.events[0].evidence.at(-2), /^Commit a{40}$/);
   assert.equal(adapter.events[0].evidence.at(-1), "PR https://github.com/acme/repo/pull/42");
   assert.equal(adapter.getItem("item-1").fields.PR, "https://github.com/acme/repo/pull/42");
-  assert.deepEqual(calls, { setup: 1, verify: 1, logs: 1, cleanup: 1, push: 1 });
+  assert.deepEqual(calls, { setup: 1, verify: 1, reset: 1, listUntracked: 1, logs: 1, cleanup: 1, push: 1 });
 });
 
 test("initial claim verification failures write artifacts and fail the item", async () => {
@@ -180,7 +193,96 @@ test("PR creation implies pushing the generated branch", async () => {
 
   assert.equal(result.ran, true);
   assert.equal(pushes.length, 1);
-  assert.deepEqual(pushes[0].slice(-2), ["https://github.com/acme/repo.git", "HEAD:ski/12-run"]);
+  assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:ski/12-run"]);
+});
+
+test("generic worker failures release instead of blocking after claim drift", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-drifted",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const claimResult = await adapter.claimReadyForWorker({
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-drift",
+    leaseSeconds: 1800
+  });
+  await adapter.transition(claimResult.item.id, Status.REVIEW);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-drift",
+    repoPolicy: { cwd: await mkdtemp(join(tmpdir(), "ski-worker-")) }
+  });
+
+  await worker.failClaimAfterError(claimResult.claim.id, "release failed after transition");
+
+  assert.equal(adapter.getItem("item-drifted").status, Status.REVIEW);
+  assert.equal(adapter.getItem("item-drifted").leaseOwner, undefined);
+});
+
+test("unsafe PR body output falls back to withheld public text", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-unsafe-pr-body",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  let prBody;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-unsafe-pr-body",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Details are in /Users/joseph/.ski-stack/runs/run-1"
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async ({ body }) => {
+      prBody = body;
+      return { number: 42, url: "https://github.com/acme/repo/pull/42" };
+    },
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(prBody, /output withheld locally/);
+  assert.doesNotMatch(prBody, /\/Users\/joseph/);
 });
 
 test("settled worker slots report failures without throwing", async () => {

@@ -1,5 +1,8 @@
 import { execFile } from "node:child_process";
 import { spawn } from "node:child_process";
+import { createWriteStream } from "node:fs";
+import { mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
 import { promisify } from "node:util";
 
 import { buildCodexRunnerEnv } from "./command-env.js";
@@ -34,6 +37,9 @@ export async function runCodexExec({
   cwd,
   schemaPath,
   outputPath,
+  streamPath,
+  stderrPath,
+  maxBufferedOutputBytes = 256 * 1024,
   codexBin = "codex",
   env = buildCodexRunnerEnv({ baseEnv: process.env }),
   spawnImpl = spawn
@@ -52,7 +58,17 @@ export async function runCodexExec({
   if (outputPath) args.push("--output-last-message", outputPath);
   args.push("-C", cwd, "-");
 
-  return spawnWithInput({ command: codexBin, args, cwd, env, input: prompt, spawnImpl });
+  return spawnWithInput({
+    command: codexBin,
+    args,
+    cwd,
+    env,
+    input: prompt,
+    spawnImpl,
+    streamPath,
+    stderrPath,
+    maxBufferedOutputBytes
+  });
 }
 
 export async function runCodexIsolationDiagnostics({ codexBin = "codex", cwd, spawnImpl = spawn } = {}) {
@@ -68,8 +84,9 @@ export async function runCodexIsolationDiagnostics({ codexBin = "codex", cwd, sp
     ...extractCodexAgentMessages(result.stdout),
     ...extractCodexAgentMessages(result.stderr)
   ].join("\n");
-  if (/"secretReadable"\s*:\s*true/.test(text)) throw new Error("Codex shell can read local secrets");
-  if (/"networkReachable"\s*:\s*true/.test(text)) throw new Error("Codex shell network is reachable");
+  const diagnostics = parseIsolationDiagnostics(text);
+  if (diagnostics.secretReadable !== false) throw new Error("Codex shell can read local secrets");
+  if (diagnostics.networkReachable !== false) throw new Error("Codex shell network is reachable");
   return { ok: true };
 }
 
@@ -89,22 +106,93 @@ function extractCodexAgentMessages(stream = "") {
   return messages;
 }
 
-function spawnWithInput({ command, args, cwd, env, input, spawnImpl }) {
+async function spawnWithInput({
+  command,
+  args,
+  cwd,
+  env,
+  input,
+  spawnImpl,
+  streamPath,
+  stderrPath,
+  maxBufferedOutputBytes
+}) {
+  const stdoutStream = streamPath ? await openOutputStream(streamPath) : null;
+  const stderrStream = stderrPath ? await openOutputStream(stderrPath) : null;
   return new Promise((resolve, reject) => {
     const child = spawnImpl(command, args, { cwd, env, stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     child.stdout?.on("data", (chunk) => {
-      stdout += chunk;
+      stdout = appendBounded(stdout, chunk, maxBufferedOutputBytes);
+      stdoutStream?.write(chunk);
     });
     child.stderr?.on("data", (chunk) => {
-      stderr += chunk;
+      stderr = appendBounded(stderr, chunk, maxBufferedOutputBytes);
+      stderrStream?.write(chunk);
     });
-    child.on("error", reject);
-    child.on("close", (code, signal) => {
-      if (code === 0) resolve({ stdout, stderr, code, signal });
-      else reject(Object.assign(new Error(`${command} exited with ${code ?? signal}`), { stdout, stderr, code, signal }));
+    child.on("error", async (error) => {
+      await closeOutputStreams(stdoutStream, stderrStream);
+      reject(error);
+    });
+    child.on("close", async (code, signal) => {
+      await closeOutputStreams(stdoutStream, stderrStream);
+      const result = { stdout, stderr, code, signal, streamPath, stderrPath };
+      if (code === 0) resolve(result);
+      else reject(Object.assign(new Error(`${command} exited with ${code ?? signal}`), result));
     });
     child.stdin?.end(input);
   });
+}
+
+async function openOutputStream(path) {
+  await mkdir(dirname(path), { recursive: true });
+  return createWriteStream(path, { flags: "w" });
+}
+
+function closeOutputStreams(...streams) {
+  return Promise.all(
+    streams
+      .filter(Boolean)
+      .map(
+        (stream) =>
+          new Promise((resolve, reject) => {
+            stream.on("error", reject);
+            stream.end(resolve);
+          })
+      )
+  );
+}
+
+function appendBounded(current, chunk, maxBytes) {
+  const next = `${current}${chunk}`;
+  if (Buffer.byteLength(next) <= maxBytes) return next;
+  return next.slice(-maxBytes);
+}
+
+function parseIsolationDiagnostics(text) {
+  for (const candidate of jsonCandidates(text)) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (typeof parsed?.secretReadable === "boolean" && typeof parsed?.networkReachable === "boolean") {
+        return parsed;
+      }
+    } catch {
+      // Keep searching for a structured diagnostic payload.
+    }
+  }
+  throw new Error("Codex isolation diagnostics did not report safe booleans");
+}
+
+function jsonCandidates(text) {
+  const candidates = [];
+  for (const line of String(text ?? "").split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    candidates.push(trimmed);
+    const first = trimmed.indexOf("{");
+    const last = trimmed.lastIndexOf("}");
+    if (first !== -1 && last > first) candidates.push(trimmed.slice(first, last + 1));
+  }
+  return candidates;
 }

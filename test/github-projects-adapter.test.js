@@ -277,6 +277,34 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
   assert.equal(claim.baseSha, "b".repeat(40));
 });
 
+test("GitHubProjectsAdapter rejects cross-repo PR field URLs", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      prUrl: "https://github.com/acme/other/pull/42"
+    })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  await assert.rejects(
+    () =>
+      adapter.claimReadyForWorker({
+        itemId: "PVTI_item_1",
+        workerType: WorkerType.REVIEWER,
+        workerId: "reviewer-1",
+        leaseSeconds: 1800
+      }),
+    /points at acme\/other/
+  );
+});
+
 test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verification", async () => {
   const responses = [
     projectResponse({

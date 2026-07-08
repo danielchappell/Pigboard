@@ -501,7 +501,13 @@ export class GitHubProjectsAdapter {
     if (!item.pullRequestNumber && !item.prUrl) return null;
     const repository = item.repository;
     if (!repository) return { number: item.pullRequestNumber, url: item.prUrl };
-    const number = item.pullRequestNumber ?? parsePullRequestNumber(item.prUrl);
+    const reference = parsePullRequestReference(item.prUrl);
+    if (reference?.repository && reference.repository.toLowerCase() !== repository.toLowerCase()) {
+      throw new AdapterError(`PR field points at ${reference.repository}, but item belongs to ${repository}`, {
+        code: "GITHUB_PR_METADATA_INVALID"
+      });
+    }
+    const number = item.pullRequestNumber ?? reference?.number;
     if (!number) return { url: item.prUrl };
     return this.fetchPullRequestMetadata({ repository, number });
   }
@@ -554,11 +560,11 @@ function formatEventComment(event) {
   }
 }
 
-function parsePullRequestNumber(url) {
+function parsePullRequestReference(url) {
   const value = String(url ?? "").trim();
-  if (/^\d+$/.test(value)) return Number(value);
-  const match = value.match(/\/pull\/(\d+)(?:\b|$)/);
-  return match ? Number(match[1]) : undefined;
+  if (/^\d+$/.test(value)) return { number: Number(value) };
+  const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:\b|$)/);
+  return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
 }
 
 function normalizeRepositoryFilter(repositories) {
@@ -599,5 +605,5 @@ function isOwnerKindMismatch(error) {
 }
 
 function isPullRequestMetadataError(error) {
-  return error?.code === "GITHUB_PR_METADATA_HTTP";
+  return error?.code === "GITHUB_PR_METADATA_HTTP" || error?.code === "GITHUB_PR_METADATA_INVALID";
 }

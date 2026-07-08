@@ -37,7 +37,9 @@ export {
   createImplementationWorktree,
   createPullRequestWorktree,
   defaultWorktreeRoot,
-  hasDiff
+  hasDiff,
+  listUntrackedFiles,
+  resetTrackedChanges
 } from "./runtime/git-worktree.js";
 export { findRuns, readRunTranscript, writeRunArtifacts } from "./runtime/run-logs.js";
 export { runRepoCommands } from "./runtime/repo-commands.js";

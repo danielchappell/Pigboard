@@ -13,14 +13,16 @@ import {
   commitAll,
   createImplementationWorktree,
   createPullRequestWorktree,
-  hasDiff
+  hasDiff,
+  listUntrackedFiles,
+  resetTrackedChanges
 } from "./git-worktree.js";
 import { runRepoCommands } from "./repo-commands.js";
 import { defaultRunLogDir, writeRunArtifacts } from "./run-logs.js";
 import { assertCredentialFreeWorktree } from "./worktree-safety.js";
 import { buildWorkerPrompt } from "./prompt.js";
 import { parseClaimId } from "../core/claims.js";
-import { formatPublicEventComment } from "../core/public-output.js";
+import { formatPublicEventComment, formatWithheldPublicEvent } from "../core/public-output.js";
 import { Status, WorkerType } from "../core/status.js";
 
 const execFileAsync = promisify(execFile);
@@ -41,6 +43,8 @@ export class GitHubCodeLoopWorker {
     writeRunArtifactsImpl = writeRunArtifacts,
     hasDiffImpl = hasDiff,
     commitAllImpl = commitAll,
+    listUntrackedFilesImpl = listUntrackedFiles,
+    resetTrackedChangesImpl = resetTrackedChanges,
     createImplementationWorktreeImpl = createImplementationWorktree,
     createPullRequestWorktreeImpl = createPullRequestWorktree,
     cleanupWorktreeImpl = cleanupWorktree,
@@ -65,6 +69,8 @@ export class GitHubCodeLoopWorker {
     this.writeRunArtifactsImpl = writeRunArtifactsImpl;
     this.hasDiffImpl = hasDiffImpl;
     this.commitAllImpl = commitAllImpl;
+    this.listUntrackedFilesImpl = listUntrackedFilesImpl;
+    this.resetTrackedChangesImpl = resetTrackedChangesImpl;
     this.createImplementationWorktreeImpl = createImplementationWorktreeImpl;
     this.createPullRequestWorktreeImpl = createPullRequestWorktreeImpl;
     this.cleanupWorktreeImpl = cleanupWorktreeImpl;
@@ -84,7 +90,8 @@ export class GitHubCodeLoopWorker {
     const { claim, item } = claimResult;
     let parsedClaim = parseClaimId(claim.id);
     let worktree;
-    let codexOutput = { stdout: "", stderr: "" };
+    let codexOutput = { stdout: "", stderr: "", preserveStreamFiles: false };
+    let setupIgnoredPaths = [];
     let claimExtender;
     try {
       parsedClaim = await this.verifyOrThrow(claim.id);
@@ -95,11 +102,21 @@ export class GitHubCodeLoopWorker {
         cwd: worktree.worktreePath,
         network: this.repoPolicy.setupNetwork ?? "off"
       });
+      if ((this.repoPolicy.setupCommands ?? []).length) {
+        await this.resetTrackedChangesImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl });
+        setupIgnoredPaths = await this.listUntrackedFilesImpl({
+          worktreePath: worktree.worktreePath,
+          execFileImpl: this.execFileImpl
+        });
+      }
       await this.assertCredentialFreeWorktreeImpl(worktree.worktreePath);
 
       const runId = safePathSegment(parsedClaim.runId ?? claim.id);
-      const resultPath = join(this.runLogDir, runId, "worker-result.json");
-      await mkdir(join(this.runLogDir, runId), { recursive: true });
+      const runDir = join(this.runLogDir, runId);
+      const resultPath = join(runDir, "worker-result.json");
+      const streamPath = join(runDir, "stream.jsonl");
+      const stderrPath = join(runDir, "stderr.log");
+      await mkdir(runDir, { recursive: true });
       const promptItem = {
         ...item,
         workerType: parsedClaim.resolvedWorkerType ?? this.workerType
@@ -112,25 +129,32 @@ export class GitHubCodeLoopWorker {
           cwd: worktree.worktreePath,
           codexBin: this.codexBin,
           schemaPath: this.schemaPath,
-          outputPath: resultPath
+          outputPath: resultPath,
+          streamPath,
+          stderrPath
         });
       } catch (error) {
         codexOutput = {
           stdout: error?.stdout ?? "",
-          stderr: error?.stderr ?? ""
+          stderr: error?.stderr ?? "",
+          preserveStreamFiles: Boolean(error?.streamPath || error?.stderrPath)
         };
         throw error;
       }
-      codexOutput = codex;
+      codexOutput = {
+        ...codex,
+        preserveStreamFiles: Boolean(codex.streamPath || codex.stderrPath)
+      };
       await this.verifyOrThrow(claim.id);
       const result = await readWorkerResult(resultPath, codex.stdout);
 
-      await this.applyWorkerOutcome({ claimId: claim.id, item, result, worktree });
+      await this.applyWorkerOutcome({ claimId: claim.id, item, result, worktree, ignoredPaths: setupIgnoredPaths });
       await this.writeRunArtifactsImpl({
         rootDir: this.runLogDir,
         runId,
-        stream: codex.stdout ?? "",
-        stderr: codex.stderr ?? "",
+        stream: codexOutput.preserveStreamFiles ? undefined : codex.stdout ?? "",
+        stderr: codexOutput.preserveStreamFiles ? undefined : codex.stderr ?? "",
+        preserveStreamFiles: codexOutput.preserveStreamFiles,
         result,
         metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result })
       });
@@ -146,8 +170,9 @@ export class GitHubCodeLoopWorker {
         await this.writeRunArtifactsImpl({
           rootDir: this.runLogDir,
           runId: safePathSegment(parsedClaim.runId ?? claim.id),
-          stream: codexOutput.stdout ?? "",
-          stderr: codexOutput.stderr ?? "",
+          stream: codexOutput.preserveStreamFiles ? undefined : codexOutput.stdout ?? "",
+          stderr: codexOutput.preserveStreamFiles ? undefined : codexOutput.stderr ?? "",
+          preserveStreamFiles: codexOutput.preserveStreamFiles,
           result: failedResult,
           metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result: failedResult })
         });
@@ -204,7 +229,7 @@ export class GitHubCodeLoopWorker {
     throw new Error(`Worker type is not auto-runnable in v1: ${this.workerType}`);
   }
 
-  async applyWorkerOutcome({ claimId, item, result, worktree }) {
+  async applyWorkerOutcome({ claimId, item, result, worktree, ignoredPaths = [] }) {
     await this.verifyOrThrow(claimId);
 
     if (this.workerType === WorkerType.IMPLEMENTER && result.outcome === "completed") {
@@ -214,7 +239,7 @@ export class GitHubCodeLoopWorker {
       if (!this.repoPolicy.allowCreatePr) {
         throw new Error("implementer requires allowCreatePr to advance to Review in v1");
       }
-      if (!(await this.hasDiffImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl }))) {
+      if (!(await this.hasDiffImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl, ignoredPaths }))) {
         throw new Error("implementer produced no diff");
       }
       await this.runRepoCommandsImpl({
@@ -226,14 +251,15 @@ export class GitHubCodeLoopWorker {
       const commitSha = await this.commitAllImpl({
         worktreePath: worktree.worktreePath,
         message: `Ski Stack ${this.workerType} ${new Date().toISOString()}`,
-        execFileImpl: this.execFileImpl
+        execFileImpl: this.execFileImpl,
+        ignoredPaths
       });
       await this.verifyOrThrow(claimId);
       if (this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr) {
         const claim = await this.verifyOrThrow(claimId);
         await this.execFileImpl(
           "git",
-          ["-C", worktree.worktreePath, "push", `https://github.com/${claim.repository}.git`, `HEAD:${worktree.branchName}`],
+          ["-C", worktree.worktreePath, "push", "--no-verify", `https://github.com/${claim.repository}.git`, `HEAD:${worktree.branchName}`],
           {
             env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
           }
@@ -249,7 +275,7 @@ export class GitHubCodeLoopWorker {
           branchName: worktree.branchName,
           baseBranch: this.repoPolicy.defaultBaseBranch ?? "main",
           title: `Ski Stack: ${item?.title ?? "Worker change"}`,
-          body: formatPublicEventComment({
+          body: safePublicEventComment({
             runId: claim.runId,
             workerType: this.workerType,
             outcome: result.outcome,
@@ -293,10 +319,10 @@ export class GitHubCodeLoopWorker {
       await this.adapter.releaseClaim?.(claimId);
       return;
     }
-    await this.adapter.failClaim(claimId, message, {
-      allowStatusChanged: true,
-      allowWorkerTypeChanged: true
-    });
+    const failed = await this.adapter.failClaim(claimId, message);
+    if (failed?.failed === false && isClaimDriftReason(failed.reason)) {
+      await this.adapter.releaseClaim?.(claimId);
+    }
   }
 
   startClaimExtender(claimId) {
@@ -323,6 +349,30 @@ function safeGitRefSegment(value) {
     .replace(/[^A-Za-z0-9_.-]+/g, "-")
     .replace(/^[.-]+|[.-]+$/g, "")
     .slice(0, 80);
+}
+
+function safePublicEventComment(output) {
+  try {
+    return formatPublicEventComment(output);
+  } catch {
+    return formatWithheldPublicEvent({
+      runId: output.runId,
+      workerType: output.workerType,
+      outcome: output.outcome
+    });
+  }
+}
+
+function isClaimDriftReason(reason) {
+  return [
+    "status_changed",
+    "worker_type_changed",
+    "repository_changed",
+    "pr_changed",
+    "head_drift",
+    "base_drift",
+    "run_mismatch"
+  ].includes(reason);
 }
 
 async function readWorkerResult(path, stdout) {

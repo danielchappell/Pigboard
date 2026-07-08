@@ -5,15 +5,27 @@ export function defaultRunLogDir(env = process.env) {
   return env.SKI_RUN_LOG_DIR ?? join(env.HOME ?? process.cwd(), ".ski-stack", "runs");
 }
 
-export async function writeRunArtifacts({ rootDir = defaultRunLogDir(), runId, stream = "", stderr = "", result = {}, metadata = {}, diff = "" }) {
+export async function writeRunArtifacts({
+  rootDir = defaultRunLogDir(),
+  runId,
+  stream,
+  stderr,
+  result = {},
+  metadata = {},
+  diff = "",
+  preserveStreamFiles = false
+}) {
   if (!runId) throw new Error("runId is required");
   const runDir = join(rootDir, runId);
+  const streamPath = join(runDir, "stream.jsonl");
+  const stderrPath = join(runDir, "stderr.log");
   await mkdir(runDir, { recursive: true });
-  await writeFile(join(runDir, "stream.jsonl"), stream);
-  await writeFile(join(runDir, "stderr.log"), stderr);
+  if (!preserveStreamFiles || stream !== undefined) await writeFile(streamPath, stream ?? "");
+  if (!preserveStreamFiles || stderr !== undefined) await writeFile(stderrPath, stderr ?? "");
   await writeFile(join(runDir, "result.json"), `${JSON.stringify(result, null, 2)}\n`);
   await writeFile(join(runDir, "metadata.json"), `${JSON.stringify({ ...metadata, runId, runDir }, null, 2)}\n`);
-  await writeFile(join(runDir, "transcript.md"), transcriptFromStream(stream, { result, metadata }));
+  const transcriptStream = stream ?? (await readOptional(streamPath));
+  await writeFile(join(runDir, "transcript.md"), transcriptFromStream(transcriptStream, { result, metadata }));
   if (diff) await writeFile(join(runDir, "diff.patch"), diff);
   await appendIndex(rootDir, { ...metadata, runId, runDir });
   return { runDir };
