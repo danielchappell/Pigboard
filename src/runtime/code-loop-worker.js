@@ -174,7 +174,7 @@ export class GitHubCodeLoopWorker {
     }
 
     if (this.workerType === WorkerType.REVIEWER || this.workerType === WorkerType.PR_BABYSITTER) {
-      const pullRequestNumber = claim.pullRequestNumber ?? item.number;
+      const pullRequestNumber = claim.pullRequestNumber ?? (item.contentType === "PullRequest" ? item.number : undefined);
       if (!pullRequestNumber) throw new Error(`${this.workerType} requires a pull request`);
       return this.createPullRequestWorktreeImpl({
         repoPath: this.repoPolicy.cwd,
@@ -267,6 +267,11 @@ export class GitHubCodeLoopWorker {
 
   async failClaimAfterError(claimId, message) {
     if (typeof this.adapter.failClaim !== "function") return;
+    const claimLostReason = String(message ?? "").match(/^claim lost: ([a-z_]+)/)?.[1];
+    if (claimLostReason === "status_changed" || claimLostReason === "worker_type_changed") {
+      await this.adapter.releaseClaim?.(claimId);
+      return;
+    }
     await this.adapter.failClaim(claimId, message, {
       allowStatusChanged: true,
       allowWorkerTypeChanged: true
@@ -274,7 +279,8 @@ export class GitHubCodeLoopWorker {
   }
 
   startClaimExtender(claimId) {
-    const intervalMs = this.claimHeartbeatMs ?? Math.max(60_000, Math.floor((this.leaseSeconds * 1000) / 3));
+    const intervalMs =
+      this.claimHeartbeatMs ?? Math.max(250, Math.min(60_000, Math.floor((this.leaseSeconds * 1000) / 3)));
     const timer = setInterval(() => {
       this.adapter.extendClaim?.(claimId, this.leaseSeconds).catch(() => {
         // The next guarded mutation will detect and report a lost claim.

@@ -71,27 +71,33 @@ async function drain() {
   draining = true;
   try {
     while (dirty.size) {
-      let ranAny = false;
+      const batch = [];
       for (const key of [...dirty]) {
         if (inFlight.has(key)) continue;
         const worker = workers.get(key);
         dirty.delete(key);
         if (!worker) continue;
         inFlight.add(key);
-        try {
-          const result = await worker.runOnce();
-          if (result.ran) {
-            ranAny = true;
-            dirty.add(key);
-          }
-        } finally {
-          inFlight.delete(key);
-        }
+        batch.push(runWorkerSlot(key, worker));
+      }
+      if (!batch.length) break;
+      const results = await Promise.all(batch);
+      const ranAny = results.some((result) => result?.ran);
+      for (const result of results) {
+        if (result?.ran) dirty.add(result.key);
       }
       if (!ranAny) break;
     }
   } finally {
     draining = false;
+  }
+}
+
+async function runWorkerSlot(key, worker) {
+  try {
+    return { key, ...(await worker.runOnce()) };
+  } finally {
+    inFlight.delete(key);
   }
 }
 
@@ -101,6 +107,11 @@ function createWorkers({ config, adapterConfig }) {
     if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
     if (slot.observeOnly) continue;
     const slotRepositories = repositoriesForSlot({ slot, config });
+    if (!slotRepositories.length && !slot.allowUnfilteredRepositories && !config.repoPolicy?.allowUnfilteredRepositories) {
+      throw new Error(
+        `Worker slot ${slot.type} must set repository/repositories or explicitly set allowUnfilteredRepositories`
+      );
+    }
     const partitions = slotRepositories.length ? slotRepositories : [null];
     const count = Number(slot.count ?? 1);
     for (const repository of partitions) {

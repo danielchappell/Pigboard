@@ -71,6 +71,11 @@ test("repo commands use Linux network namespace wrapper when available", async (
     accessImpl: async (path) => {
       assert.equal(path, "/usr/bin/unshare");
     },
+    execFileImpl: async (command, args) => {
+      assert.equal(command, "/usr/bin/unshare");
+      assert.deepEqual(args, ["-n", "true"]);
+      return { stdout: "", stderr: "" };
+    },
     spawnImpl: (command, args) => {
       calls.push({ command, args });
       return fakeCommandSpawn({ stdoutText: "ok\n" });
@@ -80,6 +85,27 @@ test("repo commands use Linux network namespace wrapper when available", async (
   assert.equal(calls[0].command, "/usr/bin/unshare");
   assert.deepEqual(calls[0].args, ["-n", "/bin/sh", "-lc", "echo ok"]);
   assert.equal(results[0].stdout, "ok\n");
+});
+
+test("repo commands reject Linux unshare wrappers that fail the network namespace probe", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-linux-commands-"));
+
+  await assert.rejects(
+    () =>
+      runRepoCommands({
+        commands: ["echo ok"],
+        cwd: root,
+        platform: "linux",
+        accessImpl: async () => {},
+        execFileImpl: async () => {
+          throw new Error("unshare disabled");
+        },
+        spawnImpl: () => {
+          throw new Error("spawn should not run");
+        }
+      }),
+    /No supported network-off wrapper/
+  );
 });
 
 test("daemon git env wires HTTPS auth without exposing GITHUB_TOKEN", () => {
@@ -118,6 +144,14 @@ test("worktree safety rejects credential-bearing git config", () => {
           url = https://ghp_abcdefghijklmnop@github.com/acme/repo.git
       `),
     /embedded credentials/
+  );
+  assert.throws(
+    () =>
+      inspectGitConfigText(`
+        [http "https://github.com/"]
+          extraheader = AUTHORIZATION: basic abc123
+      `),
+    /credential-bearing/
   );
 });
 

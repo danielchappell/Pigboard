@@ -1,8 +1,11 @@
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { access } from "node:fs/promises";
+import { promisify } from "node:util";
 
 import { buildRepoCommandEnv } from "./command-env.js";
 import { assertCredentialFreeWorktree } from "./worktree-safety.js";
+
+const execFileAsync = promisify(execFile);
 
 export async function runRepoCommands({
   commands = [],
@@ -10,6 +13,7 @@ export async function runRepoCommands({
   network = "off",
   env = buildRepoCommandEnv({ baseEnv: process.env }),
   spawnImpl = spawn,
+  execFileImpl = execFileAsync,
   platform = process.platform,
   accessImpl = access
 }) {
@@ -18,7 +22,7 @@ export async function runRepoCommands({
   }
   await assertCredentialFreeWorktree(cwd);
   if (!commands.length) return [];
-  const wrapper = await resolveNetworkOffWrapper({ platform, accessImpl });
+  const wrapper = await resolveNetworkOffWrapper({ platform, accessImpl, execFileImpl, env });
   const results = [];
   for (const command of commands) {
     const result = await runShellCommand({ command, cwd, env, spawnImpl, wrapper });
@@ -28,7 +32,12 @@ export async function runRepoCommands({
   return results;
 }
 
-async function resolveNetworkOffWrapper({ platform = process.platform, accessImpl = access } = {}) {
+async function resolveNetworkOffWrapper({
+  platform = process.platform,
+  accessImpl = access,
+  execFileImpl = execFileAsync,
+  env = buildRepoCommandEnv()
+} = {}) {
   if (platform === "darwin") {
     const sandboxExec = "/usr/bin/sandbox-exec";
     try {
@@ -45,6 +54,7 @@ async function resolveNetworkOffWrapper({ platform = process.platform, accessImp
     for (const unshare of ["/usr/bin/unshare", "/bin/unshare"]) {
       try {
         await accessImpl(unshare);
+        await execFileImpl(unshare, ["-n", "true"], { env });
         return {
           command: unshare,
           args: ["-n", "/bin/sh", "-lc"]

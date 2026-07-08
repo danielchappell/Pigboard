@@ -182,7 +182,7 @@ test("PR creation implies pushing the generated branch", async () => {
   assert.equal(pushes.length, 1);
 });
 
-test("partial result-application failures block and release claims", async () => {
+test("stale worker-type reroutes release without blocking the item", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     {
@@ -231,8 +231,62 @@ test("partial result-application failures block and release claims", async () =>
 
   assert.equal(result.ran, true);
   assert.match(result.error.message, /worker_type_changed/);
-  assert.equal(adapter.getItem("item-partial-failure").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-partial-failure").status, Status.REVIEW);
   assert.equal(adapter.getItem("item-partial-failure").leaseOwner, undefined);
+});
+
+test("issue-backed reviewer work requires PR metadata instead of falling back to issue number", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const worker = new GitHubCodeLoopWorker({
+    adapter: new MemoryQueueAdapter([]),
+    workerType: WorkerType.REVIEWER,
+    repoPolicy: { cwd: root }
+  });
+
+  await assert.rejects(
+    () =>
+      worker.prepareWorktree({
+        item: {
+          id: "item-issue-review",
+          contentType: "Issue",
+          number: 42,
+          repository: "acme/repo"
+        },
+        claim: {
+          repository: "acme/repo",
+          runId: "run-1",
+          headSha: "a".repeat(40)
+        }
+      }),
+    /reviewer requires a pull request/
+  );
+});
+
+test("claim heartbeat interval is scheduled before short leases expire", async () => {
+  const originalSetInterval = globalThis.setInterval;
+  const originalClearInterval = globalThis.clearInterval;
+  let intervalMs;
+  globalThis.setInterval = (_fn, ms) => {
+    intervalMs = ms;
+    return { unref: () => {} };
+  };
+  globalThis.clearInterval = () => {};
+  try {
+    const worker = new GitHubCodeLoopWorker({
+      adapter: new MemoryQueueAdapter([]),
+      workerType: WorkerType.IMPLEMENTER,
+      repoPolicy: { cwd: await mkdtemp(join(tmpdir(), "ski-worker-")) },
+      leaseSeconds: 30
+    });
+
+    worker.startClaimExtender("claim-id").stop();
+
+    assert.equal(intervalMs < 30_000, true);
+    assert.equal(intervalMs, 10_000);
+  } finally {
+    globalThis.setInterval = originalSetInterval;
+    globalThis.clearInterval = originalClearInterval;
+  }
 });
 
 test("worker prompt uses resolved worker type when Worker Type field is blank", async () => {

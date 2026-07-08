@@ -37,9 +37,32 @@ export function inspectGitConfigText(text, file = "git config") {
   if (SECRET_URL_PATTERN.test(text) || TOKEN_PATTERN.test(text)) {
     throw new WorktreeSafetyError("git config contains embedded credentials", { file });
   }
-  if (UNSAFE_GIT_CONFIG_PATTERN.test(text)) {
+  if (UNSAFE_GIT_CONFIG_PATTERN.test(text) || hasUnsafeSectionForm(text)) {
     throw new WorktreeSafetyError("git config contains credential-bearing settings", { file });
   }
+}
+
+function hasUnsafeSectionForm(text) {
+  let section = "";
+  for (const line of String(text ?? "").split("\n")) {
+    const sectionMatch = line.match(/^\s*\[([^\]]+)]/);
+    if (sectionMatch) {
+      section = sectionMatch[1].toLowerCase();
+      if (section.startsWith("credential")) return true;
+      continue;
+    }
+
+    const keyMatch = line.match(/^\s*([A-Za-z0-9_.-]+)\s*=/);
+    if (!keyMatch) continue;
+    const key = keyMatch[1].toLowerCase();
+    if ((section === "http" || section.startsWith("http ")) && key === "extraheader") return true;
+    if ((section === "url" || section.startsWith("url ")) && key === "insteadof") return true;
+    if ((section === "remote" || section.startsWith("remote ")) && key === "pushurl") return true;
+    if (section === "core" && key === "sshcommand") return true;
+    if ((section === "include" || section.startsWith("includeif ")) && key === "path") return true;
+    if ((section === "lfs" || section.startsWith("lfs ")) && key === "url") return true;
+  }
+  return false;
 }
 
 async function resolveGitConfigPaths(worktree) {

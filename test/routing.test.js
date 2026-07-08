@@ -55,3 +55,13 @@ test("v1 implementer can only complete to Review", () => {
   );
 });
 
+test("automated reviewers cannot bypass Babysit and mark Done", () => {
+  assert.throws(
+    () =>
+      validateWorkerTransition({
+        workerType: WorkerType.REVIEWER,
+        result: { outcome: "completed", nextStatus: Status.DONE }
+      }),
+    /reviewer cannot transition to Done/
+  );
+});
