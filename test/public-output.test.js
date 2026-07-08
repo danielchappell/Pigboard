@@ -11,12 +11,15 @@ test("public output sanitizer keeps concise GitHub-safe evidence", () => {
     nextStatus: "Babysit",
     summary: "No blocking findings.",
     evidence: ["npm test", "PR checks are green"],
+    blocker: "Waiting for required approval",
     prUrl: "https://github.com/acme/repo/pull/42"
   });
 
   assert.deepEqual(safe.evidence, ["npm test", "PR checks are green"]);
+  assert.equal(safe.blocker, "Waiting for required approval");
   assert.equal(safe.prUrl, "https://github.com/acme/repo/pull/42");
   assert.match(formatPublicEventComment(safe), /Outcome: completed/);
+  assert.match(formatPublicEventComment(safe), /Blocker: Waiting for required approval/);
 });
 
 test("public output sanitizer rejects secrets, local paths, and stream artifacts", () => {

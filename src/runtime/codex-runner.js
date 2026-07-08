@@ -45,8 +45,6 @@ export async function runCodexExec({
     "never",
     "exec",
     "--json",
-    "--ignore-user-config",
-    "--ignore-rules",
     "--sandbox",
     "workspace-write"
   ];

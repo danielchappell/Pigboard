@@ -105,13 +105,22 @@ export class GitHubCodeLoopWorker {
         workerType: parsedClaim.resolvedWorkerType ?? this.workerType
       };
       const prompt = buildWorkerPrompt({ item: promptItem, claim, workerRole: this.repoPolicy.workerRole });
-      const codex = await this.runCodexExecImpl({
-        prompt,
-        cwd: worktree.worktreePath,
-        codexBin: this.codexBin,
-        schemaPath: this.schemaPath,
-        outputPath: resultPath
-      });
+      let codex;
+      try {
+        codex = await this.runCodexExecImpl({
+          prompt,
+          cwd: worktree.worktreePath,
+          codexBin: this.codexBin,
+          schemaPath: this.schemaPath,
+          outputPath: resultPath
+        });
+      } catch (error) {
+        codexOutput = {
+          stdout: error?.stdout ?? "",
+          stderr: error?.stderr ?? ""
+        };
+        throw error;
+      }
       codexOutput = codex;
       await this.verifyOrThrow(claim.id);
       const result = await readWorkerResult(resultPath, codex.stdout);
@@ -185,6 +194,7 @@ export class GitHubCodeLoopWorker {
         repository,
         pullRequestNumber,
         runId: claim.runId,
+        baseRef: claim.baseRef,
         expectedHeadSha: claim.headSha,
         githubToken: this.repoPolicy.githubToken,
         execFileImpl: this.execFileImpl
@@ -197,7 +207,7 @@ export class GitHubCodeLoopWorker {
   async applyWorkerOutcome({ claimId, item, result, worktree }) {
     await this.verifyOrThrow(claimId);
 
-    if (this.workerType === WorkerType.IMPLEMENTER) {
+    if (this.workerType === WorkerType.IMPLEMENTER && result.outcome === "completed") {
       if (result.outcome !== "completed" || result.nextStatus !== Status.REVIEW) {
         throw new Error("implementer must complete to Review in v1");
       }

@@ -32,7 +32,8 @@
       "type": "boolean"
     },
     "doneWhenApprovedAndClean": {
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Only pr-babysitter may set this true when moving an approved, clean PR to Done."
     }
   }
 }

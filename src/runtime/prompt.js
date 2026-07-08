@@ -23,7 +23,7 @@ export function buildWorkerPrompt({ item, workerRole, claim }) {
     workerRole ?? "No role card supplied.",
     ``,
     `## Required Output`,
-    `Return a JSON-compatible result with outcome, nextStatus, summary, evidence, and blocker.`
+    `Return a JSON-compatible result with outcome, nextStatus, summary, evidence, and blocker.`,
+    `Only pr-babysitter may include doneWhenApprovedAndClean=true when moving an approved, clean PR to Done.`
   ].join("\n");
 }
-

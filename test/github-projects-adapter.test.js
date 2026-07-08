@@ -501,7 +501,8 @@ test("GitHubProjectsAdapter appends worker events as comments", async () => {
     actor: "worker-1",
     outcome: "completed",
     body: "Implemented the adapter.",
-    evidence: ["npm test"]
+    evidence: ["npm test"],
+    blocker: "Waiting for approval"
   });
 
   const commentInput = calls[1].variables.input;
@@ -509,6 +510,7 @@ test("GitHubProjectsAdapter appends worker events as comments", async () => {
   assert.match(commentInput.body, /Ski Stack Worker Event/);
   assert.match(commentInput.body, /Outcome: completed/);
   assert.match(commentInput.body, /- npm test/);
+  assert.match(commentInput.body, /Blocker: Waiting for approval/);
 });
 
 test("GitHubProjectsAdapter withholds unsafe public event output", async () => {

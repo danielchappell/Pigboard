@@ -41,6 +41,7 @@ export async function createPullRequestWorktree({
   repository,
   pullRequestNumber,
   runId,
+  baseRef,
   expectedHeadSha,
   worktreeRoot = defaultWorktreeRoot(),
   execFileImpl = execFileAsync,
@@ -52,15 +53,21 @@ export async function createPullRequestWorktree({
   await execFileImpl("git", ["-C", repoPath, "fetch", "origin", `pull/${pullRequestNumber}/head`], {
     env: buildDaemonGitEnv({ githubToken })
   });
+  const { stdout: fetchedHead } = await execFileImpl("git", ["-C", repoPath, "rev-parse", "FETCH_HEAD"], {
+    env: buildRepoCommandEnv()
+  });
+  const headSha = fetchedHead.trim();
   if (expectedHeadSha) {
-    const { stdout } = await execFileImpl("git", ["-C", repoPath, "rev-parse", "FETCH_HEAD"], {
-      env: buildRepoCommandEnv()
-    });
-    if (stdout.trim() !== expectedHeadSha) {
+    if (headSha !== expectedHeadSha) {
       throw new Error("pull request head drifted after claim");
     }
   }
-  await execFileImpl("git", ["-C", repoPath, "worktree", "add", "--detach", worktreePath, expectedHeadSha ?? "FETCH_HEAD"], {
+  if (baseRef) {
+    await execFileImpl("git", ["-C", repoPath, "fetch", "origin", baseRef], {
+      env: buildDaemonGitEnv({ githubToken })
+    });
+  }
+  await execFileImpl("git", ["-C", repoPath, "worktree", "add", "--detach", worktreePath, expectedHeadSha ?? headSha], {
     env: buildDaemonGitEnv({ githubToken })
   });
   await assertCredentialFreeWorktree(worktreePath);

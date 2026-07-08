@@ -33,6 +33,7 @@ export function sanitizePublicOutput(input, options = {}) {
     nextStatus: optionalShortText(input.nextStatus, "nextStatus", 80),
     summary: sanitizeText(input.summary ?? "", "summary", maxTextLength),
     evidence: sanitizeEvidence(input.evidence ?? [], maxEvidenceItems, maxTextLength),
+    blocker: optionalShortText(input.blocker, "blocker", maxTextLength),
     prUrl: optionalPublicUrl(input.prUrl, "prUrl"),
     commitUrl: optionalPublicUrl(input.commitUrl, "commitUrl"),
     commitSha: optionalShortText(input.commitSha, "commitSha", 80)
@@ -58,6 +59,7 @@ export function formatPublicEventComment(output) {
     lines.push("", "Evidence:");
     for (const item of safe.evidence) lines.push(`- ${item}`);
   }
+  if (safe.blocker) lines.push("", `Blocker: ${safe.blocker}`);
   if (safe.prUrl) lines.push("", `PR: ${safe.prUrl}`);
   if (safe.commitUrl) lines.push(`Commit: ${safe.commitUrl}`);
   else if (safe.commitSha) lines.push(`Commit: ${safe.commitSha}`);

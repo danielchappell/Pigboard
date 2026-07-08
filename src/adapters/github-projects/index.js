@@ -540,7 +540,8 @@ function formatEventComment(event) {
       outcome: event.outcome ?? event.type ?? "worker_event",
       nextStatus: event.nextStatus,
       summary: event.body ?? event.summary ?? "",
-      evidence: event.evidence ?? []
+      evidence: event.evidence ?? [],
+      blocker: event.blocker ?? null
     };
   try {
     return formatPublicEventComment(output);

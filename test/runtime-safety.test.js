@@ -12,6 +12,7 @@ import {
   assertCredentialFreeWorktree,
   inspectGitConfigText,
   parseCodexLoginStatus,
+  runCodexExec,
   runCodexIsolationDiagnostics,
   runRepoCommands,
   WorktreeSafetyError
@@ -36,6 +37,24 @@ test("Codex auth parser distinguishes ChatGPT local auth from API-key auth", () 
     authenticated: false,
     source: "none"
   });
+});
+
+test("Codex exec preserves project policy flags instead of ignoring user config and rules", async () => {
+  let capturedArgs;
+  await runCodexExec({
+    prompt: "Return JSON",
+    cwd: "/tmp",
+    schemaPath: "/tmp/schema.json",
+    outputPath: "/tmp/result.json",
+    spawnImpl: (_command, args) => {
+      capturedArgs = args;
+      return fakeCodexSpawn("{}")();
+    }
+  });
+
+  assert.equal(capturedArgs.includes("--ignore-user-config"), false);
+  assert.equal(capturedArgs.includes("--ignore-rules"), false);
+  assert.equal(capturedArgs.includes("--sandbox"), true);
 });
 
 test("repo and Codex runner env builders strip secret-bearing variables", () => {
@@ -246,6 +265,7 @@ test("pull request worktree creation checks out the claimed head", async () => {
     repository: "acme/repo",
     pullRequestNumber: 42,
     runId: "run-1",
+    baseRef: "main",
     worktreeRoot: root,
     expectedHeadSha,
     execFileImpl
@@ -253,6 +273,7 @@ test("pull request worktree creation checks out the claimed head", async () => {
 
   assert.equal(result.worktreePath.endsWith("acme_repo/run-1"), true);
   assert.equal(calls.some((args) => args.includes(expectedHeadSha)), true);
+  assert.equal(calls.some((args) => args.at(-1) === "main"), true);
 });
 
 test("worktree creation does not rewrite shared remotes", async () => {

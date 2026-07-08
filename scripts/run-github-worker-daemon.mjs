@@ -1,4 +1,6 @@
 import { readFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   assertLocalChatGptCodexAuth,
@@ -11,6 +13,7 @@ import {
 } from "../src/index.js";
 
 const args = new Set(process.argv.slice(2));
+const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const host = process.env.SKI_WEBHOOK_HOST ?? "127.0.0.1";
 const port = Number(process.env.SKI_WEBHOOK_PORT ?? 8787);
 const secret = process.env.GITHUB_WEBHOOK_SECRET;
@@ -27,7 +30,7 @@ if (!token || !owner || !projectNumber) {
   throw new Error("GITHUB_TOKEN/GH_TOKEN, GitHub owner, and project number are required");
 }
 
-const workers = createWorkers({
+const workers = await createWorkers({
   config,
   adapterConfig: {
     token,
@@ -107,7 +110,7 @@ async function runWorkerSlot(key, worker) {
   }
 }
 
-function createWorkers({ config, adapterConfig }) {
+async function createWorkers({ config, adapterConfig }) {
   const workers = new Map();
   for (const slot of config.slots ?? []) {
     if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
@@ -125,6 +128,7 @@ function createWorkers({ config, adapterConfig }) {
       if (!repoPolicy?.cwd) {
         throw new Error(`Missing repo policy cwd for worker ${slot.type}${repository ? ` on ${repository}` : ""}`);
       }
+      const workerRole = repoPolicy.workerRole ?? (await readWorkerRole(slot.type));
       const repositories = repository ? [repository] : [];
       for (let index = 0; index < count; index += 1) {
         const partitionName = slot.name ? `${slot.name}:${repository ?? "all"}` : repository ?? "all";
@@ -138,7 +142,10 @@ function createWorkers({ config, adapterConfig }) {
           workerType: slot.type,
           workerId: slot.workerId ?? `${key}:${process.pid}`,
           leaseSeconds: Number(slot.leaseSeconds ?? process.env.SKI_LEASE_SECONDS ?? 1800),
-          repoPolicy
+          repoPolicy: {
+            ...repoPolicy,
+            workerRole
+          }
         });
         worker.allowedRepositories = new Set(repositories.map((repo) => repo.toLowerCase()));
         workers.set(key, worker);
@@ -169,13 +176,22 @@ function normalizeRepositories(value) {
 }
 
 function policyForRepository({ config, repository, token }) {
-  const policy = (repository ? config.repositories?.[repository] : undefined) ?? config.repoPolicy;
+  const policy = repository ? config.repositories?.[repository] : config.repoPolicy;
   if (!policy) return undefined;
   return {
     ...policy,
     repository: policy.repository ?? repository,
     githubToken: policy.githubToken ?? token
   };
+}
+
+async function readWorkerRole(type) {
+  try {
+    return await readFile(join(repoRoot, "agents", `${type}.md`), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") return `No role card found for worker type: ${type}`;
+    throw error;
+  }
 }
 
 function safeKey(value) {

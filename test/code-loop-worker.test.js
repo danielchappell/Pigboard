@@ -359,6 +359,109 @@ test("worker fails the claim even when local failure logging fails", async () =>
   assert.equal(adapter.getItem("item-log-fail").leaseOwner, undefined);
 });
 
+test("implementer preserves blocked results instead of replacing the blocker", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-blocked",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-blocked",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "blocked",
+          summary: "Missing product decision.",
+          blocker: "Choose the integration target."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => {
+      throw new Error("blocked implementer should not inspect diffs");
+    },
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(adapter.getItem("item-blocked").status, Status.BLOCKED);
+  assert.equal(adapter.events[0].body, "Missing product decision.");
+  assert.equal(adapter.events[0].blocker, "Choose the integration target.");
+});
+
+test("worker preserves Codex stderr when exec fails", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-codex-fails",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  let logged;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-codex-fails",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async () => {
+      throw Object.assign(new Error("codex failed"), {
+        stdout: "{\"type\":\"turn.started\"}\n",
+        stderr: "schema validation failed"
+      });
+    },
+    writeRunArtifactsImpl: async (artifact) => {
+      logged = artifact;
+      return { runDir: join(root, "runs", "run") };
+    },
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /codex failed/);
+  assert.equal(logged.stream, "{\"type\":\"turn.started\"}\n");
+  assert.equal(logged.stderr, "schema validation failed");
+  assert.equal(adapter.getItem("item-codex-fails").status, Status.BLOCKED);
+});
+
 test("issue-backed reviewer work requires PR metadata instead of falling back to issue number", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const worker = new GitHubCodeLoopWorker({
