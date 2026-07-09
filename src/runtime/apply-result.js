@@ -15,6 +15,9 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType, 
   }
 
   if (result.outcome === "failed") {
+    if (typeof beforeRelease === "function") {
+      await beforeRelease();
+    }
     await guardedCall({
       adapter,
       claimAwareMethod: "failClaim",

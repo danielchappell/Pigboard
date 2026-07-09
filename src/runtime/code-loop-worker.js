@@ -149,6 +149,7 @@ export class GitHubCodeLoopWorker {
       };
       await this.verifyOrThrow(claim.id);
       const result = await readWorkerResult(resultPath, codex.stdout);
+      await this.assertCredentialFreeWorktreeImpl(worktree.worktreePath);
 
       await this.applyWorkerOutcome({
         claimId: claim.id,

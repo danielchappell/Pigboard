@@ -334,6 +334,33 @@ test("pull request worktree creation rejects claimed head drift", async () => {
   assert.equal(calls.some((args) => args.includes("worktree") && args.includes("add")), false);
 });
 
+test("worktree creation checks seed repo config before authenticated fetches", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-seed-config-"));
+  await mkdir(join(root, ".git"), { recursive: true });
+  await writeFile(join(root, ".git", "config"), "[credential]\n  helper = osxkeychain\n");
+  const calls = [];
+
+  await assert.rejects(
+    () =>
+      createImplementationWorktree({
+        repoPath: root,
+        repository: "acme/repo",
+        baseBranch: "main",
+        branchName: "ski/12-run",
+        runId: "run-1",
+        worktreeRoot: root,
+        githubToken: "test-token",
+        execFileImpl: async (_command, args) => {
+          calls.push(args);
+          return { stdout: "", stderr: "" };
+        }
+      }),
+    /credential-bearing/
+  );
+
+  assert.equal(calls.some((args) => args.includes("fetch")), false);
+});
+
 test("pull request worktree creation checks out the claimed head", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worktrees-"));
   const expectedHeadSha = "a".repeat(40);

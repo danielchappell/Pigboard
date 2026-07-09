@@ -201,6 +201,66 @@ test("PR creation implies pushing the generated branch", async () => {
   assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:ski/12-run"]);
 });
 
+test("worker re-checks worktree git config after Codex before git operations", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-post-codex-config",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  let safetyChecks = 0;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-post-codex-config",
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => {
+      safetyChecks += 1;
+      return { ok: true };
+    },
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => {
+      assert.equal(safetyChecks, 2);
+      return "a".repeat(40);
+    },
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(adapter.getItem("item-post-codex-config").status, Status.REVIEW);
+  assert.equal(safetyChecks, 2);
+});
+
 test("generic worker failures release instead of blocking after claim drift", async () => {
   const adapter = new MemoryQueueAdapter([
     {

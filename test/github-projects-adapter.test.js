@@ -406,6 +406,50 @@ test("GitHubProjectsAdapter does not return claims lost during write/readback", 
   assert.equal(result.reason, "owner_mismatch");
 });
 
+test("GitHubProjectsAdapter rolls back its lease fields after failed readback", async () => {
+  const driftedOwnLeaseResponse = ({ calls }) =>
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.IMPLEMENTER,
+      leaseOwner: "worker-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: calls.find((call) => call.variables?.input?.fieldId === "field_last_worker_run")?.variables.input.value.text
+    });
+  const { fetchImpl, calls } = createGraphqlMock([
+    projectResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    driftedOwnLeaseResponse,
+    driftedOwnLeaseResponse,
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "worker-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, false);
+  assert.equal(result.reason, "status_changed");
+  const clearFieldIds = calls
+    .filter((call) => String(call.query).includes("clearProjectV2ItemFieldValue"))
+    .map((call) => call.variables.input.fieldId);
+  assert.deepEqual(clearFieldIds, ["field_last_worker_run", "field_lease_owner", "field_lease_expires"]);
+});
+
 test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verification", async () => {
   const responses = [
     projectResponse({
@@ -883,6 +927,106 @@ test("GitHubProjectsAdapter pages through PR reviews before QA and blocks change
 
   assert.equal(verified.ready, false);
   assert.equal(verified.reason, "changes_requested");
+});
+
+test("GitHubProjectsAdapter preserves change requests when later comments follow", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    reviews: [
+      { user: { login: "reviewer" }, state: "CHANGES_REQUESTED", commit_id: "a".repeat(40) },
+      { user: { login: "reviewer" }, state: "COMMENTED", commit_id: "a".repeat(40) },
+      { user: { login: "maintainer" }, state: "APPROVED", commit_id: "a".repeat(40) }
+    ]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "changes_requested");
+});
+
+test("GitHubProjectsAdapter preserves approvals when later comments follow", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    reviews: [
+      { user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) },
+      { user: { login: "reviewer" }, state: "COMMENTED", commit_id: "a".repeat(40) }
+    ]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, true);
 });
 
 test("GitHubProjectsAdapter pages through check runs before QA", async () => {

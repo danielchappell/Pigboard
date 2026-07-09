@@ -170,6 +170,46 @@ test("applyWorkerResult uses fail path for failed outcomes", async () => {
   assert.equal(adapter.events[0].type, "worker_failed");
 });
 
+test("applyWorkerResult drains beforeRelease before failed outcome release", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-failed-before-release",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      repository: "owner/repo",
+      contentType: "PullRequest"
+    }
+  ]);
+  const { claim } = await adapter.claimReadyForWorker({
+    itemId: "item-failed-before-release",
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-1",
+    leaseSeconds: 60
+  });
+  let drained = false;
+  const failClaim = adapter.failClaim.bind(adapter);
+  adapter.failClaim = async (...args) => {
+    assert.equal(drained, true);
+    return failClaim(...args);
+  };
+
+  await applyWorkerResult({
+    adapter,
+    claimId: claim.id,
+    workerType: WorkerType.REVIEWER,
+    result: {
+      outcome: "failed",
+      summary: "Structured failure"
+    },
+    beforeRelease: async () => {
+      drained = true;
+    }
+  });
+
+  assert.equal(adapter.getItem("item-failed-before-release").status, Status.BLOCKED);
+  assert.equal(adapter.getItem("item-failed-before-release").leaseOwner, undefined);
+});
+
 test("applyWorkerResult does not mutate after a claim is rerouted", async () => {
   const adapter = new MemoryQueueAdapter([
     {

@@ -28,6 +28,7 @@ export async function createImplementationWorktree({
   const remoteUrl = githubRemoteUrl(repository);
   const baseRunRef = runScopedRef(runId, "base");
   await mkdir(join(worktreeRoot, repositorySegment), { recursive: true });
+  await assertCredentialFreeWorktree(repoPath);
   await execFileImpl("git", ["-C", repoPath, "fetch", "--no-tags", remoteUrl, `+${branchRemoteRef(baseBranch)}:${baseRunRef}`], {
     env: buildDaemonGitEnv({ githubToken })
   });
@@ -54,6 +55,7 @@ export async function createPullRequestWorktree({
   const remoteUrl = githubRemoteUrl(repository);
   const headRunRef = runScopedRef(runId, "pr-head");
   await mkdir(join(worktreeRoot, repositorySegment), { recursive: true });
+  await assertCredentialFreeWorktree(repoPath);
   await execFileImpl(
     "git",
     ["-C", repoPath, "fetch", "--no-tags", remoteUrl, `+${pullRequestRemoteRef(pullRequestNumber)}:${headRunRef}`],

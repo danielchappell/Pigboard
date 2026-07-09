@@ -252,6 +252,7 @@ export class GitHubProjectsAdapter {
     const verified = await this.verifyClaim(claimId);
     if (!verified.active) {
       this.claims.delete(claimId);
+      await this.rollbackClaimAttempt(projectModel, item.id, { claimId, workerId, expiresAt });
       return { claimed: false, reason: verified.reason };
     }
 
@@ -510,9 +511,13 @@ export class GitHubProjectsAdapter {
     const { items } = await this.loadProjectItems();
     const item = items.find((candidate) => candidate.id === itemId);
     if (!item) return;
-    if (item.lastWorkerRun === claimId) await this.clearField(projectModel, itemId, FieldName.LAST_WORKER_RUN);
-    if (item.leaseOwner === workerId) await this.clearField(projectModel, itemId, FieldName.LEASE_OWNER);
-    if (item.leaseExpiresAt === expiresAt) await this.clearField(projectModel, itemId, FieldName.LEASE_EXPIRES);
+    const ownsRun = item.lastWorkerRun === claimId;
+    const ownsLease = item.leaseOwner === workerId;
+    if (ownsRun) await this.clearField(projectModel, itemId, FieldName.LAST_WORKER_RUN);
+    if (ownsLease) await this.clearField(projectModel, itemId, FieldName.LEASE_OWNER);
+    if ((ownsRun || ownsLease) && item.leaseExpiresAt === expiresAt) {
+      await this.clearField(projectModel, itemId, FieldName.LEASE_EXPIRES);
+    }
   }
 
   matchesRepositoryFilter(item) {
@@ -704,7 +709,11 @@ function reviewStateForHead(reviews, headSha) {
     if (review.commit_id !== headSha) continue;
     const author = review.user?.login;
     if (!author || !review.state) continue;
-    latestByAuthor.set(author, review.state);
+    if (review.state === "APPROVED" || review.state === "CHANGES_REQUESTED") {
+      latestByAuthor.set(author, review.state);
+    } else if (review.state === "DISMISSED") {
+      latestByAuthor.delete(author);
+    }
   }
   const states = [...latestByAuthor.values()];
   return {
