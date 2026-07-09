@@ -536,6 +536,150 @@ test("GitHubProjectsAdapter requires approvals on the current PR head before QA"
   assert.equal(verified.reason, "not_approved");
 });
 
+test("GitHubProjectsAdapter accepts a PR description thumbs-up reaction before QA", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    reviews: [],
+    reactions: [{ user: { login: "maintainer" }, content: "+1" }]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, true);
+});
+
+test("GitHubProjectsAdapter requires a clean CI run before QA", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) }],
+    status: { total_count: 0, state: "success" },
+    checkRuns: { total_count: 0, check_runs: [] }
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "ci_missing");
+});
+
+test("GitHubProjectsAdapter blocks current-head change requests before QA", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    reviews: [{ user: { login: "reviewer" }, state: "CHANGES_REQUESTED", commit_id: "a".repeat(40) }],
+    reactions: [{ user: { login: "maintainer" }, content: "+1" }]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "changes_requested");
+});
+
 test("GitHubProjectsAdapter rejects unmergeable PRs before QA", async () => {
   const responses = [
     projectResponse({
@@ -584,7 +728,7 @@ test("GitHubProjectsAdapter rejects unmergeable PRs before QA", async () => {
   assert.equal(verified.reason, "not_mergeable");
 });
 
-test("GitHubProjectsAdapter pages through PR reviews before QA", async () => {
+test("GitHubProjectsAdapter pages through PR reviews before QA and blocks change requests", async () => {
   const responses = [
     projectResponse({
       status: Status.BABYSIT,
@@ -636,7 +780,7 @@ test("GitHubProjectsAdapter pages through PR reviews before QA", async () => {
   const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
 
   assert.equal(verified.ready, false);
-  assert.equal(verified.reason, "not_approved");
+  assert.equal(verified.reason, "changes_requested");
 });
 
 test("GitHubProjectsAdapter pages through check runs before QA", async () => {
@@ -853,8 +997,9 @@ function createPrMergeFetchImpl({
   responses,
   pullRequest = pullRequestResponse(),
   reviews = [],
+  reactions = [],
   status = { total_count: 0, state: "success" },
-  checkRuns = { total_count: 0, check_runs: [] }
+  checkRuns = { total_count: 1, check_runs: [{ name: "ci", status: "completed", conclusion: "success" }] }
 }) {
   return async (url, options) => {
     const requestUrl = String(url);
@@ -871,6 +1016,13 @@ function createPrMergeFetchImpl({
       return {
         ok: true,
         json: async () => reviewPages[page - 1] ?? []
+      };
+    }
+    if (parsedUrl.pathname.endsWith("/repos/acme/repo/issues/42/reactions")) {
+      const reactionPages = Array.isArray(reactions[0]) ? reactions : [reactions];
+      return {
+        ok: true,
+        json: async () => reactionPages[page - 1] ?? []
       };
     }
     if (parsedUrl.pathname.includes("/repos/acme/repo/commits/") && parsedUrl.pathname.endsWith("/status")) {

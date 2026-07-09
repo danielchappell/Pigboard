@@ -23,7 +23,8 @@ Every run starts from live PR state.
 - Address review feedback that is inside the item scope.
 - Re-run or wait on checks when that is the only remaining action.
 - Comment with evidence when a finding is stale, invalid, or deferred.
-- When the PR is approved, mergeable, and checks are clean, request
+- When the PR has a clean CI run, is mergeable, and has a current-head review
+  approval or PR-description thumbs-up reaction, request
   `mergeWhenApprovedAndClean: true` with `nextStatus: "QA"`. The harness must
   re-check live PR state and merge with an exact head-SHA guard before moving
   the item to QA.
@@ -31,7 +32,8 @@ Every run starts from live PR state.
 ## Stop Conditions
 
 - PR merged by the harness: transition to `QA`.
-- Approved and clean but not merged: request the deterministic merge gate.
+- Approved or PR-description thumbs-up, clean CI, and mergeable but not merged:
+  request the deterministic merge gate.
 - Real blocker: transition to `Blocked` with the blocker.
 - Superseded/closed: transition to `Canceled` or the configured terminal state.
 

@@ -821,7 +821,7 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
 });
 
-test("pr-babysitter merges approved clean PRs before moving to QA", async () => {
+test("pr-babysitter merges verifier-approved PRs before moving to QA", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -845,7 +845,7 @@ test("pr-babysitter merges approved clean PRs before moving to QA", async () => 
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
-      summary: "Approved and checks are clean.",
+      summary: "Verifier approved merge before QA.",
       mergeWhenApprovedAndClean: true
     },
     mergePullRequestImpl: async (input) => {
@@ -920,7 +920,7 @@ test("pr-babysitter cannot move to QA when live PR state is not ready", async ()
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
-      summary: "Approved and checks are clean.",
+      summary: "Verifier approved merge before QA.",
       mergeWhenApprovedAndClean: true
     }
   });
@@ -1045,7 +1045,7 @@ test("pr-babysitter blocks QA without merge flag", async () => {
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
-      summary: "Approved and checks are clean."
+      summary: "Verifier approved merge before QA."
     }
   });
 

@@ -450,7 +450,9 @@ export class GitHubProjectsAdapter {
     if (state.merged) return { ready: true, reason: "merged" };
     if (state.state !== "open") return { ready: false, reason: "pr_not_open" };
     if (state.draft) return { ready: false, reason: "draft" };
+    if (state.changesRequested) return { ready: false, reason: "changes_requested" };
     if (!state.approved) return { ready: false, reason: "not_approved" };
+    if (!state.ciPresent) return { ready: false, reason: "ci_missing" };
     if (!state.checksClean) return { ready: false, reason: "checks_not_clean" };
     const mergeabilityReason = mergeabilityFailureReason(state);
     if (mergeabilityReason) return { ready: false, reason: mergeabilityReason };
@@ -571,10 +573,15 @@ export class GitHubProjectsAdapter {
       errorCode: "GITHUB_PR_METADATA_HTTP",
       errorMessage: "GitHub pull request metadata request failed"
     });
-    const [reviews, status, checkRuns] = await Promise.all([
+    const [reviews, reactions, status, checkRuns] = await Promise.all([
       this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/reviews`, {
         errorCode: "GITHUB_PR_REVIEWS_HTTP",
         errorMessage: "GitHub pull request reviews request failed",
+        itemKey: null
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/issues/${number}/reactions`, {
+        errorCode: "GITHUB_PR_REACTIONS_HTTP",
+        errorMessage: "GitHub pull request reactions request failed",
         itemKey: null
       }),
       this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/status`, {
@@ -588,6 +595,8 @@ export class GitHubProjectsAdapter {
       })
     ]);
 
+    const reviewState = reviewStateForHead(reviews, pr.head?.sha);
+    const ciState = summarizeCiState(status, checkRuns);
     return {
       number: pr.number,
       url: pr.html_url,
@@ -595,8 +604,10 @@ export class GitHubProjectsAdapter {
       draft: pr.draft === true,
       merged: pr.merged === true,
       headSha: pr.head?.sha,
-      approved: hasCurrentApproval(reviews, pr.head?.sha),
-      checksClean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns),
+      approved: reviewState.approved || hasThumbsUpReaction(reactions),
+      changesRequested: reviewState.changesRequested,
+      ciPresent: ciState.present,
+      checksClean: ciState.clean,
       mergeable: pr.mergeable,
       mergeableState: pr.mergeable_state
     };
@@ -678,8 +689,8 @@ function withPagination(url, { perPage, page }) {
   return parsed.toString();
 }
 
-function hasCurrentApproval(reviews, headSha) {
-  if (!headSha) return false;
+function reviewStateForHead(reviews, headSha) {
+  if (!headSha) return { approved: false, changesRequested: false };
   const latestByAuthor = new Map();
   for (const review of Array.isArray(reviews) ? reviews : []) {
     if (review.commit_id !== headSha) continue;
@@ -688,7 +699,14 @@ function hasCurrentApproval(reviews, headSha) {
     latestByAuthor.set(author, review.state);
   }
   const states = [...latestByAuthor.values()];
-  return states.includes("APPROVED") && !states.includes("CHANGES_REQUESTED");
+  return {
+    approved: states.includes("APPROVED"),
+    changesRequested: states.includes("CHANGES_REQUESTED")
+  };
+}
+
+function hasThumbsUpReaction(reactions) {
+  return Array.isArray(reactions) && reactions.some((reaction) => reaction?.content === "+1");
 }
 
 function mergeabilityFailureReason(state) {
@@ -710,8 +728,19 @@ function areStatusChecksClean(status) {
 
 function areCheckRunsClean(checkRuns) {
   const runs = Array.isArray(checkRuns?.check_runs) ? checkRuns.check_runs : [];
-  if (!runs.length) return true;
+  if (!runs.length) return Number(checkRuns?.total_count ?? 0) === 0;
   return runs.every((run) => run.status === "completed" && ["success", "skipped", "neutral"].includes(run.conclusion));
+}
+
+function summarizeCiState(status, checkRuns) {
+  const statusCount = Number(status?.total_count ?? 0);
+  const runs = Array.isArray(checkRuns?.check_runs) ? checkRuns.check_runs : [];
+  const checkRunCount = Number(checkRuns?.total_count ?? runs.length);
+  const present = statusCount > 0 || checkRunCount > 0 || runs.length > 0;
+  return {
+    present,
+    clean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns)
+  };
 }
 
 function normalizeRepositoryFilter(repositories) {

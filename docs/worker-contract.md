@@ -50,6 +50,7 @@ Outcomes:
 - Do not silently expand scope.
 - If the item is under-specified, block it with the exact missing decision.
 - `pr-babysitter` may set `mergeWhenApprovedAndClean: true` only when asking the
-  harness to merge an approved, clean PR before moving it to `QA`.
+  harness to merge a clean-CI, mergeable PR with either current-head review
+  approval or a PR-description thumbs-up reaction before moving it to `QA`.
 - If the work should be split, transition to Grooming or create sub-items through
   the adapter.

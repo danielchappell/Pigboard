@@ -33,7 +33,7 @@
     },
     "mergeWhenApprovedAndClean": {
       "type": "boolean",
-      "description": "Only pr-babysitter may set this true when asking the harness to merge an approved, clean PR before moving it to QA."
+      "description": "Only pr-babysitter may set this true when asking the harness to merge a clean-CI, mergeable PR with review approval or PR-description thumbs-up before moving it to QA."
     }
   }
 }

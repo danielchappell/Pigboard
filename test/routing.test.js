@@ -76,7 +76,7 @@ test("pr-babysitter can no-op and remain in Babysit", () => {
   );
 });
 
-test("pr-babysitter can move merged approved clean PRs to QA only with the explicit flag", () => {
+test("pr-babysitter can move merge-gated PRs to QA only with the explicit flag", () => {
   assert.equal(
     validateWorkerTransition({
       workerType: WorkerType.PR_BABYSITTER,

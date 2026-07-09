@@ -211,7 +211,7 @@ V1 can auto-run only the code loop workers:
   findings back to `Implementation`.
 - `pr-babysitter` claims `Babysit`, addresses PR comments/CI feedback on the
   same PR, stays in `Babysit` after pushing fixes, and asks the harness to
-  merge approved clean PRs before moving them to `QA`.
+  merge clean-CI, explicitly approved PRs before moving them to `QA`.
 
 `planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual for v1.
 

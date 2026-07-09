@@ -186,7 +186,8 @@ adapter failure path, records a failure event, moves the item to `Blocked`, and
 releases the claim.
 
 Only `pr-babysitter` may set `mergeWhenApprovedAndClean: true`, and only when it
-is asking the harness to merge an approved, clean PR before moving the card to
+is asking the harness to merge a clean-CI, mergeable PR with either current-head
+review approval or a PR-description thumbs-up reaction before moving the card to
 `QA`.
 
 ## 4. Runtime Shape

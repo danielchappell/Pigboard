@@ -19,9 +19,11 @@ merge conflicts, or repeated infrastructure failures to `Blocked` with the exact
 next step. Do not open a replacement PR. Do not merge manually; the harness
 performs the merge after the deterministic gate passes.
 
-When the PR is approved, mergeable, and all checks are clean, return
-`nextStatus: "QA"` with `mergeWhenApprovedAndClean: true`. The harness, not your
-judgment alone, performs the final deterministic readiness check and merge.
+When the PR has a clean CI run, is mergeable, and has an explicit approval
+signal, return `nextStatus: "QA"` with `mergeWhenApprovedAndClean: true`.
+Approval can be either a current-head GitHub review approval or a thumbs-up
+reaction on the PR description. The harness, not your judgment alone, performs
+the final deterministic readiness check and merge.
 
 ## Useful Skills
 
@@ -43,7 +45,8 @@ Append a babysitting handoff with:
 Transition to:
 
 - `Babysit` after pushing fixes, while waiting on review, or while waiting on CI.
-- `QA` only by requesting `mergeWhenApprovedAndClean: true` after the PR is
-  approved, mergeable, and all checks are clean.
+- `QA` only by requesting `mergeWhenApprovedAndClean: true` after the PR has a
+  clean CI run, is mergeable, and has a review approval or PR-description
+  thumbs-up reaction.
 - `Blocked` when a human decision, permission, fork, conflict, or infrastructure
   issue prevents progress.

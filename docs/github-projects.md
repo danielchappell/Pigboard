@@ -47,10 +47,10 @@ column field. Moving a card into `Implementation`, `QA`, `Review`, or `Babysit`
 is the operator signal that the corresponding worker may claim it.
 
 PR-backed work remains in `Babysit` while comments, reviews, and CI are being
-handled. When the PR has a current-head approval, clean checks, and clean
-mergeability, `pr-babysitter` can request the harness merge gate. The harness
-rechecks live PR state, merges with the claimed head SHA, and then moves the
-card to `QA`.
+handled. When the PR has a clean CI run, clean mergeability, and either a
+current-head review approval or a thumbs-up reaction on the PR description,
+`pr-babysitter` can request the harness merge gate. The harness rechecks live PR
+state, merges with the claimed head SHA, and then moves the card to `QA`.
 
 GitHub does not expose public Project view create/update mutations. Setup copies
 the bundled Ski Stack template Project by default to automate the Kanban layout.
