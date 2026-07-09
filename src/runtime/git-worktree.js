@@ -32,8 +32,8 @@ export async function createImplementationWorktree({
   await execFileImpl("git", ["-C", repoPath, "fetch", "--no-tags", remoteUrl, `+${branchRemoteRef(baseBranch)}:${baseRunRef}`], {
     env: buildDaemonGitEnv({ githubToken })
   });
-  await execFileImpl("git", ["-C", repoPath, "worktree", "add", "-B", safeBranchName, worktreePath, baseRunRef], {
-    env: buildDaemonGitEnv({ githubToken })
+  await execFileImpl("git", ["-c", "core.hooksPath=/dev/null", "-C", repoPath, "worktree", "add", "-B", safeBranchName, worktreePath, baseRunRef], {
+    env: buildRepoCommandEnv()
   });
   await assertCredentialFreeWorktree(worktreePath);
   return { worktreePath, branchName: safeBranchName };
@@ -79,8 +79,8 @@ export async function createPullRequestWorktree({
       }
     );
   }
-  await execFileImpl("git", ["-C", repoPath, "worktree", "add", "--detach", worktreePath, expectedHeadSha ?? headSha], {
-    env: buildDaemonGitEnv({ githubToken })
+  await execFileImpl("git", ["-c", "core.hooksPath=/dev/null", "-C", repoPath, "worktree", "add", "--detach", worktreePath, expectedHeadSha ?? headSha], {
+    env: buildRepoCommandEnv()
   });
   await assertCredentialFreeWorktree(worktreePath);
   return { worktreePath };

@@ -66,6 +66,24 @@ test("automated reviewers cannot bypass Babysit and mark Done", () => {
   );
 });
 
+test("automated reviewers route findings to Babysit instead of Implementation", () => {
+  assert.equal(
+    validateWorkerTransition({
+      workerType: WorkerType.REVIEWER,
+      result: { outcome: "completed", nextStatus: Status.BABYSIT }
+    }),
+    Status.BABYSIT
+  );
+  assert.throws(
+    () =>
+      validateWorkerTransition({
+        workerType: WorkerType.REVIEWER,
+        result: { outcome: "completed", nextStatus: Status.IMPLEMENTATION }
+      }),
+    /reviewer cannot transition to Implementation/
+  );
+});
+
 test("pr-babysitter can no-op and remain in Babysit", () => {
   assert.equal(
     validateWorkerTransition({

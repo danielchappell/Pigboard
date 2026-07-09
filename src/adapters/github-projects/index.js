@@ -626,6 +626,64 @@ export class GitHubProjectsAdapter {
     };
   }
 
+  async loadPullRequestFeedbackForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true, ...verifyOptions });
+    if (!verified.active) {
+      throw new Error(`claim lost: ${verified.reason}`);
+    }
+    const claim = verified.claim;
+    const item = verified.item;
+    const number = claim.pullRequestNumber ?? (item.contentType === "PullRequest" ? item.number : undefined);
+    const repository = claim.repository ?? item.repository;
+    const headSha = claim.headSha ?? item.headSha;
+    if (!repository || !number) return null;
+
+    const [issueComments, reviews, reviewComments, status, checkRuns] = await Promise.all([
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/issues/${number}/comments`, {
+        errorCode: "GITHUB_PR_COMMENTS_HTTP",
+        errorMessage: "GitHub pull request comments request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/reviews`, {
+        errorCode: "GITHUB_PR_REVIEWS_HTTP",
+        errorMessage: "GitHub pull request reviews request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/comments`, {
+        errorCode: "GITHUB_PR_REVIEW_COMMENTS_HTTP",
+        errorMessage: "GitHub pull request review comments request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${headSha}/status`, {
+        errorCode: "GITHUB_PR_STATUS_HTTP",
+        errorMessage: "GitHub pull request status request failed"
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/commits/${headSha}/check-runs`, {
+        errorCode: "GITHUB_PR_CHECKS_HTTP",
+        errorMessage: "GitHub pull request checks request failed",
+        itemKey: "check_runs",
+        maxPages: 5
+      })
+    ]);
+
+    return {
+      repository,
+      number,
+      url: claim.prUrl ?? item.url,
+      headSha,
+      comments: issueComments.slice(-20).map(formatIssueCommentForPrompt),
+      reviews: reviews
+        .filter((review) => !headSha || review.commit_id === headSha)
+        .slice(-20)
+        .map(formatReviewForPrompt),
+      reviewComments: reviewComments.slice(-50).map(formatReviewCommentForPrompt),
+      ci: formatCiForPrompt(status, checkRuns)
+    };
+  }
+
   async fetchGitHubJson(url, { errorCode, errorMessage }) {
     const response = await this.fetchImpl(url, {
       method: "GET",
@@ -686,6 +744,67 @@ function formatEventComment(event) {
       outcome: output.outcome
     });
   }
+}
+
+function formatIssueCommentForPrompt(comment) {
+  return {
+    author: comment.user?.login,
+    createdAt: comment.created_at,
+    body: truncatePromptText(comment.body)
+  };
+}
+
+function formatReviewForPrompt(review) {
+  return {
+    author: review.user?.login,
+    state: review.state,
+    submittedAt: review.submitted_at,
+    body: truncatePromptText(review.body)
+  };
+}
+
+function formatReviewCommentForPrompt(comment) {
+  return {
+    author: comment.user?.login,
+    path: comment.path,
+    line: comment.line ?? comment.original_line,
+    side: comment.side,
+    createdAt: comment.created_at,
+    body: truncatePromptText(comment.body)
+  };
+}
+
+function formatCiForPrompt(status, checkRuns) {
+  const failingStatuses = (status?.statuses ?? [])
+    .filter((context) => context?.state && context.state !== "success")
+    .slice(0, 30)
+    .map((context) => ({
+      name: context.context,
+      state: context.state,
+      description: truncatePromptText(context.description, 240),
+      targetUrl: context.target_url
+    }));
+  const failingRuns = (checkRuns?.check_runs ?? [])
+    .filter((run) => run?.status !== "completed" || !["success", "neutral", "skipped"].includes(run?.conclusion))
+    .slice(0, 30)
+    .map((run) => ({
+      name: run.name,
+      status: run.status,
+      conclusion: run.conclusion,
+      detailsUrl: run.html_url
+    }));
+  return {
+    statusState: status?.state,
+    statusTotal: status?.total_count,
+    failingStatuses,
+    checkRunTotal: checkRuns?.total_count,
+    failingCheckRuns: failingRuns
+  };
+}
+
+function truncatePromptText(value, maxLength = 2000) {
+  const text = String(value ?? "");
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 }
 
 function parsePullRequestReference(url) {

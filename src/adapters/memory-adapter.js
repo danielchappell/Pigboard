@@ -124,6 +124,14 @@ export class MemoryQueueAdapter {
     const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { updated: false, reason: verified.reason };
     const item = this.items.get(verified.claim.itemId);
+    if (fieldName === "Last Worker Run") {
+      const nextClaim = parseClaimId(value);
+      item.lastWorkerRun = value;
+      if (nextClaim.headSha) item.headSha = nextClaim.headSha;
+      this.claims.set(value, { id: value, ...nextClaim });
+      this.claims.delete(claimId);
+      return { updated: true };
+    }
     item.fields ??= {};
     item.fields[fieldName] = value;
     return { updated: true };

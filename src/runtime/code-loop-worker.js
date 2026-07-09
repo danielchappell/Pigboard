@@ -21,7 +21,7 @@ import { runRepoCommands } from "./repo-commands.js";
 import { defaultRunLogDir, writeRunArtifacts } from "./run-logs.js";
 import { assertCredentialFreeWorktree } from "./worktree-safety.js";
 import { buildWorkerPrompt } from "./prompt.js";
-import { parseClaimId } from "../core/claims.js";
+import { createClaimV2Id, isClaimV2, parseClaimId } from "../core/claims.js";
 import { formatPublicEventComment, formatWithheldPublicEvent } from "../core/public-output.js";
 import { Status, WorkerType } from "../core/status.js";
 
@@ -123,7 +123,8 @@ export class GitHubCodeLoopWorker {
         ...item,
         workerType: parsedClaim.resolvedWorkerType ?? this.workerType
       };
-      const prompt = buildWorkerPrompt({ item: promptItem, claim, workerRole: this.repoPolicy.workerRole });
+      const feedbackContext = await this.loadPromptFeedbackContext(claim.id);
+      const prompt = buildWorkerPrompt({ item: promptItem, claim, workerRole: this.repoPolicy.workerRole, feedbackContext });
       let codex;
       try {
         codex = await this.runCodexExecImpl({
@@ -244,7 +245,8 @@ export class GitHubCodeLoopWorker {
   }
 
   async applyWorkerOutcome({ claimId, item, result, worktree, ignoredPaths = [], claimExtender }) {
-    await this.verifyOrThrow(claimId);
+    let activeClaimId = claimId;
+    await this.verifyOrThrow(activeClaimId);
 
     if (this.workerType === WorkerType.IMPLEMENTER && result.outcome === "completed") {
       if (result.outcome !== "completed" || result.nextStatus !== Status.REVIEW) {
@@ -280,16 +282,16 @@ export class GitHubCodeLoopWorker {
           untrackedAfterVerify.filter((path) => !untrackedBeforeVerify.includes(path))
         );
       }
-      await this.verifyOrThrow(claimId);
+      await this.verifyOrThrow(activeClaimId);
       const commitSha = await this.commitAllImpl({
         worktreePath: worktree.worktreePath,
         message: `Ski Stack ${this.workerType} ${new Date().toISOString()}`,
         execFileImpl: this.execFileImpl,
         ignoredPaths: commitIgnoredPaths
       });
-      await this.verifyOrThrow(claimId);
+      await this.verifyOrThrow(activeClaimId);
       if (this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr) {
-        const claim = await this.verifyOrThrow(claimId);
+        const claim = await this.verifyOrThrow(activeClaimId);
         await this.execFileImpl(
           "git",
           ["-C", worktree.worktreePath, "push", "--no-verify", `https://github.com/${claim.repository}.git`, `HEAD:${worktree.branchName}`],
@@ -300,8 +302,8 @@ export class GitHubCodeLoopWorker {
       }
       result.evidence = [...(result.evidence ?? []), `Commit ${commitSha}`];
       if (this.repoPolicy.allowCreatePr) {
-        await this.verifyOrThrow(claimId);
-        const claim = await this.verifyOrThrow(claimId);
+        await this.verifyOrThrow(activeClaimId);
+        const claim = await this.verifyOrThrow(activeClaimId);
         const pr = await this.ensurePullRequestImpl({
           token: this.repoPolicy.githubToken,
           repository: claim.repository,
@@ -317,41 +319,51 @@ export class GitHubCodeLoopWorker {
             evidence: result.evidence
           })
         });
-        await this.verifyOrThrow(claimId);
+        await this.verifyOrThrow(activeClaimId);
         if (typeof this.adapter.setFieldForClaim !== "function") {
           throw new Error("adapter cannot write PR field");
         }
-        const updated = await this.adapter.setFieldForClaim(claimId, "PR", pr.url);
+        const updated = await this.adapter.setFieldForClaim(activeClaimId, "PR", pr.url);
         if (updated?.updated === false) throw new Error(`claim lost: ${updated.reason ?? "pr_field"}`);
         result.prUrl = pr.url;
         result.evidence = [...(result.evidence ?? []), `PR ${pr.url}`];
       }
     }
 
-    await this.verifyOrThrow(claimId);
+    await this.verifyOrThrow(activeClaimId);
     let finalIgnoredPaths = ignoredPaths;
     if (this.workerType === WorkerType.PR_BABYSITTER && result.outcome === "completed") {
-      finalIgnoredPaths = await this.applyBabysitterDiff({ claimId, result, worktree, ignoredPaths });
+      const babysitterPatch = await this.applyBabysitterDiff({ claimId: activeClaimId, result, worktree, ignoredPaths });
+      finalIgnoredPaths = babysitterPatch.ignoredPaths;
+      activeClaimId = babysitterPatch.claimId;
     }
-    await this.verifyOrThrow(claimId);
+    await this.verifyOrThrow(activeClaimId);
     if (this.workerType !== WorkerType.IMPLEMENTER) {
       await this.rejectNonImplementerDiff({ worktree, ignoredPaths: finalIgnoredPaths });
     }
-    await this.verifyOrThrow(claimId);
+    await this.verifyOrThrow(activeClaimId);
     if (
       this.workerType === WorkerType.PR_BABYSITTER &&
       result.nextStatus === Status.QA &&
       result.mergeWhenApprovedAndClean === true
     ) {
-      const readyState = await this.verifyPullRequestReadyState(claimId);
-      if (readyState?.reason !== "merged" && !this.repoPolicy.allowMerge) {
-        throw new Error("pr-babysitter requires allowMerge to merge PRs before QA");
+      const readyState = await this.verifyPullRequestReadyState(activeClaimId);
+      if (readyState.transient) {
+        result.outcome = "no-op";
+        result.nextStatus = Status.BABYSIT;
+        result.mergeWhenApprovedAndClean = false;
+        result.summary = `${result.summary ?? "PR is waiting."} Waiting for GitHub mergeability to settle: ${readyState.reason}.`;
+        result.evidence = [...(result.evidence ?? []), `Waiting for ${readyState.reason}`];
+      } else {
+        if (readyState?.reason !== "merged" && !this.repoPolicy.allowMerge) {
+          throw new Error("pr-babysitter requires allowMerge to merge PRs before QA");
+        }
+        await this.mergePullRequestForQa({ claimId: activeClaimId, result, readyState });
       }
-      await this.mergePullRequestForQa({ claimId, result, readyState });
     }
     return applyWorkerResult({
       adapter: this.adapter,
-      claimId,
+      claimId: activeClaimId,
       workerType: this.workerType,
       result,
       verifyOptions: this.claimVerifyOptions(),
@@ -365,7 +377,7 @@ export class GitHubCodeLoopWorker {
       execFileImpl: this.execFileImpl,
       ignoredPaths
     });
-    if (!dirty) return ignoredPaths;
+    if (!dirty) return { ignoredPaths, claimId };
     if (result.nextStatus !== Status.BABYSIT) {
       throw new Error("pr-babysitter fixes must stay in Babysit for another review/check cycle");
     }
@@ -413,8 +425,24 @@ export class GitHubCodeLoopWorker {
         env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
       }
     );
+    const refreshedClaimId = await this.refreshClaimAfterOwnPush({ claimId, headSha: commitSha });
     result.evidence = [...(result.evidence ?? []), `Commit ${commitSha}`];
-    return commitIgnoredPaths;
+    return { ignoredPaths: commitIgnoredPaths, claimId: refreshedClaimId };
+  }
+
+  async loadPromptFeedbackContext(claimId) {
+    if (this.workerType !== WorkerType.REVIEWER && this.workerType !== WorkerType.PR_BABYSITTER) return null;
+    if (typeof this.adapter.loadPullRequestFeedbackForClaim !== "function") return null;
+    return this.adapter.loadPullRequestFeedbackForClaim(claimId, this.claimVerifyOptions());
+  }
+
+  async refreshClaimAfterOwnPush({ claimId, headSha }) {
+    const claim = parseClaimId(claimId);
+    if (!isClaimV2(claim) || !headSha || typeof this.adapter.setFieldForClaim !== "function") return claimId;
+    const refreshedClaimId = createClaimV2Id({ ...claim, headSha });
+    const updated = await this.adapter.setFieldForClaim(claimId, "Last Worker Run", refreshedClaimId);
+    if (updated?.updated === false) throw new Error(`claim lost: ${updated.reason ?? "refresh_claim"}`);
+    return refreshedClaimId;
   }
 
   assertPatchablePrClaim(claim) {
@@ -472,6 +500,9 @@ export class GitHubCodeLoopWorker {
     }
     const verified = await verifier.call(this.adapter, claimId);
     if (verified?.ready !== true) {
+      if (isTransientPrReadinessReason(verified?.reason)) {
+        return { ...verified, transient: true };
+      }
       throw new Error(`pr-babysitter cannot merge before QA: ${verified?.reason ?? "pr_not_ready"}`);
     }
     return verified;
@@ -570,6 +601,10 @@ function isClaimDriftReason(reason) {
     "base_drift",
     "run_mismatch"
   ].includes(reason);
+}
+
+function isTransientPrReadinessReason(reason) {
+  return reason === "mergeability_unknown";
 }
 
 async function readWorkerResult(path, stdout) {

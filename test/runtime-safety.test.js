@@ -361,6 +361,38 @@ test("worktree creation checks seed repo config before authenticated fetches", a
   assert.equal(calls.some((args) => args.includes("fetch")), false);
 });
 
+test("worktree creation does not expose daemon token to checkout hooks", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worktree-hooks-"));
+  const worktreeArgs = [];
+  const worktreeOptions = [];
+  const execFileImpl = async (_command, args, options = {}) => {
+    if (args.includes("worktree") && args.includes("add")) {
+      worktreeArgs.push(args);
+      worktreeOptions.push(options);
+      const worktreePath = args.at(-2);
+      await mkdir(join(worktreePath, ".git"), { recursive: true });
+      await writeFile(join(worktreePath, ".git", "config"), "[remote \"origin\"]\n  url = https://github.com/acme/repo.git\n");
+    }
+    return { stdout: "", stderr: "" };
+  };
+
+  await createImplementationWorktree({
+    repoPath: root,
+    repository: "acme/repo",
+    baseBranch: "main",
+    branchName: "ski/12-run",
+    runId: "run-1",
+    worktreeRoot: root,
+    githubToken: "gho_tokenvalue123456",
+    execFileImpl
+  });
+
+  assert.equal(worktreeOptions.length, 1);
+  assert.deepEqual(worktreeArgs[0].slice(0, 2), ["-c", "core.hooksPath=/dev/null"]);
+  assert.equal(worktreeOptions[0].env.GIT_CONFIG_VALUE_0, undefined);
+  assert.equal(worktreeOptions[0].env.GIT_CONFIG_KEY_0, undefined);
+});
+
 test("pull request worktree creation checks out the claimed head", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worktrees-"));
   const expectedHeadSha = "a".repeat(40);

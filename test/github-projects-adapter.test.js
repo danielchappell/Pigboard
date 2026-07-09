@@ -729,6 +729,70 @@ test("GitHubProjectsAdapter accepts a PR description thumbs-up reaction before Q
   assert.equal(verified.ready, true);
 });
 
+test("GitHubProjectsAdapter loads pull request feedback for worker prompts", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrMergeFetchImpl({
+    responses,
+    issueComments: [{ user: { login: "maintainer" }, created_at: "2026-07-07T12:00:00Z", body: "Top-level note" }],
+    reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40), body: "Approved" }],
+    reviewComments: [
+      {
+        user: { login: "reviewer" },
+        path: "src/runtime/code-loop-worker.js",
+        line: 42,
+        side: "RIGHT",
+        created_at: "2026-07-07T12:01:00Z",
+        body: "Fix this review comment"
+      }
+    ],
+    checkRuns: {
+      total_count: 1,
+      check_runs: [{ name: "unit", status: "completed", conclusion: "failure", html_url: "https://checks.example/unit" }]
+    }
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const feedback = await adapter.loadPullRequestFeedbackForClaim(result.claim.id);
+
+  assert.equal(feedback.comments[0].body, "Top-level note");
+  assert.equal(feedback.reviews[0].state, "APPROVED");
+  assert.equal(feedback.reviewComments[0].body, "Fix this review comment");
+  assert.equal(feedback.ci.failingCheckRuns[0].name, "unit");
+});
+
 test("GitHubProjectsAdapter requires a clean CI run before QA", async () => {
   const responses = [
     projectResponse({
@@ -1265,6 +1329,8 @@ function createPrMergeFetchImpl({
   pullRequest = pullRequestResponse(),
   reviews = [],
   reactions = [],
+  issueComments = [],
+  reviewComments = [],
   status = { total_count: 0, state: "success" },
   checkRuns = { total_count: 1, check_runs: [{ name: "ci", status: "completed", conclusion: "success" }] }
 }) {
@@ -1284,6 +1350,20 @@ function createPrMergeFetchImpl({
       return {
         ok: true,
         json: async () => reviewPages[page - 1] ?? []
+      };
+    }
+    if (parsedUrl.pathname.endsWith("/repos/acme/repo/pulls/42/comments")) {
+      const reviewCommentPages = Array.isArray(reviewComments[0]) ? reviewComments : [reviewComments];
+      return {
+        ok: true,
+        json: async () => reviewCommentPages[page - 1] ?? []
+      };
+    }
+    if (parsedUrl.pathname.endsWith("/repos/acme/repo/issues/42/comments")) {
+      const commentPages = Array.isArray(issueComments[0]) ? issueComments : [issueComments];
+      return {
+        ok: true,
+        json: async () => commentPages[page - 1] ?? []
       };
     }
     if (parsedUrl.pathname.endsWith("/repos/acme/repo/issues/42/reactions")) {

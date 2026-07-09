@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { GitHubCodeLoopWorker, MemoryQueueAdapter, runSettledWorkerSlot, Status, WorkerType } from "../src/index.js";
+import { GitHubCodeLoopWorker, MemoryQueueAdapter, parseClaimId, runSettledWorkerSlot, Status, WorkerType } from "../src/index.js";
 
 test("implementer runs Codex, commits a non-empty diff, logs locally, and transitions to Review", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
@@ -792,6 +792,58 @@ test("worker prompt uses resolved worker type when Worker Type field is blank", 
   assert.equal(result.ran, true);
 });
 
+test("PR workers receive feedback context in the Codex prompt", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-feedback-context",
+      title: "Babysit feedback",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.loadPullRequestFeedbackForClaim = async () => ({
+    reviewComments: [{ path: "src/example.js", line: 10, body: "Fix this comment" }],
+    ci: { failingCheckRuns: [{ name: "unit", conclusion: "failure" }] }
+  });
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-feedback",
+    repoPolicy: { cwd: root },
+    runLogDir: join(root, "runs"),
+    createPullRequestWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ prompt, outputPath }) => {
+      assert.match(prompt, /## Pull Request Feedback/);
+      assert.match(prompt, /Fix this comment/);
+      assert.match(prompt, /failingCheckRuns/);
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "no-op",
+          nextStatus: Status.BABYSIT,
+          summary: "Waiting."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => false,
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.error, undefined);
+});
+
 test("worker extends the claim while a run is active", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
@@ -1133,6 +1185,46 @@ test("pr-babysitter cannot merge before QA without merge permission", async () =
   assert.equal(adapter.getItem("item-merge-not-allowed").status, Status.BLOCKED);
 });
 
+test("pr-babysitter waits in Babysit for transient mergeability", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-mergeability-unknown",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: false, reason: "mergeability_unknown" });
+  let mergeCalls = 0;
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: true },
+    result: {
+      outcome: "no-op",
+      nextStatus: Status.QA,
+      summary: "Approved with no local edits.",
+      mergeWhenApprovedAndClean: true
+    },
+    mergePullRequestImpl: async () => {
+      mergeCalls += 1;
+      return { merged: true, sha: "m".repeat(40), message: "merged" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.error, undefined);
+  assert.equal(mergeCalls, 0);
+  assert.equal(adapter.getItem("item-mergeability-unknown").status, Status.BABYSIT);
+  assert.equal(adapter.getItem("item-mergeability-unknown").leaseOwner, undefined);
+  assert.equal(adapter.events[0].outcome, "no-op");
+  assert.match(adapter.events[0].body, /mergeability_unknown/);
+});
+
 test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
@@ -1168,6 +1260,7 @@ test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () =>
   assert.equal(result.ran, true);
   assert.equal(result.error, undefined);
   assert.equal(adapter.getItem("item-babysit-fix").status, Status.BABYSIT);
+  assert.equal(parseClaimId(adapter.getItem("item-babysit-fix").lastWorkerRun).headSha, "c".repeat(40));
   assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:feature"]);
   assert.match(adapter.events[0].evidence.at(-1), /^Commit c{40}$/);
 });
