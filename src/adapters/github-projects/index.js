@@ -1,5 +1,7 @@
 import { AdapterError } from "../../core/adapter-contract.js";
-import { createClaimId, parseClaimId } from "../../core/claims.js";
+import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../../core/claims.js";
+import { formatPublicEventComment, formatWithheldPublicEvent } from "../../core/public-output.js";
+import { resolvedWorkerTypeForItem } from "../../core/routing.js";
 import { Status } from "../../core/status.js";
 import {
   buildProjectModel,
@@ -183,10 +185,161 @@ export class GitHubProjectsAdapter {
     };
   }
 
+  async claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context = {} }) {
+    if (!workerType) throw new Error("workerType is required");
+    if (!workerId) throw new Error("workerId is required");
+    if (!leaseSeconds) throw new Error("leaseSeconds is required");
+
+    const { projectModel, items } = await this.loadProjectItems();
+    const ready = items
+      .filter((item) => this.matchesRepositoryFilter(item))
+      .filter((item) => isReadyForWorker(item, workerType, this.now()))
+      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+    const candidates = itemId ? ready.filter((candidate) => candidate.id === itemId) : ready;
+    if (!candidates.length) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
+
+    const skipped = [];
+    for (const item of candidates) {
+      try {
+        return await this.claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context });
+      } catch (error) {
+        if (itemId || !isPullRequestMetadataError(error)) throw error;
+        skipped.push({ itemId: item.id, reason: error.message });
+      }
+    }
+
+    return { claimed: false, reason: skipped.length ? "pr_metadata_failed" : "none_ready", skipped };
+  }
+
+  async claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context }) {
+    const now = this.now();
+    const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
+    const pullRequest = await this.resolveClaimPullRequest({ item, context });
+    const claimId = createClaimV2Id({
+      itemId: item.id,
+      workerId,
+      attemptId: context.attemptId ?? `${workerId}:${Number(item.attempts ?? 0) + 1}`,
+      runId: context.runId ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      expiresAt,
+      resolvedWorkerType: resolvedWorkerTypeForItem(item) ?? workerType,
+      claimedStatus: item.status,
+      claimedWorkerType: item.workerType,
+      repository: item.repository ?? context.repository ?? "unknown/unknown",
+      contentType: item.contentType ?? context.contentType ?? "Unknown",
+      issueNumber: item.contentType === "Issue" ? item.number : undefined,
+      pullRequestNumber: pullRequest?.number,
+      prUrl: pullRequest?.url,
+      baseRef: pullRequest?.baseRef,
+      baseSha: pullRequest?.baseSha,
+      headRef: pullRequest?.headRef,
+      headRepository: pullRequest?.headRepository,
+      headSha: pullRequest?.headSha,
+      claimedAt: now.toISOString(),
+      ...context
+    });
+
+    try {
+      await this.setTextField(projectModel, item.id, FieldName.LAST_WORKER_RUN, claimId);
+      await this.setTextField(projectModel, item.id, FieldName.LEASE_OWNER, workerId);
+      await this.setTextField(projectModel, item.id, FieldName.LEASE_EXPIRES, expiresAt);
+      await this.setNumberField(projectModel, item.id, FieldName.ATTEMPTS, Number(item.attempts ?? 0) + 1);
+    } catch (error) {
+      await this.rollbackClaimAttempt(projectModel, item.id, { claimId, workerId, expiresAt });
+      throw error;
+    }
+
+    this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) {
+      this.claims.delete(claimId);
+      await this.rollbackClaimAttempt(projectModel, item.id, { claimId, workerId, expiresAt });
+      return { claimed: false, reason: verified.reason };
+    }
+
+    return {
+      claimed: true,
+      claim: { id: claimId, itemId: item.id, owner: workerId, expiresAt },
+      item: {
+        ...item,
+        leaseOwner: workerId,
+        leaseExpiresAt: expiresAt,
+        attempts: Number(item.attempts ?? 0) + 1,
+        lastWorkerRun: claimId
+      }
+    };
+  }
+
   async heartbeat(claimId) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const projectModel = await this.ensureProjectModel();
     await this.setTextField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES, claim.expiresAt);
+  }
+
+  async verifyClaim(
+    claimId,
+    { requireHeadSha = false, allowStatusChanged = false, allowWorkerTypeChanged = false } = {}
+  ) {
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    const { items } = await this.loadProjectItems();
+    const item = items.find((candidate) => candidate.id === claim.itemId);
+    if (!item) return { active: false, reason: "missing" };
+    if (item.leaseOwner !== claim.workerId) return { active: false, reason: "owner_mismatch" };
+    if (item.lastWorkerRun && item.lastWorkerRun !== claimId) return { active: false, reason: "run_mismatch" };
+    if (!item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= this.now()) {
+      return { active: false, reason: "expired" };
+    }
+    if (isClaimV2(claim)) {
+      if (!allowStatusChanged && item.status !== claim.claimedStatus) {
+        return { active: false, reason: "status_changed" };
+      }
+      if (!allowWorkerTypeChanged && (item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
+        return { active: false, reason: "worker_type_changed" };
+      }
+      if ((item.repository ?? "unknown/unknown") !== claim.repository) {
+        return { active: false, reason: "repository_changed" };
+      }
+      if (item.contentType === "PullRequest" && claim.pullRequestNumber && item.number !== claim.pullRequestNumber) {
+        return { active: false, reason: "pr_changed" };
+      }
+      if (item.contentType !== "PullRequest" && claim.pullRequestNumber && item.pullRequestNumber !== claim.pullRequestNumber) {
+        return { active: false, reason: "pr_changed" };
+      }
+      if (item.contentType !== "PullRequest" && claim.pullRequestNumber && item.prUrl) {
+        const reference = parsePullRequestReference(item.prUrl);
+        if (reference?.repository && reference.repository.toLowerCase() !== claim.repository.toLowerCase()) {
+          return { active: false, reason: "pr_changed" };
+        }
+      }
+      if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
+      if (requireHeadSha && item.contentType !== "PullRequest" && claim.pullRequestNumber) {
+        const pullRequest = await this.fetchPullRequestMetadata({
+          repository: claim.repository,
+          number: claim.pullRequestNumber
+        });
+        if (pullRequest.headSha && pullRequest.headSha !== claim.headSha) {
+          return { active: false, reason: "head_drift" };
+        }
+        if (pullRequest.baseSha && claim.baseSha && pullRequest.baseSha !== claim.baseSha) {
+          return { active: false, reason: "base_drift" };
+        }
+      }
+      if (requireHeadSha && item.headSha && item.headSha !== claim.headSha) {
+        return { active: false, reason: "head_drift" };
+      }
+      if (requireHeadSha && item.baseSha && claim.baseSha && item.baseSha !== claim.baseSha) {
+        return { active: false, reason: "base_drift" };
+      }
+    }
+    return { active: true, claim, item };
+  }
+
+  async extendClaim(claimId, leaseSeconds) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { extended: false, reason: "CLAIM_LOST" };
+    const expiresAt = new Date(this.now().getTime() + leaseSeconds * 1000).toISOString();
+    const projectModel = await this.ensureProjectModel();
+    await this.setTextField(projectModel, verified.claim.itemId, FieldName.LEASE_EXPIRES, expiresAt);
+    return { extended: true, expiresAt };
   }
 
   async appendEvent(itemId, event) {
@@ -204,22 +357,70 @@ export class GitHubProjectsAdapter {
     });
   }
 
+  async appendEventForClaim(claimId, event, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { appended: false, reason: verified.reason };
+    await this.appendEvent(verified.claim.itemId, event);
+    return { appended: true };
+  }
+
   async transition(itemId, status) {
     const projectModel = await this.ensureProjectModel();
     await this.setSingleSelectField(projectModel, itemId, FieldName.STATUS, status);
   }
 
+  async transitionForClaim(claimId, status, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { transitioned: false, reason: verified.reason };
+    await this.transition(verified.claim.itemId, status);
+    return { transitioned: true };
+  }
+
+  async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { updated: false, reason: verified.reason };
+    const projectModel = await this.ensureProjectModel();
+    if (typeof value === "number") await this.setNumberField(projectModel, verified.claim.itemId, fieldName, value);
+    else await this.setTextField(projectModel, verified.claim.itemId, fieldName, value);
+    return { updated: true };
+  }
+
+  async clearWorkerTypeForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { ...verifyOptions, allowStatusChanged: true });
+    if (!verified.active) return { cleared: false, reason: verified.reason };
+    const projectModel = await this.ensureProjectModel();
+    await this.clearField(projectModel, verified.claim.itemId, FieldName.WORKER_TYPE);
+    return { cleared: true };
+  }
+
   async release(claimId) {
-    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    return this.releaseClaim(claimId);
+  }
+
+  async releaseClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, {
+      ...verifyOptions,
+      allowStatusChanged: true,
+      allowWorkerTypeChanged: true
+    });
+    if (!verified.active) return { released: false, reason: verified.reason };
+    const claim = verified.claim;
 
     const projectModel = await this.ensureProjectModel();
     await this.clearField(projectModel, claim.itemId, FieldName.LEASE_OWNER);
     await this.clearField(projectModel, claim.itemId, FieldName.LEASE_EXPIRES);
     this.claims.delete(claimId);
+    return { released: true };
   }
 
   async fail(claimId, reason) {
-    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    return this.failClaim(claimId, reason);
+  }
+
+  async failClaim(claimId, reason, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { failed: false, reason: verified.reason };
+    const claim = verified.claim;
 
     await this.appendEvent(claim.itemId, {
       type: "worker_failed",
@@ -227,7 +428,42 @@ export class GitHubProjectsAdapter {
       body: reason
     });
     await this.transition(claim.itemId, Status.BLOCKED);
-    await this.release(claimId);
+    const released = await this.releaseClaim(claimId);
+    if (released?.released === false) return { failed: false, reason: released.reason };
+    return { failed: true };
+  }
+
+  async verifyPullRequestReadyForDoneForClaim(claimId) {
+    return this.verifyPullRequestReadyForMergeForClaim(claimId);
+  }
+
+  async verifyPullRequestReadyForQaForClaim(claimId) {
+    return this.verifyPullRequestReadyForMergeForClaim(claimId);
+  }
+
+  async verifyPullRequestReadyForMergeForClaim(claimId) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
+    if (!verified.active) return { ready: false, reason: verified.reason };
+    const claim = verified.claim;
+    const item = verified.item;
+    const number = claim.pullRequestNumber ?? (item.contentType === "PullRequest" ? item.number : undefined);
+    const repository = claim.repository ?? item.repository;
+    if (!repository || !number) return { ready: false, reason: "missing_pr" };
+
+    const state = await this.fetchPullRequestMergeState({ repository, number });
+    if (claim.headSha && state.headSha && claim.headSha !== state.headSha) {
+      return { ready: false, reason: "head_drift" };
+    }
+    if (state.merged) return { ready: true, reason: "merged" };
+    if (state.state !== "open") return { ready: false, reason: "pr_not_open" };
+    if (state.draft) return { ready: false, reason: "draft" };
+    if (state.changesRequested) return { ready: false, reason: "changes_requested" };
+    if (!state.approved) return { ready: false, reason: "not_approved" };
+    if (!state.ciPresent) return { ready: false, reason: "ci_missing" };
+    if (!state.checksClean) return { ready: false, reason: "checks_not_clean" };
+    const mergeabilityReason = mergeabilityFailureReason(state);
+    if (mergeabilityReason) return { ready: false, reason: mergeabilityReason };
+    return { ready: true };
   }
 
   async ensureProjectModel() {
@@ -271,34 +507,376 @@ export class GitHubProjectsAdapter {
     });
   }
 
+  async rollbackClaimAttempt(projectModel, itemId, { claimId, workerId, expiresAt }) {
+    const { items } = await this.loadProjectItems();
+    const item = items.find((candidate) => candidate.id === itemId);
+    if (!item) return;
+    const ownsRun = item.lastWorkerRun === claimId;
+    const ownsLease = item.leaseOwner === workerId;
+    if (ownsRun) await this.clearField(projectModel, itemId, FieldName.LAST_WORKER_RUN);
+    if (ownsLease) await this.clearField(projectModel, itemId, FieldName.LEASE_OWNER);
+    if ((ownsRun || ownsLease) && item.leaseExpiresAt === expiresAt) {
+      await this.clearField(projectModel, itemId, FieldName.LEASE_EXPIRES);
+    }
+  }
+
   matchesRepositoryFilter(item) {
     if (!this.repositories.size) return true;
     if (!item.repository) return false;
     return this.repositories.has(item.repository.toLowerCase());
   }
+
+  async resolveClaimPullRequest({ item, context = {} }) {
+    if (context.pullRequestNumber || context.prUrl || context.headSha) {
+      return {
+        number: context.pullRequestNumber,
+        url: context.prUrl,
+        baseRef: context.baseRef,
+        baseSha: context.baseSha,
+        headRef: context.headRef,
+        headRepository: context.headRepository,
+        headSha: context.headSha
+      };
+    }
+
+    if (item.contentType === "PullRequest") {
+      return {
+        number: item.number,
+        url: item.url,
+        baseRef: item.baseRef,
+        baseSha: item.baseSha,
+        headRef: item.headRef,
+        headRepository: item.headRepository,
+        headSha: item.headSha
+      };
+    }
+
+    if (!item.pullRequestNumber && !item.prUrl) return null;
+    const repository = item.repository;
+    if (!repository) return { number: item.pullRequestNumber, url: item.prUrl };
+    const reference = parsePullRequestReference(item.prUrl);
+    if (reference?.repository && reference.repository.toLowerCase() !== repository.toLowerCase()) {
+      throw new AdapterError(`PR field points at ${reference.repository}, but item belongs to ${repository}`, {
+        code: "GITHUB_PR_METADATA_INVALID"
+      });
+    }
+    const number = item.pullRequestNumber ?? reference?.number;
+    if (!number) return { url: item.prUrl };
+    return this.fetchPullRequestMetadata({ repository, number });
+  }
+
+  async fetchPullRequestMetadata({ repository, number }) {
+    const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      errorCode: "GITHUB_PR_METADATA_HTTP",
+      errorMessage: "GitHub pull request metadata request failed"
+    });
+    return {
+      number: pr.number,
+      url: pr.html_url,
+      baseRef: pr.base?.ref,
+      baseSha: pr.base?.sha,
+      headRef: pr.head?.ref,
+      headRepository: pr.head?.repo?.full_name,
+      headSha: pr.head?.sha
+    };
+  }
+
+  async fetchPullRequestMergeState({ repository, number }) {
+    const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      errorCode: "GITHUB_PR_METADATA_HTTP",
+      errorMessage: "GitHub pull request metadata request failed"
+    });
+    const [reviews, reactions, status, checkRuns] = await Promise.all([
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/reviews`, {
+        errorCode: "GITHUB_PR_REVIEWS_HTTP",
+        errorMessage: "GitHub pull request reviews request failed",
+        itemKey: null
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/issues/${number}/reactions`, {
+        errorCode: "GITHUB_PR_REACTIONS_HTTP",
+        errorMessage: "GitHub pull request reactions request failed",
+        itemKey: null
+      }),
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/status`, {
+        errorCode: "GITHUB_PR_STATUS_HTTP",
+        errorMessage: "GitHub pull request status request failed"
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/check-runs`, {
+        errorCode: "GITHUB_PR_CHECKS_HTTP",
+        errorMessage: "GitHub pull request checks request failed",
+        itemKey: "check_runs"
+      })
+    ]);
+
+    const reviewState = reviewStateForHead(reviews, pr.head?.sha);
+    const ciState = summarizeCiState(status, checkRuns);
+    return {
+      number: pr.number,
+      url: pr.html_url,
+      state: pr.state,
+      draft: pr.draft === true,
+      merged: pr.merged === true,
+      headSha: pr.head?.sha,
+      approved: reviewState.approved || hasThumbsUpReaction(reactions),
+      changesRequested: reviewState.changesRequested,
+      ciPresent: ciState.present,
+      checksClean: ciState.clean,
+      mergeable: pr.mergeable,
+      mergeableState: pr.mergeable_state
+    };
+  }
+
+  async loadPullRequestFeedbackForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true, ...verifyOptions });
+    if (!verified.active) {
+      throw new Error(`claim lost: ${verified.reason}`);
+    }
+    const claim = verified.claim;
+    const item = verified.item;
+    const number = claim.pullRequestNumber ?? (item.contentType === "PullRequest" ? item.number : undefined);
+    const repository = claim.repository ?? item.repository;
+    const headSha = claim.headSha ?? item.headSha;
+    if (!repository || !number) return null;
+
+    const [issueComments, reviews, reviewComments, status, checkRuns] = await Promise.all([
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/issues/${number}/comments`, {
+        errorCode: "GITHUB_PR_COMMENTS_HTTP",
+        errorMessage: "GitHub pull request comments request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/reviews`, {
+        errorCode: "GITHUB_PR_REVIEWS_HTTP",
+        errorMessage: "GitHub pull request reviews request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/comments`, {
+        errorCode: "GITHUB_PR_REVIEW_COMMENTS_HTTP",
+        errorMessage: "GitHub pull request review comments request failed",
+        itemKey: null,
+        maxPages: 5
+      }),
+      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${headSha}/status`, {
+        errorCode: "GITHUB_PR_STATUS_HTTP",
+        errorMessage: "GitHub pull request status request failed"
+      }),
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/commits/${headSha}/check-runs`, {
+        errorCode: "GITHUB_PR_CHECKS_HTTP",
+        errorMessage: "GitHub pull request checks request failed",
+        itemKey: "check_runs",
+        maxPages: 5
+      })
+    ]);
+
+    return {
+      repository,
+      number,
+      url: claim.prUrl ?? item.url,
+      headSha,
+      comments: issueComments.slice(-20).map(formatIssueCommentForPrompt),
+      reviews: reviews
+        .filter((review) => !headSha || review.commit_id === headSha)
+        .slice(-20)
+        .map(formatReviewForPrompt),
+      reviewComments: reviewComments.slice(-50).map(formatReviewCommentForPrompt),
+      ci: formatCiForPrompt(status, checkRuns)
+    };
+  }
+
+  async fetchGitHubJson(url, { errorCode, errorMessage }) {
+    const response = await this.fetchImpl(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        Accept: "application/vnd.github+json",
+        "User-Agent": "ski-stack"
+      }
+    });
+    if (!response.ok) {
+      throw new AdapterError(`${errorMessage}: ${response.status}`, {
+        code: errorCode
+      });
+    }
+    return response.json();
+  }
+
+  async fetchGitHubJsonPages(url, { errorCode, errorMessage, itemKey, perPage = 100, maxPages = 20 }) {
+    const items = [];
+    let lastPayload;
+    for (let page = 1; page <= maxPages; page += 1) {
+      const payload = await this.fetchGitHubJson(withPagination(url, { perPage, page }), { errorCode, errorMessage });
+      lastPayload = payload;
+      const pageItems = itemKey ? payload?.[itemKey] : payload;
+      const values = Array.isArray(pageItems) ? pageItems : [];
+      items.push(...values);
+      const totalCount = Number(itemKey ? payload?.total_count : undefined);
+      if (values.length < perPage || (Number.isFinite(totalCount) && items.length >= totalCount)) {
+        break;
+      }
+    }
+    if (!itemKey) return items;
+    return {
+      ...(lastPayload && typeof lastPayload === "object" ? lastPayload : {}),
+      [itemKey]: items,
+      total_count: Number(lastPayload?.total_count ?? items.length)
+    };
+  }
 }
 
 function formatEventComment(event) {
-  const lines = [
-    "## Ski Stack Worker Event",
-    "",
-    `Type: ${event.type ?? "worker_event"}`,
-    `Actor: ${event.actor ?? "unknown"}`,
-    event.outcome ? `Outcome: ${event.outcome}` : null,
-    "",
-    event.body ?? ""
-  ].filter((line) => line !== null);
-
-  if (event.evidence?.length) {
-    lines.push("", "Evidence:");
-    for (const evidence of event.evidence) lines.push(`- ${evidence}`);
+  const output =
+    event?.publicOutput ?? {
+      runId: event.runId ?? event.claimId ?? "manual",
+      workerType: event.workerType ?? event.actor ?? "worker",
+      outcome: event.outcome ?? event.type ?? "worker_event",
+      nextStatus: event.nextStatus,
+      summary: event.body ?? event.summary ?? "",
+      evidence: event.evidence ?? [],
+      blocker: event.blocker ?? null
+    };
+  try {
+    return formatPublicEventComment(output);
+  } catch {
+    return formatWithheldPublicEvent({
+      runId: output.runId,
+      workerType: output.workerType,
+      outcome: output.outcome
+    });
   }
+}
 
-  if (event.blocker) {
-    lines.push("", `Blocker: ${event.blocker}`);
+function formatIssueCommentForPrompt(comment) {
+  return {
+    author: comment.user?.login,
+    createdAt: comment.created_at,
+    body: truncatePromptText(comment.body)
+  };
+}
+
+function formatReviewForPrompt(review) {
+  return {
+    author: review.user?.login,
+    state: review.state,
+    submittedAt: review.submitted_at,
+    body: truncatePromptText(review.body)
+  };
+}
+
+function formatReviewCommentForPrompt(comment) {
+  return {
+    author: comment.user?.login,
+    path: comment.path,
+    line: comment.line ?? comment.original_line,
+    side: comment.side,
+    createdAt: comment.created_at,
+    body: truncatePromptText(comment.body)
+  };
+}
+
+function formatCiForPrompt(status, checkRuns) {
+  const failingStatuses = (status?.statuses ?? [])
+    .filter((context) => context?.state && context.state !== "success")
+    .slice(0, 30)
+    .map((context) => ({
+      name: context.context,
+      state: context.state,
+      description: truncatePromptText(context.description, 240),
+      targetUrl: context.target_url
+    }));
+  const failingRuns = (checkRuns?.check_runs ?? [])
+    .filter((run) => run?.status !== "completed" || !["success", "neutral", "skipped"].includes(run?.conclusion))
+    .slice(0, 30)
+    .map((run) => ({
+      name: run.name,
+      status: run.status,
+      conclusion: run.conclusion,
+      detailsUrl: run.html_url
+    }));
+  return {
+    statusState: status?.state,
+    statusTotal: status?.total_count,
+    failingStatuses,
+    checkRunTotal: checkRuns?.total_count,
+    failingCheckRuns: failingRuns
+  };
+}
+
+function truncatePromptText(value, maxLength = 2000) {
+  const text = String(value ?? "");
+  return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+}
+
+function parsePullRequestReference(url) {
+  const value = String(url ?? "").trim();
+  if (/^\d+$/.test(value)) return { number: Number(value) };
+  const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:\b|$)/);
+  return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
+}
+
+function withPagination(url, { perPage, page }) {
+  const parsed = new URL(url);
+  parsed.searchParams.set("per_page", String(perPage));
+  parsed.searchParams.set("page", String(page));
+  return parsed.toString();
+}
+
+function reviewStateForHead(reviews, headSha) {
+  if (!headSha) return { approved: false, changesRequested: false };
+  const latestByAuthor = new Map();
+  for (const review of Array.isArray(reviews) ? reviews : []) {
+    if (review.commit_id !== headSha) continue;
+    const author = review.user?.login;
+    if (!author || !review.state) continue;
+    if (review.state === "APPROVED" || review.state === "CHANGES_REQUESTED") {
+      latestByAuthor.set(author, review.state);
+    } else if (review.state === "DISMISSED") {
+      latestByAuthor.delete(author);
+    }
   }
+  const states = [...latestByAuthor.values()];
+  return {
+    approved: states.includes("APPROVED"),
+    changesRequested: states.includes("CHANGES_REQUESTED")
+  };
+}
 
-  return lines.join("\n");
+function hasThumbsUpReaction(reactions) {
+  return Array.isArray(reactions) && reactions.some((reaction) => reaction?.content === "+1");
+}
+
+function mergeabilityFailureReason(state) {
+  if (state.mergeable === false) return "not_mergeable";
+  const mergeableState = String(state.mergeableState ?? "").toLowerCase();
+  if (["dirty", "blocked", "unknown", "behind"].includes(mergeableState)) {
+    return `mergeability_${mergeableState}`;
+  }
+  if (state.mergeable !== true && !["clean", "unstable", "has_hooks"].includes(mergeableState)) {
+    return "mergeability_unknown";
+  }
+  return null;
+}
+
+function areStatusChecksClean(status) {
+  if (!status || Number(status.total_count ?? 0) === 0) return true;
+  return status.state === "success";
+}
+
+function areCheckRunsClean(checkRuns) {
+  const runs = Array.isArray(checkRuns?.check_runs) ? checkRuns.check_runs : [];
+  if (!runs.length) return Number(checkRuns?.total_count ?? 0) === 0;
+  return runs.every((run) => run.status === "completed" && ["success", "skipped", "neutral"].includes(run.conclusion));
+}
+
+function summarizeCiState(status, checkRuns) {
+  const statusCount = Number(status?.total_count ?? 0);
+  const runs = Array.isArray(checkRuns?.check_runs) ? checkRuns.check_runs : [];
+  const checkRunCount = Number(checkRuns?.total_count ?? runs.length);
+  const present = statusCount > 0 || checkRunCount > 0 || runs.length > 0;
+  return {
+    present,
+    clean: areStatusChecksClean(status) && areCheckRunsClean(checkRuns)
+  };
 }
 
 function normalizeRepositoryFilter(repositories) {
@@ -336,4 +914,8 @@ function projectFromOwnerData(data, ownerType) {
 function isOwnerKindMismatch(error) {
   const message = error instanceof Error ? error.message : String(error);
   return /Could not resolve to an (Organization|User) with the login/i.test(message);
+}
+
+function isPullRequestMetadataError(error) {
+  return error?.code === "GITHUB_PR_METADATA_HTTP" || error?.code === "GITHUB_PR_METADATA_INVALID";
 }

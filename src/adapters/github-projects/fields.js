@@ -1,4 +1,4 @@
-import { Status, readyStatusForWorker } from "../../core/status.js";
+import { isReadyForWorkerType } from "../../core/routing.js";
 
 export const FieldName = Object.freeze({
   STATUS: "Status",
@@ -86,6 +86,13 @@ export function normalizeProjectItem(node) {
     url: content.url,
     number: content.number,
     repository: content.repository?.nameWithOwner,
+    prUrl: fields[FieldName.PR],
+    pullRequestNumber: parseGitHubPullRequestNumber(fields[FieldName.PR]),
+    baseRef: content.baseRefName,
+    baseSha: content.baseRefOid,
+    headRef: content.headRefName,
+    headRepository: content.headRepository?.nameWithOwner,
+    headSha: content.headRefOid,
     status: fields[FieldName.STATUS],
     workerType: fields[FieldName.WORKER_TYPE],
     priority: fields[FieldName.PRIORITY],
@@ -99,13 +106,15 @@ export function normalizeProjectItem(node) {
   };
 }
 
-export function isReadyForWorker(item, workerType, now = new Date()) {
-  const readyStatus = readyStatusForWorker(workerType);
-  if (item.workerType && item.workerType !== workerType) return false;
-  if (item.status !== Status.READY && item.status !== readyStatus) return false;
+function parseGitHubPullRequestNumber(url) {
+  const value = String(url ?? "").trim();
+  if (/^\d+$/.test(value)) return Number(value);
+  const match = value.match(/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/pull\/(\d+)(?:\b|$)/);
+  return match ? Number(match[1]) : undefined;
+}
 
-  if (!item.leaseExpiresAt) return true;
-  return new Date(item.leaseExpiresAt) <= now;
+export function isReadyForWorker(item, workerType, now = new Date()) {
+  return isReadyForWorkerType(item, workerType, now);
 }
 
 export function priorityRank(priority = "P3") {

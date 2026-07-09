@@ -1,4 +1,4 @@
-export function buildWorkerPrompt({ item, workerRole, claim }) {
+export function buildWorkerPrompt({ item, workerRole, claim, feedbackContext }) {
   return [
     `# Ski Stack Worker Run`,
     ``,
@@ -19,11 +19,24 @@ export function buildWorkerPrompt({ item, workerRole, claim }) {
     `## Body`,
     item.body ?? "",
     ``,
+    ...(feedbackContext
+      ? [
+          `## Pull Request Feedback`,
+          formatFeedbackContext(feedbackContext),
+          ``
+        ]
+      : []),
+    ``,
     `## Worker Role`,
     workerRole ?? "No role card supplied.",
     ``,
     `## Required Output`,
-    `Return a JSON-compatible result with outcome, nextStatus, summary, evidence, and blocker.`
+    `Return a JSON-compatible result with outcome, nextStatus, summary, evidence, and blocker.`,
+    `Only pr-babysitter may include mergeWhenApprovedAndClean=true when asking the harness to merge a clean-CI, mergeable PR with review approval or PR-description thumbs-up before QA.`
   ].join("\n");
 }
 
+function formatFeedbackContext(feedbackContext) {
+  if (typeof feedbackContext === "string") return feedbackContext;
+  return JSON.stringify(feedbackContext, null, 2);
+}

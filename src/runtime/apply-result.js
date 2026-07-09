@@ -1,30 +1,92 @@
 import { parseClaimId } from "../core/claims.js";
+import { isAutoRunnableWorker, statusForResult, validateWorkerTransition } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
-export async function applyWorkerResult({ adapter, claimId, result }) {
+export async function applyWorkerResult({ adapter, claimId, result, workerType, verifyOptions = {}, beforeRelease }) {
   if (!adapter) throw new Error("adapter is required");
   if (!claimId) throw new Error("claimId is required");
   if (!result) throw new Error("result is required");
 
   const claim = parseClaimId(claimId);
+  const resolvedWorkerType = workerType ?? claim.resolvedWorkerType;
+
+  if (resolvedWorkerType && isAutoRunnableWorker(resolvedWorkerType)) {
+    validateWorkerTransition({ workerType: resolvedWorkerType, result });
+  }
 
   if (result.outcome === "failed") {
-    await adapter.fail(claimId, result.blocker ?? result.summary ?? "Worker failed");
+    if (typeof beforeRelease === "function") {
+      await beforeRelease();
+    }
+    await guardedCall({
+      adapter,
+      claimAwareMethod: "failClaim",
+      legacyMethod: "fail",
+      claimId,
+      legacyUsesClaimId: true,
+      args: [result.blocker ?? result.summary ?? "Worker failed"],
+      verifyOptions,
+      falseKey: "failed"
+    });
     return { itemId: claim.itemId, status: Status.BLOCKED, released: true };
   }
 
-  await adapter.appendEvent(claim.itemId, {
-    type: "worker_result",
-    actor: claim.workerId,
-    outcome: result.outcome,
-    body: result.summary ?? "",
-    evidence: result.evidence ?? [],
-    blocker: result.blocker ?? null
+  await guardedCall({
+    adapter,
+    claimAwareMethod: "appendEventForClaim",
+    legacyMethod: "appendEvent",
+    claimId,
+    args: [
+      {
+        type: "worker_result",
+        actor: claim.workerId,
+        workerType: resolvedWorkerType ?? claim.workerId,
+        runId: claim.runId ?? claim.attemptId ?? claim.workerId,
+        outcome: result.outcome,
+        nextStatus: result.nextStatus,
+        body: result.summary ?? "",
+        evidence: result.evidence ?? [],
+        blocker: result.blocker ?? null
+      }
+    ],
+    verifyOptions,
+    falseKey: "appended"
   });
 
   const status = statusForResult(result);
-  if (status) await adapter.transition(claim.itemId, status);
-  await adapter.release(claimId);
+  if (status) {
+    await guardedCall({
+      adapter,
+      claimAwareMethod: "transitionForClaim",
+      legacyMethod: "transition",
+      claimId,
+      args: [status],
+      verifyOptions,
+      falseKey: "transitioned"
+    });
+    if (result.preserveWorkerType !== true && typeof adapter.clearWorkerTypeForClaim === "function") {
+      await guardedCall({
+        adapter,
+        claimAwareMethod: "clearWorkerTypeForClaim",
+        legacyMethod: "clearWorkerType",
+        claimId,
+        verifyOptions,
+        falseKey: "cleared"
+      });
+    }
+  }
+  if (typeof beforeRelease === "function") {
+    await beforeRelease();
+  }
+  await guardedCall({
+    adapter,
+    claimAwareMethod: "releaseClaim",
+    legacyMethod: "release",
+    claimId,
+    legacyUsesClaimId: true,
+    verifyOptions,
+    falseKey: "released"
+  });
 
   return {
     itemId: claim.itemId,
@@ -33,10 +95,25 @@ export async function applyWorkerResult({ adapter, claimId, result }) {
   };
 }
 
-function statusForResult(result) {
-  if (result.outcome === "blocked" || result.outcome === "needs-human") {
-    return Status.BLOCKED;
+async function guardedCall({
+  adapter,
+  claimAwareMethod,
+  legacyMethod,
+  claimId,
+  args = [],
+  legacyUsesClaimId = false,
+  verifyOptions = {},
+  falseKey
+}) {
+  let result;
+  if (typeof adapter[claimAwareMethod] === "function") {
+    result = await adapter[claimAwareMethod](claimId, ...args, verifyOptions);
+  } else {
+    const claim = parseClaimId(claimId);
+    result = await adapter[legacyMethod](legacyUsesClaimId ? claimId : claim.itemId, ...args);
   }
-  return result.nextStatus ?? null;
+  if (falseKey && result?.[falseKey] === false) {
+    throw new Error(`claim lost: ${result.reason ?? claimAwareMethod}`);
+  }
+  return result;
 }
-

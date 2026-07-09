@@ -1,5 +1,6 @@
-import { Status, readyStatusForWorker } from "../core/status.js";
-import { createClaimId, parseClaimId } from "../core/claims.js";
+import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../core/claims.js";
+import { isReadyForWorkerType, resolvedWorkerTypeForItem } from "../core/routing.js";
+import { Status } from "../core/status.js";
 
 export class MemoryQueueAdapter {
   constructor(items = [], { now = () => new Date() } = {}) {
@@ -11,12 +12,16 @@ export class MemoryQueueAdapter {
 
   async listReady(workerType) {
     const now = this.now();
-    const workerStatus = readyStatusForWorker(workerType);
     return [...this.items.values()]
-      .filter((item) => item.workerType === workerType)
-      .filter((item) => item.status === Status.READY || item.status === workerStatus || item.status === item.readyStatus)
-      .filter((item) => !item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= now)
+      .filter((item) => isReadyForWorkerType(item, workerType, now))
       .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+  }
+
+  async claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context = {} }) {
+    const ready = await this.listReady(workerType);
+    const item = itemId ? ready.find((candidate) => candidate.id === itemId) : ready[0];
+    if (!item) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
+    return this.#claimItem({ item, workerType, workerId, leaseSeconds, context, version: 2 });
   }
 
   async claim(itemId, workerId, leaseSeconds) {
@@ -33,6 +38,7 @@ export class MemoryQueueAdapter {
     item.leaseOwner = workerId;
     item.leaseExpiresAt = expiresAt;
     item.attempts = (item.attempts ?? 0) + 1;
+    item.lastWorkerRun = claimId;
     this.claims.set(claimId, { id: claimId, itemId, workerId, expiresAt });
 
     return {
@@ -43,14 +49,62 @@ export class MemoryQueueAdapter {
   }
 
   async heartbeat(claimId) {
-    const claim = this.claims.get(claimId);
-    if (!claim) return;
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const item = this.items.get(claim.itemId);
     if (item) item.leaseExpiresAt = claim.expiresAt;
   }
 
+  async verifyClaim(
+    claimId,
+    { allowStatusChanged = false, allowWorkerTypeChanged = false, requireHeadSha = false } = {}
+  ) {
+    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    const item = this.items.get(claim.itemId);
+    if (!item) return { active: false, reason: "missing" };
+    if (item.leaseOwner !== claim.workerId) return { active: false, reason: "owner_mismatch" };
+    if (item.lastWorkerRun && item.lastWorkerRun !== claimId) return { active: false, reason: "run_mismatch" };
+    if (!item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= this.now()) {
+      return { active: false, reason: "expired" };
+    }
+    if (isClaimV2(claim)) {
+      if (!allowStatusChanged && item.status !== claim.claimedStatus) {
+        return { active: false, reason: "status_changed" };
+      }
+      if (!allowWorkerTypeChanged && (item.workerType ?? undefined) !== (claim.claimedWorkerType ?? undefined)) {
+        return { active: false, reason: "worker_type_changed" };
+      }
+      if ((item.repository ?? "unknown/unknown") !== claim.repository) {
+        return { active: false, reason: "repository_changed" };
+      }
+      if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
+      if (requireHeadSha && item.headSha && item.headSha !== claim.headSha) {
+        return { active: false, reason: "head_drift" };
+      }
+      if (requireHeadSha && item.baseSha && claim.baseSha && item.baseSha !== claim.baseSha) {
+        return { active: false, reason: "base_drift" };
+      }
+    }
+    return { active: true, claim, item: structuredClone(item) };
+  }
+
+  async extendClaim(claimId, leaseSeconds) {
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) return { extended: false, reason: "CLAIM_LOST" };
+    const expiresAt = new Date(this.now().getTime() + leaseSeconds * 1000).toISOString();
+    const item = this.items.get(verified.claim.itemId);
+    item.leaseExpiresAt = expiresAt;
+    return { extended: true, expiresAt };
+  }
+
   async appendEvent(itemId, event) {
     this.events.push({ itemId, ...structuredClone(event) });
+  }
+
+  async appendEventForClaim(claimId, event, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { appended: false, reason: verified.reason };
+    await this.appendEvent(verified.claim.itemId, event);
+    return { appended: true };
   }
 
   async transition(itemId, status) {
@@ -59,29 +113,124 @@ export class MemoryQueueAdapter {
     item.status = status;
   }
 
+  async transitionForClaim(claimId, status, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { transitioned: false, reason: verified.reason };
+    await this.transition(verified.claim.itemId, status);
+    return { transitioned: true };
+  }
+
+  async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { updated: false, reason: verified.reason };
+    const item = this.items.get(verified.claim.itemId);
+    if (fieldName === "Last Worker Run") {
+      const nextClaim = parseClaimId(value);
+      item.lastWorkerRun = value;
+      if (nextClaim.headSha) item.headSha = nextClaim.headSha;
+      this.claims.set(value, { id: value, ...nextClaim });
+      this.claims.delete(claimId);
+      return { updated: true };
+    }
+    item.fields ??= {};
+    item.fields[fieldName] = value;
+    return { updated: true };
+  }
+
+  async clearWorkerTypeForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { ...verifyOptions, allowStatusChanged: true });
+    if (!verified.active) return { cleared: false, reason: verified.reason };
+    const item = this.items.get(verified.claim.itemId);
+    delete item.workerType;
+    return { cleared: true };
+  }
+
   async release(claimId) {
+    return this.releaseClaim(claimId);
+  }
+
+  async releaseClaim(claimId, verifyOptions = {}) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
+    const verified = await this.verifyClaim(claimId, {
+      ...verifyOptions,
+      allowStatusChanged: true,
+      allowWorkerTypeChanged: true
+    });
+    if (!verified.active) return { released: false, reason: verified.reason };
     const item = this.items.get(claim.itemId);
     if (item && item.leaseOwner === claim.workerId) {
       delete item.leaseOwner;
       delete item.leaseExpiresAt;
     }
     this.claims.delete(claimId);
+    return { released: true };
   }
 
   async fail(claimId, reason) {
-    const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
-    await this.appendEvent(claim.itemId, {
+    return this.failClaim(claimId, reason);
+  }
+
+  async failClaim(claimId, reason, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { failed: false, reason: verified.reason };
+    await this.appendEvent(verified.claim.itemId, {
       type: "worker_failed",
-      actor: claim.workerId,
+      actor: verified.claim.workerId,
       body: reason
     });
-    await this.transition(claim.itemId, Status.BLOCKED);
-    await this.release(claimId);
+    await this.transition(verified.claim.itemId, Status.BLOCKED);
+    const released = await this.releaseClaim(claimId);
+    if (released?.released === false) return { failed: false, reason: released.reason };
+    return { failed: true };
   }
 
   getItem(id) {
     return structuredClone(this.items.get(id));
+  }
+
+  async #claimItem({ item, workerType, workerId, leaseSeconds, context, version }) {
+    const live = this.items.get(item.id);
+    const now = this.now();
+    if (!isReadyForWorkerType(live, workerType, now)) {
+      return { claimed: false, reason: "not_ready" };
+    }
+    const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
+    const claimId =
+      version === 2
+        ? createClaimV2Id({
+            itemId: live.id,
+            workerId,
+            attemptId: context.attemptId ?? `${workerId}:${Number(live.attempts ?? 0) + 1}`,
+            runId: context.runId ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            expiresAt,
+            resolvedWorkerType: resolvedWorkerTypeForItem(live) ?? workerType,
+            claimedStatus: live.status,
+            claimedWorkerType: live.workerType,
+            repository: live.repository ?? context.repository ?? "unknown/unknown",
+            contentType: live.contentType ?? context.contentType ?? "Unknown",
+            issueNumber: live.contentType === "Issue" ? live.number : undefined,
+            pullRequestNumber: live.contentType === "PullRequest" ? live.number : undefined,
+            prUrl: live.contentType === "PullRequest" ? live.url : context.prUrl,
+            baseRef: live.baseRef,
+            baseSha: live.baseSha,
+            headRef: live.headRef,
+            headRepository: live.headRepository,
+            headSha: live.headSha,
+            claimedAt: now.toISOString(),
+            ...context
+          })
+        : createClaimId({ itemId: live.id, workerId, expiresAt });
+
+    live.leaseOwner = workerId;
+    live.leaseExpiresAt = expiresAt;
+    live.lastWorkerRun = claimId;
+    live.attempts = Number(live.attempts ?? 0) + 1;
+    this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
+    return {
+      claimed: true,
+      claim: { id: claimId, itemId: live.id, owner: workerId, expiresAt },
+      item: structuredClone(live)
+    };
   }
 }
 

@@ -1,4 +1,4 @@
-import { Status } from "../core/status.js";
+import { applyWorkerResult } from "./apply-result.js";
 
 export class QueueDispatcher {
   constructor({ adapter, workerId, workerType, runWorker, leaseSeconds = 1800 }) {
@@ -16,9 +16,24 @@ export class QueueDispatcher {
 
   async runOnce() {
     const readyItems = await this.adapter.listReady(this.workerType);
+    const skipped = [];
 
     for (const item of readyItems) {
-      const claimResult = await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
+      let claimResult;
+      try {
+        claimResult =
+          typeof this.adapter.claimReadyForWorker === "function"
+            ? await this.adapter.claimReadyForWorker({
+                itemId: item.id,
+                workerType: this.workerType,
+                workerId: this.workerId,
+                leaseSeconds: this.leaseSeconds
+              })
+            : await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
+      } catch (error) {
+        skipped.push({ itemId: item.id, error });
+        continue;
+      }
       if (!claimResult.claimed) continue;
 
       const { claim } = claimResult;
@@ -30,30 +45,27 @@ export class QueueDispatcher {
           workerType: this.workerType
         });
 
-        await this.adapter.appendEvent(item.id, {
-          type: "worker_result",
-          actor: this.workerId,
-          outcome: result.outcome,
-          body: result.summary ?? "",
-          evidence: result.evidence ?? [],
-          blocker: result.blocker ?? null
+        await applyWorkerResult({
+          adapter: this.adapter,
+          claimId: claim.id,
+          workerType: this.workerType,
+          result
         });
-
-        if (result.outcome === "blocked" || result.outcome === "needs-human") {
-          await this.adapter.transition(item.id, Status.BLOCKED);
-        } else if (result.nextStatus) {
-          await this.adapter.transition(item.id, result.nextStatus);
-        }
-
-        await this.adapter.release(claim.id);
         return { ran: true, itemId: item.id, result };
       } catch (error) {
-        await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+        let failed;
+        if (typeof this.adapter.failClaim === "function") {
+          failed = await this.adapter.failClaim(claim.id, error instanceof Error ? error.message : String(error));
+        } else {
+          failed = await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
+        }
+        if (failed?.failed === false && typeof this.adapter.releaseClaim === "function") {
+          await this.adapter.releaseClaim(claim.id);
+        }
         return { ran: true, itemId: item.id, error };
       }
     }
 
-    return { ran: false };
+    return skipped.length ? { ran: false, skipped } : { ran: false };
   }
 }
-
