@@ -26,7 +26,7 @@ export async function assertCredentialFreeWorktree(worktree, { allowSubmodules =
     if (!text) continue;
     inspectGitConfigText(text, file);
     if (!allowSubmodules && file.endsWith(".gitmodules") && text.trim()) {
-      throw new WorktreeSafetyError("submodules are disabled in v1", { file });
+      throw new WorktreeSafetyError("submodules are currently disabled", { file });
     }
   }
 

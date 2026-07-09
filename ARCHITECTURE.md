@@ -25,7 +25,8 @@ src/core/
   shared statuses, worker types, adapter contract docs
 
 src/runtime/
-  dispatcher, worker prompt assembly, lease handling
+  dispatcher, worker prompt assembly, worker slots, code-loop execution,
+  worktree handling, lease guarding, local run logs
 
 src/adapters/<tool>/
   vendor-specific queue implementation
@@ -39,14 +40,21 @@ src/provisioners/<tool>/
 Every queue backend must support:
 
 - `listReady(workerType)`
-- `claim(itemId, workerId, leaseSeconds)`
-- `heartbeat(claimId)`
+- `claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context })`
+- `verifyClaim(claimId, options)`
+- `extendClaim(claimId, leaseSeconds)`
 - `appendEvent(itemId, event)`
+- `appendEventForClaim(claimId, event, options)`
 - `transition(itemId, status)`
-- `release(claimId)`
-- `fail(claimId, reason)`
+- `transitionForClaim(claimId, status, options)`
+- `setFieldForClaim(claimId, fieldName, value, options)`
+- `clearWorkerTypeForClaim(claimId, options)`
+- `releaseClaim(claimId, options)`
+- `failClaim(claimId, reason, options)`
 
-The runtime never reaches around this boundary into GitHub, Jira, or Linear.
+The legacy `claim`, `heartbeat`, `release`, and `fail` names remain as
+compatibility shims where useful. The runtime never reaches around this boundary
+into GitHub, Jira, or Linear.
 
 ## GitHub Projects Strategy
 
@@ -59,11 +67,12 @@ signal, not the source of truth. On every event, reload the item via GraphQL
 before deciding whether to run a worker.
 
 GitHub Projects field writes are not transactional. The adapter implements a
-best-effort lease by reading item state, writing lease fields, and keeping claim
-metadata in the running process. That is enough for the MVP and low-collision
-worker pools. For strict multi-worker concurrency, put a transactional queue
-adapter, such as Postgres, behind the same contract and mirror status back into
-GitHub Projects for humans.
+best-effort lease by reading item state, writing lease fields, and storing a
+structured claim envelope in `Last Worker Run`. Workers re-verify that envelope
+before each GitHub mutation and extend the lease while a run is active. That is
+enough for the MVP and low-collision worker pools. For strict multi-worker
+concurrency, put a transactional queue adapter, such as Postgres, behind the
+same contract and mirror status back into GitHub Projects for humans.
 
 ## Worker Roles
 
@@ -80,3 +89,7 @@ The initial worker pool:
 
 These are role cards. A runtime can map them to Codex, Claude, another agent
 runner, or a human.
+
+The local daemon currently auto-runs only the code-loop workers: `implementer`,
+`reviewer`, and `pr-babysitter`. The other roles remain manual until an explicit
+worker implementation is added.

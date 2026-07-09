@@ -69,7 +69,7 @@ export function validateWorkerTransition({ workerType, result }) {
   }
 
   if (workerType === WorkerType.IMPLEMENTER && result.outcome === "no-op") {
-    throw new Error("implementer no-op cannot auto-advance in v1");
+    throw new Error("implementer no-op cannot auto-advance in the current runtime");
   }
 
   if (!["completed", "no-op"].includes(result.outcome)) {

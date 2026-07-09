@@ -211,7 +211,7 @@ export class GitHubCodeLoopWorker {
     const baseBranch = this.repoPolicy.defaultBaseBranch ?? "main";
     if (this.workerType === WorkerType.IMPLEMENTER) {
       if (claim.pullRequestNumber) {
-        throw new Error("PR-backed items must stay in Babysit; pr-babysitter owns existing PR fixes in v1");
+        throw new Error("PR-backed items must stay in Babysit; pr-babysitter owns existing PR fixes");
       }
       const branchName =
         claim.branchName ?? `ski/${safeGitRefSegment(item.number ?? item.id)}-${safeGitRefSegment(claim.runId)}`;
@@ -241,7 +241,7 @@ export class GitHubCodeLoopWorker {
       });
     }
 
-    throw new Error(`Worker type is not auto-runnable in v1: ${this.workerType}`);
+    throw new Error(`Worker type is not currently auto-runnable: ${this.workerType}`);
   }
 
   async applyWorkerOutcome({ claimId, item, result, worktree, ignoredPaths = [], claimExtender }) {
@@ -250,10 +250,10 @@ export class GitHubCodeLoopWorker {
 
     if (this.workerType === WorkerType.IMPLEMENTER && result.outcome === "completed") {
       if (result.outcome !== "completed" || result.nextStatus !== Status.REVIEW) {
-        throw new Error("implementer must complete to Review in v1");
+        throw new Error("implementer must complete to Review in the current runtime");
       }
       if (!this.repoPolicy.allowCreatePr) {
-        throw new Error("implementer requires allowCreatePr to advance to Review in v1");
+        throw new Error("implementer requires allowCreatePr to advance to Review");
       }
       if (!(await this.hasDiffImpl({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl, ignoredPaths }))) {
         throw new Error("implementer produced no diff");
@@ -382,7 +382,7 @@ export class GitHubCodeLoopWorker {
       throw new Error("pr-babysitter fixes must stay in Babysit for another review/check cycle");
     }
     if (!this.repoPolicy.allowPushBranches) {
-      throw new Error("pr-babysitter requires branch push permission to push PR fixes in v1");
+      throw new Error("pr-babysitter requires branch push permission to push PR fixes");
     }
     const claim = await this.verifyOrThrow(claimId);
     this.assertPatchablePrClaim(claim);
@@ -450,7 +450,7 @@ export class GitHubCodeLoopWorker {
     if (!claim.headRef) throw new Error("pr-babysitter requires a pull request head branch");
     if (!claim.headRepository) throw new Error("pr-babysitter requires a pull request head repository");
     if (String(claim.headRepository).toLowerCase() !== String(claim.repository).toLowerCase()) {
-      throw new Error("pr-babysitter cannot push fixes to fork PRs in v1");
+      throw new Error("pr-babysitter cannot currently push fixes to fork PRs");
     }
   }
 
@@ -461,7 +461,7 @@ export class GitHubCodeLoopWorker {
       ignoredPaths
     });
     if (dirty) {
-      throw new Error(`${this.workerType} produced a worktree diff; v1 does not persist non-implementer edits`);
+      throw new Error(`${this.workerType} produced a worktree diff; current runtime does not persist non-implementer edits`);
     }
   }
 
