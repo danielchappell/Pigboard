@@ -46,6 +46,12 @@ The preferred queue view is a board named `Queue Board` with `Status` as the
 column field. Moving a card into `Implementation`, `QA`, `Review`, or `Babysit`
 is the operator signal that the corresponding worker may claim it.
 
+PR-backed work remains in `Babysit` while comments, reviews, and CI are being
+handled. When the PR has a current-head approval, clean checks, and clean
+mergeability, `pr-babysitter` can request the harness merge gate. The harness
+rechecks live PR state, merges with the claimed head SHA, and then moves the
+card to `QA`.
+
 GitHub does not expose public Project view create/update mutations. Setup copies
 the bundled Ski Stack template Project by default to automate the Kanban layout.
 Custom installs can override it with `SKI_TEMPLATE_PROJECT_ID` or

@@ -821,7 +821,7 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
 });
 
-test("pr-babysitter requires explicit approved-and-clean flag to move to QA", async () => {
+test("pr-babysitter merges approved clean PRs before moving to QA", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -836,15 +836,21 @@ test("pr-babysitter requires explicit approved-and-clean flag to move to QA", as
     qaVerifications += 1;
     return { ready: true };
   };
+  const merges = [];
   const worker = workerWithCodexResult({
     root,
     adapter,
     workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, githubToken: "test-token", mergeMethod: "squash" },
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
       summary: "Approved and checks are clean.",
-      qaWhenApprovedAndClean: true
+      mergeWhenApprovedAndClean: true
+    },
+    mergePullRequestImpl: async (input) => {
+      merges.push(input);
+      return { merged: true, sha: "m".repeat(40), message: "merged" };
     }
   });
 
@@ -853,6 +859,47 @@ test("pr-babysitter requires explicit approved-and-clean flag to move to QA", as
   assert.equal(result.ran, true);
   assert.equal(adapter.getItem("item-3").status, Status.QA);
   assert.equal(qaVerifications, 1);
+  assert.equal(merges.length, 1);
+  assert.equal(merges[0].number, 42);
+  assert.equal(merges[0].expectedHeadSha, "a".repeat(40));
+  assert.equal(merges[0].method, "squash");
+  assert.match(adapter.events[0].evidence.at(-1), /^Merged PR #42 at m{40}$/);
+});
+
+test("pr-babysitter skips merge call when PR is already merged", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-already-merged",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true, reason: "merged" });
+  let mergeCalls = 0;
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.QA,
+      summary: "PR is already merged.",
+      mergeWhenApprovedAndClean: true
+    },
+    mergePullRequestImpl: async () => {
+      mergeCalls += 1;
+      return { merged: true, sha: "m".repeat(40), message: "merged" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(adapter.getItem("item-already-merged").status, Status.QA);
+  assert.equal(mergeCalls, 0);
+  assert.equal(adapter.events[0].evidence.at(-1), "PR #42 already merged");
 });
 
 test("pr-babysitter cannot move to QA when live PR state is not ready", async () => {
@@ -874,7 +921,7 @@ test("pr-babysitter cannot move to QA when live PR state is not ready", async ()
       outcome: "completed",
       nextStatus: Status.QA,
       summary: "Approved and checks are clean.",
-      qaWhenApprovedAndClean: true
+      mergeWhenApprovedAndClean: true
     }
   });
 
@@ -981,7 +1028,7 @@ test("reviewer dirty worktrees block instead of discarding edits", async () => {
   assert.equal(adapter.getItem("item-dirty-reviewer").status, Status.BLOCKED);
 });
 
-test("pr-babysitter blocks QA without approved-and-clean flag", async () => {
+test("pr-babysitter blocks QA without merge flag", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -1005,7 +1052,7 @@ test("pr-babysitter blocks QA without approved-and-clean flag", async () => {
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(result.error.message, /qaWhenApprovedAndClean/);
+  assert.match(result.error.message, /mergeWhenApprovedAndClean/);
   assert.equal(adapter.getItem("item-4").status, Status.BLOCKED);
 });
 
@@ -1017,6 +1064,7 @@ function workerWithCodexResult({
   repoPolicy = { cwd: root },
   hasDiffImpl = async () => false,
   commitAllImpl,
+  mergePullRequestImpl,
   execFileImpl = async () => ({ stdout: "", stderr: "" })
 }) {
   return new GitHubCodeLoopWorker({
@@ -1038,6 +1086,7 @@ function workerWithCodexResult({
     },
     hasDiffImpl,
     commitAllImpl,
+    mergePullRequestImpl,
     execFileImpl,
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}

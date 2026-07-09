@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { ensurePullRequest } from "../src/index.js";
+import { ensurePullRequest, mergePullRequest } from "../src/index.js";
 
 test("ensurePullRequest creates a PR when no open branch PR exists", async () => {
   const calls = [];
@@ -78,6 +78,42 @@ test("ensurePullRequest updates an existing open branch PR", async () => {
   });
 });
 
+test("mergePullRequest sends an expected head SHA guard", async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, options });
+    if (options.method === "PUT") {
+      return jsonResponse({
+        merged: true,
+        sha: "m".repeat(40),
+        message: "Pull Request successfully merged"
+      });
+    }
+    throw new Error(`unexpected ${options.method}`);
+  };
+
+  const merged = await mergePullRequest({
+    token: "token",
+    repository: "acme/repo",
+    number: 42,
+    expectedHeadSha: "a".repeat(40),
+    method: "squash",
+    title: "Ski Stack: merge PR #42",
+    message: "Ready for QA",
+    fetchImpl
+  });
+
+  assert.equal(merged.sha, "m".repeat(40));
+  assert.equal(calls[0].options.method, "PUT");
+  assert.match(calls[0].url, /\/repos\/acme\/repo\/pulls\/42\/merge$/);
+  assert.deepEqual(JSON.parse(calls[0].options.body), {
+    sha: "a".repeat(40),
+    merge_method: "squash",
+    commit_title: "Ski Stack: merge PR #42",
+    commit_message: "Ready for QA"
+  });
+});
+
 function jsonResponse(body) {
   return {
     ok: true,
@@ -85,4 +121,3 @@ function jsonResponse(body) {
     text: async () => JSON.stringify(body)
   };
 }
-

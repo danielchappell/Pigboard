@@ -31,7 +31,7 @@ Every worker receives a work item envelope and returns a stage result.
   "summary": "What changed or what was decided.",
   "evidence": ["test output, PR link, docs link, screenshot link"],
   "blocker": null,
-  "qaWhenApprovedAndClean": false
+  "mergeWhenApprovedAndClean": false
 }
 ```
 
@@ -49,7 +49,7 @@ Outcomes:
 - Write evidence back to the work item.
 - Do not silently expand scope.
 - If the item is under-specified, block it with the exact missing decision.
-- `pr-babysitter` may set `qaWhenApprovedAndClean: true` only when moving an
-  approved, clean PR to `QA`.
+- `pr-babysitter` may set `mergeWhenApprovedAndClean: true` only when asking the
+  harness to merge an approved, clean PR before moving it to `QA`.
 - If the work should be split, transition to Grooming or create sub-items through
   the adapter.

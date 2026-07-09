@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import { applyWorkerResult } from "./apply-result.js";
 import { runCodexExec } from "./codex-runner.js";
 import { buildDaemonGitEnv } from "./command-env.js";
-import { ensurePullRequest } from "./github-pr.js";
+import { ensurePullRequest, mergePullRequest } from "./github-pr.js";
 import {
   cleanupWorktree,
   commitAll,
@@ -50,6 +50,7 @@ export class GitHubCodeLoopWorker {
     cleanupWorktreeImpl = cleanupWorktree,
     assertCredentialFreeWorktreeImpl = assertCredentialFreeWorktree,
     ensurePullRequestImpl = ensurePullRequest,
+    mergePullRequestImpl = mergePullRequest,
     claimHeartbeatMs
   }) {
     if (!adapter) throw new Error("adapter is required");
@@ -76,6 +77,7 @@ export class GitHubCodeLoopWorker {
     this.cleanupWorktreeImpl = cleanupWorktreeImpl;
     this.assertCredentialFreeWorktreeImpl = assertCredentialFreeWorktreeImpl;
     this.ensurePullRequestImpl = ensurePullRequestImpl;
+    this.mergePullRequestImpl = mergePullRequestImpl;
     this.claimHeartbeatMs = claimHeartbeatMs;
   }
 
@@ -330,9 +332,10 @@ export class GitHubCodeLoopWorker {
       this.workerType === WorkerType.PR_BABYSITTER &&
       result.outcome === "completed" &&
       result.nextStatus === Status.QA &&
-      result.qaWhenApprovedAndClean === true
+      result.mergeWhenApprovedAndClean === true
     ) {
-      await this.verifyPullRequestReadyState(claimId);
+      const readyState = await this.verifyPullRequestReadyState(claimId);
+      await this.mergePullRequestForQa({ claimId, result, readyState });
     }
     return applyWorkerResult({
       adapter: this.adapter,
@@ -417,14 +420,44 @@ export class GitHubCodeLoopWorker {
 
   async verifyPullRequestReadyState(claimId) {
     const verifier =
-      this.adapter.verifyPullRequestReadyForQaForClaim ?? this.adapter.verifyPullRequestReadyForDoneForClaim;
+      this.adapter.verifyPullRequestReadyForMergeForClaim ??
+      this.adapter.verifyPullRequestReadyForQaForClaim ??
+      this.adapter.verifyPullRequestReadyForDoneForClaim;
     if (typeof verifier !== "function") {
-      throw new Error("adapter cannot verify live PR state before QA");
+      throw new Error("adapter cannot verify live PR state before merge");
     }
     const verified = await verifier.call(this.adapter, claimId);
     if (verified?.ready !== true) {
-      throw new Error(`pr-babysitter cannot move to QA: ${verified?.reason ?? "pr_not_ready"}`);
+      throw new Error(`pr-babysitter cannot merge before QA: ${verified?.reason ?? "pr_not_ready"}`);
     }
+    return verified;
+  }
+
+  async mergePullRequestForQa({ claimId, result, readyState }) {
+    const claim = await this.verifyOrThrow(claimId);
+    if (!claim.pullRequestNumber) throw new Error("pr-babysitter requires a pull request claim to merge");
+    if (!claim.headSha) throw new Error("pr-babysitter requires a claimed pull request head SHA to merge");
+    if (readyState?.reason === "merged") {
+      result.evidence = [...(result.evidence ?? []), `PR #${claim.pullRequestNumber} already merged`];
+      return;
+    }
+    const merged = await this.mergePullRequestImpl({
+      token: this.repoPolicy.githubToken,
+      repository: claim.repository,
+      number: claim.pullRequestNumber,
+      expectedHeadSha: claim.headSha,
+      method: this.repoPolicy.mergeMethod ?? "squash",
+      title: `Ski Stack: merge PR #${claim.pullRequestNumber}`,
+      message: safePublicEventComment({
+        runId: claim.runId,
+        workerType: this.workerType,
+        outcome: result.outcome,
+        nextStatus: result.nextStatus,
+        summary: result.summary,
+        evidence: result.evidence
+      })
+    });
+    result.evidence = [...(result.evidence ?? []), `Merged PR #${claim.pullRequestNumber} at ${merged.sha}`];
   }
 
   startClaimExtender(claimId) {

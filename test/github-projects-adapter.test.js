@@ -501,7 +501,7 @@ test("GitHubProjectsAdapter requires approvals on the current PR head before QA"
     mutationResponse(),
     mutationResponse()
   ];
-  const fetchImpl = createPrDoneFetchImpl({
+  const fetchImpl = createPrMergeFetchImpl({
     responses,
     reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "b".repeat(40) }]
   });
@@ -548,7 +548,7 @@ test("GitHubProjectsAdapter rejects unmergeable PRs before QA", async () => {
     mutationResponse(),
     mutationResponse()
   ];
-  const fetchImpl = createPrDoneFetchImpl({
+  const fetchImpl = createPrMergeFetchImpl({
     responses,
     pullRequest: pullRequestResponse({ mergeable: false, mergeable_state: "dirty" }),
     reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) }]
@@ -604,7 +604,7 @@ test("GitHubProjectsAdapter pages through PR reviews before QA", async () => {
       commit_id: "a".repeat(40)
     }))
   ];
-  const fetchImpl = createPrDoneFetchImpl({
+  const fetchImpl = createPrMergeFetchImpl({
     responses,
     reviews: [firstPage, [{ user: { login: "reviewer" }, state: "CHANGES_REQUESTED", commit_id: "a".repeat(40) }]]
   });
@@ -651,7 +651,7 @@ test("GitHubProjectsAdapter pages through check runs before QA", async () => {
     mutationResponse(),
     mutationResponse()
   ];
-  const fetchImpl = createPrDoneFetchImpl({
+  const fetchImpl = createPrMergeFetchImpl({
     responses,
     reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) }],
     checkRuns: {
@@ -849,7 +849,7 @@ function createGraphqlMock(responses) {
   };
 }
 
-function createPrDoneFetchImpl({
+function createPrMergeFetchImpl({
   responses,
   pullRequest = pullRequestResponse(),
   reviews = [],

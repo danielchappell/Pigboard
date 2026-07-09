@@ -86,9 +86,9 @@ export function validateWorkerTransition({ workerType, result }) {
   if (
     workerType === WorkerType.PR_BABYSITTER &&
     nextStatus === Status.QA &&
-    result.qaWhenApprovedAndClean !== true
+    result.mergeWhenApprovedAndClean !== true
   ) {
-    throw new Error("pr-babysitter can only transition to QA with qaWhenApprovedAndClean=true");
+    throw new Error("pr-babysitter can only transition to QA with mergeWhenApprovedAndClean=true");
   }
 
   return nextStatus;

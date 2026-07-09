@@ -20,7 +20,7 @@ The default worker roles are in `agents/`:
 | `implementer` | Build one scoped item against acceptance criteria. |
 | `qa` | Verify behavior with tests, app/API checks, or evidence. |
 | `reviewer` | Review diffs/plans for bugs, gaps, and drift. |
-| `pr-babysitter` | Keep a PR moving through CI, comments, and review. |
+| `pr-babysitter` | Keep one PR moving through feedback, CI, harness merge, and QA handoff. |
 | `researcher` | Answer a focused unknown that blocks progress. |
 
 The reusable skills live in `skills/`. They are not tied to the queue runtime;
@@ -210,8 +210,8 @@ V1 can auto-run only the code loop workers:
 - `reviewer` claims `Review` and advances clean PRs to `Babysit`, or routes
   findings back to `Implementation`.
 - `pr-babysitter` claims `Babysit`, addresses PR comments/CI feedback on the
-  same PR, stays in `Babysit` after pushing fixes, and moves approved clean PRs
-  to `QA`.
+  same PR, stays in `Babysit` after pushing fixes, and asks the harness to
+  merge approved clean PRs before moving them to `QA`.
 
 `planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual for v1.
 

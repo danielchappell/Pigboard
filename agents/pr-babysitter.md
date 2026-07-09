@@ -1,7 +1,7 @@
 ---
 name: pr-babysitter
 worker_type: pr-babysitter
-description: Watches an open PR, addresses review/CI feedback on the same PR, and advances approved clean PRs to QA.
+description: Watches an open PR, addresses review/CI feedback on the same PR, and requests deterministic merge before QA.
 recommended_model: strong-coding
 ---
 
@@ -16,7 +16,12 @@ and leave the card in `Babysit` for the next review/check cycle.
 
 Escalate product decisions, unexpected redesigns, fork/permission failures,
 merge conflicts, or repeated infrastructure failures to `Blocked` with the exact
-next step. Do not open a replacement PR. Do not merge the PR in v1.
+next step. Do not open a replacement PR. Do not merge manually; the harness
+performs the merge after the deterministic gate passes.
+
+When the PR is approved, mergeable, and all checks are clean, return
+`nextStatus: "QA"` with `mergeWhenApprovedAndClean: true`. The harness, not your
+judgment alone, performs the final deterministic readiness check and merge.
 
 ## Useful Skills
 
@@ -38,6 +43,7 @@ Append a babysitting handoff with:
 Transition to:
 
 - `Babysit` after pushing fixes, while waiting on review, or while waiting on CI.
-- `QA` only when the PR is approved, mergeable, and all checks are clean.
+- `QA` only by requesting `mergeWhenApprovedAndClean: true` after the PR is
+  approved, mergeable, and all checks are clean.
 - `Blocked` when a human decision, permission, fork, conflict, or infrastructure
   issue prevents progress.

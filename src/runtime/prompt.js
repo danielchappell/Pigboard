@@ -24,6 +24,6 @@ export function buildWorkerPrompt({ item, workerRole, claim }) {
     ``,
     `## Required Output`,
     `Return a JSON-compatible result with outcome, nextStatus, summary, evidence, and blocker.`,
-    `Only pr-babysitter may include qaWhenApprovedAndClean=true when moving an approved, clean PR to QA.`
+    `Only pr-babysitter may include mergeWhenApprovedAndClean=true when asking the harness to merge an approved, clean PR before QA.`
   ].join("\n");
 }

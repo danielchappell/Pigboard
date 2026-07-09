@@ -427,10 +427,14 @@ export class GitHubProjectsAdapter {
   }
 
   async verifyPullRequestReadyForDoneForClaim(claimId) {
-    return this.verifyPullRequestReadyForQaForClaim(claimId);
+    return this.verifyPullRequestReadyForMergeForClaim(claimId);
   }
 
   async verifyPullRequestReadyForQaForClaim(claimId) {
+    return this.verifyPullRequestReadyForMergeForClaim(claimId);
+  }
+
+  async verifyPullRequestReadyForMergeForClaim(claimId) {
     const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
     if (!verified.active) return { ready: false, reason: verified.reason };
     const claim = verified.claim;
@@ -439,7 +443,7 @@ export class GitHubProjectsAdapter {
     const repository = claim.repository ?? item.repository;
     if (!repository || !number) return { ready: false, reason: "missing_pr" };
 
-    const state = await this.fetchPullRequestDoneState({ repository, number });
+    const state = await this.fetchPullRequestMergeState({ repository, number });
     if (claim.headSha && state.headSha && claim.headSha !== state.headSha) {
       return { ready: false, reason: "head_drift" };
     }
@@ -562,7 +566,7 @@ export class GitHubProjectsAdapter {
     };
   }
 
-  async fetchPullRequestDoneState({ repository, number }) {
+  async fetchPullRequestMergeState({ repository, number }) {
     const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
       errorCode: "GITHUB_PR_METADATA_HTTP",
       errorMessage: "GitHub pull request metadata request failed"

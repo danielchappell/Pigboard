@@ -176,13 +176,18 @@ Result JSON shape:
   "nextStatus": "QA",
   "summary": "Implemented the scoped adapter behavior.",
   "evidence": ["npm test"],
-  "blocker": null
+  "blocker": null,
+  "mergeWhenApprovedAndClean": false
 }
 ```
 
 `blocked` and `needs-human` move the item to `Blocked`. `failed` uses the
 adapter failure path, records a failure event, moves the item to `Blocked`, and
 releases the claim.
+
+Only `pr-babysitter` may set `mergeWhenApprovedAndClean: true`, and only when it
+is asking the harness to merge an approved, clean PR before moving the card to
+`QA`.
 
 ## 4. Runtime Shape
 

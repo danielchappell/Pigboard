@@ -31,9 +31,9 @@
     "preserveWorkerType": {
       "type": "boolean"
     },
-    "qaWhenApprovedAndClean": {
+    "mergeWhenApprovedAndClean": {
       "type": "boolean",
-      "description": "Only pr-babysitter may set this true when moving an approved, clean PR to QA."
+      "description": "Only pr-babysitter may set this true when asking the harness to merge an approved, clean PR before moving it to QA."
     }
   }
 }

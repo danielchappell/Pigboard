@@ -49,6 +49,49 @@ export async function ensurePullRequest({
   return normalizePullRequest(created);
 }
 
+export async function mergePullRequest({
+  token,
+  repository,
+  number,
+  expectedHeadSha,
+  method = "squash",
+  title,
+  message,
+  fetchImpl = globalThis.fetch
+}) {
+  if (!token) throw new Error("GitHub token is required to merge pull requests");
+  if (!repository) throw new Error("repository is required");
+  if (!number) throw new Error("pull request number is required");
+  if (!expectedHeadSha) throw new Error("expectedHeadSha is required");
+  if (!fetchImpl) throw new Error("fetch implementation is required");
+
+  const [owner, repo] = repository.split("/");
+  if (!owner || !repo) throw new Error(`Invalid GitHub repository: ${repository}`);
+
+  const body = {
+    sha: expectedHeadSha,
+    merge_method: method
+  };
+  if (title) body.commit_title = title;
+  if (message) body.commit_message = message;
+
+  const merged = await githubJson({
+    token,
+    fetchImpl,
+    method: "PUT",
+    path: `/repos/${owner}/${repo}/pulls/${number}/merge`,
+    body
+  });
+  if (merged.merged !== true) {
+    throw new Error(`GitHub did not merge pull request: ${merged.message ?? "merge rejected"}`);
+  }
+  return {
+    merged: true,
+    sha: merged.sha,
+    message: merged.message
+  };
+}
+
 async function githubJson({ token, fetchImpl, method, path, body }) {
   const response = await fetchImpl(`https://api.github.com${path}`, {
     method,
@@ -76,4 +119,3 @@ function normalizePullRequest(pr) {
     baseSha: pr.base?.sha
   };
 }
-
