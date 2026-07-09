@@ -46,7 +46,7 @@ Or choose an existing GitHub Project and preview the fields Ski Stack needs:
 npm run schema:github-projects
 ```
 
-Minimum required fields:
+Required schema fields:
 
 - `Status`
 - `Worker Type` (optional override routing)
@@ -55,6 +55,8 @@ Minimum required fields:
 - `Lease Expires`
 - `Attempts`
 - `Last Worker Run`
+- `PR`
+- `Epic`
 
 Preview missing live Project fields/options:
 
@@ -90,8 +92,9 @@ is not ready.
 
 Every runnable item needs:
 
-- `Status`: the column that matches the worker, such as `Implementation`, `QA`,
-  `Review`, or `Babysit`
+- `Status`: the column that matches the worker, such as `Planning`,
+  `Architecture`, `Grooming`, `Ready`, `Implementation`, `QA`, `Review`, or
+  `Babysit`
 - `Priority`: `P0` through `P3`
 
 `Worker Type` is optional. Leave it blank for the normal Kanban flow where
@@ -173,9 +176,9 @@ Result JSON shape:
 ```json
 {
   "outcome": "completed",
-  "nextStatus": "QA",
-  "summary": "Implemented the scoped adapter behavior.",
-  "evidence": ["npm test"],
+  "nextStatus": "Review",
+  "summary": "Implemented the scoped change.",
+  "evidence": ["npm test", "PR https://github.com/owner/repo/pull/42"],
   "blocker": null,
   "mergeWhenApprovedAndClean": false
 }
@@ -192,33 +195,44 @@ review approval or a PR-description thumbs-up reaction before moving the card to
 
 ## 4. Runtime Shape
 
-The runtime shape is:
+The manual claim/apply loop is:
 
 ```text
-webhook or poll
-  -> adapter.listReady(workerType)
-  -> adapter.claim(itemId, workerId, ttl)
-  -> worker executes one stage
+operator claim
+  -> adapter.claimReadyForWorker(...)
+  -> human or external worker executes one stage
   -> adapter.appendEvent(...)
   -> adapter.transition(...)
   -> adapter.release(...)
 ```
 
-The repository currently has the adapter, dispatcher primitives, a safe
-claim/print CLI, and an apply-result CLI. The next slice is a runner that sends
-the generated prompt to a real model or Codex thread automatically.
+The daemonized code-loop runtime is:
+
+```text
+GitHub webhook or reconcile timer
+  -> scheduler marks matching worker slots dirty
+  -> adapter.claimReadyForWorker(...)
+  -> daemon prepares an isolated worktree
+  -> Codex runs locally and writes a structured result
+  -> worker verifies the claim before each GitHub mutation
+  -> Project status advances, waits, or blocks with sanitized evidence
+```
+
+The daemon currently auto-runs only `implementer`, `reviewer`, and
+`pr-babysitter`. `planner`, `architect`, `groomer`, `qa`, and `researcher`
+remain manual until they have explicit worker implementations.
 
 ## 5. Recommended First Pool
 
 Start small:
 
 - one `implementer`
-- one `qa`
 - one `reviewer`
 - one `pr-babysitter`
+- manual `qa` coverage when work reaches `QA`
 
-Do not run many implementers against the same repository until the worktree and
-branch allocation policy is encoded.
+Do not run many implementers against the same repository until the branch and
+Project contention risks are intentional for that repo.
 
 ## 6. Exit Conditions
 

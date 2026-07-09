@@ -16,7 +16,7 @@ export function createClaimV2Id(input, { maxBytes = DEFAULT_MAX_CLAIM_BYTES } = 
   const payload = JSON.stringify(claim);
   const byteLength = Buffer.byteLength(payload, "utf8");
   if (byteLength > maxBytes) {
-    throw new Error(`Ski Stack v2 claim exceeds ${maxBytes} bytes`);
+    throw new Error(`Ski Stack structured claim exceeds ${maxBytes} bytes`);
   }
   return `${CLAIM_V2_PREFIX}${Buffer.from(payload, "utf8").toString("base64url")}`;
 }

@@ -18,7 +18,7 @@ export async function runRepoCommands({
   accessImpl = access
 }) {
   if (network !== "off") {
-    throw new Error("Scoped repo-command network policies are not implemented in v1");
+    throw new Error("Scoped repo-command network policies are not currently implemented");
   }
   await assertCredentialFreeWorktree(cwd);
   if (!commands.length) return [];

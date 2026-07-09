@@ -18,7 +18,7 @@ test("claim IDs round-trip across processes", () => {
   });
 });
 
-test("v2 claim envelopes round-trip bounded run context", () => {
+test("structured claim envelopes round-trip bounded run context", () => {
   const claimId = createClaimV2Id({
     itemId: "PVTI_item_1",
     workerId: "host:123:reviewer",
@@ -58,7 +58,7 @@ test("v2 claim envelopes round-trip bounded run context", () => {
   });
 });
 
-test("v2 claim envelopes reject oversized payloads", () => {
+test("structured claim envelopes reject oversized payloads", () => {
   assert.throws(
     () =>
       createClaimV2Id(

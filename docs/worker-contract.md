@@ -8,7 +8,7 @@ Every worker receives a work item envelope and returns a stage result.
 {
   "id": "tool-specific-id",
   "title": "Human-readable work title",
-  "status": "Ready",
+  "status": "Implementation",
   "workerType": "implementer",
   "priority": "P1",
   "body": "Issue or ticket body",
@@ -27,7 +27,7 @@ Every worker receives a work item envelope and returns a stage result.
 ```json
 {
   "outcome": "completed",
-  "nextStatus": "QA",
+  "nextStatus": "Review",
   "summary": "What changed or what was decided.",
   "evidence": ["test output, PR link, docs link, screenshot link"],
   "blocker": null,
@@ -49,6 +49,9 @@ Outcomes:
 - Write evidence back to the work item.
 - Do not silently expand scope.
 - If the item is under-specified, block it with the exact missing decision.
+- Current auto-run transitions are constrained: `implementer` completes to
+  `Review`, `reviewer` completes to `Babysit`, and `pr-babysitter` either stays
+  in `Babysit` or moves to `QA` with `mergeWhenApprovedAndClean: true`.
 - `pr-babysitter` may set `mergeWhenApprovedAndClean: true` only when asking the
   harness to merge a clean-CI, mergeable PR with either current-head review
   approval or a PR-description thumbs-up reaction before moving it to `QA`.

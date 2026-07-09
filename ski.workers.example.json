@@ -16,10 +16,8 @@
       "verifyNetwork": "off",
       "allowPushBranches": true,
       "allowCreatePr": true,
-      "allowPrComments": true,
-      "allowPrReviewComments": true,
       "allowMerge": false,
-      "doneWhenApprovedAndClean": false
+      "mergeMethod": "squash"
     }
   },
   "slots": [

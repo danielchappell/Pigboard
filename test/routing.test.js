@@ -37,7 +37,7 @@ test("Worker Type override blocks status-inferred implementer", () => {
   );
 });
 
-test("v1 implementer can only complete to Review", () => {
+test("auto-run implementer can only complete to Review", () => {
   assert.equal(
     validateWorkerTransition({
       workerType: WorkerType.IMPLEMENTER,

@@ -43,8 +43,10 @@ Canceled
 ## Kanban View
 
 The preferred queue view is a board named `Queue Board` with `Status` as the
-column field. Moving a card into `Implementation`, `QA`, `Review`, or `Babysit`
-is the operator signal that the corresponding worker may claim it.
+column field. Moving a card into `Planning`, `Architecture`, `Grooming`,
+`Ready`, `Implementation`, `QA`, `Review`, or `Babysit` is the operator signal
+that the corresponding worker may claim it. The local daemon currently auto-runs
+only `Implementation`, `Review`, and `Babysit`; the other columns remain manual.
 
 PR-backed work remains in `Babysit` while comments, reviews, and CI are being
 handled. When the PR has a clean CI run, clean mergeability, and either a

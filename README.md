@@ -154,8 +154,8 @@ npm run provision:github-project -- --apply
 
 Put an issue or PR into the Project with:
 
-- `Status`: one of `Planning`, `Architecture`, `Grooming`, `Implementation`,
-  `QA`, `Review`, or `Babysit`
+- `Status`: one of `Planning`, `Architecture`, `Grooming`, `Ready`,
+  `Implementation`, `QA`, `Review`, or `Babysit`
 - `Priority`: `P0`, `P1`, `P2`, or `P3`
 
 Moving a card into a worker column makes it claimable. `Worker Type` is optional
@@ -203,7 +203,7 @@ npm run release:github -- 'ski.<claim-payload>'
 
 ## Local Worker Daemon
 
-V1 can auto-run only the code loop workers:
+The local daemon currently auto-runs only the code loop workers:
 
 - `implementer` claims `Implementation` and advances completed diffs to
   `Review`.
@@ -213,7 +213,8 @@ V1 can auto-run only the code loop workers:
   same PR, stays in `Babysit` after pushing fixes, and asks the harness to
   merge clean-CI, explicitly approved PRs before moving them to `QA`.
 
-`planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual for v1.
+`planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual until
+they have explicit worker implementations.
 
 The daemon uses local ChatGPT-authenticated Codex, not API-key billing. Startup
 runs `codex login status` and fails if local ChatGPT auth cannot be verified.
@@ -278,7 +279,7 @@ npm run logs:github -- --run run-id --json
 GitHub Project
   -> GitHub webhook wakes the local daemon
   -> adapter lists ready items by Status and repo partition
-  -> worker claims one item with a v2 lease envelope
+  -> worker claims one item with a structured lease envelope
   -> daemon prepares an isolated worktree
   -> Codex runs locally and writes a structured result
   -> daemon verifies the claim before every GitHub mutation
