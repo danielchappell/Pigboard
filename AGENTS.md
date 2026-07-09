@@ -29,10 +29,10 @@ APIs unless a dependency removes real complexity.
   mandatory hierarchy.
 - `skills/`: reusable operating skills. Keep them directly usable outside the
   queue runtime.
-- `src/core/`: shared statuses, worker types, claim ids, and adapter contract
-  definitions.
-- `src/runtime/`: queue dispatcher, prompt assembly, and worker-result
-  application.
+- `src/core/`: shared statuses, worker types, normalized queue snapshots,
+  dependency-aware availability, claim ids, and adapter contract definitions.
+- `src/runtime/`: claim coordination, queue dispatch, prompt assembly, and
+  worker-result application.
 - `src/adapters/github-projects/`: GitHub Projects queue adapter. Keep GitHub
   specifics behind this boundary.
 - `src/provisioners/github-projects/`: GitHub Project field/template setup and
@@ -66,5 +66,10 @@ APIs unless a dependency removes real complexity.
   schema, docs, and tests together.
 - When changing the GitHub adapter, add or update mocked GraphQL tests instead
   of depending on a live Project for correctness.
+- Keep eligibility and ordering in `src/core/availability.js`. Adapters normalize
+  native state and own claim/mutation mechanics; they do not implement a second
+  queue policy.
+- GitHub issue dependencies come from native `Issue.blockedBy` relationships.
+  Do not provision a duplicate Project dependency field.
 - Keep worker results evidence-driven: every transition should have a summary,
   evidence, or blocker that can be appended back to the work item.

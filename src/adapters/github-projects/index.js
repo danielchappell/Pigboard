@@ -1,4 +1,5 @@
 import { AdapterError } from "../../core/adapter-contract.js";
+import { evaluateQueueAvailability } from "../../core/availability.js";
 import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../../core/claims.js";
 import { formatPublicEventComment, formatWithheldPublicEvent } from "../../core/public-output.js";
 import { resolvedWorkerTypeForItem } from "../../core/routing.js";
@@ -7,25 +8,26 @@ import {
   buildProjectModel,
   FieldName,
   fieldId,
-  isReadyForWorker,
+  normalizeIssueDependencies,
   normalizeProjectItem,
-  priorityRank,
   singleSelectOptionId
 } from "./fields.js";
 import {
   ADD_COMMENT_MUTATION,
   CLEAR_FIELD_MUTATION,
+  ISSUE_BLOCKED_BY_QUERY,
   ORGANIZATION_PROJECT_QUERY,
   USER_PROJECT_QUERY,
   UPDATE_FIELD_MUTATION
 } from "./graphql.js";
 
-export { parseGitHubWebhook } from "./webhook.js";
+export { isGlobalQueueWakeup, parseGitHubWebhook } from "./webhook.js";
 export {
   buildProjectModel,
   FieldName,
   isReadyForWorker,
   normalizeProjectItem,
+  normalizeIssueDependencies,
   priorityRank
 } from "./fields.js";
 
@@ -92,6 +94,7 @@ export class GitHubProjectsAdapter {
     const allItems = [];
     let after = null;
     let projectModel = null;
+    let sourceOrder = 0;
 
     do {
       const project = await this.loadProjectPage(after);
@@ -103,7 +106,21 @@ export class GitHubProjectsAdapter {
 
       projectModel ??= buildProjectModel(project);
       for (const node of project.items?.nodes ?? []) {
-        if (!node?.isArchived) allItems.push(normalizeProjectItem(node));
+        if (!node?.isArchived) {
+          const item = normalizeProjectItem(node, { sourceOrder });
+          if (node.content?.__typename === "Issue" && node.content.blockedBy?.pageInfo?.hasNextPage) {
+            const dependencyCursor = node.content.blockedBy.pageInfo.endCursor;
+            if (dependencyCursor) {
+              item.dependencies.push(
+                ...(await this.loadRemainingIssueDependencies(node.content.id, dependencyCursor))
+              );
+            } else {
+              item.dependencies.push({ kind: "blockedBy", targetId: "", state: "unknown" });
+            }
+          }
+          allItems.push(item);
+        }
+        sourceOrder += 1;
       }
 
       const pageInfo = project.items?.pageInfo;
@@ -112,6 +129,43 @@ export class GitHubProjectsAdapter {
 
     this.projectModel = projectModel;
     return { projectModel, items: allItems };
+  }
+
+  async loadQueueSnapshot() {
+    const { projectModel, items } = await this.loadProjectItems();
+    return { projectModel, items, loadedAt: this.now().toISOString() };
+  }
+
+  async loadRemainingIssueDependencies(issueId, after) {
+    const dependencies = [];
+    const seenCursors = new Set();
+    let cursor = after;
+    while (cursor) {
+      if (seenCursors.has(cursor)) {
+        dependencies.push({ kind: "blockedBy", targetId: "", state: "unknown" });
+        break;
+      }
+      seenCursors.add(cursor);
+      const data = await this.graphql(ISSUE_BLOCKED_BY_QUERY, {
+        id: issueId,
+        first: 100,
+        after: cursor
+      });
+      const blockedBy = data?.node?.blockedBy;
+      if (!blockedBy) {
+        dependencies.push({ kind: "blockedBy", targetId: "", state: "unknown" });
+        break;
+      }
+      dependencies.push(...normalizeIssueDependencies(blockedBy.nodes));
+      const hasNextPage = blockedBy.pageInfo?.hasNextPage === true;
+      const nextCursor = blockedBy.pageInfo?.endCursor;
+      if (hasNextPage && !nextCursor) {
+        dependencies.push({ kind: "blockedBy", targetId: "", state: "unknown" });
+        break;
+      }
+      cursor = hasNextPage ? nextCursor : null;
+    }
+    return dependencies;
   }
 
   async loadProjectPage(after) {
@@ -144,12 +198,12 @@ export class GitHubProjectsAdapter {
   }
 
   async listReady(workerType) {
-    const { items } = await this.loadProjectItems();
-    const now = this.now();
-    return items
-      .filter((item) => this.matchesRepositoryFilter(item))
-      .filter((item) => isReadyForWorker(item, workerType, now))
-      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+    const snapshot = await this.loadQueueSnapshot();
+    return evaluateQueueAvailability(snapshot, {
+      workerType,
+      repositories: this.repositories,
+      now: this.now
+    }).available.map((candidate) => candidate.item);
   }
 
   async claim(itemId, workerId, leaseSeconds) {
@@ -190,28 +244,82 @@ export class GitHubProjectsAdapter {
     if (!workerId) throw new Error("workerId is required");
     if (!leaseSeconds) throw new Error("leaseSeconds is required");
 
-    const { projectModel, items } = await this.loadProjectItems();
-    const ready = items
-      .filter((item) => this.matchesRepositoryFilter(item))
-      .filter((item) => isReadyForWorker(item, workerType, this.now()))
-      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
-    const candidates = itemId ? ready.filter((candidate) => candidate.id === itemId) : ready;
+    const snapshot = await this.loadQueueSnapshot();
+    const selection = evaluateQueueAvailability(snapshot, {
+      workerType,
+      workerId,
+      repositories: this.repositories,
+      now: this.now
+    });
+    const candidates = itemId
+      ? selection.available.filter((candidate) => candidate.item.id === itemId)
+      : selection.available;
     if (!candidates.length) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
 
     const skipped = [];
-    for (const item of candidates) {
+    for (const candidate of candidates) {
       try {
-        return await this.claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context });
+        return await this.claimReadyItem({
+          projectModel: snapshot.projectModel,
+          item: candidate.item,
+          workerType,
+          workerId,
+          leaseSeconds,
+          availabilityFingerprint: candidate.fingerprint,
+          context
+        });
       } catch (error) {
         if (itemId || !isPullRequestMetadataError(error)) throw error;
-        skipped.push({ itemId: item.id, reason: error.message });
+        skipped.push({ itemId: candidate.item.id, reason: error.message });
       }
     }
 
     return { claimed: false, reason: skipped.length ? "pr_metadata_failed" : "none_ready", skipped };
   }
 
-  async claimReadyItem({ projectModel, item, workerType, workerId, leaseSeconds, context }) {
+  async claimCandidate({
+    itemId,
+    workerType,
+    workerId,
+    leaseSeconds,
+    expectedAvailabilityFingerprint,
+    context = {}
+  }) {
+    const snapshot = await this.loadQueueSnapshot();
+    const selection = evaluateQueueAvailability(snapshot, {
+      workerType,
+      workerId,
+      repositories: this.repositories,
+      now: this.now
+    });
+    const candidate = selection.available.find((entry) => entry.item.id === itemId);
+    if (!candidate) {
+      const unavailable = selection.unavailable.find((entry) => entry.item.id === itemId);
+      return { claimed: false, reason: unavailable?.reasons[0]?.code ?? "not_available" };
+    }
+    if (expectedAvailabilityFingerprint && candidate.fingerprint !== expectedAvailabilityFingerprint) {
+      return { claimed: false, reason: "availability_changed" };
+    }
+    return this.claimReadyItem({
+      projectModel: snapshot.projectModel,
+      item: candidate.item,
+      workerType,
+      workerId,
+      leaseSeconds,
+      availabilityFingerprint: candidate.fingerprint,
+      context
+    });
+  }
+
+  async claimReadyItem({
+    projectModel,
+    item,
+    workerType,
+    workerId,
+    leaseSeconds,
+    availabilityFingerprint,
+    context
+  }) {
     const now = this.now();
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
     const pullRequest = await this.resolveClaimPullRequest({ item, context });
@@ -234,6 +342,7 @@ export class GitHubProjectsAdapter {
       headRef: pullRequest?.headRef,
       headRepository: pullRequest?.headRepository,
       headSha: pullRequest?.headSha,
+      availabilityFingerprint,
       claimedAt: now.toISOString(),
       ...context
     });
@@ -249,7 +358,7 @@ export class GitHubProjectsAdapter {
     }
 
     this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
-    const verified = await this.verifyClaim(claimId);
+    const verified = await this.verifyClaim(claimId, { requireAvailability: true });
     if (!verified.active) {
       this.claims.delete(claimId);
       await this.rollbackClaimAttempt(projectModel, item.id, { claimId, workerId, expiresAt });
@@ -258,7 +367,7 @@ export class GitHubProjectsAdapter {
 
     return {
       claimed: true,
-      claim: { id: claimId, itemId: item.id, owner: workerId, expiresAt },
+      claim: { id: claimId, itemId: item.id, owner: workerId, expiresAt, availabilityFingerprint },
       item: {
         ...item,
         leaseOwner: workerId,
@@ -277,10 +386,16 @@ export class GitHubProjectsAdapter {
 
   async verifyClaim(
     claimId,
-    { requireHeadSha = false, allowStatusChanged = false, allowWorkerTypeChanged = false } = {}
+    {
+      requireHeadSha = false,
+      allowStatusChanged = false,
+      allowWorkerTypeChanged = false,
+      requireAvailability = false
+    } = {}
   ) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
-    const { items } = await this.loadProjectItems();
+    const snapshot = await this.loadQueueSnapshot();
+    const { items } = snapshot;
     const item = items.find((candidate) => candidate.id === claim.itemId);
     if (!item) return { active: false, reason: "missing" };
     if (item.leaseOwner !== claim.workerId) return { active: false, reason: "owner_mismatch" };
@@ -328,6 +443,22 @@ export class GitHubProjectsAdapter {
       }
       if (requireHeadSha && item.baseSha && claim.baseSha && item.baseSha !== claim.baseSha) {
         return { active: false, reason: "base_drift" };
+      }
+      if (requireAvailability) {
+        const selection = evaluateQueueAvailability(snapshot, {
+          workerType: claim.resolvedWorkerType,
+          workerId: claim.workerId,
+          repositories: this.repositories,
+          now: this.now
+        });
+        const candidate = selection.available.find((entry) => entry.item.id === claim.itemId);
+        if (!candidate) {
+          const unavailable = selection.unavailable.find((entry) => entry.item.id === claim.itemId);
+          return { active: false, reason: unavailable?.reasons[0]?.code ?? "not_available" };
+        }
+        if (claim.availabilityFingerprint && candidate.fingerprint !== claim.availabilityFingerprint) {
+          return { active: false, reason: "availability_changed" };
+        }
       }
     }
     return { active: true, claim, item };
@@ -518,12 +649,6 @@ export class GitHubProjectsAdapter {
     if ((ownsRun || ownsLease) && item.leaseExpiresAt === expiresAt) {
       await this.clearField(projectModel, itemId, FieldName.LEASE_EXPIRES);
     }
-  }
-
-  matchesRepositoryFilter(item) {
-    if (!this.repositories.size) return true;
-    if (!item.repository) return false;
-    return this.repositories.has(item.repository.toLowerCase());
   }
 
   async resolveClaimPullRequest({ item, context = {} }) {

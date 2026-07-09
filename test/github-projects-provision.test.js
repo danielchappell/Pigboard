@@ -37,6 +37,13 @@ test("planGitHubProjectProvisioning adds missing single-select options only", ()
   ]);
 });
 
+test("GitHub Project provisioning does not add a dependency field", () => {
+  assert.equal(
+    githubProjectsSchema.fields.some((field) => /depend|block/i.test(field.name)),
+    false
+  );
+});
+
 function emptyProjectModel() {
   return { id: "PROJECT_1", fields: new Map() };
 }
@@ -68,4 +75,3 @@ function typeName(type) {
     date: "DATE"
   }[type];
 }
-

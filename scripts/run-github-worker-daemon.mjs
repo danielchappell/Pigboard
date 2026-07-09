@@ -7,6 +7,7 @@ import {
   createGitHubWebhookServer,
   GitHubCodeLoopWorker,
   GitHubProjectsAdapter,
+  isGlobalQueueWakeup,
   normalizeCodexModel,
   normalizeCodexReasoningEffort,
   runCodexIsolationDiagnostics,
@@ -49,7 +50,7 @@ const server = createGitHubWebhookServer({
   insecureLocalWebhook,
   onEvent: async (event) => {
     scheduler.markAllDirty(
-      (_key, worker) => event.kind === "project" || matchesWorkerRepository(worker, event.repository)
+      (_key, worker) => isGlobalQueueWakeup(event) || matchesWorkerRepository(worker, event.repository)
     );
     scheduler.requestDrain();
   }

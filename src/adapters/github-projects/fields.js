@@ -1,4 +1,8 @@
-import { isReadyForWorkerType } from "../../core/routing.js";
+import {
+  DependencyState,
+  evaluateQueueAvailability,
+  priorityRank as priorityRankCore
+} from "../../core/availability.js";
 
 export const FieldName = Object.freeze({
   STATUS: "Status",
@@ -47,7 +51,7 @@ export function singleSelectOptionId(projectModel, fieldName, optionName) {
   return optionId;
 }
 
-export function normalizeProjectItem(node) {
+export function normalizeProjectItem(node, { sourceOrder } = {}) {
   const fields = {};
   const optionIds = {};
 
@@ -93,6 +97,9 @@ export function normalizeProjectItem(node) {
     headRef: content.headRefName,
     headRepository: content.headRepository?.nameWithOwner,
     headSha: content.headRefOid,
+    sourceOrder,
+    dependencies:
+      content.__typename === "Issue" ? normalizeIssueDependencies(content.blockedBy?.nodes) : [],
     status: fields[FieldName.STATUS],
     workerType: fields[FieldName.WORKER_TYPE],
     priority: fields[FieldName.PRIORITY],
@@ -114,9 +121,28 @@ function parseGitHubPullRequestNumber(url) {
 }
 
 export function isReadyForWorker(item, workerType, now = new Date()) {
-  return isReadyForWorkerType(item, workerType, now);
+  return evaluateQueueAvailability({ items: [item] }, { workerType, now }).available.length === 1;
 }
 
 export function priorityRank(priority = "P3") {
-  return { P0: 0, P1: 1, P2: 2, P3: 3 }[priority] ?? 99;
+  return priorityRankCore(priority);
+}
+
+export function normalizeIssueDependencies(nodes) {
+  if (!Array.isArray(nodes)) return [];
+  return nodes.map((issue) => ({
+    kind: "blockedBy",
+    targetId: issue?.id ?? "",
+    title: issue?.title,
+    url: issue?.url,
+    state: dependencyStateForIssue(issue)
+  }));
+}
+
+export function dependencyStateForIssue(issue) {
+  if (!issue?.state) return DependencyState.UNKNOWN;
+  if (issue.state === "OPEN") return DependencyState.ACTIVE;
+  if (issue.state === "CLOSED" && issue.stateReason === "NOT_PLANNED") return DependencyState.CANCELED;
+  if (issue.state === "CLOSED") return DependencyState.COMPLETED;
+  return DependencyState.UNKNOWN;
 }

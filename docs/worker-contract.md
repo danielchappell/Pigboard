@@ -11,13 +11,24 @@ Every worker receives a work item envelope and returns a stage result.
   "status": "Implementation",
   "workerType": "implementer",
   "priority": "P1",
+  "sourceOrder": 14,
+  "dependencies": [
+    {
+      "kind": "blockedBy",
+      "targetId": "tool-specific-blocker-id",
+      "title": "Prerequisite work",
+      "url": "https://example.test/issues/12",
+      "state": "completed"
+    }
+  ],
   "body": "Issue or ticket body",
   "links": [],
   "fields": {},
   "claim": {
     "id": "claim-id",
     "owner": "worker-id",
-    "expiresAt": "2026-07-07T16:30:00Z"
+    "expiresAt": "2026-07-07T16:30:00Z",
+    "availabilityFingerprint": "64-character-sha256-hex"
   }
 }
 ```
@@ -46,6 +57,13 @@ Outcomes:
 ## Rules
 
 - Do one stage only.
+- Workers receive only items the core engine found available. Dependency states
+  are `active`, `completed`, `canceled`, or `unknown`; only `completed` satisfies
+  a dependency.
+- Priority controls dispatch first, followed by platform `sourceOrder` and
+  stable item id.
+- If routing or dependency state changes during a run, release the stale claim
+  without changing Status or reporting the item as `Blocked`.
 - Write evidence back to the work item.
 - Do not silently expand scope.
 - If the item is under-specified, block it with the exact missing decision.

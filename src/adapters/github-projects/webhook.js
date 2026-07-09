@@ -1,5 +1,9 @@
 const PROJECT_EVENTS = new Set(["projects_v2", "projects_v2_item", "projects_v2_status_update"]);
 
+export function isGlobalQueueWakeup(event) {
+  return event?.kind === "project" || event?.eventName === "issues";
+}
+
 export function parseGitHubWebhook({ eventName, payload }) {
   if (!eventName) throw new Error("eventName is required");
   if (!payload || typeof payload !== "object") throw new Error("payload is required");
@@ -28,4 +32,3 @@ export function parseGitHubWebhook({ eventName, payload }) {
     delivery: payload.delivery
   };
 }
-

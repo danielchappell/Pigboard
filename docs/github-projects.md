@@ -23,6 +23,10 @@ Provision this field set:
 | PR | Text | Linked PR URL or number |
 | Epic | Text | Parent epic or track |
 
+Dependencies are not stored in a Project field. Issue-backed work uses GitHub's
+native [**Blocked by** relationship](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-issue-dependencies)
+on the source issue.
+
 ## Status Values
 
 ```text
@@ -45,14 +49,39 @@ Canceled
 The preferred queue view is a board named `Queue Board` with `Status` as the
 column field. Moving a card into `Planning`, `Architecture`, `Grooming`,
 `Ready`, `Implementation`, `QA`, `Review`, or `Babysit` is the operator signal
-that the corresponding worker may claim it. The local daemon currently auto-runs
-only `Implementation`, `Review`, and `Babysit`; the other columns remain manual.
+that the corresponding worker may consider it. The core engine still filters
+dependencies, repository routing, and leases before claiming. The local daemon
+currently auto-runs only `Implementation`, `Review`, and `Babysit`; the other
+columns remain manual.
 
 PR-backed work remains in `Babysit` while comments, reviews, and CI are being
 handled. When the PR has a clean CI run, clean mergeability, and either a
 current-head review approval or a thumbs-up reaction on the PR description,
 `pr-babysitter` can request the harness merge gate. The harness rechecks live PR
 state, merges with the claimed head SHA, and then moves the card to `QA`.
+
+## Issue Dependencies
+
+Add implementation dependencies on the source GitHub issue with **Blocked by**.
+The adapter queries and paginates `Issue.blockedBy`, including blockers in other
+repositories, and normalizes state as follows:
+
+| GitHub issue state | Queue dependency state |
+| --- | --- |
+| Open | `active` |
+| Closed as completed | `completed` |
+| Closed as not planned | `canceled` |
+| Missing or unreadable | `unknown` |
+
+Only `completed` satisfies a dependency. Canceled, unknown, missing, and cyclic
+dependencies fail closed. The card remains in its current Status column and the
+claim command reports `dependency_pending`, `dependency_canceled`,
+`dependency_unknown`, or `dependency_cycle`.
+
+Draft issues and PR-backed Project items have no dependency edges in the first
+adapter slice. Generated implementation PRs include
+`Closes owner/repo#N`; merging the PR closes its source issue and unlocks native
+dependents.
 
 GitHub does not expose public Project view create/update mutations. Setup copies
 the bundled Ski Stack template Project by default to automate the Kanban layout.
@@ -75,19 +104,24 @@ Subscribe a GitHub App or organization webhook to:
 - `check_suite`
 - `workflow_run`
 
-Project webhooks should only wake the dispatcher. The adapter must reload state
-from GitHub before claiming.
+Project webhooks should only wake the dispatcher. All `issues` events are global
+queue wakeups because a blocker in one repository can unlock a dependent in
+another. Repository-specific PR, review, comment, and CI events continue to wake
+matching partitions. Periodic reconciliation covers missed events. The adapter
+must reload state from GitHub before claiming.
 
 ## Lease Semantics
 
 GitHub Projects does not provide an atomic compare-and-set update for project
 fields. The GitHub adapter therefore uses best-effort leases:
 
-1. Reload the Project item.
-2. Skip it if `Lease Expires` is still in the future.
-3. Write `Lease Owner`, `Lease Expires`, `Attempts`, and `Last Worker Run`.
-4. Run the worker.
-5. Clear the lease fields on release.
+1. Load a complete normalized queue snapshot.
+2. Let the core engine select and fingerprint an available candidate.
+3. Reload Project and dependency state before claiming.
+4. Skip it if availability changed or a foreign lease is active.
+5. Write `Lease Owner`, `Lease Expires`, `Attempts`, and `Last Worker Run`.
+6. Re-evaluate availability after claiming and before final side effects.
+7. Clear the lease fields on release, including stale dependency claims.
 
 This is acceptable for an MVP and for small worker pools. For hard concurrency,
 use a transactional queue adapter and treat GitHub Projects as the human-facing

@@ -2,6 +2,16 @@ export { Status, WorkerType, isTerminalStatus, readyStatusForWorker } from "./co
 export { AdapterError, ClaimLostError } from "./core/adapter-contract.js";
 export { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "./core/claims.js";
 export {
+  availabilityFingerprint,
+  compareAvailableItems,
+  DependencyState,
+  evaluateQueueAvailability,
+  findCyclicItemIds,
+  normalizeDependencies,
+  priorityRank,
+  UnavailableReason
+} from "./core/availability.js";
+export {
   AUTO_RUN_WORKER_TYPES,
   hasActiveLease,
   isAutoRunnableWorker,
@@ -18,13 +28,22 @@ export {
   sanitizePublicOutput
 } from "./core/public-output.js";
 export { MemoryQueueAdapter } from "./adapters/memory-adapter.js";
-export { GitHubProjectsAdapter, parseGitHubWebhook } from "./adapters/github-projects/index.js";
+export {
+  GitHubProjectsAdapter,
+  isGlobalQueueWakeup,
+  parseGitHubWebhook
+} from "./adapters/github-projects/index.js";
 export {
   createGitHubWebhookServer,
   handleGitHubWebhookRequest,
   verifyGitHubSignature
 } from "./adapters/github-projects/webhook-server.js";
 export { QueueDispatcher } from "./runtime/dispatcher.js";
+export {
+  claimNextAvailable,
+  isAvailabilityChangeReason,
+  verifyClaimAvailability
+} from "./runtime/claim-next-available.js";
 export { applyWorkerResult } from "./runtime/apply-result.js";
 export { buildWorkerPrompt } from "./runtime/prompt.js";
 export {
@@ -35,7 +54,7 @@ export {
   runCodexExec,
   runCodexIsolationDiagnostics
 } from "./runtime/codex-runner.js";
-export { GitHubCodeLoopWorker } from "./runtime/code-loop-worker.js";
+export { GitHubCodeLoopWorker, implementationPullRequestBody } from "./runtime/code-loop-worker.js";
 export { ensurePullRequest, mergePullRequest } from "./runtime/github-pr.js";
 export { buildCodexRunnerEnv, buildDaemonGitEnv, buildRepoCommandEnv } from "./runtime/command-env.js";
 export {

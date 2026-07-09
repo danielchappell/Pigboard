@@ -1,4 +1,9 @@
 import { applyWorkerResult } from "./apply-result.js";
+import {
+  claimNextAvailable,
+  isAvailabilityChangeReason,
+  verifyClaimAvailability
+} from "./claim-next-available.js";
 
 export class QueueDispatcher {
   constructor({ adapter, workerId, workerType, runWorker, leaseSeconds = 1800 }) {
@@ -15,57 +20,64 @@ export class QueueDispatcher {
   }
 
   async runOnce() {
-    const readyItems = await this.adapter.listReady(this.workerType);
-    const skipped = [];
-
-    for (const item of readyItems) {
-      let claimResult;
-      try {
-        claimResult =
-          typeof this.adapter.claimReadyForWorker === "function"
-            ? await this.adapter.claimReadyForWorker({
-                itemId: item.id,
-                workerType: this.workerType,
-                workerId: this.workerId,
-                leaseSeconds: this.leaseSeconds
-              })
-            : await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
-      } catch (error) {
-        skipped.push({ itemId: item.id, error });
-        continue;
-      }
-      if (!claimResult.claimed) continue;
-
-      const { claim } = claimResult;
-      try {
-        const result = await this.runWorker({
-          item: claimResult.item ?? item,
-          claim,
-          workerId: this.workerId,
-          workerType: this.workerType
-        });
-
-        await applyWorkerResult({
-          adapter: this.adapter,
-          claimId: claim.id,
-          workerType: this.workerType,
-          result
-        });
-        return { ran: true, itemId: item.id, result };
-      } catch (error) {
-        let failed;
-        if (typeof this.adapter.failClaim === "function") {
-          failed = await this.adapter.failClaim(claim.id, error instanceof Error ? error.message : String(error));
-        } else {
-          failed = await this.adapter.fail(claim.id, error instanceof Error ? error.message : String(error));
-        }
-        if (failed?.failed === false && typeof this.adapter.releaseClaim === "function") {
-          await this.adapter.releaseClaim(claim.id);
-        }
-        return { ran: true, itemId: item.id, error };
-      }
+    const claimResult = await claimNextAvailable({
+      adapter: this.adapter,
+      workerType: this.workerType,
+      workerId: this.workerId,
+      leaseSeconds: this.leaseSeconds
+    });
+    if (!claimResult.claimed) {
+      return {
+        ran: false,
+        reason: claimResult.reason,
+        skipped: claimResult.skipped,
+        unavailable: claimResult.unavailable
+      };
     }
 
-    return skipped.length ? { ran: false, skipped } : { ran: false };
+    const { claim, item } = claimResult;
+    try {
+      const result = await this.runWorker({
+        item,
+        claim,
+        workerId: this.workerId,
+        workerType: this.workerType
+      });
+      const availability = await verifyClaimAvailability({
+        adapter: this.adapter,
+        claimId: claim.id,
+        workerType: this.workerType,
+        workerId: this.workerId
+      });
+      if (!availability.available) {
+        return { ran: true, itemId: item.id, stale: true, reason: availability.reason, result };
+      }
+
+      await applyWorkerResult({
+        adapter: this.adapter,
+        claimId: claim.id,
+        workerType: this.workerType,
+        result,
+        verifyOptions: { requireAvailability: true }
+      });
+      return { ran: true, itemId: item.id, result };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const reason = message.match(/^claim lost: ([a-z_]+)/)?.[1];
+      if (isAvailabilityChangeReason(reason)) {
+        await this.adapter.releaseClaim?.(claim.id);
+        return { ran: true, itemId: item.id, stale: true, reason, error };
+      }
+      let failed;
+      if (typeof this.adapter.failClaim === "function") {
+        failed = await this.adapter.failClaim(claim.id, message);
+      } else {
+        failed = await this.adapter.fail(claim.id, message);
+      }
+      if (failed?.failed === false && typeof this.adapter.releaseClaim === "function") {
+        await this.adapter.releaseClaim(claim.id);
+      }
+      return { ran: true, itemId: item.id, error };
+    }
   }
 }

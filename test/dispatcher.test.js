@@ -120,26 +120,20 @@ test("dispatcher claims items in a worker-specific status column", async () => {
   assert.equal(adapter.getItem("3").status, Status.REVIEW);
 });
 
-test("dispatcher continues past ready items that fail during claim", async () => {
+test("dispatcher uses the coordinator and continues past candidates that fail during claim", async () => {
   const calls = [];
-  const adapter = {
-    listReady: async () => [
-      { id: "bad", status: Status.REVIEW, workerType: WorkerType.REVIEWER },
-      { id: "good", status: Status.REVIEW, workerType: WorkerType.REVIEWER }
-    ],
-    claimReadyForWorker: async ({ itemId }) => {
-      calls.push(itemId);
-      if (itemId === "bad") throw new Error("GitHub pull request metadata request failed: 404");
-      return {
-        claimed: true,
-        claim: { id: "ski.eyJpdGVtSWQiOiJnb29kIiwid29ya2VySWQiOiJyZXZpZXdlci0xIiwiZXhwaXJlc0F0IjoiMjAyNi0wNy0wN1QxMjozMDowMC4wMDBaIn0", itemId },
-        item: { id: itemId, status: Status.REVIEW, workerType: WorkerType.REVIEWER }
-      };
-    },
-    appendEventForClaim: async () => ({ appended: true }),
-    transitionForClaim: async () => ({ transitioned: true }),
-    clearWorkerTypeForClaim: async () => ({ cleared: true }),
-    releaseClaim: async () => ({ released: true })
+  const adapter = new MemoryQueueAdapter([
+    { id: "bad", status: Status.REVIEW, workerType: WorkerType.REVIEWER, priority: "P1" },
+    { id: "good", status: Status.REVIEW, workerType: WorkerType.REVIEWER, priority: "P1" }
+  ]);
+  const originalClaimCandidate = adapter.claimCandidate.bind(adapter);
+  adapter.claimCandidate = async (input) => {
+    calls.push(input.itemId);
+    if (input.itemId === "bad") throw new Error("GitHub pull request metadata request failed: 404");
+    return originalClaimCandidate(input);
+  };
+  adapter.claimReadyForWorker = async () => {
+    throw new Error("legacy claim wrapper must not be used");
   };
 
   const dispatcher = new QueueDispatcher({

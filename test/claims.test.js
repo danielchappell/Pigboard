@@ -34,6 +34,7 @@ test("structured claim envelopes round-trip bounded run context", () => {
     baseSha: "b".repeat(40),
     headRef: "feature",
     headSha: "a".repeat(40),
+    availabilityFingerprint: "f".repeat(64),
     claimedAt: "2026-07-07T12:00:00.000Z"
   });
 
@@ -54,6 +55,7 @@ test("structured claim envelopes round-trip bounded run context", () => {
     baseSha: "b".repeat(40),
     headRef: "feature",
     headSha: "a".repeat(40),
+    availabilityFingerprint: "f".repeat(64),
     claimedAt: "2026-07-07T12:00:00.000Z"
   });
 });

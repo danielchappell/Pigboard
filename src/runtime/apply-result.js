@@ -54,6 +54,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType, 
   });
 
   const status = statusForResult(result);
+  const postTransitionVerifyOptions = { ...verifyOptions, requireAvailability: false };
   if (status) {
     await guardedCall({
       adapter,
@@ -70,7 +71,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType, 
         claimAwareMethod: "clearWorkerTypeForClaim",
         legacyMethod: "clearWorkerType",
         claimId,
-        verifyOptions,
+        verifyOptions: postTransitionVerifyOptions,
         falseKey: "cleared"
       });
     }
@@ -84,7 +85,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType, 
     legacyMethod: "release",
     claimId,
     legacyUsesClaimId: true,
-    verifyOptions,
+    verifyOptions: status ? postTransitionVerifyOptions : verifyOptions,
     falseKey: "released"
   });
 

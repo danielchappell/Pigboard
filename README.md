@@ -158,9 +158,15 @@ Put an issue or PR into the Project with:
   `Implementation`, `QA`, `Review`, or `Babysit`
 - `Priority`: `P0`, `P1`, `P2`, or `P3`
 
-Moving a card into a worker column makes it claimable. `Worker Type` is optional
+Moving a card into a worker column makes it eligible. `Worker Type` is optional
 override routing when a card in a shared status should be claimed by only one
-worker type.
+worker type. The queue engine also requires every dependency to be completed.
+
+For issue-backed work, author dependencies with GitHub's native **Blocked by**
+relationship on the source issue. Open, not-planned, unreadable, missing, or
+cyclic blockers make the item unavailable without moving its Project card.
+Draft issues and PR-backed cards do not expose dependency edges in the current
+adapter. No custom Project dependency field is required.
 
 Claim the next item for a worker and print the prompt:
 
@@ -182,7 +188,9 @@ npm run claim:github -- --hold
 ```
 
 Leave `SKI_REPOSITORIES` unset for a worker that can pull from any repo in the
-Project.
+Project. Candidates are ordered by Priority, Project position, then stable item
+id. When nothing is available, the claim command prints bounded reason codes for
+the items it skipped.
 
 After a human or external model completes the prompt, apply the JSON result:
 
@@ -278,13 +286,19 @@ npm run logs:github -- --run run-id --json
 ```text
 GitHub Project
   -> GitHub webhook wakes the local daemon
-  -> adapter lists ready items by Status and repo partition
-  -> worker claims one item with a structured lease envelope
+  -> adapter loads a normalized queue snapshot and native dependencies
+  -> core engine orders available work by Priority and Project position
+  -> coordinator claims one candidate with a structured lease envelope
   -> daemon prepares an isolated worktree
   -> Codex runs locally and writes a structured result
-  -> daemon verifies the claim before every GitHub mutation
+  -> daemon revalidates dependency availability before final side effects
   -> Project status advances or blocks with sanitized evidence
 ```
+
+Generated implementation PRs include a harness-owned
+`Closes owner/repo#N` line. Merging the PR closes the source issue and can unlock
+native dependents. Issue webhooks wake every worker partition; periodic
+reconciliation covers missed events.
 
 GitHub Projects is the first integration. The adapter boundary is intentionally
 separate so Jira, Linear, or a transactional queue can be added later without

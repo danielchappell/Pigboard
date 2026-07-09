@@ -1,8 +1,28 @@
 /**
+ * @typedef {"active" | "completed" | "canceled" | "unknown"} DependencyState
+ *
+ * @typedef {Object} WorkDependency
+ * @property {string} kind
+ * @property {string} targetId
+ * @property {string | undefined} title
+ * @property {string | undefined} url
+ * @property {DependencyState} state
+ *
+ * @typedef {Object} WorkItem
+ * @property {string} id
+ * @property {number | undefined} sourceOrder
+ * @property {WorkDependency[]} dependencies
+ *
+ * @typedef {Object} QueueSnapshot
+ * @property {WorkItem[]} items
+ * @property {string | undefined} loadedAt
+ */
+
+/**
  * Queue adapters implement this contract:
  *
- * - listReady(workerType): Promise<WorkItem[]>
- * - claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context }): Promise<ClaimResult>
+ * - loadQueueSnapshot(): Promise<QueueSnapshot>
+ * - claimCandidate({ itemId, workerType, workerId, leaseSeconds, expectedAvailabilityFingerprint, context }): Promise<ClaimResult>
  * - verifyClaim(claimId, options): Promise<ClaimVerification>
  * - extendClaim(claimId, leaseSeconds): Promise<ClaimExtension>
  * - appendEvent(itemId, event): Promise<void>
@@ -14,7 +34,8 @@
  * - releaseClaim(claimId, options): Promise<GuardedMutationResult>
  * - failClaim(claimId, reason, options): Promise<GuardedMutationResult>
  *
- * Legacy claim/heartbeat/release/fail names may exist as compatibility shims.
+ * listReady/claimReadyForWorker and legacy claim/heartbeat/release/fail names
+ * may exist as compatibility shims.
  *
  * This file is intentionally documentation-only. JavaScript adapters stay
  * dependency-light while tests enforce behavior through shared fixtures.
