@@ -8,7 +8,7 @@ import {
   GitHubCodeLoopWorker,
   GitHubProjectsAdapter,
   runCodexIsolationDiagnostics,
-  runSettledWorkerSlot,
+  WorkerDrainScheduler,
   WorkerType
 } from "../src/index.js";
 
@@ -39,20 +39,17 @@ const workers = await createWorkers({
     ownerType: config.github?.ownerType ?? "auto"
   }
 });
-const dirty = new Set(workers.keys());
-const inFlight = new Set();
-let draining = false;
-let drainRequested = false;
+const scheduler = new WorkerDrainScheduler({ workers });
 
 const server = createGitHubWebhookServer({
   secret,
   host,
   insecureLocalWebhook,
   onEvent: async (event) => {
-    for (const [key, worker] of workers) {
-      if (event.kind === "project" || matchesWorkerRepository(worker, event.repository)) dirty.add(key);
-    }
-    requestDrain();
+    scheduler.markAllDirty(
+      (_key, worker) => event.kind === "project" || matchesWorkerRepository(worker, event.repository)
+    );
+    scheduler.requestDrain();
   }
 });
 
@@ -61,54 +58,12 @@ server.listen(port, host, () => {
 });
 
 setInterval(() => {
-  for (const key of workers.keys()) dirty.add(key);
-  requestDrain();
+  scheduler.markAllDirty();
+  scheduler.requestDrain();
 }, Number(process.env.SKI_RECONCILE_SECONDS ?? 600) * 1000).unref();
 
-await drain();
-
-function requestDrain() {
-  drainRequested = true;
-  drain().catch((error) => console.error(error));
-}
-
-async function drain() {
-  if (draining) return;
-  draining = true;
-  try {
-    do {
-      drainRequested = false;
-      while (dirty.size) {
-        const batch = [];
-        for (const key of [...dirty]) {
-          if (inFlight.has(key)) continue;
-          const worker = workers.get(key);
-          dirty.delete(key);
-          if (!worker) continue;
-          inFlight.add(key);
-          batch.push(runWorkerSlot(key, worker));
-        }
-        if (!batch.length) break;
-        const results = await Promise.all(batch);
-        const ranAny = results.some((result) => result?.ran);
-        for (const result of results) {
-          if (result?.ran) dirty.add(result.key);
-        }
-        if (!ranAny) break;
-      }
-    } while (drainRequested || dirty.size);
-  } finally {
-    draining = false;
-  }
-}
-
-async function runWorkerSlot(key, worker) {
-  try {
-    return await runSettledWorkerSlot({ key, worker });
-  } finally {
-    inFlight.delete(key);
-  }
-}
+scheduler.markAllDirty();
+scheduler.requestDrain();
 
 async function createWorkers({ config, adapterConfig }) {
   const workers = new Map();

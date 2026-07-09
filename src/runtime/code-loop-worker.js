@@ -152,7 +152,7 @@ export class GitHubCodeLoopWorker {
       const result = await readWorkerResult(resultPath, codex.stdout);
       await this.assertCredentialFreeWorktreeImpl(worktree.worktreePath);
 
-      await this.applyWorkerOutcome({
+      const applied = await this.applyWorkerOutcome({
         claimId: claim.id,
         item,
         result,
@@ -169,7 +169,7 @@ export class GitHubCodeLoopWorker {
         result,
         metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result })
       });
-      return { ran: true, itemId: item.id, result };
+      return { ran: true, itemId: item.id, claimedStatus: item.status, status: applied?.status, result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const failedResult = {
@@ -192,7 +192,7 @@ export class GitHubCodeLoopWorker {
       }
       await claimExtender?.stop();
       await this.failClaimAfterError(claim.id, message);
-      return { ran: true, itemId: item.id, error };
+      return { ran: true, itemId: item.id, claimedStatus: item.status, error };
     } finally {
       await claimExtender?.stop();
       if (worktree) {

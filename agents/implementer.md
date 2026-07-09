@@ -29,5 +29,5 @@ Append an implementation handoff with:
 - acceptance criteria satisfied
 - anything intentionally not done
 
-Transition to `QA`, `Review`, or `Blocked`.
-
+Transition completed implementation to `Review`. Transition only hard blockers to
+`Blocked`.

@@ -29,4 +29,5 @@ Append a review handoff with:
 - severity
 - recommended next status
 
-Transition to `Implementation`, `Babysit`, or `Blocked`.
+Transition completed reviews to `Babysit`, even when findings need PR follow-up.
+Transition only hard blockers to `Blocked`.
