@@ -27,7 +27,13 @@ export {
 export { QueueDispatcher } from "./runtime/dispatcher.js";
 export { applyWorkerResult } from "./runtime/apply-result.js";
 export { buildWorkerPrompt } from "./runtime/prompt.js";
-export { assertLocalChatGptCodexAuth, parseCodexLoginStatus, runCodexExec, runCodexIsolationDiagnostics } from "./runtime/codex-runner.js";
+export {
+  assertLocalChatGptCodexAuth,
+  normalizeCodexModel,
+  parseCodexLoginStatus,
+  runCodexExec,
+  runCodexIsolationDiagnostics
+} from "./runtime/codex-runner.js";
 export { GitHubCodeLoopWorker } from "./runtime/code-loop-worker.js";
 export { ensurePullRequest, mergePullRequest } from "./runtime/github-pr.js";
 export { buildCodexRunnerEnv, buildDaemonGitEnv, buildRepoCommandEnv } from "./runtime/command-env.js";

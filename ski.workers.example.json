@@ -25,18 +25,21 @@
   "slots": [
     {
       "type": "implementer",
+      "model": "your-codex-model",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800
     },
     {
       "type": "reviewer",
+      "model": "your-codex-model",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800
     },
     {
       "type": "pr-babysitter",
+      "model": "your-codex-model",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800

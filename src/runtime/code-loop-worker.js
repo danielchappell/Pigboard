@@ -5,7 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 import { applyWorkerResult } from "./apply-result.js";
-import { runCodexExec } from "./codex-runner.js";
+import { normalizeCodexModel, runCodexExec } from "./codex-runner.js";
 import { buildDaemonGitEnv } from "./command-env.js";
 import { ensurePullRequest, mergePullRequest } from "./github-pr.js";
 import {
@@ -36,6 +36,7 @@ export class GitHubCodeLoopWorker {
     leaseSeconds = 1800,
     runLogDir = defaultRunLogDir(),
     codexBin = "codex",
+    model,
     schemaPath = join(process.cwd(), "schemas", "ski-worker-result.schema.json"),
     execFileImpl = execFileAsync,
     runCodexExecImpl = runCodexExec,
@@ -63,6 +64,7 @@ export class GitHubCodeLoopWorker {
     this.leaseSeconds = leaseSeconds;
     this.runLogDir = runLogDir;
     this.codexBin = codexBin;
+    this.model = model == null ? undefined : normalizeCodexModel(model);
     this.schemaPath = schemaPath;
     this.execFileImpl = execFileImpl;
     this.runCodexExecImpl = runCodexExecImpl;
@@ -131,6 +133,7 @@ export class GitHubCodeLoopWorker {
           prompt,
           cwd: worktree.worktreePath,
           codexBin: this.codexBin,
+          model: this.model,
           schemaPath: this.schemaPath,
           outputPath: resultPath,
           streamPath,

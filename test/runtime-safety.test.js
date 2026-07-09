@@ -56,6 +56,31 @@ test("Codex exec preserves project policy flags instead of ignoring user config 
   assert.equal(capturedArgs.includes("--ignore-user-config"), false);
   assert.equal(capturedArgs.includes("--ignore-rules"), false);
   assert.equal(capturedArgs.includes("--sandbox"), true);
+  assert.equal(capturedArgs.includes("--model"), false);
+});
+
+test("Codex exec passes an explicitly configured model to the CLI", async () => {
+  let capturedArgs;
+  await runCodexExec({
+    prompt: "Return JSON",
+    cwd: "/tmp",
+    model: "gpt-test",
+    spawnImpl: (_command, args) => {
+      capturedArgs = args;
+      return fakeCodexSpawn("{}")();
+    }
+  });
+
+  const modelIndex = capturedArgs.indexOf("--model");
+  assert.notEqual(modelIndex, -1);
+  assert.equal(capturedArgs[modelIndex + 1], "gpt-test");
+});
+
+test("Codex exec rejects blank configured models", async () => {
+  await assert.rejects(
+    () => runCodexExec({ prompt: "Return JSON", cwd: "/tmp", model: "  " }),
+    /Codex model must be a non-empty string/
+  );
 });
 
 test("repo and Codex runner env builders strip secret-bearing variables", () => {
