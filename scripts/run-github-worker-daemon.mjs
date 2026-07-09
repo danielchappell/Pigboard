@@ -7,6 +7,7 @@ import {
   createGitHubWebhookServer,
   GitHubCodeLoopWorker,
   GitHubProjectsAdapter,
+  normalizeCodexModel,
   runCodexIsolationDiagnostics,
   WorkerDrainScheduler,
   WorkerType
@@ -70,6 +71,7 @@ async function createWorkers({ config, adapterConfig }) {
   for (const slot of config.slots ?? []) {
     if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
     if (slot.observeOnly) continue;
+    const model = requiredModelForSlot(slot);
     const slotRepositories = repositoriesForSlot({ slot, config });
     if (!slotRepositories.length && !slot.allowUnfilteredRepositories && !config.repoPolicy?.allowUnfilteredRepositories) {
       throw new Error(
@@ -97,6 +99,7 @@ async function createWorkers({ config, adapterConfig }) {
           workerType: slot.type,
           workerId: slot.workerId ?? `${key}:${process.pid}`,
           leaseSeconds: Number(slot.leaseSeconds ?? process.env.SKI_LEASE_SECONDS ?? 1800),
+          model,
           repoPolicy: {
             ...repoPolicy,
             workerRole
@@ -108,6 +111,13 @@ async function createWorkers({ config, adapterConfig }) {
     }
   }
   return workers;
+}
+
+function requiredModelForSlot(slot) {
+  if (!("model" in slot)) {
+    throw new Error(`Worker slot ${slot.type} must set model`);
+  }
+  return normalizeCodexModel(slot.model);
 }
 
 function matchesWorkerRepository(worker, repository) {

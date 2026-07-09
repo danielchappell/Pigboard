@@ -35,6 +35,7 @@ export async function assertLocalChatGptCodexAuth({ codexBin = "codex", execFile
 export async function runCodexExec({
   prompt,
   cwd,
+  model,
   schemaPath,
   outputPath,
   streamPath,
@@ -46,6 +47,7 @@ export async function runCodexExec({
 }) {
   if (!prompt) throw new Error("prompt is required");
   if (!cwd) throw new Error("cwd is required");
+  const selectedModel = model == null ? undefined : normalizeCodexModel(model);
   const args = [
     "--ask-for-approval",
     "never",
@@ -54,6 +56,7 @@ export async function runCodexExec({
     "--sandbox",
     "workspace-write"
   ];
+  if (selectedModel) args.push("--model", selectedModel);
   if (schemaPath) args.push("--output-schema", schemaPath);
   if (outputPath) args.push("--output-last-message", outputPath);
   args.push("-C", cwd, "-");
@@ -69,6 +72,13 @@ export async function runCodexExec({
     stderrPath,
     maxBufferedOutputBytes
   });
+}
+
+export function normalizeCodexModel(model) {
+  if (typeof model !== "string" || !model.trim()) {
+    throw new Error("Codex model must be a non-empty string");
+  }
+  return model.trim();
 }
 
 export async function runCodexIsolationDiagnostics({ codexBin = "codex", cwd, spawnImpl = spawn } = {}) {
