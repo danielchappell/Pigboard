@@ -8,6 +8,7 @@ import {
   GitHubCodeLoopWorker,
   GitHubProjectsAdapter,
   normalizeCodexModel,
+  normalizeCodexReasoningEffort,
   runCodexIsolationDiagnostics,
   WorkerDrainScheduler,
   WorkerType
@@ -72,6 +73,7 @@ async function createWorkers({ config, adapterConfig }) {
     if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
     if (slot.observeOnly) continue;
     const model = requiredModelForSlot(slot);
+    const reasoningEffort = optionalReasoningEffortForSlot(slot);
     const slotRepositories = repositoriesForSlot({ slot, config });
     if (!slotRepositories.length && !slot.allowUnfilteredRepositories && !config.repoPolicy?.allowUnfilteredRepositories) {
       throw new Error(
@@ -100,6 +102,7 @@ async function createWorkers({ config, adapterConfig }) {
           workerId: slot.workerId ?? `${key}:${process.pid}`,
           leaseSeconds: Number(slot.leaseSeconds ?? process.env.SKI_LEASE_SECONDS ?? 1800),
           model,
+          reasoningEffort,
           repoPolicy: {
             ...repoPolicy,
             workerRole
@@ -118,6 +121,11 @@ function requiredModelForSlot(slot) {
     throw new Error(`Worker slot ${slot.type} must set model`);
   }
   return normalizeCodexModel(slot.model);
+}
+
+function optionalReasoningEffortForSlot(slot) {
+  if (slot.reasoningEffort == null) return undefined;
+  return normalizeCodexReasoningEffort(slot.reasoningEffort);
 }
 
 function matchesWorkerRepository(worker, repository) {

@@ -31,6 +31,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-1",
     model: "gpt-test",
+    reasoningEffort: "xhigh",
     repoPolicy: {
       cwd: root,
       setupCommands: ["npm install"],
@@ -58,8 +59,9 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       return untrackedSnapshots.shift() ?? [];
     },
     assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
-    runCodexExecImpl: async ({ model, outputPath }) => {
+    runCodexExecImpl: async ({ model, reasoningEffort, outputPath }) => {
       assert.equal(model, "gpt-test");
+      assert.equal(reasoningEffort, "xhigh");
       await writeFile(
         outputPath,
         JSON.stringify({

@@ -36,6 +36,7 @@ export async function runCodexExec({
   prompt,
   cwd,
   model,
+  reasoningEffort,
   schemaPath,
   outputPath,
   streamPath,
@@ -48,6 +49,7 @@ export async function runCodexExec({
   if (!prompt) throw new Error("prompt is required");
   if (!cwd) throw new Error("cwd is required");
   const selectedModel = model == null ? undefined : normalizeCodexModel(model);
+  const selectedReasoningEffort = reasoningEffort == null ? undefined : normalizeCodexReasoningEffort(reasoningEffort);
   const args = [
     "--ask-for-approval",
     "never",
@@ -57,6 +59,9 @@ export async function runCodexExec({
     "workspace-write"
   ];
   if (selectedModel) args.push("--model", selectedModel);
+  if (selectedReasoningEffort) {
+    args.push("--config", `model_reasoning_effort=${JSON.stringify(selectedReasoningEffort)}`);
+  }
   if (schemaPath) args.push("--output-schema", schemaPath);
   if (outputPath) args.push("--output-last-message", outputPath);
   args.push("-C", cwd, "-");
@@ -79,6 +84,15 @@ export function normalizeCodexModel(model) {
     throw new Error("Codex model must be a non-empty string");
   }
   return model.trim();
+}
+
+const CODEX_REASONING_EFFORTS = new Set(["none", "low", "medium", "high", "xhigh"]);
+
+export function normalizeCodexReasoningEffort(reasoningEffort) {
+  if (typeof reasoningEffort !== "string" || !CODEX_REASONING_EFFORTS.has(reasoningEffort.trim())) {
+    throw new Error("Codex reasoning effort must be one of: none, low, medium, high, xhigh");
+  }
+  return reasoningEffort.trim();
 }
 
 export async function runCodexIsolationDiagnostics({ codexBin = "codex", cwd, spawnImpl = spawn } = {}) {
