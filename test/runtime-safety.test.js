@@ -65,6 +65,7 @@ test("Codex exec passes an explicitly configured model to the CLI", async () => 
     prompt: "Return JSON",
     cwd: "/tmp",
     model: "gpt-test",
+    reasoningEffort: "xhigh",
     spawnImpl: (_command, args) => {
       capturedArgs = args;
       return fakeCodexSpawn("{}")();
@@ -74,12 +75,22 @@ test("Codex exec passes an explicitly configured model to the CLI", async () => 
   const modelIndex = capturedArgs.indexOf("--model");
   assert.notEqual(modelIndex, -1);
   assert.equal(capturedArgs[modelIndex + 1], "gpt-test");
+  const configIndex = capturedArgs.indexOf("--config");
+  assert.notEqual(configIndex, -1);
+  assert.equal(capturedArgs[configIndex + 1], 'model_reasoning_effort="xhigh"');
 });
 
 test("Codex exec rejects blank configured models", async () => {
   await assert.rejects(
     () => runCodexExec({ prompt: "Return JSON", cwd: "/tmp", model: "  " }),
     /Codex model must be a non-empty string/
+  );
+});
+
+test("Codex exec rejects unsupported reasoning effort values", async () => {
+  await assert.rejects(
+    () => runCodexExec({ prompt: "Return JSON", cwd: "/tmp", reasoningEffort: "maximum" }),
+    /Codex reasoning effort must be one of/
   );
 });
 

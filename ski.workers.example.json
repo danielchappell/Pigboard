@@ -25,21 +25,24 @@
   "slots": [
     {
       "type": "implementer",
-      "model": "your-codex-model",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "xhigh",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800
     },
     {
       "type": "reviewer",
-      "model": "your-codex-model",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "xhigh",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800
     },
     {
       "type": "pr-babysitter",
-      "model": "your-codex-model",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "xhigh",
       "count": 1,
       "repository": "owner/repo",
       "leaseSeconds": 1800

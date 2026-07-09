@@ -229,7 +229,9 @@ Edit `ski.workers.json` so each repo entry has the local checkout path and the
 commands that are safe to run before/after Codex. Every runnable worker slot
 must also set `model`; the daemon passes it directly to `codex exec --model` and
 refuses to start if it is missing or blank. `type` controls queue routing while
-`model` controls the model that performs that role. Repo commands are run with a
+`model` controls the model that performs that role. Set optional
+`reasoningEffort` to `none`, `low`, `medium`, `high`, or `xhigh` to pass Codex's
+`model_reasoning_effort` configuration override. Repo commands are run with a
 scrubbed environment and network denied.
 
 Start the daemon:
