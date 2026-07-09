@@ -626,6 +626,33 @@ test("issue-backed reviewer work requires PR metadata instead of falling back to
   );
 });
 
+test("implementer refuses PR-backed claims instead of opening a replacement PR", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const worker = new GitHubCodeLoopWorker({
+    adapter: new MemoryQueueAdapter([]),
+    workerType: WorkerType.IMPLEMENTER,
+    repoPolicy: { cwd: root }
+  });
+
+  await assert.rejects(
+    () =>
+      worker.prepareWorktree({
+        item: {
+          id: "item-issue-with-pr",
+          contentType: "Issue",
+          number: 12,
+          repository: "acme/repo"
+        },
+        claim: {
+          repository: "acme/repo",
+          runId: "run-1",
+          pullRequestNumber: 42
+        }
+      }),
+    /must stay in Babysit/
+  );
+});
+
 test("claim heartbeat interval is scheduled before short leases expire", async () => {
   const originalSetInterval = globalThis.setInterval;
   const originalClearInterval = globalThis.clearInterval;
@@ -794,7 +821,7 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
 });
 
-test("pr-babysitter requires explicit approved-and-clean flag to mark Done", async () => {
+test("pr-babysitter requires explicit approved-and-clean flag to move to QA", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -804,9 +831,9 @@ test("pr-babysitter requires explicit approved-and-clean flag to mark Done", asy
       workerType: WorkerType.PR_BABYSITTER
     })
   ]);
-  let doneVerifications = 0;
-  adapter.verifyPullRequestReadyForDoneForClaim = async () => {
-    doneVerifications += 1;
+  let qaVerifications = 0;
+  adapter.verifyPullRequestReadyForQaForClaim = async () => {
+    qaVerifications += 1;
     return { ready: true };
   };
   const worker = workerWithCodexResult({
@@ -815,20 +842,20 @@ test("pr-babysitter requires explicit approved-and-clean flag to mark Done", asy
     workerType: WorkerType.PR_BABYSITTER,
     result: {
       outcome: "completed",
-      nextStatus: Status.DONE,
+      nextStatus: Status.QA,
       summary: "Approved and checks are clean.",
-      doneWhenApprovedAndClean: true
+      qaWhenApprovedAndClean: true
     }
   });
 
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("item-3").status, Status.DONE);
-  assert.equal(doneVerifications, 1);
+  assert.equal(adapter.getItem("item-3").status, Status.QA);
+  assert.equal(qaVerifications, 1);
 });
 
-test("pr-babysitter cannot mark Done when live PR state is not ready", async () => {
+test("pr-babysitter cannot move to QA when live PR state is not ready", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -838,16 +865,16 @@ test("pr-babysitter cannot mark Done when live PR state is not ready", async () 
       workerType: WorkerType.PR_BABYSITTER
     })
   ]);
-  adapter.verifyPullRequestReadyForDoneForClaim = async () => ({ ready: false, reason: "checks_not_clean" });
+  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: false, reason: "checks_not_clean" });
   const worker = workerWithCodexResult({
     root,
     adapter,
     workerType: WorkerType.PR_BABYSITTER,
     result: {
       outcome: "completed",
-      nextStatus: Status.DONE,
+      nextStatus: Status.QA,
       summary: "Approved and checks are clean.",
-      doneWhenApprovedAndClean: true
+      qaWhenApprovedAndClean: true
     }
   });
 
@@ -856,6 +883,45 @@ test("pr-babysitter cannot mark Done when live PR state is not ready", async () 
   assert.equal(result.ran, true);
   assert.match(result.error.message, /checks_not_clean/);
   assert.equal(adapter.getItem("item-live-not-ready").status, Status.BLOCKED);
+});
+
+test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-babysit-fix",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  const pushes = [];
+  const diffChecks = [true, false];
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, allowPushBranches: true, githubToken: "test-token" },
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "Addressed review comments."
+    },
+    hasDiffImpl: async () => diffChecks.shift() ?? false,
+    commitAllImpl: async () => "c".repeat(40),
+    execFileImpl: async (_command, args) => {
+      if (args.includes("push")) pushes.push(args);
+      return { stdout: "", stderr: "" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.error, undefined);
+  assert.equal(adapter.getItem("item-babysit-fix").status, Status.BABYSIT);
+  assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:feature"]);
+  assert.match(adapter.events[0].evidence.at(-1), /^Commit c{40}$/);
 });
 
 test("pr-babysitter no-op can stay in Babysit while waiting", async () => {
@@ -915,7 +981,7 @@ test("reviewer dirty worktrees block instead of discarding edits", async () => {
   assert.equal(adapter.getItem("item-dirty-reviewer").status, Status.BLOCKED);
 });
 
-test("pr-babysitter blocks Done without approved-and-clean flag", async () => {
+test("pr-babysitter blocks QA without approved-and-clean flag", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -931,7 +997,7 @@ test("pr-babysitter blocks Done without approved-and-clean flag", async () => {
     workerType: WorkerType.PR_BABYSITTER,
     result: {
       outcome: "completed",
-      nextStatus: Status.DONE,
+      nextStatus: Status.QA,
       summary: "Approved and checks are clean."
     }
   });
@@ -939,16 +1005,25 @@ test("pr-babysitter blocks Done without approved-and-clean flag", async () => {
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(result.error.message, /doneWhenApprovedAndClean/);
+  assert.match(result.error.message, /qaWhenApprovedAndClean/);
   assert.equal(adapter.getItem("item-4").status, Status.BLOCKED);
 });
 
-function workerWithCodexResult({ root, adapter, workerType, result, hasDiffImpl = async () => false }) {
+function workerWithCodexResult({
+  root,
+  adapter,
+  workerType,
+  result,
+  repoPolicy = { cwd: root },
+  hasDiffImpl = async () => false,
+  commitAllImpl,
+  execFileImpl = async () => ({ stdout: "", stderr: "" })
+}) {
   return new GitHubCodeLoopWorker({
     adapter,
     workerType,
     workerId: `${workerType}-1`,
-    repoPolicy: { cwd: root },
+    repoPolicy,
     runLogDir: join(root, "runs"),
     createPullRequestWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -962,6 +1037,8 @@ function workerWithCodexResult({ root, adapter, workerType, result, hasDiffImpl 
       return { stdout: "", stderr: "" };
     },
     hasDiffImpl,
+    commitAllImpl,
+    execFileImpl,
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });
@@ -981,6 +1058,7 @@ function pullRequestItem({ id, title, status, workerType }) {
     baseRef: "main",
     baseSha: "b".repeat(40),
     headRef: "feature",
+    headRepository: "acme/repo",
     headSha: "a".repeat(40)
   };
 }

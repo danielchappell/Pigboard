@@ -119,3 +119,43 @@ test("dispatcher claims items in a worker-specific status column", async () => {
   assert.equal(result.ran, true);
   assert.equal(adapter.getItem("3").status, Status.REVIEW);
 });
+
+test("dispatcher continues past ready items that fail during claim", async () => {
+  const calls = [];
+  const adapter = {
+    listReady: async () => [
+      { id: "bad", status: Status.REVIEW, workerType: WorkerType.REVIEWER },
+      { id: "good", status: Status.REVIEW, workerType: WorkerType.REVIEWER }
+    ],
+    claimReadyForWorker: async ({ itemId }) => {
+      calls.push(itemId);
+      if (itemId === "bad") throw new Error("GitHub pull request metadata request failed: 404");
+      return {
+        claimed: true,
+        claim: { id: "ski.eyJpdGVtSWQiOiJnb29kIiwid29ya2VySWQiOiJyZXZpZXdlci0xIiwiZXhwaXJlc0F0IjoiMjAyNi0wNy0wN1QxMjozMDowMC4wMDBaIn0", itemId },
+        item: { id: itemId, status: Status.REVIEW, workerType: WorkerType.REVIEWER }
+      };
+    },
+    appendEventForClaim: async () => ({ appended: true }),
+    transitionForClaim: async () => ({ transitioned: true }),
+    clearWorkerTypeForClaim: async () => ({ cleared: true }),
+    releaseClaim: async () => ({ released: true })
+  };
+
+  const dispatcher = new QueueDispatcher({
+    adapter,
+    workerId: "reviewer-1",
+    workerType: WorkerType.REVIEWER,
+    runWorker: async () => ({
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "No findings"
+    })
+  });
+
+  const result = await dispatcher.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.itemId, "good");
+  assert.deepEqual(calls, ["bad", "good"]);
+});

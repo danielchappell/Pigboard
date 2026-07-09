@@ -98,7 +98,7 @@ export async function listUntrackedFiles({ worktreePath, execFileImpl = execFile
 }
 
 export async function hasDiff({ worktreePath, execFileImpl = execFileAsync, ignoredPaths = [] }) {
-  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "status", "--porcelain"], {
+  const { stdout } = await execFileImpl("git", ["-C", worktreePath, "status", "--porcelain", "--untracked-files=all"], {
     env: buildRepoCommandEnv()
   });
   const ignored = new Set(ignoredPaths);

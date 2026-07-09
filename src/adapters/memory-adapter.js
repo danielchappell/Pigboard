@@ -205,6 +205,7 @@ export class MemoryQueueAdapter {
             baseRef: live.baseRef,
             baseSha: live.baseSha,
             headRef: live.headRef,
+            headRepository: live.headRepository,
             headSha: live.headSha,
             claimedAt: now.toISOString(),
             ...context

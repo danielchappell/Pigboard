@@ -232,6 +232,7 @@ export class GitHubProjectsAdapter {
       baseRef: pullRequest?.baseRef,
       baseSha: pullRequest?.baseSha,
       headRef: pullRequest?.headRef,
+      headRepository: pullRequest?.headRepository,
       headSha: pullRequest?.headSha,
       claimedAt: now.toISOString(),
       ...context
@@ -296,6 +297,12 @@ export class GitHubProjectsAdapter {
       }
       if (item.contentType !== "PullRequest" && claim.pullRequestNumber && item.pullRequestNumber !== claim.pullRequestNumber) {
         return { active: false, reason: "pr_changed" };
+      }
+      if (item.contentType !== "PullRequest" && claim.pullRequestNumber && item.prUrl) {
+        const reference = parsePullRequestReference(item.prUrl);
+        if (reference?.repository && reference.repository.toLowerCase() !== claim.repository.toLowerCase()) {
+          return { active: false, reason: "pr_changed" };
+        }
       }
       if (requireHeadSha && !claim.headSha) return { active: false, reason: "missing_head_sha" };
       if (requireHeadSha && item.contentType !== "PullRequest" && claim.pullRequestNumber) {
@@ -420,6 +427,10 @@ export class GitHubProjectsAdapter {
   }
 
   async verifyPullRequestReadyForDoneForClaim(claimId) {
+    return this.verifyPullRequestReadyForQaForClaim(claimId);
+  }
+
+  async verifyPullRequestReadyForQaForClaim(claimId) {
     const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
     if (!verified.active) return { ready: false, reason: verified.reason };
     const claim = verified.claim;
@@ -546,6 +557,7 @@ export class GitHubProjectsAdapter {
       baseRef: pr.base?.ref,
       baseSha: pr.base?.sha,
       headRef: pr.head?.ref,
+      headRepository: pr.head?.repo?.full_name,
       headSha: pr.head?.sha
     };
   }
@@ -556,17 +568,19 @@ export class GitHubProjectsAdapter {
       errorMessage: "GitHub pull request metadata request failed"
     });
     const [reviews, status, checkRuns] = await Promise.all([
-      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}/reviews?per_page=100`, {
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/pulls/${number}/reviews`, {
         errorCode: "GITHUB_PR_REVIEWS_HTTP",
-        errorMessage: "GitHub pull request reviews request failed"
+        errorMessage: "GitHub pull request reviews request failed",
+        itemKey: null
       }),
       this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/status`, {
         errorCode: "GITHUB_PR_STATUS_HTTP",
         errorMessage: "GitHub pull request status request failed"
       }),
-      this.fetchGitHubJson(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/check-runs?per_page=100`, {
+      this.fetchGitHubJsonPages(`https://api.github.com/repos/${repository}/commits/${pr.head?.sha}/check-runs`, {
         errorCode: "GITHUB_PR_CHECKS_HTTP",
-        errorMessage: "GitHub pull request checks request failed"
+        errorMessage: "GitHub pull request checks request failed",
+        itemKey: "check_runs"
       })
     ]);
 
@@ -600,6 +614,28 @@ export class GitHubProjectsAdapter {
     }
     return response.json();
   }
+
+  async fetchGitHubJsonPages(url, { errorCode, errorMessage, itemKey, perPage = 100, maxPages = 20 }) {
+    const items = [];
+    let lastPayload;
+    for (let page = 1; page <= maxPages; page += 1) {
+      const payload = await this.fetchGitHubJson(withPagination(url, { perPage, page }), { errorCode, errorMessage });
+      lastPayload = payload;
+      const pageItems = itemKey ? payload?.[itemKey] : payload;
+      const values = Array.isArray(pageItems) ? pageItems : [];
+      items.push(...values);
+      const totalCount = Number(itemKey ? payload?.total_count : undefined);
+      if (values.length < perPage || (Number.isFinite(totalCount) && items.length >= totalCount)) {
+        break;
+      }
+    }
+    if (!itemKey) return items;
+    return {
+      ...(lastPayload && typeof lastPayload === "object" ? lastPayload : {}),
+      [itemKey]: items,
+      total_count: Number(lastPayload?.total_count ?? items.length)
+    };
+  }
 }
 
 function formatEventComment(event) {
@@ -629,6 +665,13 @@ function parsePullRequestReference(url) {
   if (/^\d+$/.test(value)) return { number: Number(value) };
   const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:\b|$)/);
   return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
+}
+
+function withPagination(url, { perPage, page }) {
+  const parsed = new URL(url);
+  parsed.searchParams.set("per_page", String(perPage));
+  parsed.searchParams.set("page", String(page));
+  return parsed.toString();
 }
 
 function hasCurrentApproval(reviews, headSha) {

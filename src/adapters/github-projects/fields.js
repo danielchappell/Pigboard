@@ -91,6 +91,7 @@ export function normalizeProjectItem(node) {
     baseRef: content.baseRefName,
     baseSha: content.baseRefOid,
     headRef: content.headRefName,
+    headRepository: content.headRepository?.nameWithOwner,
     headSha: content.headRefOid,
     status: fields[FieldName.STATUS],
     workerType: fields[FieldName.WORKER_TYPE],

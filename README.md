@@ -209,8 +209,9 @@ V1 can auto-run only the code loop workers:
   `Review`.
 - `reviewer` claims `Review` and advances clean PRs to `Babysit`, or routes
   findings back to `Implementation`.
-- `pr-babysitter` claims `Babysit`, watches CI/review state, and can mark
-  `Done` only when the result explicitly says the PR is approved and clean.
+- `pr-babysitter` claims `Babysit`, addresses PR comments/CI feedback on the
+  same PR, stays in `Babysit` after pushing fixes, and moves approved clean PRs
+  to `QA`.
 
 `planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual for v1.
 

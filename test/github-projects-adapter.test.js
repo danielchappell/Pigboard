@@ -243,7 +243,7 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
           number: 42,
           html_url: "https://github.com/acme/repo/pull/42",
           base: { ref: "main", sha: "b".repeat(40) },
-          head: { ref: "feature", sha: "a".repeat(40) }
+          head: { ref: "feature", sha: "a".repeat(40), repo: { full_name: "acme/repo" } }
         })
       };
     }
@@ -274,6 +274,7 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
   assert.equal(claim.pullRequestNumber, 42);
   assert.equal(claim.prUrl, "https://github.com/acme/repo/pull/42");
   assert.equal(claim.headSha, "a".repeat(40));
+  assert.equal(claim.headRepository, "acme/repo");
   assert.equal(claim.baseSha, "b".repeat(40));
 });
 
@@ -327,7 +328,7 @@ test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verif
           number: 42,
           html_url: "https://github.com/acme/repo/pull/42",
           base: { ref: "main", sha: "b".repeat(40) },
-          head: { ref: "feature", sha: (metadataCalls === 1 ? "a" : "c").repeat(40) }
+          head: { ref: "feature", sha: (metadataCalls === 1 ? "a" : "c").repeat(40), repo: { full_name: "acme/repo" } }
         })
       };
     }
@@ -388,7 +389,7 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
           number: 42,
           html_url: "https://github.com/acme/repo/pull/42",
           base: { ref: "main", sha: "b".repeat(40) },
-          head: { ref: "feature", sha: "a".repeat(40) }
+          head: { ref: "feature", sha: "a".repeat(40), repo: { full_name: "acme/repo" } }
         })
       };
     }
@@ -428,7 +429,67 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
   assert.equal(verified.reason, "pr_changed");
 });
 
-test("GitHubProjectsAdapter requires approvals on the current PR head before Done", async () => {
+test("GitHubProjectsAdapter rejects issue-backed claims when the PR field repository changes", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
+      return {
+        ok: true,
+        json: async () => ({
+          number: 42,
+          html_url: "https://github.com/acme/repo/pull/42",
+          base: { ref: "main", sha: "b".repeat(40) },
+          head: { ref: "feature", sha: "a".repeat(40), repo: { full_name: "acme/repo" } }
+        })
+      };
+    }
+    return {
+      ok: true,
+      json: async () => responses.shift()
+    };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "https://github.com/acme/other/pull/42"
+    })
+  );
+
+  const verified = await adapter.verifyClaim(result.claim.id, { requireHeadSha: true });
+
+  assert.equal(verified.active, false);
+  assert.equal(verified.reason, "pr_changed");
+});
+
+test("GitHubProjectsAdapter requires approvals on the current PR head before QA", async () => {
   const responses = [
     projectResponse({
       status: Status.BABYSIT,
@@ -469,13 +530,13 @@ test("GitHubProjectsAdapter requires approvals on the current PR head before Don
     })
   );
 
-  const verified = await adapter.verifyPullRequestReadyForDoneForClaim(result.claim.id);
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
 
   assert.equal(verified.ready, false);
   assert.equal(verified.reason, "not_approved");
 });
 
-test("GitHubProjectsAdapter rejects unmergeable PRs before Done", async () => {
+test("GitHubProjectsAdapter rejects unmergeable PRs before QA", async () => {
   const responses = [
     projectResponse({
       status: Status.BABYSIT,
@@ -517,10 +578,123 @@ test("GitHubProjectsAdapter rejects unmergeable PRs before Done", async () => {
     })
   );
 
-  const verified = await adapter.verifyPullRequestReadyForDoneForClaim(result.claim.id);
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
 
   assert.equal(verified.ready, false);
   assert.equal(verified.reason, "not_mergeable");
+});
+
+test("GitHubProjectsAdapter pages through PR reviews before QA", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const firstPage = [
+    { user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) },
+    ...Array.from({ length: 99 }, (_, index) => ({
+      user: { login: `reviewer-${index}` },
+      state: "COMMENTED",
+      commit_id: "a".repeat(40)
+    }))
+  ];
+  const fetchImpl = createPrDoneFetchImpl({
+    responses,
+    reviews: [firstPage, [{ user: { login: "reviewer" }, state: "CHANGES_REQUESTED", commit_id: "a".repeat(40) }]]
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "not_approved");
+});
+
+test("GitHubProjectsAdapter pages through check runs before QA", async () => {
+  const responses = [
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      prUrl: "42"
+    }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
+  const fetchImpl = createPrDoneFetchImpl({
+    responses,
+    reviews: [{ user: { login: "reviewer" }, state: "APPROVED", commit_id: "a".repeat(40) }],
+    checkRuns: {
+      total_count: 101,
+      pages: [
+        Array.from({ length: 100 }, (_, index) => ({
+          name: `check-${index}`,
+          status: "completed",
+          conclusion: "success"
+        })),
+        [{ name: "late-check", status: "completed", conclusion: "failure" }]
+      ]
+    }
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+  responses.push(
+    projectResponse({
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER,
+      leaseOwner: "babysitter-1",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: result.claim.id,
+      prUrl: "42"
+    })
+  );
+
+  const verified = await adapter.verifyPullRequestReadyForQaForClaim(result.claim.id);
+
+  assert.equal(verified.ready, false);
+  assert.equal(verified.reason, "checks_not_clean");
 });
 
 test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming next ready item", async () => {
@@ -564,7 +738,7 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
           number: 42,
           html_url: "https://github.com/acme/repo/pull/42",
           base: { ref: "main", sha: "b".repeat(40) },
-          head: { ref: "feature", sha: "a".repeat(40) }
+          head: { ref: "feature", sha: "a".repeat(40), repo: { full_name: "acme/repo" } }
         })
       };
     }
@@ -684,28 +858,36 @@ function createPrDoneFetchImpl({
 }) {
   return async (url, options) => {
     const requestUrl = String(url);
-    if (requestUrl.endsWith("/repos/acme/repo/pulls/42")) {
+    const parsedUrl = new URL(requestUrl);
+    const page = Number(parsedUrl.searchParams.get("page") ?? 1);
+    if (parsedUrl.pathname.endsWith("/repos/acme/repo/pulls/42")) {
       return {
         ok: true,
         json: async () => pullRequest
       };
     }
-    if (requestUrl.endsWith("/repos/acme/repo/pulls/42/reviews?per_page=100")) {
+    if (parsedUrl.pathname.endsWith("/repos/acme/repo/pulls/42/reviews")) {
+      const reviewPages = Array.isArray(reviews[0]) ? reviews : [reviews];
       return {
         ok: true,
-        json: async () => reviews
+        json: async () => reviewPages[page - 1] ?? []
       };
     }
-    if (requestUrl.includes("/repos/acme/repo/commits/") && requestUrl.endsWith("/status")) {
+    if (parsedUrl.pathname.includes("/repos/acme/repo/commits/") && parsedUrl.pathname.endsWith("/status")) {
       return {
         ok: true,
         json: async () => status
       };
     }
-    if (requestUrl.includes("/repos/acme/repo/commits/") && requestUrl.endsWith("/check-runs?per_page=100")) {
+    if (parsedUrl.pathname.includes("/repos/acme/repo/commits/") && parsedUrl.pathname.endsWith("/check-runs")) {
+      const runs = checkRuns.pages?.[page - 1] ?? checkRuns.check_runs?.slice((page - 1) * 100, page * 100) ?? [];
       return {
         ok: true,
-        json: async () => checkRuns
+        json: async () => ({
+          ...checkRuns,
+          check_runs: runs,
+          total_count: Number(checkRuns.total_count ?? runs.length)
+        })
       };
     }
     const response = responses.shift();
@@ -727,7 +909,7 @@ function pullRequestResponse(overrides = {}) {
     mergeable: true,
     mergeable_state: "clean",
     base: { ref: "main", sha: "b".repeat(40) },
-    head: { ref: "feature", sha: "a".repeat(40) },
+    head: { ref: "feature", sha: "a".repeat(40), repo: { full_name: "acme/repo" } },
     ...overrides
   };
 }

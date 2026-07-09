@@ -75,3 +75,32 @@ test("pr-babysitter can no-op and remain in Babysit", () => {
     Status.BABYSIT
   );
 });
+
+test("pr-babysitter can move approved clean PRs to QA only with the explicit flag", () => {
+  assert.equal(
+    validateWorkerTransition({
+      workerType: WorkerType.PR_BABYSITTER,
+      result: { outcome: "completed", nextStatus: Status.QA, qaWhenApprovedAndClean: true }
+    }),
+    Status.QA
+  );
+  assert.throws(
+    () =>
+      validateWorkerTransition({
+        workerType: WorkerType.PR_BABYSITTER,
+        result: { outcome: "completed", nextStatus: Status.QA }
+      }),
+    /qaWhenApprovedAndClean/
+  );
+});
+
+test("pr-babysitter does not route PR feedback back to implementation", () => {
+  assert.throws(
+    () =>
+      validateWorkerTransition({
+        workerType: WorkerType.PR_BABYSITTER,
+        result: { outcome: "completed", nextStatus: Status.IMPLEMENTATION }
+      }),
+    /pr-babysitter cannot transition to Implementation/
+  );
+});

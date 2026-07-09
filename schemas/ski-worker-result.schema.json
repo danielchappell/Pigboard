@@ -31,9 +31,9 @@
     "preserveWorkerType": {
       "type": "boolean"
     },
-    "doneWhenApprovedAndClean": {
+    "qaWhenApprovedAndClean": {
       "type": "boolean",
-      "description": "Only pr-babysitter may set this true when moving an approved, clean PR to Done."
+      "description": "Only pr-babysitter may set this true when moving an approved, clean PR to QA."
     }
   }
 }

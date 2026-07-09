@@ -16,17 +16,24 @@ export class QueueDispatcher {
 
   async runOnce() {
     const readyItems = await this.adapter.listReady(this.workerType);
+    const skipped = [];
 
     for (const item of readyItems) {
-      const claimResult =
-        typeof this.adapter.claimReadyForWorker === "function"
-          ? await this.adapter.claimReadyForWorker({
-              itemId: item.id,
-              workerType: this.workerType,
-              workerId: this.workerId,
-              leaseSeconds: this.leaseSeconds
-            })
-          : await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
+      let claimResult;
+      try {
+        claimResult =
+          typeof this.adapter.claimReadyForWorker === "function"
+            ? await this.adapter.claimReadyForWorker({
+                itemId: item.id,
+                workerType: this.workerType,
+                workerId: this.workerId,
+                leaseSeconds: this.leaseSeconds
+              })
+            : await this.adapter.claim(item.id, this.workerId, this.leaseSeconds);
+      } catch (error) {
+        skipped.push({ itemId: item.id, error });
+        continue;
+      }
       if (!claimResult.claimed) continue;
 
       const { claim } = claimResult;
@@ -59,6 +66,6 @@ export class QueueDispatcher {
       }
     }
 
-    return { ran: false };
+    return skipped.length ? { ran: false, skipped } : { ran: false };
   }
 }

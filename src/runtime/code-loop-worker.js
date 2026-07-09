@@ -198,6 +198,9 @@ export class GitHubCodeLoopWorker {
     const repository = item.repository ?? claim.repository;
     const baseBranch = this.repoPolicy.defaultBaseBranch ?? "main";
     if (this.workerType === WorkerType.IMPLEMENTER) {
+      if (claim.pullRequestNumber) {
+        throw new Error("PR-backed items must stay in Babysit; pr-babysitter owns existing PR fixes in v1");
+      }
       const branchName =
         claim.branchName ?? `ski/${safeGitRefSegment(item.number ?? item.id)}-${safeGitRefSegment(claim.runId)}`;
       return this.createImplementationWorktreeImpl({
@@ -315,6 +318,10 @@ export class GitHubCodeLoopWorker {
     }
 
     await this.verifyOrThrow(claimId);
+    if (this.workerType === WorkerType.PR_BABYSITTER && result.outcome === "completed") {
+      await this.applyBabysitterDiff({ claimId, result, worktree, ignoredPaths });
+    }
+    await this.verifyOrThrow(claimId);
     if (this.workerType !== WorkerType.IMPLEMENTER) {
       await this.rejectNonImplementerDiff({ worktree, ignoredPaths });
     }
@@ -322,10 +329,10 @@ export class GitHubCodeLoopWorker {
     if (
       this.workerType === WorkerType.PR_BABYSITTER &&
       result.outcome === "completed" &&
-      result.nextStatus === Status.DONE &&
-      result.doneWhenApprovedAndClean === true
+      result.nextStatus === Status.QA &&
+      result.qaWhenApprovedAndClean === true
     ) {
-      await this.verifyPullRequestDoneState(claimId);
+      await this.verifyPullRequestReadyState(claimId);
     }
     return applyWorkerResult({
       adapter: this.adapter,
@@ -333,6 +340,47 @@ export class GitHubCodeLoopWorker {
       workerType: this.workerType,
       result
     });
+  }
+
+  async applyBabysitterDiff({ claimId, result, worktree, ignoredPaths }) {
+    const dirty = await this.hasDiffImpl({
+      worktreePath: worktree.worktreePath,
+      execFileImpl: this.execFileImpl,
+      ignoredPaths
+    });
+    if (!dirty) return;
+    if (result.nextStatus !== Status.BABYSIT) {
+      throw new Error("pr-babysitter fixes must stay in Babysit for another review/check cycle");
+    }
+    if (!(this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr)) {
+      throw new Error("pr-babysitter requires branch push permission to push PR fixes in v1");
+    }
+    const claim = await this.verifyOrThrow(claimId);
+    this.assertPatchablePrClaim(claim);
+    const commitSha = await this.commitAllImpl({
+      worktreePath: worktree.worktreePath,
+      message: `Ski Stack ${this.workerType} ${new Date().toISOString()}`,
+      execFileImpl: this.execFileImpl,
+      ignoredPaths
+    });
+    await this.verifyOrThrow(claimId);
+    await this.execFileImpl(
+      "git",
+      ["-C", worktree.worktreePath, "push", "--no-verify", `https://github.com/${claim.repository}.git`, `HEAD:${claim.headRef}`],
+      {
+        env: buildDaemonGitEnv({ githubToken: this.repoPolicy.githubToken })
+      }
+    );
+    result.evidence = [...(result.evidence ?? []), `Commit ${commitSha}`];
+  }
+
+  assertPatchablePrClaim(claim) {
+    if (!claim.pullRequestNumber) throw new Error("pr-babysitter requires a pull request claim");
+    if (!claim.headRef) throw new Error("pr-babysitter requires a pull request head branch");
+    const headRepository = claim.headRepository ?? claim.repository;
+    if (String(headRepository).toLowerCase() !== String(claim.repository).toLowerCase()) {
+      throw new Error("pr-babysitter cannot push fixes to fork PRs in v1");
+    }
   }
 
   async rejectNonImplementerDiff({ worktree, ignoredPaths }) {
@@ -367,13 +415,15 @@ export class GitHubCodeLoopWorker {
     }
   }
 
-  async verifyPullRequestDoneState(claimId) {
-    if (typeof this.adapter.verifyPullRequestReadyForDoneForClaim !== "function") {
-      throw new Error("adapter cannot verify live PR state before Done");
+  async verifyPullRequestReadyState(claimId) {
+    const verifier =
+      this.adapter.verifyPullRequestReadyForQaForClaim ?? this.adapter.verifyPullRequestReadyForDoneForClaim;
+    if (typeof verifier !== "function") {
+      throw new Error("adapter cannot verify live PR state before QA");
     }
-    const verified = await this.adapter.verifyPullRequestReadyForDoneForClaim(claimId);
+    const verified = await verifier.call(this.adapter, claimId);
     if (verified?.ready !== true) {
-      throw new Error(`pr-babysitter cannot mark Done: ${verified?.reason ?? "pr_not_ready"}`);
+      throw new Error(`pr-babysitter cannot move to QA: ${verified?.reason ?? "pr_not_ready"}`);
     }
   }
 

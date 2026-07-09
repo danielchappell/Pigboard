@@ -27,7 +27,7 @@ export const NONCLAIMABLE_STATUSES = new Set([
 const COMPLETED_TRANSITIONS = Object.freeze({
   [WorkerType.IMPLEMENTER]: new Set([Status.REVIEW]),
   [WorkerType.REVIEWER]: new Set([Status.IMPLEMENTATION, Status.BABYSIT]),
-  [WorkerType.PR_BABYSITTER]: new Set([Status.IMPLEMENTATION, Status.REVIEW, Status.BABYSIT, Status.DONE])
+  [WorkerType.PR_BABYSITTER]: new Set([Status.BABYSIT, Status.QA])
 });
 
 export function resolvedWorkerTypeForItem(item) {
@@ -85,10 +85,10 @@ export function validateWorkerTransition({ workerType, result }) {
   }
   if (
     workerType === WorkerType.PR_BABYSITTER &&
-    nextStatus === Status.DONE &&
-    result.doneWhenApprovedAndClean !== true
+    nextStatus === Status.QA &&
+    result.qaWhenApprovedAndClean !== true
   ) {
-    throw new Error("pr-babysitter can only transition to Done with doneWhenApprovedAndClean=true");
+    throw new Error("pr-babysitter can only transition to QA with qaWhenApprovedAndClean=true");
   }
 
   return nextStatus;

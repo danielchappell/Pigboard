@@ -1,7 +1,7 @@
 ---
 name: reviewer
 worker_type: reviewer
-description: Reviews a PR, diff, plan, or implemented item for correctness, security, maintainability, test gaps, and spec fidelity. Use before promoting work to babysitting or done.
+description: Reviews a PR, diff, plan, or implemented item for correctness, security, maintainability, test gaps, and spec fidelity. Use before promoting work to babysitting.
 recommended_model: strong-reasoning
 ---
 
@@ -29,5 +29,4 @@ Append a review handoff with:
 - severity
 - recommended next status
 
-Transition to `Implementation`, `Babysit`, `Done`, or `Blocked`.
-
+Transition to `Implementation`, `Babysit`, or `Blocked`.

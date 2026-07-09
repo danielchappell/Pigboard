@@ -9,6 +9,7 @@ import {
   commitAll,
   createImplementationWorktree,
   createPullRequestWorktree,
+  hasDiff,
   assertCredentialFreeWorktree,
   inspectGitConfigText,
   parseCodexLoginStatus,
@@ -359,6 +360,23 @@ test("worktree creation does not rewrite shared remotes", async () => {
   assert.equal(fetchCall.includes("https://github.com/acme/repo.git"), true);
   assert.equal(fetchCall.at(-1), "+refs/heads/main:refs/ski-stack/run-1/base");
   assert.equal(calls.some((args) => args.includes("remote") && args.includes("set-url")), false);
+});
+
+test("diff detection lists untracked files individually for setup ignores", async () => {
+  const calls = [];
+  const execFileImpl = async (_command, args) => {
+    calls.push(args);
+    return { stdout: "?? generated/output.json\n", stderr: "" };
+  };
+
+  const dirty = await hasDiff({
+    worktreePath: "/tmp/worktree",
+    ignoredPaths: ["generated/output.json"],
+    execFileImpl
+  });
+
+  assert.equal(dirty, false);
+  assert.deepEqual(calls[0].slice(-2), ["--porcelain", "--untracked-files=all"]);
 });
 
 test("automated commits use scrubbed env with explicit identity", async () => {

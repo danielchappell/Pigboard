@@ -68,6 +68,7 @@ function normalizeClaimV2(input) {
     "baseRef",
     "baseSha",
     "headRef",
+    "headRepository",
     "headSha",
     "branchName"
   ]) {

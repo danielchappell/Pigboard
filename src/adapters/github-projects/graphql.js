@@ -57,6 +57,9 @@ const PROJECT_SELECTION = `
             baseRefOid
             headRefName
             headRefOid
+            headRepository {
+              nameWithOwner
+            }
             repository {
               nameWithOwner
             }
