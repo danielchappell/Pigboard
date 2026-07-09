@@ -328,12 +328,13 @@ export class GitHubCodeLoopWorker {
     }
 
     await this.verifyOrThrow(claimId);
+    let finalIgnoredPaths = ignoredPaths;
     if (this.workerType === WorkerType.PR_BABYSITTER && result.outcome === "completed") {
-      await this.applyBabysitterDiff({ claimId, result, worktree, ignoredPaths });
+      finalIgnoredPaths = await this.applyBabysitterDiff({ claimId, result, worktree, ignoredPaths });
     }
     await this.verifyOrThrow(claimId);
     if (this.workerType !== WorkerType.IMPLEMENTER) {
-      await this.rejectNonImplementerDiff({ worktree, ignoredPaths });
+      await this.rejectNonImplementerDiff({ worktree, ignoredPaths: finalIgnoredPaths });
     }
     await this.verifyOrThrow(claimId);
     if (
@@ -342,6 +343,9 @@ export class GitHubCodeLoopWorker {
       result.mergeWhenApprovedAndClean === true
     ) {
       const readyState = await this.verifyPullRequestReadyState(claimId);
+      if (readyState?.reason !== "merged" && !this.repoPolicy.allowMerge) {
+        throw new Error("pr-babysitter requires allowMerge to merge PRs before QA");
+      }
       await this.mergePullRequestForQa({ claimId, result, readyState });
     }
     return applyWorkerResult({
@@ -360,7 +364,7 @@ export class GitHubCodeLoopWorker {
       execFileImpl: this.execFileImpl,
       ignoredPaths
     });
-    if (!dirty) return;
+    if (!dirty) return ignoredPaths;
     if (result.nextStatus !== Status.BABYSIT) {
       throw new Error("pr-babysitter fixes must stay in Babysit for another review/check cycle");
     }
@@ -409,13 +413,14 @@ export class GitHubCodeLoopWorker {
       }
     );
     result.evidence = [...(result.evidence ?? []), `Commit ${commitSha}`];
+    return commitIgnoredPaths;
   }
 
   assertPatchablePrClaim(claim) {
     if (!claim.pullRequestNumber) throw new Error("pr-babysitter requires a pull request claim");
     if (!claim.headRef) throw new Error("pr-babysitter requires a pull request head branch");
-    const headRepository = claim.headRepository ?? claim.repository;
-    if (String(headRepository).toLowerCase() !== String(claim.repository).toLowerCase()) {
+    if (!claim.headRepository) throw new Error("pr-babysitter requires a pull request head repository");
+    if (String(claim.headRepository).toLowerCase() !== String(claim.repository).toLowerCase()) {
       throw new Error("pr-babysitter cannot push fixes to fork PRs in v1");
     }
   }

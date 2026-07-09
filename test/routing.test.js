@@ -94,6 +94,16 @@ test("pr-babysitter can move merge-gated PRs to QA only with the explicit flag",
   );
 });
 
+test("pr-babysitter can terminally cancel superseded PRs", () => {
+  assert.equal(
+    validateWorkerTransition({
+      workerType: WorkerType.PR_BABYSITTER,
+      result: { outcome: "completed", nextStatus: Status.CANCELED }
+    }),
+    Status.CANCELED
+  );
+});
+
 test("pr-babysitter does not route PR feedback back to implementation", () => {
   assert.throws(
     () =>

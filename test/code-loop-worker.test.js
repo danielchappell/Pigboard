@@ -908,7 +908,7 @@ test("pr-babysitter merges verifier-approved PRs before moving to QA", async () 
     root,
     adapter,
     workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token", mergeMethod: "squash" },
+    repoPolicy: { cwd: root, githubToken: "test-token", mergeMethod: "squash", allowMerge: true },
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
@@ -985,7 +985,7 @@ test("pr-babysitter merges no-op approved PRs before moving to QA", async () => 
     root,
     adapter,
     workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token" },
+    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: true },
     result: {
       outcome: "no-op",
       nextStatus: Status.QA,
@@ -1020,6 +1020,7 @@ test("pr-babysitter cannot move to QA when live PR state is not ready", async ()
     root,
     adapter,
     workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, allowMerge: true },
     result: {
       outcome: "completed",
       nextStatus: Status.QA,
@@ -1033,6 +1034,43 @@ test("pr-babysitter cannot move to QA when live PR state is not ready", async ()
   assert.equal(result.ran, true);
   assert.match(result.error.message, /checks_not_clean/);
   assert.equal(adapter.getItem("item-live-not-ready").status, Status.BLOCKED);
+});
+
+test("pr-babysitter cannot merge before QA without merge permission", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-merge-not-allowed",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true });
+  let mergeCalls = 0;
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: false },
+    result: {
+      outcome: "no-op",
+      nextStatus: Status.QA,
+      summary: "Approved with no local edits.",
+      mergeWhenApprovedAndClean: true
+    },
+    mergePullRequestImpl: async () => {
+      mergeCalls += 1;
+      return { merged: true, sha: "m".repeat(40), message: "merged" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /allowMerge/);
+  assert.equal(mergeCalls, 0);
+  assert.equal(adapter.getItem("item-merge-not-allowed").status, Status.BLOCKED);
 });
 
 test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () => {

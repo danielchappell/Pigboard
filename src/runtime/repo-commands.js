@@ -44,7 +44,7 @@ async function resolveNetworkOffWrapper({
       await accessImpl(sandboxExec);
       return {
         command: sandboxExec,
-        args: ["-p", "(version 1) (allow default) (deny network*)", "/bin/sh", "-lc"]
+        args: ["-p", "(version 1) (allow default) (deny network*)", "/bin/sh", "-c"]
       };
     } catch {
       // Fall through to fail closed.
@@ -52,15 +52,22 @@ async function resolveNetworkOffWrapper({
   }
   if (platform === "linux") {
     for (const unshare of ["/usr/bin/unshare", "/bin/unshare"]) {
-      try {
-        await accessImpl(unshare);
-        await execFileImpl(unshare, ["-n", "true"], { env });
-        return {
-          command: unshare,
-          args: ["-n", "/bin/sh", "-lc"]
-        };
-      } catch {
-        // Try the next common location.
+      const candidates = [
+        { probeArgs: ["--map-root-user", "-n", "true"], args: ["--map-root-user", "-n", "/bin/sh", "-c"] },
+        { probeArgs: ["-r", "-n", "true"], args: ["-r", "-n", "/bin/sh", "-c"] },
+        { probeArgs: ["-n", "true"], args: ["-n", "/bin/sh", "-c"] }
+      ];
+      for (const candidate of candidates) {
+        try {
+          await accessImpl(unshare);
+          await execFileImpl(unshare, candidate.probeArgs, { env });
+          return {
+            command: unshare,
+            args: candidate.args
+          };
+        } catch {
+          // Try the next supported invocation.
+        }
       }
     }
   }

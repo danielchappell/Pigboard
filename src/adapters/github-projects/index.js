@@ -249,6 +249,11 @@ export class GitHubProjectsAdapter {
     }
 
     this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
+    const verified = await this.verifyClaim(claimId);
+    if (!verified.active) {
+      this.claims.delete(claimId);
+      return { claimed: false, reason: verified.reason };
+    }
 
     return {
       claimed: true,

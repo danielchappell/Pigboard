@@ -34,10 +34,14 @@ export function buildCodexRunnerEnv({ baseEnv = process.env, extraEnv = {}, tmpd
 export function buildDaemonGitEnv({ baseEnv = process.env, githubToken, tmpdir } = {}) {
   const env = buildScrubbedEnv({
     baseEnv,
-    allow: ["PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL", "HOME"],
+    allow: ["PATH", "SHELL", "TMPDIR", "TEMP", "TMP", "LANG", "LC_ALL"],
     tmpdir
   });
+  env.HOME = tmpdir ?? "/nonexistent";
   env.GIT_TERMINAL_PROMPT = "0";
+  env.GIT_CONFIG_NOSYSTEM = "1";
+  env.GIT_CONFIG_GLOBAL = "/dev/null";
+  env.GIT_CONFIG_SYSTEM = "/dev/null";
   if (githubToken) {
     env.GIT_CONFIG_COUNT = "1";
     env.GIT_CONFIG_KEY_0 = "http.https://github.com/.extraheader";

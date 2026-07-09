@@ -223,7 +223,6 @@ test("GitHubProjectsAdapter releases a claim from a fresh process", async () => 
 });
 
 test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claims", async () => {
-  const calls = [];
   const responses = [
     projectResponse({
       status: Status.REVIEW,
@@ -235,6 +234,7 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
     mutationResponse(),
     mutationResponse()
   ];
+  const graphql = createGraphqlState(responses);
   const fetchImpl = async (url, options) => {
     if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
       return {
@@ -247,11 +247,9 @@ test("GitHubProjectsAdapter carries PR metadata from issue-backed PR field claim
         })
       };
     }
-    const call = JSON.parse(options.body);
-    calls.push(call);
     return {
       ok: true,
-      json: async () => responses.shift()
+      json: async () => graphql.next(options)
     };
   };
   const adapter = new GitHubProjectsAdapter({
@@ -376,6 +374,38 @@ test("GitHubProjectsAdapter preserves fork head repositories on PR content claim
   assert.equal(claim.headSha, "a".repeat(40));
 });
 
+test("GitHubProjectsAdapter does not return claims lost during write/readback", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    projectResponse({
+      leaseOwner: "worker-2",
+      leaseExpiresAt: "2026-07-07T12:30:00.000Z",
+      lastWorkerRun: "other-run"
+    })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "worker-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, false);
+  assert.equal(result.reason, "owner_mismatch");
+});
+
 test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verification", async () => {
   const responses = [
     projectResponse({
@@ -388,6 +418,7 @@ test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verif
     mutationResponse(),
     mutationResponse()
   ];
+  const graphql = createGraphqlState(responses);
   let metadataCalls = 0;
   const fetchImpl = async (url, options) => {
     if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
@@ -402,10 +433,9 @@ test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verif
         })
       };
     }
-    const response = responses.shift();
     return {
       ok: true,
-      json: async () => response
+      json: async () => graphql.next(options)
     };
   };
   const adapter = new GitHubProjectsAdapter({
@@ -451,6 +481,7 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
     mutationResponse(),
     mutationResponse()
   ];
+  const graphql = createGraphqlState(responses);
   const fetchImpl = async (url, options) => {
     if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
       return {
@@ -465,7 +496,7 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field change
     }
     return {
       ok: true,
-      json: async () => responses.shift()
+      json: async () => graphql.next(options)
     };
   };
   const adapter = new GitHubProjectsAdapter({
@@ -511,6 +542,7 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field reposi
     mutationResponse(),
     mutationResponse()
   ];
+  const graphql = createGraphqlState(responses);
   const fetchImpl = async (url, options) => {
     if (String(url).endsWith("/repos/acme/repo/pulls/42")) {
       return {
@@ -525,7 +557,7 @@ test("GitHubProjectsAdapter rejects issue-backed claims when the PR field reposi
     }
     return {
       ok: true,
-      json: async () => responses.shift()
+      json: async () => graphql.next(options)
     };
   };
   const adapter = new GitHubProjectsAdapter({
@@ -933,6 +965,7 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
   response.data.organization.projectV2.items.nodes.push(secondNode);
 
   const responses = [response, mutationResponse(), mutationResponse(), mutationResponse(), mutationResponse()];
+  const graphql = createGraphqlState(responses);
   const metadataCalls = [];
   const fetchImpl = async (url, options) => {
     const requestUrl = String(url);
@@ -958,7 +991,7 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
     }
     return {
       ok: true,
-      json: async () => responses.shift()
+      json: async () => graphql.next(options)
     };
   };
   const adapter = new GitHubProjectsAdapter({
@@ -1046,19 +1079,39 @@ test("GitHubProjectsAdapter withholds unsafe public event output", async () => {
 });
 
 function createGraphqlMock(responses) {
+  const graphql = createGraphqlState(responses);
+
+  return {
+    calls: graphql.calls,
+    fetchImpl: async (_url, options) => {
+      return {
+        ok: true,
+        json: async () => graphql.next(options)
+      };
+    }
+  };
+}
+
+function createGraphqlState(responses) {
   const calls = [];
+  let latestProjectResponse = null;
 
   return {
     calls,
-    fetchImpl: async (_url, options) => {
+    next(options, requestUrl = "https://api.github.com/graphql") {
       const call = JSON.parse(options.body);
       calls.push(call);
+      if (latestProjectResponse) applyGraphqlFieldMutation(latestProjectResponse, call);
+
       const response = responses.shift();
-      if (!response) throw new Error("No mocked GraphQL response left");
-      return {
-        ok: true,
-        json: async () => response
-      };
+      if (!response) {
+        if (isProjectQuery(call) && latestProjectResponse) return structuredClone(latestProjectResponse);
+        throw new Error(`No mocked GraphQL response left${requestUrl ? ` for ${requestUrl}` : ""}`);
+      }
+
+      const resolved = typeof response === "function" ? response({ call, calls, latestProjectResponse }) : response;
+      if (projectFromGraphqlResponse(resolved)) latestProjectResponse = structuredClone(resolved);
+      return resolved;
     }
   };
 }
@@ -1071,6 +1124,7 @@ function createPrMergeFetchImpl({
   status = { total_count: 0, state: "success" },
   checkRuns = { total_count: 1, check_runs: [{ name: "ci", status: "completed", conclusion: "success" }] }
 }) {
+  const graphql = createGraphqlState(responses);
   return async (url, options) => {
     const requestUrl = String(url);
     const parsedUrl = new URL(requestUrl);
@@ -1112,13 +1166,43 @@ function createPrMergeFetchImpl({
         })
       };
     }
-    const response = responses.shift();
-    if (!response) throw new Error(`No mocked GraphQL response left for ${requestUrl}`);
     return {
       ok: true,
-      json: async () => response
+      json: async () => graphql.next(options, requestUrl)
     };
   };
+}
+
+function isProjectQuery(call) {
+  return String(call.query).includes("projectV2(number: $projectNumber)");
+}
+
+function projectFromGraphqlResponse(response) {
+  return response?.data?.organization?.projectV2 ?? response?.data?.user?.projectV2;
+}
+
+function applyGraphqlFieldMutation(response, call) {
+  const input = call.variables?.input;
+  if (!input?.itemId || !input.fieldId) return;
+
+  const project = projectFromGraphqlResponse(response);
+  const item = project?.items?.nodes?.find((candidate) => candidate.id === input.itemId);
+  if (!item) return;
+
+  const fieldNode = project.fields.nodes.find((candidate) => candidate.id === input.fieldId);
+  const fieldName = fieldNode?.name;
+  if (!fieldName) return;
+
+  item.fieldValues.nodes = item.fieldValues.nodes.filter((value) => value.field?.name !== fieldName);
+  if (String(call.query).includes("clearProjectV2ItemFieldValue")) return;
+
+  const value = input.value ?? {};
+  if (Object.hasOwn(value, "text")) item.fieldValues.nodes.push(textValue(fieldName, value.text));
+  if (Object.hasOwn(value, "number")) item.fieldValues.nodes.push(numberValue(fieldName, value.number));
+  if (Object.hasOwn(value, "singleSelectOptionId")) {
+    const option = fieldNode.options?.find((candidate) => candidate.id === value.singleSelectOptionId);
+    item.fieldValues.nodes.push(singleSelectValue(fieldName, option?.name, value.singleSelectOptionId));
+  }
 }
 
 function pullRequestResponse(overrides = {}) {

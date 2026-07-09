@@ -94,7 +94,7 @@ test("repo commands use Linux network namespace wrapper when available", async (
     },
     execFileImpl: async (command, args) => {
       assert.equal(command, "/usr/bin/unshare");
-      assert.deepEqual(args, ["-n", "true"]);
+      assert.deepEqual(args, ["--map-root-user", "-n", "true"]);
       return { stdout: "", stderr: "" };
     },
     spawnImpl: (command, args) => {
@@ -104,7 +104,36 @@ test("repo commands use Linux network namespace wrapper when available", async (
   });
 
   assert.equal(calls[0].command, "/usr/bin/unshare");
-  assert.deepEqual(calls[0].args, ["-n", "/bin/sh", "-lc", "echo ok"]);
+  assert.deepEqual(calls[0].args, ["--map-root-user", "-n", "/bin/sh", "-c", "echo ok"]);
+  assert.equal(results[0].stdout, "ok\n");
+});
+
+test("repo commands fall back to privileged Linux network namespace when user namespace mapping is unavailable", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-linux-commands-"));
+  const probes = [];
+  const calls = [];
+  const results = await runRepoCommands({
+    commands: ["echo ok"],
+    cwd: root,
+    platform: "linux",
+    accessImpl: async () => {},
+    execFileImpl: async (_command, args) => {
+      probes.push(args);
+      if (args[0] !== "-n") throw new Error("unsupported unshare mode");
+      return { stdout: "", stderr: "" };
+    },
+    spawnImpl: (command, args) => {
+      calls.push({ command, args });
+      return fakeCommandSpawn({ stdoutText: "ok\n" });
+    }
+  });
+
+  assert.deepEqual(probes, [
+    ["--map-root-user", "-n", "true"],
+    ["-r", "-n", "true"],
+    ["-n", "true"]
+  ]);
+  assert.deepEqual(calls[0].args, ["-n", "/bin/sh", "-c", "echo ok"]);
   assert.equal(results[0].stdout, "ok\n");
 });
 
@@ -131,12 +160,17 @@ test("repo commands reject Linux unshare wrappers that fail the network namespac
 
 test("daemon git env wires HTTPS auth without exposing GITHUB_TOKEN", () => {
   const env = buildDaemonGitEnv({
-    baseEnv: { PATH: "/bin", GITHUB_TOKEN: "ignored" },
+    baseEnv: { PATH: "/bin", HOME: "/Users/joseph", GITHUB_TOKEN: "ignored" },
+    tmpdir: "/tmp/ski-git-home",
     githubToken: "gho_tokenvalue123456"
   });
 
   assert.equal(env.GITHUB_TOKEN, undefined);
+  assert.equal(env.HOME, "/tmp/ski-git-home");
   assert.equal(env.GIT_TERMINAL_PROMPT, "0");
+  assert.equal(env.GIT_CONFIG_NOSYSTEM, "1");
+  assert.equal(env.GIT_CONFIG_GLOBAL, "/dev/null");
+  assert.equal(env.GIT_CONFIG_SYSTEM, "/dev/null");
   assert.equal(env.GIT_CONFIG_KEY_0, "http.https://github.com/.extraheader");
   assert.match(env.GIT_CONFIG_VALUE_0, /^AUTHORIZATION: basic /);
 });
