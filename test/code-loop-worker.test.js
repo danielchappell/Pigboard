@@ -793,6 +793,73 @@ test("worker extends the claim while a run is active", async () => {
   assert.equal(extensions > 0, true);
 });
 
+test("worker drains pending claim extensions before release", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-extension-release",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  const order = [];
+  adapter.extendClaim = async () => {
+    order.push("extend-start");
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    order.push("extend-end");
+    return { extended: true };
+  };
+  const releaseClaim = adapter.releaseClaim.bind(adapter);
+  adapter.releaseClaim = async (...args) => {
+    order.push("release");
+    return releaseClaim(...args);
+  };
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-extension-release",
+    leaseSeconds: 60,
+    claimHeartbeatMs: 1,
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      await writeFile(
+        outputPath,
+        JSON.stringify({
+          outcome: "completed",
+          nextStatus: Status.REVIEW,
+          summary: "Implemented."
+        })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    hasDiffImpl: async () => true,
+    commitAllImpl: async () => "a".repeat(40),
+    execFileImpl: async () => ({ stdout: "", stderr: "" }),
+    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.deepEqual(order, ["extend-start", "extend-end", "release"]);
+});
+
 test("reviewer transitions clean PRs to Babysit", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
@@ -902,6 +969,42 @@ test("pr-babysitter skips merge call when PR is already merged", async () => {
   assert.equal(adapter.events[0].evidence.at(-1), "PR #42 already merged");
 });
 
+test("pr-babysitter merges no-op approved PRs before moving to QA", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-no-op-qa",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true });
+  let mergeCalls = 0;
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, githubToken: "test-token" },
+    result: {
+      outcome: "no-op",
+      nextStatus: Status.QA,
+      summary: "Approved with no local edits.",
+      mergeWhenApprovedAndClean: true
+    },
+    mergePullRequestImpl: async () => {
+      mergeCalls += 1;
+      return { merged: true, sha: "m".repeat(40), message: "merged" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(adapter.getItem("item-no-op-qa").status, Status.QA);
+  assert.equal(mergeCalls, 1);
+});
+
 test("pr-babysitter cannot move to QA when live PR state is not ready", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
@@ -969,6 +1072,91 @@ test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () =>
   assert.equal(adapter.getItem("item-babysit-fix").status, Status.BABYSIT);
   assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:feature"]);
   assert.match(adapter.events[0].evidence.at(-1), /^Commit c{40}$/);
+});
+
+test("pr-babysitter runs verification before pushing PR feedback fixes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-babysit-verify",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  const calls = [];
+  const diffChecks = [true, false];
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: {
+      cwd: root,
+      allowPushBranches: true,
+      githubToken: "test-token",
+      verifyCommands: ["npm test"],
+      verifyNetwork: "off"
+    },
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "Addressed review comments."
+    },
+    hasDiffImpl: async () => diffChecks.shift() ?? false,
+    listUntrackedFilesImpl: async () => (calls.includes("verify") ? ["coverage/lcov.info", "tmp/report.txt"] : ["coverage/lcov.info"]),
+    runRepoCommandsImpl: async ({ commands, network }) => {
+      if (!commands.length) return [];
+      calls.push("verify");
+      assert.deepEqual(commands, ["npm test"]);
+      assert.equal(network, "off");
+      return [];
+    },
+    commitAllImpl: async ({ ignoredPaths }) => {
+      assert.deepEqual(ignoredPaths, ["tmp/report.txt"]);
+      calls.push("commit");
+      return "c".repeat(40);
+    },
+    execFileImpl: async (_command, args) => {
+      if (args.includes("push")) calls.push("push");
+      return { stdout: "", stderr: "" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.equal(result.error, undefined);
+  assert.deepEqual(calls, ["verify", "commit", "push"]);
+});
+
+test("pr-babysitter requires branch push permission for PR feedback fixes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-babysit-no-push",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ]);
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "Addressed review comments."
+    },
+    hasDiffImpl: async () => true
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /branch push permission/);
+  assert.equal(adapter.getItem("item-babysit-no-push").status, Status.BLOCKED);
 });
 
 test("pr-babysitter no-op can stay in Babysit while waiting", async () => {
@@ -1065,6 +1253,8 @@ function workerWithCodexResult({
   hasDiffImpl = async () => false,
   commitAllImpl,
   mergePullRequestImpl,
+  listUntrackedFilesImpl = async () => [],
+  runRepoCommandsImpl = async () => [],
   execFileImpl = async () => ({ stdout: "", stderr: "" })
 }) {
   return new GitHubCodeLoopWorker({
@@ -1078,7 +1268,7 @@ function workerWithCodexResult({
       await mkdir(worktreePath, { recursive: true });
       return { worktreePath };
     },
-    runRepoCommandsImpl: async () => [],
+    runRepoCommandsImpl,
     assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
     runCodexExecImpl: async ({ outputPath }) => {
       await writeFile(outputPath, JSON.stringify(result));
@@ -1086,6 +1276,7 @@ function workerWithCodexResult({
     },
     hasDiffImpl,
     commitAllImpl,
+    listUntrackedFilesImpl,
     mergePullRequestImpl,
     execFileImpl,
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),

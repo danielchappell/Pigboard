@@ -208,3 +208,46 @@ test("applyWorkerResult does not mutate after a claim is rerouted", async () => 
   assert.equal(adapter.getItem("item-4").leaseOwner, "worker-1");
   assert.equal(adapter.events.length, 0);
 });
+
+test("applyWorkerResult carries PR head guards through claim-aware mutations", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-pr-head-drift",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      repository: "owner/repo",
+      contentType: "PullRequest",
+      number: 42,
+      headSha: "a".repeat(40)
+    }
+  ]);
+  const { claim } = await adapter.claimReadyForWorker({
+    itemId: "item-pr-head-drift",
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-1",
+    leaseSeconds: 60
+  });
+  const appendEventForClaim = adapter.appendEventForClaim.bind(adapter);
+  adapter.appendEventForClaim = async (...args) => {
+    const result = await appendEventForClaim(...args);
+    adapter.items.get("item-pr-head-drift").headSha = "b".repeat(40);
+    return result;
+  };
+
+  await assert.rejects(
+    applyWorkerResult({
+      adapter,
+      claimId: claim.id,
+      workerType: WorkerType.REVIEWER,
+      verifyOptions: { requireHeadSha: true },
+      result: {
+        outcome: "completed",
+        nextStatus: Status.BABYSIT,
+        summary: "No findings."
+      }
+    }),
+    /head_drift/
+  );
+
+  assert.equal(adapter.getItem("item-pr-head-drift").status, Status.REVIEW);
+});

@@ -100,8 +100,8 @@ export class MemoryQueueAdapter {
     this.events.push({ itemId, ...structuredClone(event) });
   }
 
-  async appendEventForClaim(claimId, event) {
-    const verified = await this.verifyClaim(claimId);
+  async appendEventForClaim(claimId, event, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { appended: false, reason: verified.reason };
     await this.appendEvent(verified.claim.itemId, event);
     return { appended: true };
@@ -113,15 +113,15 @@ export class MemoryQueueAdapter {
     item.status = status;
   }
 
-  async transitionForClaim(claimId, status) {
-    const verified = await this.verifyClaim(claimId);
+  async transitionForClaim(claimId, status, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { transitioned: false, reason: verified.reason };
     await this.transition(verified.claim.itemId, status);
     return { transitioned: true };
   }
 
-  async setFieldForClaim(claimId, fieldName, value) {
-    const verified = await this.verifyClaim(claimId);
+  async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { updated: false, reason: verified.reason };
     const item = this.items.get(verified.claim.itemId);
     item.fields ??= {};
@@ -129,8 +129,8 @@ export class MemoryQueueAdapter {
     return { updated: true };
   }
 
-  async clearWorkerTypeForClaim(claimId) {
-    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
+  async clearWorkerTypeForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { ...verifyOptions, allowStatusChanged: true });
     if (!verified.active) return { cleared: false, reason: verified.reason };
     const item = this.items.get(verified.claim.itemId);
     delete item.workerType;
@@ -141,9 +141,10 @@ export class MemoryQueueAdapter {
     return this.releaseClaim(claimId);
   }
 
-  async releaseClaim(claimId) {
+  async releaseClaim(claimId, verifyOptions = {}) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const verified = await this.verifyClaim(claimId, {
+      ...verifyOptions,
       allowStatusChanged: true,
       allowWorkerTypeChanged: true
     });

@@ -351,8 +351,8 @@ export class GitHubProjectsAdapter {
     });
   }
 
-  async appendEventForClaim(claimId, event) {
-    const verified = await this.verifyClaim(claimId);
+  async appendEventForClaim(claimId, event, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { appended: false, reason: verified.reason };
     await this.appendEvent(verified.claim.itemId, event);
     return { appended: true };
@@ -363,15 +363,15 @@ export class GitHubProjectsAdapter {
     await this.setSingleSelectField(projectModel, itemId, FieldName.STATUS, status);
   }
 
-  async transitionForClaim(claimId, status) {
-    const verified = await this.verifyClaim(claimId);
+  async transitionForClaim(claimId, status, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { transitioned: false, reason: verified.reason };
     await this.transition(verified.claim.itemId, status);
     return { transitioned: true };
   }
 
-  async setFieldForClaim(claimId, fieldName, value) {
-    const verified = await this.verifyClaim(claimId);
+  async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) return { updated: false, reason: verified.reason };
     const projectModel = await this.ensureProjectModel();
     if (typeof value === "number") await this.setNumberField(projectModel, verified.claim.itemId, fieldName, value);
@@ -379,8 +379,8 @@ export class GitHubProjectsAdapter {
     return { updated: true };
   }
 
-  async clearWorkerTypeForClaim(claimId) {
-    const verified = await this.verifyClaim(claimId, { allowStatusChanged: true });
+  async clearWorkerTypeForClaim(claimId, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, { ...verifyOptions, allowStatusChanged: true });
     if (!verified.active) return { cleared: false, reason: verified.reason };
     const projectModel = await this.ensureProjectModel();
     await this.clearField(projectModel, verified.claim.itemId, FieldName.WORKER_TYPE);
@@ -391,8 +391,9 @@ export class GitHubProjectsAdapter {
     return this.releaseClaim(claimId);
   }
 
-  async releaseClaim(claimId) {
+  async releaseClaim(claimId, verifyOptions = {}) {
     const verified = await this.verifyClaim(claimId, {
+      ...verifyOptions,
       allowStatusChanged: true,
       allowWorkerTypeChanged: true
     });
@@ -523,6 +524,7 @@ export class GitHubProjectsAdapter {
         baseRef: context.baseRef,
         baseSha: context.baseSha,
         headRef: context.headRef,
+        headRepository: context.headRepository,
         headSha: context.headSha
       };
     }
@@ -534,6 +536,7 @@ export class GitHubProjectsAdapter {
         baseRef: item.baseRef,
         baseSha: item.baseSha,
         headRef: item.headRef,
+        headRepository: item.headRepository,
         headSha: item.headSha
       };
     }

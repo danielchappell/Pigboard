@@ -306,6 +306,76 @@ test("GitHubProjectsAdapter rejects cross-repo PR field URLs", async () => {
   );
 });
 
+test("GitHubProjectsAdapter does not parse non-GitHub PR field URLs", async () => {
+  const { fetchImpl } = createGraphqlMock([
+    projectResponse({
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER,
+      prUrl: "https://gitlab.example/acme/repo/pull/42"
+    })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const ready = await adapter.listReady(WorkerType.REVIEWER);
+
+  assert.equal(ready[0].prUrl, "https://gitlab.example/acme/repo/pull/42");
+  assert.equal(ready[0].pullRequestNumber, undefined);
+});
+
+test("GitHubProjectsAdapter preserves fork head repositories on PR content claims", async () => {
+  const response = projectResponse({
+    status: Status.BABYSIT,
+    workerType: WorkerType.PR_BABYSITTER
+  });
+  const node = response.data.organization.projectV2.items.nodes[0];
+  node.content = {
+    __typename: "PullRequest",
+    id: "PR_42",
+    title: "Fork PR",
+    body: "Fork body",
+    url: "https://github.com/acme/repo/pull/42",
+    number: 42,
+    baseRefName: "main",
+    baseRefOid: "b".repeat(40),
+    headRefName: "feature",
+    headRefOid: "a".repeat(40),
+    headRepository: { nameWithOwner: "contributor/repo" },
+    repository: { nameWithOwner: "acme/repo" }
+  };
+  const { fetchImpl } = createGraphqlMock([
+    response,
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.claimReadyForWorker({
+    itemId: "PVTI_item_1",
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-1",
+    leaseSeconds: 1800
+  });
+
+  const claim = parseClaimId(result.claim.id);
+  assert.equal(claim.pullRequestNumber, 42);
+  assert.equal(claim.headRepository, "contributor/repo");
+  assert.equal(claim.headSha, "a".repeat(40));
+});
+
 test("GitHubProjectsAdapter re-checks issue-backed PR heads during guarded verification", async () => {
   const responses = [
     projectResponse({

@@ -150,7 +150,14 @@ export class GitHubCodeLoopWorker {
       await this.verifyOrThrow(claim.id);
       const result = await readWorkerResult(resultPath, codex.stdout);
 
-      await this.applyWorkerOutcome({ claimId: claim.id, item, result, worktree, ignoredPaths: setupIgnoredPaths });
+      await this.applyWorkerOutcome({
+        claimId: claim.id,
+        item,
+        result,
+        worktree,
+        ignoredPaths: setupIgnoredPaths,
+        claimExtender
+      });
       await this.writeRunArtifactsImpl({
         rootDir: this.runLogDir,
         runId,
@@ -181,10 +188,11 @@ export class GitHubCodeLoopWorker {
       } catch {
         // Claim failure must still be recorded even if local logging is unavailable.
       }
+      await claimExtender?.stop();
       await this.failClaimAfterError(claim.id, message);
       return { ran: true, itemId: item.id, error };
     } finally {
-      claimExtender?.stop();
+      await claimExtender?.stop();
       if (worktree) {
         await this.cleanupWorktreeImpl({
           repoPath: this.repoPolicy.cwd,
@@ -234,7 +242,7 @@ export class GitHubCodeLoopWorker {
     throw new Error(`Worker type is not auto-runnable in v1: ${this.workerType}`);
   }
 
-  async applyWorkerOutcome({ claimId, item, result, worktree, ignoredPaths = [] }) {
+  async applyWorkerOutcome({ claimId, item, result, worktree, ignoredPaths = [], claimExtender }) {
     await this.verifyOrThrow(claimId);
 
     if (this.workerType === WorkerType.IMPLEMENTER && result.outcome === "completed") {
@@ -330,7 +338,6 @@ export class GitHubCodeLoopWorker {
     await this.verifyOrThrow(claimId);
     if (
       this.workerType === WorkerType.PR_BABYSITTER &&
-      result.outcome === "completed" &&
       result.nextStatus === Status.QA &&
       result.mergeWhenApprovedAndClean === true
     ) {
@@ -341,7 +348,9 @@ export class GitHubCodeLoopWorker {
       adapter: this.adapter,
       claimId,
       workerType: this.workerType,
-      result
+      result,
+      verifyOptions: this.claimVerifyOptions(),
+      beforeRelease: async () => claimExtender?.stop()
     });
   }
 
@@ -355,16 +364,41 @@ export class GitHubCodeLoopWorker {
     if (result.nextStatus !== Status.BABYSIT) {
       throw new Error("pr-babysitter fixes must stay in Babysit for another review/check cycle");
     }
-    if (!(this.repoPolicy.allowPushBranches || this.repoPolicy.allowCreatePr)) {
+    if (!this.repoPolicy.allowPushBranches) {
       throw new Error("pr-babysitter requires branch push permission to push PR fixes in v1");
     }
     const claim = await this.verifyOrThrow(claimId);
     this.assertPatchablePrClaim(claim);
+    let commitIgnoredPaths = ignoredPaths;
+    let untrackedBeforeVerify = [];
+    const verifyCommands = this.repoPolicy.verifyCommands ?? [];
+    if (verifyCommands.length) {
+      untrackedBeforeVerify = await this.listUntrackedFilesImpl({
+        worktreePath: worktree.worktreePath,
+        execFileImpl: this.execFileImpl
+      });
+    }
+    await this.runRepoCommandsImpl({
+      commands: verifyCommands,
+      cwd: worktree.worktreePath,
+      network: this.repoPolicy.verifyNetwork ?? "off"
+    });
+    if (verifyCommands.length) {
+      const untrackedAfterVerify = await this.listUntrackedFilesImpl({
+        worktreePath: worktree.worktreePath,
+        execFileImpl: this.execFileImpl
+      });
+      commitIgnoredPaths = combineIgnoredPaths(
+        ignoredPaths,
+        untrackedAfterVerify.filter((path) => !untrackedBeforeVerify.includes(path))
+      );
+    }
+    await this.verifyOrThrow(claimId);
     const commitSha = await this.commitAllImpl({
       worktreePath: worktree.worktreePath,
       message: `Ski Stack ${this.workerType} ${new Date().toISOString()}`,
       execFileImpl: this.execFileImpl,
-      ignoredPaths
+      ignoredPaths: commitIgnoredPaths
     });
     await this.verifyOrThrow(claimId);
     await this.execFileImpl(
@@ -398,11 +432,15 @@ export class GitHubCodeLoopWorker {
   }
 
   async verifyOrThrow(claimId) {
-    const verified = await this.adapter.verifyClaim(claimId, {
-      requireHeadSha: this.workerType === WorkerType.REVIEWER || this.workerType === WorkerType.PR_BABYSITTER
-    });
+    const verified = await this.adapter.verifyClaim(claimId, this.claimVerifyOptions());
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
     return verified.claim;
+  }
+
+  claimVerifyOptions() {
+    return {
+      requireHeadSha: this.workerType === WorkerType.REVIEWER || this.workerType === WorkerType.PR_BABYSITTER
+    };
   }
 
   async failClaimAfterError(claimId, message) {
@@ -463,14 +501,28 @@ export class GitHubCodeLoopWorker {
   startClaimExtender(claimId) {
     const intervalMs =
       this.claimHeartbeatMs ?? Math.max(250, Math.min(60_000, Math.floor((this.leaseSeconds * 1000) / 3)));
+    const pending = new Set();
+    let stopped = false;
     const timer = setInterval(() => {
-      this.adapter.extendClaim?.(claimId, this.leaseSeconds).catch(() => {
-        // The next guarded mutation will detect and report a lost claim.
-      });
+      if (stopped || pending.size || typeof this.adapter.extendClaim !== "function") return;
+      const extension = this.adapter
+        .extendClaim(claimId, this.leaseSeconds)
+        .catch(() => {
+          // The next guarded mutation will detect and report a lost claim.
+        })
+        .finally(() => {
+          pending.delete(extension);
+        });
+      pending.add(extension);
     }, intervalMs);
     timer.unref?.();
     return {
-      stop: () => clearInterval(timer)
+      stop: async () => {
+        if (stopped) return;
+        stopped = true;
+        clearInterval(timer);
+        await Promise.allSettled([...pending]);
+      }
     };
   }
 }

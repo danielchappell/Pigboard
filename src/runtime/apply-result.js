@@ -2,7 +2,7 @@ import { parseClaimId } from "../core/claims.js";
 import { isAutoRunnableWorker, statusForResult, validateWorkerTransition } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
-export async function applyWorkerResult({ adapter, claimId, result, workerType }) {
+export async function applyWorkerResult({ adapter, claimId, result, workerType, verifyOptions = {}, beforeRelease }) {
   if (!adapter) throw new Error("adapter is required");
   if (!claimId) throw new Error("claimId is required");
   if (!result) throw new Error("result is required");
@@ -22,6 +22,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
       claimId,
       legacyUsesClaimId: true,
       args: [result.blocker ?? result.summary ?? "Worker failed"],
+      verifyOptions,
       falseKey: "failed"
     });
     return { itemId: claim.itemId, status: Status.BLOCKED, released: true };
@@ -45,6 +46,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
         blocker: result.blocker ?? null
       }
     ],
+    verifyOptions,
     falseKey: "appended"
   });
 
@@ -56,6 +58,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
       legacyMethod: "transition",
       claimId,
       args: [status],
+      verifyOptions,
       falseKey: "transitioned"
     });
     if (result.preserveWorkerType !== true && typeof adapter.clearWorkerTypeForClaim === "function") {
@@ -64,9 +67,13 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
         claimAwareMethod: "clearWorkerTypeForClaim",
         legacyMethod: "clearWorkerType",
         claimId,
+        verifyOptions,
         falseKey: "cleared"
       });
     }
+  }
+  if (typeof beforeRelease === "function") {
+    await beforeRelease();
   }
   await guardedCall({
     adapter,
@@ -74,6 +81,7 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType }
     legacyMethod: "release",
     claimId,
     legacyUsesClaimId: true,
+    verifyOptions,
     falseKey: "released"
   });
 
@@ -91,11 +99,12 @@ async function guardedCall({
   claimId,
   args = [],
   legacyUsesClaimId = false,
+  verifyOptions = {},
   falseKey
 }) {
   let result;
   if (typeof adapter[claimAwareMethod] === "function") {
-    result = await adapter[claimAwareMethod](claimId, ...args);
+    result = await adapter[claimAwareMethod](claimId, ...args, verifyOptions);
   } else {
     const claim = parseClaimId(claimId);
     result = await adapter[legacyMethod](legacyUsesClaimId ? claimId : claim.itemId, ...args);
