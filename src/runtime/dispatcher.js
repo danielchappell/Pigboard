@@ -68,9 +68,22 @@ export class QueueDispatcher {
         await this.adapter.releaseClaim?.(claim.id);
         return { ran: true, itemId: item.id, stale: true, reason, error };
       }
+      try {
+        const availability = await verifyClaimAvailability({
+          adapter: this.adapter,
+          claimId: claim.id,
+          workerType: this.workerType,
+          workerId: this.workerId
+        });
+        if (!availability.available && isAvailabilityChangeReason(availability.reason)) {
+          return { ran: true, itemId: item.id, stale: true, reason: availability.reason, error };
+        }
+      } catch {
+        // Preserve the worker error when live availability cannot be rechecked.
+      }
       let failed;
       if (typeof this.adapter.failClaim === "function") {
-        failed = await this.adapter.failClaim(claim.id, message);
+        failed = await this.adapter.failClaim(claim.id, message, { requireAvailability: true });
       } else {
         failed = await this.adapter.fail(claim.id, message);
       }

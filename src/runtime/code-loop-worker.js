@@ -496,7 +496,7 @@ export class GitHubCodeLoopWorker {
       await this.adapter.releaseClaim?.(claimId);
       return;
     }
-    const failed = await this.adapter.failClaim(claimId, message);
+    const failed = await this.adapter.failClaim(claimId, message, { requireAvailability: true });
     if (failed?.failed === false && isClaimDriftReason(failed.reason)) {
       await this.adapter.releaseClaim?.(claimId);
     }

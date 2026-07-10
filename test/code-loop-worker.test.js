@@ -306,6 +306,40 @@ test("generic worker failures release instead of blocking after claim drift", as
   assert.equal(adapter.getItem("item-drifted").leaseOwner, undefined);
 });
 
+test("code-loop error handling releases a dependency-stale claim before failing it", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-dependency-error",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12,
+      dependencies: [{ kind: "blockedBy", targetId: "blocker", state: DependencyState.COMPLETED }]
+    }
+  ]);
+  const claimResult = await adapter.claimReadyForWorker({
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-dependency-error",
+    leaseSeconds: 1800
+  });
+  adapter.items.get("item-dependency-error").dependencies[0].state = DependencyState.ACTIVE;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-dependency-error",
+    repoPolicy: { cwd: await mkdtemp(join(tmpdir(), "ski-worker-")) }
+  });
+
+  await worker.failClaimAfterError(claimResult.claim.id, "codex crashed");
+
+  assert.equal(adapter.getItem("item-dependency-error").status, Status.IMPLEMENTATION);
+  assert.equal(adapter.getItem("item-dependency-error").leaseOwner, undefined);
+  assert.equal(adapter.events.length, 0);
+});
+
 test("stale PR snapshot failures release instead of blocking", async () => {
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({

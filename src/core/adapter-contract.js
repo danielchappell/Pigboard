@@ -34,6 +34,10 @@
  * - releaseClaim(claimId, options): Promise<GuardedMutationResult>
  * - failClaim(claimId, reason, options): Promise<GuardedMutationResult>
  *
+ * claimCandidate returns claimed:false for a recoverable candidate-local
+ * rejection. It throws for adapter, transport, or mutation failures so callers
+ * do not silently skip infrastructure errors.
+ *
  * listReady/claimReadyForWorker and legacy claim/heartbeat/release/fail names
  * may exist as compatibility shims.
  *

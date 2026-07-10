@@ -60,6 +60,23 @@ test("claim coordinator releases a claim when dependencies change after claiming
   assert.equal(adapter.getItem("drift").leaseOwner, undefined);
 });
 
+test("claim coordinator rethrows infrastructure failures from an adapter", async () => {
+  const adapter = new MemoryQueueAdapter([workItem({ id: "outage" })]);
+  adapter.claimCandidate = async () => {
+    throw Object.assign(new Error("GitHub GraphQL unavailable"), { code: "GITHUB_GRAPHQL_HTTP" });
+  };
+
+  await assert.rejects(
+    claimNextAvailable({
+      adapter,
+      workerType: WorkerType.IMPLEMENTER,
+      workerId: "worker-1",
+      leaseSeconds: 1800
+    }),
+    /GitHub GraphQL unavailable/
+  );
+});
+
 test("code-loop workers use the coordinator and leave unavailable work in place", async () => {
   const adapter = new MemoryQueueAdapter([
     workItem({

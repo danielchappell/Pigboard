@@ -1308,7 +1308,7 @@ test("GitHubProjectsAdapter pages through check runs before QA", async () => {
   assert.equal(verified.reason, "checks_not_clean");
 });
 
-test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming next ready item", async () => {
+test("GitHubProjectsAdapter returns a local PR metadata rejection so the coordinator can try the next item", async () => {
   const response = projectResponse({
     status: Status.REVIEW,
     workerType: WorkerType.REVIEWER,
@@ -1329,7 +1329,15 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
   );
   response.data.organization.projectV2.items.nodes.push(secondNode);
 
-  const responses = [response, mutationResponse(), mutationResponse(), mutationResponse(), mutationResponse()];
+  const responses = [
+    response,
+    structuredClone(response),
+    structuredClone(response),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
   const graphql = createGraphqlState(responses);
   const metadataCalls = [];
   const fetchImpl = async (url, options) => {
@@ -1367,7 +1375,8 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
     now: () => new Date("2026-07-07T12:00:00.000Z")
   });
 
-  const result = await adapter.claimReadyForWorker({
+  const result = await claimNextAvailable({
+    adapter,
     workerType: WorkerType.REVIEWER,
     workerId: "reviewer-1",
     leaseSeconds: 1800
@@ -1376,6 +1385,38 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
   assert.equal(result.claimed, true);
   assert.equal(result.item.id, "PVTI_item_2");
   assert.deepEqual(metadataCalls, [404, 42]);
+});
+
+test("GitHubProjectsAdapter surfaces PR metadata service failures to the coordinator", async () => {
+  const response = projectResponse({
+    status: Status.REVIEW,
+    workerType: WorkerType.REVIEWER,
+    prUrl: "500"
+  });
+  const graphql = createGraphqlState([response, structuredClone(response)]);
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/500")) {
+      return { ok: false, status: 500, json: async () => ({}) };
+    }
+    return { ok: true, json: async () => graphql.next(options) };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  await assert.rejects(
+    claimNextAvailable({
+      adapter,
+      workerType: WorkerType.REVIEWER,
+      workerId: "reviewer-1",
+      leaseSeconds: 1800
+    }),
+    /pull request metadata request failed: 500/
+  );
 });
 
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {

@@ -300,15 +300,20 @@ export class GitHubProjectsAdapter {
     if (expectedAvailabilityFingerprint && candidate.fingerprint !== expectedAvailabilityFingerprint) {
       return { claimed: false, reason: "availability_changed" };
     }
-    return this.claimReadyItem({
-      projectModel: snapshot.projectModel,
-      item: candidate.item,
-      workerType,
-      workerId,
-      leaseSeconds,
-      availabilityFingerprint: candidate.fingerprint,
-      context
-    });
+    try {
+      return await this.claimReadyItem({
+        projectModel: snapshot.projectModel,
+        item: candidate.item,
+        workerType,
+        workerId,
+        leaseSeconds,
+        availabilityFingerprint: candidate.fingerprint,
+        context
+      });
+    } catch (error) {
+      if (!isPullRequestMetadataError(error)) throw error;
+      return { claimed: false, reason: "pr_metadata_failed" };
+    }
   }
 
   async claimReadyItem({
@@ -1042,5 +1047,6 @@ function isOwnerKindMismatch(error) {
 }
 
 function isPullRequestMetadataError(error) {
-  return error?.code === "GITHUB_PR_METADATA_HTTP" || error?.code === "GITHUB_PR_METADATA_INVALID";
+  if (error?.code === "GITHUB_PR_METADATA_INVALID") return true;
+  return error?.code === "GITHUB_PR_METADATA_HTTP" && /:\s*404\b/.test(error.message ?? "");
 }

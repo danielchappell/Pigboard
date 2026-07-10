@@ -37,21 +37,14 @@ export async function claimNextAvailable({
 
   const skipped = [];
   for (const candidate of candidates) {
-    let claimed;
-    try {
-      claimed = await adapter.claimCandidate({
-        itemId: candidate.item.id,
-        workerType,
-        workerId,
-        leaseSeconds,
-        expectedAvailabilityFingerprint: candidate.fingerprint,
-        context
-      });
-    } catch (error) {
-      if (itemId) throw error;
-      skipped.push({ itemId: candidate.item.id, reason: error instanceof Error ? error.message : String(error) });
-      continue;
-    }
+    const claimed = await adapter.claimCandidate({
+      itemId: candidate.item.id,
+      workerType,
+      workerId,
+      leaseSeconds,
+      expectedAvailabilityFingerprint: candidate.fingerprint,
+      context
+    });
     if (!claimed?.claimed) {
       skipped.push({ itemId: candidate.item.id, reason: claimed?.reason ?? "claim_rejected" });
       continue;
