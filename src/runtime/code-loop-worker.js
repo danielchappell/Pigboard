@@ -5,6 +5,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
 import { applyWorkerResult } from "./apply-result.js";
+import { claimNextAvailable, isAvailabilityChangeReason } from "./claim-next-available.js";
 import { normalizeCodexModel, normalizeCodexReasoningEffort, runCodexExec } from "./codex-runner.js";
 import { buildDaemonGitEnv } from "./command-env.js";
 import { ensurePullRequest, mergePullRequest } from "./github-pr.js";
@@ -86,7 +87,8 @@ export class GitHubCodeLoopWorker {
   }
 
   async runOnce() {
-    const claimResult = await this.adapter.claimReadyForWorker({
+    const claimResult = await claimNextAvailable({
+      adapter: this.adapter,
       workerType: this.workerType,
       workerId: this.workerId,
       leaseSeconds: this.leaseSeconds
@@ -316,13 +318,16 @@ export class GitHubCodeLoopWorker {
           branchName: worktree.branchName,
           baseBranch: this.repoPolicy.defaultBaseBranch ?? "main",
           title: `Ski Stack: ${item?.title ?? "Worker change"}`,
-          body: safePublicEventComment({
-            runId: claim.runId,
-            workerType: this.workerType,
-            outcome: result.outcome,
-            nextStatus: result.nextStatus,
-            summary: result.summary,
-            evidence: result.evidence
+          body: implementationPullRequestBody({
+            claim,
+            eventComment: safePublicEventComment({
+              runId: claim.runId,
+              workerType: this.workerType,
+              outcome: result.outcome,
+              nextStatus: result.nextStatus,
+              summary: result.summary,
+              evidence: result.evidence
+            })
           })
         });
         await this.verifyOrThrow(activeClaimId);
@@ -479,7 +484,8 @@ export class GitHubCodeLoopWorker {
 
   claimVerifyOptions() {
     return {
-      requireHeadSha: this.workerType === WorkerType.REVIEWER || this.workerType === WorkerType.PR_BABYSITTER
+      requireHeadSha: this.workerType === WorkerType.REVIEWER || this.workerType === WorkerType.PR_BABYSITTER,
+      requireAvailability: true
     };
   }
 
@@ -490,7 +496,7 @@ export class GitHubCodeLoopWorker {
       await this.adapter.releaseClaim?.(claimId);
       return;
     }
-    const failed = await this.adapter.failClaim(claimId, message);
+    const failed = await this.adapter.failClaim(claimId, message, { requireAvailability: true });
     if (failed?.failed === false && isClaimDriftReason(failed.reason)) {
       await this.adapter.releaseClaim?.(claimId);
     }
@@ -598,7 +604,7 @@ function combineIgnoredPaths(...pathGroups) {
 }
 
 function isClaimDriftReason(reason) {
-  return [
+  return isAvailabilityChangeReason(reason) || [
     "status_changed",
     "worker_type_changed",
     "repository_changed",
@@ -607,6 +613,14 @@ function isClaimDriftReason(reason) {
     "base_drift",
     "run_mismatch"
   ].includes(reason);
+}
+
+export function implementationPullRequestBody({ eventComment, claim }) {
+  const closesIssue =
+    claim?.contentType === "Issue" && claim?.repository && claim?.issueNumber
+      ? `Closes ${claim.repository}#${claim.issueNumber}`
+      : null;
+  return [eventComment, closesIssue].filter(Boolean).join("\n\n");
 }
 
 function isTransientPrReadinessReason(reason) {

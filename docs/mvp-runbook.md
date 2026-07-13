@@ -100,6 +100,12 @@ Every runnable item needs:
 `Worker Type` is optional. Leave it blank for the normal Kanban flow where
 Status selects the worker. Fill it only to force a specific worker type.
 
+For issue-backed work, set prerequisites with GitHub's native **Blocked by**
+relationship on the source issue. Do not create a Project dependency field.
+Only completed blockers satisfy the queue engine; open, not-planned, unreadable,
+missing, and cyclic blockers leave the card in its current column but make it
+unavailable.
+
 The issue or PR body should carry the task envelope:
 
 - Objective
@@ -134,10 +140,14 @@ npm run claim:github
 Leave `SKI_REPOSITORIES` unset for a worker that can claim from any repo on the
 Project.
 
-By default, the command claims the first ready item, prints the worker prompt,
-then releases the lease so the item is not left stuck. This is not read-only:
-it still writes lease fields, increments `Attempts`, and records
-`Last Worker Run`.
+By default, the command claims the highest-ranked available item, prints the
+worker prompt, then releases the lease so the item is not left stuck. Ranking is
+Priority, Project position, then stable item id. This is not read-only: it still
+writes lease fields, increments `Attempts`, and records `Last Worker Run`.
+
+If no item is available, the command prints bounded reason codes. Dependency
+reasons are `dependency_pending`, `dependency_canceled`, `dependency_unknown`,
+and `dependency_cycle`; they do not change Project Status.
 
 To keep the lease for a manual or external worker run:
 
@@ -199,7 +209,9 @@ The manual claim/apply loop is:
 
 ```text
 operator claim
-  -> adapter.claimReadyForWorker(...)
+  -> adapter.loadQueueSnapshot()
+  -> core availability engine selects a candidate
+  -> adapter.claimCandidate(...) reloads and claims it
   -> human or external worker executes one stage
   -> adapter.appendEvent(...)
   -> adapter.transition(...)
@@ -211,12 +223,18 @@ The daemonized code-loop runtime is:
 ```text
 GitHub webhook or reconcile timer
   -> scheduler marks matching worker slots dirty
-  -> adapter.claimReadyForWorker(...)
+  -> adapter loads platform state and native dependencies
+  -> claimNextAvailable() selects and claims through the core engine
   -> daemon prepares an isolated worktree
   -> Codex runs locally and writes a structured result
-  -> worker verifies the claim before each GitHub mutation
+  -> worker revalidates availability before final side effects
   -> Project status advances, waits, or blocks with sanitized evidence
 ```
+
+Issue events wake every worker partition because a cross-repository blocker can
+unlock another queue. Periodic reconciliation remains the backup. Generated
+implementation PRs carry `Closes owner/repo#N`, so merging them completes the
+source issue used by native dependencies.
 
 The daemon currently auto-runs only `implementer`, `reviewer`, and
 `pr-babysitter`. `planner`, `architect`, `groomer`, `qa`, and `researcher`

@@ -3,7 +3,7 @@ import { hostname } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { buildWorkerPrompt, GitHubProjectsAdapter } from "../src/index.js";
+import { buildWorkerPrompt, claimNextAvailable, GitHubProjectsAdapter } from "../src/index.js";
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -45,17 +45,25 @@ const adapter = new GitHubProjectsAdapter({
   repositories
 });
 
-const claimResult = await adapter.claimReadyForWorker({
+const claimResult = await claimNextAvailable({
+  adapter,
   workerType,
   workerId,
   leaseSeconds
 });
 if (!claimResult.claimed) {
-  if (claimResult.reason === "none_ready") {
-    console.log(`No ready items for worker type: ${workerType}`);
+  if (claimResult.reason === "none_available") {
+    console.log(`No available items for worker type: ${workerType}`);
+    for (const unavailable of claimResult.unavailable ?? []) {
+      const reasons = unavailable.reasons.map((reason) => reason.code).join(", ");
+      console.log(`- ${unavailable.itemId}: ${reasons}`);
+    }
     process.exit(0);
   }
   console.error(`Could not claim item: ${claimResult.reason}`);
+  for (const skipped of claimResult.skipped ?? []) {
+    console.error(`- ${skipped.itemId}: ${skipped.reason}`);
+  }
   process.exit(3);
 }
 

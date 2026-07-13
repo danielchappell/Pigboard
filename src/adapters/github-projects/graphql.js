@@ -43,8 +43,27 @@ const PROJECT_SELECTION = `
             body
             url
             number
+            state
+            stateReason
             repository {
               nameWithOwner
+            }
+            blockedBy(first: 100) {
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+              nodes {
+                id
+                title
+                url
+                number
+                state
+                stateReason
+                repository {
+                  nameWithOwner
+                }
+              }
             }
           }
           ... on PullRequest {
@@ -120,6 +139,32 @@ export const USER_PROJECT_QUERY = `
   query SkiStackUserProject($owner: String!, $projectNumber: Int!, $itemsFirst: Int!, $after: String) {
     user(login: $owner) {
       ${PROJECT_SELECTION}
+    }
+  }
+`;
+
+export const ISSUE_BLOCKED_BY_QUERY = `
+  query SkiStackIssueBlockedBy($id: ID!, $first: Int!, $after: String) {
+    node(id: $id) {
+      ... on Issue {
+        blockedBy(first: $first, after: $after) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            id
+            title
+            url
+            number
+            state
+            stateReason
+            repository {
+              nameWithOwner
+            }
+          }
+        }
+      }
     }
   }
 `;

@@ -4,7 +4,15 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { GitHubCodeLoopWorker, MemoryQueueAdapter, parseClaimId, runSettledWorkerSlot, Status, WorkerType } from "../src/index.js";
+import {
+  DependencyState,
+  GitHubCodeLoopWorker,
+  MemoryQueueAdapter,
+  parseClaimId,
+  runSettledWorkerSlot,
+  Status,
+  WorkerType
+} from "../src/index.js";
 
 test("implementer runs Codex, commits a non-empty diff, logs locally, and transitions to Review", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
@@ -88,6 +96,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
     ensurePullRequestImpl: async ({ title, body }) => {
       assert.equal(title, "Ski Stack: Build thing");
       assert.match(body, /Outcome: completed/);
+      assert.match(body, /Closes acme\/repo#12/);
       return { number: 42, url: "https://github.com/acme/repo/pull/42" };
     },
     writeRunArtifactsImpl: async () => {
@@ -297,6 +306,40 @@ test("generic worker failures release instead of blocking after claim drift", as
   assert.equal(adapter.getItem("item-drifted").leaseOwner, undefined);
 });
 
+test("code-loop error handling releases a dependency-stale claim before failing it", async () => {
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-dependency-error",
+      title: "Build thing",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12,
+      dependencies: [{ kind: "blockedBy", targetId: "blocker", state: DependencyState.COMPLETED }]
+    }
+  ]);
+  const claimResult = await adapter.claimReadyForWorker({
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-dependency-error",
+    leaseSeconds: 1800
+  });
+  adapter.items.get("item-dependency-error").dependencies[0].state = DependencyState.ACTIVE;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-dependency-error",
+    repoPolicy: { cwd: await mkdtemp(join(tmpdir(), "ski-worker-")) }
+  });
+
+  await worker.failClaimAfterError(claimResult.claim.id, "codex crashed");
+
+  assert.equal(adapter.getItem("item-dependency-error").status, Status.IMPLEMENTATION);
+  assert.equal(adapter.getItem("item-dependency-error").leaseOwner, undefined);
+  assert.equal(adapter.events.length, 0);
+});
+
 test("stale PR snapshot failures release instead of blocking", async () => {
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -381,7 +424,59 @@ test("unsafe PR body output falls back to withheld public text", async () => {
 
   assert.equal(result.ran, true);
   assert.match(prBody, /output withheld locally/);
+  assert.match(prBody, /Closes acme\/repo#12/);
   assert.doesNotMatch(prBody, /\/Users\/joseph/);
+});
+
+test("dependency drift during a code-loop run releases without blocking or publishing side effects", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-dependency-drift",
+      title: "Build after blocker",
+      status: Status.IMPLEMENTATION,
+      workerType: WorkerType.IMPLEMENTER,
+      priority: "P1",
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12,
+      dependencies: [
+        { kind: "blockedBy", targetId: "blocker", state: DependencyState.COMPLETED }
+      ]
+    }
+  ]);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "impl-dependency-drift",
+    repoPolicy: { cwd: root },
+    runLogDir: join(root, "runs"),
+    createImplementationWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: "ski/12-run" };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    runCodexExecImpl: async ({ outputPath }) => {
+      adapter.items.get("item-dependency-drift").dependencies[0].state = DependencyState.ACTIVE;
+      await writeFile(
+        outputPath,
+        JSON.stringify({ outcome: "completed", nextStatus: Status.REVIEW, summary: "Implemented." })
+      );
+      return { stdout: "", stderr: "" };
+    },
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /dependency_pending/);
+  assert.equal(adapter.getItem("item-dependency-drift").status, Status.IMPLEMENTATION);
+  assert.equal(adapter.getItem("item-dependency-drift").leaseOwner, undefined);
+  assert.equal(adapter.events.length, 0);
 });
 
 test("settled worker slots report failures without throwing", async () => {

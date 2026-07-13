@@ -70,7 +70,8 @@ function normalizeClaimV2(input) {
     "headRef",
     "headRepository",
     "headSha",
-    "branchName"
+    "branchName",
+    "availabilityFingerprint"
   ]) {
     if (input[key] !== undefined && input[key] !== null && input[key] !== "") {
       claim[key] = input[key];

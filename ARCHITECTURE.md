@@ -14,6 +14,8 @@ Ski Stack separates reusable agent capability from queue-driven automation.
    evidence, and transitions or blocks the item.
 5. **Leases prevent duplicate work.** Webhooks wake the system; atomic claims
    decide who actually owns the work.
+6. **The core engine owns dispatch policy.** Adapters normalize platform state;
+   the core decides which work is available and how candidates are ordered.
 
 ## Layers
 
@@ -22,11 +24,12 @@ skills/ and agents/
   reusable instruction assets
 
 src/core/
-  shared statuses, worker types, adapter contract docs
+  shared statuses, normalized queue snapshots, availability engine,
+  worker types, adapter contract docs
 
 src/runtime/
-  dispatcher, worker prompt assembly, worker slots, code-loop execution,
-  worktree handling, lease guarding, local run logs
+  claim coordinator, dispatcher, worker prompt assembly, worker slots,
+  code-loop execution, worktree handling, lease guarding, local run logs
 
 src/adapters/<tool>/
   vendor-specific queue implementation
@@ -39,8 +42,8 @@ src/provisioners/<tool>/
 
 Every queue backend must support:
 
-- `listReady(workerType)`
-- `claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context })`
+- `loadQueueSnapshot()`
+- `claimCandidate({ itemId, workerType, workerId, leaseSeconds, expectedAvailabilityFingerprint, context })`
 - `verifyClaim(claimId, options)`
 - `extendClaim(claimId, leaseSeconds)`
 - `appendEvent(itemId, event)`
@@ -52,24 +55,57 @@ Every queue backend must support:
 - `releaseClaim(claimId, options)`
 - `failClaim(claimId, reason, options)`
 
-The legacy `claim`, `heartbeat`, `release`, and `fail` names remain as
-compatibility shims where useful. The runtime never reaches around this boundary
-into GitHub, Jira, or Linear.
+`listReady(workerType)` and `claimReadyForWorker(...)` remain compatibility
+wrappers and must delegate selection to the shared availability engine. The
+legacy `claim`, `heartbeat`, `release`, and `fail` names remain as shims where
+useful. The runtime never reaches around this boundary into GitHub, Jira, or
+Linear.
+
+## Queue Availability
+
+A normalized `WorkItem` carries platform `sourceOrder` and dependency records
+with `kind`, `targetId`, `title`, `url`, and `state`. Dependency state is one of
+`active`, `completed`, `canceled`, or `unknown`.
+
+The pure core engine evaluates a complete `QueueSnapshot`. An item is available
+only when its Status/Worker Type and repository match the worker, it has no
+active foreign lease, every dependency is `completed`, and it is not in a
+dependency cycle. Pending, canceled, unknown, missing, and cyclic dependencies
+fail closed without changing the item's visible Status.
+
+Available work is ordered by `P0` through `P3`, then platform `sourceOrder`, then
+stable item id. Claims carry an availability fingerprint over routing and
+dependency state. Priority and source order are intentionally excluded so
+reordering does not invalidate active work.
+
+`claimNextAvailable()` coordinates selection and claim-time revalidation for
+both dispatch paths. Adapters reload platform state before writing a claim, and
+workers re-evaluate availability before final side effects. Stale claims are
+released; dependency changes never auto-transition a card to `Blocked`.
 
 ## GitHub Projects Strategy
 
 GitHub Projects is the first adapter because it gives a web UI, Issues, PRs,
 comments, fields, hierarchy, and API access in one place.
 
+Issue dependencies use GitHub's native `Issue.blockedBy` relationship, including
+cross-repository blockers. Open blockers normalize to `active`, completed
+closures to `completed`, not-planned closures to `canceled`, and unreadable
+states to `unknown`. Draft issues and PR-backed Project items have no dependency
+edges in the first implementation. No dependency Project field is provisioned.
+
 GitHub Projects webhooks exist for organization-level Projects v2 items, but
 GitHub currently marks Projects webhooks as public preview. Treat them as a wake
-signal, not the source of truth. On every event, reload the item via GraphQL
-before deciding whether to run a worker.
+signal, not the source of truth. Project events wake the queue, and issue events
+wake every worker partition because a blocker can unlock work in another repo.
+Periodic reconciliation remains the backup. On every event, reload state via
+GraphQL before deciding whether to run a worker.
 
 GitHub Projects field writes are not transactional. The adapter implements a
 best-effort lease by reading item state, writing lease fields, and storing a
 structured claim envelope in `Last Worker Run`. Workers re-verify that envelope
-before each GitHub mutation and extend the lease while a run is active. That is
+and its availability fingerprint before final GitHub side effects, and extend
+the lease while a run is active. That is
 enough for the MVP and low-collision worker pools. For strict multi-worker
 concurrency, put a transactional queue adapter, such as Postgres, behind the
 same contract and mirror status back into GitHub Projects for humans.

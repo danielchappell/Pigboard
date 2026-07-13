@@ -3,7 +3,12 @@ import { createHmac } from "node:crypto";
 import { Readable } from "node:stream";
 import test from "node:test";
 
-import { createGitHubWebhookServer, handleGitHubWebhookRequest, verifyGitHubSignature } from "../src/index.js";
+import {
+  createGitHubWebhookServer,
+  handleGitHubWebhookRequest,
+  isGlobalQueueWakeup,
+  verifyGitHubSignature
+} from "../src/index.js";
 
 test("verifyGitHubSignature validates sha256 webhook signatures", () => {
   const rawBody = Buffer.from(JSON.stringify({ action: "opened" }));
@@ -44,6 +49,12 @@ test("GitHub webhook server accepts signed JSON events", async () => {
     pullRequestNumber: undefined,
     delivery: "delivery-1"
   });
+});
+
+test("issue and Project events wake every queue partition", () => {
+  assert.equal(isGlobalQueueWakeup({ kind: "project", eventName: "projects_v2_item" }), true);
+  assert.equal(isGlobalQueueWakeup({ kind: "repo", eventName: "issues", repository: "acme/repo" }), true);
+  assert.equal(isGlobalQueueWakeup({ kind: "repo", eventName: "issue_comment", repository: "acme/repo" }), false);
 });
 
 test("GitHub webhook server rejects wrong content type and bad signatures", async () => {

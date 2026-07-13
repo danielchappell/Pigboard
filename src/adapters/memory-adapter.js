@@ -1,27 +1,92 @@
 import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../core/claims.js";
-import { isReadyForWorkerType, resolvedWorkerTypeForItem } from "../core/routing.js";
+import { availabilityFingerprint, evaluateQueueAvailability } from "../core/availability.js";
+import { resolvedWorkerTypeForItem } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
 export class MemoryQueueAdapter {
-  constructor(items = [], { now = () => new Date() } = {}) {
-    this.items = new Map(items.map((item) => [item.id, structuredClone(item)]));
+  constructor(items = [], { now = () => new Date(), repositories = [] } = {}) {
+    this.items = new Map(
+      items.map((item, sourceOrder) => [
+        item.id,
+        structuredClone({ sourceOrder, dependencies: [], ...item })
+      ])
+    );
     this.claims = new Map();
     this.events = [];
     this.now = now;
+    this.repositories = normalizeRepositoryFilter(repositories);
+  }
+
+  async loadQueueSnapshot() {
+    return {
+      loadedAt: this.now().toISOString(),
+      items: [...this.items.values()].map((item) => structuredClone(item))
+    };
   }
 
   async listReady(workerType) {
-    const now = this.now();
-    return [...this.items.values()]
-      .filter((item) => isReadyForWorkerType(item, workerType, now))
-      .sort((a, b) => priorityRank(a.priority) - priorityRank(b.priority));
+    const snapshot = await this.loadQueueSnapshot();
+    return evaluateQueueAvailability(snapshot, {
+      workerType,
+      repositories: this.repositories,
+      now: this.now
+    }).available.map((candidate) => candidate.item);
   }
 
   async claimReadyForWorker({ workerType, workerId, leaseSeconds, itemId, context = {} }) {
-    const ready = await this.listReady(workerType);
-    const item = itemId ? ready.find((candidate) => candidate.id === itemId) : ready[0];
-    if (!item) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
-    return this.#claimItem({ item, workerType, workerId, leaseSeconds, context, version: 2 });
+    const snapshot = await this.loadQueueSnapshot();
+    const selection = evaluateQueueAvailability(snapshot, {
+      workerType,
+      workerId,
+      repositories: this.repositories,
+      now: this.now
+    });
+    const candidate = itemId
+      ? selection.available.find((entry) => entry.item.id === itemId)
+      : selection.available[0];
+    if (!candidate) return { claimed: false, reason: itemId ? "not_ready" : "none_ready" };
+    return this.claimCandidate({
+      itemId: candidate.item.id,
+      workerType,
+      workerId,
+      leaseSeconds,
+      expectedAvailabilityFingerprint: candidate.fingerprint,
+      context
+    });
+  }
+
+  async claimCandidate({
+    itemId,
+    workerType,
+    workerId,
+    leaseSeconds,
+    expectedAvailabilityFingerprint,
+    context = {}
+  }) {
+    const snapshot = await this.loadQueueSnapshot();
+    const selection = evaluateQueueAvailability(snapshot, {
+      workerType,
+      workerId,
+      repositories: this.repositories,
+      now: this.now
+    });
+    const candidate = selection.available.find((entry) => entry.item.id === itemId);
+    if (!candidate) {
+      const unavailable = selection.unavailable.find((entry) => entry.item.id === itemId);
+      return { claimed: false, reason: unavailable?.reasons[0]?.code ?? "not_available" };
+    }
+    if (expectedAvailabilityFingerprint && candidate.fingerprint !== expectedAvailabilityFingerprint) {
+      return { claimed: false, reason: "availability_changed" };
+    }
+    return this.#claimItem({
+      item: candidate.item,
+      workerType,
+      workerId,
+      leaseSeconds,
+      availabilityFingerprint: candidate.fingerprint,
+      context,
+      version: 2
+    });
   }
 
   async claim(itemId, workerId, leaseSeconds) {
@@ -56,7 +121,12 @@ export class MemoryQueueAdapter {
 
   async verifyClaim(
     claimId,
-    { allowStatusChanged = false, allowWorkerTypeChanged = false, requireHeadSha = false } = {}
+    {
+      allowStatusChanged = false,
+      allowWorkerTypeChanged = false,
+      requireHeadSha = false,
+      requireAvailability = false
+    } = {}
   ) {
     const claim = this.claims.get(claimId) ?? parseClaimId(claimId);
     const item = this.items.get(claim.itemId);
@@ -82,6 +152,22 @@ export class MemoryQueueAdapter {
       }
       if (requireHeadSha && item.baseSha && claim.baseSha && item.baseSha !== claim.baseSha) {
         return { active: false, reason: "base_drift" };
+      }
+      if (requireAvailability) {
+        const selection = evaluateQueueAvailability([...this.items.values()], {
+          workerType: claim.resolvedWorkerType,
+          workerId: claim.workerId,
+          repositories: this.repositories,
+          now: this.now
+        });
+        const candidate = selection.available.find((entry) => entry.item.id === claim.itemId);
+        if (!candidate) {
+          const unavailable = selection.unavailable.find((entry) => entry.item.id === claim.itemId);
+          return { active: false, reason: unavailable?.reasons[0]?.code ?? "not_available" };
+        }
+        if (claim.availabilityFingerprint && candidate.fingerprint !== claim.availabilityFingerprint) {
+          return { active: false, reason: "availability_changed" };
+        }
       }
     }
     return { active: true, claim, item: structuredClone(item) };
@@ -188,11 +274,19 @@ export class MemoryQueueAdapter {
     return structuredClone(this.items.get(id));
   }
 
-  async #claimItem({ item, workerType, workerId, leaseSeconds, context, version }) {
+  async #claimItem({ item, workerType, workerId, leaseSeconds, availabilityFingerprint: fingerprint, context, version }) {
     const live = this.items.get(item.id);
     const now = this.now();
-    if (!isReadyForWorkerType(live, workerType, now)) {
-      return { claimed: false, reason: "not_ready" };
+    const selection = evaluateQueueAvailability([...this.items.values()], {
+      workerType,
+      workerId,
+      repositories: this.repositories,
+      now
+    });
+    const candidate = selection.available.find((entry) => entry.item.id === live?.id);
+    if (!candidate) {
+      const unavailable = selection.unavailable.find((entry) => entry.item.id === live?.id);
+      return { claimed: false, reason: unavailable?.reasons[0]?.code ?? "not_available" };
     }
     const expiresAt = new Date(now.getTime() + leaseSeconds * 1000).toISOString();
     const claimId =
@@ -216,6 +310,7 @@ export class MemoryQueueAdapter {
             headRef: live.headRef,
             headRepository: live.headRepository,
             headSha: live.headSha,
+            availabilityFingerprint: fingerprint ?? availabilityFingerprint(live),
             claimedAt: now.toISOString(),
             ...context
           })
@@ -228,12 +323,19 @@ export class MemoryQueueAdapter {
     this.claims.set(claimId, { id: claimId, ...parseClaimId(claimId) });
     return {
       claimed: true,
-      claim: { id: claimId, itemId: live.id, owner: workerId, expiresAt },
+      claim: {
+        id: claimId,
+        itemId: live.id,
+        owner: workerId,
+        expiresAt,
+        availabilityFingerprint: fingerprint ?? availabilityFingerprint(live)
+      },
       item: structuredClone(live)
     };
   }
 }
 
-function priorityRank(priority = "P3") {
-  return { P0: 0, P1: 1, P2: 2, P3: 3 }[priority] ?? 99;
+function normalizeRepositoryFilter(repositories) {
+  const values = Array.isArray(repositories) ? repositories : String(repositories ?? "").split(",");
+  return new Set(values.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
 }

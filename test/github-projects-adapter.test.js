@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createClaimId, GitHubProjectsAdapter, parseClaimId, Status, WorkerType } from "../src/index.js";
+import {
+  claimNextAvailable,
+  createClaimId,
+  DependencyState,
+  GitHubProjectsAdapter,
+  parseClaimId,
+  Status,
+  WorkerType
+} from "../src/index.js";
 
 test("GitHubProjectsAdapter lists ready items from project fields", async () => {
   const { fetchImpl } = createGraphqlMock([projectResponse()]);
@@ -21,6 +29,154 @@ test("GitHubProjectsAdapter lists ready items from project fields", async () => 
   assert.equal(ready[0].status, Status.IMPLEMENTATION);
   assert.equal(ready[0].workerType, WorkerType.IMPLEMENTER);
   assert.equal(ready[0].contentId, "ISSUE_1");
+});
+
+test("GitHubProjectsAdapter normalizes native issue dependencies and source order", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([
+    projectResponse({
+      blockedBy: {
+        pageInfo: { hasNextPage: false, endCursor: null },
+        nodes: [
+          blockerNode({ id: "OPEN", number: 2, repository: "other/repo", state: "OPEN" }),
+          blockerNode({ id: "DONE", number: 3, state: "CLOSED", stateReason: "COMPLETED" }),
+          blockerNode({ id: "CANCELED", number: 4, state: "CLOSED", stateReason: "NOT_PLANNED" }),
+          blockerNode({ id: "UNKNOWN", number: 5, state: null, stateReason: null })
+        ]
+      }
+    })
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  const snapshot = await adapter.loadQueueSnapshot();
+
+  assert.match(calls[0].query, /blockedBy\(first: 100\)/);
+  assert.equal(snapshot.items[0].sourceOrder, 0);
+  assert.deepEqual(snapshot.items[0].dependencies.map((dependency) => dependency.state), [
+    DependencyState.ACTIVE,
+    DependencyState.COMPLETED,
+    DependencyState.CANCELED,
+    DependencyState.UNKNOWN
+  ]);
+  assert.equal(snapshot.items[0].dependencies[0].targetId, "OPEN");
+  assert.match(snapshot.items[0].dependencies[0].url, /other\/repo\/issues\/2/);
+});
+
+test("GitHubProjectsAdapter paginates issue blockedBy relationships", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([
+    projectResponse({
+      blockedBy: {
+        pageInfo: { hasNextPage: true, endCursor: "dependency-page-1" },
+        nodes: [blockerNode({ id: "OPEN", number: 2, state: "OPEN" })]
+      }
+    }),
+    {
+      data: {
+        node: {
+          blockedBy: {
+            pageInfo: { hasNextPage: false, endCursor: null },
+            nodes: [blockerNode({ id: "DONE", number: 3, state: "CLOSED", stateReason: "COMPLETED" })]
+          }
+        }
+      }
+    }
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  const snapshot = await adapter.loadQueueSnapshot();
+
+  assert.equal(snapshot.items[0].dependencies.length, 2);
+  assert.match(calls[1].query, /SkiStackIssueBlockedBy/);
+  assert.equal(calls[1].variables.id, "ISSUE_1");
+  assert.equal(calls[1].variables.after, "dependency-page-1");
+});
+
+test("GitHubProjectsAdapter preserves Project item order as sourceOrder", async () => {
+  const response = projectResponse();
+  const first = response.data.organization.projectV2.items.nodes[0];
+  const second = structuredClone(first);
+  second.id = "PVTI_item_2";
+  second.content.id = "ISSUE_2";
+  second.content.number = 2;
+  second.content.title = "Second item";
+  response.data.organization.projectV2.items.nodes.push(second);
+  const { fetchImpl } = createGraphqlMock([response]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  const snapshot = await adapter.loadQueueSnapshot();
+
+  assert.deepEqual(snapshot.items.map((item) => item.sourceOrder), [0, 1]);
+});
+
+test("GitHubProjectsAdapter leaves draft Project items dependency-free", async () => {
+  const response = projectResponse();
+  response.data.organization.projectV2.items.nodes[0].content = {
+    __typename: "DraftIssue",
+    id: "DRAFT_1",
+    title: "Draft work",
+    body: "Not backed by a GitHub issue"
+  };
+  const { fetchImpl } = createGraphqlMock([response]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  const snapshot = await adapter.loadQueueSnapshot();
+
+  assert.deepEqual(snapshot.items[0].dependencies, []);
+});
+
+test("GitHubProjectsAdapter rejects claim-time dependency drift before field writes", async () => {
+  const completed = projectResponse({
+    blockedBy: {
+      pageInfo: { hasNextPage: false, endCursor: null },
+      nodes: [blockerNode({ id: "BLOCKER", state: "CLOSED", stateReason: "COMPLETED" })]
+    }
+  });
+  const pending = projectResponse({
+    blockedBy: {
+      pageInfo: { hasNextPage: false, endCursor: null },
+      nodes: [blockerNode({ id: "BLOCKER", state: "OPEN", stateReason: null })]
+    }
+  });
+  const { fetchImpl, calls } = createGraphqlMock([completed, pending]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await claimNextAvailable({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "worker-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, false);
+  assert.equal(result.reason, "candidates_changed");
+  assert.equal(result.skipped[0].reason, "dependency_pending");
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every((call) => String(call.query).includes("projectV2(number: $projectNumber)")));
 });
 
 test("GitHubProjectsAdapter can load a user-owned project", async () => {
@@ -369,6 +525,7 @@ test("GitHubProjectsAdapter preserves fork head repositories on PR content claim
   });
 
   const claim = parseClaimId(result.claim.id);
+  assert.deepEqual(result.item.dependencies, []);
   assert.equal(claim.pullRequestNumber, 42);
   assert.equal(claim.headRepository, "contributor/repo");
   assert.equal(claim.headSha, "a".repeat(40));
@@ -1151,7 +1308,7 @@ test("GitHubProjectsAdapter pages through check runs before QA", async () => {
   assert.equal(verified.reason, "checks_not_clean");
 });
 
-test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming next ready item", async () => {
+test("GitHubProjectsAdapter returns a local PR metadata rejection so the coordinator can try the next item", async () => {
   const response = projectResponse({
     status: Status.REVIEW,
     workerType: WorkerType.REVIEWER,
@@ -1172,7 +1329,15 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
   );
   response.data.organization.projectV2.items.nodes.push(secondNode);
 
-  const responses = [response, mutationResponse(), mutationResponse(), mutationResponse(), mutationResponse()];
+  const responses = [
+    response,
+    structuredClone(response),
+    structuredClone(response),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ];
   const graphql = createGraphqlState(responses);
   const metadataCalls = [];
   const fetchImpl = async (url, options) => {
@@ -1210,7 +1375,8 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
     now: () => new Date("2026-07-07T12:00:00.000Z")
   });
 
-  const result = await adapter.claimReadyForWorker({
+  const result = await claimNextAvailable({
+    adapter,
     workerType: WorkerType.REVIEWER,
     workerId: "reviewer-1",
     leaseSeconds: 1800
@@ -1219,6 +1385,38 @@ test("GitHubProjectsAdapter skips bad issue-backed PR metadata when claiming nex
   assert.equal(result.claimed, true);
   assert.equal(result.item.id, "PVTI_item_2");
   assert.deepEqual(metadataCalls, [404, 42]);
+});
+
+test("GitHubProjectsAdapter surfaces PR metadata service failures to the coordinator", async () => {
+  const response = projectResponse({
+    status: Status.REVIEW,
+    workerType: WorkerType.REVIEWER,
+    prUrl: "500"
+  });
+  const graphql = createGraphqlState([response, structuredClone(response)]);
+  const fetchImpl = async (url, options) => {
+    if (String(url).endsWith("/repos/acme/repo/pulls/500")) {
+      return { ok: false, status: 500, json: async () => ({}) };
+    }
+    return { ok: true, json: async () => graphql.next(options) };
+  };
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  await assert.rejects(
+    claimNextAvailable({
+      adapter,
+      workerType: WorkerType.REVIEWER,
+      workerId: "reviewer-1",
+      leaseSeconds: 1800
+    }),
+    /pull request metadata request failed: 500/
+  );
 });
 
 test("GitHubProjectsAdapter transitions status with a single-select option", async () => {
@@ -1454,7 +1652,8 @@ function projectResponse({
   leaseOwner = "",
   leaseExpiresAt = "2026-07-07T11:30:00.000Z",
   lastWorkerRun = "",
-  prUrl = ""
+  prUrl = "",
+  blockedBy = { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [] }
 } = {}) {
   return {
     data: {
@@ -1499,7 +1698,8 @@ function projectResponse({
                   body: "Adapter body",
                   url: "https://github.com/acme/repo/issues/1",
                   number: 1,
-                  repository: { nameWithOwner: "acme/repo" }
+                  repository: { nameWithOwner: "acme/repo" },
+                  blockedBy
                 },
                 fieldValues: {
                   nodes: [
@@ -1521,6 +1721,24 @@ function projectResponse({
         }
       }
     }
+  };
+}
+
+function blockerNode({
+  id,
+  number = 2,
+  repository = "acme/repo",
+  state,
+  stateReason = null
+}) {
+  return {
+    id,
+    title: `Blocker ${number}`,
+    url: `https://github.com/${repository}/issues/${number}`,
+    number,
+    state,
+    stateReason,
+    repository: { nameWithOwner: repository }
   };
 }
 
