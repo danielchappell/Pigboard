@@ -66,7 +66,7 @@ test("automated reviewers cannot bypass Babysit and mark Done", () => {
   );
 });
 
-test("automated reviewers route findings to Babysit instead of Implementation", () => {
+test("automated reviewers can return findings to Implementation or advance clean work to Babysit", () => {
   assert.equal(
     validateWorkerTransition({
       workerType: WorkerType.REVIEWER,
@@ -74,13 +74,12 @@ test("automated reviewers route findings to Babysit instead of Implementation", 
     }),
     Status.BABYSIT
   );
-  assert.throws(
-    () =>
-      validateWorkerTransition({
-        workerType: WorkerType.REVIEWER,
-        result: { outcome: "completed", nextStatus: Status.IMPLEMENTATION }
-      }),
-    /reviewer cannot transition to Implementation/
+  assert.equal(
+    validateWorkerTransition({
+      workerType: WorkerType.REVIEWER,
+      result: { outcome: "completed", nextStatus: Status.IMPLEMENTATION }
+    }),
+    Status.IMPLEMENTATION
   );
 });
 
@@ -94,13 +93,13 @@ test("pr-babysitter can no-op and remain in Babysit", () => {
   );
 });
 
-test("pr-babysitter can move merge-gated PRs to QA only with the explicit flag", () => {
+test("pr-babysitter can hand approved PRs to the owner but cannot enter legacy QA", () => {
   assert.equal(
     validateWorkerTransition({
       workerType: WorkerType.PR_BABYSITTER,
-      result: { outcome: "completed", nextStatus: Status.QA, mergeWhenApprovedAndClean: true }
+      result: { outcome: "completed", nextStatus: Status.READY_FOR_OWNER }
     }),
-    Status.QA
+    Status.READY_FOR_OWNER
   );
   assert.throws(
     () =>
@@ -108,7 +107,7 @@ test("pr-babysitter can move merge-gated PRs to QA only with the explicit flag",
         workerType: WorkerType.PR_BABYSITTER,
         result: { outcome: "completed", nextStatus: Status.QA }
       }),
-    /mergeWhenApprovedAndClean/
+    /pr-babysitter cannot transition to QA/
   );
 });
 

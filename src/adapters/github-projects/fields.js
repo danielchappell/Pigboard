@@ -3,6 +3,7 @@ import {
   evaluateQueueAvailability,
   priorityRank as priorityRankCore
 } from "../../core/availability.js";
+import { isClaimV2, parseClaimId } from "../../core/claims.js";
 
 export const FieldName = Object.freeze({
   STATUS: "Status",
@@ -79,6 +80,7 @@ export function normalizeProjectItem(node, { sourceOrder } = {}) {
   }
 
   const content = node.content ?? {};
+  const lastWorkerRun = fields[FieldName.LAST_WORKER_RUN];
 
   return {
     id: node.id,
@@ -89,6 +91,8 @@ export function normalizeProjectItem(node, { sourceOrder } = {}) {
     body: content.body ?? "",
     url: content.url,
     number: content.number,
+    contentState: content.state,
+    contentStateReason: content.stateReason,
     repository: content.repository?.nameWithOwner,
     prUrl: fields[FieldName.PR],
     pullRequestNumber: parseGitHubPullRequestNumber(fields[FieldName.PR]),
@@ -106,11 +110,22 @@ export function normalizeProjectItem(node, { sourceOrder } = {}) {
     leaseOwner: fields[FieldName.LEASE_OWNER],
     leaseExpiresAt: fields[FieldName.LEASE_EXPIRES],
     attempts: fields[FieldName.ATTEMPTS],
-    lastWorkerRun: fields[FieldName.LAST_WORKER_RUN],
+    lastWorkerRun,
+    availableAfter: availableAfterFromLastRun(lastWorkerRun),
     fields,
     optionIds,
     raw: node
   };
+}
+
+function availableAfterFromLastRun(value) {
+  if (!String(value ?? "").startsWith("ski2.")) return undefined;
+  try {
+    const claim = parseClaimId(value);
+    return isClaimV2(claim) ? claim.nextEligibleAt : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function parseGitHubPullRequestNumber(url) {

@@ -14,6 +14,9 @@ export const UnavailableReason = Object.freeze({
   WORKER: "worker_mismatch",
   REPOSITORY: "repository_mismatch",
   FOREIGN_LEASE: "foreign_lease",
+  NOT_BEFORE: "not_before",
+  SOURCE_TERMINAL: "source_terminal",
+  UNSUPPORTED_CONTENT_TYPE: "unsupported_content_type",
   DEPENDENCY_PENDING: "dependency_pending",
   DEPENDENCY_CANCELED: "dependency_canceled",
   DEPENDENCY_UNKNOWN: "dependency_unknown",
@@ -63,6 +66,9 @@ export function availabilityFingerprint(item) {
     workerType: item?.workerType ?? null,
     resolvedWorkerType: resolvedWorkerTypeForItem(item) ?? null,
     repository: item?.repository ?? null,
+    contentType: item?.contentType ?? null,
+    contentState: item?.contentState ?? null,
+    availableAfter: normalizeAvailableAfter(item?.availableAfter),
     dependencies
   });
   return createHash("sha256").update(payload).digest("hex");
@@ -161,6 +167,24 @@ function availabilityReasons(item, { workerType, workerId, repositories, now, cy
   if (hasActiveLease(item, now) && (!workerId || item.leaseOwner !== workerId)) {
     reasons.push({ code: UnavailableReason.FOREIGN_LEASE, leaseOwner: item.leaseOwner });
   }
+  const availableAfter = normalizeAvailableAfter(item?.availableAfter);
+  if (availableAfter && availableAfter > now.toISOString()) {
+    reasons.push({ code: UnavailableReason.NOT_BEFORE, availableAfter });
+  }
+  if (
+    resolvedWorkerType &&
+    item?.contentType &&
+    (item.contentType === "DraftIssue" ||
+      (["implementation-planner", "implementer"].includes(resolvedWorkerType) && item.contentType !== "Issue"))
+  ) {
+    reasons.push({ code: UnavailableReason.UNSUPPORTED_CONTENT_TYPE, contentType: item.contentType });
+  }
+  if (
+    (item?.contentType === "Issue" && item.contentState === "CLOSED") ||
+    (item?.contentType === "PullRequest" && ["CLOSED", "MERGED"].includes(item.contentState))
+  ) {
+    reasons.push({ code: UnavailableReason.SOURCE_TERMINAL, contentState: item.contentState });
+  }
 
   const itemGraphId = queueGraphId(item);
   if (itemGraphId && cycleIds.has(itemGraphId)) {
@@ -223,6 +247,12 @@ function normalizeRepositories(repositories) {
 function normalizeSourceOrder(value) {
   const number = Number(value);
   return Number.isFinite(number) ? number : Number.MAX_SAFE_INTEGER;
+}
+
+function normalizeAvailableAfter(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
 function stableItemId(item) {

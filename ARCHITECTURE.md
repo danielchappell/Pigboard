@@ -48,6 +48,8 @@ Every queue backend must support:
 - `extendClaim(claimId, leaseSeconds)`
 - `appendEvent(itemId, event)`
 - `appendEventForClaim(claimId, event, options)`
+- `loadStageHandoffsForClaim(claimId, options)`
+- `appendStageHandoffForClaim(claimId, handoff, options)`
 - `transition(itemId, status)`
 - `transitionForClaim(claimId, status, options)`
 - `setFieldForClaim(claimId, fieldName, value, options)`
@@ -74,14 +76,41 @@ dependency cycle. Pending, canceled, unknown, missing, and cyclic dependencies
 fail closed without changing the item's visible Status.
 
 Available work is ordered by `P0` through `P3`, then platform `sourceOrder`, then
-stable item id. Claims carry an availability fingerprint over routing and
-dependency state. Priority and source order are intentionally excluded so
-reordering does not invalidate active work.
+stable item id. Claims carry an availability fingerprint over routing,
+dependency state, and `availableAfter`. Priority and source order are
+intentionally excluded so reordering does not invalidate active work.
 
 `claimNextAvailable()` coordinates selection and claim-time revalidation for
 both dispatch paths. Adapters reload platform state before writing a claim, and
 workers re-evaluate availability before final side effects. Stale claims are
 released; dependency changes never auto-transition a card to `Blocked`.
+
+Automated planning and implementation require a real source Issue. Draft items
+fail closed as `unsupported_content_type`; PR-backed Review/Babysit items remain
+supported for migration compatibility.
+
+## Delivery Lifecycle
+
+```text
+Implementation Planning -> Implementation -> Review -> Babysit -> Ready for Owner
+```
+
+`Ready for Owner` is non-claimable. `QA` remains a legacy/manual status outside
+the automated chain. Successful issue completion or merged implementation PRs
+reconcile to `Done` from any nonterminal stage; not-planned issue closure
+reconciles to `Canceled`.
+
+Stage outputs use a versioned `StageHandoff`. GitHub persists handoffs as visible
+issue comments containing canonical JSON signed with HMAC-SHA256. The signature
+binds repository, issue, Project item, stage, input fingerprint, operation ID,
+payload hash, and creation time. The daemon accepts only exact, unedited comments
+from its configured GitHub identity and requires an independent 32-byte
+`SKI_HANDOFF_SECRET`. The memory adapter mirrors behavior for tests only.
+
+The deterministic operation ID is the durable completion record. Reconciliation
+can resume missing Project, PR, branch, or lease mutations without treating
+ordinary issue text as machine-authoritative state or rerunning completed model
+work.
 
 ## GitHub Projects Strategy
 
@@ -117,6 +146,7 @@ The initial worker pool:
 - `planner`
 - `architect`
 - `groomer`
+- `implementation-planner`
 - `implementer`
 - `qa`
 - `reviewer`
@@ -126,6 +156,8 @@ The initial worker pool:
 These are role cards. A runtime can map them to Codex, Claude, another agent
 runner, or a human.
 
-The local daemon currently auto-runs only the code-loop workers: `implementer`,
-`reviewer`, and `pr-babysitter`. The other roles remain manual until an explicit
-worker implementation is added.
+The local daemon auto-runs `implementation-planner`, `implementer`, `reviewer`,
+and `pr-babysitter`. Planning and review are read-only. Implementation owns the
+deterministic branch and every pre-PR correction; Review owns non-draft PR
+creation; Babysit owns one bounded feedback cycle but never merges. Architect,
+Groomer, QA, and the remaining roles are manual in this slice.

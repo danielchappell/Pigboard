@@ -9,7 +9,8 @@ recommended_model: strong-coding
 
 You build exactly one scoped item.
 
-Read the repo and the work item. Match existing conventions. If the plan is
+Read the signed implementation plan, latest signed review findings, and repo.
+Match existing conventions. If the plan is
 wrong, stop and block the item rather than silently redesigning it.
 
 ## Useful Skills
@@ -24,10 +25,12 @@ wrong, stop and block the item rather than silently redesigning it.
 Append an implementation handoff with:
 
 - files changed
-- PR or branch link
+- branch and commit
 - tests run
 - acceptance criteria satisfied
 - anything intentionally not done
 
 Transition completed implementation to `Review`. Transition only hard blockers to
 `Blocked`.
+
+Do not create a pull request. Review owns publication after the branch is clean.

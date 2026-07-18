@@ -7,7 +7,9 @@ import test from "node:test";
 import {
   DependencyState,
   GitHubCodeLoopWorker,
+  HandoffStage,
   MemoryQueueAdapter,
+  contextFingerprint,
   parseClaimId,
   runSettledWorkerSlot,
   Status,
@@ -44,7 +46,7 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       cwd: root,
       setupCommands: ["npm install"],
       verifyCommands: ["npm test"],
-      allowPushBranches: false,
+      allowPushBranches: true,
       allowCreatePr: true,
       githubToken: "test-token"
     },
@@ -93,11 +95,8 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
       if (args.includes("push")) calls.push += 1;
       return { stdout: "", stderr: "" };
     },
-    ensurePullRequestImpl: async ({ title, body }) => {
-      assert.equal(title, "Ski Stack: Build thing");
-      assert.match(body, /Outcome: completed/);
-      assert.match(body, /Closes acme\/repo#12/);
-      return { number: 42, url: "https://github.com/acme/repo/pull/42" };
+    ensurePullRequestImpl: async () => {
+      throw new Error("implementer must not create pull requests");
     },
     writeRunArtifactsImpl: async () => {
       calls.logs += 1;
@@ -114,9 +113,8 @@ test("implementer runs Codex, commits a non-empty diff, logs locally, and transi
   assert.equal(adapter.getItem("item-1").status, Status.REVIEW);
   assert.equal(adapter.getItem("item-1").leaseOwner, undefined);
   assert.equal(adapter.events[0].outcome, "completed");
-  assert.match(adapter.events[0].evidence.at(-2), /^Commit a{40}$/);
-  assert.equal(adapter.events[0].evidence.at(-1), "PR https://github.com/acme/repo/pull/42");
-  assert.equal(adapter.getItem("item-1").fields.PR, "https://github.com/acme/repo/pull/42");
+  assert.match(adapter.events[0].evidence.at(-1), /^Commit a{40}$/);
+  assert.equal(adapter.getItem("item-1").fields?.PR, undefined);
   assert.deepEqual(calls, { setup: 1, verify: 1, reset: 1, listUntracked: 3, logs: 1, cleanup: 1, push: 1 });
 });
 
@@ -157,7 +155,7 @@ test("initial claim verification failures write artifacts and fail the item", as
   assert.equal(adapter.getItem("item-missing-head").leaseOwner, undefined);
 });
 
-test("PR creation implies pushing the generated branch", async () => {
+test("implementation pushes the reserved branch without creating a PR", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     {
@@ -176,7 +174,7 @@ test("PR creation implies pushing the generated branch", async () => {
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-push",
-    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    repoPolicy: { cwd: root, allowPushBranches: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -202,7 +200,9 @@ test("PR creation implies pushing the generated branch", async () => {
       if (args.includes("push")) pushes.push(args);
       return { stdout: "", stderr: "" };
     },
-    ensurePullRequestImpl: async () => ({ number: 42, url: "https://github.com/acme/repo/pull/42" }),
+    ensurePullRequestImpl: async () => {
+      throw new Error("implementer must not create pull requests");
+    },
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
     cleanupWorktreeImpl: async () => {}
   });
@@ -211,7 +211,7 @@ test("PR creation implies pushing the generated branch", async () => {
 
   assert.equal(result.ran, true);
   assert.equal(pushes.length, 1);
-  assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:ski/12-run"]);
+  assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:refs/heads/ski/12-run"]);
 });
 
 test("worker re-checks worktree git config after Codex before git operations", async () => {
@@ -233,7 +233,7 @@ test("worker re-checks worktree git config after Codex before git operations", a
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-post-codex-config",
-    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    repoPolicy: { cwd: root, allowCreatePr: true, allowPushBranches: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -370,7 +370,7 @@ test("stale PR snapshot failures release instead of blocking", async () => {
   assert.equal(adapter.getItem("item-head-drift").leaseOwner, undefined);
 });
 
-test("unsafe PR body output falls back to withheld public text", async () => {
+test("unsafe implementation handoff output is blocked before any PR side effect", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     {
@@ -384,12 +384,12 @@ test("unsafe PR body output falls back to withheld public text", async () => {
       number: 12
     }
   ]);
-  let prBody;
+  let prCalls = 0;
   const worker = new GitHubCodeLoopWorker({
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-unsafe-pr-body",
-    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    repoPolicy: { cwd: root, allowPushBranches: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -412,8 +412,8 @@ test("unsafe PR body output falls back to withheld public text", async () => {
     hasDiffImpl: async () => true,
     commitAllImpl: async () => "a".repeat(40),
     execFileImpl: async () => ({ stdout: "", stderr: "" }),
-    ensurePullRequestImpl: async ({ body }) => {
-      prBody = body;
+    ensurePullRequestImpl: async () => {
+      prCalls += 1;
       return { number: 42, url: "https://github.com/acme/repo/pull/42" };
     },
     writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
@@ -423,9 +423,9 @@ test("unsafe PR body output falls back to withheld public text", async () => {
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(prBody, /output withheld locally/);
-  assert.match(prBody, /Closes acme\/repo#12/);
-  assert.doesNotMatch(prBody, /\/Users\/joseph/);
+  assert.equal(prCalls, 0);
+  assert.match(result.error.message, /unsafe public output/);
+  assert.equal(adapter.getItem("item-unsafe-pr-body").status, Status.BLOCKED);
 });
 
 test("dependency drift during a code-loop run releases without blocking or publishing side effects", async () => {
@@ -516,7 +516,7 @@ test("stale worker-type reroutes release without blocking the item", async () =>
     adapter,
     workerType: WorkerType.IMPLEMENTER,
     workerId: "impl-partial",
-    repoPolicy: { cwd: root, allowCreatePr: true, githubToken: "test-token" },
+    repoPolicy: { cwd: root, allowCreatePr: true, allowPushBranches: true, githubToken: "test-token" },
     runLogDir: join(root, "runs"),
     createImplementationWorktreeImpl: async () => {
       const worktreePath = join(root, "worktree");
@@ -552,7 +552,7 @@ test("stale worker-type reroutes release without blocking the item", async () =>
   assert.equal(adapter.getItem("item-partial-failure").leaseOwner, undefined);
 });
 
-test("implementer blocks instead of advancing to Review without PR creation", async () => {
+test("implementer blocks instead of advancing to Review without branch push permission", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     {
@@ -598,7 +598,7 @@ test("implementer blocks instead of advancing to Review without PR creation", as
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(result.error.message, /requires allowCreatePr/);
+  assert.match(result.error.message, /branch push permission/);
   assert.equal(adapter.getItem("item-no-pr").status, Status.BLOCKED);
   assert.equal(adapter.getItem("item-no-pr").leaseOwner, undefined);
 });
@@ -758,7 +758,7 @@ test("worker preserves Codex stderr when exec fails", async () => {
   assert.equal(adapter.getItem("item-codex-fails").status, Status.BLOCKED);
 });
 
-test("issue-backed reviewer work requires PR metadata instead of falling back to issue number", async () => {
+test("issue-backed reviewer work requires an implementation branch handoff", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const worker = new GitHubCodeLoopWorker({
     adapter: new MemoryQueueAdapter([]),
@@ -781,11 +781,11 @@ test("issue-backed reviewer work requires PR metadata instead of falling back to
           headSha: "a".repeat(40)
         }
       }),
-    /reviewer requires a pull request/
+    /reviewer requires an implementation branch handoff/
   );
 });
 
-test("implementer refuses PR-backed claims instead of opening a replacement PR", async () => {
+test("implementer refuses claims without a signed clean implementation plan", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const worker = new GitHubCodeLoopWorker({
     adapter: new MemoryQueueAdapter([]),
@@ -808,7 +808,7 @@ test("implementer refuses PR-backed claims instead of opening a replacement PR",
           pullRequestNumber: 42
         }
       }),
-    /must stay in Babysit/
+    /requires a signed clean implementation plan/
   );
 });
 
@@ -1099,7 +1099,151 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
 });
 
-test("pr-babysitter merges verifier-approved PRs before moving to QA", async () => {
+test("implementation planner runs read-only and persists a transcript-backed clean plan", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-planner-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      id: "item-plan",
+      title: "Plan queue lifecycle",
+      body: "Create the delivery lifecycle.",
+      status: Status.IMPLEMENTATION_PLANNING,
+      workerType: WorkerType.IMPLEMENTATION_PLANNER,
+      repository: "acme/repo",
+      contentType: "Issue",
+      number: 12
+    }
+  ]);
+  let sandbox;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTATION_PLANNER,
+    workerId: "planner-1",
+    repoPolicy: { cwd: root, requireSignedHandoffs: true },
+    runLogDir: join(root, "runs"),
+    createDetachedBaseWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, headSha: "b".repeat(40) };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    execFileImpl: async (_command, args) => {
+      if (args.includes("rev-parse")) return { stdout: `${"b".repeat(40)}\n`, stderr: "" };
+      return { stdout: "", stderr: "" };
+    },
+    runCodexExecImpl: async ({ outputPath, streamPath, sandbox: selectedSandbox }) => {
+      sandbox = selectedSandbox;
+      await writeFile(
+        streamPath,
+        [
+          JSON.stringify({ type: "subagent", agent_id: "review-a", status: "completed" }),
+          JSON.stringify({ type: "subagent", agent_id: "review-b", status: "completed" })
+        ].join("\n")
+      );
+      await writeFile(outputPath, JSON.stringify({
+        outcome: "completed",
+        nextStatus: Status.IMPLEMENTATION,
+        summary: "Plan reviewed clean.",
+        details: {
+          implementationPlan: {
+            plan: "1. Add the lifecycle.\n2. Verify recovery behavior.",
+            acceptanceCriteria: ["The lifecycle reaches Ready for Owner."],
+            tests: ["npm test"],
+            risks: ["Migration drift"],
+            adversarialReview: {
+              verdict: "clean",
+              rounds: [{ reviews: [
+                { reviewerId: "review-a", lens: "correctness", findings: [] },
+                { reviewerId: "review-b", lens: "recovery", findings: [] }
+              ] }]
+            }
+          }
+        }
+      }));
+      return { stdout: "", stderr: "", streamPath };
+    },
+    hasDiffImpl: async () => false,
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.error, undefined);
+  assert.equal(sandbox, "read-only");
+  assert.equal(adapter.getItem("item-plan").status, Status.IMPLEMENTATION);
+  assert.equal(adapter.handoffs.length, 1);
+  assert.equal(adapter.handoffs[0].envelope.stage, "implementation_plan");
+  assert.equal(adapter.handoffs[0].envelope.payload.baseSha, "b".repeat(40));
+});
+
+test("implementation planner recovers a signed completion without rerunning Codex", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-planner-recovery-"));
+  const item = {
+    id: "item-plan-recovery",
+    title: "Recover plan",
+    body: "Plan this story.",
+    status: Status.IMPLEMENTATION_PLANNING,
+    workerType: WorkerType.IMPLEMENTATION_PLANNER,
+    repository: "acme/repo",
+    contentType: "Issue",
+    number: 12
+  };
+  const adapter = new MemoryQueueAdapter([item]);
+  const seed = await adapter.claimReadyForWorker({
+    workerType: WorkerType.IMPLEMENTATION_PLANNER,
+    workerId: "seed",
+    leaseSeconds: 1800
+  });
+  const upstream = contextFingerprint({
+    itemId: item.id,
+    body: item.body,
+    dependencies: [],
+    handoffFingerprint: contextFingerprint([]),
+    headSha: null
+  });
+  const payload = {
+    repository: "acme/repo",
+    baseRef: "main",
+    baseSha: "b".repeat(40),
+    plan: "1. Implement.\n2. Test.",
+    acceptanceCriteria: ["Behavior is complete."],
+    tests: ["npm test"],
+    risks: [],
+    adversarialReview: {
+      verdict: "clean",
+      rounds: [{ reviews: [
+        { reviewerId: "review-a", lens: "correctness", findings: [] },
+        { reviewerId: "review-b", lens: "recovery", findings: [] }
+      ] }]
+    }
+  };
+  await adapter.appendStageHandoffForClaim(seed.claim.id, {
+    stage: HandoffStage.IMPLEMENTATION_PLAN,
+    inputFingerprint: upstream,
+    payload
+  });
+  await adapter.releaseClaim(seed.claim.id);
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.IMPLEMENTATION_PLANNER,
+    workerId: "planner-recovery",
+    repoPolicy: { cwd: root, requireSignedHandoffs: true },
+    runCodexExecImpl: async () => {
+      throw new Error("Codex must not run for a durable completion");
+    },
+    createDetachedBaseWorktreeImpl: async () => {
+      throw new Error("recovery must not create a worktree");
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.recovered, true);
+  assert.equal(adapter.getItem(item.id).status, Status.IMPLEMENTATION);
+});
+
+test("pr-babysitter hands authorized approval to the owner without merging", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -1108,53 +1252,8 @@ test("pr-babysitter merges verifier-approved PRs before moving to QA", async () 
       status: Status.BABYSIT,
       workerType: WorkerType.PR_BABYSITTER
     })
-  ]);
-  let qaVerifications = 0;
-  adapter.verifyPullRequestReadyForQaForClaim = async () => {
-    qaVerifications += 1;
-    return { ready: true };
-  };
-  const merges = [];
-  const worker = workerWithCodexResult({
-    root,
-    adapter,
-    workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token", mergeMethod: "squash", allowMerge: true },
-    result: {
-      outcome: "completed",
-      nextStatus: Status.QA,
-      summary: "Verifier approved merge before QA.",
-      mergeWhenApprovedAndClean: true
-    },
-    mergePullRequestImpl: async (input) => {
-      merges.push(input);
-      return { merged: true, sha: "m".repeat(40), message: "merged" };
-    }
-  });
-
-  const result = await worker.runOnce();
-
-  assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("item-3").status, Status.QA);
-  assert.equal(qaVerifications, 1);
-  assert.equal(merges.length, 1);
-  assert.equal(merges[0].number, 42);
-  assert.equal(merges[0].expectedHeadSha, "a".repeat(40));
-  assert.equal(merges[0].method, "squash");
-  assert.match(adapter.events[0].evidence.at(-1), /^Merged PR #42 at m{40}$/);
-});
-
-test("pr-babysitter skips merge call when PR is already merged", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
-  const adapter = new MemoryQueueAdapter([
-    pullRequestItem({
-      id: "item-already-merged",
-      title: "Babysit queue adapter",
-      status: Status.BABYSIT,
-      workerType: WorkerType.PR_BABYSITTER
-    })
-  ]);
-  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true, reason: "merged" });
+  ], { ownerApprovers: ["owner"] });
+  adapter.items.get("item-3").thumbsUpActors = ["owner"];
   let mergeCalls = 0;
   const worker = workerWithCodexResult({
     root,
@@ -1162,150 +1261,8 @@ test("pr-babysitter skips merge call when PR is already merged", async () => {
     workerType: WorkerType.PR_BABYSITTER,
     result: {
       outcome: "completed",
-      nextStatus: Status.QA,
-      summary: "PR is already merged.",
-      mergeWhenApprovedAndClean: true
-    },
-    mergePullRequestImpl: async () => {
-      mergeCalls += 1;
-      return { merged: true, sha: "m".repeat(40), message: "merged" };
-    }
-  });
-
-  const result = await worker.runOnce();
-
-  assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("item-already-merged").status, Status.QA);
-  assert.equal(mergeCalls, 0);
-  assert.equal(adapter.events[0].evidence.at(-1), "PR #42 already merged");
-});
-
-test("pr-babysitter merges no-op approved PRs before moving to QA", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
-  const adapter = new MemoryQueueAdapter([
-    pullRequestItem({
-      id: "item-no-op-qa",
-      title: "Babysit queue adapter",
-      status: Status.BABYSIT,
-      workerType: WorkerType.PR_BABYSITTER
-    })
-  ]);
-  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true });
-  let mergeCalls = 0;
-  const worker = workerWithCodexResult({
-    root,
-    adapter,
-    workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: true },
-    result: {
-      outcome: "no-op",
-      nextStatus: Status.QA,
-      summary: "Approved with no local edits.",
-      mergeWhenApprovedAndClean: true
-    },
-    mergePullRequestImpl: async () => {
-      mergeCalls += 1;
-      return { merged: true, sha: "m".repeat(40), message: "merged" };
-    }
-  });
-
-  const result = await worker.runOnce();
-
-  assert.equal(result.ran, true);
-  assert.equal(adapter.getItem("item-no-op-qa").status, Status.QA);
-  assert.equal(mergeCalls, 1);
-});
-
-test("pr-babysitter cannot move to QA when live PR state is not ready", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
-  const adapter = new MemoryQueueAdapter([
-    pullRequestItem({
-      id: "item-live-not-ready",
-      title: "Babysit queue adapter",
-      status: Status.BABYSIT,
-      workerType: WorkerType.PR_BABYSITTER
-    })
-  ]);
-  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: false, reason: "checks_not_clean" });
-  const worker = workerWithCodexResult({
-    root,
-    adapter,
-    workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, allowMerge: true },
-    result: {
-      outcome: "completed",
-      nextStatus: Status.QA,
-      summary: "Verifier approved merge before QA.",
-      mergeWhenApprovedAndClean: true
-    }
-  });
-
-  const result = await worker.runOnce();
-
-  assert.equal(result.ran, true);
-  assert.match(result.error.message, /checks_not_clean/);
-  assert.equal(adapter.getItem("item-live-not-ready").status, Status.BLOCKED);
-});
-
-test("pr-babysitter cannot merge before QA without merge permission", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
-  const adapter = new MemoryQueueAdapter([
-    pullRequestItem({
-      id: "item-merge-not-allowed",
-      title: "Babysit queue adapter",
-      status: Status.BABYSIT,
-      workerType: WorkerType.PR_BABYSITTER
-    })
-  ]);
-  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: true });
-  let mergeCalls = 0;
-  const worker = workerWithCodexResult({
-    root,
-    adapter,
-    workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: false },
-    result: {
-      outcome: "no-op",
-      nextStatus: Status.QA,
-      summary: "Approved with no local edits.",
-      mergeWhenApprovedAndClean: true
-    },
-    mergePullRequestImpl: async () => {
-      mergeCalls += 1;
-      return { merged: true, sha: "m".repeat(40), message: "merged" };
-    }
-  });
-
-  const result = await worker.runOnce();
-
-  assert.equal(result.ran, true);
-  assert.match(result.error.message, /allowMerge/);
-  assert.equal(mergeCalls, 0);
-  assert.equal(adapter.getItem("item-merge-not-allowed").status, Status.BLOCKED);
-});
-
-test("pr-babysitter waits in Babysit for transient mergeability", async () => {
-  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
-  const adapter = new MemoryQueueAdapter([
-    pullRequestItem({
-      id: "item-mergeability-unknown",
-      title: "Babysit queue adapter",
-      status: Status.BABYSIT,
-      workerType: WorkerType.PR_BABYSITTER
-    })
-  ]);
-  adapter.verifyPullRequestReadyForQaForClaim = async () => ({ ready: false, reason: "mergeability_unknown" });
-  let mergeCalls = 0;
-  const worker = workerWithCodexResult({
-    root,
-    adapter,
-    workerType: WorkerType.PR_BABYSITTER,
-    repoPolicy: { cwd: root, githubToken: "test-token", allowMerge: true },
-    result: {
-      outcome: "no-op",
-      nextStatus: Status.QA,
-      summary: "Approved with no local edits.",
-      mergeWhenApprovedAndClean: true
+      nextStatus: Status.READY_FOR_OWNER,
+      summary: "Authorized owner approval is present."
     },
     mergePullRequestImpl: async () => {
       mergeCalls += 1;
@@ -1317,11 +1274,36 @@ test("pr-babysitter waits in Babysit for transient mergeability", async () => {
 
   assert.equal(result.ran, true);
   assert.equal(result.error, undefined);
+  assert.equal(adapter.getItem("item-3").status, Status.READY_FOR_OWNER);
   assert.equal(mergeCalls, 0);
-  assert.equal(adapter.getItem("item-mergeability-unknown").status, Status.BABYSIT);
-  assert.equal(adapter.getItem("item-mergeability-unknown").leaseOwner, undefined);
-  assert.equal(adapter.events[0].outcome, "no-op");
-  assert.match(adapter.events[0].body, /mergeability_unknown/);
+});
+
+test("pr-babysitter rejects an unauthorized owner handoff", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-unapproved",
+      title: "Babysit queue adapter",
+      status: Status.BABYSIT,
+      workerType: WorkerType.PR_BABYSITTER
+    })
+  ], { ownerApprovers: ["owner"] });
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.PR_BABYSITTER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.READY_FOR_OWNER,
+      summary: "Approval claimed without evidence."
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.ran, true);
+  assert.match(result.error.message, /owner approval is not valid/);
+  assert.equal(adapter.getItem("item-unapproved").status, Status.BLOCKED);
 });
 
 test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () => {
@@ -1360,7 +1342,11 @@ test("pr-babysitter commits PR feedback fixes and stays in Babysit", async () =>
   assert.equal(result.error, undefined);
   assert.equal(adapter.getItem("item-babysit-fix").status, Status.BABYSIT);
   assert.equal(parseClaimId(adapter.getItem("item-babysit-fix").lastWorkerRun).headSha, "c".repeat(40));
-  assert.deepEqual(pushes[0].slice(-3), ["--no-verify", "https://github.com/acme/repo.git", "HEAD:feature"]);
+  assert.deepEqual(pushes[0].slice(-3), [
+    `--force-with-lease=refs/heads/feature:${"a".repeat(40)}`,
+    "https://github.com/acme/repo.git",
+    "HEAD:refs/heads/feature"
+  ]);
   assert.match(adapter.events[0].evidence.at(-1), /^Commit c{40}$/);
 });
 
@@ -1506,7 +1492,7 @@ test("reviewer dirty worktrees block instead of discarding edits", async () => {
   assert.equal(adapter.getItem("item-dirty-reviewer").status, Status.BLOCKED);
 });
 
-test("pr-babysitter blocks QA without merge flag", async () => {
+test("pr-babysitter cannot route automated work into legacy QA", async () => {
   const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
   const adapter = new MemoryQueueAdapter([
     pullRequestItem({
@@ -1530,7 +1516,7 @@ test("pr-babysitter blocks QA without merge flag", async () => {
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(result.error.message, /mergeWhenApprovedAndClean/);
+  assert.match(result.error.message, /pr-babysitter cannot transition to QA/);
   assert.equal(adapter.getItem("item-4").status, Status.BLOCKED);
 });
 

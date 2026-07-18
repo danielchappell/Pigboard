@@ -37,6 +37,7 @@ export async function runCodexExec({
   cwd,
   model,
   reasoningEffort,
+  sandbox = "workspace-write",
   schemaPath,
   outputPath,
   streamPath,
@@ -50,13 +51,14 @@ export async function runCodexExec({
   if (!cwd) throw new Error("cwd is required");
   const selectedModel = model == null ? undefined : normalizeCodexModel(model);
   const selectedReasoningEffort = reasoningEffort == null ? undefined : normalizeCodexReasoningEffort(reasoningEffort);
+  if (!["read-only", "workspace-write"].includes(sandbox)) throw new Error(`Unsupported Codex sandbox: ${sandbox}`);
   const args = [
     "--ask-for-approval",
     "never",
     "exec",
     "--json",
     "--sandbox",
-    "workspace-write"
+    sandbox
   ];
   if (selectedModel) args.push("--model", selectedModel);
   if (selectedReasoningEffort) {

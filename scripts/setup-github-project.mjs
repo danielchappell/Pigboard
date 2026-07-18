@@ -198,7 +198,9 @@ function printKanbanSummary({ createdFromTemplate, repositories }) {
   } else {
     console.log("- Switch the Project view layout to Board.");
     console.log("- Set the board column field to Status.");
-    console.log("- Show Todo, Planning, Architecture, Grooming, Implementation, QA, Review, Babysit, Blocked, and Done.");
+    console.log(
+      "- Show Todo, Planning, Architecture, Grooming, Ready, Implementation Planning, Implementation, QA, Review, Babysit, Ready for Owner, Blocked, Done, and Canceled."
+    );
   }
   console.log("- Move cards into a worker column to start work.");
   if (repositories.length) {

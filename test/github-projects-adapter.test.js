@@ -4,8 +4,11 @@ import test from "node:test";
 import {
   claimNextAvailable,
   createClaimId,
+  createStageHandoff,
   DependencyState,
+  formatStageHandoffComment,
   GitHubProjectsAdapter,
+  HandoffStage,
   parseClaimId,
   Status,
   WorkerType
@@ -141,6 +144,66 @@ test("GitHubProjectsAdapter leaves draft Project items dependency-free", async (
   const snapshot = await adapter.loadQueueSnapshot();
 
   assert.deepEqual(snapshot.items[0].dependencies, []);
+});
+
+test("GitHubProjectsAdapter loads trusted handoffs with backward pagination and deduplication", async () => {
+  const secret = "test-handoff-secret-01234567890123456789";
+  const older = createStageHandoff({
+    secret,
+    repository: "acme/repo",
+    issueNumber: 1,
+    itemId: "PVTI_item_1",
+    stage: HandoffStage.IMPLEMENTATION,
+    inputFingerprint: "old-input",
+    payload: { summary: "old", branchName: "ski/issue-1", headSha: "a".repeat(40) },
+    createdAt: "2026-07-18T11:00:00.000Z"
+  });
+  const latest = createStageHandoff({
+    secret,
+    repository: "acme/repo",
+    issueNumber: 1,
+    itemId: "PVTI_item_1",
+    stage: HandoffStage.IMPLEMENTATION,
+    inputFingerprint: "new-input",
+    payload: { summary: "new", branchName: "ski/issue-1", headSha: "b".repeat(40) },
+    createdAt: "2026-07-18T12:00:00.000Z"
+  });
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    owner: "acme",
+    projectNumber: 7,
+    fetchImpl: async () => { throw new Error("unexpected fetch"); },
+    handoffSecret: secret,
+    trustedAuthorLogin: "ski-daemon"
+  });
+  adapter.verifyClaim = async () => ({
+    active: true,
+    claim: { repository: "acme/repo" },
+    item: { id: "PVTI_item_1", contentType: "Issue", contentId: "ISSUE_1", number: 1 }
+  });
+  const cursors = [];
+  adapter.graphql = async (_query, variables) => {
+    cursors.push(variables.before);
+    if (!variables.before) {
+      return { node: { comments: {
+        nodes: [comment("c2", latest)],
+        pageInfo: { hasPreviousPage: true, startCursor: "cursor-2" }
+      } } };
+    }
+    return { node: { comments: {
+      nodes: [comment("c1", older), comment("c2", latest)],
+      pageInfo: { hasPreviousPage: false, startCursor: null }
+    } } };
+  };
+
+  const loaded = await adapter.loadStageHandoffsForClaim("claim", {
+    stages: [HandoffStage.IMPLEMENTATION]
+  });
+
+  assert.deepEqual(cursors, [null, "cursor-2"]);
+  assert.equal(loaded.handoffs.length, 1);
+  assert.equal(loaded.handoffs[0].commentId, "c2");
+  assert.equal(loaded.handoffs[0].envelope.payload.headSha, "b".repeat(40));
 });
 
 test("GitHubProjectsAdapter rejects claim-time dependency drift before field writes", async () => {
@@ -1739,6 +1802,16 @@ function blockerNode({
     state,
     stateReason,
     repository: { nameWithOwner: repository }
+  };
+}
+
+function comment(id, envelope) {
+  return {
+    id,
+    body: formatStageHandoffComment(envelope),
+    createdAt: envelope.createdAt,
+    updatedAt: envelope.createdAt,
+    author: { login: "ski-daemon" }
   };
 }
 

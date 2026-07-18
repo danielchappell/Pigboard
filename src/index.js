@@ -1,6 +1,19 @@
 export { Status, WorkerType, isTerminalStatus, readyStatusForWorker } from "./core/status.js";
 export { AdapterError, ClaimLostError } from "./core/adapter-contract.js";
 export { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "./core/claims.js";
+export { planDeliveryLifecycleMigration, recoverableDeliveryEvidence } from "./core/lifecycle-migration.js";
+export {
+  canonicalStringify,
+  contextFingerprint,
+  createStageHandoff,
+  formatStageHandoffComment,
+  HandoffStage,
+  normalizeHandoffSecret,
+  parseStageHandoffComment,
+  stageOperationId,
+  validateImplementationPlanPayload,
+  verifyStageHandoff
+} from "./core/handoffs.js";
 export {
   availabilityFingerprint,
   compareAvailableItems,
@@ -60,6 +73,8 @@ export { buildCodexRunnerEnv, buildDaemonGitEnv, buildRepoCommandEnv } from "./r
 export {
   cleanupWorktree,
   commitAll,
+  createDetachedBaseWorktree,
+  createImplementationBranchWorktree,
   createImplementationWorktree,
   createPullRequestWorktree,
   defaultWorktreeRoot,

@@ -93,8 +93,8 @@ is not ready.
 Every runnable item needs:
 
 - `Status`: the column that matches the worker, such as `Planning`,
-  `Architecture`, `Grooming`, `Ready`, `Implementation`, `QA`, `Review`, or
-  `Babysit`
+  `Architecture`, `Grooming`, `Ready`, `Implementation Planning`,
+  `Implementation`, `QA`, `Review`, or `Babysit`
 - `Priority`: `P0` through `P3`
 
 `Worker Type` is optional. Leave it blank for the normal Kanban flow where
@@ -188,9 +188,9 @@ Result JSON shape:
   "outcome": "completed",
   "nextStatus": "Review",
   "summary": "Implemented the scoped change.",
-  "evidence": ["npm test", "PR https://github.com/owner/repo/pull/42"],
+  "evidence": ["npm test"],
   "blocker": null,
-  "mergeWhenApprovedAndClean": false
+  "details": {}
 }
 ```
 
@@ -198,10 +198,9 @@ Result JSON shape:
 adapter failure path, records a failure event, moves the item to `Blocked`, and
 releases the claim.
 
-Only `pr-babysitter` may set `mergeWhenApprovedAndClean: true`, and only when it
-is asking the harness to merge a clean-CI, mergeable PR with either current-head
-review approval or a PR-description thumbs-up reaction before moving the card to
-`QA`.
+No automated worker may merge. Reviewer creates or recovers the non-draft PR;
+Babysit performs one bounded feedback/check cycle; an authorized PR-description
+`+1` moves the card to `Ready for Owner` for a human merge.
 
 ## 4. Runtime Shape
 
@@ -225,29 +224,30 @@ GitHub webhook or reconcile timer
   -> scheduler marks matching worker slots dirty
   -> adapter loads platform state and native dependencies
   -> claimNextAvailable() selects and claims through the core engine
-  -> daemon prepares an isolated worktree
+  -> daemon validates signed stage handoffs
+  -> daemon prepares an isolated stage-specific worktree
   -> Codex runs locally and writes a structured result
   -> worker revalidates availability before final side effects
   -> Project status advances, waits, or blocks with sanitized evidence
 ```
 
 Issue events wake every worker partition because a cross-repository blocker can
-unlock another queue. Periodic reconciliation remains the backup. Generated
-implementation PRs carry `Closes owner/repo#N`, so merging them completes the
-source issue used by native dependencies.
+unlock another queue. Periodic reconciliation remains the backup. Reviewer-
+created implementation PRs carry `Closes owner/repo#N`, so merging them
+completes the source issue used by native dependencies.
 
-The daemon currently auto-runs only `implementer`, `reviewer`, and
-`pr-babysitter`. `planner`, `architect`, `groomer`, `qa`, and `researcher`
-remain manual until they have explicit worker implementations.
+The daemon auto-runs `implementation-planner`, `implementer`, `reviewer`, and
+`pr-babysitter`. `architect` and `groomer` remain manual in this slice, and `qa`
+is a legacy/manual status outside the delivery chain.
 
 ## 5. Recommended First Pool
 
 Start small:
 
+- one `implementation-planner`
 - one `implementer`
 - one `reviewer`
 - one `pr-babysitter`
-- manual `qa` coverage when work reaches `QA`
 
 Do not run many implementers against the same repository until the branch and
 Project contention risks are intentional for that repo.
@@ -260,3 +260,31 @@ A worker must end each run by doing one of:
 - return the item to an earlier status with findings
 - mark `Blocked` with the exact blocker
 - mark `Done` only when the item itself is complete
+
+## 7. Daemon Security And Rollout
+
+Set a dedicated handoff key and configure authorized owner logins before
+starting the daemon:
+
+```bash
+export SKI_HANDOFF_SECRET=$(openssl rand -hex 32)
+```
+
+Each worker slot in `ski.workers.json` has independent `model`,
+`reasoningEffort`, and optional `rolePath`. The example uses `gpt-5.6-sol` for
+planning/review and `gpt-5.6-terra` for implementation/babysitting, all at
+`xhigh`.
+
+For an existing Project, provision the new Status and Worker Type options first,
+then preview migration:
+
+```bash
+npm run migrate:delivery-lifecycle
+```
+
+The migration preserves active leases and recoverable plan/branch/PR evidence.
+After reviewing the JSON plan, apply it explicitly:
+
+```bash
+npm run migrate:delivery-lifecycle -- --apply
+```

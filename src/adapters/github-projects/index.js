@@ -1,6 +1,13 @@
 import { AdapterError } from "../../core/adapter-contract.js";
 import { evaluateQueueAvailability } from "../../core/availability.js";
 import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../../core/claims.js";
+import {
+  contextFingerprint,
+  createStageHandoff,
+  formatStageHandoffComment,
+  parseStageHandoffComment,
+  verifyStageHandoff
+} from "../../core/handoffs.js";
 import { formatPublicEventComment, formatWithheldPublicEvent } from "../../core/public-output.js";
 import { resolvedWorkerTypeForItem } from "../../core/routing.js";
 import { Status } from "../../core/status.js";
@@ -16,8 +23,10 @@ import {
   ADD_COMMENT_MUTATION,
   CLEAR_FIELD_MUTATION,
   ISSUE_BLOCKED_BY_QUERY,
+  ISSUE_HANDOFFS_QUERY,
   ORGANIZATION_PROJECT_QUERY,
   USER_PROJECT_QUERY,
+  VIEWER_QUERY,
   UPDATE_FIELD_MUTATION
 } from "./graphql.js";
 
@@ -41,7 +50,10 @@ export class GitHubProjectsAdapter {
     now = () => new Date(),
     itemsFirst = 100,
     repositories = [],
-    ownerType = organization ? "Organization" : "auto"
+    ownerType = organization ? "Organization" : "auto",
+    handoffSecret,
+    trustedAuthorLogin,
+    ownerApprovers = []
   }) {
     if (!token) throw new Error("token is required");
     const projectOwner = owner ?? organization;
@@ -61,6 +73,9 @@ export class GitHubProjectsAdapter {
     this.detectedOwnerType = this.ownerType === "auto" ? null : this.ownerType;
     this.projectModel = null;
     this.claims = new Map();
+    this.handoffSecret = handoffSecret;
+    this.trustedAuthorLogin = trustedAuthorLogin;
+    this.ownerApprovers = new Set(ownerApprovers.map((login) => String(login).toLowerCase()));
   }
 
   async graphql(query, variables = {}) {
@@ -500,6 +515,113 @@ export class GitHubProjectsAdapter {
     return { appended: true };
   }
 
+  async appendStageHandoffForClaim(claimId, { stage, inputFingerprint, payload }, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { appended: false, reason: verified.reason };
+    const { claim, item } = verified;
+    const commentable = item.contentType === "Issue" ||
+      (item.contentType === "PullRequest" && ["review", "babysit"].includes(stage));
+    if (!commentable || !item.contentId || !item.number) {
+      return { appended: false, reason: "unsupported_content_type" };
+    }
+    const envelope = createStageHandoff({
+      secret: this.handoffSecret,
+      repository: claim.repository,
+      issueNumber: item.number,
+      itemId: item.id,
+      stage,
+      inputFingerprint,
+      payload,
+      createdAt: this.now().toISOString()
+    });
+    const existing = await this.loadStageHandoffsForClaim(claimId, { stages: [stage], ...verifyOptions });
+    const recovered = existing.handoffs.find((candidate) => candidate.envelope.operationId === envelope.operationId);
+    if (recovered) return { appended: true, recovered: true, envelope: recovered.envelope };
+    const data = await this.graphql(ADD_COMMENT_MUTATION, {
+      input: { subjectId: item.contentId, body: formatStageHandoffComment(envelope) }
+    });
+    return { appended: true, envelope, commentId: data?.addComment?.commentEdge?.node?.id };
+  }
+
+  async loadStageHandoffsForClaim(claimId, { stages, maxPages = 20, ...verifyOptions } = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
+    const { claim, item } = verified;
+    const commentable = item.contentType === "Issue" || item.contentType === "PullRequest";
+    if (!commentable || !item.contentId || !item.number) {
+      return { handoffs: [], fingerprint: contextFingerprint([]), reason: "unsupported_content_type" };
+    }
+    const wanted = new Set(stages ?? []);
+    const trustedAuthor = await this.resolveTrustedAuthorLogin();
+    const comments = [];
+    const seenComments = new Set();
+    const seenCursors = new Set();
+    let before = null;
+    let historyComplete = false;
+    for (let page = 0; page < maxPages; page += 1) {
+      const data = await this.graphql(ISSUE_HANDOFFS_QUERY, { id: item.contentId, last: 100, before });
+      const connection = data?.node?.comments;
+      if (!connection) throw new Error("GitHub issue handoff comments are unreadable");
+      for (const comment of connection.nodes ?? []) {
+        if (!comment?.id || seenComments.has(comment.id)) continue;
+        seenComments.add(comment.id);
+        comments.push(comment);
+      }
+      if (!connection.pageInfo?.hasPreviousPage) {
+        historyComplete = true;
+        break;
+      }
+      const nextCursor = connection.pageInfo?.startCursor;
+      if (!nextCursor || seenCursors.has(nextCursor)) throw new Error("GitHub issue handoff pagination did not advance");
+      seenCursors.add(nextCursor);
+      before = nextCursor;
+    }
+    if (!historyComplete) throw new Error("GitHub issue handoff history exceeds the safe pagination bound");
+    comments.sort((left, right) =>
+      String(left.createdAt).localeCompare(String(right.createdAt)) || String(left.id).localeCompare(String(right.id))
+    );
+    const handoffs = [];
+    for (const comment of comments) {
+      if (!String(comment.body ?? "").includes("ski-stack-handoff")) continue;
+      if (String(comment.author?.login ?? "").toLowerCase() !== trustedAuthor.toLowerCase()) continue;
+      const envelope = parseStageHandoffComment(comment.body);
+      if (!envelope || (wanted.size && !wanted.has(envelope.stage))) continue;
+      verifyStageHandoff(envelope, {
+        secret: this.handoffSecret,
+        repository: claim.repository,
+        issueNumber: item.number,
+        itemId: item.id
+      });
+      handoffs.push({
+        commentId: comment.id,
+        createdAt: comment.createdAt,
+        updatedAt: comment.updatedAt,
+        envelope
+      });
+    }
+    const latestByStage = new Map();
+    for (const handoff of handoffs) latestByStage.set(handoff.envelope.stage, handoff);
+    const latest = [...latestByStage.values()];
+    return {
+      handoffs: latest,
+      fingerprint: contextFingerprint(latest.map(({ commentId, updatedAt, envelope }) => ({
+        commentId,
+        updatedAt,
+        operationId: envelope.operationId,
+        payloadHash: envelope.payloadHash
+      })))
+    };
+  }
+
+  async resolveTrustedAuthorLogin() {
+    if (this.trustedAuthorLogin) return this.trustedAuthorLogin;
+    const data = await this.graphql(VIEWER_QUERY);
+    const login = data?.viewer?.login;
+    if (!login) throw new Error("Could not resolve the GitHub handoff author");
+    this.trustedAuthorLogin = login;
+    return login;
+  }
+
   async transition(itemId, status) {
     const projectModel = await this.ensureProjectModel();
     await this.setSingleSelectField(projectModel, itemId, FieldName.STATUS, status);
@@ -510,6 +632,171 @@ export class GitHubProjectsAdapter {
     if (!verified.active) return { transitioned: false, reason: verified.reason };
     await this.transition(verified.claim.itemId, status);
     return { transitioned: true };
+  }
+
+  async reconcileLifecycleEvent(event) {
+    if (!event?.repository) return { reconciled: false, reason: "unrelated_event" };
+    const { projectModel, items } = await this.loadProjectItems();
+    const repository = event.repository.toLowerCase();
+    const sourceIssue = items.find(
+      (item) => item.repository?.toLowerCase() === repository && item.contentType === "Issue" && item.number === event.issueNumber
+    );
+    const prItem = items.find(
+      (item) =>
+        item.repository?.toLowerCase() === repository &&
+        (item.pullRequestNumber === event.pullRequestNumber ||
+          (item.contentType === "PullRequest" && item.number === event.pullRequestNumber) ||
+          (event.issueNumber && item.pullRequestNumber === event.issueNumber))
+    );
+
+    if (event.eventName === "issues" && event.action === "closed" && sourceIssue) {
+      const status = event.issueStateReason === "not_planned" ? Status.CANCELED : Status.DONE;
+      if (sourceIssue.status === Status.DONE || sourceIssue.status === status) {
+        return { reconciled: false, reason: "terminal_state_protected" };
+      }
+      await this.forceLifecycleTransition(projectModel, sourceIssue, status);
+      return { reconciled: true, itemId: sourceIssue.id, status };
+    }
+    if (event.eventName === "pull_request" && event.action === "closed" && event.pullRequestMerged && prItem) {
+      await this.forceLifecycleTransition(projectModel, prItem, Status.DONE);
+      return { reconciled: true, itemId: prItem.id, status: Status.DONE };
+    }
+    if (
+      event.eventName === "reaction" &&
+      event.reactionSubject === "pull_request_description" &&
+      event.reactionContent === "+1" &&
+      prItem
+    ) {
+      const authorized = this.ownerApprovers.has(String(event.reactionUser ?? "").toLowerCase());
+      if (!authorized) return { reconciled: false, reason: "unauthorized_approval" };
+      if (event.action === "created" && prItem.status === Status.BABYSIT) {
+        await this.forceLifecycleTransition(projectModel, prItem, Status.READY_FOR_OWNER, { clearWorkerType: true });
+        return { reconciled: true, itemId: prItem.id, status: Status.READY_FOR_OWNER };
+      }
+      if (event.action === "deleted" && prItem.status === Status.READY_FOR_OWNER) {
+        await this.forceLifecycleTransition(projectModel, prItem, Status.BABYSIT, { clearWorkerType: true });
+        await this.clearLifecycleCooldown(projectModel, prItem);
+        return { reconciled: true, itemId: prItem.id, status: Status.BABYSIT };
+      }
+    }
+    if (event.eventName === "pull_request" && event.action === "synchronize" && prItem?.lastWorkerRun) {
+      try {
+        const prior = parseClaimId(prItem.lastWorkerRun);
+        if (isClaimV2(prior) && prior.nextEligibleAt && prior.headSha !== event.pullRequestHeadSha) {
+          await this.setTextField(projectModel, prItem.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
+            ...prior,
+            headSha: event.pullRequestHeadSha,
+            nextEligibleAt: undefined
+          }));
+          return { reconciled: true, itemId: prItem.id, cooldownCleared: true };
+        }
+      } catch {
+        return { reconciled: false, reason: "invalid_last_worker_run" };
+      }
+    }
+    return { reconciled: false, reason: "no_transition" };
+  }
+
+  async reconcileLifecycleState() {
+    const { projectModel, items } = await this.loadProjectItems();
+    const actions = [];
+    for (const item of items) {
+      if (item.status === Status.DONE) continue;
+      if (
+        item.contentType === "Issue" &&
+        item.contentState === "CLOSED" &&
+        item.contentStateReason !== "NOT_PLANNED"
+      ) {
+        await this.forceLifecycleTransition(projectModel, item, Status.DONE);
+        actions.push({ itemId: item.id, status: Status.DONE });
+        continue;
+      }
+      let state;
+      if (
+        item.pullRequestNumber &&
+        item.repository &&
+        [Status.REVIEW, Status.BABYSIT, Status.READY_FOR_OWNER, Status.CANCELED].includes(item.status)
+      ) {
+        state = item.status === Status.CANCELED
+          ? await this.fetchPullRequestLifecycleState({ repository: item.repository, number: item.pullRequestNumber })
+          : await this.fetchPullRequestMergeState({ repository: item.repository, number: item.pullRequestNumber });
+        if (state.merged) {
+          await this.forceLifecycleTransition(projectModel, item, Status.DONE);
+          actions.push({ itemId: item.id, status: Status.DONE });
+          continue;
+        }
+      }
+      if (item.contentType === "Issue" && item.contentState === "CLOSED") {
+        const status = item.contentStateReason === "NOT_PLANNED" ? Status.CANCELED : Status.DONE;
+        if (item.status !== status) {
+          await this.forceLifecycleTransition(projectModel, item, status);
+          actions.push({ itemId: item.id, status });
+        }
+        continue;
+      }
+      if (!state) continue;
+      const authorized = state.thumbsUpActors.some((login) => this.ownerApprovers.has(login.toLowerCase()));
+      if (authorized && item.status === Status.BABYSIT) {
+        await this.forceLifecycleTransition(projectModel, item, Status.READY_FOR_OWNER);
+        actions.push({ itemId: item.id, status: Status.READY_FOR_OWNER });
+      } else if (!authorized && item.status === Status.READY_FOR_OWNER) {
+        await this.forceLifecycleTransition(projectModel, item, Status.BABYSIT);
+        actions.push({ itemId: item.id, status: Status.BABYSIT });
+      }
+    }
+    return { reconciled: actions.length, actions };
+  }
+
+  async reconcileCompletedOperations() {
+    const { projectModel, items } = await this.loadProjectItems();
+    const actions = [];
+    for (const item of items) {
+      if (!item.lastWorkerRun || !item.leaseOwner || !item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= this.now()) continue;
+      let claim;
+      try {
+        claim = parseClaimId(item.lastWorkerRun);
+      } catch {
+        continue;
+      }
+      const stage = handoffStageForWorker(claim.resolvedWorkerType);
+      if (!isClaimV2(claim) || !claim.operationId || !stage) continue;
+      const loaded = await this.loadStageHandoffsForClaim(item.lastWorkerRun, {
+        stages: [stage],
+        allowStatusChanged: true,
+        allowWorkerTypeChanged: true,
+        requireAvailability: false
+      });
+      const completed = loaded.handoffs.find((handoff) => handoff.envelope.operationId === claim.operationId);
+      if (!completed) continue;
+      await this.clearField(projectModel, item.id, FieldName.LEASE_OWNER);
+      await this.clearField(projectModel, item.id, FieldName.LEASE_EXPIRES);
+      await this.clearField(projectModel, item.id, FieldName.WORKER_TYPE);
+      actions.push({ itemId: item.id, operationId: claim.operationId, leaseReleased: true });
+    }
+    return { reconciled: actions.length, actions };
+  }
+
+  async forceLifecycleTransition(projectModel, item, status, { clearWorkerType = true } = {}) {
+    await this.setSingleSelectField(projectModel, item.id, FieldName.STATUS, status);
+    for (const fieldName of [FieldName.LEASE_OWNER, FieldName.LEASE_EXPIRES]) {
+      await this.clearField(projectModel, item.id, fieldName);
+    }
+    if (clearWorkerType) await this.clearField(projectModel, item.id, FieldName.WORKER_TYPE);
+  }
+
+  async clearLifecycleCooldown(projectModel, item) {
+    if (!item.lastWorkerRun) return;
+    try {
+      const claim = parseClaimId(item.lastWorkerRun);
+      if (isClaimV2(claim) && claim.nextEligibleAt) {
+        await this.setTextField(projectModel, item.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
+          ...claim,
+          nextEligibleAt: undefined
+        }));
+      }
+    } catch {
+      // Invalid legacy run metadata remains visible for operator repair.
+    }
   }
 
   async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
@@ -600,6 +887,21 @@ export class GitHubProjectsAdapter {
     const mergeabilityReason = mergeabilityFailureReason(state);
     if (mergeabilityReason) return { ready: false, reason: mergeabilityReason };
     return { ready: true };
+  }
+
+  async verifyOwnerApprovalForClaim(claimId) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
+    if (!verified.active) return { approved: false, reason: verified.reason };
+    const claim = verified.claim;
+    const number = claim.pullRequestNumber ?? verified.item.pullRequestNumber;
+    if (!number) return { approved: false, reason: "missing_pr" };
+    if (!this.ownerApprovers.size) return { approved: false, reason: "owner_approvers_missing" };
+    const state = await this.fetchPullRequestMergeState({ repository: claim.repository, number });
+    if (state.merged) return { approved: false, reason: "merged" };
+    if (state.state !== "open") return { approved: false, reason: "pr_not_open" };
+    if (claim.headSha && state.headSha !== claim.headSha) return { approved: false, reason: "head_drift" };
+    const actor = state.thumbsUpActors.find((login) => this.ownerApprovers.has(login.toLowerCase()));
+    return actor ? { approved: true, actor, headSha: state.headSha } : { approved: false, reason: "authorized_thumbs_up_missing" };
   }
 
   async ensureProjectModel() {
@@ -711,6 +1013,31 @@ export class GitHubProjectsAdapter {
     };
   }
 
+  async fetchPullRequestLifecycleState({ repository, number }) {
+    const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
+      errorCode: "GITHUB_PR_METADATA_HTTP",
+      errorMessage: "GitHub pull request metadata request failed"
+    });
+    return { merged: pr.merged === true, state: pr.state, headSha: pr.head?.sha, thumbsUpActors: [] };
+  }
+
+  async loadRemoteBranch({ repository, branchName }) {
+    const response = await this.fetchImpl(
+      `https://api.github.com/repos/${repository}/branches/${encodeURIComponent(branchName)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "ski-stack"
+        }
+      }
+    );
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error(`GitHub branch metadata request failed: ${response.status}`);
+    const branch = await response.json();
+    return { branchName: branch.name, headSha: branch.commit?.sha };
+  }
+
   async fetchPullRequestMergeState({ repository, number }) {
     const pr = await this.fetchGitHubJson(`https://api.github.com/repos/${repository}/pulls/${number}`, {
       errorCode: "GITHUB_PR_METADATA_HTTP",
@@ -748,6 +1075,10 @@ export class GitHubProjectsAdapter {
       merged: pr.merged === true,
       headSha: pr.head?.sha,
       approved: reviewState.approved || hasThumbsUpReaction(reactions),
+      thumbsUpActors: reactions
+        .filter((reaction) => reaction?.content === "+1")
+        .map((reaction) => reaction.user?.login)
+        .filter(Boolean),
       changesRequested: reviewState.changesRequested,
       ciPresent: ciState.present,
       checksClean: ciState.clean,
@@ -1016,6 +1347,15 @@ function normalizeRepositoryFilter(repositories) {
       .map((value) => String(value).trim().toLowerCase())
       .filter(Boolean)
   );
+}
+
+function handoffStageForWorker(workerType) {
+  return {
+    "implementation-planner": "implementation_plan",
+    implementer: "implementation",
+    reviewer: "review",
+    "pr-babysitter": "babysit"
+  }[workerType];
 }
 
 function normalizeOwnerType(ownerType) {

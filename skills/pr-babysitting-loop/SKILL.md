@@ -1,41 +1,39 @@
 ---
 name: pr-babysitting-loop
-description: Loop for keeping a pull request moving through review, CI, deterministic merge, and QA handoff. Use for PR queue items, CI failures, review comments, merge conflicts, and late feedback.
+description: One bounded daemon cycle for keeping a pull request moving through review and CI until owner handoff.
 ---
 
 # PR Babysitting Loop
 
-Every run starts from live PR state.
+The queue runtime supplies fresh PR state and repeats this bounded cycle. Never
+sleep, fetch network state, request review, open a replacement PR, or merge from
+inside the Codex worker.
 
 ## Check
 
-- Current head SHA
-- CI/check status
-- Mergeability
-- Review decision
-- Unresolved review threads
-- New comments since last run
+- Current and claimed head SHA
+- Current-head CI and check state
+- Mergeability and draft state
+- Current-head reviews and unresolved, non-outdated threads
+- New top-level comments
+- PR-description reactions from configured owner approvers
 - Whether the PR was merged, closed, or superseded
 
 ## Act
 
-- Fix scoped CI failures.
-- Address review feedback that is inside the item scope.
-- Re-run or wait on checks when that is the only remaining action.
-- Comment with evidence when a finding is stale, invalid, or deferred.
-- When the PR has a clean CI run, is mergeable, and has a current-head review
-  approval or PR-description thumbs-up reaction, request
-  `mergeWhenApprovedAndClean: true` with `nextStatus: "QA"`. The harness must
-  re-check live PR state and merge with an exact head-SHA guard before moving
-  the item to QA.
+1. Classify every feedback item as valid, stale/invalid, or needs owner.
+2. Batch all valid, in-scope work into at most one commit.
+3. Run the narrowest meaningful verification and the configured repository checks.
+4. Push only to the existing branch with the claimed head as the expected value.
+5. Report actions and classifications. Do not create an empty commit.
 
-## Stop Conditions
+## Outcomes
 
-- PR merged by the harness: transition to `QA`.
-- Approved or PR-description thumbs-up, clean CI, and mergeable but not merged:
-  request the deterministic merge gate.
-- Real blocker: transition to `Blocked` with the blocker.
-- Superseded/closed: transition to `Canceled` or the configured terminal state.
+- Fix pushed or no current work: stay in `Babysit`.
+- Authorized PR-description thumbs-up: the harness moves to `Ready for Owner`.
+- Owner merge or successful source-issue closure: the reconciler moves to `Done`.
+- Human decision, permission failure, conflict, or repeated infrastructure failure:
+  move to `Blocked` with the exact next step.
 
-Never treat silence as success. Absence of a new notification means only that
-the next check has not found anything yet.
+Silence is not success. The runtime schedules the next fresh cycle after five
+minutes, or ten minutes when the cycle commit changed at least 15 files.

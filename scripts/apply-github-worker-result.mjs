@@ -7,6 +7,7 @@ const owner = process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG;
 const projectNumber = process.env.GITHUB_PROJECT_NUMBER;
 const claimId = process.env.SKI_CLAIM_ID ?? process.argv[2];
 const resultFile = process.env.SKI_RESULT_FILE ?? process.argv[3];
+const handoffSecret = process.env.SKI_HANDOFF_SECRET;
 
 if (!token || !owner || !projectNumber || !claimId) {
   console.error(`Missing required input.
@@ -30,7 +31,9 @@ const adapter = new GitHubProjectsAdapter({
   token,
   owner,
   projectNumber,
-  itemsFirst: 1
+  itemsFirst: 1,
+  handoffSecret,
+  trustedAuthorLogin: process.env.SKI_HANDOFF_AUTHOR_LOGIN
 });
 
 const applied = await applyWorkerResult({ adapter, claimId, result });

@@ -28,10 +28,12 @@ export const githubProjectsSchema = Object.freeze({
     "ski:planning",
     "ski:architecture",
     "ski:grooming",
+    "ski:implementation-planning",
     "ski:implementation",
     "ski:qa",
     "ski:review",
     "ski:babysit",
+    "ski:ready-for-owner",
     "ski:blocked"
   ]
 });

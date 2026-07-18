@@ -71,6 +71,10 @@ function normalizeClaimV2(input) {
     "headRepository",
     "headSha",
     "branchName",
+    "contextFingerprint",
+    "inputFingerprint",
+    "operationId",
+    "nextEligibleAt",
     "availabilityFingerprint"
   ]) {
     if (input[key] !== undefined && input[key] !== null && input[key] !== "") {

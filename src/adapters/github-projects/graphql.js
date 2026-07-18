@@ -169,6 +169,30 @@ export const ISSUE_BLOCKED_BY_QUERY = `
   }
 `;
 
+export const ISSUE_HANDOFFS_QUERY = `
+  query SkiStackIssueHandoffs($id: ID!, $last: Int!, $before: String) {
+    node(id: $id) {
+      ... on Issue {
+        comments(last: $last, before: $before) {
+          pageInfo {
+            hasPreviousPage
+            startCursor
+          }
+          nodes {
+            id
+            body
+            createdAt
+            updatedAt
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const RESOLVE_PROJECT_OWNER_QUERY = `
   query SkiStackResolveProjectOwner($owner: String!) {
     organization(login: $owner) {

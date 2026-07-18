@@ -29,6 +29,6 @@ Append a grooming handoff with:
 - first item to run
 - items that can run in parallel
 
-Transition the parent to `Done` if sub-items replace it, or `Ready` if the item
-is now small enough to implement.
-
+Return the decomposition as a structured `grooming` handoff. Put every created
+story in `Implementation Planning`, author native GitHub `blockedBy`
+relationships, and transition the replaced parent to `Done`.

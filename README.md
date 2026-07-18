@@ -17,10 +17,11 @@ The default worker roles are in `agents/`:
 | `planner` | Turn rough intent into a scoped work item. |
 | `architect` | Decide the technical approach before coding. |
 | `groomer` | Split large work into small, verifiable items. |
+| `implementation-planner` | Produce and adversarially review the concrete plan for one story. |
 | `implementer` | Build one scoped item against acceptance criteria. |
 | `qa` | Verify behavior with tests, app/API checks, or evidence. |
 | `reviewer` | Review diffs/plans for bugs, gaps, and drift. |
-| `pr-babysitter` | Keep one PR moving through feedback, CI, harness merge, and QA handoff. |
+| `pr-babysitter` | Run one bounded PR feedback/check cycle without merging. |
 | `researcher` | Answer a focused unknown that blocks progress. |
 
 The reusable skills live in `skills/`. They are not tied to the queue runtime;
@@ -155,7 +156,7 @@ npm run provision:github-project -- --apply
 Put an issue or PR into the Project with:
 
 - `Status`: one of `Planning`, `Architecture`, `Grooming`, `Ready`,
-  `Implementation`, `QA`, `Review`, or `Babysit`
+  `Implementation Planning`, `Implementation`, `QA`, `Review`, or `Babysit`
 - `Priority`: `P0`, `P1`, `P2`, or `P3`
 
 Moving a card into a worker column makes it eligible. `Worker Type` is optional
@@ -211,18 +212,24 @@ npm run release:github -- 'ski.<claim-payload>'
 
 ## Local Worker Daemon
 
-The local daemon currently auto-runs only the code loop workers:
+The local daemon runs this delivery chain:
 
+- `implementation-planner` claims `Implementation Planning`, runs Codex in a
+  read-only detached worktree, verifies at least two completed adversarial
+  review subagents and a clean final round, then advances to `Implementation`.
 - `implementer` claims `Implementation` and advances completed diffs to
-  `Review`.
-- `reviewer` claims `Review` and advances clean PRs to `Babysit`, or routes
-  findings back to `Implementation`.
+  `Review` on a deterministic `ski/issue-N` branch. It does not create a PR.
+- `reviewer` claims `Review` read-only, routes findings back to `Implementation`,
+  or creates/recovers a non-draft PR and advances clean work to `Babysit`.
 - `pr-babysitter` claims `Babysit`, addresses PR comments/CI feedback on the
-  same PR, stays in `Babysit` after pushing fixes, and asks the harness to
-  merge clean-CI, explicitly approved PRs before moving them to `QA`.
+  same PR, and stays in `Babysit` after waiting or pushing one scoped fix.
+- The lifecycle reconciler moves an authorized PR-description `+1` to
+  `Ready for Owner`; only the owner merges. Approval removal returns to
+  `Babysit`, while merge or successful source-issue closure moves to `Done`.
 
-`planner`, `architect`, `groomer`, `qa`, and `researcher` stay manual until
-they have explicit worker implementations.
+`architect` and `groomer` stay manual in this slice. Their role cards emit
+standardized handoffs, and Grooming puts implementation stories into
+`Implementation Planning`. `QA` remains available only for legacy/manual use.
 
 The daemon uses local ChatGPT-authenticated Codex, not API-key billing. Startup
 runs `codex login status` and fails if local ChatGPT auth cannot be verified.
@@ -243,6 +250,11 @@ refuses to start if it is missing or blank. `type` controls queue routing while
 `model_reasoning_effort` configuration override. Repo commands are run with a
 scrubbed environment and network denied.
 
+Each slot may set its own `rolePath`. The repository-wide `workerRole` override
+is retained only as a deprecated fallback. The example config uses
+`gpt-5.6-sol` for planning/review and `gpt-5.6-terra` for implementation and
+babysitting, all with `xhigh` reasoning.
+
 Start the daemon:
 
 ```bash
@@ -250,6 +262,7 @@ GITHUB_TOKEN=... \
 GITHUB_OWNER=your-user-or-org \
 GITHUB_PROJECT_NUMBER=1 \
 GITHUB_WEBHOOK_SECRET=change-me \
+SKI_HANDOFF_SECRET=$(openssl rand -hex 32) \
 SKI_WORKER_CONFIG=./ski.workers.json \
 npm run daemon:github
 ```
@@ -271,6 +284,10 @@ any enrolled repo in the shared Project.
 
 Full Codex streams stay local under `SKI_RUN_LOG_DIR` or
 `~/.ski-stack/runs`. GitHub only receives concise sanitized status/evidence.
+Machine-authoritative stage handoffs are visible signed issue comments. They
+require `SKI_HANDOFF_SECRET` of at least 32 bytes and are accepted only from the
+configured daemon GitHub login. Ordinary issue bodies/comments remain untrusted
+prompt context.
 
 Retrieve local logs:
 
@@ -289,13 +306,14 @@ GitHub Project
   -> adapter loads a normalized queue snapshot and native dependencies
   -> core engine orders available work by Priority and Project position
   -> coordinator claims one candidate with a structured lease envelope
-  -> daemon prepares an isolated worktree
+  -> daemon loads and verifies signed stage handoffs
+  -> daemon prepares an isolated stage-specific worktree
   -> Codex runs locally and writes a structured result
   -> daemon revalidates dependency availability before final side effects
   -> Project status advances or blocks with sanitized evidence
 ```
 
-Generated implementation PRs include a harness-owned
+Reviewer-created implementation PRs include a harness-owned
 `Closes owner/repo#N` line. Merging the PR closes the source issue and can unlock
 native dependents. Issue webhooks wake every worker partition; periodic
 reconciliation covers missed events.

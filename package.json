@@ -13,6 +13,7 @@
     "daemon:github": "node scripts/run-github-worker-daemon.mjs",
     "import:github-repos": "node scripts/import-github-project-repos.mjs",
     "logs:github": "node scripts/show-github-run-logs.mjs",
+    "migrate:delivery-lifecycle": "node scripts/migrate-delivery-lifecycle.mjs",
     "provision:github-project": "node scripts/provision-github-project.mjs",
     "release:github": "node scripts/release-github-claim.mjs",
     "schema:github-projects": "node scripts/print-github-project-schema.mjs",
