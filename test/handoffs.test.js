@@ -135,4 +135,8 @@ test("stage handoffs reject credentials and machine-local paths before publicati
     () => createStageHandoff({ ...input, payload: { summary: "See /Users/operator/private/run.jsonl" } }),
     /unsafe public output/
   );
+  assert.throws(
+    () => createStageHandoff({ ...input, payload: { summary: "See /workspace/ski-stack/run.jsonl" } }),
+    /unsafe public output/
+  );
 });

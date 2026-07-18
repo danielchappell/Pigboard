@@ -156,12 +156,39 @@ test("external head changes revoke Ready for Owner until a new approval event", 
     "b".repeat(40)
   );
 
+  const claimed = await adapter.claimReadyForWorker({
+    workerType: WorkerType.PR_BABYSITTER,
+    workerId: "babysitter-2",
+    leaseSeconds: 1800
+  });
+  assert.equal(claimed.claimed, true);
+  assert.equal(parseClaimId(claimed.claim.id).approvalInvalidatedHeadSha, "b".repeat(40));
+
   await adapter.reconcileLifecycleEvent(reactionEvent("created"));
   assert.equal(adapter.getItem("item-12").status, Status.READY_FOR_OWNER);
   assert.equal(
     parseClaimId(adapter.getItem("item-12").lastWorkerRun).approvalInvalidatedHeadSha,
     undefined
   );
+});
+
+test("closed unmerged pull requests reconcile to Canceled", async () => {
+  const adapter = new MemoryQueueAdapter([issueItem({
+    status: Status.BABYSIT,
+    workerType: WorkerType.PR_BABYSITTER,
+    pullRequestNumber: 42
+  })]);
+
+  const result = await adapter.reconcileLifecycleEvent({
+    eventName: "pull_request",
+    action: "closed",
+    repository: "acme/repo",
+    pullRequestNumber: 42,
+    pullRequestMerged: false
+  });
+
+  assert.deepEqual(result, { reconciled: true, itemId: "item-12", status: Status.CANCELED });
+  assert.equal(adapter.getItem("item-12").status, Status.CANCELED);
 });
 
 test("startup reconciliation releases only leases bound to an exact signed completion", async () => {

@@ -5,10 +5,17 @@ import {
   claimNextAvailable,
   DependencyState,
   GitHubCodeLoopWorker,
+  isAvailabilityChangeReason,
   MemoryQueueAdapter,
   Status,
   WorkerType
 } from "../src/index.js";
+
+test("claim cleanup recognizes every availability-invalidating reason", () => {
+  for (const reason of ["not_before", "source_terminal", "unsupported_content_type"]) {
+    assert.equal(isAvailabilityChangeReason(reason), true, reason);
+  }
+});
 
 test("claim coordinator skips blocked high-priority work for lower-priority available work", async () => {
   const adapter = new MemoryQueueAdapter([

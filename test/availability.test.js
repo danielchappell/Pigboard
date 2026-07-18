@@ -133,6 +133,20 @@ test("availability skips only items whose persisted cooldown has not elapsed", (
   assert.equal(selection.unavailable[0].reasons[0].code, UnavailableReason.NOT_BEFORE);
 });
 
+test("availability fingerprints ignore elapsed cooldowns but retain active cooldowns", () => {
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  const base = item({ id: "cooldown-fingerprint" });
+
+  assert.equal(
+    availabilityFingerprint({ ...base, availableAfter: "2026-07-18T11:59:00.000Z" }, { now }),
+    availabilityFingerprint(base, { now })
+  );
+  assert.notEqual(
+    availabilityFingerprint({ ...base, availableAfter: "2026-07-18T12:01:00.000Z" }, { now }),
+    availabilityFingerprint(base, { now })
+  );
+});
+
 test("automated planning and implementation require source issues", () => {
   const selection = evaluateQueueAvailability({ items: [
     item({

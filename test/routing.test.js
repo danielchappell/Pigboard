@@ -55,6 +55,23 @@ test("auto-run implementer can only complete to Review", () => {
   );
 });
 
+test("implementation planner no-op results cannot advance without a plan", () => {
+  assert.equal(
+    validateWorkerTransition({
+      workerType: WorkerType.IMPLEMENTATION_PLANNER,
+      result: { outcome: "no-op", nextStatus: Status.IMPLEMENTATION_PLANNING }
+    }),
+    Status.IMPLEMENTATION_PLANNING
+  );
+  assert.throws(
+    () => validateWorkerTransition({
+      workerType: WorkerType.IMPLEMENTATION_PLANNER,
+      result: { outcome: "no-op", nextStatus: Status.IMPLEMENTATION }
+    }),
+    /must remain in Implementation Planning/
+  );
+});
+
 test("automated reviewers cannot bypass Babysit and mark Done", () => {
   assert.throws(
     () =>

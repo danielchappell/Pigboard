@@ -43,7 +43,7 @@ export function evaluateQueueAvailability(snapshot, options = {}) {
     });
     const candidate = {
       item,
-      fingerprint: availabilityFingerprint(item)
+      fingerprint: availabilityFingerprint(item, { now })
     };
     if (reasons.length) unavailable.push({ ...candidate, reasons });
     else available.push(candidate);
@@ -53,7 +53,7 @@ export function evaluateQueueAvailability(snapshot, options = {}) {
   return { available, unavailable };
 }
 
-export function availabilityFingerprint(item) {
+export function availabilityFingerprint(item, { now = new Date() } = {}) {
   const dependencies = normalizeDependencies(item?.dependencies)
     .map((dependency) => ({
       kind: dependency.kind,
@@ -68,7 +68,7 @@ export function availabilityFingerprint(item) {
     repository: item?.repository ?? null,
     contentType: item?.contentType ?? null,
     contentState: item?.contentState ?? null,
-    availableAfter: normalizeAvailableAfter(item?.availableAfter),
+    availableAfter: fingerprintAvailableAfter(item?.availableAfter, normalizeNow(now)),
     dependencies
   });
   return createHash("sha256").update(payload).digest("hex");
@@ -253,6 +253,11 @@ function normalizeAvailableAfter(value) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+
+function fingerprintAvailableAfter(value, now) {
+  const availableAfter = normalizeAvailableAfter(value);
+  return availableAfter && availableAfter > now.toISOString() ? availableAfter : null;
 }
 
 function stableItemId(item) {

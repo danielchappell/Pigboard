@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   DependencyState,
+  createStageHandoff,
   GitHubCodeLoopWorker,
   HandoffStage,
   MemoryQueueAdapter,
@@ -1104,6 +1105,78 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(adapter.getItem("item-2").status, Status.BABYSIT);
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
   assert.equal(verifyOptions.some((options) => options?.requireHeadSha === true), true);
+});
+
+test("reviewer publishes an issue-backed branch against the signed base", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const item = {
+    id: "item-signed-base",
+    title: "Review release branch",
+    status: Status.REVIEW,
+    workerType: WorkerType.REVIEWER,
+    repository: "acme/repo",
+    contentType: "Issue",
+    number: 12,
+    branchName: "ski/issue-12",
+    headSha: "a".repeat(40)
+  };
+  const adapter = new MemoryQueueAdapter([item]);
+  adapter.handoffs.push({
+    itemId: item.id,
+    envelope: createStageHandoff({
+      secret: adapter.handoffSecret,
+      repository: item.repository,
+      issueNumber: item.number,
+      itemId: item.id,
+      stage: HandoffStage.IMPLEMENTATION,
+      inputFingerprint: "implementation-input",
+      payload: {
+        branchName: item.branchName,
+        baseRef: "release/2.x",
+        baseSha: "b".repeat(40),
+        headSha: item.headSha
+      }
+    })
+  });
+  let publishedBase;
+  const worker = new GitHubCodeLoopWorker({
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    workerId: "reviewer-signed-base",
+    repoPolicy: { cwd: root, allowCreatePr: true, defaultBaseBranch: "main", githubToken: "test-token" },
+    runLogDir: join(root, "runs"),
+    createImplementationBranchWorktreeImpl: async () => {
+      const worktreePath = join(root, "worktree");
+      await mkdir(worktreePath, { recursive: true });
+      return { worktreePath, branchName: item.branchName, headSha: item.headSha };
+    },
+    runRepoCommandsImpl: async () => [],
+    assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
+    execFileImpl: async (_command, args) => {
+      if (args.includes("rev-parse")) return { stdout: `${item.headSha}\n`, stderr: "" };
+      return { stdout: "", stderr: "" };
+    },
+    runCodexExecImpl: async ({ outputPath }) => {
+      await writeFile(outputPath, JSON.stringify({
+        outcome: "completed",
+        nextStatus: Status.BABYSIT,
+        summary: "No blocking findings."
+      }));
+      return { stdout: "", stderr: "" };
+    },
+    ensurePullRequestImpl: async ({ baseBranch }) => {
+      publishedBase = baseBranch;
+      return { number: 42, url: "https://github.com/acme/repo/pull/42" };
+    },
+    writeRunArtifactsImpl: async () => ({ runDir: join(root, "runs", "run") }),
+    cleanupWorktreeImpl: async () => {}
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.error, undefined);
+  assert.equal(publishedBase, "release/2.x");
+  assert.equal(adapter.getItem(item.id).status, Status.BABYSIT);
 });
 
 test("reviewer recomputes stage context from the live item", async () => {

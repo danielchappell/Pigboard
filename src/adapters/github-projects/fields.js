@@ -112,6 +112,7 @@ export function normalizeProjectItem(node, { sourceOrder } = {}) {
     attempts: fields[FieldName.ATTEMPTS],
     lastWorkerRun,
     availableAfter: availableAfterFromLastRun(lastWorkerRun),
+    approvalInvalidatedHeadSha: approvalInvalidatedHeadShaFromLastRun(lastWorkerRun),
     fields,
     optionIds,
     raw: node
@@ -123,6 +124,16 @@ function availableAfterFromLastRun(value) {
   try {
     const claim = parseClaimId(value);
     return isClaimV2(claim) ? claim.nextEligibleAt : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function approvalInvalidatedHeadShaFromLastRun(value) {
+  if (!String(value ?? "").startsWith("ski2.")) return undefined;
+  try {
+    const claim = parseClaimId(value);
+    return isClaimV2(claim) ? claim.approvalInvalidatedHeadSha : undefined;
   } catch {
     return undefined;
   }

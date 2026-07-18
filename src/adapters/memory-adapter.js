@@ -308,6 +308,9 @@ export class MemoryQueueAdapter {
       item.status = status;
     } else if (event.eventName === "pull_request" && event.action === "closed" && event.pullRequestMerged) {
       item.status = Status.DONE;
+    } else if (event.eventName === "pull_request" && event.action === "closed") {
+      if (item.status === Status.DONE) return { reconciled: false, reason: "terminal_state_protected" };
+      item.status = Status.CANCELED;
     } else if (
       event.eventName === "reaction" &&
       event.reactionSubject === "pull_request_description" &&
@@ -317,6 +320,7 @@ export class MemoryQueueAdapter {
         return { reconciled: false, reason: "unauthorized_approval" };
       }
       if (event.action === "created" && item.status === Status.BABYSIT) {
+        delete item.approvalInvalidatedHeadSha;
         if (item.lastWorkerRun) {
           try {
             const prior = parseClaimId(item.lastWorkerRun);
@@ -345,7 +349,12 @@ export class MemoryQueueAdapter {
         return { reconciled: false, reason: "no_transition" };
       }
       const ownerApprovalInvalidated = item.status === Status.READY_FOR_OWNER;
-      if (ownerApprovalInvalidated) item.status = Status.BABYSIT;
+      if (ownerApprovalInvalidated) {
+        item.status = Status.BABYSIT;
+        delete item.workerType;
+        delete item.leaseOwner;
+        delete item.leaseExpiresAt;
+      }
       if (isClaimV2(prior)) {
         item.lastWorkerRun = createClaimV2Id({
           ...prior,
@@ -521,6 +530,7 @@ export class MemoryQueueAdapter {
             headRef: live.headRef,
             headRepository: live.headRepository,
             headSha: live.headSha,
+            approvalInvalidatedHeadSha: approvalInvalidatedHeadSha(live),
             availabilityFingerprint: fingerprint ?? availabilityFingerprint(live),
             claimedAt: now.toISOString(),
             ...context
@@ -549,6 +559,17 @@ export class MemoryQueueAdapter {
 function normalizeRepositoryFilter(repositories) {
   const values = Array.isArray(repositories) ? repositories : String(repositories ?? "").split(",");
   return new Set(values.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
+}
+
+function approvalInvalidatedHeadSha(item) {
+  if (item?.approvalInvalidatedHeadSha) return item.approvalInvalidatedHeadSha;
+  if (!item?.lastWorkerRun) return undefined;
+  try {
+    const claim = parseClaimId(item.lastWorkerRun);
+    return isClaimV2(claim) ? claim.approvalInvalidatedHeadSha : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function handoffStageForWorker(workerType) {

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   claimNextAvailable,
   createClaimId,
+  createClaimV2Id,
   createStageHandoff,
   DependencyState,
   formatStageHandoffComment,
@@ -439,6 +440,48 @@ test("GitHubProjectsAdapter claims by writing lease fields", async () => {
   assert.equal(updates[1].value.text, "2026-07-07T12:30:00.000Z");
   assert.equal(updates[2].value.number, 1);
   assert.match(updates[3].value.text, /^ski\./);
+});
+
+test("GitHubProjectsAdapter can claim after a persisted cooldown has elapsed", async () => {
+  const lastWorkerRun = createClaimV2Id({
+    itemId: "PVTI_item_1",
+    workerId: "previous-worker",
+    attemptId: "attempt-1",
+    runId: "run-1",
+    expiresAt: "2026-07-07T11:30:00.000Z",
+    resolvedWorkerType: WorkerType.IMPLEMENTER,
+    claimedStatus: Status.IMPLEMENTATION,
+    repository: "acme/repo",
+    contentType: "Issue",
+    issueNumber: 1,
+    claimedAt: "2026-07-07T11:00:00.000Z",
+    nextEligibleAt: "2026-07-07T11:55:00.000Z"
+  });
+  const response = projectResponse({ lastWorkerRun });
+  const { fetchImpl } = createGraphqlMock([
+    response,
+    structuredClone(response),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await claimNextAvailable({
+    adapter,
+    workerType: WorkerType.IMPLEMENTER,
+    workerId: "worker-1",
+    leaseSeconds: 1800
+  });
+
+  assert.equal(result.claimed, true);
 });
 
 test("GitHubProjectsAdapter releases a claim from a fresh process", async () => {
@@ -1558,6 +1601,41 @@ test("GitHubProjectsAdapter migration clears stale routing and lease fields", as
   assert.deepEqual(calls[1].variables.input.value, {
     singleSelectOptionId: "status_implementation_planning"
   });
+});
+
+test("GitHubProjectsAdapter cancels closed unmerged PR items despite historical approval", async () => {
+  const item = {
+    id: "PVTI_pr_42",
+    status: Status.BABYSIT,
+    contentType: "PullRequest",
+    contentState: "OPEN",
+    number: 42,
+    repository: "acme/repo"
+  };
+  const transitions = [];
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl: async () => { throw new Error("unexpected fetch"); },
+    ownerApprovers: ["owner"]
+  });
+  adapter.loadProjectItems = async () => ({ projectModel: {}, items: [item] });
+  adapter.fetchPullRequestMergeState = async () => ({
+    merged: false,
+    state: "closed",
+    headSha: "a".repeat(40),
+    thumbsUpActors: ["owner"]
+  });
+  adapter.forceLifecycleTransition = async (_projectModel, candidate, status) => {
+    candidate.status = status;
+    transitions.push(status);
+  };
+
+  const result = await adapter.reconcileLifecycleState();
+
+  assert.deepEqual(transitions, [Status.CANCELED]);
+  assert.deepEqual(result.actions, [{ itemId: item.id, status: Status.CANCELED }]);
 });
 
 test("GitHubProjectsAdapter appends worker events as comments", async () => {

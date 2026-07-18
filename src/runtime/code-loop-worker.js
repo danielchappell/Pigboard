@@ -648,7 +648,7 @@ export class GitHubCodeLoopWorker {
           token: this.repoPolicy.githubToken,
           repository: claim.repository,
           branchName,
-          baseBranch: this.repoPolicy.defaultBaseBranch ?? "main",
+          baseBranch: stageContext.baseRef ?? this.repoPolicy.defaultBaseBranch ?? "main",
           expectedHeadSha: stageContext.headSha ?? claim.headSha,
           draft: false,
           title: `Ski Stack: ${item?.title ?? "Worker change"}`,

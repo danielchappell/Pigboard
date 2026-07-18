@@ -75,6 +75,13 @@ export function validateWorkerTransition({ workerType, result }) {
   if (workerType === WorkerType.IMPLEMENTER && result.outcome === "no-op") {
     throw new Error("implementer no-op cannot auto-advance in the current runtime");
   }
+  if (
+    workerType === WorkerType.IMPLEMENTATION_PLANNER &&
+    result.outcome === "no-op" &&
+    result.nextStatus !== Status.IMPLEMENTATION_PLANNING
+  ) {
+    throw new Error("implementation-planner no-op must remain in Implementation Planning");
+  }
 
   if (!["completed", "no-op"].includes(result.outcome)) {
     throw new Error(`Unsupported worker outcome: ${result.outcome}`);

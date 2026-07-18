@@ -163,7 +163,8 @@ export function normalizeHandoffSecret(secret) {
 export function assertSafeHandoffPayload(payload) {
   const serialized = canonicalStringify(payload);
   const unsafePatterns = [
-    /(?:^|[\s"'])(?:\/Users\/|\/home\/|[A-Za-z]:\\)/,
+    /(?:^|[\s(["'`])\/(?:Users|home|workspace|private|tmp|var|opt|etc|root)\//,
+    /[A-Za-z]:\\(?:Users|Windows|ProgramData|Temp)\\/i,
     /(?:ghp_|github_pat_|sk-(?:proj-)?)[A-Za-z0-9_-]{12,}/,
     /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
     /\bBearer\s+[A-Za-z0-9._~+\/-]{12,}/i,

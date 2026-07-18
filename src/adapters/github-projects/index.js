@@ -362,6 +362,7 @@ export class GitHubProjectsAdapter {
       headRef: pullRequest?.headRef,
       headRepository: pullRequest?.headRepository,
       headSha: pullRequest?.headSha,
+      approvalInvalidatedHeadSha: item.approvalInvalidatedHeadSha,
       availabilityFingerprint,
       claimedAt: now.toISOString(),
       ...context
@@ -683,6 +684,11 @@ export class GitHubProjectsAdapter {
       await this.forceLifecycleTransition(projectModel, prItem, Status.DONE);
       return { reconciled: true, itemId: prItem.id, status: Status.DONE };
     }
+    if (event.eventName === "pull_request" && event.action === "closed" && !event.pullRequestMerged && prItem) {
+      if (prItem.status === Status.DONE) return { reconciled: false, reason: "terminal_state_protected" };
+      await this.forceLifecycleTransition(projectModel, prItem, Status.CANCELED);
+      return { reconciled: true, itemId: prItem.id, status: Status.CANCELED };
+    }
     if (
       event.eventName === "reaction" &&
       event.reactionSubject === "pull_request_description" &&
@@ -744,6 +750,18 @@ export class GitHubProjectsAdapter {
     const actions = [];
     for (const item of items) {
       if (item.status === Status.DONE) continue;
+      if (item.contentType === "PullRequest" && item.contentState === "MERGED") {
+        await this.forceLifecycleTransition(projectModel, item, Status.DONE);
+        actions.push({ itemId: item.id, status: Status.DONE });
+        continue;
+      }
+      if (item.contentType === "PullRequest" && item.contentState === "CLOSED") {
+        if (item.status !== Status.CANCELED) {
+          await this.forceLifecycleTransition(projectModel, item, Status.CANCELED);
+          actions.push({ itemId: item.id, status: Status.CANCELED });
+        }
+        continue;
+      }
       if (
         item.contentType === "Issue" &&
         item.contentState === "CLOSED" &&
@@ -767,6 +785,13 @@ export class GitHubProjectsAdapter {
         if (state.merged) {
           await this.forceLifecycleTransition(projectModel, item, Status.DONE);
           actions.push({ itemId: item.id, status: Status.DONE });
+          continue;
+        }
+        if (String(state.state).toLowerCase() !== "open") {
+          if (item.status !== Status.CANCELED) {
+            await this.forceLifecycleTransition(projectModel, item, Status.CANCELED);
+            actions.push({ itemId: item.id, status: Status.CANCELED });
+          }
           continue;
         }
       }
