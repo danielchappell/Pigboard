@@ -124,6 +124,46 @@ test("external head changes clear cooldown while the worker's own head event pre
   assert.equal(parseClaimId(adapter.getItem("item-12").lastWorkerRun).nextEligibleAt, undefined);
 });
 
+test("external head changes revoke Ready for Owner until a new approval event", async () => {
+  const lastWorkerRun = createClaimV2Id({
+    itemId: "item-12",
+    workerId: "babysitter-1",
+    attemptId: "attempt-1",
+    runId: "run-1",
+    expiresAt: "2026-07-18T13:00:00.000Z",
+    resolvedWorkerType: WorkerType.PR_BABYSITTER,
+    claimedStatus: Status.BABYSIT,
+    repository: "acme/repo",
+    contentType: "Issue",
+    issueNumber: 12,
+    pullRequestNumber: 42,
+    headSha: "a".repeat(40),
+    claimedAt: "2026-07-18T12:00:00.000Z"
+  });
+  const adapter = new MemoryQueueAdapter([issueItem({
+    status: Status.READY_FOR_OWNER,
+    pullRequestNumber: 42,
+    headSha: "a".repeat(40),
+    lastWorkerRun
+  })], { ownerApprovers: ["owner"] });
+
+  const changed = await adapter.reconcileLifecycleEvent(synchronizeEvent("b".repeat(40)));
+
+  assert.equal(changed.ownerApprovalInvalidated, true);
+  assert.equal(adapter.getItem("item-12").status, Status.BABYSIT);
+  assert.equal(
+    parseClaimId(adapter.getItem("item-12").lastWorkerRun).approvalInvalidatedHeadSha,
+    "b".repeat(40)
+  );
+
+  await adapter.reconcileLifecycleEvent(reactionEvent("created"));
+  assert.equal(adapter.getItem("item-12").status, Status.READY_FOR_OWNER);
+  assert.equal(
+    parseClaimId(adapter.getItem("item-12").lastWorkerRun).approvalInvalidatedHeadSha,
+    undefined
+  );
+});
+
 test("startup reconciliation releases only leases bound to an exact signed completion", async () => {
   const adapter = new MemoryQueueAdapter([issueItem()]);
   const seeded = await adapter.claimReadyForWorker({

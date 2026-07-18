@@ -1081,6 +1081,12 @@ test("reviewer transitions clean PRs to Babysit", async () => {
       workerType: WorkerType.REVIEWER
     })
   ]);
+  const verifyOptions = [];
+  const verifyClaim = adapter.verifyClaim.bind(adapter);
+  adapter.verifyClaim = async (claimId, options) => {
+    verifyOptions.push(options);
+    return verifyClaim(claimId, options);
+  };
   const worker = workerWithCodexResult({
     root,
     adapter,
@@ -1097,6 +1103,78 @@ test("reviewer transitions clean PRs to Babysit", async () => {
   assert.equal(result.ran, true);
   assert.equal(adapter.getItem("item-2").status, Status.BABYSIT);
   assert.equal(adapter.events[0].workerType, WorkerType.REVIEWER);
+  assert.equal(verifyOptions.some((options) => options?.requireHeadSha === true), true);
+});
+
+test("reviewer recomputes stage context from the live item", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    {
+      ...pullRequestItem({
+        id: "item-live-context",
+        title: "Review live requirements",
+        status: Status.REVIEW,
+        workerType: WorkerType.REVIEWER
+      }),
+      body: "Original requirements"
+    }
+  ]);
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "No blocking findings."
+    },
+    beforeResultWrite: async () => {
+      adapter.items.get("item-live-context").body = "Changed requirements";
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.match(result.error.message, /context_drift/);
+  assert.equal(adapter.getItem("item-live-context").status, Status.REVIEW);
+});
+
+test("read-only workers snapshot repository state after setup", async () => {
+  const root = await mkdtemp(join(tmpdir(), "ski-worker-"));
+  const adapter = new MemoryQueueAdapter([
+    pullRequestItem({
+      id: "item-read-only-setup",
+      title: "Review after setup",
+      status: Status.REVIEW,
+      workerType: WorkerType.REVIEWER
+    })
+  ]);
+  let setupComplete = false;
+  const worker = workerWithCodexResult({
+    root,
+    adapter,
+    workerType: WorkerType.REVIEWER,
+    repoPolicy: { cwd: root, setupCommands: ["npm install"] },
+    result: {
+      outcome: "completed",
+      nextStatus: Status.BABYSIT,
+      summary: "No blocking findings."
+    },
+    runRepoCommandsImpl: async () => {
+      setupComplete = true;
+      return [];
+    },
+    execFileImpl: async (_command, args) => {
+      assert.equal(setupComplete, true);
+      if (args.includes("rev-parse")) return { stdout: `${"a".repeat(40)}\n`, stderr: "" };
+      return { stdout: "", stderr: "" };
+    }
+  });
+
+  const result = await worker.runOnce();
+
+  assert.equal(result.error, undefined);
+  assert.equal(adapter.getItem("item-read-only-setup").status, Status.BABYSIT);
 });
 
 test("implementation planner runs read-only and persists a transcript-backed clean plan", async () => {
@@ -1473,6 +1551,7 @@ test("reviewer dirty worktrees block instead of discarding edits", async () => {
       workerType: WorkerType.REVIEWER
     })
   ]);
+  let statusCalls = 0;
   const worker = workerWithCodexResult({
     root,
     adapter,
@@ -1482,13 +1561,20 @@ test("reviewer dirty worktrees block instead of discarding edits", async () => {
       nextStatus: Status.BABYSIT,
       summary: "No blocking findings."
     },
-    hasDiffImpl: async () => true
+    execFileImpl: async (_command, args) => {
+      if (args.includes("rev-parse")) return { stdout: `${"a".repeat(40)}\n`, stderr: "" };
+      if (args.includes("status")) {
+        statusCalls += 1;
+        return { stdout: statusCalls === 1 ? "" : " M src/index.js\n", stderr: "" };
+      }
+      return { stdout: "", stderr: "" };
+    }
   });
 
   const result = await worker.runOnce();
 
   assert.equal(result.ran, true);
-  assert.match(result.error.message, /reviewer produced a worktree diff/);
+  assert.match(result.error.message, /read-only worker changed repository state/);
   assert.equal(adapter.getItem("item-dirty-reviewer").status, Status.BLOCKED);
 });
 
@@ -1531,7 +1617,8 @@ function workerWithCodexResult({
   mergePullRequestImpl,
   listUntrackedFilesImpl = async () => [],
   runRepoCommandsImpl = async () => [],
-  execFileImpl = async () => ({ stdout: "", stderr: "" })
+  execFileImpl = async () => ({ stdout: "", stderr: "" }),
+  beforeResultWrite = async () => {}
 }) {
   return new GitHubCodeLoopWorker({
     adapter,
@@ -1547,6 +1634,7 @@ function workerWithCodexResult({
     runRepoCommandsImpl,
     assertCredentialFreeWorktreeImpl: async () => ({ ok: true }),
     runCodexExecImpl: async ({ outputPath }) => {
+      await beforeResultWrite();
       await writeFile(outputPath, JSON.stringify(result));
       return { stdout: "", stderr: "" };
     },

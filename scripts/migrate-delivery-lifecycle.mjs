@@ -1,4 +1,4 @@
-import { GitHubProjectsAdapter, planDeliveryLifecycleMigration, Status } from "../src/index.js";
+import { GitHubProjectsAdapter, HandoffStage, planDeliveryLifecycleMigration, Status } from "../src/index.js";
 
 const apply = process.argv.includes("--apply");
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
@@ -22,6 +22,12 @@ const remoteBranches = new Map();
 
 for (const item of snapshot.items) {
   if (![Status.IMPLEMENTATION, Status.REVIEW].includes(item.status)) continue;
+  const handoffs = await adapter.loadStageHandoffsForItem(item, {
+    stages: [HandoffStage.IMPLEMENTATION_PLAN]
+  });
+  item.hasSignedPlan = handoffs.handoffs.some(
+    (handoff) => handoff.envelope.stage === HandoffStage.IMPLEMENTATION_PLAN
+  );
   const branchName = item.contentType === "Issue" && item.number ? `ski/issue-${item.number}` : null;
   const branch = branchName && item.repository
     ? await adapter.loadRemoteBranch({ repository: item.repository, branchName })
@@ -31,7 +37,10 @@ for (const item of snapshot.items) {
 
 const changes = planDeliveryLifecycleMigration(snapshot.items, { remoteBranches });
 for (const change of changes) {
-  if (apply && change.action === "move") await adapter.transition(change.itemId, Status.IMPLEMENTATION_PLANNING);
+  if (apply && change.action === "move") {
+    const migrated = await adapter.migrateToImplementationPlanning(change.itemId);
+    if (!migrated.migrated) change.applyResult = migrated;
+  }
 }
 
 console.log(JSON.stringify({ mode: apply ? "apply" : "dry-run", changes }, null, 2));

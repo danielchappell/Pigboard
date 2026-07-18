@@ -66,7 +66,9 @@ test("reaction webhooks distinguish PR-description approval from comment reactio
     reaction: { id: 1, content: "+1" },
     sender: { login: "owner" }
   };
-  assert.equal(parseGitHubWebhook({ eventName: "reaction", payload: base }).reactionSubject, "pull_request_description");
+  const descriptionReaction = parseGitHubWebhook({ eventName: "reaction", payload: base });
+  assert.equal(descriptionReaction.reactionSubject, "pull_request_description");
+  assert.equal(descriptionReaction.pullRequestNumber, 42);
   assert.equal(
     parseGitHubWebhook({ eventName: "reaction", payload: { ...base, comment: { id: 2 } } }).reactionSubject,
     "comment"

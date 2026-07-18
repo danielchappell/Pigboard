@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { planDeliveryLifecycleMigration, Status } from "../src/index.js";
+import { MemoryQueueAdapter, planDeliveryLifecycleMigration, Status, WorkerType } from "../src/index.js";
 
 test("delivery lifecycle migration preserves every recoverable evidence class", () => {
   const now = new Date("2026-07-18T12:00:00.000Z");
@@ -41,6 +41,24 @@ test("delivery lifecycle migration moves only unclaimed unrecoverable Implementa
     { itemId: "review", action: "move", from: Status.REVIEW, to: Status.IMPLEMENTATION_PLANNING },
     { itemId: "expired", action: "move", from: Status.IMPLEMENTATION, to: Status.IMPLEMENTATION_PLANNING }
   ]);
+});
+
+test("delivery lifecycle migration clears stale routing and lease fields when applied", async () => {
+  const adapter = new MemoryQueueAdapter([
+    item("implementation", {
+      workerType: WorkerType.IMPLEMENTER,
+      leaseOwner: "stale-worker",
+      leaseExpiresAt: "2026-07-18T11:00:00.000Z"
+    })
+  ], { now: () => new Date("2026-07-18T12:00:00.000Z") });
+
+  const result = await adapter.migrateToImplementationPlanning("implementation");
+
+  assert.deepEqual(result, { migrated: true, itemId: "implementation" });
+  assert.equal(adapter.getItem("implementation").status, Status.IMPLEMENTATION_PLANNING);
+  assert.equal(adapter.getItem("implementation").workerType, undefined);
+  assert.equal(adapter.getItem("implementation").leaseOwner, undefined);
+  assert.equal(adapter.getItem("implementation").leaseExpiresAt, undefined);
 });
 
 function item(id, overrides = {}) {

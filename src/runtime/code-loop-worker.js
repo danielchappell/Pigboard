@@ -107,6 +107,7 @@ export class GitHubCodeLoopWorker {
     if (!claimResult.claimed) return { ran: false, reason: claimResult.reason };
 
     const { claim, item } = claimResult;
+    let activeItem = item;
     let activeClaimId = claim.id;
     let parsedClaim = parseClaimId(claim.id);
     let worktree;
@@ -116,13 +117,15 @@ export class GitHubCodeLoopWorker {
     let stageContext;
     let readOnlyGitState;
     try {
-      parsedClaim = await this.verifyOrThrow(activeClaimId);
-      stageContext = await this.loadStageContext(activeClaimId, item);
+      const initialVerification = await this.verifyClaimOrThrow(activeClaimId);
+      parsedClaim = initialVerification.claim;
+      activeItem = initialVerification.item;
+      stageContext = await this.loadStageContext(activeClaimId, activeItem);
       activeClaimId = await this.refreshClaimContext({
         claimId: activeClaimId,
         inputFingerprint: stageContext.inputFingerprint,
         operationId: stageOperationId({
-          itemId: item.id,
+          itemId: activeItem.id,
           stage: outputStageForWorker(this.workerType),
           inputFingerprint: stageContext.inputFingerprint
         })
@@ -131,16 +134,13 @@ export class GitHubCodeLoopWorker {
       claimExtender = this.startClaimExtender(activeClaimId);
       const recovered = await this.recoverCompletedStage({
         claimId: activeClaimId,
-        item,
+        item: activeItem,
         claim: parsedClaim,
         stageContext,
         claimExtender
       });
       if (recovered) return recovered;
-      worktree = await this.prepareWorktree({ item, claim: parsedClaim, stageContext });
-      if (this.isReadOnlyWorker()) {
-        readOnlyGitState = await snapshotGitState({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl });
-      }
+      worktree = await this.prepareWorktree({ item: activeItem, claim: parsedClaim, stageContext });
       await this.runRepoCommandsImpl({
         commands: this.repoPolicy.setupCommands ?? [],
         cwd: worktree.worktreePath,
@@ -154,6 +154,9 @@ export class GitHubCodeLoopWorker {
         });
       }
       await this.assertCredentialFreeWorktreeImpl(worktree.worktreePath);
+      if (this.isReadOnlyWorker()) {
+        readOnlyGitState = await snapshotGitState({ worktreePath: worktree.worktreePath, execFileImpl: this.execFileImpl });
+      }
 
       const runId = safePathSegment(parsedClaim.runId ?? activeClaimId);
       const runDir = join(this.runLogDir, runId);
@@ -162,13 +165,13 @@ export class GitHubCodeLoopWorker {
       const stderrPath = join(runDir, "stderr.log");
       await mkdir(runDir, { recursive: true });
       const promptItem = {
-        ...item,
+        ...activeItem,
         workerType: parsedClaim.resolvedWorkerType ?? this.workerType
       };
       const feedbackContext = await this.loadPromptFeedbackContext(activeClaimId);
       const prompt = buildWorkerPrompt({
         item: promptItem,
-        claim: { ...claim, id: activeClaimId },
+        claim: { ...parsedClaim, id: activeClaimId },
         workerRole: this.repoPolicy.workerRole,
         feedbackContext,
         stageContext: stageContext?.promptContext
@@ -208,18 +211,12 @@ export class GitHubCodeLoopWorker {
           worktreePath: worktree.worktreePath,
           execFileImpl: this.execFileImpl
         });
-        const dirty = await this.hasDiffImpl({
-          worktreePath: worktree.worktreePath,
-          execFileImpl: this.execFileImpl,
-          ignoredPaths: setupIgnoredPaths
-        });
-        if (dirty) throw new Error(`${this.workerType} produced a worktree diff`);
       }
-      await this.prepareStructuredResult({ result, item, claim: parsedClaim, worktree, stageContext, streamPath });
+      await this.prepareStructuredResult({ result, item: activeItem, claim: parsedClaim, worktree, stageContext, streamPath });
 
       const applied = await this.applyWorkerOutcome({
         claimId: activeClaimId,
-        item,
+        item: activeItem,
         result,
         worktree,
         ignoredPaths: setupIgnoredPaths,
@@ -233,9 +230,9 @@ export class GitHubCodeLoopWorker {
         stderr: codexOutput.preserveStreamFiles ? undefined : codex.stderr ?? "",
         preserveStreamFiles: codexOutput.preserveStreamFiles,
         result,
-        metadata: metadataForRun({ claim: parsedClaim, item, workerType: this.workerType, worktree, result })
+        metadata: metadataForRun({ claim: parsedClaim, item: activeItem, workerType: this.workerType, worktree, result })
       });
-      return { ran: true, itemId: item.id, claimedStatus: item.status, status: applied?.status, result };
+      return { ran: true, itemId: activeItem.id, claimedStatus: activeItem.status, status: applied?.status, result };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const failedResult = {
@@ -412,7 +409,7 @@ export class GitHubCodeLoopWorker {
       workerType: this.workerType,
       result,
       inputFingerprint: stageContext.inputFingerprint,
-      verifyOptions: this.claimVerifyOptions(),
+      verifyOptions: this.claimVerifyOptions(claimId),
       beforeRelease: async () => claimExtender?.stop()
     });
     return {
@@ -433,6 +430,7 @@ export class GitHubCodeLoopWorker {
       stages: Object.values(HandoffStage),
       requireAvailability: true
     });
+    const liveItem = loaded.item ?? item;
     const byStage = new Map(loaded.handoffs.map((handoff) => [handoff.envelope.stage, handoff.envelope]));
     let plan = byStage.get(HandoffStage.IMPLEMENTATION_PLAN)?.payload;
     if (plan) validateImplementationPlanPayload(plan);
@@ -441,26 +439,26 @@ export class GitHubCodeLoopWorker {
     }
     if (this.workerType === WorkerType.IMPLEMENTER && !plan) {
       plan = {
-        repository: item.repository,
+        repository: liveItem.repository,
         baseRef: this.repoPolicy.defaultBaseBranch ?? "main",
-        baseSha: item.baseSha
+        baseSha: liveItem.baseSha
       };
     }
     const implementation = byStage.get(HandoffStage.IMPLEMENTATION)?.payload;
     const review = byStage.get(HandoffStage.REVIEW)?.payload;
     const branchName =
       implementation?.branchName ??
-      (item.contentType === "Issue" ? deterministicIssueBranch(item) : undefined);
+      (liveItem.contentType === "Issue" ? deterministicIssueBranch(liveItem) : undefined);
     let remoteBranch;
     if (branchName && typeof this.adapter.loadRemoteBranch === "function") {
-      remoteBranch = await this.adapter.loadRemoteBranch({ repository: item.repository, branchName });
+      remoteBranch = await this.adapter.loadRemoteBranch({ repository: liveItem.repository, branchName });
     }
     const inputStages = inputStagesForWorker(this.workerType);
     const selectedHandoffs = loaded.handoffs.filter((handoff) => inputStages.has(handoff.envelope.stage));
     const input = {
-      itemId: item.id,
-      body: item.body ?? "",
-      dependencies: item.dependencies ?? [],
+      itemId: liveItem.id,
+      body: liveItem.body ?? "",
+      dependencies: liveItem.dependencies ?? [],
       handoffFingerprint: contextFingerprint(selectedHandoffs.map((handoff) => ({
         stage: handoff.envelope.stage,
         operationId: handoff.envelope.operationId,
@@ -470,7 +468,7 @@ export class GitHubCodeLoopWorker {
       headSha:
         this.workerType === WorkerType.IMPLEMENTER
           ? review?.headSha ?? null
-          : remoteBranch?.headSha ?? implementation?.headSha ?? item.headSha ?? null
+          : remoteBranch?.headSha ?? implementation?.headSha ?? liveItem.headSha ?? null
     };
     return {
       inputFingerprint: contextFingerprint(input),
@@ -479,7 +477,7 @@ export class GitHubCodeLoopWorker {
       review,
       existingStageHandoff: byStage.get(outputStageForWorker(this.workerType)),
       branchName: remoteBranch?.branchName ?? branchName,
-      headSha: remoteBranch?.headSha ?? implementation?.headSha ?? item.headSha,
+      headSha: remoteBranch?.headSha ?? implementation?.headSha ?? liveItem.headSha,
       baseRef: implementation?.baseRef ?? plan?.baseRef,
       baseSha: implementation?.baseSha ?? plan?.baseSha,
       promptContext: {
@@ -634,7 +632,7 @@ export class GitHubCodeLoopWorker {
       const durableReview = await this.adapter.appendStageHandoffForClaim?.(
         activeClaimId,
         result.details.handoff,
-        this.claimVerifyOptions()
+        this.claimVerifyOptions(activeClaimId)
       );
       if (durableReview?.appended === false) {
         throw new Error(`claim lost: ${durableReview.reason ?? "review_handoff"}`);
@@ -738,8 +736,8 @@ export class GitHubCodeLoopWorker {
       result,
       inputFingerprint: stageContext.inputFingerprint,
       verifyOptions: [WorkerType.PR_BABYSITTER, WorkerType.IMPLEMENTATION_PLANNER].includes(this.workerType)
-        ? { ...this.claimVerifyOptions(), requireAvailability: false }
-        : this.claimVerifyOptions(),
+        ? { ...this.claimVerifyOptions(activeClaimId), requireAvailability: false }
+        : this.claimVerifyOptions(activeClaimId),
       beforeRelease: async () => claimExtender?.stop()
     });
   }
@@ -813,7 +811,7 @@ export class GitHubCodeLoopWorker {
     if (this.workerType !== WorkerType.REVIEWER && this.workerType !== WorkerType.PR_BABYSITTER) return null;
     if (this.workerType === WorkerType.REVIEWER && !parseClaimId(claimId).pullRequestNumber) return null;
     if (typeof this.adapter.loadPullRequestFeedbackForClaim !== "function") return null;
-    return this.adapter.loadPullRequestFeedbackForClaim(claimId, this.claimVerifyOptions());
+    return this.adapter.loadPullRequestFeedbackForClaim(claimId, this.claimVerifyOptions(claimId));
   }
 
   async refreshClaimContext({ claimId, headSha, nextEligibleAt, inputFingerprint, operationId }) {
@@ -863,24 +861,30 @@ export class GitHubCodeLoopWorker {
     }
   }
 
-  async verifyOrThrow(claimId) {
-    const verified = await this.adapter.verifyClaim(claimId, this.claimVerifyOptions());
+  async verifyClaimOrThrow(claimId) {
+    const verified = await this.adapter.verifyClaim(claimId, this.claimVerifyOptions(claimId));
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
-    return verified.claim;
+    return verified;
+  }
+
+  async verifyOrThrow(claimId) {
+    return (await this.verifyClaimOrThrow(claimId)).claim;
   }
 
   async verifyStageContextOrThrow(claimId, item, expectedInputFingerprint) {
-    await this.verifyOrThrow(claimId);
-    const current = await this.loadStageContext(claimId, item);
+    const verified = await this.verifyClaimOrThrow(claimId);
+    const current = await this.loadStageContext(claimId, verified.item ?? item);
     if (current.inputFingerprint !== expectedInputFingerprint) {
       throw new Error("claim lost: context_drift");
     }
     return current;
   }
 
-  claimVerifyOptions() {
+  claimVerifyOptions(claimId) {
+    const claim = claimId ? parseClaimId(claimId) : null;
     return {
-      requireHeadSha: this.workerType === WorkerType.PR_BABYSITTER,
+      requireHeadSha: this.workerType === WorkerType.PR_BABYSITTER ||
+        (this.workerType === WorkerType.REVIEWER && Boolean(claim?.pullRequestNumber)),
       requireAvailability: true
     };
   }

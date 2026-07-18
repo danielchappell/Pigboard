@@ -546,10 +546,17 @@ export class GitHubProjectsAdapter {
   async loadStageHandoffsForClaim(claimId, { stages, maxPages = 20, ...verifyOptions } = {}) {
     const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
-    const { claim, item } = verified;
+    return this.loadStageHandoffsForItem(verified.item, {
+      stages,
+      maxPages,
+      repository: verified.claim.repository
+    });
+  }
+
+  async loadStageHandoffsForItem(item, { stages, maxPages = 20, repository = item?.repository } = {}) {
     const commentable = item.contentType === "Issue" || item.contentType === "PullRequest";
     if (!commentable || !item.contentId || !item.number) {
-      return { handoffs: [], fingerprint: contextFingerprint([]), reason: "unsupported_content_type" };
+      return { handoffs: [], fingerprint: contextFingerprint([]), item, reason: "unsupported_content_type" };
     }
     const wanted = new Set(stages ?? []);
     const trustedAuthor = await this.resolveTrustedAuthorLogin();
@@ -561,7 +568,7 @@ export class GitHubProjectsAdapter {
     for (let page = 0; page < maxPages; page += 1) {
       const data = await this.graphql(ISSUE_HANDOFFS_QUERY, { id: item.contentId, last: 100, before });
       const connection = data?.node?.comments;
-      if (!connection) throw new Error("GitHub issue handoff comments are unreadable");
+      if (!connection) throw new Error("GitHub content handoff comments are unreadable");
       for (const comment of connection.nodes ?? []) {
         if (!comment?.id || seenComments.has(comment.id)) continue;
         seenComments.add(comment.id);
@@ -588,7 +595,7 @@ export class GitHubProjectsAdapter {
       if (!envelope || (wanted.size && !wanted.has(envelope.stage))) continue;
       verifyStageHandoff(envelope, {
         secret: this.handoffSecret,
-        repository: claim.repository,
+        repository,
         issueNumber: item.number,
         itemId: item.id
       });
@@ -604,6 +611,7 @@ export class GitHubProjectsAdapter {
     const latest = [...latestByStage.values()];
     return {
       handoffs: latest,
+      item,
       fingerprint: contextFingerprint(latest.map(({ commentId, updatedAt, envelope }) => ({
         commentId,
         updatedAt,
@@ -625,6 +633,20 @@ export class GitHubProjectsAdapter {
   async transition(itemId, status) {
     const projectModel = await this.ensureProjectModel();
     await this.setSingleSelectField(projectModel, itemId, FieldName.STATUS, status);
+  }
+
+  async migrateToImplementationPlanning(itemId) {
+    const { projectModel, items } = await this.loadProjectItems();
+    const item = items.find((candidate) => candidate.id === itemId);
+    if (!item) return { migrated: false, reason: "missing" };
+    if (item.leaseOwner && item.leaseExpiresAt && new Date(item.leaseExpiresAt) > this.now()) {
+      return { migrated: false, reason: "active_lease" };
+    }
+    if (![Status.IMPLEMENTATION, Status.REVIEW].includes(item.status)) {
+      return { migrated: false, reason: "status_changed" };
+    }
+    await this.forceLifecycleTransition(projectModel, item, Status.IMPLEMENTATION_PLANNING);
+    return { migrated: true, itemId };
   }
 
   async transitionForClaim(claimId, status, verifyOptions = {}) {
@@ -670,6 +692,7 @@ export class GitHubProjectsAdapter {
       const authorized = this.ownerApprovers.has(String(event.reactionUser ?? "").toLowerCase());
       if (!authorized) return { reconciled: false, reason: "unauthorized_approval" };
       if (event.action === "created" && prItem.status === Status.BABYSIT) {
+        await this.clearApprovalInvalidation(projectModel, prItem);
         await this.forceLifecycleTransition(projectModel, prItem, Status.READY_FOR_OWNER, { clearWorkerType: true });
         return { reconciled: true, itemId: prItem.id, status: Status.READY_FOR_OWNER };
       }
@@ -679,19 +702,38 @@ export class GitHubProjectsAdapter {
         return { reconciled: true, itemId: prItem.id, status: Status.BABYSIT };
       }
     }
-    if (event.eventName === "pull_request" && event.action === "synchronize" && prItem?.lastWorkerRun) {
+    if (event.eventName === "pull_request" && event.action === "synchronize" && prItem) {
+      let prior;
       try {
-        const prior = parseClaimId(prItem.lastWorkerRun);
-        if (isClaimV2(prior) && prior.nextEligibleAt && prior.headSha !== event.pullRequestHeadSha) {
-          await this.setTextField(projectModel, prItem.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
-            ...prior,
-            headSha: event.pullRequestHeadSha,
-            nextEligibleAt: undefined
-          }));
-          return { reconciled: true, itemId: prItem.id, cooldownCleared: true };
-        }
+        prior = prItem.lastWorkerRun ? parseClaimId(prItem.lastWorkerRun) : null;
       } catch {
         return { reconciled: false, reason: "invalid_last_worker_run" };
+      }
+      if (isClaimV2(prior) && prior.headSha === event.pullRequestHeadSha) {
+        return { reconciled: false, reason: "no_transition" };
+      }
+      const ownerApprovalInvalidated = prItem.status === Status.READY_FOR_OWNER;
+      if (ownerApprovalInvalidated) {
+        await this.forceLifecycleTransition(projectModel, prItem, Status.BABYSIT, { clearWorkerType: true });
+      }
+      if (isClaimV2(prior)) {
+        await this.setTextField(projectModel, prItem.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
+          ...prior,
+          headSha: event.pullRequestHeadSha,
+          nextEligibleAt: undefined,
+          approvalInvalidatedHeadSha: ownerApprovalInvalidated
+            ? event.pullRequestHeadSha
+            : prior.approvalInvalidatedHeadSha
+        }));
+      }
+      if (ownerApprovalInvalidated || (isClaimV2(prior) && prior.nextEligibleAt)) {
+        return {
+          reconciled: true,
+          itemId: prItem.id,
+          status: ownerApprovalInvalidated ? Status.BABYSIT : undefined,
+          cooldownCleared: Boolean(prior?.nextEligibleAt),
+          ownerApprovalInvalidated
+        };
       }
     }
     return { reconciled: false, reason: "no_transition" };
@@ -712,14 +754,16 @@ export class GitHubProjectsAdapter {
         continue;
       }
       let state;
+      const pullRequestNumber = item.pullRequestNumber ??
+        (item.contentType === "PullRequest" ? item.number : undefined);
       if (
-        item.pullRequestNumber &&
+        pullRequestNumber &&
         item.repository &&
         [Status.REVIEW, Status.BABYSIT, Status.READY_FOR_OWNER, Status.CANCELED].includes(item.status)
       ) {
         state = item.status === Status.CANCELED
-          ? await this.fetchPullRequestLifecycleState({ repository: item.repository, number: item.pullRequestNumber })
-          : await this.fetchPullRequestMergeState({ repository: item.repository, number: item.pullRequestNumber });
+          ? await this.fetchPullRequestLifecycleState({ repository: item.repository, number: pullRequestNumber })
+          : await this.fetchPullRequestMergeState({ repository: item.repository, number: pullRequestNumber });
         if (state.merged) {
           await this.forceLifecycleTransition(projectModel, item, Status.DONE);
           actions.push({ itemId: item.id, status: Status.DONE });
@@ -736,7 +780,8 @@ export class GitHubProjectsAdapter {
       }
       if (!state) continue;
       const authorized = state.thumbsUpActors.some((login) => this.ownerApprovers.has(login.toLowerCase()));
-      if (authorized && item.status === Status.BABYSIT) {
+      const approvalInvalidated = approvalInvalidatedForHead(item.lastWorkerRun, state.headSha);
+      if (authorized && item.status === Status.BABYSIT && !approvalInvalidated) {
         await this.forceLifecycleTransition(projectModel, item, Status.READY_FOR_OWNER);
         actions.push({ itemId: item.id, status: Status.READY_FOR_OWNER });
       } else if (!authorized && item.status === Status.READY_FOR_OWNER) {
@@ -792,6 +837,21 @@ export class GitHubProjectsAdapter {
         await this.setTextField(projectModel, item.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
           ...claim,
           nextEligibleAt: undefined
+        }));
+      }
+    } catch {
+      // Invalid legacy run metadata remains visible for operator repair.
+    }
+  }
+
+  async clearApprovalInvalidation(projectModel, item) {
+    if (!item.lastWorkerRun) return;
+    try {
+      const claim = parseClaimId(item.lastWorkerRun);
+      if (isClaimV2(claim) && claim.approvalInvalidatedHeadSha) {
+        await this.setTextField(projectModel, item.id, FieldName.LAST_WORKER_RUN, createClaimV2Id({
+          ...claim,
+          approvalInvalidatedHeadSha: undefined
         }));
       }
     } catch {
@@ -1273,6 +1333,16 @@ function parsePullRequestReference(url) {
   if (/^\d+$/.test(value)) return { number: Number(value) };
   const match = value.match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)(?:\b|$)/);
   return match ? { repository: match[1], number: Number(match[2]), url: value } : undefined;
+}
+
+function approvalInvalidatedForHead(lastWorkerRun, headSha) {
+  if (!lastWorkerRun || !headSha) return false;
+  try {
+    const claim = parseClaimId(lastWorkerRun);
+    return isClaimV2(claim) && claim.approvalInvalidatedHeadSha === headSha;
+  } catch {
+    return false;
+  }
 }
 
 function withPagination(url, { perPage, page }) {

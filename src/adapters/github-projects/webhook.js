@@ -28,7 +28,8 @@ export function parseGitHubWebhook({ eventName, payload }) {
     action: payload.action,
     repository: payload.repository?.full_name,
     issueNumber: payload.issue?.number,
-    pullRequestNumber: payload.pull_request?.number,
+    pullRequestNumber: payload.pull_request?.number ??
+      (payload.issue?.pull_request ? payload.issue.number : undefined),
     ...compact({
       issueStateReason: payload.issue?.state_reason,
       pullRequestUrl: payload.pull_request?.html_url,

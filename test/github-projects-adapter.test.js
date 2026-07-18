@@ -146,7 +146,38 @@ test("GitHubProjectsAdapter leaves draft Project items dependency-free", async (
   assert.deepEqual(snapshot.items[0].dependencies, []);
 });
 
-test("GitHubProjectsAdapter loads trusted handoffs with backward pagination and deduplication", async () => {
+test("GitHubProjectsAdapter normalizes terminal PullRequest state", async () => {
+  const response = projectResponse({ status: Status.BABYSIT, workerType: WorkerType.PR_BABYSITTER });
+  response.data.organization.projectV2.items.nodes[0].content = {
+    __typename: "PullRequest",
+    id: "PR_42",
+    title: "Merged implementation",
+    body: "PR body",
+    url: "https://github.com/acme/repo/pull/42",
+    number: 42,
+    state: "MERGED",
+    baseRefName: "main",
+    baseRefOid: "b".repeat(40),
+    headRefName: "feature",
+    headRefOid: "a".repeat(40),
+    headRepository: { nameWithOwner: "acme/repo" },
+    repository: { nameWithOwner: "acme/repo" }
+  };
+  const { fetchImpl, calls } = createGraphqlMock([response]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl
+  });
+
+  const snapshot = await adapter.loadQueueSnapshot();
+
+  assert.equal(snapshot.items[0].contentState, "MERGED");
+  assert.match(calls[0].query, /\.\.\. on PullRequest \{[\s\S]*?state/);
+});
+
+test("GitHubProjectsAdapter loads PullRequest handoffs with backward pagination and deduplication", async () => {
   const secret = "test-handoff-secret-01234567890123456789";
   const older = createStageHandoff({
     secret,
@@ -179,10 +210,11 @@ test("GitHubProjectsAdapter loads trusted handoffs with backward pagination and 
   adapter.verifyClaim = async () => ({
     active: true,
     claim: { repository: "acme/repo" },
-    item: { id: "PVTI_item_1", contentType: "Issue", contentId: "ISSUE_1", number: 1 }
+    item: { id: "PVTI_item_1", contentType: "PullRequest", contentId: "PR_1", number: 1 }
   });
   const cursors = [];
-  adapter.graphql = async (_query, variables) => {
+  adapter.graphql = async (query, variables) => {
+    assert.match(query, /\.\.\. on PullRequest \{[\s\S]*?comments/);
     cursors.push(variables.before);
     if (!variables.before) {
       return { node: { comments: {
@@ -1500,6 +1532,34 @@ test("GitHubProjectsAdapter transitions status with a single-select option", asy
   assert.deepEqual(mutationInput.value, { singleSelectOptionId: "status_qa" });
 });
 
+test("GitHubProjectsAdapter migration clears stale routing and lease fields", async () => {
+  const { fetchImpl, calls } = createGraphqlMock([
+    projectResponse({ status: Status.IMPLEMENTATION, workerType: WorkerType.IMPLEMENTER }),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse(),
+    mutationResponse()
+  ]);
+  const adapter = new GitHubProjectsAdapter({
+    token: "test-token",
+    organization: "acme",
+    projectNumber: 7,
+    fetchImpl,
+    now: () => new Date("2026-07-07T12:00:00.000Z")
+  });
+
+  const result = await adapter.migrateToImplementationPlanning("PVTI_item_1");
+
+  assert.deepEqual(result, { migrated: true, itemId: "PVTI_item_1" });
+  assert.deepEqual(
+    calls.slice(1).map((call) => call.variables.input.fieldId),
+    ["field_status", "field_lease_owner", "field_lease_expires", "field_worker_type"]
+  );
+  assert.deepEqual(calls[1].variables.input.value, {
+    singleSelectOptionId: "status_implementation_planning"
+  });
+});
+
 test("GitHubProjectsAdapter appends worker events as comments", async () => {
   const { fetchImpl, calls } = createGraphqlMock([projectResponse(), mutationResponse()]);
   const adapter = new GitHubProjectsAdapter({
@@ -1727,6 +1787,7 @@ function projectResponse({
             nodes: [
               singleSelectField("field_status", "Status", [
                 ["status_ready", Status.READY],
+                ["status_implementation_planning", Status.IMPLEMENTATION_PLANNING],
                 ["status_implementation", Status.IMPLEMENTATION],
                 ["status_qa", Status.QA],
                 ["status_review", Status.REVIEW],
@@ -1735,6 +1796,7 @@ function projectResponse({
                 ["status_blocked", Status.BLOCKED]
               ]),
               singleSelectField("field_worker_type", "Worker Type", [
+                ["worker_implementation_planner", WorkerType.IMPLEMENTATION_PLANNER],
                 ["worker_implementer", WorkerType.IMPLEMENTER],
                 ["worker_qa", WorkerType.QA],
                 ["worker_reviewer", WorkerType.REVIEWER],

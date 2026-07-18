@@ -25,6 +25,12 @@ export async function ensurePullRequest({
     path: `/repos/${owner}/${repo}/pulls?state=open&head=${encodeURIComponent(`${owner}:${branchName}`)}&base=${encodeURIComponent(baseBranch)}`
   });
   if (existing[0]) {
+    assertExpectedPullRequest(normalizePullRequest(existing[0]), {
+      expectedHeadSha,
+      repository,
+      branchName,
+      baseBranch
+    });
     const updated = await githubJson({
       token,
       fetchImpl,

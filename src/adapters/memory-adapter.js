@@ -229,24 +229,32 @@ export class MemoryQueueAdapter {
   async loadStageHandoffsForClaim(claimId, { stages, ...verifyOptions } = {}) {
     const verified = await this.verifyClaim(claimId, verifyOptions);
     if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
-    if (!["Issue", "PullRequest"].includes(verified.item.contentType) || !verified.item.number) {
-      return { handoffs: [], fingerprint: contextFingerprint([]), reason: "unsupported_content_type" };
+    return this.loadStageHandoffsForItem(verified.item, {
+      stages,
+      repository: verified.claim.repository
+    });
+  }
+
+  async loadStageHandoffsForItem(item, { stages, repository = item?.repository } = {}) {
+    if (!["Issue", "PullRequest"].includes(item.contentType) || !item.number) {
+      return { handoffs: [], fingerprint: contextFingerprint([]), item: structuredClone(item), reason: "unsupported_content_type" };
     }
     const wanted = new Set(stages ?? []);
     const latestByStage = new Map();
     for (const [index, record] of this.handoffs.entries()) {
-      if (record.itemId !== verified.item.id || (wanted.size && !wanted.has(record.envelope.stage))) continue;
+      if (record.itemId !== item.id || (wanted.size && !wanted.has(record.envelope.stage))) continue;
       verifyStageHandoff(record.envelope, {
         secret: this.handoffSecret,
-        repository: verified.claim.repository,
-        issueNumber: verified.item.number,
-        itemId: verified.item.id
+        repository,
+        issueNumber: item.number,
+        itemId: item.id
       });
       latestByStage.set(record.envelope.stage, { commentId: `memory-${index}`, envelope: structuredClone(record.envelope) });
     }
     const handoffs = [...latestByStage.values()];
     return {
       handoffs,
+      item: structuredClone(item),
       fingerprint: contextFingerprint(handoffs.map(({ commentId, envelope }) => ({
         commentId,
         operationId: envelope.operationId,
@@ -259,6 +267,22 @@ export class MemoryQueueAdapter {
     const item = this.items.get(itemId);
     if (!item) return;
     item.status = status;
+  }
+
+  async migrateToImplementationPlanning(itemId) {
+    const item = this.items.get(itemId);
+    if (!item) return { migrated: false, reason: "missing" };
+    if (item.leaseOwner && item.leaseExpiresAt && new Date(item.leaseExpiresAt) > this.now()) {
+      return { migrated: false, reason: "active_lease" };
+    }
+    if (![Status.IMPLEMENTATION, Status.REVIEW].includes(item.status)) {
+      return { migrated: false, reason: "status_changed" };
+    }
+    item.status = Status.IMPLEMENTATION_PLANNING;
+    delete item.workerType;
+    delete item.leaseOwner;
+    delete item.leaseExpiresAt;
+    return { migrated: true, itemId };
   }
 
   async transitionForClaim(claimId, status, verifyOptions = {}) {
@@ -292,21 +316,58 @@ export class MemoryQueueAdapter {
       if (!this.ownerApprovers.has(String(event.reactionUser ?? "").toLowerCase())) {
         return { reconciled: false, reason: "unauthorized_approval" };
       }
-      if (event.action === "created" && item.status === Status.BABYSIT) item.status = Status.READY_FOR_OWNER;
+      if (event.action === "created" && item.status === Status.BABYSIT) {
+        if (item.lastWorkerRun) {
+          try {
+            const prior = parseClaimId(item.lastWorkerRun);
+            if (isClaimV2(prior) && prior.approvalInvalidatedHeadSha) {
+              item.lastWorkerRun = createClaimV2Id({ ...prior, approvalInvalidatedHeadSha: undefined });
+            }
+          } catch {
+            // Invalid legacy run metadata remains visible for operator repair.
+          }
+        }
+        item.status = Status.READY_FOR_OWNER;
+      }
       else if (event.action === "deleted" && item.status === Status.READY_FOR_OWNER) {
         item.status = Status.BABYSIT;
         item.availableAfter = undefined;
       }
       else return { reconciled: false, reason: "no_transition" };
-    } else if (event.eventName === "pull_request" && event.action === "synchronize" && item.lastWorkerRun) {
-      const prior = parseClaimId(item.lastWorkerRun);
-      if (!isClaimV2(prior) || !prior.nextEligibleAt || prior.headSha === event.pullRequestHeadSha) {
+    } else if (event.eventName === "pull_request" && event.action === "synchronize") {
+      let prior;
+      try {
+        prior = item.lastWorkerRun ? parseClaimId(item.lastWorkerRun) : null;
+      } catch {
+        return { reconciled: false, reason: "invalid_last_worker_run" };
+      }
+      if (isClaimV2(prior) && prior.headSha === event.pullRequestHeadSha) {
         return { reconciled: false, reason: "no_transition" };
       }
-      item.lastWorkerRun = createClaimV2Id({ ...prior, headSha: event.pullRequestHeadSha, nextEligibleAt: undefined });
+      const ownerApprovalInvalidated = item.status === Status.READY_FOR_OWNER;
+      if (ownerApprovalInvalidated) item.status = Status.BABYSIT;
+      if (isClaimV2(prior)) {
+        item.lastWorkerRun = createClaimV2Id({
+          ...prior,
+          headSha: event.pullRequestHeadSha,
+          nextEligibleAt: undefined,
+          approvalInvalidatedHeadSha: ownerApprovalInvalidated
+            ? event.pullRequestHeadSha
+            : prior.approvalInvalidatedHeadSha
+        });
+      }
       item.headSha = event.pullRequestHeadSha;
       item.availableAfter = undefined;
-      return { reconciled: true, itemId: item.id, cooldownCleared: true };
+      if (!ownerApprovalInvalidated && !(isClaimV2(prior) && prior.nextEligibleAt)) {
+        return { reconciled: false, reason: "no_transition" };
+      }
+      return {
+        reconciled: true,
+        itemId: item.id,
+        status: ownerApprovalInvalidated ? Status.BABYSIT : undefined,
+        cooldownCleared: Boolean(prior?.nextEligibleAt),
+        ownerApprovalInvalidated
+      };
     } else {
       return { reconciled: false, reason: "no_transition" };
     }
