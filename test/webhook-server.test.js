@@ -7,6 +7,7 @@ import {
   createGitHubWebhookServer,
   handleGitHubWebhookRequest,
   isGlobalQueueWakeup,
+  parseGitHubWebhook,
   verifyGitHubSignature
 } from "../src/index.js";
 
@@ -55,6 +56,23 @@ test("issue and Project events wake every queue partition", () => {
   assert.equal(isGlobalQueueWakeup({ kind: "project", eventName: "projects_v2_item" }), true);
   assert.equal(isGlobalQueueWakeup({ kind: "repo", eventName: "issues", repository: "acme/repo" }), true);
   assert.equal(isGlobalQueueWakeup({ kind: "repo", eventName: "issue_comment", repository: "acme/repo" }), false);
+});
+
+test("reaction webhooks distinguish PR-description approval from comment reactions", () => {
+  const base = {
+    action: "created",
+    repository: { full_name: "acme/repo" },
+    issue: { number: 42, pull_request: { url: "https://api.github.com/repos/acme/repo/pulls/42" } },
+    reaction: { id: 1, content: "+1" },
+    sender: { login: "owner" }
+  };
+  const descriptionReaction = parseGitHubWebhook({ eventName: "reaction", payload: base });
+  assert.equal(descriptionReaction.reactionSubject, "pull_request_description");
+  assert.equal(descriptionReaction.pullRequestNumber, 42);
+  assert.equal(
+    parseGitHubWebhook({ eventName: "reaction", payload: { ...base, comment: { id: 2 } } }).reactionSubject,
+    "comment"
+  );
 });
 
 test("GitHub webhook server rejects wrong content type and bad signatures", async () => {

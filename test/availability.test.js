@@ -122,6 +122,52 @@ test("availability fingerprints cover routing and dependencies but not dispatch 
   );
 });
 
+test("availability skips only items whose persisted cooldown has not elapsed", () => {
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  const selection = evaluateQueueAvailability({ items: [
+    item({ id: "cooling", status: Status.BABYSIT, workerType: WorkerType.PR_BABYSITTER, contentType: "PullRequest", availableAfter: "2026-07-18T12:05:00.000Z" }),
+    item({ id: "ready", status: Status.BABYSIT, workerType: WorkerType.PR_BABYSITTER, contentType: "PullRequest" })
+  ] }, { workerType: WorkerType.PR_BABYSITTER, now });
+
+  assert.deepEqual(selection.available.map((candidate) => candidate.item.id), ["ready"]);
+  assert.equal(selection.unavailable[0].reasons[0].code, UnavailableReason.NOT_BEFORE);
+});
+
+test("availability fingerprints ignore elapsed cooldowns but retain active cooldowns", () => {
+  const now = new Date("2026-07-18T12:00:00.000Z");
+  const base = item({ id: "cooldown-fingerprint" });
+
+  assert.equal(
+    availabilityFingerprint({ ...base, availableAfter: "2026-07-18T11:59:00.000Z" }, { now }),
+    availabilityFingerprint(base, { now })
+  );
+  assert.notEqual(
+    availabilityFingerprint({ ...base, availableAfter: "2026-07-18T12:01:00.000Z" }, { now }),
+    availabilityFingerprint(base, { now })
+  );
+});
+
+test("automated planning and implementation require source issues", () => {
+  const selection = evaluateQueueAvailability({ items: [
+    item({
+      id: "draft",
+      status: Status.IMPLEMENTATION_PLANNING,
+      workerType: WorkerType.IMPLEMENTATION_PLANNER,
+      contentType: "DraftIssue"
+    })
+  ] }, { workerType: WorkerType.IMPLEMENTATION_PLANNER });
+
+  assert.equal(selection.available.length, 0);
+  assert.equal(selection.unavailable[0].reasons[0].code, UnavailableReason.UNSUPPORTED_CONTENT_TYPE);
+});
+
+test("terminal source content is never claimed before lifecycle reconciliation", () => {
+  const closed = item({ contentType: "Issue", contentState: "CLOSED" });
+  const result = evaluateQueueAvailability([closed], { workerType: WorkerType.IMPLEMENTER });
+  assert.equal(result.available.length, 0);
+  assert.equal(result.unavailable[0].reasons[0].code, UnavailableReason.SOURCE_TERMINAL);
+});
+
 function select(items, overrides = {}) {
   return evaluateQueueAvailability(
     { items },

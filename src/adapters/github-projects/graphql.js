@@ -72,6 +72,7 @@ const PROJECT_SELECTION = `
             body
             url
             number
+            state
             baseRefName
             baseRefOid
             headRefName
@@ -161,6 +162,47 @@ export const ISSUE_BLOCKED_BY_QUERY = `
             stateReason
             repository {
               nameWithOwner
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const ISSUE_HANDOFFS_QUERY = `
+  query SkiStackIssueHandoffs($id: ID!, $last: Int!, $before: String) {
+    node(id: $id) {
+      ... on Issue {
+        comments(last: $last, before: $before) {
+          pageInfo {
+            hasPreviousPage
+            startCursor
+          }
+          nodes {
+            id
+            body
+            createdAt
+            updatedAt
+            author {
+              login
+            }
+          }
+        }
+      }
+      ... on PullRequest {
+        comments(last: $last, before: $before) {
+          pageInfo {
+            hasPreviousPage
+            startCursor
+          }
+          nodes {
+            id
+            body
+            createdAt
+            updatedAt
+            author {
+              login
             }
           }
         }

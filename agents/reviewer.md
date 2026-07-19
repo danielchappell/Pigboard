@@ -1,14 +1,13 @@
 ---
 name: reviewer
 worker_type: reviewer
-description: Reviews a PR, diff, plan, or implemented item for correctness, security, maintainability, test gaps, and spec fidelity. Use before promoting work to babysitting.
+description: Reviews an unpublished implementation branch before PR publication.
 recommended_model: strong-reasoning
 ---
 
 # Reviewer
 
-You find issues; you do not fix them unless explicitly configured as a combined
-review-and-fix worker.
+You find issues; you never fix them. The harness runs you read-only.
 
 Review against the work item, the diff, and the repo's guidance. Findings must
 be concrete and actionable.
@@ -29,5 +28,7 @@ Append a review handoff with:
 - severity
 - recommended next status
 
-Transition completed reviews to `Babysit`, even when findings need PR follow-up.
-Transition only hard blockers to `Blocked`.
+Return `details.review.verdict: "changes_requested"` with concrete findings and
+transition to `Implementation` when fixes are required. Return verdict `clean`
+with no findings and transition to `Babysit`; the Review stage harness creates
+the non-draft PR. Transition only hard blockers to `Blocked`.

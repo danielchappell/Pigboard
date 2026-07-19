@@ -3,7 +3,9 @@
     "owner": "your-github-user-or-org",
     "ownerType": "auto",
     "projectNumber": 1,
-    "repositories": ["owner/repo"]
+    "repositories": ["owner/repo"],
+    "ownerApprovers": ["your-github-login"],
+    "handoffAuthorLogin": "your-github-login"
   },
   "repositories": {
     "owner/repo": {
@@ -15,12 +17,19 @@
       "setupNetwork": "off",
       "verifyNetwork": "off",
       "allowPushBranches": true,
-      "allowCreatePr": true,
-      "allowMerge": false,
-      "mergeMethod": "squash"
+      "allowCreatePr": true
     }
   },
   "slots": [
+    {
+      "type": "implementation-planner",
+      "model": "gpt-5.6-sol",
+      "reasoningEffort": "xhigh",
+      "rolePath": "agents/implementation-planner.md",
+      "count": 1,
+      "repository": "owner/repo",
+      "leaseSeconds": 1800
+    },
     {
       "type": "implementer",
       "model": "gpt-5.6-terra",
@@ -31,7 +40,7 @@
     },
     {
       "type": "reviewer",
-      "model": "gpt-5.6-terra",
+      "model": "gpt-5.6-sol",
       "reasoningEffort": "xhigh",
       "count": 1,
       "repository": "owner/repo",

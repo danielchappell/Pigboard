@@ -1,10 +1,16 @@
 import { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "../core/claims.js";
 import { availabilityFingerprint, evaluateQueueAvailability } from "../core/availability.js";
+import { contextFingerprint, createStageHandoff, verifyStageHandoff } from "../core/handoffs.js";
 import { resolvedWorkerTypeForItem } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
 export class MemoryQueueAdapter {
-  constructor(items = [], { now = () => new Date(), repositories = [] } = {}) {
+  constructor(items = [], {
+    now = () => new Date(),
+    repositories = [],
+    handoffSecret = "memory-adapter-handoff-secret-000000",
+    ownerApprovers = []
+  } = {}) {
     this.items = new Map(
       items.map((item, sourceOrder) => [
         item.id,
@@ -13,8 +19,11 @@ export class MemoryQueueAdapter {
     );
     this.claims = new Map();
     this.events = [];
+    this.handoffs = [];
     this.now = now;
     this.repositories = normalizeRepositoryFilter(repositories);
+    this.handoffSecret = handoffSecret;
+    this.ownerApprovers = new Set(ownerApprovers.map((login) => String(login).toLowerCase()));
   }
 
   async loadQueueSnapshot() {
@@ -193,10 +202,87 @@ export class MemoryQueueAdapter {
     return { appended: true };
   }
 
+  async appendStageHandoffForClaim(claimId, { stage, inputFingerprint, payload }, verifyOptions = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) return { appended: false, reason: verified.reason };
+    const commentable = verified.item.contentType === "Issue" ||
+      (verified.item.contentType === "PullRequest" && ["review", "babysit"].includes(stage));
+    if (!commentable || !verified.item.number) {
+      return { appended: false, reason: "unsupported_content_type" };
+    }
+    const envelope = createStageHandoff({
+      secret: this.handoffSecret,
+      repository: verified.claim.repository,
+      issueNumber: verified.item.number,
+      itemId: verified.item.id,
+      stage,
+      inputFingerprint,
+      payload,
+      createdAt: this.now().toISOString()
+    });
+    const recovered = this.handoffs.find((handoff) => handoff.envelope.operationId === envelope.operationId);
+    if (recovered) return { appended: true, recovered: true, envelope: structuredClone(recovered.envelope) };
+    this.handoffs.push({ itemId: verified.item.id, envelope });
+    return { appended: true, envelope: structuredClone(envelope) };
+  }
+
+  async loadStageHandoffsForClaim(claimId, { stages, ...verifyOptions } = {}) {
+    const verified = await this.verifyClaim(claimId, verifyOptions);
+    if (!verified.active) throw new Error(`claim lost: ${verified.reason}`);
+    return this.loadStageHandoffsForItem(verified.item, {
+      stages,
+      repository: verified.claim.repository
+    });
+  }
+
+  async loadStageHandoffsForItem(item, { stages, repository = item?.repository } = {}) {
+    if (!["Issue", "PullRequest"].includes(item.contentType) || !item.number) {
+      return { handoffs: [], fingerprint: contextFingerprint([]), item: structuredClone(item), reason: "unsupported_content_type" };
+    }
+    const wanted = new Set(stages ?? []);
+    const latestByStage = new Map();
+    for (const [index, record] of this.handoffs.entries()) {
+      if (record.itemId !== item.id || (wanted.size && !wanted.has(record.envelope.stage))) continue;
+      verifyStageHandoff(record.envelope, {
+        secret: this.handoffSecret,
+        repository,
+        issueNumber: item.number,
+        itemId: item.id
+      });
+      latestByStage.set(record.envelope.stage, { commentId: `memory-${index}`, envelope: structuredClone(record.envelope) });
+    }
+    const handoffs = [...latestByStage.values()];
+    return {
+      handoffs,
+      item: structuredClone(item),
+      fingerprint: contextFingerprint(handoffs.map(({ commentId, envelope }) => ({
+        commentId,
+        operationId: envelope.operationId,
+        payloadHash: envelope.payloadHash
+      })))
+    };
+  }
+
   async transition(itemId, status) {
     const item = this.items.get(itemId);
     if (!item) return;
     item.status = status;
+  }
+
+  async migrateToImplementationPlanning(itemId) {
+    const item = this.items.get(itemId);
+    if (!item) return { migrated: false, reason: "missing" };
+    if (item.leaseOwner && item.leaseExpiresAt && new Date(item.leaseExpiresAt) > this.now()) {
+      return { migrated: false, reason: "active_lease" };
+    }
+    if (![Status.IMPLEMENTATION, Status.REVIEW].includes(item.status)) {
+      return { migrated: false, reason: "status_changed" };
+    }
+    item.status = Status.IMPLEMENTATION_PLANNING;
+    delete item.workerType;
+    delete item.leaseOwner;
+    delete item.leaseExpiresAt;
+    return { migrated: true, itemId };
   }
 
   async transitionForClaim(claimId, status, verifyOptions = {}) {
@@ -204,6 +290,125 @@ export class MemoryQueueAdapter {
     if (!verified.active) return { transitioned: false, reason: verified.reason };
     await this.transition(verified.claim.itemId, status);
     return { transitioned: true };
+  }
+
+  async reconcileLifecycleEvent(event) {
+    const item = [...this.items.values()].find((candidate) => {
+      if (candidate.repository !== event.repository) return false;
+      if (event.eventName === "issues") return candidate.contentType === "Issue" && candidate.number === event.issueNumber;
+      return candidate.pullRequestNumber === (event.pullRequestNumber ?? event.issueNumber) ||
+        (candidate.contentType === "PullRequest" && candidate.number === (event.pullRequestNumber ?? event.issueNumber));
+    });
+    if (!item) return { reconciled: false, reason: "missing" };
+    if (event.eventName === "issues" && event.action === "closed") {
+      const status = event.issueStateReason === "not_planned" ? Status.CANCELED : Status.DONE;
+      if (item.status === Status.DONE || item.status === status) {
+        return { reconciled: false, reason: "terminal_state_protected" };
+      }
+      item.status = status;
+    } else if (event.eventName === "pull_request" && event.action === "closed" && event.pullRequestMerged) {
+      item.status = Status.DONE;
+    } else if (event.eventName === "pull_request" && event.action === "closed") {
+      if (item.status === Status.DONE) return { reconciled: false, reason: "terminal_state_protected" };
+      item.status = Status.CANCELED;
+    } else if (
+      event.eventName === "reaction" &&
+      event.reactionSubject === "pull_request_description" &&
+      event.reactionContent === "+1"
+    ) {
+      if (!this.ownerApprovers.has(String(event.reactionUser ?? "").toLowerCase())) {
+        return { reconciled: false, reason: "unauthorized_approval" };
+      }
+      if (event.action === "created" && item.status === Status.BABYSIT) {
+        delete item.approvalInvalidatedHeadSha;
+        if (item.lastWorkerRun) {
+          try {
+            const prior = parseClaimId(item.lastWorkerRun);
+            if (isClaimV2(prior) && prior.approvalInvalidatedHeadSha) {
+              item.lastWorkerRun = createClaimV2Id({ ...prior, approvalInvalidatedHeadSha: undefined });
+            }
+          } catch {
+            // Invalid legacy run metadata remains visible for operator repair.
+          }
+        }
+        item.status = Status.READY_FOR_OWNER;
+      }
+      else if (event.action === "deleted" && item.status === Status.READY_FOR_OWNER) {
+        item.status = Status.BABYSIT;
+        item.availableAfter = undefined;
+      }
+      else return { reconciled: false, reason: "no_transition" };
+    } else if (event.eventName === "pull_request" && event.action === "synchronize") {
+      let prior;
+      try {
+        prior = item.lastWorkerRun ? parseClaimId(item.lastWorkerRun) : null;
+      } catch {
+        return { reconciled: false, reason: "invalid_last_worker_run" };
+      }
+      if (isClaimV2(prior) && prior.headSha === event.pullRequestHeadSha) {
+        return { reconciled: false, reason: "no_transition" };
+      }
+      const ownerApprovalInvalidated = item.status === Status.READY_FOR_OWNER;
+      if (ownerApprovalInvalidated) {
+        item.status = Status.BABYSIT;
+        delete item.workerType;
+        delete item.leaseOwner;
+        delete item.leaseExpiresAt;
+      }
+      if (isClaimV2(prior)) {
+        item.lastWorkerRun = createClaimV2Id({
+          ...prior,
+          headSha: event.pullRequestHeadSha,
+          nextEligibleAt: undefined,
+          approvalInvalidatedHeadSha: ownerApprovalInvalidated
+            ? event.pullRequestHeadSha
+            : prior.approvalInvalidatedHeadSha
+        });
+      }
+      item.headSha = event.pullRequestHeadSha;
+      item.availableAfter = undefined;
+      if (!ownerApprovalInvalidated && !(isClaimV2(prior) && prior.nextEligibleAt)) {
+        return { reconciled: false, reason: "no_transition" };
+      }
+      return {
+        reconciled: true,
+        itemId: item.id,
+        status: ownerApprovalInvalidated ? Status.BABYSIT : undefined,
+        cooldownCleared: Boolean(prior?.nextEligibleAt),
+        ownerApprovalInvalidated
+      };
+    } else {
+      return { reconciled: false, reason: "no_transition" };
+    }
+    delete item.workerType;
+    delete item.leaseOwner;
+    delete item.leaseExpiresAt;
+    return { reconciled: true, itemId: item.id, status: item.status };
+  }
+
+  async reconcileCompletedOperations() {
+    const actions = [];
+    for (const item of this.items.values()) {
+      if (!item.lastWorkerRun || !item.leaseOwner || !item.leaseExpiresAt || new Date(item.leaseExpiresAt) <= this.now()) continue;
+      let claim;
+      try {
+        claim = parseClaimId(item.lastWorkerRun);
+      } catch {
+        continue;
+      }
+      const stage = handoffStageForWorker(claim.resolvedWorkerType);
+      if (!isClaimV2(claim) || !claim.operationId || !stage) continue;
+      const completed = this.handoffs.find(
+        (record) => record.itemId === item.id && record.envelope.stage === stage && record.envelope.operationId === claim.operationId
+      );
+      if (!completed) continue;
+      delete item.workerType;
+      delete item.leaseOwner;
+      delete item.leaseExpiresAt;
+      this.claims.delete(item.lastWorkerRun);
+      actions.push({ itemId: item.id, operationId: claim.operationId, leaseReleased: true });
+    }
+    return { reconciled: actions.length, actions };
   }
 
   async setFieldForClaim(claimId, fieldName, value, verifyOptions = {}) {
@@ -214,6 +419,7 @@ export class MemoryQueueAdapter {
       const nextClaim = parseClaimId(value);
       item.lastWorkerRun = value;
       if (nextClaim.headSha) item.headSha = nextClaim.headSha;
+      item.availableAfter = nextClaim.nextEligibleAt;
       this.claims.set(value, { id: value, ...nextClaim });
       this.claims.delete(claimId);
       return { updated: true };
@@ -274,6 +480,20 @@ export class MemoryQueueAdapter {
     return structuredClone(this.items.get(id));
   }
 
+  async loadRemoteBranch({ repository, branchName }) {
+    const item = [...this.items.values()].find(
+      (candidate) => candidate.repository === repository && candidate.branchName === branchName && candidate.headSha
+    );
+    return item ? { branchName, headSha: item.headSha } : null;
+  }
+
+  async verifyOwnerApprovalForClaim(claimId) {
+    const verified = await this.verifyClaim(claimId, { requireHeadSha: true });
+    if (!verified.active) return { approved: false, reason: verified.reason };
+    const actor = (verified.item.thumbsUpActors ?? []).find((login) => this.ownerApprovers.has(String(login).toLowerCase()));
+    return actor ? { approved: true, actor } : { approved: false, reason: "authorized_thumbs_up_missing" };
+  }
+
   async #claimItem({ item, workerType, workerId, leaseSeconds, availabilityFingerprint: fingerprint, context, version }) {
     const live = this.items.get(item.id);
     const now = this.now();
@@ -310,6 +530,7 @@ export class MemoryQueueAdapter {
             headRef: live.headRef,
             headRepository: live.headRepository,
             headSha: live.headSha,
+            approvalInvalidatedHeadSha: approvalInvalidatedHeadSha(live),
             availabilityFingerprint: fingerprint ?? availabilityFingerprint(live),
             claimedAt: now.toISOString(),
             ...context
@@ -338,4 +559,24 @@ export class MemoryQueueAdapter {
 function normalizeRepositoryFilter(repositories) {
   const values = Array.isArray(repositories) ? repositories : String(repositories ?? "").split(",");
   return new Set(values.map((value) => String(value).trim().toLowerCase()).filter(Boolean));
+}
+
+function approvalInvalidatedHeadSha(item) {
+  if (item?.approvalInvalidatedHeadSha) return item.approvalInvalidatedHeadSha;
+  if (!item?.lastWorkerRun) return undefined;
+  try {
+    const claim = parseClaimId(item.lastWorkerRun);
+    return isClaimV2(claim) ? claim.approvalInvalidatedHeadSha : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function handoffStageForWorker(workerType) {
+  return {
+    "implementation-planner": "implementation_plan",
+    implementer: "implementation",
+    reviewer: "review",
+    "pr-babysitter": "babysit"
+  }[workerType];
 }

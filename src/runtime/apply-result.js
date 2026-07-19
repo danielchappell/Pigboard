@@ -2,7 +2,15 @@ import { parseClaimId } from "../core/claims.js";
 import { isAutoRunnableWorker, statusForResult, validateWorkerTransition } from "../core/routing.js";
 import { Status } from "../core/status.js";
 
-export async function applyWorkerResult({ adapter, claimId, result, workerType, verifyOptions = {}, beforeRelease }) {
+export async function applyWorkerResult({
+  adapter,
+  claimId,
+  result,
+  workerType,
+  verifyOptions = {},
+  inputFingerprint,
+  beforeRelease
+}) {
   if (!adapter) throw new Error("adapter is required");
   if (!claimId) throw new Error("claimId is required");
   if (!result) throw new Error("result is required");
@@ -29,6 +37,23 @@ export async function applyWorkerResult({ adapter, claimId, result, workerType, 
       falseKey: "failed"
     });
     return { itemId: claim.itemId, status: Status.BLOCKED, released: true };
+  }
+
+  const handoff = result.details?.handoff;
+  if (handoff && typeof adapter.appendStageHandoffForClaim === "function") {
+    await guardedCall({
+      adapter,
+      claimAwareMethod: "appendStageHandoffForClaim",
+      legacyMethod: "appendStageHandoff",
+      claimId,
+      args: [{
+        stage: handoff.stage,
+        inputFingerprint: handoff.inputFingerprint ?? inputFingerprint,
+        payload: handoff.payload
+      }],
+      verifyOptions,
+      falseKey: "appended"
+    });
   }
 
   await guardedCall({

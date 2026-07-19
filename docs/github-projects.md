@@ -19,7 +19,7 @@ Provision this field set:
 | Lease Owner | Text | Current worker id |
 | Lease Expires | Text | Lease timeout as an ISO timestamp |
 | Attempts | Number | Claim/run count |
-| Last Worker Run | Text | Last runtime run id |
+| Last Worker Run | Text | Structured claim, operation binding, head snapshot, and cooldown |
 | PR | Text | Linked PR URL or number |
 | Epic | Text | Parent epic or track |
 
@@ -35,10 +35,12 @@ Planning
 Architecture
 Grooming
 Ready
+Implementation Planning
 Implementation
 QA
 Review
 Babysit
+Ready for Owner
 Blocked
 Done
 Canceled
@@ -48,17 +50,31 @@ Canceled
 
 The preferred queue view is a board named `Queue Board` with `Status` as the
 column field. Moving a card into `Planning`, `Architecture`, `Grooming`,
-`Ready`, `Implementation`, `QA`, `Review`, or `Babysit` is the operator signal
+`Ready`, `Implementation Planning`, `Implementation`, `QA`, `Review`, or
+`Babysit` is the operator signal
 that the corresponding worker may consider it. The core engine still filters
 dependencies, repository routing, and leases before claiming. The local daemon
-currently auto-runs only `Implementation`, `Review`, and `Babysit`; the other
-columns remain manual.
+auto-runs `Implementation Planning`, `Implementation`, `Review`, and `Babysit`.
+`Ready for Owner` is non-claimable; `QA` is legacy/manual outside this chain.
 
 PR-backed work remains in `Babysit` while comments, reviews, and CI are being
-handled. When the PR has a clean CI run, clean mergeability, and either a
-current-head review approval or a thumbs-up reaction on the PR description,
-`pr-babysitter` can request the harness merge gate. The harness rechecks live PR
-state, merges with the claimed head SHA, and then moves the card to `QA`.
+handled. An authorized `+1` reaction on the PR description moves the card to
+`Ready for Owner` without running Codex. Removing it before merge returns the
+card to `Babysit`. The harness never merges; a merged implementation PR or
+successfully closed source issue reconciles to `Done`.
+
+## Trusted Handoffs
+
+Machine-authoritative plans, branches, reviews, and babysit snapshots are
+visible signed comments on the source Issue. The adapter loads comments with
+bounded backward pagination, comment-ID deduplication, stable ordering, and
+cursor-loop detection. It accepts only unedited HMAC-SHA256 envelopes from the
+configured daemon GitHub identity. Set a dedicated `SKI_HANDOFF_SECRET` of at
+least 32 bytes; never reuse or derive it from the GitHub token.
+
+Automated stages require a real Issue. Draft Project items fail closed as
+`unsupported_content_type`. Existing PR-backed Review/Babysit work is supported
+only for migration compatibility.
 
 ## Issue Dependencies
 
@@ -79,7 +95,7 @@ claim command reports `dependency_pending`, `dependency_canceled`,
 `dependency_unknown`, or `dependency_cycle`.
 
 Draft issues and PR-backed Project items have no dependency edges in the first
-adapter slice. Generated implementation PRs include
+adapter slice. Reviewer-created implementation PRs include
 `Closes owner/repo#N`; merging the PR closes its source issue and unlocks native
 dependents.
 
@@ -96,6 +112,7 @@ Subscribe a GitHub App or organization webhook to:
 - `projects_v2_item`
 - `issues`
 - `issue_comment`
+- `reaction`
 - `pull_request`
 - `pull_request_review`
 - `pull_request_review_comment`
@@ -104,11 +121,10 @@ Subscribe a GitHub App or organization webhook to:
 - `check_suite`
 - `workflow_run`
 
-Project webhooks should only wake the dispatcher. All `issues` events are global
-queue wakeups because a blocker in one repository can unlock a dependent in
-another. Repository-specific PR, review, comment, and CI events continue to wake
-matching partitions. Periodic reconciliation covers missed events. The adapter
-must reload state from GitHub before claiming.
+Project webhooks should only wake the dispatcher. Issue, pull request, and
+reaction events are global wakeups because dependency or lifecycle changes can
+unlock another partition. Periodic reconciliation covers missed events. The
+adapter reloads state from GitHub before claiming or reconciling.
 
 ## Lease Semantics
 
@@ -150,9 +166,11 @@ Useful mirrors:
 ski:planning
 ski:architecture
 ski:grooming
+ski:implementation-planning
 ski:implementation
 ski:qa
 ski:review
 ski:babysit
+ski:ready-for-owner
 ski:blocked
 ```

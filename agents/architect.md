@@ -31,5 +31,5 @@ Append a design handoff with:
 - verification strategy
 - risks and open questions
 
-Transition to `Grooming`, `Ready`, or `Blocked`.
-
+Return the design as a structured `architecture` handoff. Transition to
+`Grooming` or `Blocked`.

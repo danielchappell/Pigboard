@@ -13,8 +13,8 @@ test("ensurePullRequest creates a PR when no open branch PR exists", async () =>
         number: 42,
         html_url: "https://github.com/acme/repo/pull/42",
         node_id: "PR_node",
-        head: { sha: "a".repeat(40) },
-        base: { sha: "b".repeat(40) }
+        head: { ref: "ski/12-run", sha: "a".repeat(40), repo: { full_name: "acme/repo" } },
+        base: { ref: "main", sha: "b".repeat(40) }
       });
     }
     throw new Error(`unexpected ${options.method}`);
@@ -38,6 +38,7 @@ test("ensurePullRequest creates a PR when no open branch PR exists", async () =>
     head: "ski/12-run",
     base: "main",
     body: "Body",
+    draft: false,
     maintainer_can_modify: true
   });
 });
@@ -46,14 +47,22 @@ test("ensurePullRequest updates an existing open branch PR", async () => {
   const calls = [];
   const fetchImpl = async (url, options) => {
     calls.push({ url, options });
-    if (options.method === "GET") return jsonResponse([{ number: 42 }]);
+    if (options.method === "GET") {
+      return jsonResponse([{
+        number: 42,
+        html_url: "https://github.com/acme/repo/pull/42",
+        node_id: "PR_node",
+        head: { ref: "ski/12-run", sha: "a".repeat(40), repo: { full_name: "acme/repo" } },
+        base: { ref: "main", sha: "b".repeat(40) }
+      }]);
+    }
     if (options.method === "PATCH") {
       return jsonResponse({
         number: 42,
         html_url: "https://github.com/acme/repo/pull/42",
         node_id: "PR_node",
-        head: { sha: "a".repeat(40) },
-        base: { sha: "b".repeat(40) }
+        head: { ref: "ski/12-run", sha: "a".repeat(40), repo: { full_name: "acme/repo" } },
+        base: { ref: "main", sha: "b".repeat(40) }
       });
     }
     throw new Error(`unexpected ${options.method}`);
@@ -76,6 +85,56 @@ test("ensurePullRequest updates an existing open branch PR", async () => {
     title: "Ski Stack: Build thing",
     body: "Updated body"
   });
+});
+
+test("ensurePullRequest rejects a drifted existing PR before mutating it", async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, options });
+    return jsonResponse([{
+      number: 42,
+      html_url: "https://github.com/acme/repo/pull/42",
+      node_id: "PR_node",
+      head: { ref: "ski/12-run", sha: "c".repeat(40), repo: { full_name: "acme/repo" } },
+      base: { ref: "main", sha: "b".repeat(40) }
+    }]);
+  };
+
+  await assert.rejects(
+    () => ensurePullRequest({
+      token: "token",
+      repository: "acme/repo",
+      branchName: "ski/12-run",
+      baseBranch: "main",
+      expectedHeadSha: "a".repeat(40),
+      title: "Ski Stack: Build thing",
+      body: "Updated body",
+      fetchImpl
+    }),
+    /head drifted/
+  );
+  assert.deepEqual(calls.map(({ options }) => options.method), ["GET"]);
+});
+
+test("ensurePullRequest fails closed when GitHub omits the expected PR head", async () => {
+  const fetchImpl = async (_url, options) => {
+    if (options.method === "GET") return jsonResponse([]);
+    return jsonResponse({ number: 42, html_url: "https://github.com/acme/repo/pull/42" });
+  };
+
+  await assert.rejects(
+    () => ensurePullRequest({
+      token: "token",
+      repository: "acme/repo",
+      branchName: "ski/issue-12",
+      baseBranch: "main",
+      expectedHeadSha: "a".repeat(40),
+      title: "Ski Stack: Build thing",
+      body: "Body",
+      fetchImpl
+    }),
+    /head drifted/
+  );
 });
 
 test("mergePullRequest sends an expected head SHA guard", async () => {

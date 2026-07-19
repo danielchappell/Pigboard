@@ -1,6 +1,7 @@
 import { Status, WorkerType } from "./status.js";
 
 export const AUTO_RUN_WORKER_TYPES = new Set([
+  WorkerType.IMPLEMENTATION_PLANNER,
   WorkerType.IMPLEMENTER,
   WorkerType.REVIEWER,
   WorkerType.PR_BABYSITTER
@@ -11,6 +12,7 @@ export const WORKER_TYPE_BY_STATUS = Object.freeze({
   [Status.ARCHITECTURE]: WorkerType.ARCHITECT,
   [Status.GROOMING]: WorkerType.GROOMER,
   [Status.READY]: WorkerType.RESEARCHER,
+  [Status.IMPLEMENTATION_PLANNING]: WorkerType.IMPLEMENTATION_PLANNER,
   [Status.IMPLEMENTATION]: WorkerType.IMPLEMENTER,
   [Status.QA]: WorkerType.QA,
   [Status.REVIEW]: WorkerType.REVIEWER,
@@ -19,15 +21,17 @@ export const WORKER_TYPE_BY_STATUS = Object.freeze({
 
 export const NONCLAIMABLE_STATUSES = new Set([
   Status.TODO,
+  Status.READY_FOR_OWNER,
   Status.BLOCKED,
   Status.DONE,
   Status.CANCELED
 ]);
 
 const COMPLETED_TRANSITIONS = Object.freeze({
+  [WorkerType.IMPLEMENTATION_PLANNER]: new Set([Status.IMPLEMENTATION_PLANNING, Status.IMPLEMENTATION]),
   [WorkerType.IMPLEMENTER]: new Set([Status.REVIEW]),
-  [WorkerType.REVIEWER]: new Set([Status.BABYSIT]),
-  [WorkerType.PR_BABYSITTER]: new Set([Status.BABYSIT, Status.QA, Status.CANCELED])
+  [WorkerType.REVIEWER]: new Set([Status.IMPLEMENTATION, Status.BABYSIT]),
+  [WorkerType.PR_BABYSITTER]: new Set([Status.BABYSIT, Status.READY_FOR_OWNER, Status.CANCELED])
 });
 
 export function resolvedWorkerTypeForItem(item) {
@@ -71,6 +75,13 @@ export function validateWorkerTransition({ workerType, result }) {
   if (workerType === WorkerType.IMPLEMENTER && result.outcome === "no-op") {
     throw new Error("implementer no-op cannot auto-advance in the current runtime");
   }
+  if (
+    workerType === WorkerType.IMPLEMENTATION_PLANNER &&
+    result.outcome === "no-op" &&
+    result.nextStatus !== Status.IMPLEMENTATION_PLANNING
+  ) {
+    throw new Error("implementation-planner no-op must remain in Implementation Planning");
+  }
 
   if (!["completed", "no-op"].includes(result.outcome)) {
     throw new Error(`Unsupported worker outcome: ${result.outcome}`);
@@ -83,13 +94,5 @@ export function validateWorkerTransition({ workerType, result }) {
   if (!allowed?.has(nextStatus)) {
     throw new Error(`${workerType} cannot transition to ${nextStatus}`);
   }
-  if (
-    workerType === WorkerType.PR_BABYSITTER &&
-    nextStatus === Status.QA &&
-    result.mergeWhenApprovedAndClean !== true
-  ) {
-    throw new Error("pr-babysitter can only transition to QA with mergeWhenApprovedAndClean=true");
-  }
-
   return nextStatus;
 }

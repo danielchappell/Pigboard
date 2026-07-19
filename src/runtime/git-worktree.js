@@ -39,6 +39,56 @@ export async function createImplementationWorktree({
   return { worktreePath, branchName: safeBranchName };
 }
 
+export async function createDetachedBaseWorktree({
+  repoPath,
+  repository,
+  baseBranch,
+  expectedBaseSha,
+  runId,
+  worktreeRoot = defaultWorktreeRoot(),
+  execFileImpl = execFileAsync,
+  githubToken
+}) {
+  return createDetachedRemoteWorktree({
+    repoPath,
+    repository,
+    remoteRef: branchRemoteRef(baseBranch),
+    expectedSha: expectedBaseSha,
+    runId,
+    refName: "base",
+    worktreeRoot,
+    execFileImpl,
+    githubToken
+  });
+}
+
+export async function createImplementationBranchWorktree({
+  repoPath,
+  repository,
+  baseBranch,
+  baseSha,
+  branchName,
+  expectedHeadSha,
+  runId,
+  worktreeRoot = defaultWorktreeRoot(),
+  execFileImpl = execFileAsync,
+  githubToken
+}) {
+  const source = expectedHeadSha
+    ? { remoteRef: branchRemoteRef(branchName), expectedSha: expectedHeadSha, refName: "implementation-head" }
+    : { remoteRef: branchRemoteRef(baseBranch), expectedSha: baseSha, refName: "implementation-base" };
+  const worktree = await createDetachedRemoteWorktree({
+    repoPath,
+    repository,
+    ...source,
+    runId,
+    worktreeRoot,
+    execFileImpl,
+    githubToken
+  });
+  return { ...worktree, branchName, resumed: Boolean(expectedHeadSha) };
+}
+
 export async function createPullRequestWorktree({
   repoPath,
   repository,
@@ -134,6 +184,55 @@ export async function cleanupWorktree({ repoPath, worktreePath, keep = false, ex
   } catch {
     await rm(worktreePath, { recursive: true, force: true });
   }
+}
+
+export async function snapshotGitState({ worktreePath, execFileImpl = execFileAsync }) {
+  const [{ stdout: head }, { stdout: status }, { stdout: refs }] = await Promise.all([
+    execFileImpl("git", ["-C", worktreePath, "rev-parse", "HEAD"], { env: buildRepoCommandEnv() }),
+    execFileImpl("git", ["-C", worktreePath, "status", "--porcelain", "--untracked-files=all"], { env: buildRepoCommandEnv() }),
+    execFileImpl("git", ["-C", worktreePath, "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads", "refs/tags"], {
+      env: buildRepoCommandEnv()
+    })
+  ]);
+  return { head: head.trim(), status, refs };
+}
+
+export async function assertGitStateUnchanged({ before, worktreePath, execFileImpl = execFileAsync }) {
+  const after = await snapshotGitState({ worktreePath, execFileImpl });
+  if (before.head !== after.head || before.status !== after.status || before.refs !== after.refs) {
+    throw new Error("read-only worker changed repository state");
+  }
+  return after;
+}
+
+async function createDetachedRemoteWorktree({
+  repoPath,
+  repository,
+  remoteRef,
+  expectedSha,
+  runId,
+  refName,
+  worktreeRoot,
+  execFileImpl,
+  githubToken
+}) {
+  const repositorySegment = safePathSegment(repository);
+  const worktreePath = join(worktreeRoot, repositorySegment, safePathSegment(runId));
+  const remoteUrl = githubRemoteUrl(repository);
+  const runRef = runScopedRef(runId, refName);
+  await mkdir(join(worktreeRoot, repositorySegment), { recursive: true });
+  await assertCredentialFreeWorktree(repoPath);
+  await execFileImpl("git", ["-C", repoPath, "fetch", "--no-tags", remoteUrl, `+${remoteRef}:${runRef}`], {
+    env: buildDaemonGitEnv({ githubToken })
+  });
+  const { stdout } = await execFileImpl("git", ["-C", repoPath, "rev-parse", runRef], { env: buildRepoCommandEnv() });
+  const headSha = stdout.trim();
+  if (expectedSha && headSha !== expectedSha) throw new Error("remote ref drifted after claim");
+  await execFileImpl("git", ["-c", "core.hooksPath=/dev/null", "-C", repoPath, "worktree", "add", "--detach", worktreePath, headSha], {
+    env: buildRepoCommandEnv()
+  });
+  await assertCredentialFreeWorktree(worktreePath);
+  return { worktreePath, headSha };
 }
 
 function safePathSegment(value) {

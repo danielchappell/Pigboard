@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -10,6 +10,7 @@ import {
   isGlobalQueueWakeup,
   normalizeCodexModel,
   normalizeCodexReasoningEffort,
+  normalizeHandoffSecret,
   runCodexIsolationDiagnostics,
   WorkerDrainScheduler,
   WorkerType
@@ -27,21 +28,30 @@ await assertLocalChatGptCodexAuth();
 await runCodexIsolationDiagnostics({ cwd: process.cwd() });
 
 const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+const handoffSecret = normalizeHandoffSecret(process.env.SKI_HANDOFF_SECRET);
 const owner = config.github?.owner ?? process.env.GITHUB_OWNER ?? process.env.GITHUB_ORG;
 const projectNumber = config.github?.projectNumber ?? process.env.GITHUB_PROJECT_NUMBER;
 if (!token || !owner || !projectNumber) {
   throw new Error("GITHUB_TOKEN/GH_TOKEN, GitHub owner, and project number are required");
 }
+const ownerApprovers = normalizeApprovers(config.github?.ownerApprovers);
+if (!ownerApprovers.length) throw new Error("github.ownerApprovers must contain at least one GitHub login");
+
+const adapterConfig = {
+  token,
+  owner,
+  projectNumber,
+  ownerType: config.github?.ownerType ?? "auto",
+  handoffSecret,
+  trustedAuthorLogin: config.github?.handoffAuthorLogin,
+  ownerApprovers
+};
 
 const workers = await createWorkers({
   config,
-  adapterConfig: {
-    token,
-    owner,
-    projectNumber,
-    ownerType: config.github?.ownerType ?? "auto"
-  }
+  adapterConfig
 });
+const lifecycleAdapter = new GitHubProjectsAdapter(adapterConfig);
 const scheduler = new WorkerDrainScheduler({ workers });
 
 const server = createGitHubWebhookServer({
@@ -49,6 +59,9 @@ const server = createGitHubWebhookServer({
   host,
   insecureLocalWebhook,
   onEvent: async (event) => {
+    if (["issues", "pull_request", "reaction"].includes(event.eventName)) {
+      await lifecycleAdapter.reconcileLifecycleEvent(event);
+    }
     scheduler.markAllDirty(
       (_key, worker) => isGlobalQueueWakeup(event) || matchesWorkerRepository(worker, event.repository)
     );
@@ -61,17 +74,24 @@ server.listen(port, host, () => {
 });
 
 setInterval(() => {
-  scheduler.markAllDirty();
-  scheduler.requestDrain();
+  lifecycleAdapter.reconcileCompletedOperations()
+    .then(() => lifecycleAdapter.reconcileLifecycleState())
+    .catch((error) => console.error(error))
+    .finally(() => {
+      scheduler.markAllDirty();
+      scheduler.requestDrain();
+    });
 }, Number(process.env.SKI_RECONCILE_SECONDS ?? 600) * 1000).unref();
 
+await lifecycleAdapter.reconcileCompletedOperations();
+await lifecycleAdapter.reconcileLifecycleState();
 scheduler.markAllDirty();
 scheduler.requestDrain();
 
 async function createWorkers({ config, adapterConfig }) {
   const workers = new Map();
   for (const slot of config.slots ?? []) {
-    if (![WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
+    if (![WorkerType.IMPLEMENTATION_PLANNER, WorkerType.IMPLEMENTER, WorkerType.REVIEWER, WorkerType.PR_BABYSITTER].includes(slot.type)) continue;
     if (slot.observeOnly) continue;
     const model = requiredModelForSlot(slot);
     const reasoningEffort = optionalReasoningEffortForSlot(slot);
@@ -88,7 +108,9 @@ async function createWorkers({ config, adapterConfig }) {
       if (!repoPolicy?.cwd) {
         throw new Error(`Missing repo policy cwd for worker ${slot.type}${repository ? ` on ${repository}` : ""}`);
       }
-      const workerRole = repoPolicy.workerRole ?? (await readWorkerRole(slot.type));
+      const workerRole = slot.rolePath
+        ? await readFile(isAbsolute(slot.rolePath) ? slot.rolePath : resolve(repoRoot, slot.rolePath), "utf8")
+        : repoPolicy.workerRole ?? (await readWorkerRole(slot.type));
       const repositories = repository ? [repository] : [];
       for (let index = 0; index < count; index += 1) {
         const partitionName = slot.name ? `${slot.name}:${repository ?? "all"}` : repository ?? "all";
@@ -106,7 +128,8 @@ async function createWorkers({ config, adapterConfig }) {
           reasoningEffort,
           repoPolicy: {
             ...repoPolicy,
-            workerRole
+            workerRole,
+            requireSignedHandoffs: true
           }
         });
         worker.allowedRepositories = new Set(repositories.map((repo) => repo.toLowerCase()));
@@ -149,6 +172,11 @@ function normalizeRepositories(value) {
   return repositories.map((repo) => String(repo).trim()).filter(Boolean);
 }
 
+function normalizeApprovers(value) {
+  const values = Array.isArray(value) ? value : String(value ?? "").split(",");
+  return [...new Set(values.map((login) => String(login).trim()).filter(Boolean))];
+}
+
 function policyForRepository({ config, repository, token }) {
   const policy = repository ? config.repositories?.[repository] ?? config.repoPolicy : config.repoPolicy;
   if (!policy) return undefined;
@@ -185,9 +213,10 @@ async function loadWorkerConfig(path) {
         verifyCommands: []
       },
       slots: [
-        { type: WorkerType.IMPLEMENTER, count: 1 },
-        { type: WorkerType.REVIEWER, count: 1 },
-        { type: WorkerType.PR_BABYSITTER, count: 1 }
+        { type: WorkerType.IMPLEMENTATION_PLANNER, model: "gpt-5.6-sol", reasoningEffort: "xhigh", count: 1 },
+        { type: WorkerType.IMPLEMENTER, model: "gpt-5.6-terra", reasoningEffort: "xhigh", count: 1 },
+        { type: WorkerType.REVIEWER, model: "gpt-5.6-sol", reasoningEffort: "xhigh", count: 1 },
+        { type: WorkerType.PR_BABYSITTER, model: "gpt-5.6-terra", reasoningEffort: "xhigh", count: 1 }
       ]
     };
   }
