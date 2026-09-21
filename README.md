@@ -49,7 +49,18 @@ cd ski-stack
 npm test
 ```
 
+## Product direction
+
+The [product definition](docs/product.md) describes the agreed SaaS direction,
+Rovito-derived principles, and unresolved design decisions. The runtime below
+describes the current GitHub Projects/local Codex implementation.
+
 ## Development Map
+
+Follow the [development workflow](docs/development-workflow.md) and
+[architecture plan](docs/architecture-plan.md) before choosing implementation
+work. These describe how we develop Ski Stack; they are not customer runtime
+requirements.
 
 Ski Stack is intentionally small and dependency-light. For most local work,
 start with:

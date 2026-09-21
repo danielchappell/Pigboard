@@ -1,0 +1,27 @@
+{
+  "agentId": "bc-a7514709-a589-40cf-af18-fe8a177f4584",
+  "name": "Ski Stack: trivial Cursor API probe",
+  "prompt": {
+    "text": "Reply exactly SKI_STACK_CURSOR_PROBE_OK. This is a minimal connectivity test for the Ski Stack Cursor adapter. Do not call tools, inspect files, create files, run commands, browse, or perform any other work."
+  },
+  "mode": "plan",
+  "autoCreatePR": false,
+  "workOnCurrentBranch": false,
+  "model": {
+    "id": "gpt-5.6-sol",
+    "params": [
+      {
+        "id": "context",
+        "value": "272k"
+      },
+      {
+        "id": "reasoning",
+        "value": "none"
+      },
+      {
+        "id": "fast",
+        "value": "false"
+      }
+    ]
+  }
+}
