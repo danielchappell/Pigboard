@@ -14,11 +14,12 @@ that we maintain and improve. The owner identifies the existing Ski Stack proces
 as a working starting point and directs us to settle the architecture, roadmap
 and core functionality before iterating on the development method.
 
-Current focus: **core foundation**, starting with architecture/queue alignment and the
-existing bounded implementation path. The affected direction and queue changes
-require independent review; exact verdicts are in [review evidence](development-review.md).
-Reuse the unchanged D2 contract and S01 Story/plan, with a current-code check
-before implementation. Earlier review verdicts remain tied to their exact artifacts.
+Current focus: **S01 implementation and independent committed-code review**.
+Architecture/queue alignment is CLEAN for the exact artifacts in
+[review evidence](development-review.md). The implementation reuses the unchanged
+D2 contract and S01 Story/plan after a current-code check; its own evidence and
+pending gate are in [S01 implementation evidence](reviews/workflow-profile.md).
+Earlier review verdicts remain tied to their exact artifacts.
 
 The order is:
 
@@ -54,8 +55,8 @@ entire roadmap as one project-sized branch.
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
 claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
-ready for delivery.** S01 is the selected first foundation Story, subject to the
-alignment review above and a current-code check against its reviewed plan.
+ready for delivery.** S01 is implemented locally under its reviewed plan; its
+independent committed-code gate and PR remain outstanding as recorded below.
 Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
 
@@ -171,6 +172,11 @@ slices supported by evidence from operating that baseline.
 
 ## Current work and evidence
 
+- S01 (22 September): implemented on `codex/workflow-profile-preview`, explicitly
+  stacked on the documentation Task at `6d44a924e403634c871dedeaa9069dc2ab1408ae`.
+  Eleven changed files include tests, guides and queue/review bookkeeping.
+  All 215 local tests pass (17 new). Independent committed-code reviews are next;
+  no S01 PR, merge or hosted acceptance is claimed. See [exact evidence](reviews/workflow-profile.md).
 - Completed: marker-only Cursor API discovery, including ambiguous-create
   recovery and duplicate rejection; [evidence](pilots/cursor-api-probe-result.json).
 - Existing but unmerged: [Cursor PR #7](https://github.com/danielchappell/ski-stack/pull/7),
@@ -198,10 +204,9 @@ slices supported by evidence from operating that baseline.
 | Agents are equal | CLI/board operations supply shared commands for real MCP inspection/creation, with explicit authorization and structured recovery. |
 | Dependable | Existing implementation, review status, live proof and future outcomes remain distinct; no unresolved preview is marked ready. |
 
-Selected first implementation: S01, because it delivers the reviewed M1 setup
-outcome with resolved contracts and a bounded file/time estimate. Its prior plan
-has two independent CLEAN verdicts in [the review record](development-review.md).
-Confirm the current alignment review and recheck code/plan assumptions before
-implementation; any material plan change needs the affected review again.
+S01 delivers the reviewed M1 configuration outcome with resolved contracts and a
+bounded file/time estimate. Its plan/alignment gates and current-code check were
+completed before implementation. Next: obtain two fresh independent committed-code
+reviews, resolve confirmed in-scope findings, then open the bounded stacked PR.
 D1/D4 can continue where authorized access permits. S02 and hosted activation
 remain gated on their outstanding live decisions, and PR #7 remains separate.

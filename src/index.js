@@ -1,5 +1,6 @@
 export { Status, WorkerType, isTerminalStatus, readyStatusForWorker } from "./core/status.js";
 export { AdapterError, ClaimLostError } from "./core/adapter-contract.js";
+export { validateWorkflowProfile, formatWorkflowProfileReport } from "./core/workflow-profile.js";
 export { createClaimId, createClaimV2Id, isClaimV2, parseClaimId } from "./core/claims.js";
 export { planDeliveryLifecycleMigration, recoverableDeliveryEvidence } from "./core/lifecycle-migration.js";
 export {
