@@ -217,3 +217,17 @@ No S01 runtime code has been written. The current 198-test baseline passed on
 Node 22.17.0; it proves the unchanged runtime, not the planned feature. Future
 feature tests, committed-code reviews, PR checks and any release authorization
 remain outstanding. The other 27 Story previews remain provisional.
+
+## Product-positioning conversation record — 21 September 2026
+
+Added `product-strategy.md` and linked the owner's endorsed product outcome from
+`product.md` and `delivery-plan.md`. The strategy distinguishes endorsed intent,
+proposed scope/messaging, current official competitor evidence and unvalidated
+assumptions. These are documentation of the conversation, not an independent
+CLEAN strategy/design verdict or a revised implementation plan. Historical hashes
+above still identify the earlier reviewed artifacts; those verdicts do not cover
+the product/queue addenda or imply commercial validation. S01's Story and concrete
+plan remain unchanged. Roadmap reconciliation and review of affected design/plan
+changes are outstanding before implementation. Relative links and whitespace
+were checked; no runtime tests, live automation or paid agent jobs were run for
+this documentation update.

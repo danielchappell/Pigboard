@@ -4,6 +4,16 @@ Agreed product direction, 20 September 2026. This defines the product to design;
 it is not a claim that the SaaS, Jira adapter, MCP, or cloud runners are shipped.
 The existing implementation is the GitHub Projects/local Codex MVP.
 
+## Product direction update — 21 September 2026
+
+The owner has endorsed a sharper customer outcome: a team-owned delivery service
+that takes a feature through product/engineering discovery to small, reviewed
+changes, with humans involved at meaningful decisions. The
+[product strategy and positioning record](product-strategy.md) captures that
+outcome, candidate messaging, competitive evidence and unvalidated hypotheses.
+The integration requirements below remain enabling capabilities. This addendum
+is a conversation record; earlier design reviews do not cover it.
+
 ## What Ski Stack is
 
 Ski Stack is a SaaS platform that connects agent teams to Kanban boards so that

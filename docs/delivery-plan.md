@@ -6,6 +6,16 @@ Architecture review is CLEAN from independent product and technical reviewers;
 see [review evidence](development-review.md). Delivery-plan review is recorded
 there separately. This plan does not claim unresolved discovery is finished.
 
+## Product strategy update — 21 September 2026
+
+The owner endorsed the outcome captured in the
+[product strategy record](product-strategy.md). Reconcile this delivery map with
+that outcome and the current alternatives before further implementation; review
+affected design/plan changes through the existing gates. S01's technical plan
+remains reviewed, but its status does not establish its commercial priority.
+This note records the new direction without claiming the roadmap has already
+been revised or independently reviewed against it.
+
 ## How to use this queue
 
 Start with the discovery decisions below, then promote only the Stories whose
