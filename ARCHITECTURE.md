@@ -34,9 +34,22 @@ src/runtime/
 src/adapters/<tool>/
   vendor-specific queue implementation
 
+src/runners/<provider>.js
+  execution-provider client with explicit request and run identities
+
 src/provisioners/<tool>/
   setup for fields, labels, templates, webhooks, and repo guidance
 ```
+
+## Cursor Execution
+
+The standalone Cursor runner prepares, starts, and retrieves one plan-mode cloud
+job. The caller retains its request/agent ID before launch and the returned run
+ID for exact retrieval. Ambiguous launches trigger read-only recovery, not a
+second create. It does not implement queue claims, advance board items, or plug
+directly into the existing coding daemon. A future coordinator can use this
+provider boundary while retaining ownership and result-validation policy.
+See [the Cursor runner guide](docs/cursor-cloud.md).
 
 ## Adapter Contract
 

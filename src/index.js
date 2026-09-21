@@ -52,6 +52,7 @@ export {
   verifyGitHubSignature
 } from "./adapters/github-projects/webhook-server.js";
 export { QueueDispatcher } from "./runtime/dispatcher.js";
+export { CursorCloudError, CursorCloudRunner, prepareCursorRequest, validateCursorRequest } from "./runners/cursor-cloud.js";
 export {
   claimNextAvailable,
   isAvailabilityChangeReason,

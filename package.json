@@ -10,6 +10,7 @@
     "apply:github": "node scripts/apply-github-worker-result.mjs",
     "check:github-project": "node scripts/check-github-project.mjs",
     "claim:github": "node scripts/claim-github-worker.mjs",
+    "cursor": "node scripts/cursor-cloud.mjs",
     "daemon:github": "node scripts/run-github-worker-daemon.mjs",
     "import:github-repos": "node scripts/import-github-project-repos.mjs",
     "logs:github": "node scripts/show-github-run-logs.mjs",

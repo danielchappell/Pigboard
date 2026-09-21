@@ -49,6 +49,20 @@ cd ski-stack
 npm test
 ```
 
+## Product direction
+
+The [product definition](docs/product.md) describes the agreed SaaS direction,
+Rovito-derived principles, and unresolved design decisions. The queue runtime
+remains the GitHub Projects/local Codex implementation; the Cursor runner is separate.
+
+## Cursor Cloud Jobs
+
+Use `npm run --silent cursor -- --help` to prepare, start, and retrieve a Cursor
+cloud job with a stable provider ID. The [Cursor runner guide](docs/cursor-cloud.md)
+includes model discovery, JSON inputs/results, and recovery after a lost launch
+response. This is a standalone plan-mode runner; board routing and the existing
+GitHub/Codex daemon are separate workflows.
+
 ## Development Map
 
 Ski Stack is intentionally small and dependency-light. For most local work,
