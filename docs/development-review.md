@@ -231,3 +231,71 @@ plan remain unchanged. Roadmap reconciliation and review of affected design/plan
 changes are outstanding before implementation. Relative links and whitespace
 were checked; no runtime tests, live automation or paid agent jobs were run for
 this documentation update.
+
+## Competitive discovery review — 21 September 2026
+
+The [comparison](research/2026-09-21-competitor-build-versus-buy.md) and
+[source ledger](research/2026-09-21-competitor-sources.md) now inform the product
+strategy and active queue. This is research and a discovery-plan update, not a
+new architecture approval, implementation review, market validation or live
+integration acceptance.
+
+Fresh independent Sol reviewers `/root/competitive_product_review` and
+`/root/competitive_technical_review` reviewed the synthesis and changed strategy/
+queue text against baseline `5c1b7831b18d287fe055aad2acf3879f84f9d9e5`.
+The initial technical verdict was CLEAN. The initial product verdict was
+NOT CLEAN: the narrative admitted demand was unproven, but the active queue had
+only technical discovery to inform the commercial decision. This was a real
+in-scope planning gap. Added D0 in the existing Task catalog and linked it from
+the report, strategy and queue. No implementation or outreach was authorized.
+
+Both reviewers re-reviewed the five-artifact set below and returned **CLEAN**.
+D0 requires observed burden, comparison with current alternatives, buying evidence,
+criteria before collection and a decision that may be a package, service, hosted
+product, further discovery or no commercial product. Internal dogfooding remains
+a separate decision. No unresolved in-scope findings remain for this review surface.
+
+| Exact artifact | SHA-256 |
+| --- | --- |
+| research/2026-09-21-competitor-build-versus-buy.md | `6b8cc8809cac2caecfb611211fd7d233f4ff758c59dac6e61f9fe3e9a6b748b5` |
+| research/2026-09-21-competitor-sources.md | `5fac4c15ead51badc7629c416d4b2dff496d3c26ddcccc38af8d385fe0aabbe4` |
+| product-strategy.md | `171fc23a3c5ab662d4e3681d0d4f6ecb55541faf8cf7e9a8252e5c403f31b0cd` |
+| delivery-plan.md | `563d0276ecb2dea7fe7ed6cd8e82e9f57c0395f60100d090706bb8a24384c042` |
+| tasks/architecture-decisions.md | `345db89ca191f2c790b53f44db38722f6ccf5b33b475745851c24543d1c229c3` |
+
+Scope: both research files in full; strategy/queue changes and affected context;
+D0 addition and affected context in the Task catalog. Historical D1-D9 and the
+previous architecture were not re-approved through this research gate.
+
+Each reviewer covered **5/5 artifacts, 12/12 requirement rows, 3/3 assembly routes,
+12/12 limitation rows, 8/8 experiments**, plus D0's **6/6 acceptance criteria,
+4/4 technical criteria and 3/3 validation rows**. Both completed a second sweep.
+All 45 ledger entries were assessed. The product reviewer independently rechecked
+4 decision-critical external pages; the technical reviewer rechecked 8. The ledger
+contains 49 distinct URLs, so these are targeted independent source checks, not
+claims that either reviewer re-fetched every URL. The authors' wider source
+collection and live UI observations remain separately identified in the report.
+
+| Principle | Author assessment | Independent product assessment | Independent technical assessment |
+| --- | --- | --- | --- |
+| Intuitive | Three assembly routes and D0 separate feasibility from a commercial choice. | Named commercial Task and plain outcome choices serve human and agent readers. | D0 asks the commercial question explicitly; technical success cannot answer it alone. |
+| Discoverable | Linked report, sources, queue and Task expose evidence and unknowns. | Readers can find the gate without reconstructing the conversation. | Contracts, criteria and access boundaries are explicit and linked. |
+| Delightful experience | Seek reduced coordination and reuse native setup before adding machinery. | Existing evidence can advance work without unnecessary demos or outreach. | Teams need not endure a technical pilot before their burden is understood. |
+| Token saver | Stable IDs and a concise evidence Task reduce repeated research. | Structured criteria let agents report facts that humans can evaluate directly. | One Task captures decision inputs without hiding missing evidence. |
+| Secure | Preserve company compute limits, consent and private research data; disclose the draft. | Outreach requires instructions; summaries protect private information. | No new account, runtime, paid-work or company-access authority is implied. |
+| Agents are equal | Assess programmatic operations separately from human UI access. | Structured research is agent-usable; humans retain relationship and budget decisions. | Evidence is traceable and noninteractive within authorized access. |
+| Dependable | Do not equate docs, demo, dogfooding, review or customer demand. | Criteria, contrary evidence and a stop option prevent automatic positive conclusions. | Missing access and interviews remain unresolved; completed work is not repeated blindly. |
+
+Validation: 25 relative file links across the five artifacts resolve; whitespace
+checks pass. The change contains documentation only, so no new runtime tests or
+paid model jobs were needed. No Jira configuration changed. Opening Cursor's
+New Automation editor unexpectedly persisted one empty inactive draft; the report
+discloses it and records that no job was launched. This research does not prove
+tenant entitlements, practical multi-user handoff, full lifecycle reliability,
+customer demand or per-feature cost.
+
+Next work remains D0 and bounded D1/D4 discovery, a fair native-versus-package
+comparison, and reconciliation of affected design/delivery choices through the
+standing gates. Jira adapter precedes later app packaging. S01 remains technically
+prepared but deferred pending product reconciliation; no implementation Story was
+promoted by this documentation.

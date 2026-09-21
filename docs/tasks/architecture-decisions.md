@@ -6,6 +6,35 @@ No Task authorizes unapproved access, paid infrastructure or nontrivial company
 Cursor work. Resolve discoverable facts before bringing genuine product choices
 to the owner.
 
+## D0 — Test the product need
+
+Problem to solve
+
+Native tools may already meet the needs of teams using coding agents.
+We have not shown that other teams need or would pay for Ski Stack's help.
+
+Acceptance Criteria
+
+- Record the target segment and real examples of setup, handoff or recovery work from engineering leads who already use agents with an existing board and repository.
+- Compare their current tools and workarounds with the native and packaged routes in the competitor report.
+- Record how often the burden occurs, who bears it and what time or cost evidence supports it.
+- Distinguish stated interest from buying evidence, including the budget owner, acceptable offer and any concrete pilot commitment.
+- Recommend a package, setup service, hosted service, further discovery or no commercial product, with evidence and remaining uncertainty.
+- Keep an internal dogfooding decision separate from a claim of customer demand.
+
+Technical Acceptance Criteria
+
+- Agree the evidence sample and decision criteria before collecting results; a small sample cannot establish market size.
+- Use supplied or authorized research notes; contacting people needs explicit instructions and is not authorized by this Task.
+- Use anonymized summaries and do not publish private customer material or grant access to company systems.
+- Do not treat missing interviews, positive compliments or one forum post as proof of demand.
+
+Testing Strategy
+
+- Manual QA: Trace each recommendation to observed workflow burden, the strongest current alternative and buying evidence; verify that contrary evidence is included.
+- Access and setup: Target participants, research notes and outreach authority remain unresolved; existing public evidence can inform the interview guide.
+- Automated regression: No new tests are needed for this research-only Task; validate record links and evidence labels.
+
 ## D1 — Verify the Jira connection and workflow
 
 Problem to solve

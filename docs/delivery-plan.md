@@ -16,6 +16,25 @@ remains reviewed, but its status does not establish its commercial priority.
 This note records the new direction without claiming the roadmap has already
 been revised or independently reviewed against it.
 
+Current stage: **competitive discovery and roadmap reconciliation**, ahead of
+runtime implementation. The [deeper comparison](research/2026-09-21-competitor-build-versus-buy.md)
+records native Atlassian/Cursor, packaged Automations, and thin-adapter alternatives;
+its [ledger](research/2026-09-21-competitor-sources.md) identifies the evidence and
+unresolved contracts. The owner directs Jira adapter before a later installable
+Jira app. No Story is promoted by this research, and historical review evidence
+does not prove product differentiation.
+
+Next work combines D0 product discovery with the report's decision-critical
+access/contracts in D1/D4 and the smallest fair native-versus-package comparison.
+D0 supplies the evidence for choosing a commercial offer; technical feasibility
+alone cannot select a hosted SaaS. Its findings and the comparison inform roadmap
+reconciliation, followed by the affected design/plan reviews. Unresolved customer
+access is recorded honestly and does not block already authorized technical
+discovery or establish that internal dogfooding is a commercial product. The eight
+experiments are a research menu, not eight implementation Stories or authorization
+to run substantial work on the company Cursor account. A complete live comparison
+still needs an appropriate account/budget; trivial adapter checks remain authorized.
+
 ## How to use this queue
 
 Start with the discovery decisions below, then promote only the Stories whose
@@ -26,7 +45,8 @@ entire roadmap as one project-sized branch.
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
 claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
-ready for delivery.** Each preview must be sized and, if necessary, split after
+ready for delivery.** S01 is technically prepared but deferred pending product
+reconciliation. Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
 
 A ready Story must have one usable outcome, a credible changed-file inventory of
@@ -43,9 +63,10 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 
 | Order | Task | State | Why now |
 | --- | --- | --- | --- |
+| 1, alongside bounded D1/D4 discovery | D0: Test the product need | Public comparison complete; target-team evidence, sample/decision criteria and outreach authority unresolved | Gate the commercial offer and hosted/Marketplace investment on observed burden and buying evidence, not technical feasibility alone. |
 | Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| 2, parallel with D2 | D1: Verify Jira identity and workflow | Ready for bounded read-only discovery; service-identity access unverified | Pin connection/transition/race constraints before Jira delivery Stories. |
-| 2, parallel with D2 | D4: Define and verify runner capabilities | Ready to assess existing evidence and PR #7; live repository acceptance unresolved | Reuse provider work intentionally and identify its actual permissions/capabilities. |
+| 2, parallel with D2 | D1: Verify Jira identity and workflow | Competitive docs/UI-shell evidence collected; service identity, action availability and workflow contract remain open | Pin connection/transition/race constraints and evaluate native alternatives before Jira delivery Stories. |
+| 2, parallel with D2 | D4: Define and verify runner capabilities | Competitive API/Automation comparison recorded; external Automation provisioning/correlation and live acceptance unresolved | Reuse provider work and PR #7 intentionally; distinguish direct API, native integration and Automations. |
 | 3 | D3: Choose deployment and team access | Ready for options/access discovery; final selection follows D1/D2/D4 constraints | Make hosting, credential custody, shared inspection and operating costs concrete before deployment Stories. |
 
 These are Tasks, not promises of two-day implementation. D2 is now reviewed. The configuration-only portions of D1/D4 are resolved in

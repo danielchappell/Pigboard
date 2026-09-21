@@ -157,6 +157,36 @@ adapter checks only.
 
 ## Consequences for the existing plan
 
+### Deeper competitive investigation
+
+The [build-versus-buy report](research/2026-09-21-competitor-build-versus-buy.md)
+compares three assembly routes, twelve lifecycle requirements and eight tests
+that could change the product decision. Its [source ledger](research/2026-09-21-competitor-sources.md)
+separates current documentation, announcements, account observations and a single
+user anecdote. No full native or Ski Stack feature journey was executed.
+
+This research narrows the proposed differentiation to **installing and operating
+a complete, maintainable delivery playbook in an existing team's project**.
+Cursor already has a Jira Marketplace app, role packages and hosted automations;
+Atlassian has an agentic workflow template, attention views and native review.
+An agent UI, reusable prompts, webhook routing or a Jira plugin alone is therefore
+insufficient evidence of differentiation. The candidate benefit is reduced setup,
+maintenance and coordination per accepted feature, with comparable quality.
+
+The owner specified **Jira adapter first; installable Jira app later**. This is
+the integration order, not authorization to skip discovery/design or a finding
+that a custom hosted coordinator is necessary. Compare the strongest supported
+native configuration with a packaged playbook first. If packaging suffices, that
+can be the product; build runtime responsibilities only around measured recurring
+gaps. Customer demand and willingness to pay remain unverified.
+
+[D0 product discovery](tasks/architecture-decisions.md#d0--test-the-product-need)
+now carries that commercial decision in the active queue. It must separate actual
+workflow burden and buying evidence from enthusiasm about a demo. A decision to
+dogfood an internal tool may still be worthwhile, but does not validate a SaaS.
+
+### Roadmap consequence
+
 The [architecture](architecture-plan.md) and [delivery map](delivery-plan.md)
 remain useful technical work. Their earlier reviews establish internal design
 quality, not market validation. S01 has a reviewed implementation plan, but that
@@ -166,5 +196,6 @@ Before continuing implementation, reconcile the roadmap with the endorsed
 outcome, compare how much the current platforms can supply, and review affected
 design/plan changes through the standing lifecycle. Preserve useful work and its
 historical evidence; do not silently promote these ideas to reviewed requirements
-or extend old CLEAN verdicts to changed artifacts. No runtime behavior or external
-service was changed while recording this strategy.
+or extend old CLEAN verdicts to changed artifacts. Recording the original strategy
+changed no runtime or external service. The later research's inactive Cursor draft
+side effect is separately disclosed in the linked report.
