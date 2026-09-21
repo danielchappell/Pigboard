@@ -146,3 +146,74 @@ to PR #7 and is not a new check on this Task.
 
 The record is appended as gates complete; modifying an artifact requires checking
 whether its evidence is still applicable rather than silently retaining CLEAN.
+
+## D2 contract and S01 preparation follow-up
+
+The earlier artifact hashes above identify the initial reviewed map at commit
+`b690882d862a1bb0a0fc6420f96dfa838986c29e`. Later queue/readiness edits below do not
+retroactively change that historical evidence.
+
+D2 contract: `docs/designs/hosted-work-contract.md`, SHA-256
+`f1e5da047aeb1bbab85e6ca1979f194f941ea388b2a767482dd3e8b6bf0a847c`.
+Fresh independent Sol reviewers `/root/contract_product_review` and
+`/root/contract_technical_review` are both CLEAN after one correction round.
+Product review resolved missing board/runner interfaces, S01 sizing evidence and
+structured agent output. Technical review corrected a blanket expectedVersion
+requirement to operation-specific transaction guards. Both rereviewed the final
+artifact and performed a second sweep; product coverage included all eight D2
+criteria, six application operations, ten failure rows, four board/five runner
+methods, S01 and seven principles. Technical coverage was all 379 lines/twelve
+sections, eight D2 criteria, ten failure rows, S01 and seven principles.
+
+| Principle | Product reviewer | Technical reviewer |
+| --- | --- | --- |
+| Intuitive | Preview and live eligibility/completion are distinct. | Separate lifecycle dimensions prevent misleading success claims. |
+| Discoverable | Structured route and prerequisite/error codes serve both audiences. | Bounded identities, omissions and recovery states are explicit. |
+| Delightful experience | Configuration mistakes need no credentials or paid call. | Stable identity resumes work without duplicate runs/setup. |
+| Token saver | No prose parsing or scheduler model is needed. | Deterministic validation and bounded inspection reduce wasted calls. |
+| Secure | Opaque profile references grant no authority. | Scoped service connections, immutable effects and honest fencing limits preserve authority. |
+| Agents are equal | JSON and human output expose the same facts. | Noninteractive structured commands coexist with human acceptance. |
+| Dependable | Uncertainty and unchecked live prerequisites remain visible. | Lost ownership, ambiguous effects and partial publication have explicit recovery/gates. |
+
+D2 is complete as a logical design Task. Physical store/deployment guarantees,
+Jira mutation safety and provider result decoding remain D3/D1/D4, respectively.
+S01 configuration-only inputs are resolved; this does not close those full Tasks.
+
+## S01 grooming and implementation-plan review
+
+**Ready for implementation.** Fresh independent Sol reviewers
+`/root/s01_product_plan_review` and `/root/s01_technical_plan_review` both returned
+CLEAN for the exact artifacts below. No unresolved in-scope findings remain.
+This is a Story/plan verdict, not implementation or committed-code approval.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| stories/validate-workflow-profile.md | `24bb3a2a5343cfff469da768b72679d6bc6147c4eff5257404126d5073e99ec7` |
+| plans/validate-workflow-profile.md | `0fb7f854769b74cc6cc9e89b76945b08ed43c283faf3aab9a3e9d02ff07c1813` |
+| delivery-plan.md | `b6c8110a3590a2712db586bab8f76c7d7f12c8bc50a5076f8a9423e98fcae8bd` |
+| stories/development-roadmap.md | `d2074fa7f0e97c9e948297ce6302fe86911a3488bb850fc46de01a1fd90013d7` |
+
+The product reviewer covered 7/7 assigned artifacts, 5/5 acceptance criteria,
+5/5 technical criteria, 4/4 testing requirements, 7/7 implementation steps,
+9/9 expected implementation files, both queue/catalog changes and all seven
+principles. The technical reviewer covered 6/6 assigned artifacts in full
+(1,593/1,593 lines), 5/5 relevant existing source/documentation seams, the
+9-file inventory and conservative 12-file ceiling, and all seven principles.
+Both independently inspected the repository, verified D2 fidelity and completed
+a second sweep. Both judged the 12-human-hour estimate credible and the offline
+outcome usable without pretending D1/D3/D4 live decisions were complete.
+
+| Principle | Product reviewer | Technical reviewer |
+| --- | --- | --- |
+| Intuitive | Explicit input and route preview distinguish setup from readiness. | File/stdin modes, JSON/text and fixed exit meanings are predictable. |
+| Discoverable | README, help, guide and fixed error codes cover setup and recovery. | Examples and known-path diagnostics serve both audiences; unshipped status is explicit. |
+| Delightful experience | Offline use avoids accounts, repeated setup and paid calls. | Copy/edit/check is prompt-free with equivalent JSON/text facts. |
+| Token saver | Stable structured output avoids prose interpretation. | Route, digest and explicit unchecked codes prevent repeated discovery. |
+| Secure | Opaque references and strict shape confer no access. | Bounded input, safe diagnostics and side-effect tests enforce the offline boundary. |
+| Agents are equal | File/stdin and JSON/text expose equivalent facts. | Noninteractive structured use and readable help provide equal capability. |
+| Dependable | Static validation never claims live readiness. | Explicit prerequisites, no route/digest on failure and separate evidence classes preserve honest outcomes. |
+
+No S01 runtime code has been written. The current 198-test baseline passed on
+Node 22.17.0; it proves the unchanged runtime, not the planned feature. Future
+feature tests, committed-code reviews, PR checks and any release authorization
+remain outstanding. The other 27 Story previews remain provisional.

@@ -15,8 +15,8 @@ entire roadmap as one project-sized branch.
 
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
-claiming an estimate before discovery. **Every S item below is Provisional — not
-ready for delivery.** Its size must be validated and, if necessary, split after
+claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
+ready for delivery.** Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
 
 A ready Story must have one usable outcome, a credible changed-file inventory of
@@ -33,16 +33,17 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 
 | Order | Task | State | Why now |
 | --- | --- | --- | --- |
-| 1 | D2: Define durable attempts and recovery | Ready for technical discovery/design | Establish ownership, async state and publication contracts that all hosted code must share; existing source and API evidence are available. |
+| Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
 | 2, parallel with D2 | D1: Verify Jira identity and workflow | Ready for bounded read-only discovery; service-identity access unverified | Pin connection/transition/race constraints before Jira delivery Stories. |
 | 2, parallel with D2 | D4: Define and verify runner capabilities | Ready to assess existing evidence and PR #7; live repository acceptance unresolved | Reuse provider work intentionally and identify its actual permissions/capabilities. |
 | 3 | D3: Choose deployment and team access | Ready for options/access discovery; final selection follows D1/D2/D4 constraints | Make hosting, credential custody, shared inspection and operating costs concrete before deployment Stories. |
 
-These are Tasks, not promises of two-day implementation. Discovery starts with
-D2 because ownership and recovery determine how Jira and runner adapters fit;
-it does not wait for a new Cursor run, a new UI or a purchased service.
+These are Tasks, not promises of two-day implementation. D2 is now reviewed. The configuration-only portions of D1/D4 are resolved in
+that contract; their live identity, permission and capability checks remain open.
+S01 can be implemented without those live checks because its complete outcome is
+a truthful offline route preview. It never authorizes live execution.
 
-## Ordered first-milestone Story previews
+## First Story and ordered milestone previews
 
 Story IDs stay stable when review adds a missing slice; table order and
 dependencies determine sequence, not the numeric ID. Dependencies indicate real
@@ -53,7 +54,7 @@ its decisions and plan are ready.
 
 | ID | One complete outcome | Depends on | Likely change boundary; must validate sizing |
 | --- | --- | --- | --- |
-| S01 | Validate a saved workflow configuration and explain its route | D1 configuration contract, D2 profile contract, D4 capabilities | Configuration parser/validation, one command, docs/tests. |
+| [S01](stories/validate-workflow-profile.md) | Validate a saved workflow configuration and explain its route | Reviewed D2 plus configuration-only D1/D4 decisions; [per-Story plan](plans/validate-workflow-profile.md) must have two CLEAN reviews | Nine expected implementation files, twelve including supporting updates; estimated 12 human hours. |
 | S02 | Explain whether one Jira ticket is eligible without starting it | S01, D1 | Jira reads/normalization and existing core policy, one inspection command. |
 | S03 | Start and retrieve one provider job with stable identity | D4 | Candidate existing Cursor PR #7, reduced to the reviewed runner contract. |
 | S04 | Save and retrieve an existing provider run from shared durable state | S03, D2, D3 | Stored immutable run identity/results, scoped command access and process-restart reads; no automatic launch. |
@@ -154,6 +155,9 @@ CLEAN review before its Story previews can be sized and promoted.
 | Agents are equal | CLI/board operations supply shared commands for real MCP inspection/creation, with explicit authorization and structured recovery. |
 | Dependable | Existing implementation, review status, live proof and future outcomes remain distinct; no unresolved preview is marked ready. |
 
-Next action after this planning Task: execute D2's focused discovery/design, with
-D1/D4 progressing where authorized access permits. Do not resume implementation
-simply because PR #7 already exists.
+Selected first implementation: S01, because it delivers the reviewed M1 setup
+outcome with resolved contracts and a bounded file/time estimate. Its exact
+implementation-readiness gate is the two independent CLEAN S01 plan verdicts in
+[the review record](development-review.md); no code starts before that gate.
+D1/D4 can continue where authorized access permits. S02 and hosted activation
+remain gated on their outstanding live decisions, and PR #7 remains separate.

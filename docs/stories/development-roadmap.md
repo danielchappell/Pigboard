@@ -1,7 +1,8 @@
 # Development Story previews
 
 These follow the independently reviewed [architecture](../architecture-plan.md).
-**Every item is Provisional — not ready for delivery.** Unknown interfaces,
+S01 now links to its groomed Story and reviewed-plan gate. **The other 27 items
+remain Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).
 The [active delivery plan](../delivery-plan.md) owns dependencies, readiness,
 size checks and execution order. Each Story must ultimately fit one PR, at most
@@ -16,25 +17,11 @@ Postman is not required for these previews.
 
 ## S01 — Validate a saved workflow configuration
 
-Problem to solve
-
-Teammates cannot yet configure the Jira/cloud path predictably. They need to see configuration errors and the intended route before any work runs.
-
-Acceptance Criteria
-
-- An authorized teammate can follow a documented example to save board, repository, role and runner references.
-- Validation explains missing or incompatible values and shows the intended route without starting work.
-
-Technical Acceptance Criteria
-
-- Use the reviewed versioned profile and runner capability contracts.
-- Store secret references, never secret values, in shareable configuration.
-
-Testing Strategy
-
-- Manual QA: Save the example, validate it, then remove one required reference and confirm the named error and no launch.
-- Access and setup: Use local configuration and non-secret fixtures; concrete format follows D1/D2/D4.
-- Automated regression: Cover configuration validity, route preview and secret exclusion at the command boundary.
+The authoritative [groomed Story](validate-workflow-profile.md) and
+[implementation plan](../plans/validate-workflow-profile.md) replace this preview.
+The [delivery queue](../delivery-plan.md) and [review record](../development-review.md)
+own its readiness. D2 resolves its offline configuration contract; live Jira and
+provider checks remain prerequisites of later Stories.
 
 ## S02 — Explain one Jira ticket’s eligibility
 
