@@ -60,7 +60,36 @@ No live Jira/Cursor check, paid compute, deployment, merge or release occurred.
 
 ## Independent committed-code gate
 
-Pending two fresh independent Sol reviews of the committed implementation.
-Author checks above are not independent review. The PR opens only after both
-reviewers report CLEAN for the exact revision, with complete coverage and a
-second sweep. No current claim of hosted readiness or release is implied.
+Two fresh independent Sol agents reviewed implementation commit
+`74dee57e82b9463b6f674ca810e28b1a7e0c3113` against the explicit stacked base
+`6d44a924e403634c871dedeaa9069dc2ab1408ae`, inspecting the implementation before
+the author's conclusions. Both returned **CLEAN**, with no findings or suggested
+scope expansion. Each independently reran focused 17/17 and full 215/215 tests,
+manual command/error checks, whitespace and documentation checks.
+
+| Reviewer | Coverage and second sweep | Verdict |
+| --- | --- | --- |
+| `/root/s01_code_product_review` | 11/11 changed files, 4/4 governing artifacts, 10/10 Story requirements, 9/9 contract groups; repeated requirement and file sweep. | CLEAN |
+| `/root/s01_code_technical_review` | 11/11 changed files, 4/4 governing artifacts, 1/1 supporting serializer, 16/16 contract obligations; repeated 11/11 and 16/16 sweep. | CLEAN |
+
+| Principle | Independent product assessment | Independent technical assessment |
+| --- | --- | --- |
+| Intuitive | Copy/edit/check and familiar route labels distinguish static validity from live readiness for humans and agents. | Deterministic JSON and readable text expose the same complete route without hidden authority. |
+| Discoverable | README/help/guide and field-path recovery work without the original conversation. | Explicit input modes, stable codes, supported values and recovery limits are all documented. |
+| Delightful experience | No accounts, dependency installation or prompts; one pass reports all schema failures. | Validation is bounded, offline and free of setup or paid work. |
+| Token saver | Compact output includes the full route and all omissions; longer help remains in the guide. | Canonical digests and structured facts avoid provider calls or prose interpretation. |
+| Secure | Invalid values and unknown keys are not reflected; source/references grant no authority. | Allow-listed detached data prevents callbacks; bounded reads and safe errors preserve the offline boundary. |
+| Agents are equal | Agents have library/stdin/JSON/exit status; humans have equivalent text and copyable examples. | Both interfaces expose the same result and limitations without interactive workarounds. |
+| Dependable | File/stdin agree, digests are stable, failure has no success fields, and live readiness is always false. | Boundary, malformed-input, detachment and no-side-effect tests substantiate the documented outcomes. |
+
+[S01 PR #9](https://github.com/danielchappell/ski-stack/pull/9) opened only after
+both CLEAN code reviews. It is stacked on the documentation-only
+[PR #8](https://github.com/danielchappell/ski-stack/pull/8). These two bookkeeping
+files are the only changes after the reviewed implementation commit; runtime,
+tests, public guide, help and example retain the reviewed file tree. A separate
+committed documentation-delta review verifies this evidence update before it is
+pushed. GitHub PR history identifies that final publication revision.
+
+No hosted CI, Jira/Cursor acceptance, merge or release is implied. The owner
+retains merge authority; the broader foundation remains incomplete. D1 and D4
+are the next independent discovery Tasks before their dependent live Stories.

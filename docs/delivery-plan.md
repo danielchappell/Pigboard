@@ -14,11 +14,13 @@ that we maintain and improve. The owner identifies the existing Ski Stack proces
 as a working starting point and directs us to settle the architecture, roadmap
 and core functionality before iterating on the development method.
 
-Current focus: **S01 implementation and independent committed-code review**.
+Current focus: **S01 ready for owner; D1/D4 discovery next**.
 Architecture/queue alignment is CLEAN for the exact artifacts in
 [review evidence](development-review.md). The implementation reuses the unchanged
-D2 contract and S01 Story/plan after a current-code check; its own evidence and
-pending gate are in [S01 implementation evidence](reviews/workflow-profile.md).
+D2 contract and S01 Story/plan after a current-code check. Two fresh independent
+committed-code reviews are CLEAN; [S01 evidence](reviews/workflow-profile.md)
+records exact revisions and coverage. [PR #9](https://github.com/danielchappell/ski-stack/pull/9)
+is stacked on the documentation [PR #8](https://github.com/danielchappell/ski-stack/pull/8).
 Earlier review verdicts remain tied to their exact artifacts.
 
 The order is:
@@ -55,8 +57,9 @@ entire roadmap as one project-sized branch.
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
 claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
-ready for delivery.** S01 is implemented locally under its reviewed plan; its
-independent committed-code gate and PR remain outstanding as recorded below.
+ready for delivery.** S01 is implemented and independently reviewed under its
+reviewed plan, with an open PR. Merge/release remains with the owner; live
+discovery and hosted acceptance remain outstanding as recorded below.
 Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
 
@@ -175,8 +178,12 @@ slices supported by evidence from operating that baseline.
 - S01 (22 September): implemented on `codex/workflow-profile-preview`, explicitly
   stacked on the documentation Task at `6d44a924e403634c871dedeaa9069dc2ab1408ae`.
   Eleven changed files include tests, guides and queue/review bookkeeping.
-  All 215 local tests pass (17 new). Independent committed-code reviews are next;
-  no S01 PR, merge or hosted acceptance is claimed. See [exact evidence](reviews/workflow-profile.md).
+  Implementation commit `74dee57e82b9463b6f674ca810e28b1a7e0c3113` has two
+  independent CLEAN reviews; both reviewers also passed all 215 local tests
+  (17 new). [PR #9](https://github.com/danielchappell/ski-stack/pull/9) is open,
+  stacked on [PR #8](https://github.com/danielchappell/ski-stack/pull/8).
+  Only queue/review bookkeeping follows that reviewed code. There is no hosted
+  CI workflow; no merge or live acceptance is claimed. See [exact evidence](reviews/workflow-profile.md).
 - Completed: marker-only Cursor API discovery, including ambiguous-create
   recovery and duplicate rejection; [evidence](pilots/cursor-api-probe-result.json).
 - Existing but unmerged: [Cursor PR #7](https://github.com/danielchappell/ski-stack/pull/7),
@@ -206,7 +213,10 @@ slices supported by evidence from operating that baseline.
 
 S01 delivers the reviewed M1 configuration outcome with resolved contracts and a
 bounded file/time estimate. Its plan/alignment gates and current-code check were
-completed before implementation. Next: obtain two fresh independent committed-code
-reviews, resolve confirmed in-scope findings, then open the bounded stacked PR.
-D1/D4 can continue where authorized access permits. S02 and hosted activation
+completed before implementation. Independent committed-code review is now CLEAN
+and the bounded stacked PR is open. Next: D1/D4 discovery using existing evidence
+and authorized reads. D1 still needs the selected integration identity and
+permission/transition/race evidence. D4 must reconcile PR #7 with D2's runner
+contract and record repository/visibility limits before S03 is ready. Continue
+independent discovery while PRs await the owner's merge decision. S02 and hosted activation
 remain gated on their outstanding live decisions, and PR #7 remains separate.
