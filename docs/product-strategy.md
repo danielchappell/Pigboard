@@ -1,4 +1,7 @@
-# Ski Stack product strategy and positioning
+# Pigboard product strategy and positioning
+
+Product name chosen by the owner on 21 September 2026: **Pigboard**.
+Earlier architecture, research and implementation records use the name Ski Stack.
 
 21 September 2026. Conversation decision record and positioning hypotheses.
 The owner endorsed the product direction below. Customer demand, differentiation,
@@ -8,7 +11,7 @@ feature list, a completed product design or a reviewed replacement delivery plan
 
 ## Endorsed product direction
 
-Ski Stack is a team-owned delivery service: give it a feature, and it returns
+Pigboard is a team-owned delivery service: give it a feature, and it returns
 small, reviewed changes that satisfy an agreed product outcome, involving the
 team at the decisions that matter.
 
@@ -80,7 +83,7 @@ Provider choice supports the customer promise; it is not sufficient differentiat
 
 Candidate headline: **Delegate the feature. Stay in control of the decisions.**
 
-Candidate supporting copy: **Ski Stack takes work from product discovery to
+Candidate supporting copy: **Pigboard takes work from product discovery to
 small, reviewed pull requests, using your team's standards, existing board and
 chosen coding agents. See what is ready, what needs a decision and why.**
 
@@ -128,11 +131,11 @@ or verified that complete path. Direct Grokbot event support is a separate
 question; Cursor's webhook support does not establish a Grokbot endpoint.
 
 Cursor Automations is both an alternative and a possible execution component
-for Ski Stack. Multi-step work can be requested in an automation prompt, so do
+for Pigboard. Multi-step work can be requested in an automation prompt, so do
 not claim it can only perform one step. Its documented shared identity and team
 access weaken an earlier hypothesis that team operation is uniquely ours.
 The distinction to prove is how much customer assembly and ongoing supervision
-Ski Stack removes across the complete accepted feature.
+Pigboard removes across the complete accepted feature.
 
 ## Defensibility and evidence needed
 
@@ -163,7 +166,7 @@ The [build-versus-buy report](research/2026-09-21-competitor-build-versus-buy.md
 compares three assembly routes, twelve lifecycle requirements and eight tests
 that could change the product decision. Its [source ledger](research/2026-09-21-competitor-sources.md)
 separates current documentation, announcements, account observations and a single
-user anecdote. No full native or Ski Stack feature journey was executed.
+user anecdote. No full native or Pigboard feature journey was executed.
 
 This research narrows the proposed differentiation to **installing and operating
 a complete, maintainable delivery playbook in an existing team's project**.

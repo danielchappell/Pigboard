@@ -1,4 +1,7 @@
-# Ski Stack product definition
+# Pigboard product definition
+
+Product name chosen by the owner on 21 September 2026: **Pigboard**.
+Earlier architecture, research and implementation records use the name Ski Stack.
 
 Agreed product direction, 20 September 2026. This defines the product to design;
 it is not a claim that the SaaS, Jira adapter, MCP, or cloud runners are shipped.
@@ -14,19 +17,19 @@ outcome, candidate messaging, competitive evidence and unvalidated hypotheses.
 The integration requirements below remain enabling capabilities. This addendum
 is a conversation record; earlier design reviews do not cover it.
 
-## What Ski Stack is
+## What Pigboard is
 
-Ski Stack is a SaaS platform that connects agent teams to Kanban boards so that
+Pigboard is a SaaS platform that connects agent teams to Kanban boards so that
 work can be coordinated reliably as concurrency and team use grow.
 
 The user's defining requirements are:
 
 - Users can work directly on a Kanban board and make tickets eligible for agents.
-- Agents, through Ski Stack, move tickets, document their work, and comment on
+- Agents, through Pigboard, move tickets, document their work, and comment on
   tickets so that the board remains a shared record of progress and results.
-- The execution harness or agent platform is configurable. Ski Stack provides
+- The execution harness or agent platform is configurable. Pigboard provides
   installable packages for Cursor and Codex.
-- Ski Stack provides an MCP interface through which a control agent can inspect
+- Pigboard provides an MCP interface through which a control agent can inspect
   and interact with the team, create Jira tickets, and support ideation that
   starts the pipeline.
 
@@ -45,9 +48,9 @@ prerequisite for this product.
 
 The seven principles and mandatory review procedure in [AGENTS.md](../AGENTS.md)
 are authoritative. They come from Rovito; the applications below explain what
-they mean for Ski Stack design and are not a separate implementation backlog.
+they mean for Pigboard design and are not a separate implementation backlog.
 
-| Principle | Implication for Ski Stack | A question every design should answer |
+| Principle | Implication for Pigboard | A question every design should answer |
 | --- | --- | --- |
 | Intuitive | The normal journey uses familiar tickets, roles, stages, and results. Defaults and status behavior are understandable without learning worker internals. | Can a user predict what happens when a ticket becomes eligible, and where its result will appear? |
 | Discoverable | Humans can discover setup, roles, capabilities, and recovery. MCP tools expose clear inputs, current capabilities, structured results, and actionable errors. | Can a new teammate or agent find the supported next action without this conversation? |
@@ -66,7 +69,7 @@ noninteractive execution does not remove necessary human authorization.
 
 - The board remains a direct way to submit, prioritize, inspect, and progress
   work; using a control agent is not mandatory.
-- Ski Stack owns deterministic coordination and the accepted record of a run.
+- Pigboard owns deterministic coordination and the accepted record of a run.
   Board adapters translate board-specific data and actions. Execution adapters
   integrate with the configured harness. Do not duplicate core scheduling policy
   in each adapter or distribute it across per-role automation rules.
