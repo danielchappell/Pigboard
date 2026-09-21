@@ -5,6 +5,28 @@ path to the agreed product; it is not implementation, infrastructure procurement
 or activation approval. The [development workflow](development-workflow.md)
 requires this design gate before grooming the delivery plan.
 
+## Pigboard direction and foundation boundary
+
+The owner has chosen an opinionated AI SDLC, using the existing Ski Stack method
+as the starting process. Settle the architecture and dependency-ordered roadmap,
+then deliver the core in small usable slices. Improve the method after we can
+operate and observe it on that foundation. Commercial discovery is not a blocker
+to this authorized foundation work; existing access and verification gates remain.
+
+The component and authority boundaries below are retained. Core policy routes
+work, shared state records ownership/evidence, adapters connect Jira and supported
+runners, and application commands expose the same facts to people and agents.
+Profiles map project context onto a supported method; they are not a commitment
+to a general workflow designer. Preserve the existing local workflow while adding
+the hosted path. Do not redesign the method to justify new infrastructure.
+
+M1/M2 prove setup and one hosted handoff. M3 carries the existing development
+lifecycle onto that path, including its review and owner-decision boundaries.
+Packages and MCP keep their actual M4/M5 dependencies; broader scale remains M6.
+Method improvements can then follow observed outcomes without waiting for every
+future provider or multi-team feature. This ordering does not claim M2 alone
+proves the complete AI SDLC or that owner experience is hosted acceptance evidence.
+
 ## Product outcome
 
 A team coordinates software work through its Kanban board. Moving an opted-in
@@ -97,7 +119,7 @@ flowchart LR
 
 1. **Workflow policy:** Keep eligibility, dependencies, ordering and allowed
    outcomes in the core. A workflow profile translates configured board statuses
-   to internal stages and roles. Board adapters supply normalized facts; models
+   to supported internal stages and roles. Board adapters supply normalized facts; models
    never pick arbitrary transitions or repositories. Fingerprints must include
    every input that can make a claim stale, including opt-in and profile version.
 2. **Board connection:** Translate board identity, tickets, dependencies, comments
@@ -192,7 +214,7 @@ Groom it into small outcomes only after independent design review.
 | M0: Resolve integration and state contracts | A reviewed decision set makes the first hosted path safe and estimable. | This design; existing API evidence. |
 | M1: Configure and inspect intended work | An authorized teammate saves board, repository, role and runner references, validates the setup, and sees whether a ticket is eligible and where it will go without launching work. | M0 board/config/identity decisions. |
 | M2: Run one hosted discovery journey | Jira opt-in produces one durable cloud attempt, recoverable result and human-review handoff with shared visibility. | M1; durable coordinator, runner and publication decisions. |
-| M3: Coordinate the software lifecycle | Product, technical discovery, architecture, grooming, planning and delivery roles exchange reviewed handoffs on the board. | M2; versioned workflow and review authority design. |
+| M3: Carry the existing software lifecycle onto the foundation | Existing product, technical discovery, architecture, grooming, planning and delivery roles exchange reviewed handoffs on the board. | M2; D5 maps the baseline process, versioned workflow and review authority. |
 | M4: Reuse teams and execution providers | A teammate installs/configures versioned Cursor or Codex assets and selects a supported harness without rebuilding coordination. | M2; package/provider capability decisions; individual M3 roles may reuse packages. |
 | M5: Converse with the control plane | An authorized control agent inspects work and creates an ideation ticket through MCP; scoped retry/interruption follows supported contracts. | M2 application commands; separate MCP authorization design; richer actions follow M3/M4. |
 | M6: Operate as a shared SaaS | Multiple teams and concurrent workers have isolated access, bounded usage and dependable recovery/operations. | M2 and explicit tenancy, scale and operations design. |
@@ -204,9 +226,11 @@ No milestone is silently dropped because the first pilot has one role/provider.
 
 ## Alternatives and decisions
 
-- Provider UI/native Jira integration alone: useful execution/inspection, but
-  does not replace the explicit multi-role workflow, shared run authority and
-  configurable provider contract. Reuse the UI where it meets visibility needs.
+- Provider UI/native Jira integration: reuse execution, inspection and review
+  capabilities where they meet the supported method's contracts. The competitor
+  report does not establish that native assembly cannot supply the lifecycle.
+  Evaluate concrete gaps during D1/D4; the owner has authorized the foundation
+  without making a full comparative pilot its prerequisite.
 - Per-role Jira automations: duplicate policy and complicate packaging. Use one
   bounded wake mechanism plus reconciliation; choose automation vs polling from
   documented access and cost evidence during setup, not assumptions about quotas.

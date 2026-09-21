@@ -1,39 +1,48 @@
 # Ski Stack development plan
 
 21 September 2026. This is the active development queue. It follows the
-[reviewed architecture](architecture-plan.md) and [working process](development-workflow.md).
-Architecture review is CLEAN from independent product and technical reviewers;
-see [review evidence](development-review.md). Delivery-plan review is recorded
-there separately. This plan does not claim unresolved discovery is finished.
+[architecture direction](architecture-plan.md) and [working process](development-workflow.md).
+Earlier architecture and delivery-plan reviews were CLEAN for their recorded
+versions. The [review record](development-review.md) separately identifies the
+current alignment verdicts and exact hashes; historical verdicts do not approve
+changed documents. This plan does not claim unresolved discovery is finished.
 
-## Product strategy update — 21 September 2026
+## Owner decision and current sequence — 21 September 2026
 
-The owner endorsed the outcome captured in the
-[product strategy record](product-strategy.md). Reconcile this delivery map with
-that outcome and the current alternatives before further implementation; review
-affected design/plan changes through the existing gates. S01's technical plan
-remains reviewed, but its status does not establish its commercial priority.
-This note records the new direction without claiming the roadmap has already
-been revised or independently reviewed against it.
+Pigboard's [product direction](product-strategy.md) is an opinionated AI SDLC
+that we maintain and improve. The owner identifies the existing Ski Stack process
+as a working starting point and directs us to settle the architecture, roadmap
+and core functionality before iterating on the development method.
 
-Current stage: **competitive discovery and roadmap reconciliation**, ahead of
-runtime implementation. The [deeper comparison](research/2026-09-21-competitor-build-versus-buy.md)
-records native Atlassian/Cursor, packaged Automations, and thin-adapter alternatives;
-its [ledger](research/2026-09-21-competitor-sources.md) identifies the evidence and
-unresolved contracts. The owner directs Jira adapter before a later installable
-Jira app. No Story is promoted by this research, and historical review evidence
-does not prove product differentiation.
+Current focus: **core foundation**, starting with architecture/queue alignment and the
+existing bounded implementation path. The affected direction and queue changes
+require independent review; exact verdicts are in [review evidence](development-review.md).
+Reuse the unchanged D2 contract and S01 Story/plan, with a current-code check
+before implementation. Earlier review verdicts remain tied to their exact artifacts.
 
-Next work combines D0 product discovery with the report's decision-critical
-access/contracts in D1/D4 and the smallest fair native-versus-package comparison.
-D0 supplies the evidence for choosing a commercial offer; technical feasibility
-alone cannot select a hosted SaaS. Its findings and the comparison inform roadmap
-reconciliation, followed by the affected design/plan reviews. Unresolved customer
-access is recorded honestly and does not block already authorized technical
-discovery or establish that internal dogfooding is a commercial product. The eight
-experiments are a research menu, not eight implementation Stories or authorization
-to run substantial work on the company Cursor account. A complete live comparison
-still needs an appropriate account/budget; trivial adapter checks remain authorized.
+The order is:
+
+1. Confirm the retained component/authority boundaries and this delivery order;
+   resolve D1/D3/D4 facts before their dependent live Stories.
+2. Deliver M1/M2 through small usable slices: setup/inspection, provider execution,
+   shared ownership/state, result validation, Jira publication, automatic recovery
+   and laptop-independent operation. A1 records the full hosted acceptance.
+3. Carry the existing process through M3's reviewed lifecycle handoffs. D5 defines
+   the necessary migration contracts without redesigning the method first.
+4. Improve that running baseline from observed interventions, rework and delivery
+   results. M4/M5 packages and MCP retain their real dependencies; M6 scale and
+   later process work do not become prerequisites to the first useful foundation.
+
+D0 market research and a complete native-versus-package experiment are deferred
+from the critical path. They inform later commercial choices, not permission to
+build the authorized core. The [competitor comparison](research/2026-09-21-competitor-build-versus-buy.md)
+and [sources](research/2026-09-21-competitor-sources.md) remain useful inputs for
+concrete integration choices. This owner decision supersedes the research's
+recommendation to make commercial discovery a prior foundation gate.
+
+Jira adapter remains before a later installable Jira app. Company Cursor use stays
+limited to trivial adapter checks; meaningful live acceptance still needs an
+appropriate authorized account/budget. No roadmap change expands that authority.
 
 ## How to use this queue
 
@@ -45,8 +54,9 @@ entire roadmap as one project-sized branch.
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
 claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
-ready for delivery.** S01 is technically prepared but deferred pending product
-reconciliation. Each preview must be sized and, if necessary, split after
+ready for delivery.** S01 is the selected first foundation Story, subject to the
+alignment review above and a current-code check against its reviewed plan.
+Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
 
 A ready Story must have one usable outcome, a credible changed-file inventory of
@@ -63,11 +73,11 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 
 | Order | Task | State | Why now |
 | --- | --- | --- | --- |
-| 1, alongside bounded D1/D4 discovery | D0: Test the product need | Public comparison complete; target-team evidence, sample/decision criteria and outreach authority unresolved | Gate the commercial offer and hosted/Marketplace investment on observed burden and buying evidence, not technical feasibility alone. |
+| Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
 | Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| 2, parallel with D2 | D1: Verify Jira identity and workflow | Competitive docs/UI-shell evidence collected; service identity, action availability and workflow contract remain open | Pin connection/transition/race constraints and evaluate native alternatives before Jira delivery Stories. |
-| 2, parallel with D2 | D4: Define and verify runner capabilities | Competitive API/Automation comparison recorded; external Automation provisioning/correlation and live acceptance unresolved | Reuse provider work and PR #7 intentionally; distinguish direct API, native integration and Automations. |
-| 3 | D3: Choose deployment and team access | Ready for options/access discovery; final selection follows D1/D2/D4 constraints | Make hosting, credential custody, shared inspection and operating costs concrete before deployment Stories. |
+| Next, alongside S01 where independent | D1: Verify Jira identity and workflow | Competitive docs/UI-shell evidence collected; service identity, action availability and workflow contract remain open | Pin connection/transition/race constraints and reuse suitable native capabilities before Jira delivery Stories. |
+| Next, alongside S01 where independent | D4: Define and verify runner capabilities | Competitive API/Automation comparison recorded; provider choice and live acceptance unresolved | Reuse provider work and PR #7 intentionally; resolve management/correlation only for the chosen execution path. |
+| After relevant D1/D4 facts | D3: Choose deployment and team access | Ready for options/access discovery; final selection follows D1/D2/D4 constraints | Make hosting, credential custody, shared inspection and operating costs concrete before deployment Stories. |
 
 These are Tasks, not promises of two-day implementation. D2 is now reviewed. The configuration-only portions of D1/D4 are resolved in
 that contract; their live identity, permission and capability checks remain open.
@@ -155,7 +165,9 @@ onboarding and billing remain later product choices, not silently required code.
 D5-D8 are [focused design Tasks](tasks/architecture-decisions.md) for lifecycle,
 packages, MCP and multi-team operations; A1 is the pilot acceptance Task. They are queued by milestone, not blockers
 on the first pilot. Each resolves the necessary contracts and obtains independent
-CLEAN review before its Story previews can be sized and promoted.
+CLEAN review before its Story previews can be sized and promoted. D5 carries the
+existing method into hosted handoffs; later changes to the method are separate
+slices supported by evidence from operating that baseline.
 
 ## Current work and evidence
 
@@ -187,8 +199,9 @@ CLEAN review before its Story previews can be sized and promoted.
 | Dependable | Existing implementation, review status, live proof and future outcomes remain distinct; no unresolved preview is marked ready. |
 
 Selected first implementation: S01, because it delivers the reviewed M1 setup
-outcome with resolved contracts and a bounded file/time estimate. Its exact
-implementation-readiness gate is the two independent CLEAN S01 plan verdicts in
-[the review record](development-review.md); no code starts before that gate.
+outcome with resolved contracts and a bounded file/time estimate. Its prior plan
+has two independent CLEAN verdicts in [the review record](development-review.md).
+Confirm the current alignment review and recheck code/plan assumptions before
+implementation; any material plan change needs the affected review again.
 D1/D4 can continue where authorized access permits. S02 and hosted activation
 remain gated on their outstanding live decisions, and PR #7 remains separate.

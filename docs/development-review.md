@@ -299,3 +299,80 @@ comparison, and reconciliation of affected design/delivery choices through the
 standing gates. Jira adapter precedes later app packaging. S01 remains technically
 prepared but deferred pending product reconciliation; no implementation Story was
 promoted by this documentation.
+
+## Pigboard method and foundation alignment — 21 September 2026
+
+The owner endorsed an opinionated AI SDLC that Pigboard maintains and improves,
+using the existing Ski Stack process as the starting method. Architecture,
+ordered delivery and core functionality come first. This decision supersedes the
+previous recommendation to make commercial discovery/comparative experiments a
+prerequisite to the foundation. D0 remains later commercial work; its prior
+review was not authority to override the owner's subsequent scope decision.
+
+Reviewed changes: product definition/strategy, repository guidance, affected
+architecture direction, delivery order and D0/D5 Task wording. The underlying
+component/authority contracts and implementation Stories are retained. This is
+an affected design/plan alignment review, not implementation or live acceptance.
+
+Fresh independent Sol reviewers `/root/foundation_direction_product_review` and
+`/root/foundation_direction_technical_review` both returned **CLEAN** for the
+six-artifact set below, compared with base
+`979c327c46284a74178bfe110335a7f62bbbfd03`.
+
+| Artifact | SHA-256 |
+| --- | --- |
+| AGENTS.md | `8da8382cd4d93d2350ec53381cc3a83e72616800c9191e8b8e3004c05a524454` |
+| docs/product.md | `67ad09b0014057ccbed18eaef32690f0997ddff8dfa363fd4c6aa2cdc75f1050` |
+| docs/product-strategy.md | `7acfa5a13f94661cb29f172415cdd64a83a5afdf83a98488c5d42dd1df209e40` |
+| docs/architecture-plan.md | `9d98090af56ea2e72906cf960304f7bb070f75c0bfde90ea8efcae4151b69527` |
+| docs/delivery-plan.md | `85625db55af284f1227e89b53e9a199387b5422c2eee115d5df005ba9562c487` |
+| docs/tasks/architecture-decisions.md | `a83a0d72f95e3ed8820a00b82215889e80f7b6fd90a83d96c4f3a13be0475258` |
+
+Each reviewer inspected **6/6 changed artifacts and 10/10 requirements**, with a
+second sweep. Requirements covered the maintained method, baseline-versus-hosted
+evidence, architecture and small slices, M1/M2-to-M3 order and S01 rationale,
+D0/comparison deferral, live authority/compute limits, exact review provenance,
+absence of a generic platform/new hierarchy, contributor/product separation,
+and preservation of local behavior, PR #7 and A1. Both inspected supporting
+D2/S01 artifacts and the Story catalog; the technical reviewer also checked
+current core/dispatcher/worker seams. Their verdicts cover the changed surface,
+not a new approval of every unchanged future milestone.
+
+The initial product verdict was NOT CLEAN because the queue's opening text
+called the modified architecture CLEAN using a historical verdict. The technical
+review also identified that status defect. Corrected the introduction to bind
+earlier verdicts to recorded versions and direct current status to exact hashes.
+Both re-reviewed the correction and affected authority/dependency context to
+CLEAN. No unresolved in-scope finding remains.
+
+| Principle | Author assessment | Independent product assessment | Independent technical assessment |
+| --- | --- | --- | --- |
+| Intuitive | One supported method and a foundation-first sequence clarify what customers buy and what we build next. | People and agents get truthful readiness conditions after the header correction. | Familiar board stages and deterministic contracts preserve clear meanings. |
+| Discoverable | Direction, queue, Task and exact review records link to the same next work. | Readers can trace the path without reconstructing the conversation. | Stable fields, dependencies and unchecked prerequisites serve agent inspection. |
+| Delightful experience | Reuse the working method and prepared first slice; avoid unrelated market/platform blockers. | Authorized work continues while real decisions stay visible. | Offline S01 avoids setup and paid calls; durable recovery avoids repeated work later. |
+| Token saver | Retain deterministic routing and prior reviewed contracts instead of restarting discovery. | Concise status and linked detail reduce repeated context. | Structured route/run facts avoid model-driven scheduling and prose parsing. |
+| Secure | Direction changes grant no new credentials, writes, company compute or release authority. | Scoped application policy and explicit human decisions remain. | Ticket text and valid profiles grant no execution authority. |
+| Agents are equal | Human board use and structured commands share core policy; MCP retains its real dependencies. | Both audiences can determine readiness and recovery from the same facts. | Noninteractive contracts are usable before the later full MCP surface. |
+| Dependable | Separate owner experience, reviewed design, implementation and hosted proof. | The corrected review state and retained A1 gate preserve honest claims. | Attempts, validation, publication and acceptance remain distinct. |
+
+Current-code check: source/scripts/tests/package configuration are unchanged from
+the S01-inspected runtime base `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`.
+The reviewed D2 contract, S01 Story and S01 plan retain hashes
+`f1e5da047aeb1bbab85e6ca1979f194f941ea388b2a767482dd3e8b6bf0a847c`,
+`24bb3a2a5343cfff469da768b72679d6bc6147c4eff5257404126d5073e99ec7`
+and `0fb7f854769b74cc6cc9e89b76945b08ed43c283faf3aab9a3e9d02ff07c1813`.
+The technical reviewer found no incompatibility with the retained S01 plan.
+
+S01 is ready under its existing plan reviews plus this alignment and current-code
+check. Its outcome remains an offline configuration/route preview, not a live
+readiness claim. No S01 implementation has been added. D1/D3/D4 still gate their
+dependent live Stories; A1 still closes M2 only with actual hosted evidence.
+M3 carries the existing baseline before method improvements. Future packages,
+MCP, providers, scale and process experimentation do not all become first-release
+prerequisites.
+
+Validation: 33 relative file links across the six changed artifacts resolve,
+and whitespace checks pass. No runtime tests were needed for this documentation
+change; the historical 198-test baseline was not rerun or relabeled as a new
+feature pass. No Jira changes, Cursor jobs, deployment, PR merge or release
+occurred. Existing research and prior exact review records remain historical.

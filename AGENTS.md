@@ -15,10 +15,13 @@ APIs unless a dependency removes real complexity.
 
 ## Product direction and defining principles
 
-The agreed product direction is a SaaS platform connecting Kanban boards to
-configurable agent teams. [Product definition](docs/product.md) records that
-target and its design implications. The current implementation remains the
-GitHub Projects/local Codex MVP; design goals are not shipped capabilities.
+The product is named Pigboard. Its agreed direction is an opinionated AI SDLC
+whose supported development method we maintain and improve. Settle the architecture,
+ordered roadmap and core functionality first, using the existing Ski Stack process
+as the starting method. [Product definition](docs/product.md) records that decision.
+Board/runner adapters, packages and MCP enable the method; unrestricted workflow
+configurability is not the customer promise. The current implementation remains
+the GitHub Projects/local Codex MVP; product goals are not shipped capabilities.
 
 The following principles are adopted from Rovito's ratified working agreement.
 Their meaning is preserved, with product-specific wording adapted to Ski Stack.
@@ -79,9 +82,10 @@ scope increases still require the user's approval before implementation.
 
 ## How we design and develop Ski Stack
 
-These are working rules for the humans and agents building Ski Stack. They do
-not add requirements to Ski Stack's runtime, installed agent packages, or the
-workflows its customers choose.
+These are working rules for the humans and agents building Ski Stack/Pigboard.
+They do not silently become runtime or package requirements. The chosen product
+direction is opinionated, but each customer-visible process rule and fast path
+still needs an explicit scoped design and verification.
 
 Follow [our development lifecycle](docs/development-workflow.md) for substantive
 software work. Use Ski Stack's own roles to develop Ski Stack: Planner and

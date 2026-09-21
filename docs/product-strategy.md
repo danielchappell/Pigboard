@@ -11,9 +11,17 @@ feature list, a completed product design or a reviewed replacement delivery plan
 
 ## Endorsed product direction
 
-Pigboard is a team-owned delivery service: give it a feature, and it returns
-small, reviewed changes that satisfy an agreed product outcome, involving the
-team at the decisions that matter.
+Pigboard supplies an opinionated AI software development lifecycle (AI SDLC).
+It chooses, enforces, operates, validates and improves a supported development
+method. Give it a feature, and it coordinates small, reviewed changes against
+the agreed outcome, involving people at the decisions that matter.
+
+The owner endorsed this direction on 21 September 2026 and identified the existing
+Ski Stack process as a working starting point from their experience. Reuse that
+process; first settle the architecture, ordered roadmap and core functionality.
+Then improve the method through observed delivery outcomes. This is authority
+to develop the foundation, not a claim that the hosted product has already passed
+end-to-end acceptance or that reliability has been measured across customers.
 
 The intended customer is an engineering lead with an existing application,
 quality standards and developers already using coding agents. This initial
@@ -22,17 +30,25 @@ The recurring burden is coordination between agent sessions: clarifying work,
 checking assumptions, preserving decisions, handing over context, ensuring the
 right reviews occurred, recovering failures and establishing readiness.
 
-The proposed customer promise is less human supervision per accepted feature,
-with scope, quality, cost and remaining uncertainty visible. Kanban integration,
-configurable execution providers, role packages and MCP remain enabling
-capabilities from the original product definition.
+The proposed customer promise is a dependable development method the customer
+can delegate to, with less supervision per accepted feature and visible scope,
+quality, cost and uncertainty. Kanban integration, supported execution providers,
+role packages and MCP enable that promise. Ease of setup matters, but does not
+by itself capture the product's responsibility for the complete process.
 
 The owner's repeated interventions during development illustrate the problem:
 review the design before grooming; keep Stories small; review the implementation
 rather than treating plan review as code review; continue authorized work.
-Productizing a configurable process that reliably follows those rules could
-remove this burden. The contributor working agreement does not become a fixed,
-mandatory workflow for every customer.
+The product should take responsibility for those handoffs. Customers supply
+product goals, domain constraints, repository conventions, budgets and approval
+authority. Pigboard maintains the supported method and its integration boundaries.
+Configuration adapts the method to that context; an unrestricted workflow builder
+is not the product goal. The contributor agreement remains a development rule;
+customer-visible steps and fast paths must be explicitly designed and tested.
+
+Reliability is a target to earn through evidence. A supported process must enforce
+its gates, preserve completed work, expose uncertainty and make recovery clear.
+It cannot promise that every feature is correct or commercially successful.
 
 ## Intended customer experience
 
@@ -60,9 +76,9 @@ judgments with evidence and accountable decision owners.
 
 ## Capabilities that could earn a product's price
 
-- **An executable team playbook.** Versioned roles, review criteria, Story
-  boundaries, required evidence and human decisions. Teams can install and
-  adapt a supported process instead of wiring every handoff themselves.
+- **A maintained development method.** Versioned roles, review criteria, Story
+  boundaries, required evidence and human decisions, with a supported path through
+  them. Pigboard owns that path; customers configure their context and authority.
 - **Intent linked to implementation.** Requirements, decisions, designs,
   Stories, tests and reviews refer to the work they cover. Changed acceptance
   criteria or commits expose affected downstream work and stale approvals.
@@ -75,17 +91,21 @@ judgments with evidence and accountable decision owners.
 - **Delivery that survives handoffs and failures.** Keep accepted work and
   recover the unfinished operation. Make ownership and uncertain external
   effects visible; do not promise universal exactly-once execution.
+- **Measured process improvement.** After the foundation carries the existing
+  method, use interventions, rework, defects and accepted outcomes to guide
+  changes. Test and version changes before rollout. A general experimentation
+  platform or automatic process rewriting is not part of the first foundation.
 
 These are product hypotheses. They are not demonstrated competitor omissions.
 Provider choice supports the customer promise; it is not sufficient differentiation.
 
 ## Proposed marketing
 
-Candidate headline: **Delegate the feature. Stay in control of the decisions.**
+Candidate headline: **A development process you can delegate to.**
 
-Candidate supporting copy: **Pigboard takes work from product discovery to
-small, reviewed pull requests, using your team's standards, existing board and
-chosen coding agents. See what is ready, what needs a decision and why.**
+Candidate supporting copy: **Pigboard runs a disciplined AI development process,
+from product discovery to small, reviewed changes. We maintain and improve the
+method; your team directs the product and decides what ships.**
 
 These are future positioning drafts, not claims ready for a live marketing site.
 
@@ -168,37 +188,39 @@ that could change the product decision. Its [source ledger](research/2026-09-21-
 separates current documentation, announcements, account observations and a single
 user anecdote. No full native or Pigboard feature journey was executed.
 
-This research narrows the proposed differentiation to **installing and operating
-a complete, maintainable delivery playbook in an existing team's project**.
+The research first narrowed the proposed differentiation to installing and
+operating a complete delivery playbook. The owner's subsequent decision expands
+the responsibility to **maintaining and improving an opinionated AI SDLC**.
 Cursor already has a Jira Marketplace app, role packages and hosted automations;
 Atlassian has an agentic workflow template, attention views and native review.
 An agent UI, reusable prompts, webhook routing or a Jira plugin alone is therefore
 insufficient evidence of differentiation. The candidate benefit is reduced setup,
 maintenance and coordination per accepted feature, with comparable quality.
 
-The owner specified **Jira adapter first; installable Jira app later**. This is
-the integration order, not authorization to skip discovery/design or a finding
-that a custom hosted coordinator is necessary. Compare the strongest supported
-native configuration with a packaged playbook first. If packaging suffices, that
-can be the product; build runtime responsibilities only around measured recurring
-gaps. Customer demand and willingness to pay remain unverified.
+The owner specified **Jira adapter first; installable Jira app later**. Reuse
+native capabilities where they satisfy the supported method, and compare them
+when resolving a concrete integration choice. The owner has chosen to develop
+Pigboard's foundation now; a complete native-versus-package experiment is not a
+prerequisite to that authorized work. Customer demand and willingness to pay
+remain unverified and matter for commercial rollout.
 
 [D0 product discovery](tasks/architecture-decisions.md#d0--test-the-product-need)
-now carries that commercial decision in the active queue. It must separate actual
-workflow burden and buying evidence from enthusiasm about a demo. A decision to
-dogfood an internal tool may still be worthwhile, but does not validate a SaaS.
+remains later commercial discovery. It must separate workflow burden and buying
+evidence from enthusiasm about a demo, but does not block settling or building
+the core. Dogfooding gives process evidence without claiming market validation.
 
 ### Roadmap consequence
 
 The [architecture](architecture-plan.md) and [delivery map](delivery-plan.md)
-remain useful technical work. Their earlier reviews establish internal design
-quality, not market validation. S01 has a reviewed implementation plan, but that
-alone does not establish it as the best next investment under this product thesis.
+remain the foundation. Their earlier reviews establish internal design quality,
+not market validation. S01's offline setup/route preview remains the selected
+first increment because it supports M1 before live execution, with an already
+reviewed contract and bounded implementation plan.
 
-Before continuing implementation, reconcile the roadmap with the endorsed
-outcome, compare how much the current platforms can supply, and review affected
-design/plan changes through the standing lifecycle. Preserve useful work and its
-historical evidence; do not silently promote these ideas to reviewed requirements
-or extend old CLEAN verdicts to changed artifacts. Recording the original strategy
-changed no runtime or external service. The later research's inactive Cursor draft
-side effect is separately disclosed in the linked report.
+The order is architecture/roadmap alignment and core integration decisions,
+small usable foundation slices, the existing lifecycle on that foundation, then
+measured method improvements. Review the affected design/queue changes and recheck
+the selected Story against current code before implementation. Preserve historical
+evidence; do not extend old CLEAN verdicts to changed artifacts. The research's
+inactive Cursor draft side effect remains disclosed in its report; this direction
+update changes no runtime or external service.

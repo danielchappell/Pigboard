@@ -10,16 +10,17 @@ to the owner.
 
 Problem to solve
 
-Native tools may already meet the needs of teams using coding agents.
-We have not shown that other teams need or would pay for Ski Stack's help.
+The owner has chosen Pigboard's opinionated AI SDLC and authorized its foundation.
+We still need evidence of which teams would adopt and pay for that maintained
+method. This later commercial Task does not block the core or baseline process.
 
 Acceptance Criteria
 
-- Record the target segment and real examples of setup, handoff or recovery work from engineering leads who already use agents with an existing board and repository.
+- Record which teams want to adopt a maintained development method and their real setup, handoff or recovery burden.
 - Compare their current tools and workarounds with the native and packaged routes in the competitor report.
 - Record how often the burden occurs, who bears it and what time or cost evidence supports it.
 - Distinguish stated interest from buying evidence, including the budget owner, acceptable offer and any concrete pilot commitment.
-- Recommend a package, setup service, hosted service, further discovery or no commercial product, with evidence and remaining uncertainty.
+- Recommend an audience, supported offer and commercial next step, including further discovery or no commercial launch when evidence is insufficient.
 - Keep an internal dogfooding decision separate from a claim of customer demand.
 
 Technical Acceptance Criteria
@@ -148,14 +149,15 @@ Testing Strategy
 
 Problem to solve
 
-The first pilot covers one researcher. The full product needs product and
-engineering roles to exchange reviewed work without letting model text grant
-authority or silently advance a ticket.
+The first pilot covers one researcher. The existing Ski Stack method must run
+through hosted product and engineering handoffs without model text granting
+authority or silently advancing a ticket. Carry that baseline forward before
+changing the method.
 
 Acceptance Criteria
 
-- Map idea, product discovery, technical discovery, architecture, grooming and delivery onto explicit configured stages.
-- Define each stage's input/output, independent review evidence, human decision points and allowed next actions.
+- Map the existing role cards, skills and review rules for idea, discovery, architecture, grooming and delivery onto supported hosted stages.
+- Define each stage's input/output, independent review evidence, human decision points and allowed next actions, identifying any change from the baseline method.
 - Define issue hierarchy, dependencies and partial recovery when grooming creates several Stories.
 - Preserve the local signed-handoff behavior and identify the hosted trust mechanism.
 - Split S09-S15, S27 and S28 further where any role outcome exceeds the Story limits.

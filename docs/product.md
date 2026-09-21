@@ -7,6 +7,20 @@ Agreed product direction, 20 September 2026. This defines the product to design;
 it is not a claim that the SaaS, Jira adapter, MCP, or cloud runners are shipped.
 The existing implementation is the GitHub Projects/local Codex MVP.
 
+## Current decision — an opinionated AI SDLC
+
+On 21 September 2026 the owner chose Pigboard as a maintained development method:
+we choose, enforce, operate, validate and improve the supported AI SDLC.
+The existing Ski Stack process is the starting method, reported by the owner to
+work in their use. First settle the architecture, delivery roadmap and core
+functionality, then carry that method onto the hosted foundation and improve it
+from observed outcomes. Hosted acceptance and broader reliability remain to prove.
+
+Customers provide product context, constraints and authority; Pigboard supplies
+the supported method. Existing adapters, packages and MCP enable that experience.
+This supersedes configurability as the main customer promise. Market research
+informs commercial rollout without blocking the authorized foundation work.
+
 ## Product direction update — 21 September 2026
 
 The owner has endorsed a sharper customer outcome: a team-owned delivery service
@@ -19,8 +33,9 @@ is a conversation record; earlier design reviews do not cover it.
 
 ## What Pigboard is
 
-Pigboard is a SaaS platform that connects agent teams to Kanban boards so that
-work can be coordinated reliably as concurrency and team use grow.
+Pigboard is an opinionated AI SDLC product, delivered through a hosted service
+connecting agents and Kanban boards. Its architecture supports dependable team
+operation and a development method that we can test and improve over time.
 
 The user's defining requirements are:
 
