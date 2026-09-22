@@ -14,6 +14,11 @@ provider lookup key. `start` sends at most one create request; ambiguous errors
 and the documented duplicate conflict lead to reads only. Save the returned run
 ID for exact retrieval. Without a run ID, retrieval accepts only an agent with
 one run, so an external follow-up cannot silently replace the original result.
+The manual caller must keep the saved request unchanged. Recovery by agent ID
+cannot prove that an edited prompt, model, repository, or ref matches the
+original provider request. A recovered run is the work already associated with
+that ID, never an attestation of the current file's contents. Content-digest
+binding belongs to the later hosted application slice.
 
 The library and CLI use explicit inputs and JSON outputs. They do not create a
 local scheduler or work-item authority. No Jira transitions, hosted coordinator,
@@ -35,6 +40,28 @@ and a fresh client reading the same stored run. Run the full existing suite once
 the focused checks pass. Use only the completed trivial cloud probe as live
 evidence; do not run substantive work on the company Cursor account.
 
+Offline manual verification uses only help and prepare; neither calls Cursor:
+
+```bash
+npm run --silent cursor -- --help
+printf 'Reply exactly SKI_STACK_CURSOR_PROBE_OK.\n' > /tmp/ski-cursor-qa-prompt.txt
+npm run --silent cursor -- prepare --prompt-file /tmp/ski-cursor-qa-prompt.txt --model gpt-5.6-sol --name 'Offline QA' > /tmp/ski-cursor-qa-request.json
+```
+
+Inspect the request's stable `agentId`. Verify the `start`/`get` command flow
+with `node --test test/cursor-cloud-cli.test.js test/cursor-cloud.test.js`:
+those tests inject mocked provider responses and do not launch a cloud agent.
+A new live `start`/`get` acceptance pass is separate and requires an authorized
+account, bounded task, repository grant if used, and cost allowance; record
+provider IDs and result when that authority exists. The saved marker-only probe
+does not count as a live acceptance test of this implementation.
+
+For optional repository work, plan mode and disabled automatic PR creation do
+not enforce read-only source access. Cursor may write or push a branch under
+the connected account's permissions. The manual operator must authorize the
+specific repository and task before launch; the current no-repository probe
+does not verify that access.
+
 ## Seven-principle assessment
 
 | Principle | Plan assessment |
@@ -43,9 +70,30 @@ evidence; do not run substantive work on the company Cursor account.
 | Discoverable | CLI help, model discovery, a runnable example, and structured errors explain supported inputs and recovery. |
 | Delightful experience | Recovery reuses the saved ID and avoids making users repeat a completed prompt. |
 | Token saver | Routing and recovery use deterministic code; no model decides which API call to make. |
-| Secure | Fixed HTTPS API origin, rejected redirects, no keys in request files, and sanitized errors keep credentials out of outputs. |
+| Secure | Fixed HTTPS API origin, rejected redirects, no keys in request files, and sanitized errors keep credentials out of outputs. Repository write authority is an operator gate before optional repo-backed work; plan mode is not that gate. |
 | Agents are equal | The exported runner and JSON CLI expose the same lifecycle without interactive prompts. |
 | Dependable | Read run-level states, retain IDs after failures, reject ambiguous multi-run recovery, and never infer failure from a lost create response. |
+
+## Retrospective integration plan for current main
+
+PR #7 was written from `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`;
+current main includes the reviewed workflow-profile slice at
+`005419b63460540bfbb96400c46e7274a47af723`. Merge current main into this
+branch without rewriting its commits. Retain main's product definition,
+development rules, Jira discovery records, and offline profile feature. Combine
+the README's profile and Cursor instructions, both package commands, and both
+public exports. Retain the new runner, CLI, tests, guide, Story, and this plan.
+The standalone Cursor command stays separate from hosted ownership/Jira work.
+
+Check the resulting diff against the actual PR base: all code, tests, docs and
+conflict-resolution changes together must stay at most 20 files and under two
+human working days. Run offline help/prepare, the 22 focused mocked checks,
+then the full repository suite; check links, whitespace and the final diff.
+The repository has no hosted CI workflow, and these checks do not replace an
+authorized repository-backed or second-user live test. After committing the
+merge result, obtain two fresh independent reviews of that exact committed
+code, including every changed file and the seven principles. Fix and re-review
+real in-scope findings before updating PR #7.
 
 ## Review and evidence
 

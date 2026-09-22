@@ -8,6 +8,15 @@ run the existing GitHub/Codex daemon in the cloud.
 Use Node.js 20+ and a Cursor API key supplied as `CURSOR_API_KEY` by your shell
 or secret manager. Do not put the key in the prompt, request file, CLI arguments,
 or source control. Model usage is billed by Cursor under the account's rules.
+The `start` examples below launch a billable agent; use them only with an
+authorized account and bounded task. The company-account pilot permits only
+trivial checks, and the existing marker-only probe does not validate this
+implementation.
+
+To verify the CLI without launching a cloud agent, run the offline help and
+prepare commands in the [implementation plan](plans/cursor-cloud-job.md), then
+run `node --test test/cursor-cloud-cli.test.js test/cursor-cloud.test.js` for
+mocked `start` and `get` behavior.
 
 ## First run
 
@@ -41,6 +50,9 @@ For repository work, add both `--repo https://github.com/OWNER/REPO` and
 `--ref COMMIT_OR_BRANCH` when preparing. Cursor needs its own access to that
 repository. A commit pins the exact revision; a branch can move before launch.
 Repository access has not been verified by the current no-repository probe.
+Cursor can write or push a branch under the connected account's permissions.
+Plan mode and `autoCreatePR: false` do not enforce read-only source access.
+Use only a repository and task whose possible source writes are authorized.
 
 Start the saved request:
 
@@ -75,9 +87,14 @@ under the same agent ID. A recovered result has `disposition: "recovered"`.
 It never automatically retries a POST or chooses a replacement ID.
 
 If reads cannot resolve the launch, the error includes `agentId`,
-`recoveryRequired: true`, and `recoveryCode`. Use `get` with that ID. A run may
-not be readable immediately. If you deliberately retry creation, use the same
-saved request and ID. Do not rerun `prepare` as a retry.
+`recoveryRequired: true`, and `recoveryCode`. Use `get` with that ID; a run may
+not be readable immediately. If `get` reports `ambiguous_run`, use the original
+`runId` from a saved receipt if you have one. Otherwise inspect the agent in
+Cursor with an authorized account and ask the run owner to establish the
+original run ID. If it cannot be established, leave the launch unresolved;
+never select a follow-up run by position or create a replacement job. If you
+deliberately retry creation after investigating, use the same unchanged saved
+request and ID. Do not rerun `prepare` as a retry.
 
 Status is run-level, not agent-level:
 
