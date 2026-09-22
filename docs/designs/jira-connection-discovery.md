@@ -52,11 +52,36 @@ Read-only preflight for an approved integration identity:
 4. Check comment read/create/own-edit and visibility for the intended audience.
    A restricted comment or issue may be invisible to a project browser.
    [Comment API](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/).
+5. Read the site's issue-link types and the pilot issue's complete `issuelinks`.
+   Record the type ID and direction that mean this issue **is blocked by**
+   another issue. Do not infer that relationship from a display label alone.
+   [Issue-link model](https://developer.atlassian.com/cloud/jira/platform/issue-linking-model/).
 
 No dedicated identity, credential, permission scope or selected pilot issue is
 established yet. Store future credentials in a service secret store, never in
 the profile, ticket, prompt, event body or review artifact. The owner must select
 the integration identity and permitted source/result audience before provisioning.
+
+## Dependency mapping for S02
+
+Jira link types are configurable. Resolve their native IDs under the selected
+identity and record which type/end pairs mean the candidate is blocked. For the
+usual `Blocks` type, an `inwardIssue` on the candidate is its blocker; verify
+that mapping on this site before use. An unrelated outward `blocks` link is not
+a blocker. Map each blocker to core `kind: "blockedBy"`, its native issue ID and
+one of `active`, `completed`, `canceled` or `unknown`. The selected workflow must
+name terminal-success and canceled status/resolution IDs. Only verified success
+is `completed`; active work is `active`; canceled work stays `canceled`; missing
+or ambiguous status/resolution is `unknown`. Core eligibility blocks on every
+state except `completed`.
+
+Read each blocker under the same integration identity, including links to
+another project. A hidden, missing or disallowed cross-project blocker is
+`unknown`, not absent. Treat incomplete link catalogs, missing `issuelinks`,
+truncated/paginated results without all pages, duplicate/conflicting links and
+unreadable blocker status as incomplete dependency evidence; S02 returns
+unavailable and S05 cannot send. D1 must verify the site's link type,
+direction, full-read behavior and status mapping before S02 is ready.
 
 ## Notification and reconciliation
 
@@ -71,13 +96,16 @@ after duplication/export/import. Atlassian documents these
 No rule is selected or installed until ownership, outbound allowlist and secret
 custody are checked.
 
-A signed Jira admin webhook filtered to `project = INT` is a second candidate,
-possibly easier to package. Atlassian documents
-[registration, HMAC signatures, delivery IDs and retries](https://developer.atlassian.com/cloud/jira/software/webhooks/).
-Registration authority and lifecycle on this site remain unverified. Do not
-confuse admin webhooks with OAuth app dynamic registration and its 30-day refresh.
+A signed Jira admin webhook is deferred. A filter of `project = INT` alone can
+deliver issue content from tickets outside the board or service identity's
+approved audience before the receiver can re-read and reject them. It cannot be
+selected until minimal-payload behavior or an audience-equivalent event filter
+is verified, and payload receipt, logging, retention and handler authority are
+explicitly approved. Atlassian documents
+[webhook payloads and registration](https://developer.atlassian.com/cloud/jira/software/webhooks/).
+The identifier-only project Automation candidate remains the pilot path.
 
-Both deliveries are only wake-up hints. The service re-reads the named issue
+The chosen delivery is only a wake-up hint. The service re-reads the named issue
 under its identity, confirms project/type/status/label, allowed assignee and
 board membership, revision, dependencies, issue-level security and approved
 source audience, and runs existing core eligibility. Unknown or disallowed
@@ -101,7 +129,9 @@ to observe the existing provider run. Integration comments must not create a
 new attempt. A read immediately before a write is **not** an atomic
 no-overwrite guarantee.
 
-Reserve a comment effect with a unique operation marker, intended body digest
+Use append-only integration progress comments. Do not edit an existing comment:
+Jira comment update has no verified condition that protects a later human edit.
+Reserve each comment effect with a unique operation marker, intended body digest
 and audience before POST; include a non-secret marker in the comment and persist
 the returned comment ID. After an uncertain create, use bounded paginated reads
 to match marker, author and content. One exact match confirms. Zero matches,
@@ -110,10 +140,13 @@ and need operator attention; never auto-post again after a timeout or lease
 expiry. Jira documents [paginated reads and comment properties on creation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-comments/);
 property retrieval and audience behavior still need a controlled check.
 
-Automatic status transition is **blocked** until D1 proves a Jira-enforced
-expected-source condition for the selected identity/workflow, or the owner
-accepts revised publication behavior. The observed global-looking transitions
-make a stale read especially risky: a human may move the issue before POST.
+Automatic status transition is **blocked** until D1 proves a server-enforced
+condition over every advancement-critical fact: source status, opt-in label,
+allowed assignee, approved audience/security and issue revision. If Jira cannot
+enforce that whole condition for the selected identity/workflow, S06 leaves the
+ticket for manual human transition after publishing the comment. The observed
+global-looking transitions make a stale read especially risky: a human may
+change eligibility while leaving the issue in the same status.
 `GET transitions` shows availability when read, not a conditional write on the
 same issue revision. S06 must fail closed when the adapter cannot advertise
 the required precondition; it must not silently transition unconditionally.
@@ -125,15 +158,17 @@ before/after history evidence. No live write check has been run.
 | Gate | Needed evidence | Dependent work |
 | --- | --- | --- |
 | Integration identity and audience | Owner-selected account/app identity, credential custodian, allowed INT types and source/result visibility. | S02 preflight and all Jira writes. |
-| Notification installation | Rule editor/allowlist and secret custody, or signed admin webhook registration; authenticated delivery and duplicate check. | S07 automatic wake-up; S02 can use an explicit issue ID. |
-| Native workflow/permissions | Identity-scoped metadata, contextual permissions and issue transitions/fields. | S02 eligibility and S05 launch preflight. |
-| Transition race | Server-enforced expected-source behavior, scoped workflow change or explicit owner decision for manual transition. | S06 status advancement and A1 acceptance. |
+| Notification installation | Automation rule editor/allowlist and secret custody; identifier-only authenticated delivery and duplicate check. Rich admin webhooks remain deferred. | S07 automatic wake-up; S02 can use an explicit issue ID. |
+| Native workflow/permissions | Identity-scoped metadata, contextual permissions, issue links/blocker states and transitions/fields. | S02 eligibility and S05 launch preflight. |
+| Transition race | Server-enforced guard over status, opt-in, assignee, audience/security and revision; otherwise manual transition. | S06 automatic status advancement and A1 acceptance. |
 | Ambiguous comment | Authorized small write, audience/readback and lost-response recovery check. | S06 comment publication. |
 
 Future tests cover ambiguous names, wrong project, board-filter/assignee
-exclusion, denied or unknown source audience, denied/partial reads, label
+exclusion, active/canceled/unknown/cross-project blockers, wrong link direction,
+denied or unknown source audience, denied/partial reads, label
 removal, unchanged assignee, duplicate events, incomplete pages, human edits,
-uncertain comment create and refused transition without a guard. These are
+uncertain append-only comment create and refused automatic transition without
+the full guard. These are
 obligations, not tests performed by this Task.
 
 ## Author's seven-principle assessment
@@ -144,6 +179,6 @@ obligations, not tests performed by this Task.
 | Discoverable | Setup names missing grants; agent results distinguish verified, denied and unknown. |
 | Delightful experience | A small notification wakes the service without repeated bot setup on each ticket. |
 | Token saver | Event IDs trigger bounded reads and eligibility reports decisive facts before history. |
-| Secure | One-project binding, authenticated ingress, secret custody and audience restrictions gate effects. |
+| Secure | One-project binding, identifier-only authenticated ingress, complete dependency reads and audience restrictions gate effects. Rich webhooks are deferred. |
 | Agents are equal | Noninteractive inspection exposes the same eligibility and recovery facts as the human view. |
-| Dependable | Missed events reconcile, ambiguous comments are not replayed, and unsafe transitions remain blocked. |
+| Dependable | Missed events reconcile, ambiguous append-only comments are not replayed, and unsafe transitions remain manual. |

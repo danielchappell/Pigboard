@@ -1,6 +1,6 @@
 # D1 Jira connection discovery review
 
-22 September 2026. Two independent Sol reviewers assessed the read-only
+22 September 2026. The historical design round below had two independent Sol reviewers assessing the read-only
 [INT connection design](../designs/jira-connection-discovery.md), the
 [delivery queue](../delivery-plan.md) and the
 [D1 Task](../tasks/architecture-decisions.md#d1--verify-the-jira-connection-and-workflow).
@@ -20,9 +20,9 @@ source-audience checks before provider send. The author fixed those four
 in-scope findings together and disclosed the residual race after content has
 been sent to a provider.
 
-Both fresh design re-reviews were **CLEAN for the exact hashes above**. This
-record then changed only the delivery plan's D1 status/link line; its current
-SHA-256 is `f5c28480ab2a8201e3b0aa3fad4544555e67a501693db0dd001e57374ef742ef`.
+Both design re-reviews were **CLEAN for the exact historical hashes above**. This
+record then changed only the delivery plan's D1 status/link line; its SHA-256
+at that point was `f5c28480ab2a8201e3b0aa3fad4544555e67a501693db0dd001e57374ef742ef`.
 That metadata delta is reviewed separately and does not change the D1 design
 or Task content. The product
 review covered 3/3 changed files (149/149 design lines, 233/233 queue lines,
@@ -31,7 +31,7 @@ through S07. The technical review covered 3/3 changed files, 2/2 governing
 documents, 2/2 context documents, 4/4 official Atlassian source areas and a
 second admission/send/publication/recovery sweep. Each reviewer independently
 assessed all seven principles, including human-board versus noninteractive
-agent behavior. No unresolved in-scope design finding remains.
+agent behavior. Those verdicts do not cover the later PR feedback revision.
 
 This verdict covers a **read-only discovery design**, not a completed D1 Task:
 the service identity, native metadata, contextual permissions, event
@@ -39,3 +39,24 @@ installation, comment behavior and safe transition capability still need
 authorized evidence. No Jira mutation or live integration check was performed.
 Documentation-only changes needed no new automated tests; relative links and
 `git diff --check` passed locally.
+
+## PR #12 feedback revision
+
+The [product/documentation review](jira-connection-product.md) and
+[technical/security review](jira-connection-technical.md) independently return
+**CLEAN** for the later five-file revision against `381dcb9`. Each report lists
+the exact source SHA-256 values, examines 5/5 changed source files and all 6/6
+PR feedback topics, makes a second sweep, and records its own concrete
+assessment of all seven principles for human and agent use. The reviewed
+revision defines native Jira blocker mapping; defers rich webhook payloads;
+uses append-only progress comments; and permits automatic transition only with
+a full server-enforced eligibility guard. The provisional S06 Story and delivery
+queue agree on a manual handoff when that guard is unavailable. The PR #7
+review evidence is inherited from the updated stacked base, not supplied by D1.
+
+The reviewer reports name the earlier SHA-256 of this record before this
+verdict paragraph and the queue status update. These final edits record review
+status only; they do not change the D1 design, Task or Story criteria. D1's
+identity, link configuration, source audience, comment write and transition
+checks remain open. Design CLEAN is not live acceptance or permission to mutate
+Jira.
