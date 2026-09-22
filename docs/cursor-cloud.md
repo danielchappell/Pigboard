@@ -75,6 +75,9 @@ active. If you only have the saved agent ID, omit `--run-id`: Ski Stack reads
 the agent's run list and accepts exactly one run. If someone added a follow-up
 in Cursor, it asks for the original run ID instead of silently reading a
 different answer. The returned URL opens the same agent in Cursor for inspection.
+The [Cursor v1 endpoint reference](https://cursor.com/docs/cloud-agent/api/endpoints)
+documents `GET /v1/agents/{id}/runs`; the marker-only probe did not exercise
+that list endpoint, so this command path has mocked test coverage only.
 
 ## Timeout and duplicate recovery
 
@@ -101,7 +104,7 @@ Status is run-level, not agent-level:
 | Status | Meaning |
 | --- | --- |
 | `CREATING`, `RUNNING` | Work is active; `terminal` is false. |
-| `FINISHED` | The turn ended; inspect `result` and validate the answer. |
+| `FINISHED` | The turn ended; a nonempty final `result` is required before reporting it. Retry the same `get` if Cursor briefly exposes the status before the reply. Inspect and validate the answer. |
 | `ERROR`, `CANCELLED`, `EXPIRED` | The turn ended unsuccessfully; the CLI returns exit code 1 with the result JSON. |
 
 Command errors are JSON on stderr with exit code 1. Successful

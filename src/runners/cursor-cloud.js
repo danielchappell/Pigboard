@@ -134,6 +134,7 @@ export class CursorCloudRunner {
   #result(run, agentId, runId = run?.id) {
     if (!run || !RUN_ID.test(run.id ?? "") || run.id !== runId || run.agentId !== agentId || !STATES.has(run.status)
       || (run.result !== undefined && typeof run.result !== "string")
+      || (run.status === "FINISHED" && !text(run.result))
       || (run.durationMs !== undefined && (!Number.isFinite(run.durationMs) || run.durationMs < 0))) {
       throw invalidResponse(agentId);
     }

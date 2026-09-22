@@ -129,7 +129,7 @@ test("get handles every documented run status and does not equate terminal with 
 });
 
 test("malformed and mismatched provider records never become trustworthy results", async () => {
-  for (const bad of [run("NEW_STATE"), run("FINISHED", { id: OTHER }), run("FINISHED", { agentId: "other" }), run("FINISHED", { result: {} }), run("FINISHED", { durationMs: -1 })]) {
+  for (const bad of [run("NEW_STATE"), run("FINISHED", { id: OTHER }), run("FINISHED", { agentId: "other" }), run("FINISHED", { result: {} }), run("FINISHED", { result: undefined }), run("FINISHED", { result: "  " }), run("FINISHED", { durationMs: -1 })]) {
     const { runner } = harness([reply(bad)]);
     await assert.rejects(runner.get({ agentId: AGENT, runId: RUN }), { code: "invalid_response", agentId: AGENT, runId: RUN });
   }
