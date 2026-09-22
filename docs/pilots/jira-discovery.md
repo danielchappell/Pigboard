@@ -2,8 +2,9 @@
 
 Design and discovery record, 21 September 2026. The user approved this pilot
 direction. The workflow below is the proposed implementation; it is not running.
-See [feasibility findings](jira-discovery-feasibility.md) for the evidence and
-[the next Task](../tasks/verify-cursor-discovery.md) for the remaining live check.
+See [feasibility findings](jira-discovery-feasibility.md) for the evidence.
+The trivial API check is complete; the [architecture plan](../architecture-plan.md)
+and [delivery plan](../delivery-plan.md) now govern the next work.
 
 ## The outcome
 
@@ -102,7 +103,7 @@ agent continue while the submitting developer's laptop is offline.
 
 This milestone can span several PRs. Each Story still needs one complete usable
 outcome, at most 20 changed files, and less than two human days including tests
-and PR preparation. We will size the first execution Story after the live check.
+and PR preparation. We will groom Stories after reviewing the overall architecture and delivery path.
 
 ## Seven-principle assessment
 

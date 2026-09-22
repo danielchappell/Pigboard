@@ -15,12 +15,13 @@ APIs unless a dependency removes real complexity.
 
 ## Product direction and defining principles
 
-The agreed product direction is a SaaS platform connecting Kanban boards to
-configurable agent teams. [Product definition](docs/product.md) records that
-target and its design implications. The queue implementation remains the
-GitHub Projects/local Codex MVP. A standalone Cursor cloud runner is available
-for explicit plan-mode jobs; it is not a Jira integration or hosted coordinator.
-Design goals are not shipped capabilities.
+The product is named Pigboard. Its agreed direction is an opinionated AI SDLC
+whose supported development method we maintain and improve. Settle the architecture,
+ordered roadmap and core functionality first, using the existing Ski Stack process
+as the starting method. [Product definition](docs/product.md) records that decision.
+Board/runner adapters, packages and MCP enable the method; unrestricted workflow
+configurability is not the customer promise. The current implementation remains
+the GitHub Projects/local Codex MVP; product goals are not shipped capabilities.
 
 The following principles are adopted from Rovito's ratified working agreement.
 Their meaning is preserved, with product-specific wording adapted to Ski Stack.
@@ -81,19 +82,38 @@ scope increases still require the user's approval before implementation.
 
 ## How we design and develop Ski Stack
 
-These are working rules for the humans and agents building Ski Stack. They do
-not add requirements to Ski Stack's runtime, installed agent packages, or the
-workflows its customers choose.
+These are working rules for the humans and agents building Ski Stack/Pigboard.
+They do not silently become runtime or package requirements. The chosen product
+direction is opinionated, but each customer-visible process rule and fast path
+still needs an explicit scoped design and verification.
 
-Design and deliver incrementally. Keep the product direction clear, but design
-only enough to deliver the next smallest usable slice. Build it, verify the
-result, learn from it, and expand. Keep later roadmap items at outcome level
-until their discovery and design are needed. Avoid designing the entire SaaS
-or building unused foundations before the first working journey.
+Follow [our development lifecycle](docs/development-workflow.md) for substantive
+software work. Use Ski Stack's own roles to develop Ski Stack: Planner and
+Researcher -> Architect -> independent design review -> Groomer -> Implementation
+Planner and independent plan review -> Implementer -> fresh independent
+committed-code review -> PR/Babysit -> Ready for Owner.
+
+Map the product/feature architecture and dependency-ordered development path
+before choosing the first implementation slice. Groom only after the architecture
+review is CLEAN. Design at the appropriate level for the whole outcome, then
+detail each small slice when it is ready. Do not replace this with an arbitrary
+adapter-first Story or design the whole SaaS down to implementation details.
+
+Use at least two distinct, fresh independent Sol reviewers per substantive design,
+delivery/implementation-plan and committed-code review round. Give them
+complementary product/experience and technical/security lenses; each independently
+assesses all seven principles, coverage, documentation and actual evidence.
+Fix confirmed in-scope findings and re-review to CLEAN. Commit before code review;
+open the PR after the code gate. Author review never substitutes for independence.
+
+Continue authorized work through these gates without routine permission prompts.
+Preserve scope, real access/decision gates and the owner's merge authority. Keep
+one active delivery queue; distinguish planned, reviewed, implemented and live-
+verified outcomes. A skipped gate requires an honest retrospective review.
 
 Always use `write-pr-sized-stories` when writing, splitting, or revising our
-development work items. The owner's skill is currently available at
-`/Users/josephchappell/.codex/skills/write-pr-sized-stories/SKILL.md`.
+development work items. Resolve that installed skill from the active skill
+catalog so this guidance works on other teammates' machines too.
 For Ski Stack development, every Story must:
 
 - Deliver one complete, usable behavior or technical outcome.

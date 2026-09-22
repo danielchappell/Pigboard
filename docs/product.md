@@ -1,23 +1,50 @@
-# Ski Stack product definition
+# Pigboard product definition
+
+Product name chosen by the owner on 21 September 2026: **Pigboard**.
+Earlier architecture, research and implementation records use the name Ski Stack.
 
 Agreed product direction, 20 September 2026. This defines the product to design;
-it is not a claim that the SaaS, Jira adapter, or MCP are shipped.
-The queue implementation is the GitHub Projects/local Codex MVP. A standalone
-[Cursor cloud runner](cursor-cloud.md) now supports explicit plan-mode jobs.
+it is not a claim that the SaaS, Jira adapter, MCP, or cloud runners are shipped.
+The existing implementation is the GitHub Projects/local Codex MVP.
 
-## What Ski Stack is
+## Current decision — an opinionated AI SDLC
 
-Ski Stack is a SaaS platform that connects agent teams to Kanban boards so that
-work can be coordinated reliably as concurrency and team use grow.
+On 21 September 2026 the owner chose Pigboard as a maintained development method:
+we choose, enforce, operate, validate and improve the supported AI SDLC.
+The existing Ski Stack process is the starting method, reported by the owner to
+work in their use. First settle the architecture, delivery roadmap and core
+functionality, then carry that method onto the hosted foundation and improve it
+from observed outcomes. Hosted acceptance and broader reliability remain to prove.
+
+Customers provide product context, constraints and authority; Pigboard supplies
+the supported method. Existing adapters, packages and MCP enable that experience.
+This supersedes configurability as the main customer promise. Market research
+informs commercial rollout without blocking the authorized foundation work.
+
+## Product direction update — 21 September 2026
+
+The owner has endorsed a sharper customer outcome: a team-owned delivery service
+that takes a feature through product/engineering discovery to small, reviewed
+changes, with humans involved at meaningful decisions. The
+[product strategy and positioning record](product-strategy.md) captures that
+outcome, candidate messaging, competitive evidence and unvalidated hypotheses.
+The integration requirements below remain enabling capabilities. This addendum
+is a conversation record; earlier design reviews do not cover it.
+
+## What Pigboard is
+
+Pigboard is an opinionated AI SDLC product, delivered through a hosted service
+connecting agents and Kanban boards. Its architecture supports dependable team
+operation and a development method that we can test and improve over time.
 
 The user's defining requirements are:
 
 - Users can work directly on a Kanban board and make tickets eligible for agents.
-- Agents, through Ski Stack, move tickets, document their work, and comment on
+- Agents, through Pigboard, move tickets, document their work, and comment on
   tickets so that the board remains a shared record of progress and results.
-- The execution harness or agent platform is configurable. Ski Stack provides
+- The execution harness or agent platform is configurable. Pigboard provides
   installable packages for Cursor and Codex.
-- Ski Stack provides an MCP interface through which a control agent can inspect
+- Pigboard provides an MCP interface through which a control agent can inspect
   and interact with the team, create Jira tickets, and support ideation that
   starts the pipeline.
 
@@ -36,9 +63,9 @@ prerequisite for this product.
 
 The seven principles and mandatory review procedure in [AGENTS.md](../AGENTS.md)
 are authoritative. They come from Rovito; the applications below explain what
-they mean for Ski Stack design and are not a separate implementation backlog.
+they mean for Pigboard design and are not a separate implementation backlog.
 
-| Principle | Implication for Ski Stack | A question every design should answer |
+| Principle | Implication for Pigboard | A question every design should answer |
 | --- | --- | --- |
 | Intuitive | The normal journey uses familiar tickets, roles, stages, and results. Defaults and status behavior are understandable without learning worker internals. | Can a user predict what happens when a ticket becomes eligible, and where its result will appear? |
 | Discoverable | Humans can discover setup, roles, capabilities, and recovery. MCP tools expose clear inputs, current capabilities, structured results, and actionable errors. | Can a new teammate or agent find the supported next action without this conversation? |
@@ -57,7 +84,7 @@ noninteractive execution does not remove necessary human authorization.
 
 - The board remains a direct way to submit, prioritize, inspect, and progress
   work; using a control agent is not mandatory.
-- Ski Stack owns deterministic coordination and the accepted record of a run.
+- Pigboard owns deterministic coordination and the accepted record of a run.
   Board adapters translate board-specific data and actions. Execution adapters
   integrate with the configured harness. Do not duplicate core scheduling policy
   in each adapter or distribute it across per-role automation rules.
@@ -99,34 +126,24 @@ review is not proof of a working implementation. Changes that expand agreed
 scope must be proposed separately; the principles are not a license to expand
 work or require speculative infrastructure.
 
-## First pilot
+## Architecture and delivery process
 
-The user approved starting with one Jira-to-agent-to-Jira discovery journey.
-The [pilot design](pilots/jira-discovery.md) describes the proposed experience,
-and the [feasibility findings](pilots/jira-discovery-feasibility.md) separate
-verified capabilities from the remaining live checks. This is one team, one
-repository, one role, one execution provider, and one active job. The
-[provider verification Task](tasks/verify-cursor-discovery.md) produced live API
-evidence. The first implementation is the [standalone Cursor job Story](stories/run-cursor-cloud-job.md);
-the complete Jira journey remains a later milestone.
+The [architecture plan](architecture-plan.md) maps the complete product direction,
+current implementation, component ownership, candidate milestones and unresolved
+Tasks. Follow [our development workflow](development-workflow.md): independently
+review that architecture, then groom its dependency-ordered slices. The active
+[delivery plan](delivery-plan.md) records readiness and the next work.
 
-## Decisions still to design
+## Existing pilot evidence
 
-These remain open, rather than implicitly approved architecture:
+The user approved exploring one Jira-to-agent-to-Jira discovery journey. The
+[pilot record](pilots/jira-discovery.md) and [feasibility findings](pilots/jira-discovery-feasibility.md)
+remain useful evidence. One trivial Cursor API probe is complete. The pending
+Cursor command PR is partial work, not the approved project roadmap or a completed
+Jira/cloud journey. Its review/disposition belongs in the architecture and delivery
+plan. The owner has explicitly required that map before more implementation.
 
-- The first complete board-to-agent-to-board vertical slice and its acceptance
-  criteria; the current GitHub MVP rollout is distinct from the Jira/cloud path.
-- Production execution credentials and environment lifecycle beyond the initial
-  standalone Cursor runner.
-- Where shared progress is viewed and what the initial Ski Stack UI must expose
-  alongside the Kanban board and runner interfaces.
-- The initial concurrency target, durable claim mechanism, and recovery contract.
-- Team/workspace membership, connection ownership, and access boundaries.
-- Package installation, configuration, compatibility, and upgrade behavior.
-- MCP capabilities for ideation, ticket creation, inspection, interruption,
-  retry, and completion, including how each reports partial outcomes.
-- Hosting, storage, commercial packaging, and support commitments.
-
-Resolve only what the next runnable slice needs. Keep the seven principles as
-acceptance criteria throughout discovery, architecture, story definition,
-implementation, documentation, and release review.
+Open decisions include hosted state/recovery, Jira identity/permissions, team
+access, runner contracts, package lifecycle, MCP authority and operating limits.
+Resolve them through scoped Tasks before declaring dependent Stories ready; keep
+later architecture at the level needed to preserve the product direction.

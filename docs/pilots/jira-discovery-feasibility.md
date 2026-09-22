@@ -187,17 +187,15 @@ credential provisioning, cancellation, and API tool-use transcript inspection
 were not part of this check. The marker-only run must not be presented as proof
 that the Jira pilot or production adapter is implemented.
 
-## Next delivery decision
+## Delivery status after the workflow correction
 
 The core [trivial API check](../tasks/verify-cursor-discovery.md) is complete.
-The [first implementation Story](../stories/run-cursor-cloud-job.md) delivers
-a usable Ski Stack command to start or retrieve one Cursor job with explicit
-inputs and a retained provider ID. The [plan](../plans/cursor-cloud-job.md)
-records the command/result contract and file/time estimate. Jira and a hosted
-coordinator remain outside that first slice.
-The broader Jira design question stays in our local development workflow. Every subsequent Story must stay within one PR,
-20 changed files, and less than two human working days including tests.
+A standalone Cursor command implementation exists in
+[PR #7](https://github.com/danielchappell/ski-stack/pull/7), but has only an author
+review. It is unmerged and does not decide the first architectural slice.
 
-After that check, choose the smallest complete usable outcome, with its live QA
-path and a justified file/time estimate. Keep the complete Jira/cloud milestone
-distinct from that first PR. Do not promise the whole milestone in two days.
+The owner requires the complete [architecture and development map](../architecture-plan.md)
+to be reviewed before grooming the delivery queue. Treat this pilot and PR as
+existing evidence/work to reconcile against that map. See the
+[active delivery plan](../delivery-plan.md) for readiness and next actions.
+Do not launch additional paid work or claim the Jira milestone is implemented.
