@@ -27,6 +27,19 @@ The default worker roles are in `agents/`:
 The reusable skills live in `skills/`. They are not tied to the queue runtime;
 use them directly whenever they help.
 
+## Preview a workflow offline
+
+With Node.js 20+ and a checkout, validate a shareable Jira-to-worker configuration:
+
+```bash
+npm run --silent profile:check -- --file ski.workflow.example.json --format text
+```
+
+This needs no credentials, dependencies or connected accounts and starts no agent
+work. A valid profile is a static route preview; `liveReady` remains `false`.
+The [workflow profile guide](docs/workflow-profile.md) covers copying/editing the
+file, JSON/stdin usage, error recovery and the live prerequisites still unchecked.
+
 ## Quick Setup
 
 Requirements:
