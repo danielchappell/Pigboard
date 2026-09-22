@@ -44,6 +44,10 @@ The INT board is understood from the human UI, but the future integration's
 permissions and transition contract are unverified. We cannot safely size or
 activate Jira writes from that UI evidence alone.
 
+The [read-only D1 connection record](../designs/jira-connection-discovery.md)
+captures the observed permission scheme/workflow, candidate notification paths
+and publication guards. It does not close this Task's live identity or race gates.
+
 Acceptance Criteria
 
 - Record the intended integration identity, allowed project, issue types, status IDs and required transition fields.

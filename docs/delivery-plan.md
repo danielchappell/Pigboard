@@ -81,7 +81,7 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | --- | --- | --- | --- |
 | Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
 | Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| Next | D1: Verify Jira identity and workflow | Competitive docs/UI-shell evidence collected; service identity, action availability and workflow contract remain open | Pin connection/transition/race constraints and reuse suitable native capabilities before Jira delivery Stories. |
+| Design CLEAN; live gates open | D1: Verify Jira identity and workflow | [Read-only INT discovery](designs/jira-connection-discovery.md) and [two-reviewer record](reviews/jira-connection-discovery.md) define event/reconciliation and publication gates; service identity, native IDs, per-issue authority and transition guard remain open | Complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity facts first. |
 | Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
@@ -116,7 +116,7 @@ its decisions and plan are ready.
 | --- | --- | --- | --- |
 | [S01](stories/validate-workflow-profile.md) | Validate a saved workflow configuration and explain its route | Reviewed D2 plus configuration-only D1/D4 decisions; [per-Story plan](plans/validate-workflow-profile.md) must have two CLEAN reviews | Nine expected implementation files, twelve including supporting updates; estimated 12 human hours. |
 | S02 | Explain whether one Jira ticket is eligible without starting it | S01, D1 | Jira reads/normalization and existing core policy, one inspection command. |
-| S03 | Start and retrieve one manual Cursor cloud job with stable identity | D4-design; PR #7 retrospective Story/plan and committed-code reviews | Existing standalone CLI and library, kept separate from hosted launch authority; no repository-backed acceptance claimed. |
+| S03 | Start and retrieve one manual Cursor cloud job with stable identity | D4-design; PR #7 retrospective Story/plan and committed-code reviews CLEAN | Existing standalone CLI and library, kept separate from hosted launch authority; no repository-backed acceptance claimed. |
 | S04 | Save and retrieve an existing provider run from shared durable state | S03, D2, D3, D4-design | Manually register and inspect a run after restart; mutable or unattested revisions are inspection-only, not validation/publication input. |
 | S05 | Explicitly start one eligible Jira request once | S02, S03, S04, D1, D2, D3, D4-design, D4-live | Atomic attempt/send reservation plus D2 provider facade and one operator-invoked launch/recovery command. Recheck size after discovery; split only into complete usable outcomes. |
 | S26 | Observe and validate a saved provider result | S04, D2, D4-design, D4-source | One observation/validation command stores a role result or needs-attention; source revision must be proven immutable before validation. |
@@ -219,6 +219,10 @@ slices supported by evidence from operating that baseline.
   the first hosted send after durable ownership and D4-live evidence. A recovered
   manual run is not automatically bound to the hosted request. D4's
   repository/read-only/visibility gates remain open; preserve PR #7's branch.
+- D1's [read-only connection record](designs/jira-connection-discovery.md)
+  identifies one-project notification options and a blocking status-write race.
+  No service identity, REST metadata, comment write or transition test is yet
+  verified; S02 and automatic publication are not ready.
 - Current main has no hosted CI workflow. This is an evidence gap to record in
   each future plan, not permission to describe local tests as hosted checks or
   to add infrastructure as an unreviewed side effect.
