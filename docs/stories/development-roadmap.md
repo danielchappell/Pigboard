@@ -45,11 +45,11 @@ Testing Strategy
 - Access and setup: Use mocked Jira data first; live reads require D1’s verified integration identity and scoped test ticket.
 - Automated regression: Cover Jira normalization and core eligibility through the inspection command.
 
-## S03 — Start and retrieve one provider job
+## S03 — Start and retrieve one manual Cursor cloud job
 
 Problem to solve
 
-Ski Stack needs a repeatable provider operation before automatic scheduling. A lost create response must not lead callers to buy a duplicate run.
+Ski Stack needs a repeatable manual Cursor operation before hosted launch or automatic scheduling. A lost create response must not lead callers to buy a duplicate run.
 
 Acceptance Criteria
 
@@ -58,8 +58,8 @@ Acceptance Criteria
 
 Technical Acceptance Criteria
 
-- Conform to D4’s runner contract and explicit capabilities.
-- Reconcile the existing PR #7 instead of creating a duplicate implementation.
+- Keep the standalone command inside D4’s manual boundary; it does not grant hosted launch authority or claim the D2 application facade.
+- Reconcile the existing PR #7 instead of creating a duplicate implementation. Review its Story and plan retrospectively, then review the exact committed code after conflict resolution.
 
 Testing Strategy
 
