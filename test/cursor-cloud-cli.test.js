@@ -23,7 +23,7 @@ test("real command help works without credentials and documents noninteractive J
   const { stdout } = await promisify(execFile)(process.execPath, ["scripts/cursor-cloud.mjs", "--help"], { cwd: new URL("..", import.meta.url), env: {} });
   assert.match(stdout, /prepare/);
   assert.match(stdout, /get --agent-id ID/);
-  assert.match(stdout, /All output is JSON/);
+  assert.match(stdout, /Command results and errors are JSON; help is text/);
 });
 
 test("saved request flows through prepare, start, and a fresh client get without new model work", async () => {

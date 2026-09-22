@@ -15,7 +15,7 @@ models [--model ID]
   Lists supported model IDs and parameters.
 
 Use: npm run --silent cursor -- COMMAND [options]
-API commands require CURSOR_API_KEY. All output is JSON; errors go to stderr.
+API commands require CURSOR_API_KEY. Command results and errors are JSON; help is text.
 Plan mode only; one optional GitHub repo/ref; no automatic PR or follow-up launch.
 Prepare/get do not run a model. FINISHED means a turn ended, not human acceptance.
 `;

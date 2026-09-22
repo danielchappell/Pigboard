@@ -97,18 +97,24 @@ real in-scope findings before updating PR #7.
 
 ## Review and evidence
 
-The implementation changes 18 files including the approved contributor/product
-guidance and discovery evidence. The original checkout and its uncommitted work
-are preserved; implementation uses an isolated branch from main `5e48c3d`.
+At the original PR tip `3df1eab7f931284ca4204edb2d67ac8ccf98fba5`, the
+diff against former main `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`
+changed 18 files and the author reported 220 passing tests, including 22
+runner/CLI checks. These are historical pre-merge figures.
 
-Validation: all 220 repository tests pass, including 22 new runner/CLI checks.
-The real npm help command works without credentials. Local links, whitespace,
-saved API evidence, and the changed-file count were checked. No credential is
-stored in the changed files. No additional cloud run was launched. There is no
-repository CI workflow in this checkout; local tests are not a hosted CI claim.
+After integrating current main, merge commit
+`6ebf7d65168543cbce8b3fe666f2985559a0a13f` changes 12 files against
+`005419b63460540bfbb96400c46e7274a47af723`. At that commit, 22 focused
+and 239 full repository tests pass; the offline Cursor help/prepare commands
+and the retained workflow-profile preview work. Six changed documents have no
+missing relative links, and whitespace checks pass. The original checkout and
+its uncommitted work remain untouched. No credential was committed, no new
+cloud run was launched, and no hosted CI workflow exists in this repository.
+Local tests and the marker-only probe are distinct from live acceptance.
 
-The author reviewed the implementation and found no remaining in-scope issue.
-This is an author review, not an independent review verdict.
+The original author reviewed the earlier implementation and found no remaining
+in-scope issue. That historical author assessment does not substitute for fresh
+independent review of the final committed code.
 
 | Principle | Implementation review |
 | --- | --- |

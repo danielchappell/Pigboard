@@ -104,8 +104,9 @@ Status is run-level, not agent-level:
 | `FINISHED` | The turn ended; inspect `result` and validate the answer. |
 | `ERROR`, `CANCELLED`, `EXPIRED` | The turn ended unsuccessfully; the CLI returns exit code 1 with the result JSON. |
 
-Command errors are JSON on stderr with exit code 1. Successful commands return
-JSON on stdout with exit code 0, including pending runs. A provider's finished
+Command errors are JSON on stderr with exit code 1. Successful
+`prepare`/`start`/`get`/`models` commands return JSON on stdout with exit code
+0, including pending runs; help is plain text. A provider's finished
 turn is not human acceptance or permission to advance a ticket. Plan mode and
 `autoCreatePR: false` are not enforced read-only repository permissions.
 
