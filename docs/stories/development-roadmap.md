@@ -1,7 +1,7 @@
 # Development Story previews
 
 These follow the independently reviewed [architecture](../architecture-plan.md).
-S01 now links to its groomed Story and reviewed-plan gate. **The other 27 items
+S01 now links to its groomed Story and reviewed-plan gate. **The other 30 items
 remain Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).
 The [active delivery plan](../delivery-plan.md) owns dependencies, readiness,
@@ -205,6 +205,78 @@ Testing Strategy
 - Manual QA: Start the deployed fixture journey, disconnect the client and inspect the same run from a second authorized session.
 - Access and setup: Requires D3’s authorized deployment/test identities; full model acceptance remains constrained by execution authority.
 - Automated regression: Cover deployment health, authenticated inspection and coordinator restart against the selected environment.
+
+## S29 — Quarantine one restored connection
+
+Problem to solve
+
+A database restore can lose a record of work already sent to Cursor or Jira.
+Starting new work from that copy could repeat an external action.
+
+Acceptance Criteria
+
+- A separately authorized recovery principal sets and verifies the one-team connection's out-of-database quarantine marker and expected database target before a restored cluster can be attached; it records the recovery point and possible lost-write window.
+- While recovering, the service rejects new launches and publications across restart and explains the blocked state to authorized humans and agents.
+- Missing recovery-point evidence keeps the connection in maintenance.
+
+Technical Acceptance Criteria
+
+- Fence the old sender before accepting a restored store; if it cannot be fenced, do not cut over.
+- Persist quarantine outside the restored attempt rows. Reject a changed database target without a verified marker, and check it on every Machine before scheduling or effects, including deploy overlap and restart.
+
+Testing Strategy
+
+- Manual QA: Set the marker, fence the old sender, restore an isolated Fly Managed Postgres fixture after a simulated send, and check that no ticket or provider request is repeated. Attempt attachment without a marker and with overlapping deploys.
+- Access and setup: Use the selected Fly pilot organization and separately authorized recovery identity; no live customer ticket is needed.
+- Automated regression: Cover missing-marker rejection, deploy overlap, restart-safe quarantine and rejection of new effects when the recovery window is unknown.
+
+## S30 — Reconcile a restored connection's external effects
+
+Problem to solve
+
+A quarantined connection may be missing records of provider runs or Jira
+comments that were sent after the database recovery point.
+
+Acceptance Criteria
+
+- The recovery principal sees known provider and Jira effects and an explicit unknown or unbounded lost window when the sources cannot enumerate every possible effect.
+- Exact positive evidence records each effect against its original identity; missing or conflicting evidence is marked unresolved. An unbounded window can never be marked complete by this Story.
+- The connection stays quarantined with no new send or publication after reconciliation.
+
+Technical Acceptance Criteria
+
+- Match exact provider and Jira identities against the original database, audit and provider/Jira evidence when available; never infer that a missing restored row means no send occurred.
+- Treat unavailable provider or Jira credentials as unresolved observation, not proof of no effect.
+
+Testing Strategy
+
+- Manual QA: Restore a fixture with one post-recovery-point send, record its exact identity, then remove evidence and confirm the unknown window remains unresolved and quarantined.
+- Access and setup: Use an isolated Fly Managed Postgres restore, synthetic external evidence and a separately authorized recovery identity.
+- Automated regression: Cover effect matching and continued quarantine when evidence is incomplete.
+
+## S31 — Reapply current access and reopen a restored connection
+
+Problem to solve
+
+The restored database may also contain old roles or credentials. Even a
+reconciled run cannot be exposed until current access is restored.
+
+Acceptance Criteria
+
+- The recovery principal compares current membership, role, credential and connection-scope changes since the recovery point using an identity source outside the restored database.
+- Only the recovery principal can record cutover and reopen the verified restored cluster when effect and access evidence are complete.
+- Missing or conflicting access evidence keeps the connection quarantined and denies stale inspection or commands.
+
+Technical Acceptance Criteria
+
+- Apply current revocations and connection scope before exposing restored results or commands; restored database roles confer no recovery authority.
+- Rebind the Fly database secret only for a verified cutover; an unverified provider credential cannot recover a run.
+
+Testing Strategy
+
+- Manual QA: Restore a fixture with one revoked user and rotated credential; verify denied stale access and either safe cutover or continued quarantine.
+- Access and setup: Use an isolated Fly restore, current out-of-database identity records and a separately authorized recovery principal; no production ticket write is required.
+- Automated regression: Cover the full viewer/operator/connection-admin/scoped-agent/recovery-principal command allow/deny matrix, stale-access denial, secret/connection validation and refusal to reopen on incomplete evidence.
 
 ## S09 — Turn an idea ticket into a product brief
 
@@ -603,24 +675,27 @@ Testing Strategy
 - Access and setup: Use synthetic usage records and mocked provider calls; no spending experiment is required.
 - Automated regression: Cover consistent launch enforcement and continued reconciliation at capacity.
 
-## S25 — Recover stored work after restoring state
+## S25 — Keep two teams isolated during a restore
 
 Problem to solve
 
-A backup is useful only if the team can resume safely. Restoring stale run state must not launch duplicates or hide external work.
+The one-team recovery path does not prove that restoring shared state keeps a
+second team's work and access isolated.
 
 Acceptance Criteria
 
-- The operator follows a documented restore procedure and identifies outstanding provider and publication work.
-- Recovery reconciles uncertain effects before resuming writes or launching new attempts.
+- The operator can restore one team's connection without reopening another team's uncertain work.
+- Each team's member and agent sees only its own recovery state and permitted results.
+- Missing cross-team evidence keeps affected connections quarantined rather than launching new work.
 
 Technical Acceptance Criteria
 
-- Use D8’s selected recovery contract and the existing provider/publication identities.
+- Extend S29-S31's one-team recovery contract without weakening its effect or authority checks.
+- Use D8’s multi-team isolation contract and existing provider/publication identities.
 - Do not claim recovery beyond the tested retention and backup boundary.
 
 Testing Strategy
 
-- Manual QA: Restore an isolated snapshot containing an interrupted fixture job, reconcile it and inspect the original provider/result identity.
-- Access and setup: Requires a disposable restore target and synthetic provider/Jira evidence; never overwrite live state for QA.
-- Automated regression: Cover restored-state reconciliation and protection against duplicate external effects.
+- Manual QA: Restore an isolated two-team fixture with one interrupted job; inspect each team's evidence and denied cross-team access.
+- Access and setup: Use a disposable restore target and synthetic provider/Jira evidence; never overwrite live state for QA.
+- Automated regression: Cover cross-team isolation and no duplicate external effect after restore.

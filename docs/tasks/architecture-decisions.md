@@ -104,30 +104,33 @@ Testing Strategy
 Problem to solve
 
 The product must continue with laptops off and expose progress to teammates.
-Hosting, durable storage, access and operating limits have not been selected.
+The owner selected Fly.io hosting, but the organization, managed store, team
+access and operating limits still need verified choices.
 
-The [D3 options brief](../designs/hosted-deployment-options.md) compares one
-managed Node/PostgreSQL path on Render or AWS and names the owner decisions.
-It is not a selected account, spend approval or deployed service.
+The [D3 hosting brief](../designs/hosted-deployment-options.md) maps a Fly App
+and Managed Postgres to the one-team contract. It is not a selected Fly
+organization, spend approval or deployed service.
 
 Acceptance Criteria
 
-- Compare a small number of practical host/store choices against the reviewed contracts and expected pilot load.
-- Choose or surface the owner decision for credentials, deployment ownership, team authentication and source/result audiences.
-- Define retention, backup/restore, health inspection, bounded usage and expected cost sources.
+- Verify Fly App/Managed Postgres fit against the reviewed contracts and expected pilot load; retain alternatives only if a Fly requirement fails.
+- Record the selected Fly organization and the decisions for credentials, deployment ownership, team authentication and source/result audiences.
+- Define class-specific retention including backups, a pre-A1 restore path with an out-of-database recovery principal and pre-attachment quarantine marker, health inspection, bounded usage and expected cost sources.
 - Document one teammate setup/inspection journey and the exact live evidence needed before M2 is complete.
 
 Technical Acceptance Criteria
 
 - Do not provision paid services or broaden access merely to write the plan.
 - Keep one service/worker and one team where possible; do not add an unused distributed platform.
+- Gate restored-state reopening on bounded effect and current access-change reconciliation; an unknown or unbounded effect window stays quarantined, and a revoked provider credential also blocks provider reads.
+- Verify how Fly credentials, an external connection grant and recovery commands enforce the full role matrix; do not treat a machine-exec token alone as command confinement.
 - Verify current provider facts from official sources before selecting them.
 
 Testing Strategy
 
-- Manual QA: Trace a new authorized teammate from setup through run inspection and recovery; check both permitted and denied access.
-- Access and setup: Host account, integration identity, production secrets and deployment permissions are unresolved choices.
-- Automated regression: Identify deployment health, authorization and recovery checks required by the selected platform.
+- Manual QA: Trace an authorized teammate from setup through inspection, then use a separately authorized recovery principal to mark quarantine before attaching a restored cluster with a lost send and revoked member; verify the full role-denial matrix, missing-marker rejection and quarantine on uncertainty.
+- Access and setup: The Fly account is signed in; organization, integration identity, app roles, secrets, budget and deployment permissions remain unresolved.
+- Automated regression: Identify Fly deployment health, role-denial and restored-state recovery checks.
 
 ## D4 — Define runner capabilities and reconcile the Cursor work
 
@@ -326,10 +329,12 @@ rely on it.
 
 Acceptance Criteria
 
-- Record the deployed revision and completed S01-S08/S26 outcomes with their independent reviews and required checks.
+- Record the deployed revision and completed S01-S08/S26/S29-S31 outcomes with their independent reviews and required checks.
 - Demonstrate setup, eligible Jira input, one provider attempt, validated findings, ticket publication and human acceptance using the configured environment.
 - Show second-user visibility and continued coordination with the submitting client offline.
 - Record duplicate delivery, restart, provider uncertainty, invalid output, interrupted publication and human takeover results.
+- Drill a Fly Managed Postgres restore with a lost effect and access change; verify pre-attachment quarantine, safe cutover and continued quarantine when evidence is missing or the lost window is unbounded.
+- Check allowed and denied viewer, operator, connection administrator, scoped agent and recovery-principal commands.
 - Mark M2 complete only when all required evidence and the owner’s product acceptance are recorded; otherwise list exactly what remains.
 
 Technical Acceptance Criteria
@@ -340,6 +345,6 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Follow the configured setup and full ticket journey, inspect it as a second authorized user, and walk the controlled failure/recovery scenarios.
+- Manual QA: Follow the configured setup and full ticket journey, inspect it as a second authorized user, then drill restore and role-denial scenarios.
 - Access and setup: Concrete test identities, repository, deployed URL and meaningful-work authority come from D1/D3/D4; missing access leaves this Task incomplete.
 - Automated regression: Confirm the existing end-to-end recovery and isolation checks at the accepted revision; record any newly discovered behavior defect as a scoped Story.
