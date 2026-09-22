@@ -58,7 +58,7 @@ No live Jira/Cursor check, paid compute, deployment, merge or release occurred.
 | Agents are equal | File/stdin, JSON and exit statuses provide noninteractive access; the human text view derives from the same result. |
 | Dependable | Valid and invalid results retain `liveReady: false`; tests cover repeatability, detached data, byte limits and safe failure without side effects. |
 
-## Independent committed-code gate
+## Initial independent committed-code gate
 
 Two fresh independent Sol agents reviewed implementation commit
 `74dee57e82b9463b6f674ca810e28b1a7e0c3113` against the explicit stacked base
@@ -84,12 +84,51 @@ manual command/error checks, whitespace and documentation checks.
 
 [S01 PR #9](https://github.com/danielchappell/ski-stack/pull/9) opened only after
 both CLEAN code reviews. It is stacked on the documentation-only
-[PR #8](https://github.com/danielchappell/ski-stack/pull/8). These two bookkeeping
-files are the only changes after the reviewed implementation commit; runtime,
-tests, public guide, help and example retain the reviewed file tree. A separate
-committed documentation-delta review verifies this evidence update before it is
-pushed. GitHub PR history identifies that final publication revision.
+[PR #8](https://github.com/danielchappell/ski-stack/pull/8). At publication commit
+`05018bbcffa12671af058d1692b3a2211903ea34`, two bookkeeping files were the only
+changes after the initial reviewed implementation commit; runtime, tests, public
+guide, help and example retained that reviewed file tree. Both reviewers also
+returned CLEAN for that documentation delta before it was pushed. Subsequent
+feedback and changes are recorded below; the initial verdicts remain historical.
 
 No hosted CI, Jira/Cursor acceptance, merge or release is implied. The owner
 retains merge authority; the broader foundation remains incomplete. D1 and D4
 are the next independent discovery Tasks before their dependent live Stories.
+
+## PR feedback cycle: display safety and explicit eligibility
+
+The first babysitting poll found two unresolved, non-outdated P2 threads against
+code unchanged since the original review. Both were reproduced or confirmed on
+published head `05018bbcffa12671af058d1692b3a2211903ea34` and classified as valid:
+
+- [Unicode separators](https://github.com/danielchappell/ski-stack/pull/9#discussion_r4067123410):
+  U+2028/U+2029 inside each display-name field were accepted and reflected into
+  text. Reject their Unicode categories before route creation, alongside the
+  existing control-character checks, so they cannot inject readiness lines.
+- [Unchecked eligibility wording](https://github.com/danielchappell/ski-stack/pull/9#discussion_r4067123413):
+  stable prerequisite codes alone did not satisfy the Story's explicit human
+  warning. The text report now says live access and ticket eligibility have not
+  been checked while preserving its structured codes and `liveReady: false`.
+
+This bounded correction reuses the existing S01 design and implementation plan:
+safe names, safe diagnostics and an explicit human-readable eligibility warning
+were already in scope. No schema, provider, authority or architecture expansion.
+New library tests cover both separators in all five name fields; real-process
+tests cover JSON/text rejection and the readable warning. The guide documents
+the restriction. Focused tests passed **19/19**, and full local tests passed
+**217/217** on Node 22.17.0; whitespace checks also pass.
+
+| Principle | Author's feedback-fix assessment |
+| --- | --- |
+| Intuitive | The standalone report now states the live access/eligibility limitation plainly. |
+| Discoverable | Error text and guide name the forbidden separators so users can repair the field. |
+| Delightful experience | Normal names still work; correction needs no extra setup or question. |
+| Token saver | One short sentence makes the consequential limitation clear without a guide lookup. |
+| Secure | Validation rejects injected line/paragraph boundaries before display and does not echo rejected content. |
+| Agents are equal | Stable JSON codes and readiness stay unchanged; humans receive an equally explicit warning. |
+| Dependable | Regression tests cover both separators, every name field and real CLI output. |
+
+Fresh independent committed-code review outcomes for this feedback commit are
+recorded against its exact SHA in [PR #9](https://github.com/danielchappell/ski-stack/pull/9).
+The initial CLEAN verdicts do not substitute for that gate. Babysitting ends only
+on a PR-description thumbs-up; no merge or review-request comment is authorized.

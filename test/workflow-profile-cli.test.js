@@ -51,7 +51,23 @@ test("help is credential-free and text shows static readiness and all prerequisi
   assert.equal(text.status, 0);
   assert.match(text.stdout, /Valid static workflow profile: int-discovery/);
   assert.match(text.stdout, /Live ready: no/);
+  assert.match(text.stdout, /Live access and ticket eligibility have not been checked\./);
   assert.match(text.stdout, /execution_authorization: not_checked/);
+});
+
+test("CLI rejects Unicode separator injection in both output formats", () => {
+  for (const separator of ["\u2028", "\u2029"]) {
+    const input = JSON.parse(example);
+    input.board.readyStatus = `Ready${separator}Live ready: yes`;
+    const json = error(["--stdin"], JSON.stringify(input), "invalid_profile", 1);
+    assert.equal(json.errors[0].path, "$.board.readyStatus");
+    assert.equal(json.errors[0].code, "invalid_value");
+    const text = run(["--stdin", "--format", "text"], JSON.stringify(input));
+    assert.equal(text.status, 1);
+    assert.match(text.stdout, /Live ready: no/);
+    assert.ok(!text.stdout.includes(separator));
+    assert.ok(!text.stdout.includes("Live ready: yes"));
+  }
 });
 
 test("flags are rejected before input reading", () => {

@@ -14,13 +14,15 @@ that we maintain and improve. The owner identifies the existing Ski Stack proces
 as a working starting point and directs us to settle the architecture, roadmap
 and core functionality before iterating on the development method.
 
-Current focus: **S01 ready for owner; D1/D4 discovery next**.
+Current focus: **S01 awaiting PR approval; D1/D4 discovery next**.
 Architecture/queue alignment is CLEAN for the exact artifacts in
 [review evidence](development-review.md). The implementation reuses the unchanged
 D2 contract and S01 Story/plan after a current-code check. Two fresh independent
 committed-code reviews are CLEAN; [S01 evidence](reviews/workflow-profile.md)
 records exact revisions and coverage. [PR #9](https://github.com/danielchappell/ski-stack/pull/9)
 is stacked on the documentation [PR #8](https://github.com/danielchappell/ski-stack/pull/8).
+The active babysitting cycle corrects two valid display-safety/eligibility findings;
+its fresh review gate is recorded separately from those initial CLEAN verdicts.
 Earlier review verdicts remain tied to their exact artifacts.
 
 The order is:
@@ -182,8 +184,12 @@ slices supported by evidence from operating that baseline.
   independent CLEAN reviews; both reviewers also passed all 215 local tests
   (17 new). [PR #9](https://github.com/danielchappell/ski-stack/pull/9) is open,
   stacked on [PR #8](https://github.com/danielchappell/ski-stack/pull/8).
-  Only queue/review bookkeeping follows that reviewed code. There is no hosted
-  CI workflow; no merge or live acceptance is claimed. See [exact evidence](reviews/workflow-profile.md).
+  The initial publication added only queue/review bookkeeping. A subsequent
+  babysitting cycle fixes two valid text-report findings with regression coverage:
+  19 focused and 217 full local tests pass. Fresh exact-commit review outcomes
+  are recorded on PR #9, separately from the initial verdicts. There is no hosted
+  CI workflow; no merge, approval reaction or live acceptance is claimed.
+  See [exact evidence](reviews/workflow-profile.md).
 - Completed: marker-only Cursor API discovery, including ambiguous-create
   recovery and duplicate rejection; [evidence](pilots/cursor-api-probe-result.json).
 - Existing but unmerged: [Cursor PR #7](https://github.com/danielchappell/ski-stack/pull/7),

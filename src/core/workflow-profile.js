@@ -112,8 +112,8 @@ function validateField(value, rule, path, errors) {
       break;
     case "name":
       valid = value.length > 0 && value.length <= 256 && [...value].length <= 128 &&
-        value.trim() === value && !/[\p{Cc}\p{Cf}\p{Cs}]/u.test(value);
-      message = "Use 1-128 characters without outer whitespace or control characters.";
+        value.trim() === value && !/[\p{Cc}\p{Cf}\p{Cs}\p{Zl}\p{Zp}]/u.test(value);
+      message = "Use 1-128 characters without outer whitespace, control characters or line/paragraph separators.";
       break;
     case "repository": {
       const match = value.length <= 2048 && /^https:\/\/github\.com\/([A-Za-z0-9-]+)\/([A-Za-z0-9_.-]+)$/.exec(value);
@@ -150,6 +150,7 @@ export function formatWorkflowProfileReport(result) {
     `Repository: ${route.repository.url} @ ${route.repository.revision}`,
     `Runner: ${route.runner.type} (${route.runner.connectionRef}); model: ${route.runner.model}`,
     "Live ready: no. This is an offline preview; no work was started.",
+    "Live access and ticket eligibility have not been checked.",
     "Live prerequisites:",
     ...result.unchecked.map(({ code, status }) => `  ${code}: ${status}`)
   ].join("\n");

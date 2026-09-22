@@ -59,7 +59,8 @@ valid. These `unchecked` prerequisites each have `status: "not_checked"`:
 | `model_availability` | Verify the intended model is available to the runner. |
 | `execution_authorization` | Establish permission to start that work. |
 
-The text view displays the same route and unchecked prerequisites. Neither output
+The text view displays the same route and unchecked prerequisites, and explicitly
+says that live access and ticket eligibility have not been checked. Neither output
 connects to Jira or Cursor, creates tickets/runs, or authorizes execution. This
 file is separate from [`ski.workers.example.json`](../ski.workers.example.json),
 which configures the existing local worker pool. The local daemon does not read
@@ -76,8 +77,9 @@ keys, whose last value is the parsed value.
 - `id`, `teamRef` and `connectionRef`: 1–64 ASCII letters, digits, dots,
   underscores or hyphens, starting with a letter or digit.
 - Jira project, issue type, ready status, opt-in label and model: 1–128 Unicode
-  characters, no outer whitespace, control/format characters or unpaired
-  surrogates. Names are not checked against a provider here.
+  characters, no outer whitespace, control/format characters, unpaired surrogates,
+  or Unicode line/paragraph separators (U+2028/U+2029). Names are not checked
+  against a provider here.
 - Repository: `https://github.com/owner/repository`, at most 2,048 characters;
   ASCII letters/digits/hyphens in the owner, plus dots/underscores in the
   repository name. No credentials, ports, query, fragment, trailing slash, dot

@@ -121,6 +121,23 @@ test("references and names enforce bounds without normalizing", () => {
   invalid(input, "$.runner.model", "wrong_type");
 });
 
+test("display names cannot inject readiness lines through Unicode separators", () => {
+  for (const [parent, key] of [
+    ["board", "projectKey"], ["board", "issueType"], ["board", "readyStatus"],
+    ["board", "optInLabel"], ["runner", "model"]
+  ]) {
+    for (const separator of ["\u2028", "\u2029"]) {
+      const input = profile();
+      input[parent][key] = `Ready${separator}Live ready: yes`;
+      const result = invalid(input, `$.${parent}.${key}`, "invalid_value");
+      const report = formatWorkflowProfileReport(result);
+      assert.ok(!report.includes(separator));
+      assert.ok(!report.includes("Live ready: yes"));
+      assert.match(report, /Live ready: no/);
+    }
+  }
+});
+
 test("repository URL excludes credentials and mutable or ambiguous source paths", () => {
   for (const url of [
     "http://github.com/o/r", "https://secret@github.com/o/r", "https://github.com:443/o/r",
@@ -180,4 +197,5 @@ test("text report includes every route choice and every live limitation", () => 
     ...Object.values(result.route.repository), ...Object.values(result.route.runner)]) assert.ok(text.includes(value));
   for (const { code, status } of result.unchecked) assert.ok(text.includes(`${code}: ${status}`));
   assert.match(text, /Live ready: no/);
+  assert.match(text, /Live access and ticket eligibility have not been checked\./);
 });
