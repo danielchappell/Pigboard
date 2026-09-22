@@ -106,6 +106,10 @@ Problem to solve
 The product must continue with laptops off and expose progress to teammates.
 Hosting, durable storage, access and operating limits have not been selected.
 
+The [D3 options brief](../designs/hosted-deployment-options.md) compares one
+managed Node/PostgreSQL path on Render or AWS and names the owner decisions.
+It is not a selected account, spend approval or deployed service.
+
 Acceptance Criteria
 
 - Compare a small number of practical host/store choices against the reviewed contracts and expected pilot load.
