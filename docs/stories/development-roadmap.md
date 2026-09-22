@@ -82,6 +82,7 @@ Technical Acceptance Criteria
 
 - Use D2’s durable record and D3’s scoped access contract.
 - This operation does not launch or retry provider work.
+- A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
 
 Testing Strategy
 
@@ -127,6 +128,7 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - Use D2/D4’s role/result and provider-state contracts, pinned to the stored immutable input.
+- Refuse validation until D4-source binds the provider's actual source commit to that input; leave the saved run available for inspection.
 - A stale owner or mismatched run cannot overwrite the accepted result.
 
 Testing Strategy

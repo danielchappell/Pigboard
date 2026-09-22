@@ -145,6 +145,62 @@ Testing Strategy
 - Access and setup: Private repository grants and another authorized teammate's visibility remain unverified; no new grant is implicit.
 - Automated regression: Identify common runner-contract scenarios and provider-specific ambiguity tests for later implementation.
 
+## D4L — Verify Cursor pilot access and source identity
+
+Problem to solve
+
+The D4 design cannot prove this account can read the pilot repository safely,
+bind a run to its actual source commit, or share results with teammates.
+Those facts determine whether a hosted researcher run can be accepted.
+
+Acceptance Criteria
+
+- Record the exact hosted connection identity, repository grant and permission policy intended for S05, then a bounded checkout at a pinned 40-hex commit through that connection.
+- Verify an enforced read-only source boundary and the actual checked-out commit using provider-visible or independently checked evidence; a model reply alone is insufficient proof.
+- Record one authorized teammate's run/result access and a denied viewer path for that same connection without sharing the API key.
+- Record which account and budget permit a meaningful researcher check, its observed result and cost, or mark that check unavailable. Evidence from a different account or connection is informative only; it cannot close D4-live for S05.
+- Put each pass, failure and unknown with the tested connection, repository, permission policy, identity, time and safe evidence in `docs/pilots/cursor-live-gates.md`; keep secrets and ticket contents out.
+- Leave D4-live open if any required check is unknown or failed. If read-only access or source binding fails, route to D4F and a provider decision before S05/A1.
+
+Technical Acceptance Criteria
+
+- Use only trivial compute on the company Cursor account; a meaningful run needs separate authorized account and budget.
+- Do not treat plan mode, a local request digest or a model's claimed commit as enforced source access or provider attestation.
+- D4-source is the verified actual-commit binding for the specific saved run; S26 depends on it before validating repository-backed output. D4-live applies only to the hosted connection, repository and permission policy actually used by S05; changing any of them reopens the relevant checks.
+
+Testing Strategy
+
+- Manual QA: Compare a pinned test revision with the provider's checkout evidence, inspect the same run as a second user and check the denied path.
+- Access and setup: Repository grant, teammate identity and any meaningful-work account are still unresolved; do not invent them.
+- Automated regression: No implementation in this Task; record the source-binding and denied-access tests required by S05/S26.
+
+## D4F — Evaluate a hosted Codex fallback
+
+Problem to solve
+
+The selected Cursor path may not enforce read-only access or prove the actual
+source commit for a real repository. If either gate fails, the pilot needs another runner
+decision before hosted launch.
+
+Acceptance Criteria
+
+- If Cursor's read-only or source-binding gate fails, compare a hosted Codex path with the same researcher journey.
+- Record repository access, revision binding, run recovery, team visibility and expected cost evidence.
+- Recommend whether to keep Cursor for a smaller non-repository role or ask the owner to select Codex for this pilot.
+- Keep S05 and A1 blocked until the owner selects a provider and the affected D4 design and delivery plan are reviewed again.
+
+Technical Acceptance Criteria
+
+- Use D2's runner contract and keep board eligibility unchanged.
+- Do not treat installable Codex role files or a local CLI session as proof of cloud execution.
+- Do not start paid or substantive company work during this decision Task.
+
+Testing Strategy
+
+- Manual QA: Walk the same pinned-revision researcher request through both documented paths and list unverified steps.
+- Access and setup: Read-only provider documentation and saved evidence suffice to begin; live account and repository checks need separate authority.
+- Automated regression: No code changes in this Task; name runner-contract tests required by the selected follow-up Story.
+
 ## D5 — Design reviewed lifecycle handoffs
 
 Problem to solve
@@ -267,7 +323,7 @@ Acceptance Criteria
 
 Technical Acceptance Criteria
 
-- D1-D4 must resolve the identity, state, access and provider contracts before acceptance activation.
+- D1-D3 and D4-design/D4-live must resolve identity, state, access and provider contracts before acceptance activation. If Cursor fails read-only or source binding, D4F and an owner provider choice must also be complete.
 - Separate local/mock evidence, live integration checks and owner acceptance; a marker-only probe cannot prove useful repository discovery.
 - Use only authorized test tickets, accounts and execution environments; substantial company Cursor work remains excluded.
 

@@ -1,15 +1,33 @@
 # D4 runner design review record
 
-22 September 2026. These are design reviews of
+22 September 2026. The D4 rounds below are design reviews of
 [runner-capabilities.md](../designs/runner-capabilities.md) and its
-[delivery-queue update](../delivery-plan.md). They do not approve PR #7 code,
-prove live provider access, or promote S03/S26 to ready Stories.
+[delivery-queue update](../delivery-plan.md). They do not prove live provider
+access or promote S26 to a ready Story. PR #7 has separate retrospective plan
+and committed-code review evidence below.
 
 | Round | Exact artifacts | Product review | Technical review |
 | --- | --- | --- | --- |
 | Initial | D4 SHA-256 `64a776c66d565c582f3f701a92cf1752d28ea718da94172c23478f55f9bab743` | NOT CLEAN: choose PR #7 disposition and correct read-only gate. 7/7 surfaces, second sweep, seven principles assessed. | CLEAN on that old artifact only. 9/9 surfaces, second sweep, seven principles assessed. |
 | Revised | D4 SHA-256 `8f03cca4ab437a5fa3b3cfb0fddbc9a4b232df6169407edc16c3eccf032e88db`; queue SHA-256 `b86d5c11ff46dd97ff142b69ab824f1306a79f6025139820ec13a28a89667a66` | NOT CLEAN: the linked review record was missing. Both prior P2 causes are fixed. 8/8 surfaces, second sweep, seven principles assessed. | NOT CLEAN: hosted S03 start preceded S04/S05 durable ownership. D4 135/135 lines, queue 229/229 lines and all named contracts, second sweep, seven principles assessed. |
 | Third | D4 SHA-256 `8759a828a35c339354b4838c5430c49ceb7fdfcb7689d07c6e709cc40aeea485`; queue `3353d6a28bb3a88562d472a295349bdeb1db00d89f8d10cb27657d993c59900d`; Story previews `44d6947efe514a6b3d98b82406335b198e92e975a4700589fa994205a5ef33b3`; this record before verdict entry `0bc8a335a9baa5f60dda2962877d95b6e22aa2a62d52a7794f88c68b5e4145b4` | CLEAN: 11/11 agreed surfaces, complete artifact/requirement walk, second sweep and independent seven-principle assessment. | CLEAN: 4/4 primary and 9/9 supporting surfaces, second sweep and independent seven-principle assessment. |
+
+The current PR #11 feedback round addressed all four live review threads together:
+uncertain `409`/lost replies remain unbound and need attention, D4-design and
+D4-live are separate, the D4F fallback is conditional on failed read-only or
+source binding, and S04 imports without actual-commit proof stay inspection-only.
+D4L now owns per-run source evidence and live evidence for the exact S05 hosted
+connection, repository and permission policy. Two fresh independent Sol
+reviewers returned CLEAN for the revised seven-file feedback artifact against
+`ea78c6d7c30a5750d84f525b9980eccb9f053930` (path/content SHA-256
+`5746276a3e5b6c6a1fbf29a1a07e58e56c0823810dac10ffd060f21116cbf29d`).
+The product reviewer checked 7/7 files, 4/4 comments, D4L's 6/6 acceptance,
+3/3 technical and 3/3 testing criteria, the affected delivery dependencies,
+and all seven principles with a second sweep. The technical reviewer checked
+7/7 files, 4/4 comments, 3/3 earlier findings, 5/5 D2 runner operations,
+6/6 affected delivery dependencies, all D4L/D4F criteria, and all seven
+principles with a second sweep. No in-scope design finding remains; these
+verdicts do not establish live provider access or approve a release.
 
 The product reviewer checked the D4 Task, full design and queue, D2 runner and
 authority contract, M2 goal, and PR #7 Story, plan, and targeted source. The
@@ -39,6 +57,44 @@ This record was updated with the verdicts. Neither metadata update changes the
 reviewed design or the Story boundaries; both reviewers confirmed that limited
 assertion against the final queue and record in separate CLEAN metadata-delta
 reviews, with full changed-file coverage and a second sweep. Repository
-permissions, second-user visibility, meaningful-work authority and PR #7's
-retrospective/code reviews
-remain open and are not implied by design CLEAN.
+permissions, second-user visibility and meaningful-work authority remain open
+and are not implied by design CLEAN. PR #7's reviews were open at that
+third-round design snapshot; their later evidence is recorded separately below.
+
+## PR #7 retrospective and committed-code evidence
+
+The [product/documentation review](cursor-cloud-job-product.md) and
+[technical/security review](cursor-cloud-job-technical.md) are the two distinct
+reviewer-authored records for the exact PR #7 head. The standalone Cursor [Story](https://github.com/danielchappell/ski-stack/blob/da2fc8ccc0cdc4cd0493c16691d286309f513c9f/docs/stories/run-cursor-cloud-job.md) and
+[implementation plan](https://github.com/danielchappell/ski-stack/blob/da2fc8ccc0cdc4cd0493c16691d286309f513c9f/docs/plans/cursor-cloud-job.md) were reviewed
+retrospectively at `da2fc8ccc0cdc4cd0493c16691d286309f513c9f`.
+Two fresh independent Sol reviewers separately returned CLEAN for the plan:
+each examined both primary artifacts, all 8/8 Story acceptance criteria,
+7/7 technical criteria and 4/4 testing requirements, with a second sweep.
+This did not turn retrospective review into prior approval.
+
+The same two reviewers separately returned CLEAN for the exact committed PR
+diff at `da2fc8c` against `005419b63460540bfbb96400c46e7274a47af723`:
+12/12 changed files, 8/8 Story acceptance criteria and 7/7 technical criteria
+were examined, followed by a second file/contract sweep. The technical review
+also counted 4/4 testing requirements. Both reviewed the three-file feedback
+commit separately. Focused tests passed 22/22, the full suite 239/239, and
+`git diff --check` passed. No new live Cursor run or hosted CI check occurred.
+The current Cursor endpoint reference documents List Runs; that path still has
+mocked-only coverage. The provider's `FINISHED` response now needs a nonempty
+reply. This evidence supports the standalone manual S03 code, not D2's hosted
+binding, a repository grant, or meaningful-work acceptance.
+
+| Principle | Product reviewer | Technical reviewer |
+| --- | --- | --- |
+| Intuitive | Prepare/start/get and run-level status make the manual journey clear. | Exact saved IDs and status checks prevent a follow-up from silently replacing the intended run. |
+| Discoverable | Help, model listing, examples and the guide explain normal use and same-ID retry. | JSON error codes and retained IDs identify what an agent or operator can inspect next. |
+| Delightful experience | Reusing a saved ID avoids asking a person to repeat setup or a paid prompt. | Uncertain creates do not trigger a second POST; read-only observation can recover visible work. |
+| Token saver | Direct retrieval and bounded run listing avoid extra model calls. | Deterministic validation and exact-run reads avoid model-based recovery decisions. |
+| Secure | The guide warns that plan mode does not enforce read-only source access. | Fixed API origin, rejected redirects, request shape and key redaction limit credential exposure. |
+| Agents are equal | Human examples and the Cursor URL coexist with an exported library and JSON CLI. | Structured noninteractive errors, results and exit codes support agent callers. |
+| Dependable | A finished turn is not human acceptance; unresolved work retains its original ID. | Missing/blank finished replies, malformed IDs and ambiguous follow-ups fail closed. |
+
+Reviewers found no in-scope defect in the final standalone diff. Their CLEAN
+verdicts do not override the separate D4 live access gates or the stricter
+provider-binding rule for hosted attempts.

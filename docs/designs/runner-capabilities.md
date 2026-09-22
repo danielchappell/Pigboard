@@ -14,9 +14,9 @@ silent substitute for the chosen pilot.
 | Evidence | What it establishes | What it does not establish |
 | --- | --- | --- |
 | Saved [marker-only probe](../pilots/cursor-api-probe-result.json), 21 September | User-key authentication, model listing, client agent ID, a successful no-repository run, duplicate-ID conflict, and exact run retrieval on this account. | Repository access, teammate visibility, useful researcher output, cost at working scale, or safe source-write authority. |
-| [Cursor v1 endpoints](https://cursor.com/docs/cloud-agent/api/endpoints), checked 22 September | `POST /agents` creates an agent and initial run; a supplied `bc-<uuid>` can return `409 agent_id_conflict`; `GET /agents/{id}/runs/{runId}` returns run status and terminal final-reply text. A follow-up creates another run and an active agent can reject it as busy. | Server-side matching of a repeated request body or exactly-once execution after an unknown network outcome. |
+| [Cursor v1 endpoints](https://cursor.com/docs/cloud-agent/api/endpoints), checked 22 September | `POST /agents` creates an agent and initial run; a supplied `bc-<uuid>` can return `409 agent_id_conflict`; agent, run-list and exact-run reads are documented. A follow-up creates another run and an active agent can reject it as busy. | Server-side matching of a repeated request body, provider-attested prompt/model/revision identity, or exactly-once execution after an unknown network outcome. The saved marker probe did not exercise the run-list endpoint. |
 | [Cursor Cloud Agents](https://cursor.com/docs/cloud-agent), checked 22 September | Repository use needs an admin-connected source-control integration; agents clone and can push a separate branch. Cursor manages cloud VMs; run diagnostics are available through Cursor Cloud MCP. | That this team's connection has the required repository grant, or that plan mode prevents writes. |
-| PR #7 at `3df1eab7f931284ca4204edb2d67ac8ccf98fba5`, 18 changed files | A standalone Node runner and CLI prepare, start once, recover with reads, retrieve a named run, validate response shapes, and redact the supplied key. Its author reports 220 local tests. | D2's hosted application contract, independent CLEAN review, hosted CI, or a repository-backed live test. The PR currently conflicts with main. |
+| [PR #7](https://github.com/danielchappell/ski-stack/pull/7) at `da2fc8ccc0cdc4cd0493c16691d286309f513c9f`, 12 files against current main | A standalone Node runner and CLI prepare, start once, observe existing work with reads, retrieve a named run, validate response shapes, and redact the supplied key. Two fresh full-PR reviews are CLEAN; 239 local tests pass. | D2's hosted application contract, hosted CI, provider-attested request binding, or a repository-backed live test. [Review evidence](../reviews/runner-capabilities.md#pr-7-retrospective-and-committed-code-evidence) is separate from this D4 design review. |
 | [OpenAI Agents API](https://developers.openai.com/api/docs/guides/agents-api/overview) and [hosted sandbox](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted), checked 22 September | A managed Codex harness can start durable sessions in an OpenAI-hosted environment and stream or receive events. The documentation shows Astra as a model example and separate API/container billing. | An approved account, repository checkout/write workflow, cost allowance, or the same ID and recovery semantics as Cursor. |
 
 The Cursor documentation and saved probe are different evidence levels. API
@@ -34,14 +34,19 @@ credential reference, scope, and authorization. The Cursor adapter only maps the
 | `describeCapabilities` | Static versioned declaration: create one initial run with client agent ID; read an agent and exact run; read-only recovery from the saved agent ID; final-reply text transport. No claim of enforced read-only mode, cancel, automatic follow-up, or repository permission. Account-specific access is a separate inspection result. |
 | `prepare` | Pure over saved attempt ID, immutable launch UUID, role/package version, profile digest, prompt, selected model, optional HTTPS repository and resolved 40-hex commit. Produce the exact provider body and canonical request digest. Persist the launch UUID with the attempt before preparation; never generate it while retrying. The standalone CLI may keep its random-ID prepare interface for existing users, but the hosted path must take this saved ID. |
 | `start` | Use the saved request and one `POST /v1/agents` send grant. `autoCreatePR:false` and `workOnCurrentBranch:false` are explicit. `mode:plan` may guide the agent but gives no permission guarantee. Persist both agent and initial run IDs from a valid response. A conflict, timeout, broken response, or uncertain upstream error leads to observation, not another create. |
-| `recover` | Read only by the original agent ID, then resolve exactly one matching initial run or return `missing`, `ambiguous`, or `unavailable` with a reason. Store the first discovered run ID. A later `latestRunId` or a newer follow-up is never substituted for the recorded run. A missing read is an observation, not proof that the create failed. |
+| `recover` | Read only by the original agent ID. If a successful create receipt stored the initial run ID, retrieve that exact run. After a lost create response or `409`, an agent/run read is only an observation: the provider does not attest that its prompt, model, repository and revision match the saved request. Return `unverified`/needs-attention, not a bound attempt, unless a later verified provider contract supplies that binding. A later `latestRunId` or follow-up is never substituted for a recorded run. A missing read does not prove the create failed. |
 | `get` | Read the recorded agent/run pair, validate both IDs and known native state, add observation time, mapped status, bounded result and explicit omission/truncation facts. Unknown status, identity mismatch, or oversized/unreadable result becomes attention. `FINISHED` means provider termination, not accepted researcher work. |
 
-The service checks its saved request digest before any send or recovery. Cursor's
-duplicate-ID conflict does not prove that the first request had the same prompt,
-model, repository or commit. Recovering an existing agent after a local request
-change must return a conflict; it must never relabel that agent as the new work.
-The provider cannot grant the current-attempt slot or authorize publication.
+The service checks its saved request digest before any send or recovery. That
+local comparison catches a changed local request, but cannot bind an observed
+remote agent to the original payload. A duplicate-ID conflict may refer to an
+older, unrelated agent. A timeout can also leave an observed agent whose input
+cannot be verified. Preserve its IDs for investigation, stop automatic launch
+and publication. Treat it as this attempt only after provider-visible binding
+or a recorded human investigation with independent evidence of the original
+request and actual source revision. No retry may create a replacement
+job merely because the read is missing. The provider cannot grant the
+current-attempt slot or authorize publication.
 
 For the first researcher role, use a single final reply containing only a JSON
 object with `schemaVersion:1`, nonempty `answer`, arrays of `findings` and
@@ -57,33 +62,48 @@ accurate; the human still accepts the findings.
 
 ## PR #7 reuse and retrospective assessment
 
-PR #7's [Story](https://github.com/danielchappell/ski-stack/blob/3df1eab7f931284ca4204edb2d67ac8ccf98fba5/docs/stories/run-cursor-cloud-job.md)
-and [plan](https://github.com/danielchappell/ski-stack/blob/3df1eab7f931284ca4204edb2d67ac8ccf98fba5/docs/plans/cursor-cloud-job.md)
+PR #7's [Story](https://github.com/danielchappell/ski-stack/blob/da2fc8ccc0cdc4cd0493c16691d286309f513c9f/docs/stories/run-cursor-cloud-job.md)
+and [plan](https://github.com/danielchappell/ski-stack/blob/da2fc8ccc0cdc4cd0493c16691d286309f513c9f/docs/plans/cursor-cloud-job.md)
 describe a usable manual `prepare`/`start`/`get` command. That was an honest,
 bounded standalone outcome. It preceded D2 and cannot count as a reviewed plan
 for the later hosted S05 integration. The plan's no-scheduler/no-Jira boundary still
 fits. Its wording that callers treat a saved request as immutable is not an
 enforced match after `409`; D2 requires the application to persist and compare
 the digest. This is a retrospective gap, not a claim that the existing CLI is
-broken for its documented manual use.
+broken for its documented manual use. Its `disposition: "recovered"` describes
+an observed run under the saved ID, not provider attestation of request content;
+the hosted facade must not treat that disposition alone as a bound attempt.
 
 Decision: use PR #7 as S03's independent, usable manual Cursor job outcome. It
 has no hosted authority. Reuse request validation,
 fixed API origin, key redaction, one-send behavior, exact-run retrieval, status
-checks, and mocked API fixtures. PR #7 needs a retrospective independent
-Story/plan review against its standalone outcome, conflict resolution against
-current main, required tests and fresh independent reviews of the resulting
-committed diff before it can be considered ready. Preserve its branch and work
-within its 18-file scope; split if conflict work makes it exceed 20 changed
-files or two human days. This order provides an operator-visible, recoverable
+checks, and mocked API fixtures. PR #7 required a retrospective independent
+Story/plan review against its standalone outcome, integration with current
+main, required tests and fresh independent reviews of the resulting committed
+diff. Those retrospective and committed-code gates are now CLEAN for `da2fc8c`,
+with the exact evidence below;
+future code changes need fresh review. Preserve its branch and work within the
+20-file limit; split if later work makes it exceed 20 changed files or two
+human days. This order provides an operator-visible, recoverable
 provider command first. S04 can then save and inspect an existing run under
 shared scope without starting one. S05 is the first hosted launch: it must
 atomically reserve the current attempt and send intent before using a D2
 prepare/start/recover/get facade over the PR #7 code. That facade adds stable
-hosted preparation, scoped connection handling, observation fields and digest
-binding. Size S05 from real files after D1/D3 and split it into complete usable
+hosted preparation, scoped connection handling, observation fields, local digest
+comparison and the separate remote-binding gate. Size S05 from real files after D1/D3 and split it into complete usable
 outcomes if it cannot fit one PR; never move a live send ahead of its store.
-Historical author tests and this design review do not approve PR #7 code.
+The [separate committed-code reviews](../reviews/runner-capabilities.md#pr-7-retrospective-and-committed-code-evidence),
+not historical author tests or this design review, support PR #7's code gate.
+
+S04 may import a standalone run launched from a branch for inspection, but a
+moving ref does not identify the source commit. Such a run is inspection-only:
+S26 cannot validate it for publication and S06 cannot publish it until the
+[D4L Task](../tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity)
+records provider-visible or independently checked evidence binding the actual
+checkout to a 40-hex revision. That **D4-source** gate is separate from a local
+request digest. A model's claimed commit or a guess from the branch's later
+tip is insufficient. D4-live additionally requires the repository grant,
+enforced read-only behavior, teammate access and meaningful-work authority.
 
 ## Repository, team, and authority gates
 
@@ -100,25 +120,31 @@ trial must use a disposable repository or a non-repository information task;
 neither qualifies as an accepted read-only run against a real source repository.
 Do not describe plan mode as an access control. A useful repository-based pilot
 cannot be accepted under an unverified repository grant or source audience.
+The contingency for failed read-only or actual-commit binding is
+[D4F](../tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback):
+evaluate a hosted Codex path, then obtain an explicit provider choice and revise
+the D4/S05/A1 contracts before a repository-backed pilot. Cursor remains the
+selected runner until that decision; the fallback Task alone does not switch it.
 
 Codex execution has a feasible API candidate: OpenAI's managed Agents API with
 hosted sandboxes and explicit model selection. This is distinct from installing
 Codex roles/skills and from running the local CLI on one computer. Evaluate its
 repository provisioning, state/identity recovery, team access and costs in a
-later Codex-specific runner Task before claiming interchangeable providers.
+contingent D4F Task before claiming interchangeable providers.
 The first Cursor path should keep D2's provider-neutral contract so this option
 does not require a new board or claim policy.
 
 ## Recovery checks by slice
 
-PR #7's retrospective plan and code review must cover the manual saved-request
+PR #7's retrospective plan and code reviews covered the manual saved-request
 flow, a lost create reply, `409` conflict, missing/ambiguous run reads, exact
 run retrieval after follow-up, identity mismatch, unknown status, safe errors,
 and no repository credentials in payloads. S04 must prove shared process-restart
-inspection of a manually registered run. S05's reviewed plan must prove stored
-preparation and digest binding, one reserved send across crashes and contention,
-and read-only recovery after uncertainty. The hosted route must reject a mutable
-branch ref. S26 must
+inspection of a manually registered run and label mutable/unattested revisions
+inspection-only. S05's reviewed plan must prove stored preparation, one reserved
+send across crashes and contention, and needs-attention after an unbound remote
+observation. A local digest alone is not provider binding. The hosted route must
+reject a mutable branch ref. S26 must
 test JSON shape/version, size limits, invalid references, provider terminal
 failure, a finished question, changed ticket/profile input, and no publication
 from malformed or stale output. Local mocked tests are necessary but do not
@@ -130,12 +156,12 @@ replace the account/repository/team evidence above.
 | --- | --- |
 | Intuitive | The operator sees one saved job with a stable provider link and clear states; the standalone command remains usable while the hosted path gains a distinct contract. |
 | Discoverable | A capability response and access-check result explain supported operations and unverified repository permissions to both human and agent callers. |
-| Delightful experience | Read-only recovery uses the original ID after a lost reply, so users are not asked to repeat finished work. |
+| Delightful experience | Read-only observation uses the original ID after a lost reply without repeating paid work; uncertain binding needs human resolution. |
 | Token saver | Code chooses the recorded run and validates JSON; no model decides whether an API retry is safe. Raw output is bounded with stated omissions. |
-| Secure | The service owns scope and credentials; a saved digest blocks payload substitution, and plan mode is not mistaken for write control. |
+| Secure | The service owns scope and credentials; a saved digest blocks local payload substitution, but an unbound remote observation cannot authorize publication. Plan mode is not mistaken for write control. |
 | Agents are equal | The same typed prepare/start/recover/get states are usable from commands and future MCP without UI clicks. Human diagnostics remain readable. |
 | Dependable | Unknown launch/result outcomes stay visible and stop advancement; terminal provider status never implies validated findings or human acceptance. |
 
 The [review record](../reviews/runner-capabilities.md) identifies the exact
-artifact and independent verdicts. No S03/S26 Story is promoted by the author's
+artifact and independent verdicts. No hosted Story is promoted by the author's
 assessment alone.
