@@ -85,7 +85,7 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
-| After relevant D1/D4 facts | D3: Choose deployment and team access | Ready for options/access discovery; final selection follows D1/D2/D4 constraints | Make hosting, credential custody, shared inspection and operating costs concrete before deployment Stories. |
+| Fly.io design CLEAN; D3 live decisions open | D3: Choose deployment and team access | [One-team hosting brief](designs/hosted-deployment-options.md), [review record](reviews/hosted-deployment-options.md), [product review](reviews/pr13-fly-product-feedback.md) and [technical review](reviews/pr13-fly-technical-feedback.md) cover the Fly decision and PR feedback at recorded hashes | Verify selected Fly organization, shared store, team identity, budget, retention and restore path before S04 or deployment Stories. |
 
 These are Tasks, not promises of two-day implementation. **D4-design** means a
 reviewed runner mapping and PR #7 manual disposition. **D4-source** means D4L
@@ -123,6 +123,9 @@ its decisions and plan are ready.
 | S06 | Publish one stored result back to its Jira ticket safely | S05, S26, D1, D2 | Append-only progress/result comments and recoverable publication; automatic transition only if Jira enforces the full eligibility guard, otherwise manual handoff. |
 | S07 | Pick up eligible tickets and reconcile existing attempts automatically | S05, S26, S06 | Bounded scheduled coordinator tick, one active attempt, stored polling/progress; no new queue policy. |
 | S08 | Run that coordinator independently of a developer's computer | S07, D3 | Deployment/configuration using selected services, authenticated health/inspection and operational guide. |
+| S29 | Quarantine one restored connection | S08, D3 | Separately authorized recovery principal verifies an out-of-database marker before any restored DB attachment; all Machines reject effects through overlap/restart. Provisional size check required. |
+| S30 | Reconcile one restored connection's external effects | S29, D1, D3, D4-design | Record known provider/Jira effects and explicitly unknown or unbounded windows; no completeness claim without enumeration evidence. Provisional size check required. |
+| S31 | Reapply current access and reopen a restored connection | S30, D3 | Rebuild current authority from outside the restored DB, test the role matrix, rebind the verified Fly cluster and reopen only with full evidence. Provisional size check required. |
 
 S04 is a usable shared run-inspection capability, including a process restart;
 it is not an unused schema migration. S05 exposes a deliberate single-ticket
@@ -132,13 +135,15 @@ add a dashboard, subscription billing or multi-tenant administration.
 
 **A1: Accept the hosted Jira discovery journey** is a queued validation Task
 [with its own body](tasks/architecture-decisions.md#a1--accept-the-hosted-jira-discovery-journey).
-It is blocked on S01-S08 and S26 delivering their intended outcomes, D1-D3,
+It is blocked on S01-S08, S26 and S29-S31 delivering their intended outcomes, D1-D3,
 D4-design and D4-live
 resolved, required reviewed checks passing, and an authorized acceptance
 environment. A1 alone closes M2 after recording all required live evidence:
  demonstrate the complete Jira journey,
 replay/restart/failure recovery, one writer, laptop independence and second-user
-visibility. A meaningful model task needs an authorized environment; company
+visibility. It includes a Fly Managed Postgres restore drill with pre-attachment
+quarantine, a lost effect and access change, plus the full role-denial matrix. A meaningful
+model task needs an authorized environment; company
 Cursor checks remain trivial. Local mocked results are useful tests but are not
 live acceptance. Mark M2 complete only when A1 records those results against the actual deployed
 revision and the owner/product acceptance outcome; record a failed or unavailable
@@ -171,7 +176,7 @@ ready implementation.
 | S22 | Run two eligible jobs without ownership collisions | M6; D8, M2, transactional/fencing evidence and bounded provider capacity. |
 | S23 | Operate a second team with isolated connections and run visibility | M6; D8 tenancy/access design, existing single-team commands. |
 | S24 | Enforce a configured team launch limit and expose why work waits | M6; D8, launch accounting/limits and existing eligibility inspection. |
-| S25 | Restore stored run state and reconcile outstanding work after recovery | M6; D8, selected backup mechanism and existing resume/publication behavior. |
+| S25 | Extend restored-state recovery beyond the one-team pilot | M6; D8, S29-S31 one-team restore and multi-team isolation evidence. |
 
 The researcher path in M2 supplies the first technical answer. S27 explicitly
 adapts it into the reviewed technical-discovery handoff; S09 adds the distinct
