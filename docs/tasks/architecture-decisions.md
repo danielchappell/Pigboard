@@ -44,25 +44,32 @@ The INT board is understood from the human UI, but the future integration's
 permissions and transition contract are unverified. We cannot safely size or
 activate Jira writes from that UI evidence alone.
 
+The [read-only D1 connection record](../designs/jira-connection-discovery.md)
+captures the observed permission scheme/workflow, candidate notification paths
+and publication guards. It does not close this Task's live identity or race gates.
+
 Acceptance Criteria
 
 - Record the intended integration identity, allowed project, issue types, status IDs and required transition fields.
 - Establish read/comment/update/transition authority and record any unavailable access without guessing it.
 - Define authenticated event delivery, bounded reconciliation and the human-edit race policy.
-- Define how a progress comment is found after a lost create response without blindly posting twice.
+- Verify the link type, direction and blocker-state mapping that lets S02 use core dependency eligibility.
+- Define how an append-only progress comment is found after a lost create response without blindly posting twice.
 - Name what requires a controlled live write check before activation.
 
 Technical Acceptance Criteria
 
 - Begin with authorized read-only metadata and permission checks; do not test writes by making unapproved mutations.
 - Keep the human assignee and source/result audience restrictions.
+- Use identifier-only notification until any richer webhook's audience and payload handling are approved.
+- Keep status transitions manual unless Jira enforces a guard over every advancement-critical field.
 - Keep secret values out of the decision record and ticket context.
 
 Testing Strategy
 
 - Manual QA: Review the evidence table against the existing INT configuration and identify every verified field and remaining live check.
 - Access and setup: Use the selected integration identity when available; its access and credential provisioning remain unresolved.
-- Automated regression: Identify future adapter contract coverage from the recorded permission, transition and ambiguity rules.
+- Automated regression: Identify future adapter coverage for dependency mapping, event payloads, comment recovery and guarded transitions.
 
 ## D2 — Define durable attempts and recovery
 

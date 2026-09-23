@@ -145,18 +145,18 @@ Completed work is not useful to the team if it stays only in the provider view. 
 
 Acceptance Criteria
 
-- Publishing updates the matching ticket’s progress/result evidence and performs only its currently allowed transition.
+- Publishing adds progress/result evidence to the matching ticket. It transitions only with a verified full eligibility guard; otherwise it leaves a clear manual handoff.
 - A lost write response is reconciled before another write, or becomes visible needs-attention.
 - Human changes and audience restrictions prevent inappropriate publication or transition.
 
 Technical Acceptance Criteria
 
-- Use stored validated output, operation identity and D1’s verified transition/race contract.
+- Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract.
 - Keep the human assignee and never use comments as run locks.
 
 Testing Strategy
 
-- Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect the ticket or fixture projection for one intended result and no rerun.
+- Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect one intended comment, no rerun and manual status when no full guard exists.
 - Access and setup: Use the scoped fixture Jira service first; live comment/transition acceptance requires the controlled test ticket and verified write authority.
 - Automated regression: Cover partial publication recovery, stale-ticket handling and source-audience enforcement.
 
