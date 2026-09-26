@@ -1,8 +1,8 @@
 # Development Story previews
 
 These follow the independently reviewed [architecture](../architecture-plan.md).
-S01 now links to its groomed Story and reviewed-plan gate. **The other 30 items
-remain Provisional — not ready for delivery.** Unknown interfaces,
+S01 and S03 were independently reviewed and merged. **All other Stories remain
+Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).
 The [active delivery plan](../delivery-plan.md) owns dependencies, readiness,
 size checks and execution order. Each Story must ultimately fit one PR, at most
@@ -59,7 +59,7 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - Keep the standalone command inside D4’s manual boundary; it does not grant hosted launch authority or claim the D2 application facade.
-- Reconcile the existing PR #7 instead of creating a duplicate implementation. Review its Story and plan retrospectively, then review the exact committed code after conflict resolution.
+- The standalone command in merged PR #7 is the delivered S03 scope; repository-backed live acceptance remains open under D4L.
 
 Testing Strategy
 

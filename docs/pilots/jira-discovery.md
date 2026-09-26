@@ -1,7 +1,9 @@
 # First pilot: a Jira ticket gets a useful discovery answer
 
-Design and discovery record, 21 September 2026. The user approved this pilot
-direction. The workflow below is the proposed implementation; it is not running.
+Historical design and discovery record, 21 September 2026. The user approved
+this pilot direction at the time. The INT workflow below was proposed, not run,
+and was superseded for the active pilot by the
+[PIG connection design](../designs/pig-jira-connection-discovery.md).
 See [feasibility findings](jira-discovery-feasibility.md) for the evidence.
 The trivial API check is complete; the [architecture plan](../architecture-plan.md)
 and [delivery plan](../delivery-plan.md) now govern the next work.

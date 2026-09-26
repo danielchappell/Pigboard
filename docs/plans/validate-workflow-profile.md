@@ -1,10 +1,11 @@
 # S01 implementation plan: validate a saved workflow configuration
 
-21 September 2026. Plan for the [S01 Story](../stories/validate-workflow-profile.md),
+Historical 21 September 2026 plan for the [S01 Story](../stories/validate-workflow-profile.md),
 following the independently CLEAN [D2/configuration design](../designs/hosted-work-contract.md)
-SHA-256 `f1e5da047aeb1bbab85e6ca1979f194f941ea388b2a767482dd3e8b6bf0a847c`.
-This is a plan, not a shipped command. Implementation waits for two independent
-CLEAN plan reviews; status and hashes are in [review evidence](../development-review.md).
+at SHA-256 `f1e5da047aeb1bbab85e6ca1979f194f941ea388b2a767482dd3e8b6bf0a847c`.
+S01 has since merged. The INT example below records the originally reviewed
+selector; the active PIG profile is [the repository example](../../ski.workflow.example.json).
+The review state at the time is in [review evidence](../development-review.md).
 
 ## Why this is first
 

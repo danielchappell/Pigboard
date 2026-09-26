@@ -1,22 +1,24 @@
 # Ski Stack development plan
 
-21 September 2026. This is the active development queue. It follows the
+Updated 26 September 2026. This is the active development queue. It follows the
 [architecture direction](architecture-plan.md) and [working process](development-workflow.md).
 Earlier architecture and delivery-plan reviews were CLEAN for their recorded
 versions. The [review record](development-review.md) separately identifies the
 current alignment verdicts and exact hashes; historical verdicts do not approve
 changed documents. This plan does not claim unresolved discovery is finished.
 
-## Owner decision and current sequence — 21 September 2026
+## Owner decision and current sequence — 26 September 2026
 
 Pigboard's [product direction](product-strategy.md) is an opinionated AI SDLC
 that we maintain and improve. The owner identifies the existing Ski Stack process
 as a working starting point and directs us to settle the architecture, roadmap
 and core functionality before iterating on the development method.
 
-Current focus: **S01 merged; D4 design CLEAN, D1 and D4 live discovery open**.
-Architecture/queue alignment is CLEAN for the exact artifacts in
-[review evidence](development-review.md). The implementation reuses the unchanged
+Current focus: **S01 and S03 merged; D1 Pigboard discovery, D3 and D4 live gates open**.
+Earlier architecture/queue alignment was CLEAN only for the exact artifacts in
+[review evidence](development-review.md). The PIG revision has its own CLEAN
+[design review](reviews/pig-jira-connection-discovery.md) at `902b62b`; live
+gates remain open. The implementation reuses the unchanged
 D2 contract and S01 Story/plan after a current-code check. Two fresh independent
 committed-code reviews are CLEAN; [S01 evidence](reviews/workflow-profile.md)
 records exact revisions and coverage. [PR #9](https://github.com/danielchappell/ski-stack/pull/9)
@@ -59,8 +61,8 @@ entire roadmap as one project-sized branch.
 
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
-claiming an estimate before discovery. **All Stories except S01 remain Provisional — not
-ready for delivery.** S01 is implemented, independently reviewed and merged;
+claiming an estimate before discovery. **All Stories except S01 and S03 remain
+Provisional — not ready for delivery.** S01 and S03 are independently reviewed and merged;
 live discovery and hosted acceptance remain outstanding as recorded below.
 Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
@@ -81,7 +83,7 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | --- | --- | --- | --- |
 | Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
 | Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| Design CLEAN; live gates open | D1: Verify Jira identity and workflow | [Read-only INT discovery](designs/jira-connection-discovery.md) and [review record](reviews/jira-connection-discovery.md) define event/reconciliation and publication gates; service identity, native IDs, blocker mapping, per-issue authority and transition guard remain open | Complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity and link facts first. |
+| PIG design CLEAN at `902b62b`; live gates open | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled`; the [review](reviews/pig-jira-connection-discovery.md) covers that exact design. The [INT record](designs/jira-connection-discovery.md) is historical. Service identity, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity and link facts first. |
 | Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
@@ -212,19 +214,18 @@ slices supported by evidence from operating that baseline.
   See [exact evidence](reviews/workflow-profile.md).
 - Completed: marker-only Cursor API discovery, including ambiguous-create
   recovery and duplicate rejection; [evidence](pilots/cursor-api-probe-result.json).
-- Existing but unmerged: [Cursor PR #7](https://github.com/danielchappell/ski-stack/pull/7),
-  current commit `da2fc8ccc0cdc4cd0493c16691d286309f513c9f` against
-  `005419b63460540bfbb96400c46e7274a47af723`. The retrospective Story/plan
+- Merged externally: [Cursor PR #7](https://github.com/danielchappell/ski-stack/pull/7),
+  reviewed commit `da2fc8ccc0cdc4cd0493c16691d286309f513c9f`. The retrospective Story/plan
   reviews and two fresh full-PR committed-code reviews are CLEAN for that SHA;
   [evidence](reviews/runner-capabilities.md#pr-7-retrospective-and-committed-code-evidence)
-  records coverage. Focused 22 and full 239 local tests pass. It remains
+  records coverage. Focused 22 and full 239 local tests passed at that revision. It remains
   separate from hosted launch and has no hosted CI or repository-backed live proof.
 - D4's [runner design](designs/runner-capabilities.md) maps PR #7 to S03's
   usable standalone command. S04 stores and inspects an existing run; S05 is
   the first hosted send after durable ownership and D4-live evidence. A recovered
   manual run is not automatically bound to the hosted request. D4's
-  repository/read-only/visibility gates remain open; preserve PR #7's branch.
-- D1's [read-only connection record](designs/jira-connection-discovery.md)
+  repository/read-only/visibility gates remain open.
+- D1's [active PIG connection design](designs/pig-jira-connection-discovery.md)
   keeps the identifier-only project Automation candidate, defers richer admin
   webhooks, and requires verified blocker mapping. Progress comments are
   append-only; status movement stays manual unless a full eligibility guard is
@@ -233,27 +234,29 @@ slices supported by evidence from operating that baseline.
 - Current main has no hosted CI workflow. This is an evidence gap to record in
   each future plan, not permission to describe local tests as hosted checks or
   to add infrastructure as an unreviewed side effect.
-- No Jira board, automation, ticket, credential, paid cloud job, deployment or
-  package installation changed during this planning Task.
+- The Scubapig Pigboard project key changed from KAN to PIG on 26 September;
+  no ticket, workflow, permission, credential, automation rule or membership was
+  changed. No provider work was launched.
 
 ## Author's delivery-plan assessment
 
 | Principle | Assessment |
 | --- | --- |
-| Intuitive | Configuration/inspection precede launch; stages have one named outcome and explicit predecessors. |
+| Intuitive | Configuration/inspection precede launch; PIG Task + To Do + `ai-enabled` is the visible opt-in route. Stages have one named outcome and explicit predecessors. |
 | Discoverable | Task outputs, Story bodies, readiness rules and current next work are linked from this queue. |
 | Delightful experience | Discovery can progress without repetitive approval prompts; unsupported setup and access are identified before paid work. |
 | Token saver | Reuses current code/API evidence and avoids speculative full implementation plans for blocked future Stories. |
 | Secure | Access, source/result audiences, external-write races and runner capabilities gate dependent work; no credentials appear in artifacts. |
 | Agents are equal | CLI/board operations supply shared commands for real MCP inspection/creation, with explicit authorization and structured recovery. |
-| Dependable | Existing implementation, review status, live proof and future outcomes remain distinct; no unresolved preview is marked ready. |
+| Dependable | S01/S03 merged scope, historical INT review, new PIG design and unverified live gates remain distinct; no unresolved preview is marked ready. |
 
 S01 delivers the reviewed M1 configuration outcome at merged main
-`005419b63460540bfbb96400c46e7274a47af723`. D1 still needs the selected
+`005419b63460540bfbb96400c46e7274a47af723`. D1 still needs the dedicated
 integration identity and permission/transition/race evidence. D4's design and
 PR #7 standalone Story/plan and code are independently CLEAN at the recorded
 SHA. This PR's D4 feedback revisions have two exact-artifact CLEAN reviews
 recorded in the linked review record.
 Repository permissions, enforced read-only behavior, second-user visibility
 and meaningful-work authority remain unverified. S02 and hosted activation
-stay gated on their respective decisions. PR #7 remains separate and unmerged.
+stay gated on their respective decisions. PR #7 merged externally; its live
+repository-backed acceptance remains open.

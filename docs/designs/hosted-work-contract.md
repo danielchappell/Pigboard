@@ -1,6 +1,6 @@
 # Hosted work and configuration contract
 
-D2 design, 21 September 2026. This develops the independently reviewed
+D2 design, 21 September 2026; pilot example updated 26 September. This develops the independently reviewed
 [architecture](../architecture-plan.md), not a replacement architecture. It also
 resolves the configuration-only parts of D1/D4 needed for S01. Live Jira
 permissions, runner repository access and deployment choices remain unresolved.
@@ -253,14 +253,14 @@ Use a versioned JSON document, with exactly these supported fields for the pilot
 ```json
 {
   "version": 1,
-  "id": "int-discovery",
+  "id": "pig-discovery",
   "teamRef": "example-team",
   "board": {
     "type": "jira",
-    "connectionRef": "jira-int",
-    "projectKey": "INT",
+    "connectionRef": "jira-pig",
+    "projectKey": "PIG",
     "issueType": "Task",
-    "readyStatus": "Ready to Work",
+    "readyStatus": "To Do",
     "optInLabel": "ai-enabled"
   },
   "worker": {
@@ -279,8 +279,10 @@ Use a versioned JSON document, with exactly these supported fields for the pilot
 }
 ```
 
-The repository/revision and INT display names come from recorded pilot evidence;
-team/connection references above are illustrative, not provisioned connections.
+The repository/revision are historical example values; PIG display names come
+from current human-UI pilot evidence. Native IDs and service access remain
+unverified. Team/connection references above are illustrative, not provisioned
+connections.
 D1's future live preflight resolves names unambiguously to IDs under the connection
 identity and binds those IDs to the active profile. Ambiguous names, missing IDs
 or denied access block live execution. S01 never resolves them or reads secrets.

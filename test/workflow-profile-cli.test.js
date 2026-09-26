@@ -49,7 +49,7 @@ test("help is credential-free and text shows static readiness and all prerequisi
   assert.match(help.stdout, /64 KiB/);
   const text = run(["--stdin", "--format", "text"], example);
   assert.equal(text.status, 0);
-  assert.match(text.stdout, /Valid static workflow profile: int-discovery/);
+  assert.match(text.stdout, /Valid static workflow profile: pig-discovery/);
   assert.match(text.stdout, /Live ready: no/);
   assert.match(text.stdout, /Live access and ticket eligibility have not been checked\./);
   assert.match(text.stdout, /execution_authorization: not_checked/);
