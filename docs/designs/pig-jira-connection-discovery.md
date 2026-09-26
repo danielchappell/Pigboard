@@ -70,6 +70,14 @@ S02 may inspect an explicit issue ID without a webhook. Its result should show
 the decisive status, label, dependency and access facts, plus unknown or denied
 evidence. A complete read is required before it can say “eligible.”
 
+Before S05 sends a provider request, re-read the selected issue's status,
+opt-in, assignee, dependencies, source revision and approved source audience.
+Withhold the send if any changed or cannot be read completely. This check is
+not atomic with provider receipt: a human can restrict a ticket immediately
+after the read, and content already sent cannot be recalled. The owner must
+accept that residual window for a named, nonsensitive pilot issue and audience
+before any live provider submission. D1 does not make that choice on its behalf.
+
 ## Later event, publication and recovery contract
 
 Keep the prior [INT design's](jira-connection-discovery.md#notification-and-reconciliation)
@@ -87,9 +95,10 @@ attention and must not cause an automatic repeat. Re-read eligibility and
 audience before publication; if a human changed them, withhold the write and
 explain the stale input while observing the existing provider run.
 
+`In Review` is the human handoff status for a completed discovery result.
 Automatic status movement remains blocked until Jira proves a server-enforced
 guard over source status, label, assignee, audience/security and revision.
-Otherwise S06 publishes the result and leaves the transition to a human.
+Otherwise S06 publishes the result and leaves the move to In Review to a human.
 Neither a prior read nor `GET transitions` is a conditional write. Controlled
 write, comment recovery and transition checks need a designated disposable
 Pigboard issue and recorded before/after history. No such check has run.
@@ -98,7 +107,8 @@ Pigboard issue and recorded before/after history. No such check has run.
 
 D1 remains open. S02 needs the service identity and all read-only ID, filter,
 dependency and audience facts above. S05 additionally needs an approved source
-audience and D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
+audience, acceptance of the pre-send residual race for a designated issue and
+D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
 needs notification and reconciliation proof. A browser session or historical
 INT result cannot close any of them. No Jira content is sent to a provider as
 part of D1.

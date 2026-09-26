@@ -4,8 +4,10 @@ Product name chosen by the owner on 21 September 2026: **Pigboard**.
 Earlier architecture, research and implementation records use the name Ski Stack.
 
 Agreed product direction, 20 September 2026. This defines the product to design;
-it is not a claim that the SaaS, Jira adapter, MCP, or cloud runners are shipped.
-The existing implementation is the GitHub Projects/local Codex MVP.
+it is not a claim that the SaaS, Jira adapter, MCP, or hosted cloud coordination
+are shipped.
+The existing implementation is the GitHub Projects/local Codex MVP plus the
+standalone Cursor command. Hosted Jira/cloud operation is not shipped.
 
 ## Current decision — an opinionated AI SDLC
 
@@ -53,8 +55,10 @@ and an agent submitting work enter the same workflow. Status-to-role routing,
 claims, and eligibility are deterministic policy; they do not require an AI
 manager. Roles and skills remain independently reusable, as in the current MVP.
 
-The first intended board scope is Jira project INT with the ai-enabled opt-in
-label. The core model remains independent of Jira and any execution provider.
+The first intended board scope is the Scubapig Jira Pigboard project `PIG`, with
+Task + To Do + the `ai-enabled` opt-in label. The earlier INT pilot was discovery
+evidence, not the active site. The core model remains independent of Jira and
+any execution provider.
 Cursor and Codex are intended integration targets; neither is a required product
 architecture dependency. The earlier Grok package was an experiment, not a
 prerequisite for this product.
@@ -138,10 +142,10 @@ review that architecture, then groom its dependency-ordered slices. The active
 
 The user approved exploring one Jira-to-agent-to-Jira discovery journey. The
 [pilot record](pilots/jira-discovery.md) and [feasibility findings](pilots/jira-discovery-feasibility.md)
-remain useful evidence. One trivial Cursor API probe is complete. The pending
-Cursor command PR is partial work, not the approved project roadmap or a completed
-Jira/cloud journey. Its review/disposition belongs in the architecture and delivery
-plan. The owner has explicitly required that map before more implementation.
+remain historical evidence. The active [PIG D1 design](designs/pig-jira-connection-discovery.md)
+governs the current pilot. The standalone Cursor command from PR #7 is merged,
+but repository-backed provider and Jira/cloud acceptance remain open. The
+[delivery plan](delivery-plan.md) records the next gates and slices.
 
 Open decisions include hosted state/recovery, Jira identity/permissions, team
 access, runner contracts, package lifecycle, MCP authority and operating limits.

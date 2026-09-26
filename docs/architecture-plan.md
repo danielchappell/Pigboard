@@ -55,8 +55,10 @@ Prove one complete hosted journey before expanding to a general SaaS:
 - One team, Jira Pigboard `PIG`, one configured repository, one researcher role and one
   active cloud job, with Cursor as the first candidate provider.
 - An authorized teammate labels a Task `ai-enabled` while it is in To Do.
-- Ski Stack reports queued, then provider-accepted progress; publishes findings
-  and evidence; and offers the result at Product Acceptance for human review.
+- Ski Stack reports queued, then provider-accepted progress, and publishes
+  findings and evidence for human review. Pigboard's `In Review` column is the
+  human handoff status; transition remains manual unless D1 verifies a
+  full server-enforced eligibility guard.
 - Repeated notifications or coordinator restarts recover the same attempt. A
   failed board publication retries publication without rerunning the agent.
 - A second authorized teammate can inspect the progress and result, and the
@@ -89,7 +91,7 @@ hosted delivery order.
 | Policy | `src/core/availability.js`, `routing.js` and `claim-next-available.js` choose roles/work deterministically. | A versioned workflow mapping must include opt-in, team/project scope and all eligibility-changing inputs. |
 | Board integration | GitHub Projects snapshot, comments, transitions, signed handoffs and best-effort leases. | Jira connection, normalization and publication; shared transactional run authority. |
 | Execution | Local Codex coding loop; four coding stages auto-run. | Async cloud lifecycle, durable recovery and provider-neutral execution contract. |
-| Cursor evidence | Recorded API create, timeout recovery, conflict rejection and final result; pending start/get CLI. | Repository permissions, teammate visibility and integration with durable coordinator state. |
+| Cursor evidence | Recorded API create, timeout recovery, conflict rejection and final result; merged standalone start/get CLI. | Repository permissions, teammate visibility and integration with durable coordinator state. |
 | Roles/assets | Planner, Researcher, Architect, Groomer and delivery role cards plus skills. | Installable versioned provider packages, compatibility and upgrade rules. |
 | Visibility | Board comments, provider links and local JSONL logs. | Shared run history, setup diagnostics and access-controlled team inspection. |
 | Control plane | Manual board/CLI entry and existing worker results. | Hosted service commands and MCP over the same permission and policy checks. |

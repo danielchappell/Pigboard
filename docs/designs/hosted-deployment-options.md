@@ -1,12 +1,12 @@
 # D3 hosted deployment and team access: decision brief
 
-23 September 2026. This is a design for one team and one active Cursor job,
+23 September 2026; Pigboard target updated 26 September. This is a design for one team and one active Cursor job,
 not provisioned infrastructure. The owner selected their signed-in Fly.io
 account as the hosting provider; read-only CLI checks confirmed sign-in and
 multiple available organizations. The deployment organization is not yet
 selected. This design applies the reviewed
 [durable attempt contract](hosted-work-contract.md), the
-[INT connection gates](jira-connection-discovery.md) and the
+[active PIG connection gates](pig-jira-connection-discovery.md) and the
 [runner capability decision](runner-capabilities.md). Team login, service
 identity, region, organization, cost ceiling and retention remain open D3 facts.
 
@@ -84,7 +84,7 @@ bootstrap and credential custodian are owner decisions before team access
 Stories are delivery-ready.
 
 The onboarding proof is concrete: a deploy owner deploys the chosen revision,
-a connection administrator binds the INT/Cursor connections through service-held
+a connection administrator binds the PIG/Cursor connections through service-held
 secrets, and a team administrator adds one authorized teammate. The teammate
 can inspect the same attempt and result
 after the operator's laptop is off. A denied teammate cannot read ticket
@@ -173,7 +173,7 @@ after restart or overlapping deploys. Set recovery mode, disable
 ingress/scheduling, stop the old service at the host and verify no old sender
 can resume; an in-flight external request still needs reconciliation. If the
 old sender cannot be fenced or the marker cannot be verified on every Machine,
-do not attach the restored target. Disable all INT launches and publications
+do not attach the restored target. Disable all PIG launches and publications
 during recovery. Restore into an
 isolated database and establish the recovery point and full lost-write window.
 Compare the original DB if available, deployment/audit records and provider/Jira
