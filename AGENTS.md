@@ -159,6 +159,8 @@ is available to users. Reuse the existing core policy and adapter boundaries.
   dependency-aware availability, claim ids, and adapter contract definitions.
 - `src/runtime/`: claim coordination, queue dispatch, prompt assembly, and
   worker-result application.
+- `src/runners/`: execution-provider clients, separate from board adapters and
+  queue policy.
 - `src/adapters/github-projects/`: GitHub Projects queue adapter. Keep GitHub
   specifics behind this boundary.
 - `src/provisioners/github-projects/`: GitHub Project field/template setup and
