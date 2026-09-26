@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "id": "int-discovery",
+  "id": "pig-discovery",
   "teamRef": "example-team",
   "board": {
     "type": "jira",
-    "connectionRef": "jira-int",
-    "projectKey": "INT",
+    "connectionRef": "jira-pig",
+    "projectKey": "PIG",
     "issueType": "Task",
-    "readyStatus": "Ready to Work",
+    "readyStatus": "To Do",
     "optInLabel": "ai-enabled"
   },
   "worker": {

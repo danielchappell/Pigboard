@@ -40,17 +40,18 @@ Testing Strategy
 
 Problem to solve
 
-The INT board is understood from the human UI, but the future integration's
+The Pigboard `PIG` board is understood from the human UI, but the future integration's
 permissions and transition contract are unverified. We cannot safely size or
 activate Jira writes from that UI evidence alone.
 
-The [read-only D1 connection record](../designs/jira-connection-discovery.md)
-captures the observed permission scheme/workflow, candidate notification paths
-and publication guards. It does not close this Task's live identity or race gates.
+The [active PIG connection design](../designs/pig-jira-connection-discovery.md)
+records the current board selector, candidate notification path and publication
+guards. The earlier INT record is historical. Neither closes this Task's live
+identity or race gates.
 
 Acceptance Criteria
 
-- Record the intended integration identity, allowed project, issue types, status IDs and required transition fields.
+- Record the dedicated integration identity, allowed `PIG` project, Task type, `To Do` status ID and required transition fields.
 - Establish read/comment/update/transition authority and record any unavailable access without guessing it.
 - Define authenticated event delivery, bounded reconciliation and the human-edit race policy.
 - Verify the link type, direction and blocker-state mapping that lets S02 use core dependency eligibility.
@@ -67,8 +68,8 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Review the evidence table against the existing INT configuration and identify every verified field and remaining live check.
-- Access and setup: Use the selected integration identity when available; its access and credential provisioning remain unresolved.
+- Manual QA: Review the evidence against the existing `PIG` board and identify every verified field and remaining live check.
+- Access and setup: Use the dedicated integration identity when available; its access and credential provisioning remain unresolved.
 - Automated regression: Identify future adapter coverage for dependency mapping, event payloads, comment recovery and guarded transitions.
 
 ## D2 — Define durable attempts and recovery

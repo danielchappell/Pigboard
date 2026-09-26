@@ -1,6 +1,7 @@
 # Ski Stack architecture and development direction
 
-21 September 2026. High-level design for independent review. This defines the
+Updated 26 September 2026 for the Pigboard pilot. High-level design for
+independent review. This defines the
 path to the agreed product; it is not implementation, infrastructure procurement
 or activation approval. The [development workflow](development-workflow.md)
 requires this design gate before grooming the delivery plan.
@@ -51,9 +52,9 @@ allowed transitions, retries and quotas belong to code, not AI tie-breaking.
 
 Prove one complete hosted journey before expanding to a general SaaS:
 
-- One team, Jira INT, one configured repository, one researcher role and one
+- One team, Jira Pigboard `PIG`, one configured repository, one researcher role and one
   active cloud job, with Cursor as the first candidate provider.
-- An authorized teammate labels a Task `ai-enabled` and moves it to Ready to Work.
+- An authorized teammate labels a Task `ai-enabled` while it is in To Do.
 - Ski Stack reports queued, then provider-accepted progress; publishes findings
   and evidence; and offers the result at Product Acceptance for human review.
 - Repeated notifications or coordinator restarts recover the same attempt. A
@@ -61,10 +62,11 @@ Prove one complete hosted journey before expanding to a general SaaS:
 - A second authorized teammate can inspect the progress and result, and the
   coordinator does not depend on either developer's computer being awake.
 
-Keep the human assignee. The inspected INT board filters by named people or
-unassigned, so assigning to a bot could hide work. Status names are proposed
-mappings onto the existing workflow; discover transition IDs and required fields
-under the integration identity before activation.
+Keep the human assignee. The active Pigboard board uses its existing To Do status
+and an explicit opt-in label. Its filter, allowed assignees and native status ID
+must be verified under the integration identity before activation. The earlier
+INT board mapping and its restricted assignee filter are historical evidence,
+not a Pigboard permission or workflow claim.
 
 The company Cursor account is authorized only for trivial adapter checks. The
 marker-only API probe is already complete. A repository probe, if access is
@@ -75,11 +77,12 @@ does not expand spending or repository grants.
 
 ## What exists and what does not
 
-Baseline: main `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`. The original working
-checkout at `5e90721` was also inspected. Both describe the GitHub Projects/local
-Codex MVP. Pending [PR #7](https://github.com/danielchappell/ski-stack/pull/7) at
-`3df1eab` adds standalone Cursor commands; it is not merged and lacks independent
-review. Its existence does not set the delivery order.
+Historical baseline: main `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`.
+The original working checkout at `5e90721` was also inspected. Both describe
+the GitHub Projects/local Codex MVP. [PR #7](https://github.com/danielchappell/ski-stack/pull/7)
+later delivered the reviewed standalone Cursor command and merged externally.
+That command has no repository-backed live acceptance and does not set the
+hosted delivery order.
 
 | Area | Existing evidence | Gap to this product |
 | --- | --- | --- |
@@ -274,8 +277,8 @@ planning Task.
 
 | Principle | Author's assessment |
 | --- | --- |
-| Intuitive | Existing board actions, explicit role mapping and honest run states; exact transitions are D1's activation gate. |
-| Discoverable | M1 explains eligibility and setup before agents run; packages and MCP carry explicit capability discovery. |
+| Intuitive | Existing To Do plus `ai-enabled` makes opt-in visible without a new column; To Do alone is deliberately insufficient. Exact transitions are D1's activation gate. |
+| Discoverable | M1 explains the route; S02 must explain the label, status and dependency facts before agents run. Packages and MCP carry explicit capability discovery. |
 | Delightful experience | Shared progress and recovery remove manual handoffs and duplicate runs; ordinary stages need no repeated owner permission. |
 | Token saver | Code routes and reconciles; agents receive scoped context and expose detail on demand; no model is the scheduler. |
 | Secure | Scoped authority, external secret custody and audience checks start with the first hosted path; unresolved mechanisms block dependent Stories. |
