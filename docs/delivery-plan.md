@@ -16,8 +16,9 @@ and core functionality before iterating on the development method.
 
 Current focus: **S01 and S03 merged; D1 Pigboard discovery, D3 and D4 live gates open**.
 Earlier architecture/queue alignment was CLEAN only for the exact artifacts in
-[review evidence](development-review.md). The current PIG revision requires its
-own review. The implementation reuses the unchanged
+[review evidence](development-review.md). The PIG revision has its own CLEAN
+[design review](reviews/pig-jira-connection-discovery.md) at `902b62b`; live
+gates remain open. The implementation reuses the unchanged
 D2 contract and S01 Story/plan after a current-code check. Two fresh independent
 committed-code reviews are CLEAN; [S01 evidence](reviews/workflow-profile.md)
 records exact revisions and coverage. [PR #9](https://github.com/danielchappell/ski-stack/pull/9)
@@ -82,7 +83,7 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | --- | --- | --- | --- |
 | Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
 | Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| PIG design revision under review; live gates open | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled`; the [INT record](designs/jira-connection-discovery.md) and its CLEAN review are historical. Service identity, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity and link facts first. |
+| PIG design CLEAN at `902b62b`; live gates open | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled`; the [review](reviews/pig-jira-connection-discovery.md) covers that exact design. The [INT record](designs/jira-connection-discovery.md) is historical. Service identity, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity and link facts first. |
 | Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
