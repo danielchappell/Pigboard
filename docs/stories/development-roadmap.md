@@ -82,7 +82,7 @@ Acceptance Criteria
 
 Technical Acceptance Criteria
 
-- Use D2’s durable record and D3’s scoped access contract.
+- Use D2’s durable record in the selected Pigboard Neon Postgres project and D3’s scoped access contract; no local-only state is an accepted shared store. Pin the original root endpoint in a reviewed deployment artifact separate from the database secret, and reject a different effective target before inspecting data.
 - Registered-run inspection permits scoped viewers and operators, and agents only with a separate inspect grant for the connection. Connection admins need an independently granted viewer/operator role; the recovery principal cannot inspect the run.
 - Registration requires the D3 operator permission or a separate, explicit scoped-agent register grant. Registration does not attest the source revision, validate a result or grant permission to launch or publish.
 - This operation does not launch or retry provider work.
@@ -92,7 +92,7 @@ Testing Strategy
 
 - Manual QA: Save an existing fixture run, exit, retrieve it from a second process and confirm identity, an allowed scoped viewer or agent inspection, and denied out-of-scope and same-scope ungranted access.
 - Access and setup: Use the selected isolated store and test identities from D3; these remain unresolved before readiness.
-- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration and both scope and role isolation across process restarts.
+- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration, root-endpoint binding across secret changes/reconnects, and both scope and role isolation across process restarts.
 
 ## S05 — Explicitly start one eligible Jira request
 
@@ -109,13 +109,14 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - Persist immutable launch intent before the provider call and enforce D2’s ownership/recovery rules.
+- Check current authority and reserve the effect in one transaction on the pinned original root endpoint. Reject a secret or connection override pointing to an older Neon child before reads or sends; a pre-S29 revision has no recovery path.
 - Use configured role/repository and keep coordinator credentials out of the prompt.
 
 Testing Strategy
 
 - Manual QA: Start the same synthetic ticket twice through mocked provider calls and confirm one attempt and one accepted provider identity.
 - Access and setup: Use an isolated store, authorized test ticket and mocked runner; meaningful live work needs separately established execution authority.
-- Automated regression: Cover claim contention, ambiguous launch recovery and stale-input rejection at the application command.
+- Automated regression: Cover claim contention, ambiguous launch recovery, stale-input rejection and no read/send when the configured database target is a historical child.
 
 ## S26 — Observe and validate a saved provider result
 
@@ -214,25 +215,28 @@ Testing Strategy
 
 Problem to solve
 
-A database restore can lose a record of work already sent to Cursor or Jira.
-Starting new work from that copy could repeat an external action.
+A point restore inside the Neon project can lose a record of work already sent
+to Cursor or Jira. Starting work from the older copy could repeat that action.
 
 Acceptance Criteria
 
-- A separately authorized recovery principal sets and verifies the one-team connection's out-of-database quarantine marker and expected database target before a restored cluster can be attached; it records the recovery point and possible lost-write window.
+- A separately authorized recovery principal writes a connection-scoped recovery record in the private control repository. It names the recovery point and possible lost-write window, then binds the exact Neon child branch before that branch is attached.
+- Before enabling recovery-capable deployment, install a `normal` record for the original live root. The new revision checks that record before effects. Earlier S05/S08 revisions pin the original endpoint independently of the connection secret, reject a historical child and do not claim recovery support.
+- Before attaching that child branch, a trusted infrastructure custodian suspends normal deploy access, revokes old provider credentials and proves no old Fly Machine can send. The new app starts in quarantine.
 - While recovering, the service rejects new launches and publications across restart and explains the blocked state to authorized humans and agents.
 - Missing recovery-point evidence keeps the connection in maintenance.
 
 Technical Acceptance Criteria
 
-- Fence the old sender before accepting a restored store; if it cannot be fenced, do not cut over.
-- Persist quarantine outside the restored attempt rows. Reject a changed database target without a verified marker, and check it on every Machine before scheduling or effects, including deploy overlap and restart.
+- The runtime can read but cannot write the recovery record; the recovery principal has a separate write grant. Updates reject a changed GitHub head.
+- Fence the old sender before accepting a restored branch; if it cannot be fenced, do not cut over. A Fly secret or boot-time flag alone is not a fence.
+- Keep quarantine outside the restored rows. Reject a changed project, branch, recovery ID or current-authority generation, including during deploy overlap and restart.
 
 Testing Strategy
 
-- Manual QA: Set the marker, fence the old sender, restore an isolated Fly Managed Postgres fixture after a simulated send, and check that no ticket or provider request is repeated. Attempt attachment without a marker and with overlapping deploys.
-- Access and setup: Use the selected Fly pilot organization and separately authorized recovery identity; no live customer ticket is needed.
-- Automated regression: Cover missing-marker rejection, deploy overlap, restart-safe quarantine and rejection of new effects when the recovery window is unknown.
+- Manual QA: In a disposable Pigboard Neon project, record an external recovery ID, fence the old sender, create a child branch from before a simulated send and verify no send repeats. Attempt a stale-head update, missing-record attachment and overlapping deploy.
+- Access and setup: Use the dedicated Pigboard Fly/Neon resources, private control repository and separate recovery and infrastructure identities; no live customer ticket is needed.
+- Automated regression: Cover missing or mismatched record, stale GitHub head, control-repository outage, deploy overlap, restart-safe quarantine and unknown recovery window.
 
 ## S30 — Reconcile a restored connection's external effects
 
@@ -243,20 +247,22 @@ comments that were sent after the database recovery point.
 
 Acceptance Criteria
 
-- The recovery principal sees known provider and Jira effects and an explicit unknown or unbounded lost window when the sources cannot enumerate every possible effect.
+- A currently authorized operator or scoped agent can read exact provider and Jira effects through a read-only quarantine command. The recovery principal sees only effect IDs, digests and evidence state, not raw provider content.
+- The recovery record shows an explicit unknown or unbounded lost window when the sources cannot enumerate every possible effect.
 - Exact positive evidence records each effect against its original identity; missing or conflicting evidence is marked unresolved. An unbounded window can never be marked complete by this Story.
 - The connection stays quarantined with no new send or publication after reconciliation.
 
 Technical Acceptance Criteria
 
+- A current connection admin binds a fresh credential for the same original provider identity before observation. The command denies viewers, operators, agents and the recovery principal; the read-only observation route denies viewers, connection-admin-only callers and the recovery principal.
 - Match exact provider and Jira identities against the original database, audit and provider/Jira evidence when available; never infer that a missing restored row means no send occurred.
 - Treat unavailable provider or Jira credentials as unresolved observation, not proof of no effect.
 
 Testing Strategy
 
-- Manual QA: Restore a fixture with one post-recovery-point send, record its exact identity, then remove evidence and confirm the unknown window remains unresolved and quarantined.
-- Access and setup: Use an isolated Fly Managed Postgres restore, synthetic external evidence and a separately authorized recovery identity.
-- Automated regression: Cover effect matching and continued quarantine when evidence is incomplete.
+- Manual QA: Restore a Neon child-branch fixture with one post-recovery-point send. Bind a current test credential, observe its exact identity through the restricted route, then remove evidence and confirm the connection remains quarantined.
+- Access and setup: Use a disposable Pigboard Neon project, synthetic external evidence and separate connection-admin, operator/agent and recovery identities.
+- Automated regression: Cover credential-binding and observation role denials, read-only provider commands, exact effect matching and continued quarantine when evidence is incomplete.
 
 ## S31 — Reapply current access and reopen a restored connection
 
@@ -267,20 +273,21 @@ reconciled run cannot be exposed until current access is restored.
 
 Acceptance Criteria
 
-- The recovery principal compares current membership, role, credential and connection-scope changes since the recovery point using an identity source outside the restored database.
-- Only the recovery principal can record cutover and reopen the verified restored cluster when effect and access evidence are complete.
+- The recovery principal compares current membership, role, credential and connection-scope changes with the live-root authority journal, never roles from the historical child branch. Missing or damaged current authority requires fresh verification before reopening.
+- A trusted infrastructure custodian copies reconciled run/effect data from the child branch back to the live root without replacing current authority. Only the recovery principal can record the verified cutover and reopen after full effect and access evidence.
 - Missing or conflicting access evidence keeps the connection quarantined and denies stale inspection or commands.
 
 Technical Acceptance Criteria
 
-- Apply current revocations and connection scope before exposing restored results or commands; restored database roles confer no recovery authority.
-- Rebind the Fly database secret only for a verified cutover; an unverified provider credential cannot recover a run.
+- Apply current revocations and connection scope before exposing restored results or commands; historical child-branch roles confer no recovery authority.
+- Verify the copied run/effect identities and current authority generation before sending can resume. The reopened root must check authority and reserve an effect in one transaction.
+- Select only a fresh recovery-ID-bound provider credential in the root. A stale child-only or restored credential cannot send.
 
 Testing Strategy
 
-- Manual QA: Restore a fixture with one revoked user and rotated credential; verify denied stale access and either safe cutover or continued quarantine.
-- Access and setup: Use an isolated Fly restore, current out-of-database identity records and a separately authorized recovery principal; no production ticket write is required.
-- Automated regression: Cover the full viewer/operator/connection-admin/scoped-agent/recovery-principal command allow/deny matrix, stale-access denial, secret/connection validation and refusal to reopen on incomplete evidence.
+- Manual QA: Restore a Neon child-branch fixture with one revoked user, rotated credential and lost effect. Verify denied old access, reconciled copy-back to the live root and either safe reopen or continued quarantine.
+- Access and setup: Use a disposable Pigboard Neon project, current external identity evidence, private recovery-control repository and separately authorized recovery/infrastructure principals; no production ticket write is required.
+- Automated regression: Cover the viewer/operator/connection-admin/scoped-agent/recovery-principal role matrix, stale-access and credential denial, root copy-back integrity, atomic root authority/effect reservation and refusal to reopen on incomplete evidence.
 
 ## S09 — Turn an idea ticket into a product brief
 
