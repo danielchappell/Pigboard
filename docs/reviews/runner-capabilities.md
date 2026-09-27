@@ -98,3 +98,61 @@ binding, a repository grant, or meaningful-work acceptance.
 Reviewers found no in-scope defect in the final standalone diff. Their CLEAN
 verdicts do not override the separate D4 live access gates or the stricter
 provider-binding rule for hosted attempts.
+
+## Imported-run format and source gate correction
+
+On 27 September, two fresh independent Sol reviewers examined the imported-run
+provenance revision at `a8aa7b7045677c8805d8de596c4dd65e7670b8cb`
+(D4 file SHA-256 `79bf36bccd1b9e1deb251bca7b94030a1a148d709b2f85828174ef39d1b703a0`).
+Both returned **NOT CLEAN**: the D4 design allowed S26 to check an
+audience-authorized moving-ref import's output format, but the delivery queue
+made D4-source a blanket S26 dependency and the S04 preview used “validated”
+without separating format from ticket acceptance. The product reviewer covered
+the D4 design 1/1 and four affected artifacts 4/4 with a dependency second
+sweep. The technical reviewer covered 8/8 named surfaces with a provenance
+and disclosure second sweep. Each assessed all seven principles independently.
+
+The first, unpublished correction commit
+`4e9de6f31594b27a4c50e5c1888723f982f90e14`
+received two fresh **NOT CLEAN** reviews: the D4L Task still stated the old
+blanket gate. Both covered all 3/3 changed files, the affected contracts and
+all seven principles, then made second sweeps. The author amended it to
+`b962618281c4a3a611fba1d598f9e97dac77a66d`, correcting D4L as the fourth
+file. Two new independent Sol reviewers returned **CLEAN** for that exact
+commit. Product review covered 4/4 changed files and 9/9 relevant contracts;
+technical review covered 4/4 files and 8/8 requirements. Both made a second
+cross-artifact sweep and independently assessed all seven principles.
+The amended-away commit is not an ancestor of this PR, so it is preserved by
+the [review-evidence tag](https://github.com/danielchappell/ski-stack/commit/4e9de6f31594b27a4c50e5c1888723f982f90e14).
+The remote tag `review-evidence/d4-first-correction-20260927` peels to that
+exact commit; its tree is `2b28ccd9533447cc7f2f9427678396364f2a612c`.
+Readers can inspect the historical three-file diff without treating that
+rejected revision as approved.
+
+The reviewed rule is: prove exact-run original audience and current disclosure
+before any provider status or result read. Within that audience, S26 may record
+a format-valid but unbound result without D4-source. That result remains
+nonpublishable. Validated ticket work and publication require the actual
+checkout commit for the same run, independent original-request binding and
+the later trusted S05 launch record. The S02a → S02b → S04 → S26 → S05 → S06
+order is unchanged. This is documentation evidence, not a Cursor account grant,
+live origin proof, running service or completed Story.
+
+GitHub's hosted review of PR #23 at `5898656f4c1bee13a7b4042d86fb1d46c0738c84`
+found two in-scope P2 gaps. It could not inspect the amended-away first
+correction commit, and D2/S06 still described `valid` output without the
+separate binding guard. The tag above preserves that historical artifact.
+The [D2 contract](../designs/hosted-work-contract.md) now records format and
+the three binding facts separately, and S06 requires all of them before a
+Jira write. These are design and provisional-Story corrections; no code or
+live gate changed. Fresh review of this feedback revision is still required.
+
+| Principle | Author assessment of this feedback revision |
+| --- | --- |
+| Intuitive | A format-valid answer is described as nonpublishable until the exact work it answers is proven. |
+| Discoverable | D2 and S06 name the missing launch, request and source facts for humans and agents. |
+| Delightful experience | Authorized people can inspect an imported result without a repeated run while publication stays safely withheld. |
+| Token saver | Separate format and binding facts explain the outcome in one inspection. |
+| Secure | A Jira write requires the trusted launch, original request, actual checkout commit and current scope. |
+| Agents are equal | The same publish guard applies to human and noninteractive callers; their presentation can differ. |
+| Dependable | An unbound import cannot be silently treated as ticket work, and an amended-away review artifact remains auditable. |

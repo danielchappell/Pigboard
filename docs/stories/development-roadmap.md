@@ -1,8 +1,8 @@
 # Development Story previews
 
-These follow the [architecture](../architecture-plan.md); an earlier revision
-was independently reviewed, and the current editorial Story-reference update
-requires exact-revision review.
+These follow the [architecture](../architecture-plan.md). The S04/S26
+format-source wording has an exact-artifact [D4 design review](../reviews/runner-capabilities.md);
+the implementation Stories remain provisional until their own gates are met.
 S01 and S03 were independently reviewed and merged. **All other Stories remain
 Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).
@@ -130,7 +130,7 @@ Technical Acceptance Criteria
 - Store and return status metadata only. Discard any co-returned result text; S26 owns result capture.
 - This operation does not launch or retry provider work.
 - A failed database wake or Free quota limit cannot turn a missing write into a successful registration.
-- A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
+- A run started from a moving branch or without a verified source commit is inspection-only. S26 may check its output format within the proven audience, but cannot mark it validated ticket work or publishable without verified source and original-request binding.
 
 Testing Strategy
 
@@ -173,7 +173,7 @@ A provider can finish without answering the intended question. Publishing its ra
 Acceptance Criteria
 
 - An observation command retrieves the exact recorded run within its currently authorized source audience and stores its current state without starting another job.
-- A completed result is checked against the configured role’s output contract and stored with its validation and binding state.
+- A completed result is checked against the configured role’s output contract and stored with a separate format outcome and request/source binding state. Format-valid alone is not publication eligibility.
 - Questions, invalid output, provider failure and a valid-looking but unbound answer remain distinct from an answer eligible for publication.
 
 Technical Acceptance Criteria
@@ -201,11 +201,19 @@ Acceptance Criteria
 - Publishing adds progress/result evidence to the matching ticket. It transitions only with a verified full eligibility guard; otherwise it leaves a clear manual handoff.
 - A lost write response is reconciled before another write, or becomes visible needs-attention.
 - Human changes and audience restrictions prevent inappropriate publication or transition.
+- A format-valid imported result with unproven request or source binding remains
+  visible as nonpublishable and sends nothing to Jira.
 - If the Free store cannot reserve the write, no new Jira comment or transition is sent; the caller sees a blocked or uncertain result.
 
 Technical Acceptance Criteria
 
-- Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract. Recheck the current selected pair/version against the launch record inside the write reservation; a changed pair withholds publication.
+- Require S26's stored `valid` format outcome and three proven facts for the
+  unchanged ticket input: S05's trusted launch-to-run record, the original
+  request, and the actual checked-out source commit. A format-valid import
+  missing any proof stays nonpublishable.
+- Use an append-only comment operation identity and D1's verified
+  transition/race contract. Recheck the selected pair/version against the
+  launch record inside the write reservation; a changed pair withholds publication.
 - Commit the D2 effect reservation on the pinned root before any Jira write; a quota or database failure cannot authorize a send.
 - Keep the human assignee and never use comments as run locks.
 - Before storing publication evidence, document its audience, lifetime and deletion, including restored copies.
@@ -214,7 +222,9 @@ Testing Strategy
 
 - Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect one intended comment, no rerun and manual status when no full guard exists.
 - Access and setup: Use the scoped fixture Jira service first; live comment/transition acceptance requires the controlled test ticket and verified write authority.
-- Automated regression: Cover partial publication recovery, no Jira write after a failed or uncertain reservation, changed-pair or stale-ticket handling, and source-audience enforcement.
+- Automated regression: Cover partial publication recovery, failed or
+  uncertain reservations, changed or stale input, source-audience denial,
+  and format-valid results missing any binding proof.
 
 ## S07 — Automatically pick up and reconcile eligible work
 

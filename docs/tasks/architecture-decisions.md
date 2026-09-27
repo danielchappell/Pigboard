@@ -202,7 +202,9 @@ Technical Acceptance Criteria
 
 - Use only trivial compute on the company Cursor account; a meaningful run needs separate authorized account and budget.
 - Do not treat plan mode, a local request digest or a model's claimed commit as enforced source access or provider attestation.
-- D4-source is the verified actual-commit binding for the specific saved run; S26 depends on it before validating repository-backed output. D4-live applies only to the hosted connection, repository and permission policy actually used by S05; changing any of them reopens the relevant checks.
+- D4-source binds the actual checkout commit to the specific saved run.
+- S26 may check output format within a proven audience without D4-source. It cannot mark repository-backed output as validated ticket work or publishable until D4-source and trusted original-request binding are proven.
+- D4-live applies only to the hosted connection, repository and permission policy actually used by S05. Changing any of them reopens the relevant checks.
 - The S04 import-audience gate is separate from D4-source and D4-live. A selected pair, provider API key or same-repository grant alone does not prove a particular run's content audience; inspect only minimal provider metadata after caller authority, and do not read run status/result until run-specific origin and current source-to-target authorization are verified.
 
 Testing Strategy

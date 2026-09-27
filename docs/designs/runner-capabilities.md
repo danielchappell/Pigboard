@@ -1,7 +1,7 @@
 # D4 runner capability decision
 
 22 September 2026. Discovery and design for the first hosted researcher run.
-This applies the substantively unchanged [hosted work contract](hosted-work-contract.md) to
+This applies the [hosted work contract](hosted-work-contract.md) to
 Cursor Cloud Agents and examines the existing [PR #7](https://github.com/danielchappell/ski-stack/pull/7).
 It does not activate a provider, grant repository access, or approve that PR.
 The first runner remains Cursor because the owner has authorized only trivial
@@ -56,7 +56,9 @@ nonempty `text` and `referenceIds`; each reference has an `id`, `url` or explici
 reviewed implementation plan before a live run. The adapter preserves the bounded
 raw final reply with the exact run identity; S26 parses and validates this shape,
 checks binding to the stored input, and records `valid`, `question`, `invalid`,
-or `stale`. Non-JSON, truncated, missing, or unsupported-version replies never
+or `stale` for the output contract, separately from request/source binding and
+publication eligibility. A format-valid but unbound reply is nonpublishable.
+Non-JSON, truncated, missing, or unsupported-version replies never
 advance the ticket. A syntactically valid reference is not proof the source is
 accurate; the human still accepts the findings.
 
@@ -121,8 +123,9 @@ error. D4L must prove this path before S04 is ready. If the provider and
 trusted source commands cannot supply run-specific proof, re-groom S04 into a
 complete trusted-source outcome before implementation.
 An authorized import from a moving ref remains inspection-only: S26 may check
-its output format within the established audience, but cannot mark it
-publishable and S06 cannot publish it from a claimed role or revision. The
+its output format within the established audience and record a format-valid but
+unbound result. It cannot mark the result validated ticket work or eligible for
+publication, and S06 cannot publish it from a claimed role or revision. The
 [D4L Task](../tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity)
 must record provider-visible or independently checked evidence binding the actual
 checkout to a 40-hex revision. That **D4-source** gate does not prove the
@@ -195,7 +198,6 @@ replace the account/repository/team evidence above.
 | Agents are equal | The same typed prepare/start/recover/get states are usable from commands and future MCP without UI clicks. A scoped agent import needs a preapproved exact-run transfer grant; a human may authorize only after independent verification of their rights to that run's content. Diagnostics stay readable without exposing foreign metadata. |
 | Dependable | Unknown exact-run origin or revoked disclosure fails before shared inspection, and unknown launch/result outcomes stay visible without advancing; terminal provider status never implies validated findings or human acceptance. If import evidence is unavailable, S04 is re-groomed rather than declaring partial plumbing complete. |
 
-The [review record](../reviews/runner-capabilities.md) identifies earlier
-artifacts and their independent verdicts. This revised imported-run provenance
-contract needs its own exact-artifact review. No hosted Story is promoted by
-the author's assessment alone.
+The [review record](../reviews/runner-capabilities.md) distinguishes the
+imported-run provenance and format-gate design reviews from earlier D4 rounds.
+Neither design review proves the live D4L gates or promotes a hosted Story.

@@ -113,7 +113,12 @@ Avoid one enum that confuses provider activity with useful completion:
 - Coordination: queued, owned, waiting, needs-attention, superseded, closed.
 - Provider: not-started, launch-uncertain, pending, running, finished, failed,
   cancelled, expired or unknown.
-- Validation: not-ready, valid, question, invalid or stale.
+- Validation (output format and role contract): not-ready, valid, question,
+  invalid or stale. `valid` alone does not mean validated ticket work.
+- Binding: record the trusted launch-to-run identity, independently verified
+  original request, and actual checked-out source commit as separate
+  proven/unproven/contradicted facts. A format-valid imported run may leave
+  these unproven; a claimed role, requested ref or model reply cannot prove them.
 - Publication: not-ready, pending, partial, confirmed, uncertain or withheld.
 - Acceptance: not-requested, awaiting-human, accepted or rejected.
 
@@ -123,7 +128,12 @@ states require attention, not a guessed success/failure. A finished turn may
 still contain a question; a valid answer may still await ticket publication;
 published findings are not automatically human-accepted work.
 
-Only a validated result for the unchanged immutable input can enter publication.
+Only a format-valid result for the unchanged immutable input with all three
+binding facts proven can enter publication. The trusted launch record must
+match the ticket, role/package, profile, exact provider request and saved run;
+the original request and actual checkout commit need independent evidence for
+that run. A format-valid but unbound import remains inspection-only and cannot
+be described as validated ticket work.
 The initial researcher result contract is answer/findings, supporting references,
 recommended next step and explicit unresolved questions. An output with no usable
 answer or with a decision that stops work stays question/needs-attention.
@@ -205,8 +215,8 @@ requirement to resolve in D1, not a guarantee supplied by this abstract contract
 | Inspect | Resolve profile, authorized board snapshot and all blocking dependency facts. | Explain eligible/unavailable and unresolved setup; no claim or mutation. |
 | Submit | Recheck snapshot/input, transactionally acquire the current-attempt/capacity slot and save exact provider request. | Return attempt identity before/with provider identity; uncertain launch resumes original identity. |
 | Observe | Own the attempt and load the exact recorded provider identity. | Store native/normalized state, result digest and timestamp; bound reads and polling delay. |
-| Validate | Check terminal provider state, exact input/role contract and current source eligibility. | Store valid/question/invalid/stale and reasons; no external write. |
-| Publish | Require valid nonstale output, current scope/audience and allowed board mutation contract; reserve effect. | Store each comment/transition checkpoint; resume only missing proven-safe effects. |
+| Validate | Check terminal provider state and role-result format within the run's currently authorized source audience; separately assess original-request and actual-source binding. | Store valid/question/invalid/stale format outcome, each binding fact and reasons; an unbound import remains nonpublishable. No external write. |
+| Publish | Require valid nonstale output, the trusted launch-to-run record, independently bound original request and actual checkout commit, current immutable input/scope/audience and allowed board mutation contract; reserve effect. | Store each comment/transition checkpoint; resume only missing proven-safe effects. |
 | Retry | Verify authorized explicit request, terminal/resolved old attempt and current eligibility. | New linked attempt and immutable input; repeated retry request finds the same new attempt. |
 
 The hosted adapter normalizes eligible Jira work to existing core stages for
