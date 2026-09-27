@@ -40,7 +40,7 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     chmodSync(key, 0o600);
     const port = await freePort();
     writeFileSync(join(data, "postgresql.conf"),
-      `\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\n`, { flag: "a" });
+      `\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\nunix_socket_directories = '${temp}'\n`, { flag: "a" });
     try {
       execFileSync("pg_ctl", ["-D", data, "-l", log, "-o",
         `-h localhost -p ${port}`, "-w", "start"], { stdio: "pipe" });

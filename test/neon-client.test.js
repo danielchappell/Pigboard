@@ -139,7 +139,7 @@ test("a real local TLS Postgres reconnect repeats the root pin check", async (t)
       "-keyout", key, "-out", cert], { stdio: "pipe" });
     chmodSync(key, 0o600);
     const port = await freePort();
-    writeFileSync(join(data, "postgresql.conf"), `\nlisten_addresses = 'localhost'\nport = ${port}\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\n`, { flag: "a" });
+    writeFileSync(join(data, "postgresql.conf"), `\nlisten_addresses = 'localhost'\nport = ${port}\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\nunix_socket_directories = '${temp}'\n`, { flag: "a" });
     const start = () => {
       try {
         execFileSync("pg_ctl", ["-D", data, "-l", log, "-w", "start"], { stdio: "pipe" });
