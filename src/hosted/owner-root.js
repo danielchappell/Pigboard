@@ -15,7 +15,7 @@ export class OwnerError extends Error {
   }
 }
 
-const PIN_FIELDS = ["projectId", "branchId", "host", "port", "database"];
+const PIN_FIELDS = ["projectId", "branchId", "endpointId", "host", "port", "database"];
 
 export function checkOwnerPin(target = OWNER_TARGET, runtime = ROOT_TARGET) {
   if (PIN_FIELDS.some((field) => target[field] !== runtime[field]) ||
