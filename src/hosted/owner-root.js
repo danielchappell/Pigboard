@@ -114,7 +114,7 @@ export async function connectOwner(filePath, options = {}) {
       throw new OwnerError("owner_identity_mismatch");
     }
     // A role-level search_path must not redirect migration DDL or authority queries.
-    await client.query("SET search_path = public, pg_catalog");
+    await client.query("SET search_path = pg_catalog, public");
     return client;
   } catch (error) {
     try { await client.end(); } catch { /* Preserve the safe reason. */ }

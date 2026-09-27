@@ -16,13 +16,34 @@ const CATALOG_QUERIES = [
    WHERE n.nspname = 'public' AND c.relname = ANY($1::text[]) ORDER BY c.relname`,
   `SELECT c.relname, a.attnum, a.attname,
      pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
-     a.attnotnull, pg_catalog.pg_get_expr(d.adbin, d.adrelid) AS default_expr
+     a.attnotnull, a.attidentity,
+     pg_catalog.pg_get_expr(d.adbin, d.adrelid) AS default_expr,
+     pg_catalog.pg_get_serial_sequence(
+       pg_catalog.format('%I.%I', n.nspname, c.relname), a.attname
+     ) AS backing_sequence
    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
    JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
    LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
    WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
      AND a.attnum > 0 AND NOT a.attisdropped
-   ORDER BY c.relname, a.attnum`,
+     ORDER BY c.relname, a.attnum`,
+  `SELECT c.relname, a.attnum, a.attidentity,
+     seq_ns.nspname AS sequence_schema, seq.relname AS sequence_name,
+     s.seqstart, s.seqincrement, s.seqmin, s.seqmax, s.seqcache, s.seqcycle
+   FROM pg_catalog.pg_class c
+   JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+   LEFT JOIN pg_catalog.pg_depend dep
+     ON dep.refclassid = 'pg_catalog.pg_class'::pg_catalog.regclass
+     AND dep.refobjid = c.oid AND dep.refobjsubid = a.attnum
+     AND dep.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
+     AND dep.deptype IN ('a', 'i')
+   LEFT JOIN pg_catalog.pg_class seq ON seq.oid = dep.objid AND seq.relkind = 'S'
+   LEFT JOIN pg_catalog.pg_namespace seq_ns ON seq_ns.oid = seq.relnamespace
+   LEFT JOIN pg_catalog.pg_sequence s ON s.seqrelid = seq.oid
+   WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+     AND a.attnum > 0 AND NOT a.attisdropped
+   ORDER BY c.relname, a.attnum, seq_ns.nspname, seq.relname`,
   `SELECT c.relname, k.conname, k.contype,
      pg_catalog.pg_get_constraintdef(k.oid, true) AS definition
    FROM pg_catalog.pg_constraint k JOIN pg_catalog.pg_class c ON c.oid = k.conrelid
@@ -48,7 +69,8 @@ export class AuthorityError extends Error {
 
 function cleanName(name) {
   if (typeof name !== "string" || name.trim() !== name ||
-      name.length < 1 || name.length > 120 || /[\r\n\u0000-\u001f]/u.test(name)) {
+      name.length < 1 || name.length > 120 ||
+      /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/u.test(name)) {
     throw new AuthorityError("invalid_owner_name");
   }
   return name;
@@ -96,7 +118,7 @@ async function schemaState(client) {
   let receipts;
   try {
     receipts = (await client.query(
-      "SELECT version, checksum, catalog_checksum FROM pigboard_schema_migrations ORDER BY version"
+      "SELECT version, checksum, catalog_checksum FROM public.pigboard_schema_migrations ORDER BY version"
     )).rows;
   } catch {
     return { status: "schema_conflict" };
@@ -112,7 +134,7 @@ async function schemaState(client) {
     return { status: "schema_conflict" };
   }
   const authority = await client.query(
-    "SELECT generation FROM pigboard_team_authority WHERE team_key = 'pilot'"
+    "SELECT generation FROM public.pigboard_team_authority WHERE team_key = 'pilot'"
   );
   if (authority.rows.length !== 1) return { status: "schema_conflict" };
   const generation = Number(authority.rows[0].generation);
@@ -122,17 +144,25 @@ async function schemaState(client) {
 }
 
 export async function inspectAuthority(client) {
-  let schema;
+  let inTransaction = false;
   try {
-    schema = await schemaState(client);
-    if (schema.status !== "schema_current") return schema;
+    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+    inTransaction = true;
+    const schema = await schemaState(client);
+    if (schema.status !== "schema_current") {
+      await client.query("COMMIT");
+      inTransaction = false;
+      return schema;
+    }
     const result = await client.query(`
       SELECT p.id AS principal_id, p.name, c.active AS credential_active
-      FROM pigboard_grants g
-      JOIN pigboard_principals p ON p.id = g.principal_id
-      JOIN pigboard_credentials c ON c.principal_id = p.id
+      FROM public.pigboard_grants g
+      JOIN public.pigboard_principals p ON p.id = g.principal_id
+      JOIN public.pigboard_credentials c ON c.principal_id = p.id
       WHERE g.role = 'owner' AND g.active
     `);
+    await client.query("COMMIT");
+    inTransaction = false;
     if (result.rows.length > 1) return { status: "schema_conflict" };
     const row = result.rows[0];
     return { ...schema, owner: row ? {
@@ -140,6 +170,7 @@ export async function inspectAuthority(client) {
       active: row.credential_active === true
     } : null };
   } catch {
+    if (inTransaction) try { await client.query("ROLLBACK"); } catch { /* Connection may be lost. */ }
     return { status: "inspection_unverified" };
   }
 }
@@ -157,7 +188,7 @@ export async function migrateAuthority(client) {
     if (before.status === "schema_absent") {
       await client.query(SQL);
       const catalog = await catalogChecksum(client);
-      await client.query(`INSERT INTO pigboard_schema_migrations
+      await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (1, $1, $2)`, [CHECKSUM, catalog]);
     }
     const after = await schemaState(client);
@@ -178,21 +209,21 @@ async function issueOwner(client, name, generation, previousId) {
   const principalId = randomUUID();
   const credentialId = randomUUID();
   const token = newToken();
-  await client.query("INSERT INTO pigboard_principals(id, name, kind) VALUES ($1, $2, 'human')",
+  await client.query("INSERT INTO public.pigboard_principals(id, name, kind) VALUES ($1, $2, 'human')",
     [principalId, name]);
-  await client.query(`INSERT INTO pigboard_credentials
+  await client.query(`INSERT INTO public.pigboard_credentials
     (id, principal_id, digest_version, digest, issued_generation)
     VALUES ($1, $2, 'sha256-v1', $3, $4)`,
   [credentialId, principalId, digestCallerToken(token), generation]);
   for (const role of ["owner", "connection_admin"]) {
-    await client.query("INSERT INTO pigboard_grants(principal_id, role) VALUES ($1, $2)",
+    await client.query("INSERT INTO public.pigboard_grants(principal_id, role) VALUES ($1, $2)",
       [principalId, role]);
   }
-  await client.query(`INSERT INTO pigboard_authority_events
+  await client.query(`INSERT INTO public.pigboard_authority_events
     (generation, event_type, principal_id, previous_principal_id)
     VALUES ($1, $2, $3, $4)`,
   [generation, previousId ? "owner_recovered" : "owner_bootstrapped", principalId, previousId]);
-  await client.query("UPDATE pigboard_team_authority SET generation = $1 WHERE team_key = 'pilot'",
+  await client.query("UPDATE public.pigboard_team_authority SET generation = $1 WHERE team_key = 'pilot'",
     [generation]);
   return { status: previousId ? "recovered" : "bootstrapped", generation,
     principalId, name, token };
@@ -213,12 +244,12 @@ export async function changeOwner(client, { name, expectGeneration = null } = {}
       return schema;
     }
     const authority = await client.query(
-      "SELECT generation FROM pigboard_team_authority WHERE team_key = 'pilot' FOR UPDATE"
+      "SELECT generation FROM public.pigboard_team_authority WHERE team_key = 'pilot' FOR UPDATE"
     );
     if (authority.rows.length !== 1) throw new AuthorityError("schema_conflict");
     const currentGeneration = Number(authority.rows[0].generation);
-    const owner = await client.query(`SELECT p.id, p.name FROM pigboard_grants g
-      JOIN pigboard_principals p ON p.id = g.principal_id
+    const owner = await client.query(`SELECT p.id, p.name FROM public.pigboard_grants g
+      JOIN public.pigboard_principals p ON p.id = g.principal_id
       WHERE g.role = 'owner' AND g.active`);
     if (owner.rows.length > 1) throw new AuthorityError("schema_conflict");
     const active = owner.rows[0];
@@ -235,8 +266,8 @@ export async function changeOwner(client, { name, expectGeneration = null } = {}
       return { status: "stale_generation", generation: currentGeneration };
     }
     if (expectGeneration !== null) {
-      await client.query("UPDATE pigboard_credentials SET active = false WHERE principal_id = $1 AND active", [active.id]);
-      await client.query("UPDATE pigboard_grants SET active = false WHERE principal_id = $1 AND active", [active.id]);
+      await client.query("UPDATE public.pigboard_credentials SET active = false WHERE principal_id = $1 AND active", [active.id]);
+      await client.query("UPDATE public.pigboard_grants SET active = false WHERE principal_id = $1 AND active", [active.id]);
     }
     const receipt = await issueOwner(client, name, currentGeneration + 1, active?.id ?? null);
     committing = true;
@@ -267,18 +298,36 @@ function safeDirectory(path, mode = null) {
   return { dev: stat.dev, ino: stat.ino, resolved };
 }
 
+function syncDirectory(path, identity) {
+  const fd = openSync(path, constants.O_RDONLY | constants.O_DIRECTORY | constants.O_NOFOLLOW);
+  try {
+    const stat = fstatSync(fd);
+    if (!stat.isDirectory() || stat.dev !== identity.dev || stat.ino !== identity.ino) {
+      throw new AuthorityError("unsafe_credential_directory");
+    }
+    fsyncSync(fd);
+  } finally {
+    closeSync(fd);
+  }
+}
+
 export function prepareCredentialDirectory(home = homedir()) {
   try {
-    safeDirectory(home);
+    const homeIdentity = safeDirectory(home);
     const config = join(home, ".config");
     if (!existsSync(config)) mkdirSync(config, { mode: 0o700 });
-    safeDirectory(config);
+    const configIdentity = safeDirectory(config);
     const app = join(config, "pigboard");
     if (!existsSync(app)) mkdirSync(app, { mode: 0o700 });
-    safeDirectory(app, 0o700);
+    const appIdentity = safeDirectory(app, 0o700);
     const directory = join(app, "owner-credentials");
     if (!existsSync(directory)) mkdirSync(directory, { mode: 0o700 });
     const identity = safeDirectory(directory, 0o700);
+    // Persist every ancestor entry before a database commit can issue a token.
+    for (const [path, current] of [[directory, identity], [app, appIdentity],
+      [config, configIdentity], [home, homeIdentity]]) {
+      syncDirectory(path, current);
+    }
     return { directory, identity };
   } catch (error) {
     if (error instanceof AuthorityError) throw error;
@@ -308,6 +357,7 @@ export function deliverCredential(prepared, generation, token) {
   const { directory, identity } = prepared;
   const path = join(directory, `owner-generation-${generation}.token`);
   let fd;
+  let directoryFd;
   try {
     const current = safeDirectory(directory, 0o700);
     if (current.dev !== identity.dev || current.ino !== identity.ino ||
@@ -326,10 +376,19 @@ export function deliverCredential(prepared, generation, token) {
       written += writeSync(fd, bytes, written, bytes.length - written);
     }
     fsyncSync(fd);
+    directoryFd = openSync(directory, constants.O_RDONLY | constants.O_DIRECTORY |
+      constants.O_NOFOLLOW);
+    const directoryStat = fstatSync(directoryFd);
+    if (!directoryStat.isDirectory() || directoryStat.dev !== identity.dev ||
+        directoryStat.ino !== identity.ino) {
+      throw new AuthorityError("credential_undelivered");
+    }
+    fsyncSync(directoryFd);
     return path;
   } catch {
     throw new AuthorityError("credential_undelivered");
   } finally {
+    if (directoryFd !== undefined) closeSync(directoryFd);
     if (fd !== undefined) closeSync(fd);
   }
 }

@@ -1,0 +1,24 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  node-and-postgres:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install PostgreSQL test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql openssl
+          pg_bin=$(dirname "$(find /usr/lib/postgresql -name initdb -type f -print -quit)")
+          test -x "$pg_bin/pg_ctl"
+          echo "$pg_bin" >> "$GITHUB_PATH"
+      - run: npm ci
+      - run: npm test

@@ -56,6 +56,11 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     const migrations = await Promise.all([migrateAuthority(first), migrateAuthority(second)]);
     assert.deepEqual(migrations.map((item) => item.status).sort(), ["already_current", "applied"]);
     assert.deepEqual(migrations.map((item) => item.generation), [0, 0]);
+    await first.query(`CREATE FUNCTION public.to_regclass(text)
+      RETURNS pg_catalog.regclass LANGUAGE sql AS 'SELECT NULL::pg_catalog.regclass'`);
+    await first.query("SET search_path = pg_catalog, public");
+    await second.query("SET search_path = pg_catalog, public");
+    assert.equal((await inspectAuthority(first)).status, "schema_current");
     const creations = await Promise.all([
       changeOwner(first, { name: "First Owner" }),
       changeOwner(second, { name: "Other Owner" })
@@ -155,15 +160,31 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(JSON.parse(existingOutput[0]).status, "credential_file_exists");
     assert.match(JSON.parse(existingOutput[0]).nextAction, /never overwrite it/);
     assert.equal((await inspectAuthority(first)).generation, 3);
+    let ownerQueryReached = false;
+    const interleavedInspection = { query: async (sql, params) => {
+      if (!ownerQueryReached && sql.includes("SELECT p.id AS principal_id")) {
+        ownerQueryReached = true;
+        const next = await changeOwner(second,
+          { name: "Owner During Inspection", expectGeneration: 3 });
+        assert.equal(next.status, "recovered");
+      }
+      return first.query(sql, params);
+    } };
+    const stable = await inspectAuthority(interleavedInspection);
+    assert.equal(stable.generation, 3);
+    assert.equal(stable.owner.name, "Owner After Lost Reply");
+    assert.equal((await inspectAuthority(first)).generation, 4);
     await first.query("UPDATE pigboard_grants SET active = false WHERE role = 'owner' AND active");
     assert.deepEqual(await changeOwner(second, { name: "Unsafe New Bootstrap" }),
-      { status: "owner_missing_needs_repair", generation: 3 });
+      { status: "owner_missing_needs_repair", generation: 4 });
     await first.query("DROP INDEX public.pigboard_one_active_owner");
     assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });
     assert.deepEqual(await inspectAuthority(first), { status: "schema_conflict" });
     await first.query(`CREATE UNIQUE INDEX pigboard_one_active_owner
       ON pigboard_grants (role) WHERE role = 'owner' AND active`);
     assert.equal((await inspectAuthority(second)).status, "schema_current");
+    await first.query("ALTER TABLE public.pigboard_grants ALTER COLUMN id DROP IDENTITY");
+    assert.deepEqual(await inspectAuthority(second), { status: "schema_conflict" });
     await first.query("UPDATE pigboard_schema_migrations SET checksum = $1 WHERE version = 1",
       ["0".repeat(64)]);
     assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });

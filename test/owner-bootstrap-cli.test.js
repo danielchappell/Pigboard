@@ -4,7 +4,7 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, renameSync,
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { AuthorityError, deliverCredential, prepareCredentialDirectory,
+import { AuthorityError, changeOwner, deliverCredential, prepareCredentialDirectory,
   preflightCredentialTarget } from "../src/hosted/authority-bootstrap.js";
 import { OwnerError } from "../src/hosted/owner-root.js";
 import { runOwnerCommand } from "../scripts/bootstrap-pigboard-owner.mjs";
@@ -34,6 +34,16 @@ test("owner command gives bounded help, usage, and connection failures", async (
     openConnection: async () => { throw new OwnerError("owner_connection_unverified"); }
   }), 1);
   assert.match(JSON.parse(lines.pop()).nextAction, /Check Neon availability/);
+});
+
+test("owner names cannot inject Unicode line separators into reports", async () => {
+  let queried = false;
+  const client = { query: async () => { queried = true; } };
+  for (const separator of ["\u0085", "\u2028", "\u2029"]) {
+    await assert.rejects(changeOwner(client, { name: `Alice${separator}status: bootstrapped` }),
+      { reason: "invalid_owner_name" });
+  }
+  assert.equal(queried, false);
 });
 
 test("a credential is delivered only into the original private directory", () => {

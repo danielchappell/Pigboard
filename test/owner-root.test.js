@@ -56,15 +56,17 @@ test("the owner client verifies TLS and session identity without returning a pas
   writeFileSync(file, urlFor(), { mode: 0o600 });
   let config;
   let ended = false;
+  const queries = [];
   class RecordingClient {
     constructor(value) { config = value; }
     async connect() {}
-    async query() { return { rows: [{ role: OWNER_TARGET.role,
+    async query(sql) { queries.push(sql); return { rows: [{ role: OWNER_TARGET.role,
       database: OWNER_TARGET.database, ssl: true }] }; }
     async end() { ended = true; }
   }
   try {
     const client = await connectOwner(file, { ClientClass: RecordingClient });
+    assert.ok(queries.includes("SET search_path = pg_catalog, public"));
     assert.equal(config.ssl.rejectUnauthorized, true);
     assert.equal(config.ssl.servername, OWNER_TARGET.host);
     assert.equal(config.enableChannelBinding, true);

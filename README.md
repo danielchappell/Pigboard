@@ -79,6 +79,9 @@ Requirements:
 - Node.js 20+
 - GitHub CLI authenticated with `gh auth login`, or a `GITHUB_TOKEN`/`GH_TOKEN`
   with Project and repo access
+- PostgreSQL server tools `initdb` and `pg_ctl`, plus `openssl`, for the real
+  local TLS database tests included in `npm test`. Install PostgreSQL and put
+  its server binary directory on `PATH`; CI installs these tools before testing.
 
 For local `gh` auth, grant GitHub Projects scopes once:
 
