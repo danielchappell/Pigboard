@@ -24,7 +24,16 @@ test("owner command gives bounded help, usage, and connection failures", async (
     output,
     openConnection: async () => { throw new OwnerError("owner_target_mismatch"); }
   }), 1);
-  assert.deepEqual(JSON.parse(lines.pop()), { status: "owner_target_mismatch" });
+  assert.deepEqual(JSON.parse(lines.pop()), {
+    status: "owner_target_mismatch",
+    nextAction: "Compare the private URL target with the reviewed owner pin; do not use a child, pooler or runtime role."
+  });
+  assert.equal(await runOwnerCommand(["inspect", "--owner-url-file", "/private/file",
+    "--format", "json"], {
+    output,
+    openConnection: async () => { throw new OwnerError("owner_connection_unverified"); }
+  }), 1);
+  assert.match(JSON.parse(lines.pop()).nextAction, /Check Neon availability/);
 });
 
 test("a credential is delivered only into the original private directory", () => {

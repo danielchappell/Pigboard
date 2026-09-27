@@ -1,6 +1,7 @@
 CREATE TABLE pigboard_schema_migrations (
   version integer PRIMARY KEY,
   checksum text NOT NULL CHECK (checksum ~ '^[0-9a-f]{64}$'),
+  catalog_checksum text NOT NULL CHECK (catalog_checksum ~ '^[0-9a-f]{64}$'),
   applied_at timestamptz NOT NULL DEFAULT now()
 );
 

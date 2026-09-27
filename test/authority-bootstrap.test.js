@@ -7,7 +7,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 import pg from "pg";
 import { changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
-  verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
+  prepareCredentialDirectory, verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
+import { runOwnerCommand } from "../scripts/bootstrap-pigboard-owner.mjs";
 
 function requireBinary(name) {
   const result = spawnSync("/usr/bin/env", ["sh", "-c", `command -v ${name}`], { encoding: "utf8" });
@@ -116,9 +117,53 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.deepEqual(await migrateAuthority(lostCommitReply),
       { status: "schema_outcome_unknown" });
     assert.equal((await inspectAuthority(first)).generation, 3);
+    const newClient = async () => {
+      const client = new pg.Client({ host: "localhost", port,
+        database: "postgres", user: process.env.USER,
+        ssl: { rejectUnauthorized: true, servername: "localhost", ca: readFileSync(cert, "utf8") } });
+      await client.connect();
+      clients.push(client);
+      return client;
+    };
+    const vanishedOutput = [];
+    assert.equal(await runOwnerCommand(["recover", "--owner-url-file", "/unused/test/path",
+      "--name", "Would Lose Directory", "--expect-generation", "3", "--format", "json"], {
+      home: temp, output: (line) => vanishedOutput.push(line), openConnection: newClient,
+      prepareDirectory: (home) => {
+        const prepared = prepareCredentialDirectory(home);
+        rmSync(prepared.directory, { recursive: true, force: true });
+        return prepared;
+      }
+    }), 1);
+    assert.equal(JSON.parse(vanishedOutput[0]).status, "unsafe_credential_directory");
+    assert.match(JSON.parse(vanishedOutput[0]).nextAction, /Fix local ownership/);
+    assert.equal((await inspectAuthority(first)).generation, 3);
+    const staleOutput = [];
+    assert.equal(await runOwnerCommand(["recover", "--owner-url-file", "/unused/test/path",
+      "--name", "Would Be Stale", "--expect-generation", "2", "--format", "json"], {
+      home: temp, output: (line) => staleOutput.push(line), openConnection: newClient
+    }), 1);
+    assert.equal(JSON.parse(staleOutput[0]).status, "stale_generation");
+    assert.match(JSON.parse(staleOutput[0]).nextAction, /Inspect the current generation/);
+    const prepared = prepareCredentialDirectory(temp);
+    writeFileSync(join(prepared.directory, "owner-generation-4.token"), "existing", { mode: 0o600 });
+    const existingOutput = [];
+    assert.equal(await runOwnerCommand(["recover", "--owner-url-file", "/unused/test/path",
+      "--name", "Would Overwrite", "--expect-generation", "3", "--format", "json"], {
+      home: temp, output: (line) => existingOutput.push(line), openConnection: newClient
+    }), 1);
+    assert.equal(JSON.parse(existingOutput[0]).status, "credential_file_exists");
+    assert.match(JSON.parse(existingOutput[0]).nextAction, /never overwrite it/);
+    assert.equal((await inspectAuthority(first)).generation, 3);
     await first.query("UPDATE pigboard_grants SET active = false WHERE role = 'owner' AND active");
     assert.deepEqual(await changeOwner(second, { name: "Unsafe New Bootstrap" }),
       { status: "owner_missing_needs_repair", generation: 3 });
+    await first.query("DROP INDEX public.pigboard_one_active_owner");
+    assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });
+    assert.deepEqual(await inspectAuthority(first), { status: "schema_conflict" });
+    await first.query(`CREATE UNIQUE INDEX pigboard_one_active_owner
+      ON pigboard_grants (role) WHERE role = 'owner' AND active`);
+    assert.equal((await inspectAuthority(second)).status, "schema_current");
     await first.query("UPDATE pigboard_schema_migrations SET checksum = $1 WHERE version = 1",
       ["0".repeat(64)]);
     assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });

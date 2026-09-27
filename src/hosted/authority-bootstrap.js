@@ -10,6 +10,33 @@ const TABLES = ["pigboard_schema_migrations", "pigboard_team_authority",
   "pigboard_principals", "pigboard_credentials", "pigboard_grants",
   "pigboard_authority_events"];
 const MIGRATION_LOCK = 870010021;
+const CATALOG_QUERIES = [
+  `SELECT c.relname, c.relkind, c.relrowsecurity, c.relforcerowsecurity
+   FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = ANY($1::text[]) ORDER BY c.relname`,
+  `SELECT c.relname, a.attnum, a.attname,
+     pg_catalog.format_type(a.atttypid, a.atttypmod) AS data_type,
+     a.attnotnull, pg_catalog.pg_get_expr(d.adbin, d.adrelid) AS default_expr
+   FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid
+   LEFT JOIN pg_catalog.pg_attrdef d ON d.adrelid = c.oid AND d.adnum = a.attnum
+   WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+     AND a.attnum > 0 AND NOT a.attisdropped
+   ORDER BY c.relname, a.attnum`,
+  `SELECT c.relname, k.conname, k.contype,
+     pg_catalog.pg_get_constraintdef(k.oid, true) AS definition
+   FROM pg_catalog.pg_constraint k JOIN pg_catalog.pg_class c ON c.oid = k.conrelid
+   JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+   ORDER BY c.relname, k.conname`,
+  `SELECT c.relname, i.relname AS index_name,
+     pg_catalog.pg_get_indexdef(i.oid) AS definition
+   FROM pg_catalog.pg_index x JOIN pg_catalog.pg_class c ON c.oid = x.indrelid
+   JOIN pg_catalog.pg_class i ON i.oid = x.indexrelid
+   JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+   ORDER BY c.relname, i.relname`
+];
 
 export class AuthorityError extends Error {
   constructor(reason) {
@@ -54,17 +81,34 @@ async function tablePresence(client) {
   return new Map(response.rows.map((row) => [row.name, row.relation !== null]));
 }
 
+async function catalogChecksum(client) {
+  const catalog = [];
+  for (const sql of CATALOG_QUERIES) {
+    catalog.push((await client.query(sql, [TABLES])).rows);
+  }
+  return createHash("sha256").update(JSON.stringify(catalog)).digest("hex");
+}
+
 async function schemaState(client) {
   const present = await tablePresence(client);
   if (TABLES.every((name) => !present.get(name))) return { status: "schema_absent" };
   if (TABLES.some((name) => !present.get(name))) return { status: "schema_conflict" };
   let receipts;
   try {
-    receipts = (await client.query("SELECT version, checksum FROM pigboard_schema_migrations ORDER BY version")).rows;
+    receipts = (await client.query(
+      "SELECT version, checksum, catalog_checksum FROM pigboard_schema_migrations ORDER BY version"
+    )).rows;
   } catch {
     return { status: "schema_conflict" };
   }
   if (receipts.length !== 1 || receipts[0].version !== 1 || receipts[0].checksum !== CHECKSUM) {
+    return { status: "schema_conflict" };
+  }
+  try {
+    if ((await catalogChecksum(client)) !== receipts[0].catalog_checksum) {
+      return { status: "schema_conflict" };
+    }
+  } catch {
     return { status: "schema_conflict" };
   }
   const authority = await client.query(
@@ -112,7 +156,9 @@ export async function migrateAuthority(client) {
     }
     if (before.status === "schema_absent") {
       await client.query(SQL);
-      await client.query("INSERT INTO pigboard_schema_migrations(version, checksum) VALUES (1, $1)", [CHECKSUM]);
+      const catalog = await catalogChecksum(client);
+      await client.query(`INSERT INTO pigboard_schema_migrations
+        (version, checksum, catalog_checksum) VALUES (1, $1, $2)`, [CHECKSUM, catalog]);
     }
     const after = await schemaState(client);
     if (after.status !== "schema_current") throw new AuthorityError("schema_conflict");
@@ -206,12 +252,19 @@ export async function changeOwner(client, { name, expectGeneration = null } = {}
 }
 
 function safeDirectory(path, mode = null) {
-  const stat = lstatSync(path);
+  let stat;
+  let resolved;
+  try {
+    stat = lstatSync(path);
+    resolved = realpathSync(path);
+  } catch {
+    throw new AuthorityError("unsafe_credential_directory");
+  }
   if (!stat.isDirectory() || stat.uid !== process.getuid() ||
       (mode === null ? (stat.mode & 0o022) !== 0 : (stat.mode & 0o777) !== mode)) {
     throw new AuthorityError("unsafe_credential_directory");
   }
-  return { dev: stat.dev, ino: stat.ino, resolved: realpathSync(path) };
+  return { dev: stat.dev, ino: stat.ino, resolved };
 }
 
 export function prepareCredentialDirectory(home = homedir()) {

@@ -53,6 +53,35 @@ function publicResult(result) {
   return safe;
 }
 
+const NEXT_ACTION = Object.freeze({
+  schema_absent: "Run the protected owner migration, then inspect before bootstrap.",
+  schema_conflict: "Stop; inspect the migration receipt and managed schema under owner custody before any repair.",
+  inspection_unverified: "Check database availability and inspect again; do not assume a prior operation failed.",
+  schema_outcome_unknown: "Inspect the current schema and owner before any explicit migration retry.",
+  outcome_unknown: "Inspect the current schema and owner before any explicit retry or recovery.",
+  owner_exists: "Inspect the current owner; if its credential is lost, use guarded recovery instead of bootstrap.",
+  owner_missing_needs_repair: "Stop and investigate the authority record under infrastructure custody; do not bootstrap again.",
+  stale_generation: "Inspect the current generation and owner before deciding whether guarded recovery is still needed.",
+  credential_undelivered: "Inspect the current owner, then run guarded recovery; do not repeat bootstrap.",
+  credential_file_exists: "Inspect the generation and existing private file; never overwrite it. Use guarded recovery if the credential is lost.",
+  unsafe_credential_directory: "Fix local ownership, symlinks or modes, then inspect before attempting a change.",
+  unsafe_owner_url_file: "Fix the private URL file and its parent ownership, symlinks or modes before retrying.",
+  invalid_owner_url_file: "Supply an absolute path to one protected owner URL file.",
+  invalid_owner_url: "Correct the protected URL file without printing its contents; use a direct TLS Postgres URL.",
+  owner_target_mismatch: "Compare the private URL target with the reviewed owner pin; do not use a child, pooler or runtime role.",
+  owner_pin_mismatch: "Stop and review the source-controlled owner and runtime pins before connecting.",
+  owner_identity_mismatch: "Stop and verify the actual owner database, role and TLS identity before any mutation.",
+  owner_connection_unverified: "Check Neon availability, owner login and TLS; inspect after restoring the connection.",
+  invalid_owner_name: "Use a nonempty single-line owner name of at most 120 characters.",
+  invalid_expected_generation: "Use the positive generation returned by a fresh inspection.",
+  owner_change_failed: "Inspect current owner state before deciding whether any explicit retry is safe."
+});
+
+function withNextAction(result) {
+  return NEXT_ACTION[result.status] && !result.nextAction ?
+    { ...result, nextAction: NEXT_ACTION[result.status] } : result;
+}
+
 function render(result, format) {
   if (format === "json") return JSON.stringify(result);
   const fields = ["status", "schemaVersion", "generation", "name", "principalId",
@@ -71,7 +100,7 @@ function successful(status) {
 }
 
 export async function runOwnerCommand(args, { output = console.log,
-  openConnection = connectOwner, home } = {}) {
+  openConnection = connectOwner, prepareDirectory = prepareCredentialDirectory, home } = {}) {
   const options = parse(args);
   if (options?.help) {
     output(HELP);
@@ -94,7 +123,7 @@ export async function runOwnerCommand(args, { output = console.log,
       } else if (options.command === "bootstrap" && before.owner) {
         result = { status: "owner_exists", generation: before.generation };
       } else {
-        const prepared = prepareCredentialDirectory(home);
+        const prepared = prepareDirectory(home);
         preflightCredentialTarget(prepared, before.generation + 1);
         result = await changeOwner(client, {
           name: options.name,
@@ -111,16 +140,13 @@ export async function runOwnerCommand(args, { output = console.log,
         }
       }
     }
-    const safe = publicResult(result);
-    if (["outcome_unknown", "schema_outcome_unknown"].includes(safe.status)) {
-      safe.nextAction = "Inspect the current schema and owner before any explicit retry.";
-    }
+    const safe = withNextAction(publicResult(result));
     output(render(safe, options.format));
     return successful(safe.status) ? 0 : 1;
   } catch (error) {
     const reason = error instanceof OwnerError || error instanceof AuthorityError ?
       error.reason : "operation_unverified";
-    output(render({ status: reason }, options.format));
+    output(render(withNextAction({ status: reason }), options.format));
     return 1;
   } finally {
     if (client) try { await client.end(); } catch { /* No raw driver output. */ }
