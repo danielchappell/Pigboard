@@ -1,6 +1,8 @@
 # Development Story previews
 
-These follow the independently reviewed [architecture](../architecture-plan.md).
+These follow the [architecture](../architecture-plan.md); an earlier revision
+was independently reviewed, and the current editorial Story-reference update
+requires exact-revision review.
 S01 and S03 were independently reviewed and merged. **All other Stories remain
 Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).
@@ -23,7 +25,32 @@ The [delivery queue](../delivery-plan.md) and [review record](../development-rev
 own its readiness. D2 resolves its offline configuration contract; live Jira and
 provider checks remain prerequisites of later Stories.
 
-## S02 — Explain one Jira ticket’s eligibility
+## S02a — Choose a Jira project and board
+
+Problem to solve
+
+An administrator cannot safely choose which Jira project and board Pigboard may use. The service credential may see more of the site than the team intends.
+
+Acceptance Criteria
+
+- A verified connection administrator can discover named projects and associated boards, choose one pair and correct a wrong selection without knowing native IDs or filters.
+- An authorized agent gets structured choices and stable IDs without an interactive prompt. A caller without connection-administrator authority cannot list or change the selection.
+- The selected pair is validated and recorded for later inspection; a missing, invalid or unavailable pair gives an actionable reason.
+
+Technical Acceptance Criteria
+
+- Verify the caller's connection-administrator scope independently of the Jira credential and workflow profile.
+- Verify project ID, board association and Task/To Do visibility before saving. Reject an unrelated board and never silently choose another.
+- Keep credentials in the service secret boundary and the selected pair in its configuration boundary. A profile or ticket cannot widen either.
+- Save the pair with a version under the D3 live-root connection authority. Pin the original root endpoint separately from the secret and reject a different effective target before reading or saving a pair, including startup, reconnect and secret change. Reject correction during active or uncertain effects. Keep trusted attempts inspectable under their saved launch pair/version and imported runs under their registration-time access association; neither old record authorizes an effect after correction. Later effects must check the current version.
+
+Testing Strategy
+
+- Manual QA: With a permitted test identity, list choices, save the PIG/board 2 pair and see the selected names and IDs. Exercise correction with a second verified permitted pair if D1 supplies one; otherwise use a controlled metadata fixture for correction and invalid-pair rejection.
+- Access and setup: D1 must provide a verified Scubapig integration identity, a connection administrator and a denied caller. The correction and invalid-pair fixtures must be named before delivery; do not change another live project merely to create them.
+- Automated regression: Cover selection, versioned correction, active/uncertain-work denial, fail-closed project-board validation and child-target refusal before selection reads or writes through the public human and agent entry points.
+
+## S02b — Explain one Jira ticket’s eligibility
 
 Problem to solve
 
@@ -31,19 +58,25 @@ A teammate cannot tell why a Jira ticket would be picked up or skipped. Guessing
 
 Acceptance Criteria
 
-- Inspection names the ticket’s configured role and repository, or the specific reason it is unavailable.
-- Wrong project, missing opt-in, blocked dependencies and unreadable state produce no launch or board write.
+- Inspection names the selected project's ticket, configured role and repository, or the decisive reason it is unavailable.
+- A wrong-project or wrong-board ticket, missing opt-in, blocked dependency or unreadable state produces no launch or board write.
+- Humans get a concise explanation and agents get the same facts in a structured result, including unknown or incomplete evidence.
+- A caller without current inspection access receives no ticket status, labels, dependency or access facts, even when the Jira credential can read the ticket.
+- An allowed caller whose issue audience cannot be proved sees only a generic unavailable result, with no ticket facts or launch.
 
 Technical Acceptance Criteria
 
-- Use the authorized Jira connection and core deterministic availability policy.
-- Include all reviewed eligibility inputs in the normalized state.
+- Use S02a's current saved project-board pair/version and the core deterministic eligibility policy; a profile cannot widen that scope. Check the version before a rich issue read; if it changes later, discard the result and return stale without a launch.
+- Before any Jira issue lookup, verify current team and connection scope plus a human viewer/operator grant or separate scoped-agent inspect grant. A connection administrator without a viewer/operator grant cannot inspect by default.
+- Read only D1's proven minimal native fields to check project, board membership and issue-level audience. If status or labels are needed solely for board filtering, keep them internal to that check. Suppress all minimal fields from output, logs and diagnostics until audience proof passes. Deny body and dependency-detail reads when scope or audience is unknown or denied; return only facts within the caller's audience.
+- Resolve blocker project IDs before blocker status reads and discard embedded out-of-scope linked-issue fields.
+- Incomplete links, hidden blockers and unknown canceled/completed mappings fail closed instead of implying eligibility.
 
 Testing Strategy
 
-- Manual QA: Inspect an eligible test Task, remove its opt-in in a fixture and confirm the reason changes in command output.
-- Access and setup: Use mocked Jira data first; live reads require D1’s verified integration identity and scoped test ticket.
-- Automated regression: Cover Jira normalization and core eligibility through the inspection command.
+- Manual QA: As a permitted human viewer and scoped agent, inspect D1's designated nonsensitive PIG issue through the selected pair and see the eligible, unavailable or unknown reason. A same-pair caller without an inspect grant sees no ticket facts; a permitted caller denied the issue audience sees only unavailable. No work starts and Jira is unchanged.
+- Access and setup: Use D1's verified read-only service identity, selected pair, designated issue and minimal audience fields, plus D3's permitted human/agent inspect grants and denied same-pair caller. Exercise denied issue audience, missing opt-in, blocked dependency and wrong-project/board cases with named fixtures unless D1 separately establishes suitable test issues and human edit authority. This Story does not send Jira content to Cursor.
+- Automated regression: Cover Jira normalization, dependency completeness, pre-lookup caller denial, minimal audience lookup, suppressed fields, scope denial and human/agent inspection output through the public command.
 
 ## S03 — Start and retrieve one manual Cursor cloud job
 
@@ -77,24 +110,28 @@ local terminal transcript. Result content is handled by S26.
 
 Acceptance Criteria
 
-- An authorized caller registers one existing run’s immutable identity, then retrieves its identity and last recorded inspection status from a fresh process. The response says when status was last observed and identifies any missing or unverified result content.
+- An authorized caller registers an existing run only after its original audience and permission to share it are proven. An authorized teammate can then inspect its identity and last observed status from a fresh process.
+- Inspection says when status was observed and whether result content is missing or unverified. Revoked sharing hides even a previously saved run ID, status and link.
 - A caller outside the configured scope cannot read the run, and a mismatched request cannot replace its identity.
 - If the Free database is asleep, inspection reports a bounded wait. If its quota is exhausted or it remains unavailable, inspection reports that state without claiming a fresh observation.
 
 Technical Acceptance Criteria
 
-- Use D2’s durable record in the selected Pigboard Neon Postgres project and D3’s scoped access contract; no local-only state is an accepted shared store. Pin the original root endpoint in a reviewed deployment artifact separate from the database secret, and reject a different effective target before inspecting data.
-- Registered-run inspection permits scoped viewers and operators, and agents only with a separate inspect grant for the connection. Connection admins need an independently granted viewer/operator role; the recovery principal cannot inspect the run.
-- Registration requires the D3 operator permission or a separate, explicit scoped-agent register grant. Registration does not attest the source revision, validate a result or grant permission to launch or publish.
+- Store the record in the selected Pigboard Neon project under D2/D3's scoped contract. Reuse S02a's original-root pin and deny reads or writes through another target.
+- Registration needs an operator or scoped-agent register grant. It also needs trusted evidence tying the exact provider agent/run IDs to their original audience and a current source-to-target sharing grant.
+- Verify a human approver's rights to that exact run and its content. An agent needs a preapproved grant for the exact run and target.
+- Account, repository and selected-pair matches cannot replace run-specific proof. Unknown origin denies registration and provider status/result reads without exposing metadata.
+- Each inspection rechecks the target viewer/operator or agent grant and the source-to-target sharing grant. Connection admins need a separate viewer/operator grant; the recovery principal has no inspection grant.
+- Store and return status metadata only. Discard any co-returned result text; S26 owns result capture.
 - This operation does not launch or retry provider work.
 - A failed database wake or Free quota limit cannot turn a missing write into a successful registration.
 - A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
 
 Testing Strategy
 
-- Manual QA: Save an existing fixture run, exit, retrieve it from a second process and confirm identity, an allowed scoped viewer or agent inspection, and denied out-of-scope and same-scope ungranted access.
+- Manual QA: Register an audience-bound fixture run and inspect it from another process as a scoped viewer. Confirm that a foreign run, missing origin record or revoked sharing grant reveals no run details.
 - Access and setup: Use the selected isolated store and test identities from D3; these remain unresolved before readiness.
-- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration, database wake/quota failure, root-endpoint binding across secret changes/reconnects, and both scope and role isolation across process restarts.
+- Automated regression: Cover durable scoped inspection, exact-run origin and revoked disclosure across restart, result omission, root binding and store outages.
 
 ## S05 — Explicitly start one eligible Jira request
 
@@ -111,7 +148,7 @@ Acceptance Criteria
 
 Technical Acceptance Criteria
 
-- Persist immutable launch intent before the provider call and enforce D2’s ownership/recovery rules.
+- Persist immutable launch intent, including the selected project-board pair/version, before the provider call and enforce D2’s ownership/recovery rules.
 - Check current authority and reserve the effect in one transaction on the pinned original root endpoint. Reject a secret or connection override pointing to an older Neon child before reads or sends; a pre-S29 revision has no recovery path.
 - Use configured role/repository and keep coordinator credentials out of the prompt.
 - Before storing copied source, a prepared request or a sealed credential, document that class's audience, lifetime and deletion, including restored copies.
@@ -120,7 +157,7 @@ Testing Strategy
 
 - Manual QA: Start the same synthetic ticket twice through mocked provider calls and confirm one attempt and one accepted provider identity.
 - Access and setup: Use an isolated store, authorized test ticket and mocked runner; meaningful live work needs separately established execution authority.
-- Automated regression: Cover claim contention, database quota/unavailability before reservation, ambiguous launch recovery, stale-input rejection and no read/send when the configured database target is a historical child.
+- Automated regression: Cover claim contention, database quota/unavailability before reservation, ambiguous launch recovery, changed-pair and stale-input rejection, and no read/send when the configured database target is a historical child.
 
 ## S26 — Observe and validate a saved provider result
 
@@ -130,22 +167,23 @@ A provider can finish without answering the intended question. Publishing its ra
 
 Acceptance Criteria
 
-- An observation command retrieves the exact recorded run and stores its current state without starting another job.
-- A completed result is checked against the configured role’s output contract and stored as validated output or explicit needs-attention.
-- Questions, invalid output and provider failure remain distinct from a publishable answer.
+- An observation command retrieves the exact recorded run within its currently authorized source audience and stores its current state without starting another job.
+- A completed result is checked against the configured role’s output contract and stored with its validation and binding state.
+- Questions, invalid output, provider failure and a valid-looking but unbound answer remain distinct from an answer eligible for publication.
 
 Technical Acceptance Criteria
 
-- Use D2/D4’s role/result and provider-state contracts, pinned to the stored immutable input.
-- Refuse validation until D4-source binds the provider's actual source commit to that input; leave the saved run available for inspection.
+- Use D2/D4’s role/result and provider-state contracts. Recheck S04's source-to-connection audience authorization before reading or storing an imported result; changed or missing authority yields no provider read or result disclosure. For an authorized imported run, a claimed role or revision permits only format inspection; it does not attest the original request or authorize publication.
+- Require a trusted immutable launch record binding the ticket, role/package, profile, exact provider request and recorded run. Independently bind the provider's original request and D4-source's actual checkout commit before marking output eligible for publication. A lost-create observation or duplicate-ID conflict is not that proof.
+- Leave an audience-authorized run with an unbound original request or unverified checkout commit available for scoped inspection with an explicit nonpublishable state. A run with unknown source audience is not inspected.
 - A stale owner or mismatched run cannot overwrite the accepted result.
 - Before storing provider output, document who can read it, how long it remains and how it is deleted, including restored copies.
 
 Testing Strategy
 
-- Manual QA: Observe successful, question and invalid-output fixtures; inspect stored state and verify only the valid answer is available for publication.
-- Access and setup: Use stored scoped runs and mocked provider replies; no additional paid run is required.
-- Automated regression: Cover exact-run observation, role-result validation and stale-result rejection.
+- Manual QA: Observe successful, question and invalid-output fixtures; inspect stored state and verify that an imported valid-looking answer stays nonpublishable while a fully bound valid answer is eligible.
+- Access and setup: Use stored scoped runs, a trusted launch-record fixture and mocked provider replies; no additional paid run is required.
+- Automated regression: Cover exact-run observation, changed/missing import audience, role-result validation, missing request/source binding and stale-result rejection.
 
 ## S06 — Publish one stored result to its ticket
 
@@ -162,7 +200,7 @@ Acceptance Criteria
 
 Technical Acceptance Criteria
 
-- Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract.
+- Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract. Recheck the current selected pair/version against the launch record inside the write reservation; a changed pair withholds publication.
 - Commit the D2 effect reservation on the pinned root before any Jira write; a quota or database failure cannot authorize a send.
 - Keep the human assignee and never use comments as run locks.
 - Before storing publication evidence, document its audience, lifetime and deletion, including restored copies.
@@ -171,7 +209,7 @@ Testing Strategy
 
 - Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect one intended comment, no rerun and manual status when no full guard exists.
 - Access and setup: Use the scoped fixture Jira service first; live comment/transition acceptance requires the controlled test ticket and verified write authority.
-- Automated regression: Cover partial publication recovery, no Jira write after a failed or uncertain reservation, stale-ticket handling and source-audience enforcement.
+- Automated regression: Cover partial publication recovery, no Jira write after a failed or uncertain reservation, changed-pair or stale-ticket handling, and source-audience enforcement.
 
 ## S07 — Automatically pick up and reconcile eligible work
 

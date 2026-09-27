@@ -1,7 +1,7 @@
 # D4 runner capability decision
 
 22 September 2026. Discovery and design for the first hosted researcher run.
-This applies the reviewed [hosted work contract](hosted-work-contract.md) to
+This applies the substantively unchanged [hosted work contract](hosted-work-contract.md) to
 Cursor Cloud Agents and examines the existing [PR #7](https://github.com/danielchappell/ski-stack/pull/7).
 It does not activate a provider, grant repository access, or approve that PR.
 The first runner remains Cursor because the owner has authorized only trivial
@@ -14,7 +14,7 @@ silent substitute for the chosen pilot.
 | Evidence | What it establishes | What it does not establish |
 | --- | --- | --- |
 | Saved [marker-only probe](../pilots/cursor-api-probe-result.json), 21 September | User-key authentication, model listing, client agent ID, a successful no-repository run, duplicate-ID conflict, and exact run retrieval on this account. | Repository access, teammate visibility, useful researcher output, cost at working scale, or safe source-write authority. |
-| [Cursor v1 endpoints](https://cursor.com/docs/cloud-agent/api/endpoints), checked 22 September | `POST /agents` creates an agent and initial run; a supplied `bc-<uuid>` can return `409 agent_id_conflict`; agent, run-list and exact-run reads are documented. A follow-up creates another run and an active agent can reject it as busy. | Server-side matching of a repeated request body, provider-attested prompt/model/revision identity, or exactly-once execution after an unknown network outcome. The saved marker probe did not exercise the run-list endpoint. |
+| [Cursor v1 endpoints](https://cursor.com/docs/cloud-agent/api/endpoints), rechecked 27 September | `POST /agents` creates an agent and initial run; a supplied `bc-<uuid>` can return `409 agent_id_conflict`; agent, run-list and exact-run reads are documented. The agent response includes repository URLs, while the run response can include result text. A follow-up creates another run and an active agent can reject it as busy. | The documented responses do not attest the original run's owner/audience, prompt/model/revision, or a repeated request-body match; nor do they establish exactly-once execution after an unknown network outcome. The saved marker probe did not exercise the run-list endpoint. |
 | [Cursor Cloud Agents](https://cursor.com/docs/cloud-agent), checked 22 September | Repository use needs an admin-connected source-control integration; agents clone and can push a separate branch. Cursor manages cloud VMs; run diagnostics are available through Cursor Cloud MCP. | That this team's connection has the required repository grant, or that plan mode prevents writes. |
 | [PR #7](https://github.com/danielchappell/ski-stack/pull/7) at `da2fc8ccc0cdc4cd0493c16691d286309f513c9f`, 12 files against current main | A standalone Node runner and CLI prepare, start once, observe existing work with reads, retrieve a named run, validate response shapes, and redact the supplied key. Two fresh full-PR reviews are CLEAN; 239 local tests pass. | D2's hosted application contract, hosted CI, provider-attested request binding, or a repository-backed live test. [Review evidence](../reviews/runner-capabilities.md#pr-7-retrospective-and-committed-code-evidence) is separate from this D4 design review. |
 | [OpenAI Agents API](https://developers.openai.com/api/docs/guides/agents-api/overview) and [hosted sandbox](https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted), checked 22 September | A managed Codex harness can start durable sessions in an OpenAI-hosted environment and stream or receive events. The documentation shows Astra as a model example and separate API/container billing. | An approved account, repository checkout/write workflow, cost allowance, or the same ID and recovery semantics as Cursor. |
@@ -95,13 +95,42 @@ outcomes if it cannot fit one PR; never move a live send ahead of its store.
 The [separate committed-code reviews](../reviews/runner-capabilities.md#pr-7-retrospective-and-committed-code-evidence),
 not historical author tests or this design review, support PR #7's code gate.
 
-S04 may import a standalone run launched from a branch for inspection, but a
-moving ref does not identify the source commit. Such a run is inspection-only:
-S26 cannot validate it for publication and S06 cannot publish it until the
+S04 may import a standalone run launched from a branch for inspection only
+after binding that **exact agent/run ID** to its original source audience and
+authorizing disclosure to the selected connection. A pair/version, provider
+API key, account/repository match or registrar's general source role is not
+run-specific proof. Authenticate the registrar's current source and target
+grants before a minimal provider metadata lookup. A trusted run-specific
+origin record must then establish the original audience and owner: either
+provider-attested evidence or a contemporaneous launch receipt issued by a
+trusted source command. A source-authorized human may approve transfer only
+after their authority for this exact run and its original content is
+independently verified; an agent needs a preapproved grant bound to the same
+run-specific record and target audience. An entered ID, later model claim or
+self-attestation cannot create that record. Store its identity and evidence
+reference, not raw prompt or result.
+
+Before **each** S04 provider status read or shared inspection, recheck the
+current source-to-target authorization and target viewer/agent grant. A revoked
+source grant or disclosure blocks even previously saved status, ID and link;
+discard any result field returned alongside provider status. S26 performs its
+own audience recheck before result capture. If run-specific origin or current
+disclosure cannot be proved, do not read status/result, create or show a shared
+registration, or return provider metadata; report a scoped unverified-import
+error. D4L must prove this path before S04 is ready. If the provider and
+trusted source commands cannot supply run-specific proof, re-groom S04 into a
+complete trusted-source outcome before implementation.
+An authorized import from a moving ref remains inspection-only: S26 may check
+its output format within the established audience, but cannot mark it
+publishable and S06 cannot publish it from a claimed role or revision. The
 [D4L Task](../tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity)
-records provider-visible or independently checked evidence binding the actual
-checkout to a 40-hex revision. That **D4-source** gate is separate from a local
-request digest. A model's claimed commit or a guess from the branch's later
+must record provider-visible or independently checked evidence binding the actual
+checkout to a 40-hex revision. That **D4-source** gate does not prove the
+original prompt, role, profile or provider request. Publication additionally
+requires a trusted immutable launch record and independent evidence binding
+that original request to the exact run. S05 creates that record for hosted
+launches; an imported run cannot gain the same authority merely by registering
+its IDs. A model's claimed commit or a guess from the branch's later
 tip is insufficient. D4-live additionally requires the repository grant,
 enforced read-only behavior, teammate access and meaningful-work authority.
 
@@ -140,8 +169,12 @@ PR #7's retrospective plan and code reviews covered the manual saved-request
 flow, a lost create reply, `409` conflict, missing/ambiguous run reads, exact
 run retrieval after follow-up, identity mismatch, unknown status, safe errors,
 and no repository credentials in payloads. S04 must prove shared process-restart
-inspection of a manually registered run and label mutable/unattested revisions
-inspection-only. S05's reviewed plan must prove stored preparation, one reserved
+inspection of a manually registered run with proven source-to-target audience.
+It must deny a foreign run, a registrar without exact-run source rights, a
+same-pair viewer without a grant and a revoked disclosure after restart,
+without reading or disclosing provider status/results. Mutable/unattested
+revisions remain inspection-only after
+that audience check. S05's reviewed plan must prove stored preparation, one reserved
 send across crashes and contention, and needs-attention after an unbound remote
 observation. A local digest alone is not provider binding. The hosted route must
 reject a mutable branch ref. S26 must
@@ -158,10 +191,11 @@ replace the account/repository/team evidence above.
 | Discoverable | A capability response and access-check result explain supported operations and unverified repository permissions to both human and agent callers. |
 | Delightful experience | Read-only observation uses the original ID after a lost reply without repeating paid work; uncertain binding needs human resolution. |
 | Token saver | Code chooses the recorded run and validates JSON; no model decides whether an API retry is safe. Raw output is bounded with stated omissions. |
-| Secure | The service owns scope and credentials; a saved digest blocks local payload substitution, but an unbound remote observation cannot authorize publication. Plan mode is not mistaken for write control. |
-| Agents are equal | The same typed prepare/start/recover/get states are usable from commands and future MCP without UI clicks. Human diagnostics remain readable. |
-| Dependable | Unknown launch/result outcomes stay visible and stop advancement; terminal provider status never implies validated findings or human acceptance. |
+| Secure | The service owns scope and credentials; trusted exact-run origin and current source-to-target authorization are checked before registration and every status/result read, so a known foreign ID or later revocation cannot expose even saved metadata. A saved digest blocks local payload substitution, but an unbound remote observation cannot authorize publication. Plan mode is not mistaken for write control. |
+| Agents are equal | The same typed prepare/start/recover/get states are usable from commands and future MCP without UI clicks. A scoped agent import needs a preapproved exact-run transfer grant; a human may authorize only after independent verification of their rights to that run's content. Diagnostics stay readable without exposing foreign metadata. |
+| Dependable | Unknown exact-run origin or revoked disclosure fails before shared inspection, and unknown launch/result outcomes stay visible without advancing; terminal provider status never implies validated findings or human acceptance. If import evidence is unavailable, S04 is re-groomed rather than declaring partial plumbing complete. |
 
-The [review record](../reviews/runner-capabilities.md) identifies the exact
-artifact and independent verdicts. No hosted Story is promoted by the author's
-assessment alone.
+The [review record](../reviews/runner-capabilities.md) identifies earlier
+artifacts and their independent verdicts. This revised imported-run provenance
+contract needs its own exact-artifact review. No hosted Story is promoted by
+the author's assessment alone.
