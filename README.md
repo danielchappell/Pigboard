@@ -62,6 +62,16 @@ fresh, pinned Neon root connection. Both commands need a private
 private Fly setup, safe secret handoff, diagnostic results, restart and rollback.
 The host is not live merely because this code or a passing local test exists.
 
+## Set up the first Pigboard owner
+
+An infrastructure operator can run `npm run --silent owner:migrate -- --help`
+for the protected migration, first-owner bootstrap, inspection and guarded
+recovery commands. They use a private local `pigboard_owner` URL file and write
+the one-time caller credential to a private owner file, never to terminal output.
+The [owner setup guide](docs/hosted-pigboard-authority.md) gives the ordered steps
+and interruption recovery. These commands are not a normal service API; local
+tests alone do not prove live Neon setup or make the first host ready.
+
 ## Quick Setup
 
 Requirements:

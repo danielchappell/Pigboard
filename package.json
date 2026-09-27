@@ -8,6 +8,10 @@
   "scripts": {
     "test": "node --test",
     "host:pigboard": "node scripts/run-pigboard-host.mjs",
+    "owner:migrate": "node scripts/bootstrap-pigboard-owner.mjs migrate",
+    "owner:bootstrap": "node scripts/bootstrap-pigboard-owner.mjs bootstrap",
+    "owner:recover": "node scripts/bootstrap-pigboard-owner.mjs recover",
+    "owner:inspect": "node scripts/inspect-pigboard-authority.mjs",
     "neon:preflight": "node scripts/check-neon-root.mjs",
     "profile:check": "node scripts/check-workflow-profile.mjs",
     "apply:github": "node scripts/apply-github-worker-result.mjs",

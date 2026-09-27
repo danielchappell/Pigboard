@@ -1,0 +1,131 @@
+import assert from "node:assert/strict";
+import { execFileSync, spawnSync } from "node:child_process";
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { test } from "node:test";
+import pg from "pg";
+import { changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
+  verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
+
+function requireBinary(name) {
+  const result = spawnSync("/usr/bin/env", ["sh", "-c", `command -v ${name}`], { encoding: "utf8" });
+  assert.equal(result.status, 0, `${name} is required for the non-skipping owner race test`);
+}
+
+async function freePort() {
+  const server = createServer();
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const port = server.address().port;
+  await new Promise((resolve) => server.close(resolve));
+  return port;
+}
+
+test("real independent Postgres sessions serialize migration, setup, and recovery", async () => {
+  for (const name of ["initdb", "pg_ctl", "openssl"]) requireBinary(name);
+  const temp = mkdtempSync(join(tmpdir(), "pigboard-owner-race-"));
+  const data = join(temp, "data");
+  const log = join(temp, "postgres.log");
+  const cert = join(temp, "server.crt");
+  const key = join(temp, "server.key");
+  let running = false;
+  const clients = [];
+  try {
+    execFileSync("initdb", ["-D", data, "-A", "trust", "--no-instructions"], { stdio: "pipe" });
+    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
+      "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost",
+      "-keyout", key, "-out", cert], { stdio: "pipe" });
+    chmodSync(key, 0o600);
+    const port = await freePort();
+    writeFileSync(join(data, "postgresql.conf"),
+      `\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\n`, { flag: "a" });
+    execFileSync("pg_ctl", ["-D", data, "-l", log, "-o",
+      `-h localhost -p ${port}`, "-w", "start"], { stdio: "pipe" });
+    running = true;
+    for (let i = 0; i < 2; i += 1) {
+      const client = new pg.Client({ host: "localhost", port,
+        database: "postgres", user: process.env.USER,
+        ssl: { rejectUnauthorized: true, servername: "localhost", ca: readFileSync(cert, "utf8") } });
+      await client.connect();
+      clients.push(client);
+    }
+    const [first, second] = clients;
+    assert.deepEqual(await inspectAuthority(first), { status: "schema_absent" });
+    const migrations = await Promise.all([migrateAuthority(first), migrateAuthority(second)]);
+    assert.deepEqual(migrations.map((item) => item.status).sort(), ["already_current", "applied"]);
+    assert.deepEqual(migrations.map((item) => item.generation), [0, 0]);
+    const creations = await Promise.all([
+      changeOwner(first, { name: "First Owner" }),
+      changeOwner(second, { name: "Other Owner" })
+    ]);
+    assert.deepEqual(creations.map((item) => item.status).sort(), ["bootstrapped", "owner_exists"]);
+    const issued = creations.find((item) => item.status === "bootstrapped");
+    assert.match(issued.token, /^pb1_[A-Za-z0-9_-]{43}$/u);
+    assert.equal(issued.generation, 1);
+    const inspection = await inspectAuthority(second);
+    assert.equal(inspection.status, "schema_current");
+    assert.equal(inspection.generation, 1);
+    assert.equal(inspection.owner.principalId, issued.principalId);
+    assert.equal(inspection.owner.active, true);
+    const rerun = await migrateAuthority(first);
+    assert.deepEqual(rerun, { status: "already_current", schemaVersion: 1, generation: 1 });
+    const originalCredential = (await first.query(
+      "SELECT digest_version, digest, active FROM pigboard_credentials WHERE principal_id = $1",
+      [issued.principalId])).rows[0];
+    assert.equal(originalCredential.digest, digestCallerToken(issued.token));
+    assert.equal(verifyCallerToken(issued.token, originalCredential.digest_version,
+      originalCredential.digest), true);
+    assert.equal(verifyCallerToken("pb1_" + "A".repeat(43), originalCredential.digest_version,
+      originalCredential.digest), false);
+    const replacements = await Promise.all([
+      changeOwner(first, { name: "Recovered Owner", expectGeneration: 1 }),
+      changeOwner(second, { name: "Competing Recovery", expectGeneration: 1 })
+    ]);
+    assert.deepEqual(replacements.map((item) => item.status).sort(), ["recovered", "stale_generation"]);
+    const replacement = replacements.find((item) => item.status === "recovered");
+    assert.equal(replacement.generation, 2);
+    assert.equal((await inspectAuthority(first)).owner.principalId, replacement.principalId);
+    assert.equal((await migrateAuthority(second)).generation, 2);
+    const old = (await second.query(
+      "SELECT active FROM pigboard_credentials WHERE principal_id = $1",
+      [issued.principalId])).rows[0];
+    assert.equal(old.active, false);
+    const activeOwners = await first.query(
+      "SELECT count(*)::int AS count FROM pigboard_grants WHERE role = 'owner' AND active");
+    assert.equal(activeOwners.rows[0].count, 1);
+    const events = await first.query("SELECT generation, event_type FROM pigboard_authority_events ORDER BY generation");
+    assert.deepEqual(events.rows.map((row) => Number(row.generation)), [1, 2]);
+    assert.deepEqual(events.rows.map((row) => row.event_type),
+      ["owner_bootstrapped", "owner_recovered"]);
+    assert.equal((await first.query("SELECT generation FROM pigboard_team_authority WHERE team_key = 'pilot'"))
+      .rows[0].generation, "2");
+    // Simulate a transport failure after the server committed. The caller must
+    // inspect rather than replay an owner-changing operation.
+    const lostCommitReply = { query: async (sql, params) => {
+      const result = await second.query(sql, params);
+      if (sql === "COMMIT") throw new Error("reply lost after commit");
+      return result;
+    } };
+    const ambiguous = await changeOwner(lostCommitReply,
+      { name: "Owner After Lost Reply", expectGeneration: 2 });
+    assert.deepEqual(ambiguous, { status: "outcome_unknown" });
+    const afterUnknown = await inspectAuthority(first);
+    assert.equal(afterUnknown.generation, 3);
+    assert.equal(afterUnknown.owner.name, "Owner After Lost Reply");
+    assert.deepEqual(await migrateAuthority(lostCommitReply),
+      { status: "schema_outcome_unknown" });
+    assert.equal((await inspectAuthority(first)).generation, 3);
+    await first.query("UPDATE pigboard_grants SET active = false WHERE role = 'owner' AND active");
+    assert.deepEqual(await changeOwner(second, { name: "Unsafe New Bootstrap" }),
+      { status: "owner_missing_needs_repair", generation: 3 });
+    await first.query("UPDATE pigboard_schema_migrations SET checksum = $1 WHERE version = 1",
+      ["0".repeat(64)]);
+    assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });
+    assert.deepEqual(await inspectAuthority(first), { status: "schema_conflict" });
+  } finally {
+    for (const client of clients) try { await client.end(); } catch { /* Cleanup. */ }
+    if (running) spawnSync("pg_ctl", ["-D", data, "-m", "immediate", "-w", "stop"], { stdio: "pipe" });
+    rmSync(temp, { recursive: true, force: true });
+  }
+});
