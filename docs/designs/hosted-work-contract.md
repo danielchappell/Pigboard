@@ -350,7 +350,9 @@ No parser framework, network client, database or provider launch is included.
 
 The later command outcomes remain separate: S04 inspects a saved run across
 processes; S05 submits one ticket; S26 observes/validates; S06 publishes stored
-work; S07 schedules these operations; S08 deploys the selected service. Combining
+work; S07 schedules these operations; S08 adds the automatic coordinator to the
+service first hosted no later than S02a. The first host may require a complete
+technical Story before S02a under the 20-file limit. Combining
 store/auth setup, launch, polling and Jira recovery into one Story would cross
 several boundaries and is not accepted as a two-day slice. Their precise file/day
 estimates remain blocked on D1/D3/D4 choices; D2 does not invent them. Revisit and

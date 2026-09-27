@@ -27,28 +27,33 @@ provider checks remain prerequisites of later Stories.
 
 ## S02a — Choose a Jira project and board
 
+**Provisional — not ready for delivery.** The combined first-host, authority,
+store, Jira metadata and pair-selection preview is estimated at 22–26 changed
+files. Split complete prerequisite technical outcomes before implementation,
+then review this Story's exact plan.
+
 Problem to solve
 
 An administrator cannot safely choose which Jira project and board Pigboard may use. The service credential may see more of the site than the team intends.
 
 Acceptance Criteria
 
-- A verified connection administrator can discover named projects and associated boards, choose one pair and correct a wrong selection without knowing native IDs or filters.
+- A verified connection administrator can discover named projects inside the owner's approved site/project scope and their associated boards, choose one pair and correct a wrong selection without knowing native IDs or filters.
 - An authorized agent gets structured choices and stable IDs without an interactive prompt. A caller without connection-administrator authority cannot list or change the selection.
 - The selected pair is validated and recorded for later inspection; a missing, invalid or unavailable pair gives an actionable reason.
 
 Technical Acceptance Criteria
 
-- Verify the caller's connection-administrator scope independently of the Jira credential and workflow profile.
-- Verify project ID, board association and Task/To Do visibility before saving. Reject an unrelated board and never silently choose another.
+- Verify the caller's connection-administrator scope independently of the Jira credential and workflow profile. Only the team owner may approve or widen the site/project candidate scope; an agent with connection-admin rights cannot.
+- Verify the approved project ID, board association and Task/To Do filter and column visibility before saving. Reject an unrelated board or a scope change during listing, and never silently choose another.
 - Keep credentials in the service secret boundary and the selected pair in its configuration boundary. A profile or ticket cannot widen either.
 - Save the pair with a version under the D3 live-root connection authority. Pin the original root endpoint separately from the secret and reject a different effective target before reading or saving a pair, including startup, reconnect and secret change. Reject correction during active or uncertain effects. Keep trusted attempts inspectable under their saved launch pair/version and imported runs under their registration-time access association; neither old record authorizes an effect after correction. Later effects must check the current version.
 
 Testing Strategy
 
-- Manual QA: With a permitted test identity, list choices, save the PIG/board 2 pair and see the selected names and IDs. Exercise correction with a second verified permitted pair if D1 supplies one; otherwise use a controlled metadata fixture for correction and invalid-pair rejection.
-- Access and setup: D1 must provide a verified Scubapig integration identity, a connection administrator and a denied caller. The correction and invalid-pair fixtures must be named before delivery; do not change another live project merely to create them.
-- Automated regression: Cover selection, versioned correction, active/uncertain-work denial, fail-closed project-board validation and child-target refusal before selection reads or writes through the public human and agent entry points.
+- Manual QA: As a permitted administrator or agent, list current approved choices, save the PIG/board 2 pair and see its names, IDs and version. Correct it to a safe second PIG board, then return to board 2; a denied caller sees no choices. A controlled metadata fixture also covers invalid-pair and filter mismatch behavior.
+- Access and setup: D1 must prove Scubapig integration-identity metadata and supply a safe second PIG board for live correction. D3 must provide the reviewed first-host secret/auth/store boundary, an owner-approved PIG scope, a connection administrator, a scoped agent and a denied caller. Do not change an unrelated project merely to create a fixture.
+- Automated regression: Cover owner-only scope approval, selection, versioned correction, active/uncertain-work denial, filter/column mismatch, concurrent scope reduction or grant revocation during listing, and child-target refusal before selection reads or writes through the human and agent entry points.
 
 ## S02b — Explain one Jira ticket’s eligibility
 
@@ -240,18 +245,18 @@ Testing Strategy
 
 Problem to solve
 
-The workflow still depends on an operator’s process. The first hosted team must see and recover its work even when that computer is off.
+The selection service is hosted, but the automatic coordinator still depends on an operator’s process. The team must see and recover its work even when that computer is off.
 
 Acceptance Criteria
 
 - The configured hosted worker continues the established ticket workflow after the initiating client disconnects.
 - An authorized teammate can inspect health/run evidence and an unauthorized viewer is denied.
-- The operating guide explains restart, credential configuration and common failures for the selected host.
+- The operating guide explains coordinator restart, credential rotation and common failures on the existing host.
 - Health probes permit Neon to sleep, and operations report measured compute and storage use against the Free limits.
 
 Technical Acceptance Criteria
 
-- Use D3’s chosen host/store/access setup and existing coordinator commands.
+- Add the coordinator to D3’s previously verified host/store/access setup and existing commands; do not defer the first-host secret, TLS or rollback checks to this Story.
 - Keep process health independent of a Postgres query; record active CU-hours and storage against the account's actual Free allowances.
 - Keep one team and one active attempt; do not bundle a new dashboard or billing system.
 
