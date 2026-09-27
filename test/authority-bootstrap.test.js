@@ -41,8 +41,14 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     const port = await freePort();
     writeFileSync(join(data, "postgresql.conf"),
       `\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\n`, { flag: "a" });
-    execFileSync("pg_ctl", ["-D", data, "-l", log, "-o",
-      `-h localhost -p ${port}`, "-w", "start"], { stdio: "pipe" });
+    try {
+      execFileSync("pg_ctl", ["-D", data, "-l", log, "-o",
+        `-h localhost -p ${port}`, "-w", "start"], { stdio: "pipe" });
+    } catch (error) {
+      let serverLog = "PostgreSQL did not write a log";
+      try { serverLog = readFileSync(log, "utf8"); } catch { /* Startup may fail before log creation. */ }
+      throw new Error(`Disposable PostgreSQL startup failed:\n${serverLog}`, { cause: error });
+    }
     running = true;
     for (let i = 0; i < 2; i += 1) {
       const client = new pg.Client({ host: "localhost", port,

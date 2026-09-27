@@ -141,7 +141,13 @@ test("a real local TLS Postgres reconnect repeats the root pin check", async (t)
     const port = await freePort();
     writeFileSync(join(data, "postgresql.conf"), `\nlisten_addresses = 'localhost'\nport = ${port}\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\n`, { flag: "a" });
     const start = () => {
-      execFileSync("pg_ctl", ["-D", data, "-l", log, "-w", "start"], { stdio: "pipe" });
+      try {
+        execFileSync("pg_ctl", ["-D", data, "-l", log, "-w", "start"], { stdio: "pipe" });
+      } catch (error) {
+        let serverLog = "PostgreSQL did not write a log";
+        try { serverLog = readFileSync(log, "utf8"); } catch { /* Startup may fail before log creation. */ }
+        throw new Error(`Disposable PostgreSQL startup failed:\n${serverLog}`, { cause: error });
+      }
       running = true;
     };
     const stop = () => {
