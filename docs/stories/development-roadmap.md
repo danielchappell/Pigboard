@@ -71,24 +71,28 @@ Testing Strategy
 
 Problem to solve
 
-Provider IDs and results must survive the process that obtained them. Authorized teammates need a shared record rather than a local terminal transcript.
+Provider IDs and the last recorded inspection status must survive the process
+that obtained them. Authorized teammates need a shared record rather than a
+local terminal transcript. Result content is handled by S26.
 
 Acceptance Criteria
 
-- An authorized caller saves one existing run’s immutable identity and can retrieve its current stored result from a fresh process.
+- An authorized caller registers one existing run’s immutable identity, then retrieves its identity and last recorded inspection status from a fresh process. The response says when status was last observed and identifies any missing or unverified result content.
 - A caller outside the configured scope cannot read the run, and a mismatched request cannot replace its identity.
 
 Technical Acceptance Criteria
 
 - Use D2’s durable record and D3’s scoped access contract.
+- Registered-run inspection permits scoped viewers and operators, and agents only with a separate inspect grant for the connection. Connection admins need an independently granted viewer/operator role; the recovery principal cannot inspect the run.
+- Registration requires the D3 operator permission or a separate, explicit scoped-agent register grant. Registration does not attest the source revision, validate a result or grant permission to launch or publish.
 - This operation does not launch or retry provider work.
 - A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
 
 Testing Strategy
 
-- Manual QA: Save an existing fixture run, exit, retrieve it from a second process and confirm identity and denied out-of-scope access.
+- Manual QA: Save an existing fixture run, exit, retrieve it from a second process and confirm identity, an allowed scoped viewer or agent inspection, and denied out-of-scope and same-scope ungranted access.
 - Access and setup: Use the selected isolated store and test identities from D3; these remain unresolved before readiness.
-- Automated regression: Cover durable run identity, result retrieval and access isolation across process restarts.
+- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration and both scope and role isolation across process restarts.
 
 ## S05 — Explicitly start one eligible Jira request
 
