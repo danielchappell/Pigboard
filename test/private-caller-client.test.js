@@ -6,6 +6,7 @@ import { createServer, request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import { pathToFileURL } from "node:url";
 import { deliverCredential, prepareCredentialDirectory } from "../src/hosted/authority-bootstrap.js";
 import { inspectPrivateCaller, PRIVATE_SERVICE, readCallerTokenFile,
   CallerClientError } from "../src/hosted/private-caller-client.js";
@@ -172,17 +173,46 @@ test("a well-formed unissued token is denied, while a valid 503 remains unavaila
       assert.equal(result.status, "denied");
       assert.ok(!result.nextAction.includes("Raw server text"));
     });
-    await fixture((_request, response) => respond(response, 503, {
-      schemaVersion: 1, status: "unavailable", reason: "inspection_unverified",
-      omissions: ["current_grant"], nextAction: "Raw server text must not be used."
-    }), async ({ request }) => {
-      const result = await inspectPrivateCaller({ tokenFile: item.path, request });
-      assert.equal(result.status, "unavailable");
-      assert.deepEqual(result.omissions, ["current_grant"]);
-      assert.ok(!result.nextAction.includes("Raw server text"));
-    });
+    for (const reason of ["inspection_unverified", "authentication_failed",
+      "temporarily_unavailable"]) {
+      await fixture((_request, response) => respond(response, 503, {
+        schemaVersion: 1, status: "unavailable", reason,
+        omissions: ["current_grant"], nextAction: "Raw server text must not be used."
+      }), async ({ request }) => {
+        const result = await inspectPrivateCaller({ tokenFile: item.path, request });
+        assert.equal(result.status, "unavailable");
+        assert.equal(result.reason, reason);
+        assert.deepEqual(result.omissions, ["current_grant"]);
+        assert.ok(!result.nextAction.includes("Raw server text"));
+      });
+    }
   } finally {
     item.cleanup();
+  }
+});
+
+test("a changed private address is refused before sending the owner bearer", async () => {
+  const item = privateFile();
+  const temp = fs.mkdtempSync(join(tmpdir(), "pigboard-target-drift-"));
+  try {
+    const source = join(temp, "src", "hosted", "private-caller-client.mjs");
+    fs.mkdirSync(join(temp, "src", "hosted"), { recursive: true });
+    fs.mkdirSync(join(temp, "config"));
+    fs.copyFileSync(new URL("../src/hosted/private-caller-client.js", import.meta.url), source);
+    fs.writeFileSync(join(temp, "config", "pigboard-private-service.json"),
+      JSON.stringify({ ...PRIVATE_SERVICE, ip: "fdaa:cb:e98:0:1::3" }));
+    const { inspectPrivateCaller: inspectChangedTarget } =
+      await import(pathToFileURL(source).href);
+    let requests = 0;
+    const result = await inspectChangedTarget({ tokenFile: item.path,
+      request: () => { requests += 1; throw Error("must not connect"); } });
+    assert.equal(result.status, "unverified");
+    assert.equal(result.reason, "private_target_unverified");
+    assert.equal(requests, 0);
+    assert.ok(!JSON.stringify(result).includes(OWNER_TOKEN));
+  } finally {
+    item.cleanup();
+    fs.rmSync(temp, { recursive: true, force: true });
   }
 });
 

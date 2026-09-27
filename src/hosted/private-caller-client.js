@@ -1,6 +1,5 @@
 import * as fs from "node:fs";
 import { request as httpRequest } from "node:http";
-import { isIP } from "node:net";
 import { dirname, isAbsolute } from "node:path";
 
 export const PRIVATE_SERVICE = Object.freeze(JSON.parse(fs.readFileSync(
@@ -14,8 +13,10 @@ const GRANTS = new Set(["owner", "connection_admin"]);
 const UNAVAILABLE_REASONS = new Set([
   "target_mismatch", "invalid_secret", "unsupported_channel_binding", "identity_mismatch",
   "tls_not_active", "tls_verification_failed", "authority_conflict",
-  "schema_or_grant_mismatch", "inspection_unverified"
+  "schema_or_grant_mismatch", "inspection_unverified", "authentication_failed",
+  "temporarily_unavailable"
 ]);
+const REVIEWED_PRIVATE_IP = "fdaa:cb:e98:0:1::2";
 const MAX_RESPONSE_BYTES = 8192;
 // The host can spend up to 30s connecting to a sleeping Neon branch, then
 // 5s validating the root and 5s reading the grant.
@@ -149,8 +150,7 @@ function validatedResponse(httpStatus, headers, data) {
 function validTarget(target) {
   return target && target.app === "pigboard-pilot-jdc" &&
     target.host === "pigboard-pilot-jdc.flycast" &&
-    typeof target.ip === "string" && isIP(target.ip) === 6 &&
-    target.ip.toLowerCase().startsWith("fd") && target.port === 80;
+    target.ip === REVIEWED_PRIVATE_IP && target.port === 80;
 }
 
 export async function inspectPrivateCaller({ tokenFile, request = httpRequest,

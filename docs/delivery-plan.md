@@ -41,11 +41,11 @@ still needs its own resolved prerequisites, reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
 turn a blocked Story into a ready one.
 The owner-only [bootstrap Story](stories/pigboard-owner-bootstrap.md) is the first
-complete shared-authority prerequisite. PR #24 is open on PR #22 with local
-tests and independent exact-commit reviews; live Neon owner setup is unverified.
-The [private self-inspection route Story](stories/pigboard-owner-service-inspection.md)
-is now PR #25, open on PR #24 at independently reviewed head `76b5f67` with
-270/270 local tests. The new [protected caller-inspection Story](stories/pigboard-private-caller-inspection.md)
+complete shared-authority prerequisite. PR #24 merged at reviewed head `a6fd879`
+with 264 merge-tree tests and two hosted PostgreSQL checks passing; live Neon owner
+setup is unverified. The [private self-inspection route Story](stories/pigboard-owner-service-inspection.md)
+merged as PR #25 at reviewed head `0ce0b2a`, with 271 merge-tree tests and two
+hosted checks passing. The new [protected caller-inspection Story](stories/pigboard-private-caller-inspection.md)
 gives the bootstrapped human owner a safe workstation command for that route;
 its Story and plan had two fresh independent CLEAN reviews at their exact final
 artifacts. Later human and agent recipients use it only after separate issuance.
