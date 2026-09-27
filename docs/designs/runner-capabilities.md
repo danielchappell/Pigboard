@@ -1,7 +1,7 @@
 # D4 runner capability decision
 
 22 September 2026. Discovery and design for the first hosted researcher run.
-This applies the substantively unchanged [hosted work contract](hosted-work-contract.md) to
+This applies the [hosted work contract](hosted-work-contract.md) to
 Cursor Cloud Agents and examines the existing [PR #7](https://github.com/danielchappell/ski-stack/pull/7).
 It does not activate a provider, grant repository access, or approve that PR.
 The first runner remains Cursor because the owner has authorized only trivial

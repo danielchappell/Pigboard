@@ -112,7 +112,8 @@ the D4 design 1/1 and four affected artifacts 4/4 with a dependency second
 sweep. The technical reviewer covered 8/8 named surfaces with a provenance
 and disclosure second sweep. Each assessed all seven principles independently.
 
-The first correction commit `4e9de6f31594b27a4c50e5c1888723f982f90e14`
+The first, unpublished correction commit
+`4e9de6f31594b27a4c50e5c1888723f982f90e14`
 received two fresh **NOT CLEAN** reviews: the D4L Task still stated the old
 blanket gate. Both covered all 3/3 changed files, the affected contracts and
 all seven principles, then made second sweeps. The author amended it to
@@ -121,6 +122,12 @@ file. Two new independent Sol reviewers returned **CLEAN** for that exact
 commit. Product review covered 4/4 changed files and 9/9 relevant contracts;
 technical review covered 4/4 files and 8/8 requirements. Both made a second
 cross-artifact sweep and independently assessed all seven principles.
+The amended-away commit is not an ancestor of this PR, so it is preserved by
+the [review-evidence tag](https://github.com/danielchappell/ski-stack/commit/4e9de6f31594b27a4c50e5c1888723f982f90e14).
+The remote tag `review-evidence/d4-first-correction-20260927` peels to that
+exact commit; its tree is `2b28ccd9533447cc7f2f9427678396364f2a612c`.
+Readers can inspect the historical three-file diff without treating that
+rejected revision as approved.
 
 The reviewed rule is: prove exact-run original audience and current disclosure
 before any provider status or result read. Within that audience, S26 may record
@@ -130,3 +137,22 @@ checkout commit for the same run, independent original-request binding and
 the later trusted S05 launch record. The S02a → S02b → S04 → S26 → S05 → S06
 order is unchanged. This is documentation evidence, not a Cursor account grant,
 live origin proof, running service or completed Story.
+
+GitHub's hosted review of PR #23 at `5898656f4c1bee13a7b4042d86fb1d46c0738c84`
+found two in-scope P2 gaps. It could not inspect the amended-away first
+correction commit, and D2/S06 still described `valid` output without the
+separate binding guard. The tag above preserves that historical artifact.
+The [D2 contract](../designs/hosted-work-contract.md) now records format and
+the three binding facts separately, and S06 requires all of them before a
+Jira write. These are design and provisional-Story corrections; no code or
+live gate changed. Fresh review of this feedback revision is still required.
+
+| Principle | Author assessment of this feedback revision |
+| --- | --- |
+| Intuitive | A format-valid answer is described as nonpublishable until the exact work it answers is proven. |
+| Discoverable | D2 and S06 name the missing launch, request and source facts for humans and agents. |
+| Delightful experience | Authorized people can inspect an imported result without a repeated run while publication stays safely withheld. |
+| Token saver | Separate format and binding facts explain the outcome in one inspection. |
+| Secure | A Jira write requires the trusted launch, original request, actual checkout commit and current scope. |
+| Agents are equal | The same publish guard applies to human and noninteractive callers; their presentation can differ. |
+| Dependable | An unbound import cannot be silently treated as ticket work, and an amended-away review artifact remains auditable. |

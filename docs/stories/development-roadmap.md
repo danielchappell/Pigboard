@@ -201,11 +201,19 @@ Acceptance Criteria
 - Publishing adds progress/result evidence to the matching ticket. It transitions only with a verified full eligibility guard; otherwise it leaves a clear manual handoff.
 - A lost write response is reconciled before another write, or becomes visible needs-attention.
 - Human changes and audience restrictions prevent inappropriate publication or transition.
+- A format-valid imported result with unproven request or source binding remains
+  visible as nonpublishable and sends nothing to Jira.
 - If the Free store cannot reserve the write, no new Jira comment or transition is sent; the caller sees a blocked or uncertain result.
 
 Technical Acceptance Criteria
 
-- Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract. Recheck the current selected pair/version against the launch record inside the write reservation; a changed pair withholds publication.
+- Require S26's stored `valid` format outcome and three proven facts for the
+  unchanged ticket input: S05's trusted launch-to-run record, the original
+  request, and the actual checked-out source commit. A format-valid import
+  missing any proof stays nonpublishable.
+- Use an append-only comment operation identity and D1's verified
+  transition/race contract. Recheck the selected pair/version against the
+  launch record inside the write reservation; a changed pair withholds publication.
 - Commit the D2 effect reservation on the pinned root before any Jira write; a quota or database failure cannot authorize a send.
 - Keep the human assignee and never use comments as run locks.
 - Before storing publication evidence, document its audience, lifetime and deletion, including restored copies.
@@ -214,7 +222,9 @@ Testing Strategy
 
 - Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect one intended comment, no rerun and manual status when no full guard exists.
 - Access and setup: Use the scoped fixture Jira service first; live comment/transition acceptance requires the controlled test ticket and verified write authority.
-- Automated regression: Cover partial publication recovery, no Jira write after a failed or uncertain reservation, changed-pair or stale-ticket handling, and source-audience enforcement.
+- Automated regression: Cover partial publication recovery, failed or
+  uncertain reservations, changed or stale input, source-audience denial,
+  and format-valid results missing any binding proof.
 
 ## S07 — Automatically pick up and reconcile eligible work
 
