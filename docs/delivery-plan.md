@@ -110,7 +110,7 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
 | Complete decision; current revision review pending | D2: Define durable attempts and recovery | Two reviewers found the earlier [contract](designs/hosted-work-contract.md) revision CLEAN; this branch edits only Story references, but the current file needs an exact-revision verdict | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
 | Revised PIG design; new early-service revision review and live gates apply | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled` through an explicit project-board pair. PR #19 reviewed its earlier PIG revision CLEAN; this owner-approved project-scope revision needs its own exact-artifact review. The [INT record](designs/jira-connection-discovery.md) is historical. A Scubapig Jira User service account exists, but its credential, effective permissions, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Review the owner-approved project chooser and pair-scope change, then complete identity-scoped preflight and controlled checks before Jira write Stories. S02a needs project/board metadata; S02b needs issue/link/audience facts. |
-| Revised design; exact-revision review and live gates open | D4: Define and verify runner capabilities | The [runner design](designs/runner-capabilities.md) revises imported-run provenance; its [review record](reviews/runner-capabilities.md) covers earlier revisions and PR #7's standalone code | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
+| Revised design reviewed; live gates open | D4: Define and verify runner capabilities | The [runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) cover the imported-run format/source correction and PR #7's separate standalone code. | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No import source-audience, repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
 | Revised Neon Free design; exact-revision review and staged live gates apply | D3: Choose deployment and team access | [Selected one-team design](designs/hosted-fly-neon-free.md) and the [earlier revision’s review record](reviews/hosted-fly-neon-free.md). The [Neon Launch design/review](designs/hosted-fly-neon-launch.md) and prior [Fly MPG brief](designs/hosted-deployment-options.md) are historical for their exact artifacts. | The [first-service Task](designs/s02a-first-service.md) moves the Fly-held secret boundary no later than S02a and requires an owner-approved project scope, named human/agent grants, a scoped SQL role and a pinned original-root endpoint. Re-groom the oversized combined S02a before implementation. The first hosted Story must prove secret-safe restart/rollback, sleep-safe liveness and bounded store failure; S02a then rejects a child target before any pair read or save. Before S02b, prove current-team human viewer and scoped agent inspect grants before lookup, a denied same-pair caller and D1's minimal issue-audience lookup before richer reads. Before S04, prove root/child endpoint identity and ordinary grant boundaries, a disposable two-client SQL feasibility probe, actual Free limits and test identities. S04 reuses the pin for registered-run inspection and tests child-read denial on that path; S05 proves no child-target send. S08 adds coordinator load/second-teammate and quota checks to that first host. S29-S31 build recovery; A1 proves the measured within-project Free restore window and full interlock. |
@@ -147,8 +147,9 @@ for publication until that exact run has D4-source and the separate trusted
 original-request binding. S05/A1 need D4-live. If read-only or source
 binding fails, D4F and a new owner provider choice
 precede hosted activation. D2's substantive contract was reviewed at its
-recorded earlier revision; this branch changes only later-Story names, whose
-current file still needs an exact-revision verdict. The configuration-only
+recorded earlier revision. The current D4 imported-run format correction has
+its own design verdict in the [D4 review record](reviews/runner-capabilities.md).
+The configuration-only
 portions of D1/D4 are resolved in that contract; their live identity,
 permission and capability checks remain open.
 S01 can be implemented without those live checks because its complete outcome is
@@ -306,9 +307,9 @@ slices supported by evidence from operating that baseline.
 S01 delivers the reviewed M1 configuration outcome at merged main
 `005419b63460540bfbb96400c46e7274a47af723`. The Scubapig integration
 service account exists; D1 still needs its API credential and identity-scoped
-permission, transition and human-edit race evidence. D4's earlier design
-revision was independently CLEAN; its current imported-run provenance revision
-requires an exact-artifact review. PR #7's standalone Story/plan and code are
+permission, transition and human-edit race evidence. D4's imported-run
+provenance and format-source correction received fresh exact-artifact reviews;
+its live access gates remain open. PR #7's standalone Story/plan and code are
 independently CLEAN at the recorded SHA, and its feedback revisions have two
 exact-artifact CLEAN reviews in the linked review record.
 Repository permissions, enforced read-only behavior, second-user visibility

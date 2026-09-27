@@ -1,8 +1,8 @@
 # Development Story previews
 
-These follow the [architecture](../architecture-plan.md); an earlier revision
-was independently reviewed, and the current editorial Story-reference update
-requires exact-revision review.
+These follow the [architecture](../architecture-plan.md). The S04/S26
+format-source wording has an exact-artifact [D4 design review](../reviews/runner-capabilities.md);
+the implementation Stories remain provisional until their own gates are met.
 S01 and S03 were independently reviewed and merged. **All other Stories remain
 Provisional — not ready for delivery.** Unknown interfaces,
 permissions and estimates must be resolved through the [decision Tasks](../tasks/architecture-decisions.md).

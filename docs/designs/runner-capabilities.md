@@ -198,7 +198,6 @@ replace the account/repository/team evidence above.
 | Agents are equal | The same typed prepare/start/recover/get states are usable from commands and future MCP without UI clicks. A scoped agent import needs a preapproved exact-run transfer grant; a human may authorize only after independent verification of their rights to that run's content. Diagnostics stay readable without exposing foreign metadata. |
 | Dependable | Unknown exact-run origin or revoked disclosure fails before shared inspection, and unknown launch/result outcomes stay visible without advancing; terminal provider status never implies validated findings or human acceptance. If import evidence is unavailable, S04 is re-groomed rather than declaring partial plumbing complete. |
 
-The [review record](../reviews/runner-capabilities.md) identifies earlier
-artifacts and their independent verdicts. This revised imported-run provenance
-contract needs its own exact-artifact review. No hosted Story is promoted by
-the author's assessment alone.
+The [review record](../reviews/runner-capabilities.md) distinguishes the
+imported-run provenance and format-gate design reviews from earlier D4 rounds.
+Neither design review proves the live D4L gates or promotes a hosted Story.
