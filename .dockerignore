@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+.env
+.env.*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pgpass
+**/*password*
+**/*credential*
+implementation-reviews
+docs
+test
+.codex
+.agents
+*.log
