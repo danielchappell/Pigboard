@@ -1,6 +1,6 @@
 # Run the first private Pigboard service
 
-This service is an operator-only first host for the future project-and-board selector. It holds the restricted Pigboard Neon credential on one private Fly Machine. It exposes only `GET /health` on Fly's private network. The root diagnostic is a one-shot command inside the Machine, not an HTTP route. There is no Jira credential, caller grant, saved project-board pair or Cursor action in this slice. A green health check means the process is live; it does not mean Neon, Jira or a customer flow is ready.
+This service is an operator-only first host for the future project-and-board selector. It holds the restricted Pigboard Neon credential on one private Fly Machine. It exposes `GET /health` and, after authority migration version 2, `GET /v1/authority/me` on Fly's private network. The latter returns only the authenticated caller's current principal and grants. The root diagnostic is a one-shot command inside the Machine, not an HTTP route. There is no Jira credential, saved project-board pair or Cursor action in this slice. A green health check means the process is live; it does not mean Neon, Jira or a customer flow is ready.
 
 ## Before the first deploy
 
@@ -54,6 +54,14 @@ fly ssh console --app pigboard-pilot-jdc --machine <machine-id> \
 ```
 
 The JSON has `schemaVersion`, an overall `pass`, `fail` or `unverified` status, the non-secret expected target, `checks[]` and `omissions[]`. Exit 0 means all checks passed; exit 1 means failure or incomplete proof. `root_target` failure means no connection was attempted. `unsupported_channel_binding` means remove only that URL option and retry; verified TLS remains required. A `tls_verification_failed` or `tls_not_active` result requires certificate/target repair; do not disable TLS checks. `authentication_failed` means check the private role and credential. `temporarily_unavailable` means the connection or read did not complete within the bound; its cause is unknown. Inspect Neon and Fly state, then rerun the one-shot diagnostic. Do not treat a timeout alone as proof that Neon was asleep. Normal health never opens a database connection, so it does not keep Neon awake.
+
+## Inspect a current owner grant
+
+First complete the [protected owner migration and bootstrap](hosted-pigboard-authority.md) on the dedicated production root. Confirm `owner:inspect` reports `schema_current` at version 2 and the current owner generation. The `pigboard_app` runtime login has column-limited reads, not owner or write permission. Keep the owner database URL outside the Machine. Use the private Fly network or an authenticated local tunnel; never add public ingress for this route.
+
+Send `GET /v1/authority/me` with one `Authorization: Bearer <caller credential>` header. Read the credential from its protected owner file through a private client or channel; do not paste it into a shell command, URL, ticket, log or repository. A 200 JSON result contains `schemaVersion`, `status: "ok"`, team, generation, the caller's own principal ID/name/kind and current `grants`. A 401 `denied` means the bearer is malformed, inactive or no longer current; it reveals no owner identity. A 503 `unavailable` means the pinned root, TLS, schema/grant proof or database read could not be verified; `omissions` identifies the absent current-grant proof. Check the private URL against the reviewed root pin, run the owner-only inspection and one-shot root diagnostic, then retry. Do not treat 503 as revoked access. Responses have `Cache-Control: no-store`.
+
+After a Machine restart, inspect again with the same current credential and confirm the generation and grants. On an **authorized disposable owner setup**, recover at the inspected generation, then confirm the old credential gets 401 and the replacement gets 200. Do not rotate a live owner's sole credential just for QA. A failed or unrun private inspection leaves live acceptance open even if local PostgreSQL and HTTP tests pass. `/health` remains independent of Neon and reveals no owner state.
 
 ## Check wake, restart and rollback
 

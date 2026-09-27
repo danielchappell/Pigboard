@@ -4,10 +4,12 @@ Updated 27 September 2026. This is the active development queue. It follows the
 [architecture direction](architecture-plan.md) and [working process](development-workflow.md).
 Earlier architecture and delivery-plan reviews were CLEAN for their recorded
 versions. Their [review record](development-review.md) identifies those
-historical verdicts and exact hashes. This revision includes an owner-bootstrap
-implementation Story stacked on the private-host prerequisite; it needs its own
-exact committed-code review and PR checks. Historical verdicts do not approve
-changed code or documents. This plan does not claim unresolved discovery is finished.
+historical verdicts and exact hashes. This revision adds the private
+owner-grant-inspection prerequisite after owner bootstrap. Its independent
+Story/plan review is recorded separately; implementation still needs exact
+committed-code review, PR checks and live acceptance. Historical verdicts do not
+approve changed code or documents. This plan does not claim unresolved discovery
+is finished.
 
 ## Owner decision and current sequence — 27 September 2026
 
@@ -39,11 +41,14 @@ still needs its own resolved prerequisites, reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
 turn a blocked Story into a ready one.
 The owner-only [bootstrap Story](stories/pigboard-owner-bootstrap.md) is the first
-complete shared-authority prerequisite. Its local commands install a versioned
-schema, create/inspect one named owner, and replace a lost credential under a
-generation guard. Its independent Story/plan gate is recorded outside this
-repository. It remains an implementation in progress; no live Neon owner,
-runtime login, Fly Machine, service grant route, or Jira pair has been accepted.
+complete shared-authority prerequisite. PR #24 is open on PR #22 with local
+tests and independent exact-commit reviews; live Neon owner setup is unverified.
+The next [private self-inspection Story](stories/pigboard-owner-service-inspection.md)
+adds a column-limited runtime read and private service route so the named owner
+can prove a current grant after restart. Its Story and implementation plan had
+two independent CLEAN reviews on their exact final artifacts; code review is
+still pending. Neither Story selects a Jira pair. No live Neon owner, restricted
+runtime credential, Fly Machine or service grant route has been accepted.
 Earlier architecture/queue alignment was CLEAN only for the exact artifacts in
 [review evidence](development-review.md). The earlier PIG revision has its own
 CLEAN [design review](reviews/pig-jira-connection-discovery.md) at `902b62b`;
@@ -176,6 +181,8 @@ its decisions and plan are ready.
 | [S01](stories/validate-workflow-profile.md) | Validate a saved workflow configuration and explain its route | Reviewed D2 plus configuration-only D1/D4 decisions; [per-Story plan](plans/validate-workflow-profile.md) must have two CLEAN reviews | Nine expected implementation files, twelve including supporting updates; estimated 12 human hours. |
 | [D3a](stories/neon-root-preflight.md) | Check the pinned Neon root and restricted runtime role | Reviewed D3 first-service design and local credential-custody contract; exact Story/plan and committed-code independent reviews CLEAN | Owner-only diagnostic before the first hosted secret holder. Twelve changed files and 1.25 human working days estimated. PR #21 is open at `9b493b8`; 247 local tests pass. Actual scoped login, private handoff and TLS/grant proof remain open. No Fly or S02a claim. |
 | D3b | Run the first private Pigboard host and prove its root diagnostic | D3a reviewed root pin and role contract; D3b Task design and implementation plan independently reviewed CLEAN; live D3a scoped-login preflight before deployment acceptance | Fifteen-file, 1.5-day technical Story implemented on a separate branch stacked on PR #21. Private Flycast liveness stays independent of Neon; an operator-only pinned TLS diagnostic is designed to verify the restricted root after observed idle wake, restart and code-image rollback. Those live checks remain pending, separate from local tests and committed-code review. No Jira/caller route or database write. |
+| [D3c](stories/pigboard-owner-bootstrap.md) | Bootstrap and inspect one named owner | D3b private host and reviewed authority plan; live protected owner URL for acceptance | PR #24 is open on PR #22 at `a6fd879`; two independent exact-commit reviews were CLEAN, 264 local tests passed, and both current-head hosted PostgreSQL jobs passed. Versioned owner migration, guarded recovery and private credential file exist in code. Live migration, owner setup and runtime grants are unverified. |
+| [D3d](stories/pigboard-owner-service-inspection.md) | Inspect the caller's current grant through the private host | D3c protected owner setup, v2 runtime column-read migration and restricted pinned runtime URL | Story and plan independently reviewed CLEAN. Implementation on a branch stacked on PR #24 is in progress. A private bearer route returns only the caller's current principal and grants; old credentials deny after recovery. Local tests do not prove live Neon, private Fly restart or child-root refusal. This is a technical prerequisite before scoped agent grants and S02a pair selection. |
 | S02a | Choose and correct one Jira project-and-board pair | S01, D1 service-identity project/board/filter/column metadata and safe correction fixture, D3 reviewed first-host/authentication/scope/store path plus any complete prerequisite technical Story | A verified human or agent connection administrator chooses named projects inside current owner-approved site/project scope, then an associated board; save revalidates Task/To Do visibility and records a versioned pair. The first service holds SQL/Jira secrets, pins the original root separately, and rejects a child target before reads or writes. Correction refuses active/uncertain effects; old records stay inspectable. No issue inspection or Jira write. The combined preview is estimated at 22–26 files and is **Provisional — not ready for delivery** until split and independently plan-reviewed. |
 | S02b | Explain whether one Jira ticket is eligible without starting it | S02a, D1 issue/link/audience and minimal-field facts, D3 current-team human viewer/scoped agent inspect grants and denied-caller proof | Jira reads/normalization and existing core policy, one inspection command limited to S02a's selected project-board pair and the caller's source audience. Check app caller authority before any issue lookup, then use only proven minimal metadata to establish project, board and issue audience before richer reads or output. Denied callers and denied/unknown audiences get no ticket facts. Recheck file/time size after D1/D3. |
 | S03 | Start and retrieve one manual Cursor cloud job with stable identity | D4-design; PR #7 retrospective Story/plan and committed-code reviews CLEAN | Existing standalone CLI and library, kept separate from hosted launch authority; no repository-backed acceptance claimed. |
