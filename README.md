@@ -64,6 +64,18 @@ The host does not select a Jira board or expose a public API. The
 private Fly setup, safe credential use, diagnostic results, restart and rollback.
 The host is not live merely because this code or a passing local test exists.
 
+With the private Fly Machine, Neon runtime login and an owner-specific WireGuard
+route verified, the bootstrapped owner can inspect only their current grant with
+`npm run --silent caller:me -- --token-file /absolute/private/owner.token`.
+`--format json` gives the same validated result to a noninteractive caller. The
+token stays in an owned mode-0600 file under an owned mode-0700 directory; the
+command accepts no URL or token argument and does not change grants. A valid 401
+is denial, a valid 503 is service unavailability, and a bad route or response is
+unverified. The [private-service guide](docs/hosted-pigboard-first-service.md#inspect-a-current-owner-grant)
+explains peer setup, recovery and the still-open live acceptance gate. Named
+human and agent recipients can use their own credentials only after later
+issuance; this command does not administer grants.
+
 ## Set up the first Pigboard owner
 
 An infrastructure operator can run `npm run --silent owner:migrate -- --help`
