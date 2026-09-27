@@ -4,9 +4,10 @@ Updated 27 September 2026. This is the active development queue. It follows the
 [architecture direction](architecture-plan.md) and [working process](development-workflow.md).
 Earlier architecture and delivery-plan reviews were CLEAN for their recorded
 versions. Their [review record](development-review.md) identifies those
-historical verdicts and exact hashes. The current revision's independent
-verdicts belong in this documentation Task PR; historical verdicts do not
-approve changed documents. This plan does not claim unresolved discovery is finished.
+historical verdicts and exact hashes. This revision includes an owner-bootstrap
+implementation Story stacked on the private-host prerequisite; it needs its own
+exact committed-code review and PR checks. Historical verdicts do not approve
+changed code or documents. This plan does not claim unresolved discovery is finished.
 
 ## Owner decision and current sequence — 27 September 2026
 
@@ -37,6 +38,12 @@ technical outcomes before coding; the final PR count may exceed six. Each slice
 still needs its own resolved prerequisites, reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
 turn a blocked Story into a ready one.
+The owner-only [bootstrap Story](stories/pigboard-owner-bootstrap.md) is the first
+complete shared-authority prerequisite. Its local commands install a versioned
+schema, create/inspect one named owner, and replace a lost credential under a
+generation guard. Its independent Story/plan gate is recorded outside this
+repository. It remains an implementation in progress; no live Neon owner,
+runtime login, Fly Machine, service grant route, or Jira pair has been accepted.
 Earlier architecture/queue alignment was CLEAN only for the exact artifacts in
 [review evidence](development-review.md). The earlier PIG revision has its own
 CLEAN [design review](reviews/pig-jira-connection-discovery.md) at `902b62b`;
