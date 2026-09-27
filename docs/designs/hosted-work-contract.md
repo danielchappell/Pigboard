@@ -1,7 +1,9 @@
 # Hosted work and configuration contract
 
-D2 design, 21 September 2026; pilot example updated 26 September. This develops the independently reviewed
-[architecture](../architecture-plan.md), not a replacement architecture. It also
+D2 design, 21 September 2026; pilot example updated 26 September. This develops
+the [architecture](../architecture-plan.md), whose earlier revision was
+independently reviewed, rather than replacing it. The current architecture has
+an editorial Story-reference update requiring exact-revision review. It also
 resolves the configuration-only parts of D1/D4 needed for S01. Live Jira
 permissions, runner repository access and deployment choices remain unresolved.
 No hosted write Story becomes ready from this document alone.
@@ -325,7 +327,7 @@ code and `{path, code, message}` errors, without a route/digest success claim.
 
 The validator is deterministic and performs no network, credential lookup, shell
 execution, file mutation or automatic issue/run creation. Reading the explicit
-input file/stdin is its only I/O besides output. S02 later provides live eligibility
+input file/stdin is its only I/O besides output. S02b later provides live eligibility
 inspection; this separation is visible in help and result fields, not a hidden
 reduction of the milestone's outcome.
 
@@ -365,7 +367,7 @@ The configuration-only portions of D1 and D4 are resolved here: connection and
 native names remain opaque/unchecked; the declared first provider/role pair is
 Cursor/researcher, matching existing evidence; no provider capability or live
 permission is inferred from a valid profile. This is sufficient for S01 after
-independent review, not for S02 or hosted activation. D1/D3/D4 remain open in the
+independent review, not for S02a/S02b or hosted activation. D1/D3/D4 remain open in the
 queue, and no access or expensive compute is implied by these decisions.
 
 ## Author's seven-principle assessment

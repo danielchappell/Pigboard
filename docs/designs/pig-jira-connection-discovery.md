@@ -1,6 +1,6 @@
 # D1 Jira connection discovery: Pigboard pilot
 
-26 September 2026. This is the active Jira target design for
+27 September 2026. This is the active Jira target design for
 `scubapig.atlassian.net` project `PIG`, board `2`. The earlier
 [INT record](jira-connection-discovery.md) is historical. Its general safety
 contract remains useful, but its site, IDs, workflow, permissions and CLEAN
@@ -10,7 +10,8 @@ has been verified by this document.
 ## Outcome and observed boundary
 
 One authorized teammate can later opt a Task into the existing `To Do` column
-by adding `ai-enabled`. S02 will explain eligibility without starting work.
+by adding `ai-enabled`. S02a will save an administrator-selected project and
+board; S02b will explain eligibility without starting work.
 S05 and later Stories add durable launch and publication after their separate
 gates. The label is the explicit opt-in; a Task in To Do without it is ineligible.
 Keep the human assignee. Use one project, one approved team and one configured
@@ -29,12 +30,17 @@ record is kept in this workspace outside the repository.
 
 ## Connection and authority
 
-Use a dedicated noninteractive integration identity for the Scubapig site.
-Keep its credentials in a service secret store, outside profiles, tickets,
-prompts, events and review records. The human browser login proves neither
-that identity nor its scopes. D1 must verify the identity, credential
-custodian, project/type/status IDs and contextual read/comment/edit/transition
-grants before S02 is delivery-ready. Report denied and unknown separately.
+The Scubapig organization now has a dedicated `Pigboard Jira Integration`
+service account. Atlassian shows only Jira User app access and automatically
+added its default `jira-users-scubapig` group, which grants that same Jira User
+access. No API credential or identity-scoped request has been verified.
+Keep future credentials in a service secret store, outside profiles, tickets,
+prompts, events and review records. The human browser login does not prove
+the service account's effective issue permissions. D1 must verify credential
+custodian, project/type/status IDs and the contextual read grants needed by
+each Story before that Story is delivery-ready. Record contextual comment,
+edit and transition grants for S06; unknown or denied write grants do not
+block read-only S02a or S02b. Report denied and unknown separately.
 
 The owner has authorized use of this empty Scubapig account and prioritizes
 customer-selected project and board scope in the adapter. A Jira credential
@@ -62,8 +68,20 @@ filter and columns can show the configured Task/To Do candidates. Show the
 chosen names and IDs for review. Distinguish no credential access, no boards,
 an invalid project-board relationship, a filter/column mismatch and unavailable
 metadata with an actionable correction; never silently choose another board.
-The authorized administrator can reselect the pair, with the same validation,
-before inspecting more work. The workflow profile's `connectionRef` and project key
+The selected pair has a durable version under the live-root connection record.
+An administrator can correct it with an expected-version update after the same
+validation. Reject correction while the connection has an active attempt or
+an uncertain Cursor/Jira effect; first reconcile that work under its original
+pair. Trusted attempts keep their immutable launch pair/version. An imported
+S04 run keeps only the pair/version selected at registration as an access
+association; that does not prove its original launch scope or source. Both
+remain inspectable with their existing read grants, but correction cannot
+make an imported run publishable or authorize a new launch or publication to
+an old ticket. S02b
+inspection reports a changed pair as stale and rechecks the current version.
+S05 and S06 must compare the current pair/version with the attempt's saved
+pair/version inside their effect reservation; a mismatch sends nothing and
+requires an explicit new inspection or human handoff. The workflow profile's `connectionRef` and project key
 must match that pair; the profile cannot add an allowed project or board. A
 wrong or missing pair fails before a rich issue read or any effect. Check
 project identity and board membership with the minimum metadata needed for
@@ -87,14 +105,38 @@ source/result audience and permission to send ticket content to Cursor remain
 separate from Jira read permission. The owner has not authorized any specific
 ticket content for provider submission.
 
+Before any Jira issue lookup, the application verifies the caller's current
+team and selected-connection scope plus a human viewer/operator grant or a
+separate scoped noninteractive agent inspect grant. A connection administrator
+without a viewer/operator grant cannot inspect by default. The Jira credential
+and selected pair do not grant inspection to a Pigboard caller. An authorized
+caller may then read only the minimal native fields D1 proves necessary to
+establish the issue's project, board membership and issue-level audience. D1
+must name any status or label field needed solely to evaluate board membership;
+it remains internal during this check. Keep all minimal fields out of public
+output, logs and diagnostics until the check passes.
+If that minimal lookup cannot prove the caller may see the issue, return a
+generic unavailable result without a body, status, label or dependency read.
+Only after project, board and source audience are verified may S02b read and
+return richer ticket facts within that audience. A service-visible issue alone
+is insufficient.
+
 ## Read-only D1 preflight
 
 1. With the integration identity, read the selected project/type/status
    metadata, board configuration/filter and one designated nonsensitive test
    issue. Record native IDs, board membership and effective visibility for
    that same identity. Test whether a board-scoped, minimal-field read can
-   prove membership without retrieving the issue body. Reject an unverified
-   project-board pair or membership result.
+   prove membership and issue-level audience without retrieving the issue
+   body or dependency details. Record the minimal fields, including any status
+   or label needed solely for board filtering, and whether they suffice under
+   the service identity. Reject an unverified project-board
+   pair, membership or audience result.
+   This read-only preflight does not promise a second live pair, a mutable
+   opted-in issue or a wrong-board issue. Name controlled metadata and issue
+   fixtures for S02a correction and S02b denial checks before either Story is
+   ready, unless separately authorized live test data and human edit authority
+   are established.
 2. Query contextual Browse Projects, Edit Issues, Transition Issues, Add
    Comments and Edit Own Comments grants. A positive permission result is only
    a precondition to a later controlled write check.
@@ -117,7 +159,7 @@ ticket content for provider submission.
    shows availability now, not an atomic guard on a later transition. Record
    which facts still need a controlled live check.
 
-S02 may inspect an explicit issue ID without a webhook. Its result should show
+S02b may inspect an explicit issue ID without a webhook. Its result should show
 the decisive status, label, dependency and access facts, plus unknown or denied
 evidence. A complete read is required before it can say “eligible.”
 
@@ -156,8 +198,12 @@ Pigboard issue and recorded before/after history. No such check has run.
 
 ## Readiness and verification
 
-D1 remains open. S02 needs the service identity, selected project-board pair,
-and all read-only ID, filter, dependency and audience facts above. S05
+D1 remains open. S02a needs a usable service credential and identity-scoped
+project/board metadata. D3 must first choose and prove the single-team
+human/agent authentication, connection-administrator grant source and durable
+live-root pair/version store; S02a implements only the selected minimal
+setup boundary after a 20-file/<2-day size check. S02b additionally needs S02a's saved pair and the
+read-only issue, filter, dependency and audience facts above. S05
 additionally needs an approved source
 audience, acceptance of the pre-send residual race for a designated issue and
 D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
@@ -179,10 +225,10 @@ their Stories, not evidence that implementation exists.
 
 | Principle | Assessment |
 | --- | --- |
-| Intuitive | Setup offers named project and board choices; an existing status plus a visible opt-in label are the teammate controls. The tradeoff is that To Do alone does not mean ready. |
-| Discoverable | Human choices and structured agent choices expose available pairs; S02 names the decisive eligibility or access fact, and selection or mapping failures give a correction. |
+| Intuitive | Setup offers named project and board choices; correction names active or uncertain work that must be reconciled first. An existing status plus a visible opt-in label are the teammate controls. The tradeoff is that To Do alone does not mean ready. |
+| Discoverable | S02a gives human choices and structured agent choices for available pairs; S02b names the decisive eligibility or access fact. Selection or mapping failures give a correction. |
 | Delightful experience | One validated pair is saved rather than repeatedly asking for IDs or ticket setup; a teammate applies one label to opt in. |
 | Token saver | Setup and inspection lead with relevant choices or decisive facts and expose missing evidence without dumping tickets or Jira filters. |
-| Secure | Verified connection-administrator scope guards choice listing and changes; a service-held identity, explicit project-board allowlist, audience checks and complete in-scope dependency reads gate effects. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
+| Secure | Verified connection-administrator scope guards choice listing and changes; a service-held identity, versioned project-board allowlist, current-binding checks, audience checks and complete in-scope dependency reads gate effects. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
 | Agents are equal | Authorized agents get structured list/select operations and noninteractive inspection with the same scope checks and recovery facts as humans; neither can infer administration from a profile. |
-| Dependable | Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |
+| Dependable | A saved S02a pair does not imply S02b issue-read authority. Correction preserves old inspection records, rejects active/uncertain effects and makes stale inspection explicit. Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |

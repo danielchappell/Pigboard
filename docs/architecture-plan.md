@@ -280,7 +280,7 @@ planning Task.
 | Principle | Author's assessment |
 | --- | --- |
 | Intuitive | Existing To Do plus `ai-enabled` makes opt-in visible without a new column; To Do alone is deliberately insufficient. Exact transitions are D1's activation gate. |
-| Discoverable | M1 explains the route; S02 must explain the label, status and dependency facts before agents run. Packages and MCP carry explicit capability discovery. |
+| Discoverable | M1 explains the route; S02a explains project-board choice and S02b explains the label, status and dependency facts before agents run. Packages and MCP carry explicit capability discovery. |
 | Delightful experience | Shared progress and recovery remove manual handoffs and duplicate runs; ordinary stages need no repeated owner permission. |
 | Token saver | Code routes and reconciles; agents receive scoped context and expose detail on demand; no model is the scheduler. |
 | Secure | Scoped authority, external secret custody and audience checks start with the first hosted path; unresolved mechanisms block dependent Stories. |

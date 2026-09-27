@@ -55,7 +55,7 @@ Acceptance Criteria
 - Define guided human and structured agent discovery/selection of a customer-selected project-board pair, with relationship/filter validation, actionable correction and proof that a profile or ticket cannot widen it.
 - Establish read/comment/update/transition authority and record any unavailable access without guessing it.
 - Define authenticated event delivery, bounded reconciliation and the human-edit race policy.
-- Verify the link type, direction and blocker-state mapping that lets S02 use core dependency eligibility.
+- Verify the link type, direction and blocker-state mapping that lets S02b use core dependency eligibility.
 - Define how an append-only progress comment is found after a lost create response without blindly posting twice.
 - Name what requires a controlled live write check before activation.
 
@@ -109,18 +109,25 @@ The product must continue with laptops off and expose progress to teammates.
 The owner selected one low-cost Fly app Machine and an isolated Pigboard Neon
 Free Postgres project. Free point restores reach only the measured usable
 history, at most about six hours or 1 GB of changes, with no scheduled
-snapshots. The [selected design](../designs/hosted-fly-neon-free.md) has
-[two independent CLEAN reviews](../reviews/hosted-fly-neon-free.md) for its
-exact artifact; the Neon Launch and
+snapshots. An earlier revision of the
+[selected design](../designs/hosted-fly-neon-free.md) has
+[two independent CLEAN reviews](../reviews/hosted-fly-neon-free.md) for that
+recorded artifact; the current revision needs its own review. The Neon Launch and
 [Fly Managed Postgres brief](../designs/hosted-deployment-options.md) are
-historical for their physical topology and recovery windows. The Fly `pigboard` organization exists,
-but no app, Neon Pigboard organization/project or recovery-control repository
-has been provisioned. D3's store-and-access facts are needed before S04;
+historical for their physical topology and recovery windows. The Fly `pigboard`
+organization and a separate Pigboard Neon Free organization/Frankfurt project
+exist. Fly has no app, and no recovery-control repository exists. Owner-console
+SQL persistence and idle wake have narrow proof; a scoped runtime SQL role,
+ordinary child-target denial, app-client reconnect and team command authority
+remain unverified. D3's early authority/store facts are needed before S02a;
+the remaining store-and-access facts are needed before S04;
 hosted load and the implemented restore drill come later with S08 and A1.
 
 Acceptance Criteria
 
-- **Before S04:** verify a dedicated Pigboard Neon Free organization/project in Frankfurt and a scoped SQL role with no Entendia or Joseph project reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Record the root endpoint identity for S04's separate non-secret pin, confirm a child has a different host, and prove ordinary runtime/deploy grants cannot reassign the endpoint. Record the actual Free quotas and initial usage. S04 implements and tests historical-child read denial; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
+- **Before S02a:** choose and verify one concrete human and noninteractive agent authentication path, connection-administrator grant source and durable selected-pair/version record on the Pigboard Neon live root. Verify a scoped SQL role and pinned root endpoint for that first store use. Prove an authorized administrator and a denied caller without treating the Jira credential or profile as a grant. Define an atomic correction guard for active or uncertain effects and identify the smallest S02a code boundary. If the auth, store and selection work cannot fit 20 files and less than two days, re-groom the approved six-PR queue before implementation.
+- **Before S02b:** verify a current-team human viewer and a separately scoped noninteractive agent inspect grant for the selected connection. Test a denied caller who names that same pair before any Jira issue lookup. D1 must prove which minimal fields establish project, board membership and issue-level audience without content exposure; verify an allowed caller can read richer facts only after that check and a denied issue audience receives no ticket facts. Neither the Jira service credential nor connection-administrator status alone grants ticket inspection.
+- **Before S04:** verify a dedicated Pigboard Neon Free organization/project in Frankfurt and a scoped SQL role with no Entendia or Joseph project reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Confirm a child has a different host and prove ordinary runtime/deploy grants cannot reassign the root endpoint pinned by S02a. Record the actual Free quotas and initial usage. S04 reuses the pin and tests historical-child read denial on its run path; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
 - **Before S08 deployment acceptance:** verify the `pigboard` Fly organization, shared-cpu-1x/1 GB load, actual region/price, runtime and deploy principal reach, health and secret custody. Prove health probes do not keep Neon awake, and measure active CU-hours and storage against Free quotas. Prove a second authorized teammate can inspect while the owner's laptop is off and a revoked teammate cannot.
 - **Before A1 hosted acceptance, after S29-S31:** verify the separate private recovery-control repository and recovery/custodian grants, S29's initial `normal` manifest and effect-read gate, measured **within-project** Neon Free restore history with no scheduled snapshots, and the full restore path with live-root current authority, external manifest, physical/provider fence and quarantine. This is not a pre-S04 or pre-S05 implementation gate; those earlier revisions pin the original endpoint and reject a historical child but do not support restore.
 - Record team authentication, integration credentials and source/result audiences. Decide each stored data class's audience, lifetime and deletion before the Story that first captures it: S26 for provider results, S05 for copied source, prepared requests or sealed credentials, and S06 for publication evidence; move the gate earlier if capture starts earlier. Record setup/inspection and restore evidence before M2 is complete. The separately approved 90-day minimal post-terminal metadata lifetime is unchanged.
@@ -136,8 +143,8 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Before S04, use a disposable Pigboard Neon Free project and SQL fixture with two clients to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 itself tests historical-child secret denial before reads, registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, sleep-safe health, quota observation, restart and a second teammate. After S29-S31, A1 measures available Free history and drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
-- Access and setup: The Fly `pigboard` organization exists. Pigboard Neon organization/project, GitHub recovery-control repository, integration identity, app roles, secrets, spending observation and deployment permissions remain unverified or uncreated.
+- Manual QA: Before S02a, verify a scoped role and root pin in the existing Pigboard project, plus allowed and denied human/agent selection identities. S02a itself rejects a child-target secret before pair reads or writes. Before S02b, prove permitted human/agent inspection, pre-lookup denied same-pair inspection, a minimal issue-audience lookup and denial without ticket facts. Before S04, use a disposable SQL fixture and two clients in that project to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 tests historical-child secret denial on registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, sleep-safe health, quota observation, restart and a second teammate. After S29-S31, A1 measures available Free history and drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
+- Access and setup: The Fly `pigboard` organization and Pigboard Neon Free organization/project exist. The GitHub recovery-control repository, scoped runtime SQL role, human/agent command identities, app role grants, secrets, spending observation and deployment permissions remain unverified or uncreated.
 - Automated regression: Identify Fly load/health, Neon wake/reconnect, role-denial, effect reservation and restored-state recovery checks; distinguish local tests from hosted/live evidence.
 
 ## D4 — Define runner capabilities and reconcile the Cursor work
@@ -172,7 +179,8 @@ Testing Strategy
 Problem to solve
 
 The D4 design cannot prove this account can read the pilot repository safely,
-bind a run to its actual source commit, or share results with teammates.
+bind a run to its actual source commit, or verify a manually imported run's
+source audience before sharing status or results with teammates.
 Those facts determine whether a hosted researcher run can be accepted.
 
 Acceptance Criteria
@@ -180,15 +188,17 @@ Acceptance Criteria
 - Record the exact hosted connection identity, repository grant and permission policy intended for S05, then a bounded checkout at a pinned 40-hex commit through that connection.
 - Verify an enforced read-only source boundary and the actual checked-out commit using provider-visible or independently checked evidence; a model reply alone is insufficient proof.
 - Record one authorized teammate's run/result access and a denied viewer path for that same connection without sharing the API key.
+- Before S04, establish a trusted origin record for the exact provider agent/run IDs and original content audience, either provider-attested or a contemporaneous receipt from a trusted launch command. Establish how a source-authorized human's authority for that exact run is independently verified before transfer approval, or how a scoped agent receives a preapproved run-specific source-to-target grant. Account/repository metadata alone is insufficient. Prove the grant is rechecked on every shared inspection after restart and revoked grants hide saved status, ID and link. Test a foreign run ID, missing origin and revoked disclosure without returning provider status or result. If run-specific origin cannot be proved, keep S04 provisional and re-groom a complete trusted-source outcome rather than treating pair registration as proof.
 - Record which account and budget permit a meaningful researcher check, its observed result and cost, or mark that check unavailable. Evidence from a different account or connection is informative only; it cannot close D4-live for S05.
 - Put each pass, failure and unknown with the tested connection, repository, permission policy, identity, time and safe evidence in `docs/pilots/cursor-live-gates.md`; keep secrets and ticket contents out.
-- Leave D4-live open if any required check is unknown or failed. If read-only access or source binding fails, route to D4F and a provider decision before S05/A1.
+- Track S04's import-audience proof separately from D4-live. Leave D4-live open if its repository, enforced read-only, teammate or meaningful-work check is unknown or failed; a failed import proof blocks S04's shared-import path but does not by itself invalidate S05's separately trusted hosted launch. If read-only access or source binding fails, route to D4F and a provider decision before S05/A1.
 
 Technical Acceptance Criteria
 
 - Use only trivial compute on the company Cursor account; a meaningful run needs separate authorized account and budget.
 - Do not treat plan mode, a local request digest or a model's claimed commit as enforced source access or provider attestation.
 - D4-source is the verified actual-commit binding for the specific saved run; S26 depends on it before validating repository-backed output. D4-live applies only to the hosted connection, repository and permission policy actually used by S05; changing any of them reopens the relevant checks.
+- The S04 import-audience gate is separate from D4-source and D4-live. A selected pair, provider API key or same-repository grant alone does not prove a particular run's content audience; inspect only minimal provider metadata after caller authority, and do not read run status/result until run-specific origin and current source-to-target authorization are verified.
 
 Testing Strategy
 

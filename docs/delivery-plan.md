@@ -3,9 +3,10 @@
 Updated 27 September 2026. This is the active development queue. It follows the
 [architecture direction](architecture-plan.md) and [working process](development-workflow.md).
 Earlier architecture and delivery-plan reviews were CLEAN for their recorded
-versions. The [review record](development-review.md) separately identifies the
-current alignment verdicts and exact hashes; historical verdicts do not approve
-changed documents. This plan does not claim unresolved discovery is finished.
+versions. Their [review record](development-review.md) identifies those
+historical verdicts and exact hashes. The current revision's independent
+verdicts belong in this documentation Task PR; historical verdicts do not
+approve changed documents. This plan does not claim unresolved discovery is finished.
 
 ## Owner decision and current sequence — 27 September 2026
 
@@ -18,21 +19,27 @@ Current focus: **S01 and S03 merged; D1 Pigboard discovery, D3 and D4 live gates
 The owner selected one shared-cpu-1x/1 GB Fly Machine and a dedicated Pigboard
 Neon Free project with point restore limited to the actual usable history, at
 most about six hours or 1 GB of changes, and no scheduled snapshots. The
-[selected D3 design](designs/hosted-fly-neon-free.md) is
-[CLEAN for its exact artifact](reviews/hosted-fly-neon-free.md); live isolation,
-quota, load, authority and restore gates remain open.
+[selected D3 design](designs/hosted-fly-neon-free.md) carries decisions from
+an [earlier reviewed revision](reviews/hosted-fly-neon-free.md). Its current
+revision requires its own exact-artifact review before implementation. Live
+isolation, quota, load, authority and restore gates remain open.
 The earlier Neon Launch and Fly Managed Postgres reviews are historical for
 their exact artifacts. The approved 90-day lifetime for minimal completed-run
 metadata is a separate policy and remains unchanged.
-The authorized next five-PR stack is **S02 → S04 → S26 → S05 → S06**. Each
-slice still needs its own resolved prerequisites, reviewed implementation plan,
+The authorized next six-PR stack is **S02a → S02b → S04 → S26 → S05 → S06**. S02a
+owns customer project-and-board selection; S02b owns read-only ticket
+eligibility. The owner approved this split on 27 September 2026 to keep one
+complete outcome per PR. Each slice still needs its own resolved prerequisites,
+reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
 turn a blocked Story into a ready one.
 Earlier architecture/queue alignment was CLEAN only for the exact artifacts in
-[review evidence](development-review.md). The PIG revision has its own CLEAN
-[design review](reviews/pig-jira-connection-discovery.md) at `902b62b`; live
-gates remain open. The implementation reuses the unchanged
-D2 contract and S01 Story/plan after a current-code check. Two fresh independent
+[review evidence](development-review.md). The earlier PIG revision has its own
+CLEAN [design review](reviews/pig-jira-connection-discovery.md) at `902b62b`;
+the revised project-board design and this six-PR queue need fresh exact-artifact
+reviews. Live gates remain open. The implementation reuses D2's unchanged
+behavior and S01 Story/plan after a current-code check. D2's current file has
+editorial S02a/S02b references that need exact-revision review. Two fresh independent
 committed-code reviews are CLEAN; [S01 evidence](reviews/workflow-profile.md)
 records exact revisions and coverage. [PR #9](https://github.com/danielchappell/ski-stack/pull/9)
 and its documentation base [PR #8](https://github.com/danielchappell/ski-stack/pull/8)
@@ -95,18 +102,19 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | Order | Task | State | Why now |
 | --- | --- | --- | --- |
 | Later commercial discovery | D0: Test the product need | Deferred from the foundation path; target-team evidence and outreach authority unresolved | Inform audience, offer, adoption and commercial rollout; not a prerequisite to the authorized one-team foundation or baseline process. |
-| Complete | D2: Define durable attempts and recovery | Design CLEAN from two independent reviewers; [contract](designs/hosted-work-contract.md) | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
-| Revised PIG design awaiting fresh review; live gates open | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled` through an explicit project-board pair. The prior [review](reviews/pig-jira-connection-discovery.md) covers the earlier design only; the [INT record](designs/jira-connection-discovery.md) is historical. Service identity, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Review the revised pair-scope design, then complete identity-scoped preflight and controlled checks before Jira write Stories. S02 needs its read-only identity and link facts first. |
-| Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
-| Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
+| Complete decision; current revision review pending | D2: Define durable attempts and recovery | Two reviewers found the earlier [contract](designs/hosted-work-contract.md) revision CLEAN; this branch edits only Story references, but the current file needs an exact-revision verdict | Defines logical ownership/interfaces/recovery and resolves S01 configuration-only inputs; physical/live guarantees remain D1/D3/D4 gates. |
+| Revised PIG design; exact-revision review and live gates apply | D1: Verify Jira identity and workflow | [Active Pigboard design](designs/pig-jira-connection-discovery.md) selects `PIG` Task + To Do + `ai-enabled` through an explicit project-board pair. The prior [review](reviews/pig-jira-connection-discovery.md) covers the earlier design only; the [INT record](designs/jira-connection-discovery.md) is historical. A Scubapig Jira User service account exists, but its credential, effective permissions, native IDs, blocker mapping, per-issue authority and transition guard remain open. | Review the revised pair-scope design, then complete identity-scoped preflight and controlled checks before Jira write Stories. S02a needs project/board metadata; S02b needs issue/link/audience facts. |
+| Revised design; exact-revision review and live gates open | D4: Define and verify runner capabilities | The [runner design](designs/runner-capabilities.md) revises imported-run provenance; its [review record](reviews/runner-capabilities.md) covers earlier revisions and PR #7's standalone code | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
+| Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No import source-audience, repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
-| Neon Free design CLEAN at recorded SHA-256; staged D3 live gates open | D3: Choose deployment and team access | [Selected one-team design](designs/hosted-fly-neon-free.md) and its [independent review record](reviews/hosted-fly-neon-free.md). The [Neon Launch design/review](designs/hosted-fly-neon-launch.md) and prior [Fly MPG brief](designs/hosted-deployment-options.md) are historical for their exact artifacts. | Before S04, prove dedicated Pigboard Free store, SQL isolation, root/child endpoint identity and ordinary grant boundary, a disposable two-client SQL feasibility probe, actual Free limits and test identities. S04 implements the root pin, child-read denial and registered-run inspection; S05 proves no child-target send. S08 proves Fly load/teammate operation and quota-safe health checks. S29-S31 build recovery; A1 proves the measured within-project Free restore window and full interlock. |
+| Revised Neon Free design; exact-revision review and staged live gates apply | D3: Choose deployment and team access | [Selected one-team design](designs/hosted-fly-neon-free.md) and the [earlier revision’s review record](reviews/hosted-fly-neon-free.md). The [Neon Launch design/review](designs/hosted-fly-neon-launch.md) and prior [Fly MPG brief](designs/hosted-deployment-options.md) are historical for their exact artifacts. | Before S02a, prove scoped SQL access, a pinned original-root endpoint and the human/agent grant path for the first saved pair. S02a implements and tests effective-target denial before any pair read or save. Before S02b, prove current-team human viewer and scoped agent inspect grants before lookup, a denied same-pair caller and D1's minimal issue-audience lookup before richer reads. Before S04, prove root/child endpoint identity and ordinary grant boundaries, a disposable two-client SQL feasibility probe, actual Free limits and test identities. S04 reuses the pin for registered-run inspection and tests child-read denial on that path; S05 proves no child-target send. S08 proves Fly load/teammate operation and quota-safe health checks. S29-S31 build recovery; A1 proves the measured within-project Free restore window and full interlock. |
 
 These are Tasks, not promises of two-day implementation. **D3-design** means the
 selected Fly + Neon Free architecture has two CLEAN independent design
-reviews of its exact hash in the review record. **D3-store/access** is the narrower pre-S04 live
+reviews of the exact revision being implemented. The linked historical record
+alone does not establish that gate for a changed file. **D3-early authority/store** gates S02a's first shared-store use: a concrete human/agent grant path, scoped SQL role, separate original-root pin and versioned pair record. S02a implements and tests effective-target rejection on startup, reconnect and before selection reads or writes, including a changed secret pointing to a child. S02b additionally needs verified viewer/agent inspect grants before any issue lookup, a denied-caller check and D1's minimal metadata proof of issue audience before richer reads or output. **D3-store/access** is the narrower pre-S04 live
 gate: dedicated Pigboard Neon isolation, scoped SQL/test identities, recorded root/child endpoint identities and ordinary grant boundary, and a disposable
-two-client SQL transaction/reconnect probe. S04 owns the effective-target pin, child-read denial, application registration/inspection and role acceptance; S05 proves no child-target send. **D3-host/recovery** remains open
+two-client SQL transaction/reconnect probe. S04 reuses S02a's pin for application registration/inspection and tests child-read denial on its run path; S05 proves no child-target send. **D3-host/recovery** remains open
 through S08 and S29-S31 until Fly load/team operation, control grants,
 the measured Free restore history and the full restore interlock are proven at A1. S04 does
 not depend on capabilities those later Stories implement. The 90-day minimal
@@ -115,7 +123,11 @@ must be recorded before the Story that first stores each class: S26 for any
 provider result, S05 for copied Jira source, prepared requests or sealed
 credentials, and S06 for publication evidence. If an earlier Story stores a
 class, its decision moves earlier. **D4-design** means a
-reviewed runner mapping and PR #7 manual disposition. **D4-source** means D4L
+reviewed runner mapping and PR #7 manual disposition. S04 additionally needs
+D4L's run-specific origin and source-audience import proof before any shared
+provider status/result inspection; pair registration alone is not proof.
+Recheck current source-to-target disclosure on every S04/S26 read.
+**D4-source** means D4L
 has verified which immutable commit Cursor actually used for the saved run; a model
 reply or local digest alone does not close it. **D4-live** means D4L has also
 verified the repository grant, enforced read-only behavior, second-user access
@@ -125,8 +137,11 @@ does not close this gate; a change to those inputs reopens the affected checks.
 D4-design can support S03/S04 without
 D4-live; S26 needs D4-source, and S05/A1 need D4-live. If read-only or source
 binding fails, D4F and a new owner provider choice
-precede hosted activation. D2 is now reviewed. The configuration-only portions of D1/D4 are resolved in
-that contract; their live identity, permission and capability checks remain open.
+precede hosted activation. D2's substantive contract was reviewed at its
+recorded earlier revision; this branch changes only later-Story names, whose
+current file still needs an exact-revision verdict. The configuration-only
+portions of D1/D4 are resolved in that contract; their live identity,
+permission and capability checks remain open.
 S01 can be implemented without those live checks because its complete outcome is
 a truthful offline route preview. It never authorizes live execution.
 
@@ -142,11 +157,12 @@ its decisions and plan are ready.
 | ID | One complete outcome | Depends on | Likely change boundary; must validate sizing |
 | --- | --- | --- | --- |
 | [S01](stories/validate-workflow-profile.md) | Validate a saved workflow configuration and explain its route | Reviewed D2 plus configuration-only D1/D4 decisions; [per-Story plan](plans/validate-workflow-profile.md) must have two CLEAN reviews | Nine expected implementation files, twelve including supporting updates; estimated 12 human hours. |
-| S02 | Explain whether one Jira ticket is eligible without starting it | S01, D1 | Jira reads/normalization and existing core policy, one inspection command limited to the connection's selected project-board pair. |
+| S02a | Choose and correct one Jira project-and-board pair | S01, D1 identity and project/board metadata, D3 early authentication/grant and live-root selection-store decision/proof | First minimal use of D3's shared authority store: verified connection-administrator scope for human and agent callers, named choices, validation, a versioned saved pair and a separate original-root pin. Reject a child effective target before any pair read or save, including startup, reconnect and secret change. Correction denies active/uncertain effects; old records stay inspectable. No issue inspection or Jira write. D3 must name the concrete auth/store mechanism and prove this combined slice fits 20 files/<2 days before promotion; otherwise re-groom the PR count. |
+| S02b | Explain whether one Jira ticket is eligible without starting it | S02a, D1 issue/link/audience and minimal-field facts, D3 current-team human viewer/scoped agent inspect grants and denied-caller proof | Jira reads/normalization and existing core policy, one inspection command limited to S02a's selected project-board pair and the caller's source audience. Check app caller authority before any issue lookup, then use only proven minimal metadata to establish project, board and issue audience before richer reads or output. Denied callers and denied/unknown audiences get no ticket facts. Recheck file/time size after D1/D3. |
 | S03 | Start and retrieve one manual Cursor cloud job with stable identity | D4-design; PR #7 retrospective Story/plan and committed-code reviews CLEAN | Existing standalone CLI and library, kept separate from hosted launch authority; no repository-backed acceptance claimed. |
-| S04 | Register and inspect an existing provider run across processes | S03, D2, D3-store/access, D4-design | Use the selected isolated Neon Postgres store, independently pinned original-root endpoint and current Pigboard-scoped access; persist immutable identity and last recorded inspection status/time with explicit result omissions. Mutable or unattested revisions remain inspection-only. S26 owns result observation and validation. Recheck 20-file/<2-day size after the narrow D3 store/access proof. |
-| S26 | Observe and validate a saved provider result | S04, D2, D4-design, D4-source, policy for any stored provider result | One observation/validation command stores a role result or needs-attention; source revision must be proven immutable before validation. |
-| S05 | Explicitly start one eligible Jira request once | S02, S03, S04, D1, D2, D3-store/access, D4-design, D4-live, policies for any stored source/request/credential | Atomic root authority check and attempt/send reservation plus D2 provider facade and one operator-invoked launch/reconcile command. The original root endpoint is pinned separately from the connection secret; changing that secret to a historical child denies reads and sends. Recheck size after discovery; full disaster-recovery implementation remains a later gate. |
+| S04 | Register and inspect an existing provider run across processes | S03, D2, D3-store/access, D4-design, D4L run-specific import audience proof | Reuse S02a's live-root authority boundary with selected isolated Neon Postgres, independently pinned original-root endpoint and current Pigboard-scoped access; persist immutable run identity, trusted original-audience evidence, current source-to-connection disclosure grant, registration-time selected pair/version and last status/time with explicit result omissions. Pair/version or account/repository match does not prove a run's original audience. Recheck source disclosure and target viewer/agent grant on each shared read, hiding saved ID/status/link on revocation; deny provider reads and registration without run-specific proof. Discard co-returned result text. Mutable or unattested revisions remain inspection-only after audience proof. S26 owns result observation and validation. Recheck 20-file/<2-day size after D3 store/access and D4L import proofs. |
+| S26 | Observe and validate a saved provider result | S04, D2, D4-design, D4-source, policy for any stored provider result | One observation/validation command stores bounded output and binding state. Read an imported result only after S04's current source-audience authorization is rechecked; it can be format-checked within that audience but stays nonpublishable. Publication eligibility additionally requires S05's trusted immutable launch record, independent original-request binding and proof of the actual checkout commit. |
+| S05 | Explicitly start one eligible Jira request once | S02b, S03, S04, D1, D2, D3-store/access, D4-design, D4-live, policies for any stored source/request/credential | Atomic root authority check and attempt/send reservation plus D2 provider facade and one operator-invoked launch/reconcile command. The original root endpoint is pinned separately from the connection secret; changing that secret to a historical child denies reads and sends. Recheck size after discovery; full disaster-recovery implementation remains a later gate. |
 | S06 | Publish one stored result back to its Jira ticket safely | S05, S26, D1, D2, policy for stored publication evidence | Append-only progress/result comments and recoverable publication; automatic transition only if Jira enforces the full eligibility guard, otherwise manual handoff. |
 | S07 | Pick up eligible tickets and reconcile existing attempts automatically | S05, S26, S06 | Bounded scheduled coordinator tick, one active attempt, stored polling/progress; no new queue policy. |
 | S08 | Run that coordinator independently of a developer's computer | S07, D3-design, D3-store/access | Deployment/configuration using selected services, authenticated health/inspection, shared-cpu-1x/1 GB load proof, second-user operation and operational guide. |
@@ -154,7 +170,8 @@ its decisions and plan are ready.
 | S30 | Reconcile one restored connection's external effects | S29, D1, D3-design, D4-design | Current-authority operator observes exact Jira/Cursor effects through a read-only quarantine route; record known effects and unknown or unbounded windows, never completion without enumeration evidence. Provisional — re-groom after focused credential/observation checks. |
 | S31 | Reapply current access and reopen a restored connection | S30, D3-design | Use the live-root authority journal, rebind current provider credentials, reconcile and copy child data back into the root before atomic effect admission resumes; reopen only with full evidence and expected-head manifest update. Provisional — likely needs splitting after feasibility checks and a size inventory. |
 
-S04 is a usable shared run-inspection capability, including a process restart;
+S02a is usable connection setup, and S02b is usable read-only inspection; neither
+silently starts work. S04 is a usable shared run-inspection capability, including a process restart;
 it is not an unused schema migration. S05 exposes a deliberate single-ticket
 operation before automatic scheduling. S26 observes and validates the role result before S06 can publish it. S06 is a
 complete recoverable publishing operation for a validated ticket-linked attempt. S08 does not silently
@@ -256,8 +273,8 @@ slices supported by evidence from operating that baseline.
   keeps the identifier-only project Automation candidate, defers richer admin
   webhooks, and requires verified blocker mapping. Progress comments are
   append-only; status movement stays manual unless a full eligibility guard is
-  proven. No service identity, REST metadata, comment write or transition test
-  is yet verified; S02 and automatic publication are not ready.
+  proven. No service API credential, REST metadata, comment write or transition test
+  is yet verified; S02a/S02b and automatic publication are not ready.
 - Current main has no hosted CI workflow. This is an evidence gap to record in
   each future plan, not permission to describe local tests as hosted checks or
   to add infrastructure as an unreviewed side effect.
@@ -269,21 +286,23 @@ slices supported by evidence from operating that baseline.
 
 | Principle | Assessment |
 | --- | --- |
-| Intuitive | Configuration and inspection precede launch; PIG Task + To Do + `ai-enabled` is the visible opt-in route. The D3 store choice is not a teammate workflow step. Recovery still needs plain blocked-state wording in S29-S31. |
-| Discoverable | Task outputs, Story bodies, readiness rules and the five-PR order are linked from this queue. D3 live setup and recovery controls remain explicit prerequisites rather than hidden assumptions. |
-| Delightful experience | Discovery can progress without repeated approval prompts. The Free store can sleep, so S04 must show a bounded wake delay honestly; Fly health checks must not keep it active, and live setup waits for review and authority checks. |
+| Intuitive | An administrator chooses a named Jira pair once in S02a; a teammate then inspects a ticket in S02b before launch. Correction of a pair explains active or uncertain work that must be reconciled first. PIG Task + To Do + `ai-enabled` is the visible opt-in route. The D3 store choice is not a teammate workflow step. Recovery still needs plain blocked-state wording in S29-S31. |
+| Discoverable | Task outputs, the separate setup/inspection Story bodies, readiness rules and the six-PR order are linked from this queue. D3 live setup and recovery controls remain explicit prerequisites rather than hidden assumptions. |
+| Delightful experience | The saved S02a pair avoids asking for Jira IDs on each S02b inspection. The Free store can sleep, so S04 must show a bounded wake delay honestly; Fly health checks must not keep it active, and live setup waits for review and authority checks. |
 | Token saver | Reuses current code/API evidence and avoids speculative full implementation plans for blocked later Stories. Agent responses must include uncertainty and omissions, not just short success text. |
-| Secure | D1 audience, D4 source/read-only and D3 separate Pigboard Neon/control-repository grants gate effects. The live-root authority journal and physical/provider fence prevent restored rows from granting access or sends; all remain unproven live. |
-| Agents are equal | Human and agent inspection/launch use scoped commands. The recovery preview includes a noninteractive CLI observation route with the same role and connection checks; no browser-only handoff is required. |
-| Dependable | S01/S03 merged scope, historical paid-store reviews, selected Free design and open live gates remain distinct. Restore covers only the measured short within-project history; Free quota exhaustion closes new effects. S29-S31 remain provisional until sized, and no plan review is inferred from a CLEAN design. |
+| Secure | S02a checks connection-administrator authority before listing or changing scope and requires D3's concrete early identity/grant/store boundary; S02b checks current viewer/agent inspect grants before issue lookup, then verifies audience from minimal metadata before richer reads or output. Pair correction is versioned and cannot strand active or uncertain effects; later effect reservations compare the saved version. S04 requires exact-run origin and rechecks current source-to-target import authorization before every shared read; an imported run cannot become S26-publishable without trusted original-request and source binding. D1 audience, D4 source/read-only and D3 separate Pigboard Neon/control-repository grants gate effects. The live-root authority journal and physical/provider fence prevent restored rows from granting access or sends; all remain unproven live. |
+| Agents are equal | Authorized human and agent callers both have scoped S02a selection and S02b inspection, with a distinct agent inspect grant and noninteractive structured choices/results. The recovery preview includes a noninteractive CLI observation route with the same role and connection checks; no browser-only handoff is required. |
+| Dependable | S01/S03 merged scope, historical paid-store reviews, selected Free design and open live gates remain distinct. S02a's saved pair is a prerequisite, not proof that S02b can read an issue; a changed pair makes an old inspection stale. S26 reports format-valid but unbound results as nonpublishable. Restore covers only the measured short within-project history; Free quota exhaustion closes new effects. S29-S31 remain provisional until sized, and no plan review is inferred from a CLEAN design. |
 
 S01 delivers the reviewed M1 configuration outcome at merged main
-`005419b63460540bfbb96400c46e7274a47af723`. D1 still needs the dedicated
-integration identity and permission/transition/race evidence. D4's design and
-PR #7 standalone Story/plan and code are independently CLEAN at the recorded
-SHA. This PR's D4 feedback revisions have two exact-artifact CLEAN reviews
-recorded in the linked review record.
+`005419b63460540bfbb96400c46e7274a47af723`. The Scubapig integration
+service account exists; D1 still needs its API credential and identity-scoped
+permission, transition and human-edit race evidence. D4's earlier design
+revision was independently CLEAN; its current imported-run provenance revision
+requires an exact-artifact review. PR #7's standalone Story/plan and code are
+independently CLEAN at the recorded SHA, and its feedback revisions have two
+exact-artifact CLEAN reviews in the linked review record.
 Repository permissions, enforced read-only behavior, second-user visibility
-and meaningful-work authority remain unverified. S02 and hosted activation
+and meaningful-work authority remain unverified. S02a/S02b and hosted activation
 stay gated on their respective decisions. PR #7 merged externally; its live
 repository-backed acceptance remains open.
