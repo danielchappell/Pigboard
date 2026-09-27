@@ -131,6 +131,25 @@ function prepare(secret, expectedTarget) {
   return { check: pinCheck(candidate, expectedTarget), candidate };
 }
 
+function clientConfig(candidate, expectedTarget, { tlsCa, connectionTimeoutMs, queryTimeoutMs }) {
+  return {
+    host: candidate.host,
+    port: candidate.port,
+    database: candidate.database,
+    user: candidate.role,
+    password: candidate.password,
+    ssl: {
+      rejectUnauthorized: true,
+      servername: expectedTarget.host,
+      ...(tlsCa ? { ca: tlsCa } : {})
+    },
+    enableChannelBinding: true,
+    connectionTimeoutMillis: connectionTimeoutMs,
+    query_timeout: queryTimeoutMs,
+    statement_timeout: queryTimeoutMs
+  };
+}
+
 export function checkRuntimeTarget(secret) {
   return prepare(secret, ROOT_TARGET).check;
 }
@@ -198,22 +217,9 @@ export async function diagnoseNeonRoot(secret, options = {}) {
     return report([rootCheck, ...omitted(AFTER_PIN, "not_attempted")], expectedTarget);
   }
 
-  const client = new ClientClass({
-    host: candidate.host,
-    port: candidate.port,
-    database: candidate.database,
-    user: candidate.role,
-    password: candidate.password,
-    ssl: {
-      rejectUnauthorized: true,
-      servername: expectedTarget.host,
-      ...(options.tlsCa ? { ca: options.tlsCa } : {})
-    },
-    enableChannelBinding: true,
-    connectionTimeoutMillis: connectionTimeoutMs,
-    query_timeout: queryTimeoutMs,
-    statement_timeout: queryTimeoutMs
-  });
+  const client = new ClientClass(clientConfig(candidate, expectedTarget, {
+    tlsCa: options.tlsCa, connectionTimeoutMs, queryTimeoutMs
+  }));
   let connected = false;
   try {
     await withinDeadline(() => client.connect(), connectionTimeoutMs, client);
@@ -240,5 +246,46 @@ export async function diagnoseNeonRoot(secret, options = {}) {
     return report(checks, expectedTarget);
   } finally {
     await closeClient(client);
+  }
+}
+
+export class PinnedNeonError extends Error {
+  constructor(reason) {
+    super(reason);
+    this.name = "PinnedNeonError";
+    this.reason = reason;
+  }
+}
+
+// The expected target and ClientClass seams are for isolated tests. The hosted
+// entry point uses the source-controlled runtime root pin without overrides.
+export async function openPinnedRuntimeClient(secret, options = {}) {
+  const expectedTarget = options.expectedTarget ?? ROOT_TARGET;
+  const ClientClass = options.ClientClass ?? Client;
+  const connectionTimeoutMs = Number.isInteger(options.connectionTimeoutMs) && options.connectionTimeoutMs > 0 ?
+    Math.min(options.connectionTimeoutMs, CONNECTION_TIMEOUT_MS) : CONNECTION_TIMEOUT_MS;
+  const queryTimeoutMs = Number.isInteger(options.queryTimeoutMs) && options.queryTimeoutMs > 0 ?
+    Math.min(options.queryTimeoutMs, QUERY_TIMEOUT_MS) : QUERY_TIMEOUT_MS;
+  const { check: rootCheck, candidate } = prepare(secret, expectedTarget);
+  if (rootCheck.status !== "pass") throw new PinnedNeonError(rootCheck.reason);
+  const client = new ClientClass(clientConfig(candidate, expectedTarget, {
+    tlsCa: options.tlsCa, connectionTimeoutMs, queryTimeoutMs
+  }));
+  try {
+    await withinDeadline(() => client.connect(), connectionTimeoutMs, client);
+    if (pinCheck(candidate, expectedTarget).status !== "pass") {
+      throw new PinnedNeonError("target_mismatch");
+    }
+    const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client);
+    const row = response.rows?.[0];
+    if (row?.role !== expectedTarget.role || row?.database !== expectedTarget.database) {
+      throw new PinnedNeonError("identity_mismatch");
+    }
+    if (row?.ssl !== true) throw new PinnedNeonError("tls_not_active");
+    return { client, close: () => closeClient(client) };
+  } catch (error) {
+    await closeClient(client);
+    throw error instanceof PinnedNeonError ? error :
+      new PinnedNeonError(connectionFailure(error).reason);
   }
 }

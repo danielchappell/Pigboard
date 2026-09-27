@@ -15,6 +15,8 @@ Usage:
 The URL file and its parent must be owner-only. The credential is saved once in
 ~/.config/pigboard/owner-credentials/ and is never printed. On an unknown result,
 inspect before retrying; on an undelivered credential, inspect then recover.
+Create the restricted pigboard_app role before migrating; migration v2 gives it
+only the columns needed for private self-inspection.
 The guide is docs/hosted-pigboard-authority.md.`;
 
 function parse(args) {
@@ -55,6 +57,8 @@ function publicResult(result) {
 
 const NEXT_ACTION = Object.freeze({
   schema_absent: "Run the protected owner migration, then inspect before bootstrap.",
+  migration_required: "Run the protected owner migration to install the next schema version before bootstrap or service inspection.",
+  runtime_role_missing: "Create the restricted pigboard_app login under owner custody, then rerun the protected migration.",
   schema_conflict: "Stop; inspect the migration receipt and managed schema under owner custody before any repair.",
   inspection_unverified: "Check database availability and inspect again; do not assume a prior operation failed.",
   schema_outcome_unknown: "Inspect the current schema and owner before any explicit migration retry.",
@@ -96,7 +100,7 @@ function render(result, format) {
 }
 
 function successful(status) {
-  return ["applied", "already_current", "schema_current", "bootstrapped", "recovered"].includes(status);
+  return ["applied", "upgraded", "already_current", "schema_current", "bootstrapped", "recovered"].includes(status);
 }
 
 export async function runOwnerCommand(args, { output = console.log,

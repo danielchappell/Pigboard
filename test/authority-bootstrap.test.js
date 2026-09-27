@@ -8,6 +8,7 @@ import { test } from "node:test";
 import pg from "pg";
 import { changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
   prepareCredentialDirectory, verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
+import { inspectOwnGrant } from "../src/hosted/authority-self.js";
 import { runOwnerCommand } from "../scripts/bootstrap-pigboard-owner.mjs";
 
 function requireBinary(name) {
@@ -59,6 +60,15 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     }
     const [first, second] = clients;
     assert.deepEqual(await inspectAuthority(first), { status: "schema_absent" });
+    assert.deepEqual(await migrateAuthority(first), { status: "runtime_role_missing" });
+    const missingRoleOutput = [];
+    assert.equal(await runOwnerCommand(["migrate", "--owner-url-file", "/unused/test/path",
+      "--format", "json"], { output: (line) => missingRoleOutput.push(line),
+      openConnection: async () => ({ query: first.query.bind(first), end: async () => {} }) }), 1);
+    assert.equal(JSON.parse(missingRoleOutput[0]).status, "runtime_role_missing");
+    assert.match(JSON.parse(missingRoleOutput[0]).nextAction, /pigboard_app/);
+    assert.deepEqual(await inspectAuthority(second), { status: "schema_absent" });
+    await first.query("CREATE ROLE pigboard_app LOGIN");
     const migrations = await Promise.all([migrateAuthority(first), migrateAuthority(second)]);
     assert.deepEqual(migrations.map((item) => item.status).sort(), ["already_current", "applied"]);
     assert.deepEqual(migrations.map((item) => item.generation), [0, 0]);
@@ -67,6 +77,22 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     await first.query("SET search_path = pg_catalog, public");
     await second.query("SET search_path = pg_catalog, public");
     assert.equal((await inspectAuthority(first)).status, "schema_current");
+    assert.deepEqual(migrations.map((item) => item.schemaVersion), [2, 2]);
+    const app = new pg.Client({ host: "localhost", port, database: "postgres",
+      user: "pigboard_app", ssl: { rejectUnauthorized: true,
+        servername: "localhost", ca: readFileSync(cert, "utf8") } });
+    await app.connect();
+    clients.push(app);
+    await assert.rejects(app.query("UPDATE pigboard_team_authority SET generation = 99"),
+      { code: "42501" });
+    await assert.rejects(app.query("CREATE TABLE public.pigboard_illegal(id integer)"),
+      { code: "42501" });
+    await assert.rejects(app.query("SELECT * FROM pigboard_authority_events"),
+      { code: "42501" });
+    const inspectAsApp = (token) => inspectOwnGrant(token, {
+      secret: "held-by-private-host", openConnection: async () =>
+        ({ client: app, close: async () => {} })
+    });
     const creations = await Promise.all([
       changeOwner(first, { name: "First Owner" }),
       changeOwner(second, { name: "Other Owner" })
@@ -81,7 +107,7 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(inspection.owner.principalId, issued.principalId);
     assert.equal(inspection.owner.active, true);
     const rerun = await migrateAuthority(first);
-    assert.deepEqual(rerun, { status: "already_current", schemaVersion: 1, generation: 1 });
+    assert.deepEqual(rerun, { status: "already_current", schemaVersion: 2, generation: 1 });
     const originalCredential = (await first.query(
       "SELECT digest_version, digest, active FROM pigboard_credentials WHERE principal_id = $1",
       [issued.principalId])).rows[0];
@@ -90,6 +116,11 @@ test("real independent Postgres sessions serialize migration, setup, and recover
       originalCredential.digest), true);
     assert.equal(verifyCallerToken("pb1_" + "A".repeat(43), originalCredential.digest_version,
       originalCredential.digest), false);
+    const selfBeforeRecovery = await inspectAsApp(issued.token);
+    assert.equal(selfBeforeRecovery.status, "ok");
+    assert.equal(selfBeforeRecovery.principal.id, issued.principalId);
+    assert.deepEqual(selfBeforeRecovery.grants, ["connection_admin", "owner"]);
+    assert.equal(selfBeforeRecovery.generation, 1);
     const replacements = await Promise.all([
       changeOwner(first, { name: "Recovered Owner", expectGeneration: 1 }),
       changeOwner(second, { name: "Competing Recovery", expectGeneration: 1 })
@@ -98,6 +129,9 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     const replacement = replacements.find((item) => item.status === "recovered");
     assert.equal(replacement.generation, 2);
     assert.equal((await inspectAuthority(first)).owner.principalId, replacement.principalId);
+    assert.equal((await inspectAsApp(issued.token)).status, "denied");
+    assert.equal((await inspectAsApp(replacement.token)).principal.id,
+      replacement.principalId);
     assert.equal((await migrateAuthority(second)).generation, 2);
     const old = (await second.query(
       "SELECT active FROM pigboard_credentials WHERE principal_id = $1",
@@ -128,6 +162,22 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.deepEqual(await migrateAuthority(lostCommitReply),
       { status: "schema_outcome_unknown" });
     assert.equal((await inspectAuthority(first)).generation, 3);
+    await first.query("DELETE FROM pigboard_schema_migrations WHERE version = 2");
+    assert.deepEqual(await inspectAuthority(second),
+      { status: "migration_required", schemaVersion: 1, generation: 3 });
+    const pendingOutput = [];
+    assert.equal(await runOwnerCommand(["inspect", "--owner-url-file", "/unused/test/path",
+      "--format", "json"], { output: (line) => pendingOutput.push(line),
+      openConnection: async () => ({ query: first.query.bind(first), end: async () => {} }) }), 1);
+    assert.equal(JSON.parse(pendingOutput[0]).status, "migration_required");
+    assert.match(JSON.parse(pendingOutput[0]).nextAction, /migration/);
+    assert.deepEqual(await migrateAuthority(first),
+      { status: "upgraded", schemaVersion: 2, generation: 3 });
+    await first.query("REVOKE SELECT (digest) ON pigboard_credentials FROM pigboard_app");
+    assert.deepEqual(await inspectAuthority(second), { status: "schema_conflict" });
+    assert.deepEqual(await migrateAuthority(first), { status: "schema_conflict" });
+    await first.query("GRANT SELECT (digest) ON pigboard_credentials TO pigboard_app");
+    assert.equal((await inspectAuthority(second)).status, "schema_current");
     const newClient = async () => {
       const client = new pg.Client({ host: "localhost", port,
         database: "postgres", user: process.env.USER,

@@ -6,7 +6,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { ROOT_TARGET } from "../src/hosted/root-target.js";
-import { checkRuntimeTarget, diagnoseNeonRoot } from "../src/hosted/neon-client.js";
+import { checkRuntimeTarget, diagnoseNeonRoot, openPinnedRuntimeClient,
+  PinnedNeonError } from "../src/hosted/neon-client.js";
 
 function urlFor(target, password = "private-test-password") {
   return `postgresql://${encodeURIComponent(target.role)}:${encodeURIComponent(password)}@${target.host}:${target.port}/${encodeURIComponent(target.database)}?sslmode=require`;
@@ -107,6 +108,54 @@ test("the diagnostic uses an explicit verified-TLS config and only a read query"
   assert.equal(config.connectionString, undefined);
   assert.match(sql, /^\s*SELECT\b/i);
   assert.equal(JSON.stringify(result).includes(config.password), false);
+});
+
+test("the application connection checks pin and server identity before protected SQL", async () => {
+  let created = 0;
+  const wrong = urlFor({ ...ROOT_TARGET, host: "wrong.example.test" });
+  class RecordingClient {
+    constructor(config) {
+      created += 1;
+      assert.equal(config.ssl.rejectUnauthorized, true);
+      assert.equal(config.ssl.servername, ROOT_TARGET.host);
+      assert.equal(config.connectionString, undefined);
+    }
+    async connect() {}
+    async query(sql) {
+      assert.match(sql, /current_user/);
+      return { rows: [{ role: ROOT_TARGET.role,
+        database: ROOT_TARGET.database, ssl: true }] };
+    }
+    async end() {}
+  }
+  await assert.rejects(openPinnedRuntimeClient(wrong, { ClientClass: RecordingClient }),
+    (error) => error instanceof PinnedNeonError && error.reason === "target_mismatch");
+  assert.equal(created, 0);
+  const connection = await openPinnedRuntimeClient(urlFor(ROOT_TARGET),
+    { ClientClass: RecordingClient });
+  assert.equal(created, 1);
+  await connection.close();
+  class WrongSession extends RecordingClient {
+    async query() { return { rows: [{ role: "pigboard_owner",
+      database: ROOT_TARGET.database, ssl: true }] }; }
+  }
+  await assert.rejects(openPinnedRuntimeClient(urlFor(ROOT_TARGET),
+    { ClientClass: WrongSession }),
+  (error) => error instanceof PinnedNeonError && error.reason === "identity_mismatch");
+});
+
+test("a stalled application connection is bounded and reports no private URL", async () => {
+  const password = "application-private-password";
+  class StalledClient {
+    async connect() { return new Promise(() => {}); }
+    async end() {}
+  }
+  const started = Date.now();
+  await assert.rejects(openPinnedRuntimeClient(urlFor(ROOT_TARGET, password), {
+    ClientClass: StalledClient, connectionTimeoutMs: 20
+  }), (error) => error instanceof PinnedNeonError &&
+    error.reason === "temporarily_unavailable" && !error.message.includes(password));
+  assert.ok(Date.now() - started < 2_000);
 });
 
 function available(binary) {

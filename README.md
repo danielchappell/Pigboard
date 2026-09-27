@@ -54,12 +54,14 @@ not establish live readiness.
 
 ## Run the first private Pigboard host
 
-`npm run --silent host:pigboard` starts a small liveness-only HTTP service. The
+`npm run --silent host:pigboard` starts a small private HTTP service. The
 operator can run `npm run --silent host:pigboard -- --diagnose-root` to check a
 fresh, pinned Neon root connection. Both commands need a private
-`PIGBOARD_NEON_URL`; neither selects a Jira board or exposes a user API. The
+`PIGBOARD_NEON_URL`. After owner migration version 2, a caller can inspect only
+their own current grant with `GET /v1/authority/me` and a bearer credential.
+The host does not select a Jira board or expose a public API. The
 [first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
-private Fly setup, safe secret handoff, diagnostic results, restart and rollback.
+private Fly setup, safe credential use, diagnostic results, restart and rollback.
 The host is not live merely because this code or a passing local test exists.
 
 ## Set up the first Pigboard owner

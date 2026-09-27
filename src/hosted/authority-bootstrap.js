@@ -5,11 +5,23 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 const SQL = readFileSync(new URL("../../sql/001-pigboard-authority.sql", import.meta.url), "utf8");
+const READ_SQL = readFileSync(new URL("../../sql/002-pigboard-owner-read.sql", import.meta.url), "utf8");
 const CHECKSUM = createHash("sha256").update(SQL).digest("hex");
+const READ_CHECKSUM = createHash("sha256").update(READ_SQL).digest("hex");
 const TABLES = ["pigboard_schema_migrations", "pigboard_team_authority",
   "pigboard_principals", "pigboard_credentials", "pigboard_grants",
   "pigboard_authority_events"];
 const MIGRATION_LOCK = 870010021;
+const RUNTIME_READ_COLUMNS = {
+  pigboard_schema_migrations: {},
+  pigboard_team_authority: { team_key: true, generation: true },
+  pigboard_principals: { id: true, name: true, kind: true, created_at: false },
+  pigboard_credentials: { id: false, principal_id: true, digest_version: true,
+    digest: true, issued_generation: true, active: true, created_at: false },
+  pigboard_grants: { id: false, principal_id: true, role: true,
+    active: true, created_at: false },
+  pigboard_authority_events: {}
+};
 const CATALOG_QUERIES = [
   `SELECT c.relname, c.relkind, c.relrowsecurity, c.relforcerowsecurity
    FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
@@ -97,7 +109,10 @@ function newToken() {
 
 async function tablePresence(client) {
   const response = await client.query(
-    "SELECT name, to_regclass('public.' || name) AS relation FROM unnest($1::text[]) AS table_name(name)",
+    `SELECT names.name, c.oid AS relation
+     FROM unnest($1::text[]) AS names(name)
+     LEFT JOIN pg_catalog.pg_namespace n ON n.nspname = 'public'
+     LEFT JOIN pg_catalog.pg_class c ON c.relnamespace = n.oid AND c.relname = names.name`,
     [TABLES]
   );
   return new Map(response.rows.map((row) => [row.name, row.relation !== null]));
@@ -109,6 +124,42 @@ async function catalogChecksum(client) {
     catalog.push((await client.query(sql, [TABLES])).rows);
   }
   return createHash("sha256").update(JSON.stringify(catalog)).digest("hex");
+}
+
+async function runtimeReadGrantsCurrent(client) {
+  const role = await client.query("SELECT to_regrole('pigboard_app') IS NOT NULL AS exists");
+  if (role.rows[0]?.exists !== true) return false;
+  const schema = await client.query(`SELECT
+    has_schema_privilege('pigboard_app', 'public', 'USAGE') AS can_use,
+    has_schema_privilege('pigboard_app', 'public', 'CREATE') AS can_create`);
+  if (schema.rows[0]?.can_use !== true || schema.rows[0]?.can_create !== false) return false;
+  const columns = Object.entries(RUNTIME_READ_COLUMNS).flatMap(([table, expected]) =>
+    Object.entries(expected).map(([column, shouldRead]) =>
+      ({ table, column, shouldRead })));
+  const actual = await client.query(`WITH expected AS (
+      SELECT * FROM jsonb_to_recordset($1::jsonb)
+        AS e(table_name text, column_name text, should_read boolean)
+    ) SELECT table_name, column_name, should_read,
+      has_column_privilege('pigboard_app', format('public.%I', table_name),
+        column_name, 'SELECT') AS can_read
+    FROM expected`, [JSON.stringify(columns.map(({ table, column, shouldRead }) =>
+    ({ table_name: table, column_name: column, should_read: shouldRead })))]);
+  if (actual.rows.length !== columns.length ||
+      actual.rows.some((row) => row.can_read !== row.should_read)) return false;
+  const forbidden = await client.query(`SELECT table_name,
+      has_any_column_privilege('pigboard_app', format('public.%I', table_name),
+        'SELECT') AS can_read_any,
+      has_any_column_privilege('pigboard_app', format('public.%I', table_name),
+        'INSERT') AS can_insert,
+      has_any_column_privilege('pigboard_app', format('public.%I', table_name),
+        'UPDATE') AS can_update,
+      has_table_privilege('pigboard_app', format('public.%I', table_name),
+        'DELETE') AS can_delete
+    FROM unnest($1::text[]) AS tables(table_name)`, [TABLES]);
+  return forbidden.rows.length === TABLES.length && forbidden.rows.every((row) =>
+    !row.can_insert && !row.can_update && !row.can_delete &&
+    (row.table_name !== "pigboard_schema_migrations" &&
+     row.table_name !== "pigboard_authority_events" || !row.can_read_any));
 }
 
 async function schemaState(client) {
@@ -123,11 +174,16 @@ async function schemaState(client) {
   } catch {
     return { status: "schema_conflict" };
   }
-  if (receipts.length !== 1 || receipts[0].version !== 1 || receipts[0].checksum !== CHECKSUM) {
+  if (![1, 2].includes(receipts.length) || receipts[0].version !== 1 ||
+      receipts[0].checksum !== CHECKSUM ||
+      (receipts.length === 2 &&
+       (receipts[1].version !== 2 || receipts[1].checksum !== READ_CHECKSUM))) {
     return { status: "schema_conflict" };
   }
   try {
-    if ((await catalogChecksum(client)) !== receipts[0].catalog_checksum) {
+    const catalog = await catalogChecksum(client);
+    if (catalog !== receipts[0].catalog_checksum ||
+        (receipts.length === 2 && catalog !== receipts[1].catalog_checksum)) {
       return { status: "schema_conflict" };
     }
   } catch {
@@ -139,7 +195,15 @@ async function schemaState(client) {
   if (authority.rows.length !== 1) return { status: "schema_conflict" };
   const generation = Number(authority.rows[0].generation);
   if (!Number.isSafeInteger(generation) || generation < 0) return { status: "schema_conflict" };
-  return { status: "schema_current", schemaVersion: 1,
+  if (receipts.length === 2) {
+    try {
+      if (!(await runtimeReadGrantsCurrent(client))) return { status: "schema_conflict" };
+    } catch {
+      return { status: "schema_conflict" };
+    }
+  }
+  return { status: receipts.length === 2 ? "schema_current" : "migration_required",
+    schemaVersion: receipts.length,
     generation };
 }
 
@@ -185,18 +249,32 @@ export async function migrateAuthority(client) {
       await client.query("ROLLBACK");
       return before;
     }
+    if (before.status !== "schema_current") {
+      const role = await client.query("SELECT to_regrole('pigboard_app') IS NOT NULL AS exists");
+      if (role.rows[0]?.exists !== true) {
+        await client.query("ROLLBACK");
+        return { status: "runtime_role_missing" };
+      }
+    }
     if (before.status === "schema_absent") {
       await client.query(SQL);
       const catalog = await catalogChecksum(client);
       await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (1, $1, $2)`, [CHECKSUM, catalog]);
     }
+    if (before.status !== "schema_current") {
+      await client.query(READ_SQL);
+      const catalog = await catalogChecksum(client);
+      await client.query(`INSERT INTO pigboard_schema_migrations
+        (version, checksum, catalog_checksum) VALUES (2, $1, $2)`, [READ_CHECKSUM, catalog]);
+    }
     const after = await schemaState(client);
     if (after.status !== "schema_current") throw new AuthorityError("schema_conflict");
     committing = true;
     await client.query("COMMIT");
-    return { status: before.status === "schema_absent" ? "applied" : "already_current",
-      schemaVersion: 1, generation: after.generation };
+    return { status: before.status === "schema_absent" ? "applied" :
+      before.status === "migration_required" ? "upgraded" : "already_current",
+    schemaVersion: 2, generation: after.generation };
   } catch {
     if (!committing) {
       try { await client.query("ROLLBACK"); } catch { /* Connection may be lost. */ }
