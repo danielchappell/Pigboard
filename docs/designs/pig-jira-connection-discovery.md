@@ -45,9 +45,14 @@ selected connection, and enforce the narrower application scope on every
 command and future event. Do not change unrelated projects merely to make
 the first pilot identity appear PIG-only.
 
-An administrator selects one explicit project-and-board pair for each logical
-connection. The setup flow lists projects visible to the integration identity,
-then shows boards associated with the chosen project by name, with native IDs
+Only a verified connection administrator for the owning team and site may
+list project and board choices, select a pair, or reselect it. Apply this
+caller check equally to human and agent commands, before exposing choices.
+The Jira credential's visibility and a workflow profile do not grant this
+administration authority. A denied caller gets no project list and cannot
+change the pair. The administrator selects one explicit project-and-board pair
+for each logical connection. The setup flow lists projects visible to the
+integration identity, then shows associated boards by name, with native IDs
 as disambiguators. A human can choose from those lists; an agent can obtain
 the same structured choices and select one by stable IDs without an interactive
 prompt. Neither path requires knowing a Jira filter or guessing an ID. For the
@@ -57,8 +62,8 @@ filter and columns can show the configured Task/To Do candidates. Show the
 chosen names and IDs for review. Distinguish no credential access, no boards,
 an invalid project-board relationship, a filter/column mismatch and unavailable
 metadata with an actionable correction; never silently choose another board.
-The administrator can reselect the pair, with the same validation, before
-inspecting more work. The workflow profile's `connectionRef` and project key
+The authorized administrator can reselect the pair, with the same validation,
+before inspecting more work. The workflow profile's `connectionRef` and project key
 must match that pair; the profile cannot add an allowed project or board. A
 wrong or missing pair fails before a rich issue read or any effect. Check
 project identity and board membership with the minimum metadata needed for
@@ -161,7 +166,8 @@ INT result cannot close any of them. No Jira content is sent to a provider as
 part of D1.
 
 Future adapter tests should cover project/board discovery, rejected and
-corrected selections, wrong project/board/type/status/label,
+corrected selections, denial of project choices and changes to a caller without
+connection-administrator scope, wrong project/board/type/status/label,
 ambiguous native names, incomplete links/pages, hidden or canceled blockers,
 wrong link direction, out-of-scope blockers and non-propagation of embedded
 linked-issue fields, denied source audience, human
@@ -177,6 +183,6 @@ their Stories, not evidence that implementation exists.
 | Discoverable | Human choices and structured agent choices expose available pairs; S02 names the decisive eligibility or access fact, and selection or mapping failures give a correction. |
 | Delightful experience | One validated pair is saved rather than repeatedly asking for IDs or ticket setup; a teammate applies one label to opt in. |
 | Token saver | Setup and inspection lead with relevant choices or decisive facts and expose missing evidence without dumping tickets or Jira filters. |
-| Secure | A service-held identity, explicit project-board allowlist, audience checks and complete in-scope dependency reads gate effects; any unknown fails closed. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
-| Agents are equal | Structured list/select operations and noninteractive inspection carry the same choices, eligibility and recovery facts as human guidance. |
+| Secure | Verified connection-administrator scope guards choice listing and changes; a service-held identity, explicit project-board allowlist, audience checks and complete in-scope dependency reads gate effects. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
+| Agents are equal | Authorized agents get structured list/select operations and noninteractive inspection with the same scope checks and recovery facts as humans; neither can infer administration from a profile. |
 | Dependable | Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |

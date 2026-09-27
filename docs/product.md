@@ -59,9 +59,11 @@ The first intended board scope is the Scubapig Jira Pigboard project `PIG`, with
 Task + To Do + the `ai-enabled` opt-in label. The earlier INT pilot was discovery
 evidence, not the active site. The core model remains independent of Jira and
 any execution provider.
-Each Jira connection must let its administrator choose a project and associated
-board from named options, with the same structured selection available to
-agents. A profile or ticket cannot widen that selection. The first
+Each Jira connection must let a verified connection administrator for its
+owning team and site choose a project and associated board from named options.
+An authorized agent has the same structured selection, while a caller without
+that administration scope cannot list choices or change the pair. A Jira
+credential, profile or ticket cannot grant or widen that authority. The first
 pilot selects the `PIG` project and board pair; customers can later configure
 more pairs as separate logical connections. Jira credentials may have wider site access,
 so Pigboard must enforce its own selected scope on reads and effects.

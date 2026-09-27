@@ -32,13 +32,14 @@ A teammate cannot tell why a Jira ticket would be picked up or skipped. Guessing
 Acceptance Criteria
 
 - Inspection names the ticket’s configured role, repository and selected Jira project and board, or the specific reason it is unavailable.
-- An administrator can discover named projects and associated boards, choose and correct one pair without knowing native IDs or filters; an agent can perform the same selection noninteractively using structured choices and stable IDs.
+- A verified connection administrator can discover named projects and associated boards, choose and correct one pair without knowing native IDs or filters; an authorized agent can perform the same selection noninteractively using structured choices and stable IDs.
 - Wrong project or board, missing opt-in, blocked dependencies and unreadable state produce no launch or board write.
 
 Technical Acceptance Criteria
 
 - Use an explicit project-and-board pair configured on the Jira connection and the core deterministic availability policy. A profile cannot widen that connection scope.
 - Validate the pair's relationship and Task/To Do filter before saving; distinguish access denial, no board, invalid pair and unavailable metadata with actionable errors.
+- Deny project/board choices and selection changes to callers without connection-administrator scope, independently of the Jira credential and profile.
 - Use only minimal metadata to reject an out-of-scope ticket before reading its body. Extract linked IDs without propagating embedded out-of-scope fields; resolve blocker project by native ID before any status/body read and treat unresolved or out-of-scope blockers as unknown and blocking.
 - Include all reviewed eligibility inputs in the normalized state.
 
