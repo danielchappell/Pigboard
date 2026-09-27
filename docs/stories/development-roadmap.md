@@ -130,7 +130,7 @@ Technical Acceptance Criteria
 - Store and return status metadata only. Discard any co-returned result text; S26 owns result capture.
 - This operation does not launch or retry provider work.
 - A failed database wake or Free quota limit cannot turn a missing write into a successful registration.
-- A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
+- A run started from a moving branch or without a verified source commit is inspection-only. S26 may check its output format within the proven audience, but cannot mark it validated ticket work or publishable without verified source and original-request binding.
 
 Testing Strategy
 
@@ -173,7 +173,7 @@ A provider can finish without answering the intended question. Publishing its ra
 Acceptance Criteria
 
 - An observation command retrieves the exact recorded run within its currently authorized source audience and stores its current state without starting another job.
-- A completed result is checked against the configured role’s output contract and stored with its validation and binding state.
+- A completed result is checked against the configured role’s output contract and stored with a separate format outcome and request/source binding state. Format-valid alone is not publication eligibility.
 - Questions, invalid output, provider failure and a valid-looking but unbound answer remain distinct from an answer eligible for publication.
 
 Technical Acceptance Criteria
