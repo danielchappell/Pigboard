@@ -127,7 +127,7 @@ export async function authorityCatalogChecksum(client) {
 }
 
 async function runtimeReadGrantsCurrent(client) {
-  const role = await client.query("SELECT to_regrole('pigboard_app') IS NOT NULL AS exists");
+  const role = await client.query("SELECT pg_catalog.to_regrole('pigboard_app') IS NOT NULL AS exists");
   if (role.rows[0]?.exists !== true) return false;
   const schema = await client.query(`SELECT
     has_schema_privilege('pigboard_app', 'public', 'USAGE') AS can_use,
@@ -263,7 +263,7 @@ export async function migrateAuthority(client) {
       return before;
     }
     if (before.status !== "schema_current") {
-      const role = await client.query("SELECT to_regrole('pigboard_app') IS NOT NULL AS exists");
+      const role = await client.query("SELECT pg_catalog.to_regrole('pigboard_app') IS NOT NULL AS exists");
       if (role.rows[0]?.exists !== true) {
         await client.query("ROLLBACK");
         return { status: "runtime_role_missing" };
@@ -278,7 +278,7 @@ export async function migrateAuthority(client) {
     if (before.status !== "schema_current") {
       await client.query(READ_SQL);
       const catalog = await authorityCatalogChecksum(client);
-      await client.query(`INSERT INTO pigboard_schema_migrations
+      await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (2, $1, $2)`, [READ_CHECKSUM, catalog]);
     }
     const after = await schemaState(client);
