@@ -29,13 +29,48 @@ record is kept in this workspace outside the repository.
 
 ## Connection and authority
 
-Use a dedicated noninteractive integration identity with bounded access to
-Pigboard. Keep its credentials in a service secret store, outside profiles,
-tickets, prompts, events and review records. The human browser login proves
-neither that identity nor its scopes. D1 must verify the identity, credential
+Use a dedicated noninteractive integration identity for the Scubapig site.
+Keep its credentials in a service secret store, outside profiles, tickets,
+prompts, events and review records. The human browser login proves neither
+that identity nor its scopes. D1 must verify the identity, credential
 custodian, project/type/status IDs and contextual read/comment/edit/transition
-grants before S02 is delivery-ready. Do not widen project access to make a
-preflight pass. Report denied and unknown separately.
+grants before S02 is delivery-ready. Report denied and unknown separately.
+
+The owner has authorized use of this empty Scubapig account and prioritizes
+customer-selected project and board scope in the adapter. A Jira credential
+may still see other Open projects on the same site. Do not claim that token
+scopes or the adapter's allowlist remove that vendor-level access. Keep the
+credential in the service, grant only the Jira operations required by the
+selected connection, and enforce the narrower application scope on every
+command and future event. Do not change unrelated projects merely to make
+the first pilot identity appear PIG-only.
+
+An administrator selects one explicit project-and-board pair for each logical
+connection. The setup flow lists projects visible to the integration identity,
+then shows boards associated with the chosen project by name, with native IDs
+as disambiguators. A human can choose from those lists; an agent can obtain
+the same structured choices and select one by stable IDs without an interactive
+prompt. Neither path requires knowing a Jira filter or guessing an ID. For the
+pilot the pair is project `PIG` (`10001`) and board `2`. Before saving, resolve
+the IDs and verify that the board includes the selected project and that its
+filter and columns can show the configured Task/To Do candidates. Show the
+chosen names and IDs for review. Distinguish no credential access, no boards,
+an invalid project-board relationship, a filter/column mismatch and unavailable
+metadata with an actionable correction; never silently choose another board.
+The administrator can reselect the pair, with the same validation, before
+inspecting more work. The workflow profile's `connectionRef` and project key
+must match that pair; the profile cannot add an allowed project or board. A
+wrong or missing pair fails before a rich issue read or any effect. Check
+project identity and board membership with the minimum metadata needed for
+that decision. An issue from another project, even if visible to the Jira
+credential or included on a selected board, is unavailable. A blocker outside
+the selected project scope is `unknown` and blocks eligibility; the adapter
+does not fetch its body.
+The same pair check will guard later launch, publication and notifications.
+Customers can select more pairs through additional logical connections using
+the same site identity. Before enabling overlapping boards that may contain
+the same issue, the attempt policy must prevent duplicate work across those
+connections. Multi-pair operation is not part of the first pilot.
 
 Use the selector `PIG` + `Task` + `To Do` + `ai-enabled` in the versioned workflow
 profile. The profile selects work; it does not grant permission. Resolve each
@@ -49,16 +84,27 @@ ticket content for provider submission.
 
 ## Read-only D1 preflight
 
-1. With the integration identity, read project/type/status metadata, board
-   filter and one designated nonsensitive test issue. Record IDs and effective
-   visibility for that same identity.
+1. With the integration identity, read the selected project/type/status
+   metadata, board configuration/filter and one designated nonsensitive test
+   issue. Record native IDs, board membership and effective visibility for
+   that same identity. Test whether a board-scoped, minimal-field read can
+   prove membership without retrieving the issue body. Reject an unverified
+   project-board pair or membership result.
 2. Query contextual Browse Projects, Edit Issues, Transition Issues, Add
    Comments and Edit Own Comments grants. A positive permission result is only
    a precondition to a later controlled write check.
 3. Read all issue links and site link types. Verify which type and direction
-   mean the candidate **is blocked by** another issue. Verify full pagination
-   and read each blocker under the same identity. Hidden, missing and cross-
-   project blockers with no authorized read stay `unknown`, never absent.
+   mean the candidate **is blocked by** another issue. Verify full pagination.
+   Extract only each linked issue's native ID from the link response and discard
+   any embedded linked-issue fields before normalization, logging, diagnostics
+   or human/agent output. Resolve the target's project native ID with a
+   minimal-field lookup before reading blocker status or body; an issue-key
+   prefix is insufficient because issues and projects can be renamed or moved.
+   Read an in-scope blocker under the same identity only after that check.
+   Hidden, missing, unresolved-project and cross-project blockers stay
+   `unknown`, never absent. Do not propagate out-of-scope issue content even
+   if Jira included it in a link response. Verify the live response shape and
+   the minimal project-ID lookup under the integration identity.
 4. Record native statuses/resolutions that mean completed and canceled. Map
    active, canceled and unknown blockers to core eligibility as blocking; only
    verified completed blockers clear the dependency.
@@ -105,17 +151,21 @@ Pigboard issue and recorded before/after history. No such check has run.
 
 ## Readiness and verification
 
-D1 remains open. S02 needs the service identity and all read-only ID, filter,
-dependency and audience facts above. S05 additionally needs an approved source
+D1 remains open. S02 needs the service identity, selected project-board pair,
+and all read-only ID, filter, dependency and audience facts above. S05
+additionally needs an approved source
 audience, acceptance of the pre-send residual race for a designated issue and
 D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
 needs notification and reconciliation proof. A browser session or historical
 INT result cannot close any of them. No Jira content is sent to a provider as
 part of D1.
 
-Future adapter tests should cover wrong project/type/status/label, ambiguous
-native names, incomplete links/pages, hidden or canceled blockers, wrong link
-direction, denied source audience, human edits, uncertain comments and refusal
+Future adapter tests should cover project/board discovery, rejected and
+corrected selections, wrong project/board/type/status/label,
+ambiguous native names, incomplete links/pages, hidden or canceled blockers,
+wrong link direction, out-of-scope blockers and non-propagation of embedded
+linked-issue fields, denied source audience, human
+edits, uncertain comments and refusal
 to auto-transition without the full guard. These tests are obligations for
 their Stories, not evidence that implementation exists.
 
@@ -123,10 +173,10 @@ their Stories, not evidence that implementation exists.
 
 | Principle | Assessment |
 | --- | --- |
-| Intuitive | An existing status plus a visible opt-in label are the teammate controls. The tradeoff is that To Do alone does not mean ready. |
-| Discoverable | S02 must name the decisive eligibility or access fact for humans and agents; native mapping failures must be actionable. |
-| Delightful experience | No new workflow column or repeated ticket setup is needed; a teammate applies one label to opt in. |
-| Token saver | Inspection leads with decisive facts and exposes missing evidence without dumping the full ticket. |
-| Secure | A bounded identity, audience checks and complete dependency reads gate effects; any unknown fails closed. |
-| Agents are equal | The noninteractive inspection result carries the same eligibility and recovery facts as human guidance. |
+| Intuitive | Setup offers named project and board choices; an existing status plus a visible opt-in label are the teammate controls. The tradeoff is that To Do alone does not mean ready. |
+| Discoverable | Human choices and structured agent choices expose available pairs; S02 names the decisive eligibility or access fact, and selection or mapping failures give a correction. |
+| Delightful experience | One validated pair is saved rather than repeatedly asking for IDs or ticket setup; a teammate applies one label to opt in. |
+| Token saver | Setup and inspection lead with relevant choices or decisive facts and expose missing evidence without dumping tickets or Jira filters. |
+| Secure | A service-held identity, explicit project-board allowlist, audience checks and complete in-scope dependency reads gate effects; any unknown fails closed. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
+| Agents are equal | Structured list/select operations and noninteractive inspection carry the same choices, eligibility and recovery facts as human guidance. |
 | Dependable | Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |

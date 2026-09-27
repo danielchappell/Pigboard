@@ -31,19 +31,22 @@ A teammate cannot tell why a Jira ticket would be picked up or skipped. Guessing
 
 Acceptance Criteria
 
-- Inspection names the ticket’s configured role and repository, or the specific reason it is unavailable.
-- Wrong project, missing opt-in, blocked dependencies and unreadable state produce no launch or board write.
+- Inspection names the ticket’s configured role, repository and selected Jira project and board, or the specific reason it is unavailable.
+- An administrator can discover named projects and associated boards, choose and correct one pair without knowing native IDs or filters; an agent can perform the same selection noninteractively using structured choices and stable IDs.
+- Wrong project or board, missing opt-in, blocked dependencies and unreadable state produce no launch or board write.
 
 Technical Acceptance Criteria
 
-- Use the authorized Jira connection and core deterministic availability policy.
+- Use an explicit project-and-board pair configured on the Jira connection and the core deterministic availability policy. A profile cannot widen that connection scope.
+- Validate the pair's relationship and Task/To Do filter before saving; distinguish access denial, no board, invalid pair and unavailable metadata with actionable errors.
+- Use only minimal metadata to reject an out-of-scope ticket before reading its body. Extract linked IDs without propagating embedded out-of-scope fields; resolve blocker project by native ID before any status/body read and treat unresolved or out-of-scope blockers as unknown and blocking.
 - Include all reviewed eligibility inputs in the normalized state.
 
 Testing Strategy
 
-- Manual QA: Inspect an eligible test Task, remove its opt-in in a fixture and confirm the reason changes in command output.
-- Access and setup: Use mocked Jira data first; live reads require D1’s verified integration identity and scoped test ticket.
-- Automated regression: Cover Jira normalization and core eligibility through the inspection command.
+- Manual QA: Select and correct a project-board pair through named choices, inspect an eligible test Task, remove its opt-in, then choose a ticket outside the selected board and confirm both are refused without work starting.
+- Access and setup: Use mocked Jira data first; live reads require D1’s verified integration identity, selected PIG project and board, and a nonsensitive test ticket.
+- Automated regression: Cover human/agent selection behavior, connection scope, linked-field non-propagation, Jira normalization and core eligibility through the inspection command.
 
 ## S03 — Start and retrieve one manual Cursor cloud job
 

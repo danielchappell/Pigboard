@@ -51,7 +51,8 @@ identity or race gates.
 
 Acceptance Criteria
 
-- Record the dedicated integration identity, allowed `PIG` project, Task type, `To Do` status ID and required transition fields.
+- Record the dedicated integration identity, selected `PIG` project and board IDs, Task type, `To Do` status ID and required transition fields.
+- Define guided human and structured agent discovery/selection of a customer-selected project-board pair, with relationship/filter validation, actionable correction and proof that a profile or ticket cannot widen it.
 - Establish read/comment/update/transition authority and record any unavailable access without guessing it.
 - Define authenticated event delivery, bounded reconciliation and the human-edit race policy.
 - Verify the link type, direction and blocker-state mapping that lets S02 use core dependency eligibility.
@@ -61,14 +62,14 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - Begin with authorized read-only metadata and permission checks; do not test writes by making unapproved mutations.
-- Keep the human assignee and source/result audience restrictions.
+- Keep the human assignee and source/result audience restrictions. Use only minimal metadata to reject out-of-scope issues before reading their bodies, even if the Jira credential could. Extract linked issue IDs without propagating embedded out-of-scope fields; resolve project identity before blocker-status reads.
 - Use identifier-only notification until any richer webhook's audience and payload handling are approved.
 - Keep status transitions manual unless Jira enforces a guard over every advancement-critical field.
 - Keep secret values out of the decision record and ticket context.
 
 Testing Strategy
 
-- Manual QA: Review the evidence against the existing `PIG` board and identify every verified field and remaining live check.
+- Manual QA: Review the evidence against the selected `PIG` board and identify every verified field, rejected out-of-scope issue and remaining live check.
 - Access and setup: Use the dedicated integration identity when available; its access and credential provisioning remain unresolved.
 - Automated regression: Identify future adapter coverage for dependency mapping, event payloads, comment recovery and guarded transitions.
 
