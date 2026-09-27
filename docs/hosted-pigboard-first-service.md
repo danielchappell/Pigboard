@@ -31,6 +31,8 @@ fly ips list --app pigboard-pilot-jdc
 fly machine list --app pigboard-pilot-jdc
 ```
 
+If `fly launch --no-deploy` fails during placement before creating the app, inspect `fly apps list --org pigboard` before retrying. An organization Machine-limit error can be handled only up to app creation without a Machine: use `fly apps create pigboard-pilot-jdc --org pigboard`, then `fly ips allocate-v6 --private --app pigboard-pilot-jdc --org pigboard --region fra`. Do not repeat either command if the app or private address already exists. This app-only path does not resolve the Machine limit; stop before staging the secret or deploying until Fly permits the one reviewed Machine.
+
 Inspect the app configuration and IP list before adding any secret. It should have a private Flycast address and no public IPv4/IPv6 address. `fly launch` can update `fly.toml`; inspect any change before deployment. Stage the secret from the private file so importing it cannot start a Machine:
 
 ```bash
