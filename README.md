@@ -52,6 +52,16 @@ creates a role, changes grants, deploys Fly or selects a Jira board. The
 recovery. Until an actual scoped login and TLS connection pass, local tests do
 not establish live readiness.
 
+## Run the first private Pigboard host
+
+`npm run --silent host:pigboard` starts a small liveness-only HTTP service. The
+operator can run `npm run --silent host:pigboard -- --diagnose-root` to check a
+fresh, pinned Neon root connection. Both commands need a private
+`PIGBOARD_NEON_URL`; neither selects a Jira board or exposes a user API. The
+[first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
+private Fly setup, safe secret handoff, diagnostic results, restart and rollback.
+The host is not live merely because this code or a passing local test exists.
+
 ## Quick Setup
 
 Requirements:
@@ -71,6 +81,7 @@ Clone and test:
 ```bash
 git clone git@github.com:danielchappell/ski-stack.git
 cd ski-stack
+npm ci
 npm test
 ```
 

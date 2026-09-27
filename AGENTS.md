@@ -144,8 +144,9 @@ is available to users. Reuse the existing core policy and adapter boundaries.
 - Run `git status --short --branch` before changing files.
 - Read `README.md`, `ARCHITECTURE.md`, and the relevant file under `docs/`
   before changing runtime behavior.
-- Use `npm test` as the default verification command. The repo uses Node's
-  built-in test runner and has no production dependencies.
+- Run `npm ci` in a fresh checkout, then use `npm test` as the default
+  verification command. The repo uses Node's built-in test runner and has
+  `pg` as a production dependency for the private Pigboard host.
 - Keep changes scoped. Documentation-only updates usually do not need new tests;
   runtime, adapter, provisioning, and status changes do.
 
