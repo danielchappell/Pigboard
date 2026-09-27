@@ -105,33 +105,37 @@ Testing Strategy
 Problem to solve
 
 The product must continue with laptops off and expose progress to teammates.
-The owner selected Fly.io hosting, but the organization, managed store, team
-access and operating limits still need verified choices.
-
-The [D3 hosting brief](../designs/hosted-deployment-options.md) maps a Fly App
-and Managed Postgres to the one-team contract. It is not a selected Fly
-organization, spend approval or deployed service.
+The owner selected one low-cost Fly app Machine and an isolated Pigboard Neon
+Launch Postgres project with seven-day point-in-time history and no scheduled
+snapshots. The [selected design](../designs/hosted-fly-neon-launch.md) is
+[independently reviewed](../reviews/hosted-fly-neon-launch.md); the prior
+[Fly Managed Postgres brief](../designs/hosted-deployment-options.md) is
+historical for its physical topology. The Fly `pigboard` organization exists,
+but no app, Neon Pigboard organization/project or recovery-control repository
+has been provisioned. D3's store-and-access facts are needed before S04;
+hosted load and the implemented restore drill come later with S08 and A1.
 
 Acceptance Criteria
 
-- Verify Fly App/Managed Postgres fit against the reviewed contracts and expected pilot load; retain alternatives only if a Fly requirement fails.
-- Record the selected Fly organization and the decisions for credentials, deployment ownership, team authentication and source/result audiences.
-- Define class-specific retention including backups, a pre-A1 restore path with an out-of-database recovery principal and pre-attachment quarantine marker, health inspection, bounded usage and expected cost sources.
-- Document one teammate setup/inspection journey and the exact live evidence needed before M2 is complete.
+- **Before S04:** verify a dedicated Pigboard Neon organization/project in Frankfurt and a scoped SQL role with no Entendia reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Record the root endpoint identity for S04's separate non-secret pin, confirm a child has a different host, and prove ordinary runtime/deploy grants cannot reassign the endpoint. S04 implements and tests historical-child read denial; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
+- **Before S08 deployment acceptance:** verify the `pigboard` Fly organization, shared-cpu-1x/1 GB load, actual region/price, runtime and deploy principal reach, health and secret custody. Prove a second authorized teammate can inspect while the owner's laptop is off and a revoked teammate cannot.
+- **Before A1 hosted acceptance, after S29-S31:** verify the separate private recovery-control repository and recovery/custodian grants, S29's initial `normal` manifest and effect-read gate, seven-day **within-project** Neon PITR with no scheduled snapshots, and the full restore path with live-root current authority, external manifest, physical/provider fence and quarantine. This is not a pre-S04 or pre-S05 implementation gate; those earlier revisions pin the original endpoint and reject a historical child but do not support restore.
+- Record team authentication, integration credentials, source/result audiences, class-specific retention for copied content/evidence/sealed credentials, and the exact setup/inspection and restore evidence needed before M2 is complete. The separately approved 90-day minimal post-terminal metadata lifetime is unchanged.
 
 Technical Acceptance Criteria
 
-- Do not provision paid services or broaden access merely to write the plan.
-- Keep one service/worker and one team where possible; do not add an unused distributed platform.
-- Gate restored-state reopening on bounded effect and current access-change reconciliation; an unknown or unbounded effect window stays quarantined, and a revoked provider credential also blocks provider reads.
-- Verify how Fly credentials, an external connection grant and recovery commands enforce the full role matrix; do not treat a machine-exec token alone as command confinement.
+- Do not provision paid services or broaden access merely to write the plan; record cost and scope before any live proof resource is created.
+- Keep one app Machine, one normal Neon compute endpoint and one team where possible; do not add an unused distributed platform. The external metadata-only recovery repository adds no always-on compute.
+- Design restored-state reopening around bounded effects, current authority and access-change reconciliation, credential rebinding, and verified copy-back to the live root. S29-S31 implement and test those controls; an unknown effect window, unavailable authority journal or missing manifest must stay quarantined.
+- Verify how Fly credentials, the private GitHub recovery-control manifest, live-root authority journal and recovery commands enforce the full role matrix as their dependent Stories are delivered; do not treat a machine-exec token or stale restored row as command authority.
+- Limit backup claims to point restore within the existing Neon project. Project/account loss is not covered by the selected no-snapshot policy.
 - Verify current provider facts from official sources before selecting them.
 
 Testing Strategy
 
-- Manual QA: Trace an authorized teammate from setup through inspection, then use a separately authorized recovery principal to mark quarantine before attaching a restored cluster with a lost send and revoked member; verify the full role-denial matrix, missing-marker rejection and quarantine on uncertainty.
-- Access and setup: The Fly account is signed in; organization, integration identity, app roles, secrets, budget and deployment permissions remain unresolved.
-- Automated regression: Identify Fly deployment health, role-denial and restored-state recovery checks.
+- Manual QA: Before S04, use a disposable Pigboard Neon project and SQL fixture with two clients to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 itself tests historical-child secret denial before reads, registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, restart and a second teammate. After S29-S31 and seven elapsed days, A1 drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
+- Access and setup: The Fly `pigboard` organization exists. Pigboard Neon organization/project, GitHub recovery-control repository, integration identity, app roles, secrets, spending observation and deployment permissions remain unverified or uncreated.
+- Automated regression: Identify Fly load/health, Neon wake/reconnect, role-denial, effect reservation and restored-state recovery checks; distinguish local tests from hosted/live evidence.
 
 ## D4 — Define runner capabilities and reconcile the Cursor work
 
@@ -334,7 +338,7 @@ Acceptance Criteria
 - Demonstrate setup, eligible Jira input, one provider attempt, validated findings, ticket publication and human acceptance using the configured environment.
 - Show second-user visibility and continued coordination with the submitting client offline.
 - Record duplicate delivery, restart, provider uncertainty, invalid output, interrupted publication and human takeover results.
-- Drill a Fly Managed Postgres restore with a lost effect and access change; verify pre-attachment quarantine, safe cutover and continued quarantine when evidence is missing or the lost window is unbounded.
+- Drill Neon Launch point restore to an isolated branch **within the existing project** with a lost effect and access change; verify external manifest, live-root current authority, physical/provider fence, reconciliation and safe copy-back. Continue quarantine when evidence is missing or the lost window is unbounded; do not claim recovery from project/account loss.
 - Check allowed and denied viewer, operator, connection administrator, scoped agent and recovery-principal commands.
 - Mark M2 complete only when all required evidence and the owner’s product acceptance are recorded; otherwise list exactly what remains.
 
