@@ -40,6 +40,18 @@ work. A valid profile is a static route preview; `liveReady` remains `false`.
 The [workflow profile guide](docs/workflow-profile.md) covers copying/editing the
 file, JSON/stdin usage, error recovery and the live prerequisites still unchecked.
 
+## Check the Pigboard database boundary
+
+An operator can run `npm run --silent neon:preflight -- --passfile /absolute/private/path`
+to check the dedicated Neon production root and the restricted runtime role. It
+requires a separately created `pigboard_app` login, a private PostgreSQL password
+file and an owner-created disposable table. The command reports pass, fail or
+unverified in text, or with `--format json` for an operator agent. It never
+creates a role, changes grants, deploys Fly or selects a Jira board. The
+[Neon preflight guide](docs/hosted-neon-preflight.md) explains setup, cleanup and
+recovery. Until an actual scoped login and TLS connection pass, local tests do
+not establish live readiness.
+
 ## Quick Setup
 
 Requirements:

@@ -7,6 +7,7 @@
   "main": "src/index.js",
   "scripts": {
     "test": "node --test",
+    "neon:preflight": "node scripts/check-neon-root.mjs",
     "profile:check": "node scripts/check-workflow-profile.mjs",
     "apply:github": "node scripts/apply-github-worker-result.mjs",
     "check:github-project": "node scripts/check-github-project.mjs",
