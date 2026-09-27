@@ -106,25 +106,27 @@ Problem to solve
 
 The product must continue with laptops off and expose progress to teammates.
 The owner selected one low-cost Fly app Machine and an isolated Pigboard Neon
-Launch Postgres project with seven-day point-in-time history and no scheduled
-snapshots. The [selected design](../designs/hosted-fly-neon-launch.md) is
-[independently reviewed](../reviews/hosted-fly-neon-launch.md); the prior
-[Fly Managed Postgres brief](../designs/hosted-deployment-options.md) is
-historical for its physical topology. The Fly `pigboard` organization exists,
+Free Postgres project. Free point restores reach only the measured usable
+history, at most about six hours or 1 GB of changes, with no scheduled
+snapshots. The [selected design](../designs/hosted-fly-neon-free.md) has
+[two independent CLEAN reviews](../reviews/hosted-fly-neon-free.md) for its
+exact artifact; the Neon Launch and
+[Fly Managed Postgres brief](../designs/hosted-deployment-options.md) are
+historical for their physical topology and recovery windows. The Fly `pigboard` organization exists,
 but no app, Neon Pigboard organization/project or recovery-control repository
 has been provisioned. D3's store-and-access facts are needed before S04;
 hosted load and the implemented restore drill come later with S08 and A1.
 
 Acceptance Criteria
 
-- **Before S04:** verify a dedicated Pigboard Neon organization/project in Frankfurt and a scoped SQL role with no Entendia reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Record the root endpoint identity for S04's separate non-secret pin, confirm a child has a different host, and prove ordinary runtime/deploy grants cannot reassign the endpoint. S04 implements and tests historical-child read denial; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
-- **Before S08 deployment acceptance:** verify the `pigboard` Fly organization, shared-cpu-1x/1 GB load, actual region/price, runtime and deploy principal reach, health and secret custody. Prove a second authorized teammate can inspect while the owner's laptop is off and a revoked teammate cannot.
-- **Before A1 hosted acceptance, after S29-S31:** verify the separate private recovery-control repository and recovery/custodian grants, S29's initial `normal` manifest and effect-read gate, seven-day **within-project** Neon PITR with no scheduled snapshots, and the full restore path with live-root current authority, external manifest, physical/provider fence and quarantine. This is not a pre-S04 or pre-S05 implementation gate; those earlier revisions pin the original endpoint and reject a historical child but do not support restore.
-- Record team authentication, integration credentials, source/result audiences, class-specific retention for copied content/evidence/sealed credentials, and the exact setup/inspection and restore evidence needed before M2 is complete. The separately approved 90-day minimal post-terminal metadata lifetime is unchanged.
+- **Before S04:** verify a dedicated Pigboard Neon Free organization/project in Frankfurt and a scoped SQL role with no Entendia or Joseph project reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Record the root endpoint identity for S04's separate non-secret pin, confirm a child has a different host, and prove ordinary runtime/deploy grants cannot reassign the endpoint. Record the actual Free quotas and initial usage. S04 implements and tests historical-child read denial; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
+- **Before S08 deployment acceptance:** verify the `pigboard` Fly organization, shared-cpu-1x/1 GB load, actual region/price, runtime and deploy principal reach, health and secret custody. Prove health probes do not keep Neon awake, and measure active CU-hours and storage against Free quotas. Prove a second authorized teammate can inspect while the owner's laptop is off and a revoked teammate cannot.
+- **Before A1 hosted acceptance, after S29-S31:** verify the separate private recovery-control repository and recovery/custodian grants, S29's initial `normal` manifest and effect-read gate, measured **within-project** Neon Free restore history with no scheduled snapshots, and the full restore path with live-root current authority, external manifest, physical/provider fence and quarantine. This is not a pre-S04 or pre-S05 implementation gate; those earlier revisions pin the original endpoint and reject a historical child but do not support restore.
+- Record team authentication, integration credentials and source/result audiences. Decide each stored data class's audience, lifetime and deletion before the Story that first captures it: S26 for provider results, S05 for copied source, prepared requests or sealed credentials, and S06 for publication evidence; move the gate earlier if capture starts earlier. Record setup/inspection and restore evidence before M2 is complete. The separately approved 90-day minimal post-terminal metadata lifetime is unchanged.
 
 Technical Acceptance Criteria
 
-- Do not provision paid services or broaden access merely to write the plan; record cost and scope before any live proof resource is created.
+- Use Neon Free without a paid upgrade; record actual limits and Fly cost before a live proof resource is created. A quota or unavailable store stops new effects. An expired point blocks its attempted restore or reopen, not ordinary work on the live root. Report either failure without silently changing the 90-day metadata policy.
 - Keep one app Machine, one normal Neon compute endpoint and one team where possible; do not add an unused distributed platform. The external metadata-only recovery repository adds no always-on compute.
 - Design restored-state reopening around bounded effects, current authority and access-change reconciliation, credential rebinding, and verified copy-back to the live root. S29-S31 implement and test those controls; an unknown effect window, unavailable authority journal or missing manifest must stay quarantined.
 - Verify how Fly credentials, the private GitHub recovery-control manifest, live-root authority journal and recovery commands enforce the full role matrix as their dependent Stories are delivered; do not treat a machine-exec token or stale restored row as command authority.
@@ -133,7 +135,7 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Before S04, use a disposable Pigboard Neon project and SQL fixture with two clients to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 itself tests historical-child secret denial before reads, registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, restart and a second teammate. After S29-S31 and seven elapsed days, A1 drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
+- Manual QA: Before S04, use a disposable Pigboard Neon Free project and SQL fixture with two clients to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 itself tests historical-child secret denial before reads, registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, sleep-safe health, quota observation, restart and a second teammate. After S29-S31, A1 measures available Free history and drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
 - Access and setup: The Fly `pigboard` organization exists. Pigboard Neon organization/project, GitHub recovery-control repository, integration identity, app roles, secrets, spending observation and deployment permissions remain unverified or uncreated.
 - Automated regression: Identify Fly load/health, Neon wake/reconnect, role-denial, effect reservation and restored-state recovery checks; distinguish local tests from hosted/live evidence.
 
@@ -338,7 +340,7 @@ Acceptance Criteria
 - Demonstrate setup, eligible Jira input, one provider attempt, validated findings, ticket publication and human acceptance using the configured environment.
 - Show second-user visibility and continued coordination with the submitting client offline.
 - Record duplicate delivery, restart, provider uncertainty, invalid output, interrupted publication and human takeover results.
-- Drill Neon Launch point restore to an isolated branch **within the existing project** with a lost effect and access change; verify external manifest, live-root current authority, physical/provider fence, reconciliation and safe copy-back. Continue quarantine when evidence is missing or the lost window is unbounded; do not claim recovery from project/account loss.
+- Drill Neon Free point restore from an actually available point to an isolated branch **within the existing project** with a lost effect and access change; verify external manifest, live-root current authority, physical/provider fence, reconciliation and safe copy-back. Record the oldest usable point and whether change volume shortened the window. Continue quarantine when evidence is missing or the lost window is unbounded; do not claim recovery after history expires or from project/account loss.
 - Check allowed and denied viewer, operator, connection administrator, scoped agent and recovery-principal commands.
 - Mark M2 complete only when all required evidence and the owner’s product acceptance are recorded; otherwise list exactly what remains.
 
