@@ -51,14 +51,25 @@ selected connection, and enforce the narrower application scope on every
 command and future event. Do not change unrelated projects merely to make
 the first pilot identity appear PIG-only.
 
+The [first-service D3 path](s02a-first-service.md) narrows choices to the
+intersection of the integration identity's readable projects and a versioned,
+owner-approved site/project scope on the live root. The owner-only scope
+command uses named project choices; an agent with connection-admin access
+cannot widen it. The pilot begins with Scubapig project `PIG` (`10001`), not
+an implicit grant to every project visible to the Jira credential. Filter a
+buffered choice list against the *current* approved scope immediately before
+disclosure, so a concurrent scope reduction does not return stale names. The
+owner can approve another readable project without a code deploy; S02a still
+selects only one project-board pair for one connection.
+
 Only a verified connection administrator for the owning team and site may
 list project and board choices, select a pair, or reselect it. Apply this
 caller check equally to human and agent commands, before exposing choices.
 The Jira credential's visibility and a workflow profile do not grant this
 administration authority. A denied caller gets no project list and cannot
 change the pair. The administrator selects one explicit project-and-board pair
-for each logical connection. The setup flow lists projects visible to the
-integration identity, then shows associated boards by name, with native IDs
+for each logical connection. The setup flow lists approved projects readable
+by the integration identity, then shows associated boards by name, with native IDs
 as disambiguators. A human can choose from those lists; an agent can obtain
 the same structured choices and select one by stable IDs without an interactive
 prompt. Neither path requires knowing a Jira filter or guessing an ID. For the
@@ -68,6 +79,10 @@ filter and columns can show the configured Task/To Do candidates. Show the
 chosen names and IDs for review. Distinguish no credential access, no boards,
 an invalid project-board relationship, a filter/column mismatch and unavailable
 metadata with an actionable correction; never silently choose another board.
+Use a safe second PIG board to prove live correction before calling that S02a
+behavior accepted. A controlled metadata fixture remains useful for regression
+but does not itself establish operator correction. Do not change an unrelated
+project or activate automatic work merely to create the fixture.
 The selected pair has a durable version under the live-root connection record.
 An administrator can correct it with an expected-version update after the same
 validation. Reject correction while the connection has an active attempt or
@@ -198,12 +213,15 @@ Pigboard issue and recorded before/after history. No such check has run.
 
 ## Readiness and verification
 
-D1 remains open. S02a needs a usable service credential and identity-scoped
-project/board metadata. D3 must first choose and prove the single-team
-human/agent authentication, connection-administrator grant source and durable
-live-root pair/version store; S02a implements only the selected minimal
-setup boundary after a 20-file/<2-day size check. S02b additionally needs S02a's saved pair and the
-read-only issue, filter, dependency and audience facts above. S05
+D1 remains open. S02a needs a usable service credential, identity-scoped
+project/board/filter/column metadata and a safe second PIG board available for
+its later live correction check. D3 has selected the early Fly-held secret,
+named human/agent grant and live-root pair/version path, but its SQL, TLS,
+identity and host gates need proof. The combined S02a preview exceeds 20 files;
+groom a complete prerequisite technical outcome and independently review each
+resulting Story plan before coding. S02a then proves live save and correction.
+S02b additionally needs S02a's saved pair and the read-only issue, filter,
+dependency and audience facts above. S05
 additionally needs an approved source
 audience, acceptance of the pre-send residual race for a designated issue and
 D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
@@ -225,10 +243,10 @@ their Stories, not evidence that implementation exists.
 
 | Principle | Assessment |
 | --- | --- |
-| Intuitive | Setup offers named project and board choices; correction names active or uncertain work that must be reconciled first. An existing status plus a visible opt-in label are the teammate controls. The tradeoff is that To Do alone does not mean ready. |
-| Discoverable | S02a gives human choices and structured agent choices for available pairs; S02b names the decisive eligibility or access fact. Selection or mapping failures give a correction. |
-| Delightful experience | One validated pair is saved rather than repeatedly asking for IDs or ticket setup; a teammate applies one label to opt in. |
-| Token saver | Setup and inspection lead with relevant choices or decisive facts and expose missing evidence without dumping tickets or Jira filters. |
-| Secure | Verified connection-administrator scope guards choice listing and changes; a service-held identity, versioned project-board allowlist, current-binding checks, audience checks and complete in-scope dependency reads gate effects. The credential may have broader vendor-level visibility on an Open Jira site, which remains a documented tradeoff. |
-| Agents are equal | Authorized agents get structured list/select operations and noninteractive inspection with the same scope checks and recovery facts as humans; neither can infer administration from a profile. |
-| Dependable | A saved S02a pair does not imply S02b issue-read authority. Correction preserves old inspection records, rejects active/uncertain effects and makes stale inspection explicit. Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |
+| Intuitive | Setup offers named projects inside the owner's approved scope and then associated boards; correction names active or uncertain work that must be reconciled first. The owner-only scope step adds pilot setup, while teammates keep the visible opt-in label. To Do alone does not mean ready. |
+| Discoverable | S02a gives humans guided choices and agents structured choices with stable IDs; filter/column mismatch names the reason a board cannot show Task/To Do. S02b names the decisive eligibility or access fact. A safe second live PIG board is still needed to prove correction. |
+| Delightful experience | One validated pair is saved rather than repeatedly asking for IDs; an owner can approve another project without a deploy, and a teammate applies one label to opt in. The owner approval is deliberate extra setup for broader scope. |
+| Token saver | Setup and inspection lead with currently approved choices or decisive facts and expose omissions without dumping tickets or Jira filters. A buffered list is filtered again against current scope before disclosure, avoiding corrective calls after stale choices. |
+| Secure | Current owner-approved site/project scope and connection-administrator grant guard choices and changes; a service-held Jira identity, versioned pair, audience checks and complete in-scope dependency reads gate effects. The credential may still see more in an Open Jira site, so the app boundary and secret custody require live proof. |
+| Agents are equal | A named noninteractive agent can list and select an approved pair with the same scope and recovery facts as a human administrator; it cannot widen the owner's approved projects or infer grants from a profile. |
+| Dependable | A saved S02a pair does not imply S02b issue-read authority. Correction preserves old inspection records, rejects active/uncertain effects and makes stale inspection explicit; live correction proof is pending. Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |

@@ -45,14 +45,15 @@ permissions and transition contract are unverified. We cannot safely size or
 activate Jira writes from that UI evidence alone.
 
 The [active PIG connection design](../designs/pig-jira-connection-discovery.md)
-records the current board selector, candidate notification path and publication
-guards. The earlier INT record is historical. Neither closes this Task's live
-identity or race gates.
+records the owner-approved project scope, board selector, candidate notification
+path and publication guards. The [first-service Task](../designs/s02a-first-service.md)
+defines the proposed authority and store boundary before S02a. The earlier INT
+record is historical. These documents do not close the live identity or race gates.
 
 Acceptance Criteria
 
 - Record the dedicated integration identity, selected `PIG` project and board IDs, Task type, `To Do` status ID and required transition fields.
-- Define guided human and structured agent discovery/selection of a customer-selected project-board pair, with relationship/filter validation, actionable correction and proof that a profile or ticket cannot widen it.
+- Define guided human and structured agent discovery/selection of a customer-selected project-board pair within a current owner-approved site/project scope, with relationship/filter/column validation, actionable correction and proof that a profile, ticket or connection administrator cannot widen the scope.
 - Establish read/comment/update/transition authority and record any unavailable access without guessing it.
 - Define authenticated event delivery, bounded reconciliation and the human-edit race policy.
 - Verify the link type, direction and blocker-state mapping that lets S02b use core dependency eligibility.
@@ -69,7 +70,7 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Review the evidence against the selected `PIG` board and identify every verified field, rejected out-of-scope issue and remaining live check.
+- Manual QA: Review service-identity evidence against the selected `PIG` board and identify every verified field, rejected out-of-scope issue and remaining live check. Before S02a, confirm a safe second `PIG` board and its service-visible metadata; S02a proves live save/correction after implementation. Keep controlled fixtures for regression.
 - Access and setup: Use the dedicated integration identity when available; its access and credential provisioning remain unresolved.
 - Automated regression: Identify future adapter coverage for dependency mapping, event payloads, comment recovery and guarded transitions.
 
@@ -119,16 +120,20 @@ organization and a separate Pigboard Neon Free organization/Frankfurt project
 exist. Fly has no app, and no recovery-control repository exists. Owner-console
 SQL persistence and idle wake have narrow proof; a scoped runtime SQL role,
 ordinary child-target denial, app-client reconnect and team command authority
-remain unverified. D3's early authority/store facts are needed before S02a;
+remain unverified. The [first-service Task](../designs/s02a-first-service.md)
+selects an early Fly-held secret boundary, migration-created authority row,
+owner bootstrap, versioned grants/scope/pair and root pin for review. Its
+preliminary 22–26-file combined S02a estimate requires re-grooming before a
+Story is ready. D3's early authority/store facts are needed before S02a;
 the remaining store-and-access facts are needed before S04;
 hosted load and the implemented restore drill come later with S08 and A1.
 
 Acceptance Criteria
 
-- **Before S02a:** choose and verify one concrete human and noninteractive agent authentication path, connection-administrator grant source and durable selected-pair/version record on the Pigboard Neon live root. Verify a scoped SQL role and pinned root endpoint for that first store use. Prove an authorized administrator and a denied caller without treating the Jira credential or profile as a grant. Define an atomic correction guard for active or uncertain effects and identify the smallest S02a code boundary. If the auth, store and selection work cannot fit 20 files and less than two days, re-groom the approved six-PR queue before implementation.
+- **Before S02a:** review and verify the first-service path: a migration-created unique root authority row, named human owner bootstrap, separately issued/revocable agent credential, current connection-administrator grant, owner-approved site/project scope, durable pair/version record, scoped SQL role and separately pinned original-root endpoint. Prove an authorized administrator and a denied caller without treating the Jira credential, profile or Fly deploy grant as an app role. Define atomic correction and disclosure checks against current grants/scope and active or uncertain effects. The combined work is preliminarily 22–26 files; re-groom it into complete ≤20-file, <2-day outcomes before implementation rather than promoting the combined S02a.
 - **Before S02b:** verify a current-team human viewer and a separately scoped noninteractive agent inspect grant for the selected connection. Test a denied caller who names that same pair before any Jira issue lookup. D1 must prove which minimal fields establish project, board membership and issue-level audience without content exposure; verify an allowed caller can read richer facts only after that check and a denied issue audience receives no ticket facts. Neither the Jira service credential nor connection-administrator status alone grants ticket inspection.
 - **Before S04:** verify a dedicated Pigboard Neon Free organization/project in Frankfurt and a scoped SQL role with no Entendia or Joseph project reach. Use a disposable SQL fixture and two independent clients to prove persistence, transaction/uniqueness behavior, and reconnect after suspension; this is a database feasibility probe, not S04's registered-run command or role acceptance. Confirm a child has a different host and prove ordinary runtime/deploy grants cannot reassign the root endpoint pinned by S02a. Record the actual Free quotas and initial usage. S04 reuses the pin and tests historical-child read denial on its run path; S05 tests send denial. Identify usable test human/agent identities and decide retention for the minimal metadata S04 stores.
-- **Before S08 deployment acceptance:** verify the `pigboard` Fly organization, shared-cpu-1x/1 GB load, actual region/price, runtime and deploy principal reach, health and secret custody. Prove health probes do not keep Neon awake, and measure active CU-hours and storage against Free quotas. Prove a second authorized teammate can inspect while the owner's laptop is off and a revoked teammate cannot.
+- **With the first hosted Story:** verify the `pigboard` Fly organization, service-held SQL/Jira secret custody, TLS, non-database-polling liveness, bounded store failure, restart and rollback without reverting a committed pair. Record actual one-Machine spend. **Before S08 deployment acceptance:** verify shared-cpu-1x/1 GB coordinator load, actual region/price, runtime and deploy principal reach, and quota-safe health. Prove health probes do not keep Neon awake, measure active CU-hours and storage against Free quotas, and show a second authorized teammate can inspect while the owner's laptop is off while a revoked teammate cannot.
 - **Before A1 hosted acceptance, after S29-S31:** verify the separate private recovery-control repository and recovery/custodian grants, S29's initial `normal` manifest and effect-read gate, measured **within-project** Neon Free restore history with no scheduled snapshots, and the full restore path with live-root current authority, external manifest, physical/provider fence and quarantine. This is not a pre-S04 or pre-S05 implementation gate; those earlier revisions pin the original endpoint and reject a historical child but do not support restore.
 - Record team authentication, integration credentials and source/result audiences. Decide each stored data class's audience, lifetime and deletion before the Story that first captures it: S26 for provider results, S05 for copied source, prepared requests or sealed credentials, and S06 for publication evidence; move the gate earlier if capture starts earlier. Record setup/inspection and restore evidence before M2 is complete. The separately approved 90-day minimal post-terminal metadata lifetime is unchanged.
 
@@ -143,7 +148,7 @@ Technical Acceptance Criteria
 
 Testing Strategy
 
-- Manual QA: Before S02a, verify a scoped role and root pin in the existing Pigboard project, plus allowed and denied human/agent selection identities. S02a itself rejects a child-target secret before pair reads or writes. Before S02b, prove permitted human/agent inspection, pre-lookup denied same-pair inspection, a minimal issue-audience lookup and denial without ticket facts. Before S04, use a disposable SQL fixture and two clients in that project to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 tests historical-child secret denial on registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test Fly load, sleep-safe health, quota observation, restart and a second teammate. After S29-S31, A1 measures available Free history and drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
+- Manual QA: Before S02a, verify a scoped role and root pin in the existing Pigboard project, owner bootstrap and current grants/scope with allowed and denied human/agent selection identities. Establish a safe second PIG board whose metadata is visible to the service identity; S02a proves live save/correction after implementation. The first hosted Story proves secret-safe restart, liveness, bounded failure and rollback; S02a tests grant/scope races and rejects a child-target secret before pair reads or writes. Before S02b, prove permitted human/agent inspection, pre-lookup denied same-pair inspection, a minimal issue-audience lookup and denial without ticket facts. Before S04, use a disposable SQL fixture and two clients in that project to prove durable rows, competing-write uniqueness, reconnect, distinct root/child hostnames and Neon endpoint-reassignment grant denial. S04 tests historical-child secret denial on registered-run inspection and app role/scope denials across processes; S05 tests no send on the child. During S08, test coordinator load, sleep-safe health, quota observation and a second teammate. After S29-S31, A1 measures available Free history and drills child-branch restore, lost send, revoked member, expected-head conflict, old-Machine/provider fence, role denials, quarantine and reconciled copy-back.
 - Access and setup: The Fly `pigboard` organization and Pigboard Neon Free organization/project exist. The GitHub recovery-control repository, scoped runtime SQL role, human/agent command identities, app role grants, secrets, spending observation and deployment permissions remain unverified or uncreated.
 - Automated regression: Identify Fly load/health, Neon wake/reconnect, role-denial, effect reservation and restored-state recovery checks; distinguish local tests from hosted/live evidence.
 
