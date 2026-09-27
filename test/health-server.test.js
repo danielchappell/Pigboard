@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { startHealthServer } from "../src/hosted/health-server.js";
+import { deniedGrant } from "../src/hosted/authority-self.js";
 
 test("private liveness works without a database secret or database call", async () => {
   const server = await startHealthServer({ host: "127.0.0.1", port: 0 });
@@ -58,5 +59,34 @@ test("private owner inspection authenticates once and separates denial from outa
     assert.deepEqual((await response.json()).omissions, ["current_grant"]);
   } finally {
     await new Promise((resolve) => unavailable.close(resolve));
+  }
+});
+
+test("malformed and revoked bearers have one generic response, while a handler failure is unavailable", async () => {
+  const token = `pb1_${"A".repeat(43)}`;
+  const server = await startHealthServer({ host: "127.0.0.1", port: 0,
+    inspectSelf: async () => deniedGrant() });
+  try {
+    const url = `http://127.0.0.1:${server.address().port}/v1/authority/me`;
+    const malformed = await fetch(url, { headers: { Authorization: "Bearer malformed" } });
+    const revoked = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(malformed.status, 401);
+    assert.equal(revoked.status, 401);
+    assert.deepEqual(await malformed.json(), await revoked.json());
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+  const failed = await startHealthServer({ host: "127.0.0.1", port: 0,
+    inspectSelf: async () => { throw new Error("private driver details"); } });
+  try {
+    const response = await fetch(`http://127.0.0.1:${failed.address().port}/v1/authority/me`,
+      { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(response.status, 503);
+    const body = await response.json();
+    assert.deepEqual(body.omissions, ["current_grant"]);
+    assert.equal(typeof body.nextAction, "string");
+    assert.equal(JSON.stringify(body).includes("private driver"), false);
+  } finally {
+    await new Promise((resolve) => failed.close(resolve));
   }
 });

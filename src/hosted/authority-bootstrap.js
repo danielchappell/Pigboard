@@ -118,7 +118,7 @@ async function tablePresence(client) {
   return new Map(response.rows.map((row) => [row.name, row.relation !== null]));
 }
 
-async function catalogChecksum(client) {
+export async function authorityCatalogChecksum(client) {
   const catalog = [];
   for (const sql of CATALOG_QUERIES) {
     catalog.push((await client.query(sql, [TABLES])).rows);
@@ -147,6 +147,8 @@ async function runtimeReadGrantsCurrent(client) {
   if (actual.rows.length !== columns.length ||
       actual.rows.some((row) => row.can_read !== row.should_read)) return false;
   const forbidden = await client.query(`SELECT table_name,
+      has_table_privilege('pigboard_app', format('public.%I', table_name),
+        'SELECT') AS can_select_table,
       has_any_column_privilege('pigboard_app', format('public.%I', table_name),
         'SELECT') AS can_read_any,
       has_any_column_privilege('pigboard_app', format('public.%I', table_name),
@@ -154,10 +156,21 @@ async function runtimeReadGrantsCurrent(client) {
       has_any_column_privilege('pigboard_app', format('public.%I', table_name),
         'UPDATE') AS can_update,
       has_table_privilege('pigboard_app', format('public.%I', table_name),
-        'DELETE') AS can_delete
+        'DELETE') AS can_delete,
+      has_table_privilege('pigboard_app', format('public.%I', table_name),
+        'TRUNCATE') AS can_truncate,
+      has_any_column_privilege('pigboard_app', format('public.%I', table_name),
+        'REFERENCES') AS can_reference,
+      has_table_privilege('pigboard_app', format('public.%I', table_name),
+        'TRIGGER') AS can_trigger,
+      CASE WHEN current_setting('server_version_num')::integer >= 170000
+        THEN has_table_privilege('pigboard_app', format('public.%I', table_name),
+          'MAINTAIN') ELSE false END AS can_maintain
     FROM unnest($1::text[]) AS tables(table_name)`, [TABLES]);
   return forbidden.rows.length === TABLES.length && forbidden.rows.every((row) =>
-    !row.can_insert && !row.can_update && !row.can_delete &&
+    !row.can_select_table && !row.can_insert && !row.can_update &&
+    !row.can_delete && !row.can_truncate && !row.can_reference &&
+    !row.can_trigger && !row.can_maintain &&
     (row.table_name !== "pigboard_schema_migrations" &&
      row.table_name !== "pigboard_authority_events" || !row.can_read_any));
 }
@@ -181,7 +194,7 @@ async function schemaState(client) {
     return { status: "schema_conflict" };
   }
   try {
-    const catalog = await catalogChecksum(client);
+    const catalog = await authorityCatalogChecksum(client);
     if (catalog !== receipts[0].catalog_checksum ||
         (receipts.length === 2 && catalog !== receipts[1].catalog_checksum)) {
       return { status: "schema_conflict" };
@@ -258,13 +271,13 @@ export async function migrateAuthority(client) {
     }
     if (before.status === "schema_absent") {
       await client.query(SQL);
-      const catalog = await catalogChecksum(client);
+      const catalog = await authorityCatalogChecksum(client);
       await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (1, $1, $2)`, [CHECKSUM, catalog]);
     }
     if (before.status !== "schema_current") {
       await client.query(READ_SQL);
-      const catalog = await catalogChecksum(client);
+      const catalog = await authorityCatalogChecksum(client);
       await client.query(`INSERT INTO pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (2, $1, $2)`, [READ_CHECKSUM, catalog]);
     }

@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { deniedGrant, unavailableGrant } from "./authority-self.js";
 
 const LIVE_BODY = { schemaVersion: 1, status: "live" };
 
@@ -31,18 +32,15 @@ export function createHealthServer({ inspectSelf } = {}) {
     if (request.method === "GET" && request.url === "/v1/authority/me") {
       const token = bearerFrom(request);
       if (!token) {
-        sendJson(response, 401, { schemaVersion: 1, status: "denied",
-          reason: "invalid_credential" });
+        sendJson(response, 401, deniedGrant());
         return;
       }
       let result;
       try {
         result = typeof inspectSelf === "function" ? await inspectSelf(token) :
-          { schemaVersion: 1, status: "unavailable", reason: "inspection_unverified",
-            omissions: ["current_grant"] };
+          unavailableGrant("inspection_unverified");
       } catch {
-        result = { schemaVersion: 1, status: "unavailable", reason: "inspection_unverified",
-          omissions: ["current_grant"] };
+        result = unavailableGrant("inspection_unverified");
       }
       sendJson(response, result.status === "ok" ? 200 : result.status === "denied" ? 401 : 503,
         result);
