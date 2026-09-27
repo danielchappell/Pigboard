@@ -106,11 +106,20 @@ are ready:
 | Command | Viewer | Operator | Connection admin | Scoped agent | Recovery principal |
 | --- | --- | --- | --- | --- | --- |
 | Inspect approved ticket/result | Allow | Allow | Deny unless separately granted viewer/operator | Allow only with an explicit inspect grant | Deny; recovery metadata only |
+| Inspect a registered run's identity, last status/time and result omissions | Allow in the authorized scope | Allow in the authorized scope | Deny unless separately granted viewer/operator | Allow only with an explicit inspect grant for that connection | Deny; recovery metadata only |
+| Register one existing run for shared inspection | Deny | Allow with exact provider, connection, run and source identifiers in the authorized scope | Deny unless separately granted operator | Allow only with an explicit register grant and the same identity/scope checks | Deny |
 | Launch or retry | Deny | Allow with normal eligibility/budget checks | Deny unless separately granted operator | Allow only with an explicit launch/retry grant and the same checks | Deny |
 | Reconcile a normal attempt | Deny | Allow | Deny unless separately granted operator | Allow only with an explicit reconcile grant | Deny |
 | Enter recovery and set the external marker | Deny | Deny | Deny | Deny | Allow for the named app, connection and expected target, before DB attachment |
 | Inspect recovery window, record restore evidence or reopen | Deny | Deny | Deny | Deny | Allow only for the named connection in recovery mode |
 | Bind or rotate Jira/Cursor credentials | Deny | Deny | Allow | Deny | Deny; may verify a current secret version without reading its value |
+
+Registration is idempotent only for the same immutable identity; a conflicting
+registration fails without changing the stored run. It records the last observed
+inspection status and time, and names result content that has not been observed
+or validated. Registration does not attest a source revision, validate a result,
+or confer launch, retry or publication authority. S26 owns result observation
+and validation under its separate access and source-proof requirements.
 
 The recovery principal is separate from all roles stored in the database being
 restored. For the Fly pilot, investigate a named operator using a short-lived,
