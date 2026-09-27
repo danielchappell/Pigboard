@@ -1,5 +1,9 @@
 # D3 selected hosting: one Fly Machine with Neon Launch Postgres
 
+**Historical design.** The owner subsequently selected [Neon Free for the
+one-team pilot](hosted-fly-neon-free.md). This Launch design and its review
+remain evidence for their recorded revision, not the current provisioning plan.
+
 27 September 2026. **Selected design, not provisioned or live-proven.** The owner chose the cheaper Fly + Neon Launch path, then reduced the backup recovery window from ten days to seven days rather than retain daily snapshots beyond Launch point-in-time history. This changes the physical store and recovery path. The [earlier D3 design](hosted-deployment-options.md) remains the source for unchanged team authority, data classes, effect boundaries and acceptance; this document supersedes its Fly Managed Postgres topology and marker-only restore procedure. The [D2 durable-attempt contract](hosted-work-contract.md), five-slice order, 20-file Story limit and approved 90-day minimal terminal metadata lifetime remain. The earlier Fly MPG CLEAN review is historical, and the Launch-specific revision and active delivery plan require fresh independent review before implementation.
 
 ## Outcome and current facts

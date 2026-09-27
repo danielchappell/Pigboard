@@ -1,6 +1,6 @@
 # D3 hosted deployment and team access: decision brief
 
-> **Historical design:** the owner selected [Fly + Neon Launch with seven-day PITR](hosted-fly-neon-launch.md) on 27 September 2026. This brief's Fly Managed Postgres topology, ten-day backup assumptions and marker-only recovery procedure are superseded. Its unchanged team roles, data classes, effect boundaries and acceptance context remain inputs to the selected design. The selected topology has not been provisioned or live-proven.
+> **Historical design:** the owner selected [Fly + Neon Free](hosted-fly-neon-free.md) after the [Launch revision](hosted-fly-neon-launch.md) on 27 September 2026. This brief's Fly Managed Postgres topology, ten-day backup assumptions and marker-only recovery procedure are superseded. Its unchanged team roles, data classes, effect boundaries and acceptance context remain inputs to the selected design. The selected topology has not been provisioned or live-proven.
 
 23 September 2026; Pigboard target updated 26 September. This is a design for one team and one active Cursor job,
 not provisioned infrastructure. The owner selected their signed-in Fly.io

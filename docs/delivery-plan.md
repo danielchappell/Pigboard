@@ -16,11 +16,14 @@ and core functionality before iterating on the development method.
 
 Current focus: **S01 and S03 merged; D1 Pigboard discovery, D3 and D4 live gates open**.
 The owner selected one shared-cpu-1x/1 GB Fly Machine and a dedicated Pigboard
-Neon Launch project with seven-day within-project PITR and no scheduled
-snapshots. The [selected D3 design](designs/hosted-fly-neon-launch.md) is
-[CLEAN for its exact reviewed artifact](reviews/hosted-fly-neon-launch.md),
-but its live isolation, load, authority, cost and restore gates remain open.
-The earlier Fly Managed Postgres design/reviews do not approve this topology.
+Neon Free project with point restore limited to the actual usable history, at
+most about six hours or 1 GB of changes, and no scheduled snapshots. The
+[selected D3 design](designs/hosted-fly-neon-free.md) is
+[CLEAN for its exact artifact](reviews/hosted-fly-neon-free.md); live isolation,
+quota, load, authority and restore gates remain open.
+The earlier Neon Launch and Fly Managed Postgres reviews are historical for
+their exact artifacts. The approved 90-day lifetime for minimal completed-run
+metadata is a separate policy and remains unchanged.
 The authorized next five-PR stack is **S02 → S04 → S26 → S05 → S06**. Each
 slice still needs its own resolved prerequisites, reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
@@ -97,18 +100,21 @@ authorized; missing credentials/access or a genuine owner choice remain explicit
 | Design CLEAN; live gates open | D4: Define and verify runner capabilities | [Runner design](designs/runner-capabilities.md) and [review record](reviews/runner-capabilities.md) separate the reviewed mapping from repository, read-only, teammate and meaningful-work checks | Treat PR #7 as manual S03; S04 inspects an existing run; S05 cannot send until the live gates are met. |
 | Authorized live checks pending | [D4L: Verify Cursor pilot access and source identity](tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity) | No repository, actual-commit, enforced read-only, teammate or meaningful-work proof yet | Record each pass/failure/unknown in the named evidence artifact. No company-account substantive compute. |
 | Contingent on failed Cursor read-only or source binding | [D4F: Evaluate a hosted Codex fallback](tasks/architecture-decisions.md#d4f--evaluate-a-hosted-codex-fallback) | No provider switch has been chosen | If Cursor cannot meet both real-repository gates, evaluate Codex and obtain an explicit revised provider decision before S05/A1. |
-| Fly + Neon Launch design CLEAN at recorded SHA-256; staged D3 live gates open | D3: Choose deployment and team access | [Selected one-team design](designs/hosted-fly-neon-launch.md) and its [current independent review record](reviews/hosted-fly-neon-launch.md). Earlier CLEAN verdicts apply only to their exact design hashes. The prior [Fly MPG brief](designs/hosted-deployment-options.md) and reviews are historical for the replaced store/recovery path. | Before S04, prove dedicated Pigboard Neon store, SQL isolation, root/child endpoint identity and ordinary grant boundary, a disposable two-client SQL feasibility probe and test identities. S04 implements the root pin, child-read denial and registered-run inspection; S05 proves no child-target send. S08 proves Fly load/teammate operation. S29-S31 build recovery; A1 proves seven-day within-project PITR and the full restore interlock. |
+| Neon Free design CLEAN at recorded SHA-256; staged D3 live gates open | D3: Choose deployment and team access | [Selected one-team design](designs/hosted-fly-neon-free.md) and its [independent review record](reviews/hosted-fly-neon-free.md). The [Neon Launch design/review](designs/hosted-fly-neon-launch.md) and prior [Fly MPG brief](designs/hosted-deployment-options.md) are historical for their exact artifacts. | Before S04, prove dedicated Pigboard Free store, SQL isolation, root/child endpoint identity and ordinary grant boundary, a disposable two-client SQL feasibility probe, actual Free limits and test identities. S04 implements the root pin, child-read denial and registered-run inspection; S05 proves no child-target send. S08 proves Fly load/teammate operation and quota-safe health checks. S29-S31 build recovery; A1 proves the measured within-project Free restore window and full interlock. |
 
 These are Tasks, not promises of two-day implementation. **D3-design** means the
-selected Fly + Neon Launch architecture has two CLEAN independent design
-reviews of the exact hash in the review record. **D3-store/access** is the narrower pre-S04 live
+selected Fly + Neon Free architecture has two CLEAN independent design
+reviews of its exact hash in the review record. **D3-store/access** is the narrower pre-S04 live
 gate: dedicated Pigboard Neon isolation, scoped SQL/test identities, recorded root/child endpoint identities and ordinary grant boundary, and a disposable
 two-client SQL transaction/reconnect probe. S04 owns the effective-target pin, child-read denial, application registration/inspection and role acceptance; S05 proves no child-target send. **D3-host/recovery** remains open
 through S08 and S29-S31 until Fly load/team operation, control grants,
-seven-day history and the full restore interlock are proven at A1. S04 does
+the measured Free restore history and the full restore interlock are proven at A1. S04 does
 not depend on capabilities those later Stories implement. The 90-day minimal
 post-terminal metadata policy is unchanged; other data-class retention choices
-remain open. **D4-design** means a
+must be recorded before the Story that first stores each class: S26 for any
+provider result, S05 for copied Jira source, prepared requests or sealed
+credentials, and S06 for publication evidence. If an earlier Story stores a
+class, its decision moves earlier. **D4-design** means a
 reviewed runner mapping and PR #7 manual disposition. **D4-source** means D4L
 has verified which immutable commit Cursor actually used for the saved run; a model
 reply or local digest alone does not close it. **D4-live** means D4L has also
@@ -139,9 +145,9 @@ its decisions and plan are ready.
 | S02 | Explain whether one Jira ticket is eligible without starting it | S01, D1 | Jira reads/normalization and existing core policy, one inspection command. |
 | S03 | Start and retrieve one manual Cursor cloud job with stable identity | D4-design; PR #7 retrospective Story/plan and committed-code reviews CLEAN | Existing standalone CLI and library, kept separate from hosted launch authority; no repository-backed acceptance claimed. |
 | S04 | Register and inspect an existing provider run across processes | S03, D2, D3-store/access, D4-design | Use the selected isolated Neon Postgres store, independently pinned original-root endpoint and current Pigboard-scoped access; persist immutable identity and last recorded inspection status/time with explicit result omissions. Mutable or unattested revisions remain inspection-only. S26 owns result observation and validation. Recheck 20-file/<2-day size after the narrow D3 store/access proof. |
-| S26 | Observe and validate a saved provider result | S04, D2, D4-design, D4-source | One observation/validation command stores a role result or needs-attention; source revision must be proven immutable before validation. |
-| S05 | Explicitly start one eligible Jira request once | S02, S03, S04, D1, D2, D3-store/access, D4-design, D4-live | Atomic root authority check and attempt/send reservation plus D2 provider facade and one operator-invoked launch/reconcile command. The original root endpoint is pinned separately from the connection secret; changing that secret to a historical child denies reads and sends. Recheck size after discovery; full disaster-recovery implementation remains a later gate. |
-| S06 | Publish one stored result back to its Jira ticket safely | S05, S26, D1, D2 | Append-only progress/result comments and recoverable publication; automatic transition only if Jira enforces the full eligibility guard, otherwise manual handoff. |
+| S26 | Observe and validate a saved provider result | S04, D2, D4-design, D4-source, policy for any stored provider result | One observation/validation command stores a role result or needs-attention; source revision must be proven immutable before validation. |
+| S05 | Explicitly start one eligible Jira request once | S02, S03, S04, D1, D2, D3-store/access, D4-design, D4-live, policies for any stored source/request/credential | Atomic root authority check and attempt/send reservation plus D2 provider facade and one operator-invoked launch/reconcile command. The original root endpoint is pinned separately from the connection secret; changing that secret to a historical child denies reads and sends. Recheck size after discovery; full disaster-recovery implementation remains a later gate. |
+| S06 | Publish one stored result back to its Jira ticket safely | S05, S26, D1, D2, policy for stored publication evidence | Append-only progress/result comments and recoverable publication; automatic transition only if Jira enforces the full eligibility guard, otherwise manual handoff. |
 | S07 | Pick up eligible tickets and reconcile existing attempts automatically | S05, S26, S06 | Bounded scheduled coordinator tick, one active attempt, stored polling/progress; no new queue policy. |
 | S08 | Run that coordinator independently of a developer's computer | S07, D3-design, D3-store/access | Deployment/configuration using selected services, authenticated health/inspection, shared-cpu-1x/1 GB load proof, second-user operation and operational guide. |
 | S29 | Quarantine one restored connection | S08, D3-design | Install the initial `normal` manifest and effect-read gate in a recovery-capable revision; recovery principal records expected-head cutover state, while the custodian proves exclusive deploy/provider fence and zero old Machines before attaching a Neon child branch in quarantine. Provisional — re-groom to the 20-file/<2-day limit after focused control-repository feasibility checks. |
@@ -162,7 +168,7 @@ resolved, required reviewed checks passing, and an authorized acceptance
 environment. A1 alone closes M2 after recording all required live evidence:
  demonstrate the complete Jira journey,
 replay/restart/failure recovery, one writer, laptop independence and second-user
-visibility. It includes a seven-day Neon Launch **within-project** restore drill
+visibility. It includes a measured Neon Free **within-project** restore drill
 with pre-attachment quarantine, a lost effect and access change, verified
 copy-back to the live root and the full role-denial matrix. The selected policy
 does not cover project or account loss. A meaningful
@@ -265,11 +271,11 @@ slices supported by evidence from operating that baseline.
 | --- | --- |
 | Intuitive | Configuration and inspection precede launch; PIG Task + To Do + `ai-enabled` is the visible opt-in route. The D3 store choice is not a teammate workflow step. Recovery still needs plain blocked-state wording in S29-S31. |
 | Discoverable | Task outputs, Story bodies, readiness rules and the five-PR order are linked from this queue. D3 live setup and recovery controls remain explicit prerequisites rather than hidden assumptions. |
-| Delightful experience | Discovery can progress without repeated approval prompts. The lower-cost store can sleep, so S04 must show a bounded wake delay honestly; paid setup waits for real load and authority checks. |
+| Delightful experience | Discovery can progress without repeated approval prompts. The Free store can sleep, so S04 must show a bounded wake delay honestly; Fly health checks must not keep it active, and live setup waits for review and authority checks. |
 | Token saver | Reuses current code/API evidence and avoids speculative full implementation plans for blocked later Stories. Agent responses must include uncertainty and omissions, not just short success text. |
 | Secure | D1 audience, D4 source/read-only and D3 separate Pigboard Neon/control-repository grants gate effects. The live-root authority journal and physical/provider fence prevent restored rows from granting access or sends; all remain unproven live. |
 | Agents are equal | Human and agent inspection/launch use scoped commands. The recovery preview includes a noninteractive CLI observation route with the same role and connection checks; no browser-only handoff is required. |
-| Dependable | S01/S03 merged scope, historical Fly MPG reviews, selected Neon design and open live gates remain distinct. Seven-day PITR covers only within-project restore, and S29-S31 remain provisional until they can be sized; no plan review is inferred from a CLEAN design. |
+| Dependable | S01/S03 merged scope, historical paid-store reviews, selected Free design and open live gates remain distinct. Restore covers only the measured short within-project history; Free quota exhaustion closes new effects. S29-S31 remain provisional until sized, and no plan review is inferred from a CLEAN design. |
 
 S01 delivers the reviewed M1 configuration outcome at merged main
 `005419b63460540bfbb96400c46e7274a47af723`. D1 still needs the dedicated

@@ -79,6 +79,7 @@ Acceptance Criteria
 
 - An authorized caller registers one existing run’s immutable identity, then retrieves its identity and last recorded inspection status from a fresh process. The response says when status was last observed and identifies any missing or unverified result content.
 - A caller outside the configured scope cannot read the run, and a mismatched request cannot replace its identity.
+- If the Free database is asleep, inspection reports a bounded wait. If its quota is exhausted or it remains unavailable, inspection reports that state without claiming a fresh observation.
 
 Technical Acceptance Criteria
 
@@ -86,13 +87,14 @@ Technical Acceptance Criteria
 - Registered-run inspection permits scoped viewers and operators, and agents only with a separate inspect grant for the connection. Connection admins need an independently granted viewer/operator role; the recovery principal cannot inspect the run.
 - Registration requires the D3 operator permission or a separate, explicit scoped-agent register grant. Registration does not attest the source revision, validate a result or grant permission to launch or publish.
 - This operation does not launch or retry provider work.
+- A failed database wake or Free quota limit cannot turn a missing write into a successful registration.
 - A run started from a moving branch or without a verified source commit is inspection-only; it cannot be validated or published as ticket work.
 
 Testing Strategy
 
 - Manual QA: Save an existing fixture run, exit, retrieve it from a second process and confirm identity, an allowed scoped viewer or agent inspection, and denied out-of-scope and same-scope ungranted access.
 - Access and setup: Use the selected isolated store and test identities from D3; these remain unresolved before readiness.
-- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration, root-endpoint binding across secret changes/reconnects, and both scope and role isolation across process restarts.
+- Automated regression: Cover durable run identity, last recorded status and its observation time, explicit omissions, immutable registration, database wake/quota failure, root-endpoint binding across secret changes/reconnects, and both scope and role isolation across process restarts.
 
 ## S05 — Explicitly start one eligible Jira request
 
@@ -105,18 +107,20 @@ Acceptance Criteria
 - Starting an eligible test Task creates one traceable attempt and returns the provider link or an honest unresolved state.
 - A repeated command or competing caller resumes the same attempt without launching another job.
 - A changed ticket or lost ownership prevents stale work from being accepted.
+- If the Free database cannot admit the reservation, no provider launch occurs and the caller sees the failed or uncertain state.
 
 Technical Acceptance Criteria
 
 - Persist immutable launch intent before the provider call and enforce D2’s ownership/recovery rules.
 - Check current authority and reserve the effect in one transaction on the pinned original root endpoint. Reject a secret or connection override pointing to an older Neon child before reads or sends; a pre-S29 revision has no recovery path.
 - Use configured role/repository and keep coordinator credentials out of the prompt.
+- Before storing copied source, a prepared request or a sealed credential, document that class's audience, lifetime and deletion, including restored copies.
 
 Testing Strategy
 
 - Manual QA: Start the same synthetic ticket twice through mocked provider calls and confirm one attempt and one accepted provider identity.
 - Access and setup: Use an isolated store, authorized test ticket and mocked runner; meaningful live work needs separately established execution authority.
-- Automated regression: Cover claim contention, ambiguous launch recovery, stale-input rejection and no read/send when the configured database target is a historical child.
+- Automated regression: Cover claim contention, database quota/unavailability before reservation, ambiguous launch recovery, stale-input rejection and no read/send when the configured database target is a historical child.
 
 ## S26 — Observe and validate a saved provider result
 
@@ -135,6 +139,7 @@ Technical Acceptance Criteria
 - Use D2/D4’s role/result and provider-state contracts, pinned to the stored immutable input.
 - Refuse validation until D4-source binds the provider's actual source commit to that input; leave the saved run available for inspection.
 - A stale owner or mismatched run cannot overwrite the accepted result.
+- Before storing provider output, document who can read it, how long it remains and how it is deleted, including restored copies.
 
 Testing Strategy
 
@@ -153,17 +158,20 @@ Acceptance Criteria
 - Publishing adds progress/result evidence to the matching ticket. It transitions only with a verified full eligibility guard; otherwise it leaves a clear manual handoff.
 - A lost write response is reconciled before another write, or becomes visible needs-attention.
 - Human changes and audience restrictions prevent inappropriate publication or transition.
+- If the Free store cannot reserve the write, no new Jira comment or transition is sent; the caller sees a blocked or uncertain result.
 
 Technical Acceptance Criteria
 
 - Use stored validated output, an append-only comment operation identity and D1’s verified transition/race contract.
+- Commit the D2 effect reservation on the pinned root before any Jira write; a quota or database failure cannot authorize a send.
 - Keep the human assignee and never use comments as run locks.
+- Before storing publication evidence, document its audience, lifetime and deletion, including restored copies.
 
 Testing Strategy
 
 - Manual QA: Publish a synthetic stored result, interrupt one response and retry; inspect one intended comment, no rerun and manual status when no full guard exists.
 - Access and setup: Use the scoped fixture Jira service first; live comment/transition acceptance requires the controlled test ticket and verified write authority.
-- Automated regression: Cover partial publication recovery, stale-ticket handling and source-audience enforcement.
+- Automated regression: Cover partial publication recovery, no Jira write after a failed or uncertain reservation, stale-ticket handling and source-audience enforcement.
 
 ## S07 — Automatically pick up and reconcile eligible work
 
@@ -176,17 +184,19 @@ Acceptance Criteria
 - A bounded coordinator tick finds eligible work and progresses its stored attempt through observation and publication.
 - Missed notifications and labels added after a status change are found by reconciliation.
 - Restarting the worker resumes recorded work and keeps the first pilot to one active attempt.
+- A quiet team lets the Free database become idle; scheduled checks do not keep its compute awake.
 
 Technical Acceptance Criteria
 
 - Reuse the existing application operations and core policy rather than adding a second scheduler.
 - Use bounded reads/polls and the reviewed single-worker capacity contract.
+- Set the coordinator's polling cadence so it does not continuously reset Neon's idle timer.
 
 Testing Strategy
 
 - Manual QA: Run scheduled ticks over synthetic eligible, repeated and interrupted work; inspect run records and ticket projections for one completed journey.
 - Access and setup: Use local test scheduling, isolated state and mocked provider/Jira services before live activation.
-- Automated regression: Cover reconciliation, restart and capacity behavior across the composed workflow.
+- Automated regression: Cover reconciliation, restart, capacity and a quiet polling interval that permits database suspension.
 
 ## S08 — Operate the coordinator with laptops offline
 
@@ -199,17 +209,19 @@ Acceptance Criteria
 - The configured hosted worker continues the established ticket workflow after the initiating client disconnects.
 - An authorized teammate can inspect health/run evidence and an unauthorized viewer is denied.
 - The operating guide explains restart, credential configuration and common failures for the selected host.
+- Health probes permit Neon to sleep, and operations report measured compute and storage use against the Free limits.
 
 Technical Acceptance Criteria
 
 - Use D3’s chosen host/store/access setup and existing coordinator commands.
+- Keep process health independent of a Postgres query; record active CU-hours and storage against the account's actual Free allowances.
 - Keep one team and one active attempt; do not bundle a new dashboard or billing system.
 
 Testing Strategy
 
-- Manual QA: Start the deployed fixture journey, disconnect the client and inspect the same run from a second authorized session.
+- Manual QA: Start the deployed fixture journey, disconnect the client and inspect the same run from a second authorized session; then leave it quiet and check Neon suspension and quota use.
 - Access and setup: Requires D3’s authorized deployment/test identities; full model acceptance remains constrained by execution authority.
-- Automated regression: Cover deployment health, authenticated inspection and coordinator restart against the selected environment.
+- Automated regression: Cover deployment health without a database query, quota observation, authenticated inspection and coordinator restart against the selected environment.
 
 ## S29 — Quarantine one restored connection
 
