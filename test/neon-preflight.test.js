@@ -19,8 +19,9 @@ const goodSnapshot = {
   otherRoleMembership: false, dbConnect: true, dbCreate: false,
   schemas: [{ name: "public", usage: true, create: false }],
   fixtureExists: true,
-  fixture: { select: true, insert: true, update: false, delete: false,
-    truncate: false, references: false, trigger: false, maintain: false }
+  fixture: { select: true, insert: true, update: false, updateAnyColumn: false,
+    delete: false, truncate: false, references: false,
+    referencesAnyColumn: false, trigger: false, maintain: false }
 };
 
 function fakeSpawn(snapshot = goodSnapshot, capture = () => {}) {
@@ -104,6 +105,14 @@ test("effective CREATE and inherited privilege violations cannot pass", () => {
   const trigger = evaluateSnapshot({ ...goodSnapshot,
     fixture: { ...goodSnapshot.fixture, trigger: true } });
   assert.equal(trigger.find((item) => item.id === "fixture_grants").status, "fail");
+  for (const key of ["updateAnyColumn", "referencesAnyColumn"]) {
+    const columnGrant = evaluateSnapshot({ ...goodSnapshot,
+      fixture: { ...goodSnapshot.fixture, [key]: true } });
+    assert.equal(columnGrant.find((item) => item.id === "fixture_grants").status, "fail");
+  }
+  const absentColumnEvidence = evaluateSnapshot({ ...goodSnapshot,
+    fixture: { ...goodSnapshot.fixture, updateAnyColumn: undefined } });
+  assert.equal(absentColumnEvidence.find((item) => item.id === "fixture_grants").status, "unverified");
   const missing = evaluateSnapshot({ ...goodSnapshot, fixtureExists: false, fixture: null });
   assert.equal(missing.find((item) => item.id === "fixture_grants").status, "unverified");
 });
@@ -119,7 +128,15 @@ test("child target is refused before passfile access or process launch", async (
   assert.equal(calls, 0);
   assert.equal(report.status, "fail");
   assert.equal(report.checks[0].reason, "target_mismatch");
+  assert.equal(report.requestedHost, "ep-hidden-feather-b2qm5pb0.c-6.eu-central-1.aws.neon.tech");
+  assert.equal(report.target.host, ROOT_TARGET.host);
+  assert.match(formatPreflightText(report), /Requested host: ep-hidden-feather-b2qm5pb0/);
   assert.ok(report.omissions.includes("connection"));
+  const unsafe = await runPreflight({ targetHost: "bad\nsecret", passfile: "/unused",
+    lstat: () => { calls += 1; }, spawnCommand: () => { calls += 1; } });
+  assert.equal(unsafe.requestedHost, null);
+  assert.ok(!JSON.stringify(unsafe).includes("secret"));
+  assert.equal(calls, 0);
 });
 
 test("complete check gives one safe JSON/text result; partial report is unverified", async () => {

@@ -16,7 +16,8 @@ It must contain an exact host:5432:database:role entry; this command never reads
 the file, so only a successful pinned login proves a matching credential exists.
 No password, connection string, Jira data or app grant is printed.
 
-Text is the default. JSON includes status, target, checks and omissions.
+Text is the default. JSON includes status, expected target, safely printable
+requested host, checks and omissions.
 Exit 0 means every check passed; 1 means failed or unverified; 2 means bad usage.
 The operator guide is docs/hosted-neon-preflight.md. This does not deploy Fly
 or claim S02a is ready.`;
@@ -44,7 +45,7 @@ if (options?.help) {
   console.log(help);
 } else if (!options) {
   const report = {
-    schemaVersion: 1, status: "fail", target: publicTarget(),
+    schemaVersion: 1, status: "fail", target: publicTarget(), requestedHost: null,
     checks: [{ id: "usage", status: "fail", reason: "invalid_usage",
       message: "Use --passfile ABSOLUTE_PATH, optional --format text|json and --target-host HOST. See --help." }],
     omissions: ["connection", "identity", "tls", "role_attributes", "role_membership",

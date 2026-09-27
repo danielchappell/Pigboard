@@ -39,9 +39,11 @@ SELECT json_build_object(
       'select', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'SELECT'),
       'insert', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'INSERT'),
       'update', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'UPDATE'),
+      'updateAnyColumn', has_any_column_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'UPDATE'),
       'delete', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'DELETE'),
       'truncate', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'TRUNCATE'),
       'references', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'REFERENCES'),
+      'referencesAnyColumn', has_any_column_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'REFERENCES'),
       'trigger', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'TRIGGER'),
       'maintain', has_table_privilege(current_user, to_regclass('public.pigboard_runtime_role_probe')::oid, 'MAINTAIN')
     ) END)
@@ -52,21 +54,26 @@ function check(id, status, reason, message) {
   return { id, status, reason, message };
 }
 
-function result(checks) {
+function safeRequestedHost(host) {
+  return typeof host === "string" && /^[A-Za-z0-9.-]{1,253}$/.test(host) ? host : null;
+}
+
+function result(checks, requestedHost = ROOT_TARGET.host) {
   const status = checks.some((item) => item.status === "fail") ? "fail" :
     checks.some((item) => item.status === "unverified") ? "unverified" : "pass";
   return {
     schemaVersion: 1,
     status,
     target: publicTarget(),
+    requestedHost: safeRequestedHost(requestedHost),
     checks,
     omissions: checks.filter((item) => item.status === "unverified").map((item) => item.id)
   };
 }
 
-function incomplete(checks, reason) {
+function incomplete(checks, reason, requestedHost) {
   return result([...checks, ...OMITTED_AFTER_PRECHECK.map((id) =>
-    check(id, "unverified", reason, "This check was not completed."))]);
+    check(id, "unverified", reason, "This check was not completed."))], requestedHost);
 }
 
 export function checkPassfile(path, options = {}) {
@@ -188,7 +195,8 @@ export function evaluateSnapshot(snapshot) {
       check("schema_privileges", "fail", "schema_grants_broad", "Public USAGE is missing or effective schema CREATE is allowed.") :
       check("schema_privileges", "unverified", "schema_grants_unavailable", "Schema privileges could not be established."));
   const fixture = snapshot.fixture;
-  const fixtureDenied = ["update", "delete", "truncate", "references", "trigger", "maintain"];
+  const fixtureDenied = ["update", "updateAnyColumn", "delete", "truncate",
+    "references", "referencesAnyColumn", "trigger", "maintain"];
   checks.push(snapshot.fixtureExists === true && fixture?.select === true && fixture?.insert === true &&
     fixtureDenied.every((key) => fixture?.[key] === false) ?
     check("fixture_grants", "pass", "fixture_grants_restricted", "The disposable fixture allows only SELECT/INSERT.") :
@@ -207,16 +215,16 @@ export async function runPreflight({ targetHost = ROOT_TARGET.host, passfile, sp
     database: ROOT_TARGET.database, role: ROOT_TARGET.role }));
   if (checks[0].status !== "pass") {
     checks.push(check("passfile", "unverified", "target_refused", "No password file was inspected."));
-    return incomplete(checks, "target_refused");
+    return incomplete(checks, "target_refused", targetHost);
   }
   checks.push(checkPassfile(passfile, { lstat, uid }));
-  if (checks[1].status !== "pass") return incomplete(checks, "passfile_refused");
+  if (checks[1].status !== "pass") return incomplete(checks, "passfile_refused", targetHost);
   const invocation = buildPsqlInvocation(passfile, { psqlBinary, pathEnv });
   const response = await runPsql(invocation, spawnCommand, timeoutMs);
   if (!response.ok) {
     checks.push(check("connection", "fail", response.reason, "The pinned database connection did not complete."));
     return result([...checks, ...OMITTED_AFTER_PRECHECK.slice(1).map((id) =>
-      check(id, "unverified", response.reason, "This check was not completed."))]);
+      check(id, "unverified", response.reason, "This check was not completed."))], targetHost);
   }
   let snapshot;
   try {
@@ -224,17 +232,18 @@ export async function runPreflight({ targetHost = ROOT_TARGET.host, passfile, sp
   } catch {
     checks.push(check("connection", "unverified", "invalid_report", "The database returned an unreadable diagnostic report."));
     return result([...checks, ...OMITTED_AFTER_PRECHECK.slice(1).map((id) =>
-      check(id, "unverified", "invalid_report", "This check was not completed."))]);
+      check(id, "unverified", "invalid_report", "This check was not completed."))], targetHost);
   }
   checks.push(check("connection", "pass", "query_completed", "The pinned database diagnostic query completed."));
-  return result([...checks, ...evaluateSnapshot(snapshot)]);
+  return result([...checks, ...evaluateSnapshot(snapshot)], targetHost);
 }
 
 export function formatPreflightText(report) {
   const heading = report.status === "pass" ? "PASS" : report.status === "fail" ? "FAIL" : "UNVERIFIED";
   return [
     `Pigboard Neon root preflight: ${heading}`,
-    `Target: ${report.target.host}:${report.target.port}/${report.target.database} as ${report.target.role}`,
+    `Expected root: ${report.target.host}:${report.target.port}/${report.target.database} as ${report.target.role}`,
+    `Requested host: ${report.requestedHost ?? "not available"}`,
     ...report.checks.map((item) => `${item.status.toUpperCase()} ${item.id}: ${item.message}`),
     `Omissions: ${report.omissions.length ? report.omissions.join(", ") : "none"}`,
     report.status === "pass" ? "This diagnostic passed; it does not prove Fly deployment or S02a readiness." :

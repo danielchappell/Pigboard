@@ -60,11 +60,14 @@ npm run --silent neon:preflight -- --passfile /absolute/private/path \
 The normal result includes `root_target`, `passfile`, `connection`, `identity`,
 `tls`, `role_attributes`, `role_membership`, `database_privileges`,
 `schema_privileges` and `fixture_grants`. Text and JSON carry the same status.
-JSON has `schemaVersion`, `status`, non-secret `target`, `checks[]` with stable
+JSON has `schemaVersion`, `status`, non-secret expected `target`, a safely
+printable `requestedHost` (null for malformed input), `checks[]` with stable
 IDs/status/reasons, and `omissions[]`. Exit 0 means all checks passed; exit 1
 means a failure or an unverified check; exit 2 means invalid command usage.
 Neither a timeout nor a missing field can pass. The command never prints the
 password-file path or contents, a connection string, or raw database stderr.
+The fixture check also rejects column-level UPDATE or REFERENCES grants; a
+table-only ACL check would miss those effective privileges.
 
 If `root_target` fails, compare the host with the source-controlled pin; do not
 change the pin merely to make a child pass. If `passfile` fails, repair its
