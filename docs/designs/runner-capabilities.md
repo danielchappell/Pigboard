@@ -56,7 +56,9 @@ nonempty `text` and `referenceIds`; each reference has an `id`, `url` or explici
 reviewed implementation plan before a live run. The adapter preserves the bounded
 raw final reply with the exact run identity; S26 parses and validates this shape,
 checks binding to the stored input, and records `valid`, `question`, `invalid`,
-or `stale`. Non-JSON, truncated, missing, or unsupported-version replies never
+or `stale` for the output contract, separately from request/source binding and
+publication eligibility. A format-valid but unbound reply is nonpublishable.
+Non-JSON, truncated, missing, or unsupported-version replies never
 advance the ticket. A syntactically valid reference is not proof the source is
 accurate; the human still accepts the findings.
 
@@ -121,8 +123,9 @@ error. D4L must prove this path before S04 is ready. If the provider and
 trusted source commands cannot supply run-specific proof, re-groom S04 into a
 complete trusted-source outcome before implementation.
 An authorized import from a moving ref remains inspection-only: S26 may check
-its output format within the established audience, but cannot mark it
-publishable and S06 cannot publish it from a claimed role or revision. The
+its output format within the established audience and record a format-valid but
+unbound result. It cannot mark the result validated ticket work or eligible for
+publication, and S06 cannot publish it from a claimed role or revision. The
 [D4L Task](../tasks/architecture-decisions.md#d4l--verify-cursor-pilot-access-and-source-identity)
 must record provider-visible or independently checked evidence binding the actual
 checkout to a 40-hex revision. That **D4-source** gate does not prove the
