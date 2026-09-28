@@ -88,14 +88,16 @@ test("complete target metadata stays read-only and keeps absent static associati
   assert.deepEqual(result.omissions, ["pair_validity", "issue_membership", "caller_audience", "other_D1_evidence"]);
   assert.equal(calls[0].url, "https://auth.atlassian.com/oauth/token");
   assert.equal(calls[0].init.method, "POST");
-  assert.equal(calls[0].init.redirect, "error");
+  assert.equal(calls[0].init.redirect, "manual");
+  assert.equal(calls[0].init.headers["Content-Type"], "application/x-www-form-urlencoded");
+  assert.equal(calls[0].init.body.get("audience"), null);
   assert.equal(calls[0].init.body.get("client_id"), "client-id-value");
   assert.equal(calls[0].init.body.get("client_secret"), "client-secret-value");
   assert.equal(calls[0].init.headers.Authorization, undefined);
   assert.equal(calls[1].url, `${API}/rest/api/3/myself`);
   for (const call of calls.slice(1)) {
     assert.equal(call.init.method, "GET");
-    assert.equal(call.init.redirect, "error");
+    assert.equal(call.init.redirect, "manual");
     assert.equal(call.init.headers.Authorization, "Bearer test-bearer");
     assert.ok(call.url.startsWith(API + "/"));
     assert.ok(!/\/issue(?:\/|\?|$)|\/comment|\/transition/u.test(call.url));
@@ -245,14 +247,19 @@ test("timeout is a named incomplete outcome without vendor error text", async t 
 
 test("redirect returns incomplete and causes no follow-up request", async t => {
   const files = credentials(t);
-  const { calls, fetchImpl } = fakeFetch({ token: new Response(null, {
-    status: 302, headers: { Location: "https://example.invalid/steal" }
-  }) });
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init });
+    if (init.redirect === "error") throw new TypeError("native fetch rejects redirects in error mode");
+    assert.equal(init.redirect, "manual");
+    return new Response(null, { status: 302,
+      headers: { Location: "https://example.invalid/steal" } });
+  };
   const result = await checkPigJiraMetadata({ ...files, fetchImpl });
   assert.equal(result.status, "metadata_incomplete");
   assert.equal(result.routes[0].reason, "redirect_refused");
   assert.equal(calls.length, 1);
-  assert.equal(calls[0].init.redirect, "error");
+  assert.equal(calls[0].init.redirect, "manual");
 });
 
 test("CLI gives matching JSON and text meaning with stable exit codes", async () => {

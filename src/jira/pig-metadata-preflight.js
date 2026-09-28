@@ -109,7 +109,7 @@ function isTimeout(error) {
 async function boundedJson(url, init, fetchImpl) {
   let response;
   try {
-    response = await fetchImpl(url, { ...init, redirect: "error", signal: AbortSignal.timeout(15_000) });
+    response = await fetchImpl(url, { ...init, redirect: "manual", signal: AbortSignal.timeout(15_000) });
   } catch (error) {
     return { reason: isTimeout(error) ? "timeout" : "request_failed", httpStatus: null };
   }
