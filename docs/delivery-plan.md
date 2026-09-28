@@ -27,6 +27,20 @@ implementation details from the reviewed design. Ask the owner only for a real
 access limit or product decision that the existing authorization does not
 settle. Keep live acceptance separate from merged code.
 
+The next complete technical prerequisite is the pilot-specific
+[D1 Jira metadata diagnostic](stories/pig-jira-metadata-preflight.md). Its
+[design](designs/pig-jira-metadata-preflight.md) has independent CLEAN review for
+the exact external design artifact recorded in
+[its review record](reviews/pig-jira-metadata-preflight-design.md); the repository
+copy changes only one reference link. The Story and
+[implementation plan](plans/pig-jira-metadata-preflight.md) have independent
+CLEAN [plan review](reviews/pig-jira-metadata-preflight-plan.md) for their
+recorded exact artifacts. The command, tests and guide are implemented in this
+branch for exact committed-code review and PR checks; those results must be
+recorded at their revisions before claiming delivery. The command makes a dedicated-service metadata check repeatable, but
+will not finish D1 or accept S02a. The live service credential and subsequent
+issue, permission, filter and caller-audience evidence remain separate gates.
+
 ## Owner decision and delivery sequence
 
 Pigboard's [product direction](product-strategy.md) is an opinionated AI SDLC

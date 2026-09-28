@@ -14,6 +14,7 @@
     "owner:inspect": "node scripts/inspect-pigboard-authority.mjs",
     "owner:runtime-login": "node scripts/setup-pigboard-runtime-login.mjs",
     "caller:me": "node scripts/inspect-pigboard-caller.mjs",
+    "jira:metadata": "node scripts/check-pig-jira-metadata.mjs",
     "neon:preflight": "node scripts/check-neon-root.mjs",
     "profile:check": "node scripts/check-workflow-profile.mjs",
     "apply:github": "node scripts/apply-github-worker-result.mjs",

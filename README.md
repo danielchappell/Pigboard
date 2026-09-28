@@ -40,6 +40,15 @@ work. A valid profile is a static route preview; `liveReady` remains `false`.
 The [workflow profile guide](docs/workflow-profile.md) covers copying/editing the
 file, JSON/stdin usage, error recovery and the live prerequisites still unchecked.
 
+## Check PIG Jira metadata
+
+For the Scubapig pilot, `npm run --silent jira:metadata -- --help` describes a
+read-only check of PIG project and board metadata with the dedicated Jira service
+account. The [Jira metadata guide](docs/pig-jira-metadata-preflight.md) explains
+protected OAuth files, the required read scopes, text/JSON results and recovery.
+The service credential is not yet live-verified; a passing local test or a
+completed metadata check does not validate a board pair or accept S02a.
+
 ## Check the Pigboard database boundary
 
 An operator can run `npm run --silent neon:preflight -- --passfile /absolute/private/path`
