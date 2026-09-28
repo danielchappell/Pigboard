@@ -179,6 +179,28 @@ test("definite precommit failure rolls back and reports an orphan passfile", asy
   } finally { rmSync(directory, { recursive: true, force: true }); }
 });
 
+test("unconfirmed rollback reports uncertainty and preserves an orphan passfile", async () => {
+  const directory = mkdtempSync(join(tmpdir(), "pigboard-role-rollback-unknown-"));
+  try {
+    chmodSync(directory, 0o700);
+    const options = setupOptions(directory, { failAt: "ROLLBACK" });
+    const result = await setupRuntimeLogin(options.args, { ...options.deps,
+      writePassfile: (path) => {
+        writeFileSync(path, "orphan\n", { mode: 0o600 });
+        const error = new Error("private write error");
+        error.fileCreated = true;
+        throw error;
+      } });
+    assert.equal(result.status, "outcome_unknown");
+    assert.equal(result.fileCreated, true);
+    assert.match(result.nextAction, /Do not rerun/u);
+    assert.equal(options.queries.includes("ROLLBACK"), true);
+    assert.equal(options.queries.includes("COMMIT"), false);
+    assert.equal(existsSync(options.args.passfile), true);
+    assert.equal(JSON.stringify(result).includes("private write error"), false);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
 test("a descriptor-close failure still reports a durable orphan passfile", async () => {
   const directory = mkdtempSync(join(tmpdir(), "pigboard-role-close-"));
   try {
@@ -237,6 +259,31 @@ test("postcommit preflight failure and exception expose safe diagnostics", async
     assert.deepEqual(thrown.omissions, ["saved_passfile_login"]);
     assert.equal(JSON.stringify(thrown).includes("private preflight material"), false);
   } finally { rmSync(directory, { recursive: true, force: true }); }
+});
+
+test("failed saved-login checks still recheck a reassigned endpoint", async () => {
+  for (const preflight of [
+    async () => ({ checks: passChecks().checks.map((check) => check.id ===
+      "connection" ? { id: "connection", status: "fail", reason: "connection_failed" } :
+      check), omissions: ["connection"] }),
+    async () => { throw new Error("private preflight material"); }
+  ]) {
+    const directory = mkdtempSync(join(tmpdir(), "pigboard-role-postcheck-moved-"));
+    try {
+      chmodSync(directory, 0o700);
+      const options = setupOptions(directory);
+      let endpointCalls = 0;
+      const result = await setupRuntimeLogin(options.args, { ...options.deps, preflight,
+        endpointCheck: async () => ++endpointCalls === 1 });
+      assert.equal(result.status, "outcome_unknown");
+      assert.equal(endpointCalls, 2);
+      assert.equal(result.fileCreated, true);
+      assert.equal(options.queries.includes("COMMIT"), true);
+      assert.equal(existsSync(options.args.passfile), true);
+      assert.equal(result.preflightChecks.some((check) => check.status !== "pass"), true);
+      assert.equal(JSON.stringify(result).includes("private preflight material"), false);
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  }
 });
 
 test("uncertain COMMIT preserves the new passfile and never reports success", async () => {
@@ -333,6 +380,8 @@ test("a restricted role commits only with a saved passfile that authenticates", 
       writeFileSync(adminPasswordFile, `${adminPassword}\n`, { mode: 0o600 });
       execFileSync("initdb", ["-D", data, "--username=probe_admin", "--auth-local=trust",
         "--auth-host=scram-sha-256", `--pwfile=${adminPasswordFile}`], { stdio: "ignore" });
+      writeFileSync(join(data, "postgresql.conf"),
+        `\nunix_socket_directories = '${directory}'\n`, { flag: "a" });
       execFileSync("pg_ctl", ["-D", data, "-o", `-h 127.0.0.1 -p ${number}`,
         "-l", join(directory, "postgres.log"), "-w", "start"], { stdio: "ignore" });
     }

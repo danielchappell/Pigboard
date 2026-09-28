@@ -85,10 +85,11 @@ mapping between two checks, and a later mismatch is reported as uncertain.
 
 If `passfile_exists` or `role_exists`, inspect the existing file and pinned role;
 the command never overwrites, resets or drops either. `precommit_failed` means
-the transaction was rolled back, but a passfile may remain: confirm role absence
+no COMMIT was attempted and any started transaction's rollback was confirmed,
+but a passfile may remain: confirm role absence
 on the pinned branch, inspect the exact private orphan file, remove only that
-file under owner custody and explicitly rerun. `outcome_unknown` means COMMIT or
-the final branch mapping could not be established; **do not rerun**. Recheck the
+file under owner custody and explicitly rerun. `outcome_unknown` means COMMIT,
+rollback, or the final branch mapping could not be established; **do not rerun**. Recheck the
 mapping and inspect both role and file. If both exist, run the pinned diagnostic
 with the file; its connection, identity, TLS, role and database/schema checks
 can reconcile the credential even while the fixture is still missing.

@@ -322,21 +322,30 @@ export async function setupRuntimeLogin({ ownerUrlFile, neonKeyFile, passfile },
     checks.push({ id: "commit", status: "pass" });
     let preflight;
     try { preflight = await (deps.preflight ?? runPreflight)({ passfile }); }
-    catch { return report("created_unverified", checks, { fileCreated,
-      preflightChecks: safePreflightChecks() }); }
-    if (!preflightAcceptable(preflight)) return report("created_unverified", checks,
-      { fileCreated, preflightChecks: safePreflightChecks(preflight) });
-    checks.push({ id: "saved_passfile_login", status: "pass" });
-    if (!await endpoint(key, target, deps.fetchImpl)) return report("outcome_unknown", checks,
-      { fileCreated });
+    catch { /* Keep the saved credential and check the endpoint before classifying. */ }
+    const loginVerified = preflightAcceptable(preflight);
+    if (loginVerified) checks.push({ id: "saved_passfile_login", status: "pass" });
+    let endpointVerified = false;
+    try { endpointVerified = await endpoint(key, target, deps.fetchImpl); }
+    catch { /* A failed mapping check cannot establish the committed target. */ }
+    const preflightExtras = loginVerified ? {} :
+      { preflightChecks: safePreflightChecks(preflight) };
+    if (!endpointVerified) return report("outcome_unknown", checks,
+      { fileCreated, ...preflightExtras });
     checks.push({ id: "endpoint_after", status: "pass" });
+    if (!loginVerified) return report("created_unverified", checks,
+      { fileCreated, ...preflightExtras });
     return report("created_verified", checks, { fileCreated,
       omissions: preflight.omissions.filter((id) => id === "fixture_grants") });
   } catch (error) {
-    if (committed) return report("created_unverified", checks, { fileCreated,
+    if (committed) return report(checks.some((check) => check.id === "endpoint_after") ?
+      "created_unverified" : "outcome_unknown", checks, { fileCreated,
       preflightChecks: safePreflightChecks() });
     if (commitAttempted) return report("outcome_unknown", checks, { fileCreated });
-    if (inTransaction) try { await client.query("ROLLBACK"); } catch { /* Closing aborts the transaction. */ }
+    if (inTransaction) {
+      try { await client.query("ROLLBACK"); }
+      catch { return report("outcome_unknown", checks, { fileCreated }); }
+    }
     return report(error?.message === "passfile_exists" ? "passfile_exists" :
       "precommit_failed", checks, { fileCreated });
   } finally {
