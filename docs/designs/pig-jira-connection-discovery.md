@@ -6,6 +6,8 @@
 contract remains useful, but its site, IDs, workflow, permissions and CLEAN
 review do not transfer to Pigboard. No service connection or Jira write path
 has been verified by this document.
+The 28 September revision makes caller-specific issue audience an explicit
+S02b discovery gate; it does not choose that policy or claim live proof.
 
 ## Outcome and observed boundary
 
@@ -130,6 +132,15 @@ establish the issue's project, board membership and issue-level audience. D1
 must name any status or label field needed solely to evaluate board membership;
 it remains internal during this check. Keep all minimal fields out of public
 output, logs and diagnostics until the check passes.
+The service identity's successful read proves only what that identity can see.
+It does not prove that this human or agent caller belongs to the issue's Jira
+audience. Before S02b is ready, the [D1 caller-audience Task](../tasks/pig-jira-caller-audience.md) must choose and
+verify a current, issue-specific disclosure rule for both caller kinds. A
+verified Jira user context or an explicit owner-approved application audience
+that accounts for the issue's security restriction are possible designs, not
+decisions made here. An agent does not acquire a Jira user identity by holding
+a Pigboard grant. If the chosen rule cannot establish this caller's audience,
+the minimal lookup stays internal and inspection returns generic unavailable.
 If that minimal lookup cannot prove the caller may see the issue, return a
 generic unavailable result without a body, status, label or dependency read.
 Only after project, board and source audience are verified may S02b read and
@@ -141,8 +152,11 @@ is insufficient.
 1. With the integration identity, read the selected project/type/status
    metadata, board configuration/filter and one designated nonsensitive test
    issue. Record native IDs, board membership and effective visibility for
-   that same identity. Test whether a board-scoped, minimal-field read can
-   prove membership and issue-level audience without retrieving the issue
+   that same identity. These reads establish only service-identity visibility,
+   not a Pigboard caller's audience. Test whether a board-scoped, minimal-field
+   read can
+   prove membership and expose enough restriction metadata for a separately
+   authorized caller-audience decision without retrieving the issue
    body or dependency details. Record the minimal fields, including any status
    or label needed solely for board filtering, and whether they suffice under
    the service identity. Reject an unverified project-board
@@ -162,11 +176,16 @@ is insufficient.
    or human/agent output. Resolve the target's project native ID with a
    minimal-field lookup before reading blocker status or body; an issue-key
    prefix is insufficient because issues and projects can be renamed or moved.
-   Read an in-scope blocker under the same identity only after that check.
-   Hidden, missing, unresolved-project and cross-project blockers stay
-   `unknown`, never absent. Do not propagate out-of-scope issue content even
-   if Jira included it in a link response. Verify the live response shape and
-   the minimal project-ID lookup under the integration identity.
+   A blocker in the selected project still needs the same current
+   caller-specific issue-audience proof as the selected ticket before its
+   status or body is read or any blocker fact is shown. Use only the minimal
+   restriction metadata needed for that decision. Hidden, missing,
+   unresolved-project, cross-project and caller-audience-unproved blockers
+   stay `unknown`, never absent; they block eligibility. Report only a generic
+   dependency-unknown result, without that blocker's ID, status or count. Do not
+   propagate out-of-audience issue content even if Jira included it in a link response.
+   Verify the live response shape, minimal project-ID lookup and per-blocker
+   audience decision under the selected rule.
 4. Record native statuses/resolutions that mean completed and canceled. Map
    active, canceled and unknown blockers to core eligibility as blocking; only
    verified completed blockers clear the dependency.
@@ -180,6 +199,8 @@ evidence. A complete read is required before it can say “eligible.”
 
 Before S05 sends a provider request, re-read the selected issue's status,
 opt-in, assignee, dependencies, source revision and approved source audience.
+Apply the same caller-audience rule to each linked blocker before using its
+status; an unproved blocker keeps the send closed.
 Withhold the send if any changed or cannot be read completely. This check is
 not atomic with provider receipt: a human can restrict a ticket immediately
 after the read, and content already sent cannot be recalled. The owner must
@@ -221,7 +242,9 @@ identity and host gates need proof. The combined S02a preview exceeds 20 files;
 groom a complete prerequisite technical outcome and independently review each
 resulting Story plan before coding. S02a then proves live save and correction.
 S02b additionally needs S02a's saved pair and the read-only issue, filter,
-dependency and audience facts above. S05
+dependency and audience facts above, plus a reviewed and live-proven
+caller-to-source-audience rule from the linked D1 Task. A service-account read
+or Pigboard inspect grant alone cannot close that gate. S05
 additionally needs an approved source
 audience, acceptance of the pre-send residual race for a designated issue and
 D2/D3/D4 live gates. S06 needs controlled comment behavior; S07
@@ -234,7 +257,8 @@ corrected selections, denial of project choices and changes to a caller without
 connection-administrator scope, wrong project/board/type/status/label,
 ambiguous native names, incomplete links/pages, hidden or canceled blockers,
 wrong link direction, out-of-scope blockers and non-propagation of embedded
-linked-issue fields, denied source audience, human
+linked-issue fields, same-project blockers outside the caller's audience,
+denied source audience, human
 edits, uncertain comments and refusal
 to auto-transition without the full guard. These tests are obligations for
 their Stories, not evidence that implementation exists.
@@ -244,9 +268,9 @@ their Stories, not evidence that implementation exists.
 | Principle | Assessment |
 | --- | --- |
 | Intuitive | Setup offers named projects inside the owner's approved scope and then associated boards; correction names active or uncertain work that must be reconciled first. The owner-only scope step adds pilot setup, while teammates keep the visible opt-in label. To Do alone does not mean ready. |
-| Discoverable | S02a gives humans guided choices and agents structured choices with stable IDs; filter/column mismatch names the reason a board cannot show Task/To Do. S02b names the decisive eligibility or access fact. A safe second live PIG board is still needed to prove correction. |
+| Discoverable | S02a gives humans guided choices and agents structured choices with stable IDs; filter/column mismatch names the reason a board cannot show Task/To Do. S02b names the decisive eligibility or access fact only after its caller-audience rule is proved. A safe second live PIG board is still needed to prove correction. |
 | Delightful experience | One validated pair is saved rather than repeatedly asking for IDs; an owner can approve another project without a deploy, and a teammate applies one label to opt in. The owner approval is deliberate extra setup for broader scope. |
 | Token saver | Setup and inspection lead with currently approved choices or decisive facts and expose omissions without dumping tickets or Jira filters. A buffered list is filtered again against current scope before disclosure, avoiding corrective calls after stale choices. |
-| Secure | Current owner-approved site/project scope and connection-administrator grant guard choices and changes; a service-held Jira identity, versioned pair, audience checks and complete in-scope dependency reads gate effects. The credential may still see more in an Open Jira site, so the app boundary and secret custody require live proof. |
-| Agents are equal | A named noninteractive agent can list and select an approved pair with the same scope and recovery facts as a human administrator; it cannot widen the owner's approved projects or infer grants from a profile. |
-| Dependable | A saved S02a pair does not imply S02b issue-read authority. Correction preserves old inspection records, rejects active/uncertain effects and makes stale inspection explicit; live correction proof is pending. Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |
+| Secure | Current owner-approved site/project scope and connection-administrator grant guard choices and changes; a service-held Jira identity, versioned pair, caller-specific audience proof for the selected ticket and each blocker, and complete in-scope dependency reads gate effects. An unproved blocker remains unknown. Service visibility or an app grant alone cannot authorize ticket disclosure. The credential may still see more in an Open Jira site, so the app boundary and secret custody require live proof. |
+| Agents are equal | A named noninteractive agent can list and select an approved pair with the same scope and recovery facts as a human administrator; it cannot widen the owner's approved projects or infer grants from a profile. The later issue-audience rule must cover agents without assuming they have Jira user identities. |
+| Dependable | A saved S02a pair does not imply S02b issue-read authority. Unknown caller audience returns generic unavailable, and S02b stays provisional until the rule is proved. Correction preserves old inspection records, rejects active/uncertain effects and makes stale inspection explicit; live correction proof is pending. Missed events reconcile, uncertain comments do not replay, and unsafe status changes stay manual. |
