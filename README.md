@@ -44,8 +44,12 @@ file, JSON/stdin usage, error recovery and the live prerequisites still unchecke
 
 An operator can run `npm run --silent neon:preflight -- --passfile /absolute/private/path`
 to check the dedicated Neon production root and the restricted runtime role. It
-requires a separately created `pigboard_app` login, a private PostgreSQL password
-file and an owner-created disposable table. The command reports pass, fail or
+requires a `pigboard_app` login, a private PostgreSQL password file and an
+owner-created disposable table. An infrastructure owner can run
+`npm run --silent owner:runtime-login -- --help` for instructions to create the
+restricted login and file; setup needs a private owner URL and project-scoped
+Neon API key. The diagnostic
+reports pass, fail or
 unverified in text, or with `--format json` for an operator agent. It never
 creates a role, changes grants, deploys Fly or selects a Jira board. The
 [Neon preflight guide](docs/hosted-neon-preflight.md) explains setup, cleanup and

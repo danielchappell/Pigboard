@@ -22,6 +22,6 @@ export function checkRootTarget(candidate = {}) {
 }
 
 export function publicTarget() {
-  const { projectId, branchId, host, port, database, role } = ROOT_TARGET;
-  return { projectId, branchId, host, port, database, role };
+  const { projectId, branchId, endpointId, host, port, database, role } = ROOT_TARGET;
+  return { projectId, branchId, endpointId, host, port, database, role };
 }
