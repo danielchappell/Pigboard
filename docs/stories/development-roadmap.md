@@ -68,20 +68,22 @@ Acceptance Criteria
 - Humans get a concise explanation and agents get the same facts in a structured result, including unknown or incomplete evidence.
 - A caller without current inspection access receives no ticket status, labels, dependency or access facts, even when the Jira credential can read the ticket.
 - An allowed caller whose issue audience cannot be proved sees only a generic unavailable result, with no ticket facts or launch.
+- An in-project linked blocker whose audience cannot be proved for this caller remains unknown and prevents eligibility without revealing its identity, status or count.
 
 Technical Acceptance Criteria
 
 - Use S02a's current saved project-board pair/version and the core deterministic eligibility policy; a profile cannot widen that scope. Check the version before a rich issue read; if it changes later, discard the result and return stale without a launch.
 - Before any Jira issue lookup, verify current team and connection scope plus a human viewer/operator grant or separate scoped-agent inspect grant. A connection administrator without a viewer/operator grant cannot inspect by default.
-- Read only D1's proven minimal native fields to check project, board membership and issue-level audience. If status or labels are needed solely for board filtering, keep them internal to that check. Suppress all minimal fields from output, logs and diagnostics until audience proof passes. Deny body and dependency-detail reads when scope or audience is unknown or denied; return only facts within the caller's audience.
-- Resolve blocker project IDs before blocker status reads and discard embedded out-of-scope linked-issue fields.
-- Incomplete links, hidden blockers and unknown canceled/completed mappings fail closed instead of implying eligibility.
+- D1's [caller-audience Task](../tasks/pig-jira-caller-audience.md) must first choose and prove a current issue-specific disclosure rule for humans and noninteractive agents. A Pigboard grant, selected pair or successful service-account read alone does not establish that audience.
+- Read only D1's proven minimal native fields to check project, board membership and the selected issue's current caller-specific audience. If status or labels are needed solely for board filtering, keep them internal to that check. Suppress all minimal fields from output, logs and diagnostics until audience proof passes. Deny body and dependency-detail reads when scope or audience is unknown or denied; return only facts within the caller's audience.
+- Discard linked-issue fields co-returned by Jira. Resolve each blocker's native project ID with a minimal lookup; for each in-project blocker, prove this caller's current issue-specific audience separately before reading its status or body or disclosing any blocker fact. An unproved, hidden, missing or out-of-scope blocker remains unknown, blocks eligibility and yields only a generic dependency-unknown result without its ID, status or count.
+- Incomplete links and unknown canceled/completed mappings fail closed instead of implying eligibility.
 
 Testing Strategy
 
-- Manual QA: As a permitted human viewer and scoped agent, inspect D1's designated nonsensitive PIG issue through the selected pair and see the eligible, unavailable or unknown reason. A same-pair caller without an inspect grant sees no ticket facts; a permitted caller denied the issue audience sees only unavailable. No work starts and Jira is unchanged.
-- Access and setup: Use D1's verified read-only service identity, selected pair, designated issue and minimal audience fields, plus D3's permitted human/agent inspect grants and denied same-pair caller. Exercise denied issue audience, missing opt-in, blocked dependency and wrong-project/board cases with named fixtures unless D1 separately establishes suitable test issues and human edit authority. This Story does not send Jira content to Cursor.
-- Automated regression: Cover Jira normalization, dependency completeness, pre-lookup caller denial, minimal audience lookup, suppressed fields, scope denial and human/agent inspection output through the public command.
+- Manual QA: As a permitted human viewer and scoped agent, inspect D1's designated nonsensitive PIG issue through the selected pair and see the eligible, unavailable or unknown reason. A same-pair caller without an inspect grant sees no ticket facts; a permitted caller denied the issue audience sees only unavailable. A same-project linked blocker outside the caller's audience remains dependency-unknown without blocker facts. No work starts and Jira is unchanged.
+- Access and setup: Use D1's verified read-only service identity, selected pair, designated issue, minimal fields and live-proven caller-audience rule for the selected issue and each blocker, plus D3's permitted human/agent inspect grants and denied same-pair caller. Exercise denied issue and blocker audiences, missing opt-in, blocked dependency and wrong-project/board cases with named fixtures unless D1 separately establishes suitable test issues and human edit authority. This Story does not send Jira content to Cursor.
+- Automated regression: Cover Jira normalization, dependency completeness, pre-lookup caller denial, minimal audience lookup, per-blocker audience denial or unknown, discarded embedded linked fields, suppressed identities/status/counts, scope denial and human/agent inspection output through the public command.
 
 ## S03 — Start and retrieve one manual Cursor cloud job
 
