@@ -197,8 +197,13 @@ S02b may inspect an explicit issue ID without a webhook. Its result should show
 the decisive status, label, dependency and access facts, plus unknown or denied
 evidence. A complete read is required before it can say “eligible.”
 
-Before S05 sends a provider request, re-read the selected issue's status,
-opt-in, assignee, dependencies, source revision and approved source audience.
+Before S05 reads rich issue content or reserves a provider send, re-prove the
+initiating caller's current Pigboard grant and the selected issue's current
+caller-specific audience under the S02b rule. A previous S02b result, service
+read or approved Cursor disclosure audience cannot substitute for that proof.
+If it is denied or unknown, return generic unavailable without a rich read,
+reservation or send. Then re-read the selected issue's status, opt-in,
+assignee, dependencies, source revision and approved source audience.
 Apply the same caller-audience rule to each linked blocker before using its
 status; an unproved blocker keeps the send closed.
 Withhold the send if any changed or cannot be read completely. This check is
@@ -258,6 +263,7 @@ connection-administrator scope, wrong project/board/type/status/label,
 ambiguous native names, incomplete links/pages, hidden or canceled blockers,
 wrong link direction, out-of-scope blockers and non-propagation of embedded
 linked-issue fields, same-project blockers outside the caller's audience,
+selected-issue or blocker audience lost after S02b but before S05,
 denied source audience, human
 edits, uncertain comments and refusal
 to auto-transition without the full guard. These tests are obligations for
