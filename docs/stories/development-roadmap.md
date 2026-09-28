@@ -132,6 +132,7 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - Store the record in the selected Pigboard Neon project under D2/D3's scoped contract. Reuse S02a's original-root pin and deny reads or writes through another target.
+- Begin only after D3g has delivered and verified current human-viewer and scoped-agent connection inspection grants, including denial after revoke. Reuse those grants for the target side of every shared read; S04's separate register grant must not be inferred from inspection access.
 - Registration needs an operator or scoped-agent register grant. It also needs trusted evidence tying the exact provider agent/run IDs to their original audience and a current source-to-target sharing grant.
 - Verify a human approver's rights to that exact run and its content. An agent needs a preapproved grant for the exact run and target.
 - Account, repository and selected-pair matches cannot replace run-specific proof. Unknown origin denies registration and provider status/result reads without exposing metadata.
