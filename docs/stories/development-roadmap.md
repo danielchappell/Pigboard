@@ -27,10 +27,17 @@ provider checks remain prerequisites of later Stories.
 
 ## S02a — Choose a Jira project and board
 
-**Provisional — not ready for delivery.** The combined first-host, authority,
-store, Jira metadata and pair-selection preview is estimated at 22–26 changed
-files. Split complete prerequisite technical outcomes before implementation,
-then review this Story's exact plan.
+**Provisional — not ready for delivery.** The former 22–26-file estimate covered
+a combined first host, authority store, Jira metadata and pair selector before
+D3a–D3e0 merged. It is historical. The private host, root pin, owner bootstrap
+and caller-inspection code now exist, but their live Neon/Fly/peer acceptance is
+open. Distinct D3e1/D3e2 caller administration, D3r rotation and D3f approved
+project scope remain mandatory technical prerequisites; the D1 service-identity
+metadata and safe correction fixture remain unproved. The current S02a-only
+first-pass inventory is 14–18 changed files after those prerequisites, with no
+approved under-two-day estimate. Re-inventory and independently review this
+Story's exact plan before implementation; split any complete outcome that
+exceeds either standing Story limit.
 
 Problem to solve
 
@@ -291,6 +298,7 @@ Acceptance Criteria
 
 - A separately authorized recovery principal writes a connection-scoped recovery record in the private control repository. It names the recovery point and possible lost-write window, then binds the exact Neon child branch before that branch is attached.
 - Before enabling recovery-capable deployment, install a `normal` record for the original live root. The new revision checks that record before effects. Earlier S05/S08 revisions pin the original endpoint independently of the connection secret, reject a historical child and do not claim recovery support.
+- After each ordinary grant, project scope, pair or credential administration commit on the root, report the committed generation as `manifest_sync_pending` until the separate recovery principal updates the `normal` record to the latest verified root generation and journal digest. Effects remain closed during that interval; a lost response is reconciled by reading current state rather than repeating the administration change.
 - Before attaching that child branch, a trusted infrastructure custodian suspends normal deploy access, revokes old provider credentials and proves no old Fly Machine can send. The new app starts in quarantine.
 - While recovering, the service rejects new launches and publications across restart and explains the blocked state to authorized humans and agents.
 - Missing recovery-point evidence keeps the connection in maintenance.
@@ -298,14 +306,16 @@ Acceptance Criteria
 Technical Acceptance Criteria
 
 - The runtime can read but cannot write the recovery record; the recovery principal has a separate write grant. Updates reject a changed GitHub head.
+- The recovery principal reads the pinned root through a restricted authority view, verifies journal continuity and the exact root/project tuple, then advances the `normal` record with an expected-head update. Concurrent root commits, a stale head or a lost update response require re-reading root and manifest before retrying synchronization. Routine synchronization cannot overwrite a `fenced`, `quarantined` or `reopen` recovery record.
 - Fence the old sender before accepting a restored branch; if it cannot be fenced, do not cut over. A Fly secret or boot-time flag alone is not a fence.
 - Keep quarantine outside the restored rows. Reject a changed project, branch, recovery ID or current-authority generation, including during deploy overlap and restart.
 
 Testing Strategy
 
 - Manual QA: In a disposable Pigboard Neon project, record an external recovery ID, fence the old sender, create a child branch from before a simulated send and verify no send repeats. Attempt a stale-head update, missing-record attachment and overlapping deploy.
+- Manual QA: On the original root before a restore, commit a routine authority change, observe `manifest_sync_pending` and denied effects, reconcile the latest generation/digest, then verify the matching `normal` record permits only newly authorized effects. Repeat through a stale manifest head and an unavailable control repository without replaying the committed change.
 - Access and setup: Use the dedicated Pigboard Fly/Neon resources, private control repository and separate recovery and infrastructure identities; no live customer ticket is needed.
-- Automated regression: Cover missing or mismatched record, stale GitHub head, control-repository outage, deploy overlap, restart-safe quarantine and unknown recovery window.
+- Automated regression: Cover ordinary grant/scope/pair/credential changes, concurrent root generations, stale head, lost response, missing or mismatched record, control-repository outage, deploy overlap, restart-safe quarantine and unknown recovery window. Sends remain denied until a matching `normal` record is read.
 
 ## S30 — Reconcile a restored connection's external effects
 
@@ -343,20 +353,21 @@ reconciled run cannot be exposed until current access is restored.
 Acceptance Criteria
 
 - The recovery principal compares current membership, role, credential and connection-scope changes with the live-root authority journal, never roles from the historical child branch. Missing or damaged current authority requires fresh verification before reopening.
-- A trusted infrastructure custodian copies reconciled run/effect data from the child branch back to the live root without replacing current authority. Only the recovery principal can record the verified cutover and reopen after full effect and access evidence.
+- A trusted infrastructure custodian copies reconciled run/effect data from the child branch back to the live root without replacing current authority. After full effect and access evidence, only the recovery principal can publish an expected-head `reopen` readiness record. Sends remain closed until a separate expected-head transition to a matching `normal` epoch after current root, credential and physical/provider-fence rechecks.
 - Missing or conflicting access evidence keeps the connection quarantined and denies stale inspection or commands.
 
 Technical Acceptance Criteria
 
 - Apply current revocations and connection scope before exposing restored results or commands; historical child-branch roles confer no recovery authority.
 - Verify the copied run/effect identities and current authority generation before sending can resume. The reopened root must check authority and reserve an effect in one transaction.
+- The recovery principal alone moves `reopen` to `normal` for the same recovery ID and root target after rechecking the latest root generation/digest, manifest head, root-bound active credential and custodian fence. An intervening authority change, stale head, lost reply or failed fence leaves effects closed until the entire decision is refreshed. The runtime admits effects only after it reads that exact `normal` record; ordinary deploy authority returns last.
 - Select only a fresh recovery-ID-bound provider credential in the root. A stale child-only or restored credential cannot send.
 
 Testing Strategy
 
 - Manual QA: Restore a Neon child-branch fixture with one revoked user, rotated credential and lost effect. Verify denied old access, reconciled copy-back to the live root and either safe reopen or continued quarantine.
 - Access and setup: Use a disposable Pigboard Neon project, current external identity evidence, private recovery-control repository and separately authorized recovery/infrastructure principals; no production ticket write is required.
-- Automated regression: Cover the viewer/operator/connection-admin/scoped-agent/recovery-principal role matrix, stale-access and credential denial, root copy-back integrity, atomic root authority/effect reservation and refusal to reopen on incomplete evidence.
+- Automated regression: Cover the viewer/operator/connection-admin/scoped-agent/recovery-principal role matrix, stale-access and credential denial, root copy-back integrity, atomic root authority/effect reservation, guarded `reopen` to `normal` transition, intervening root change/stale manifest head/lost response/fence failure, and refusal to admit effects on incomplete evidence.
 
 ## S09 — Turn an idea ticket into a product brief
 
