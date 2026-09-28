@@ -1,12 +1,10 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { createServer } from "node:net";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import pg from "pg";
+import { createLocalTlsPostgres } from "./support/local-tls-postgres.js";
 import { authorityCatalogChecksum, changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
   prepareCredentialDirectory, verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
 import { inspectOwnGrant } from "../src/hosted/authority-self.js";
@@ -18,42 +16,15 @@ function requireBinary(name) {
   assert.equal(result.status, 0, `${name} is required for the non-skipping owner race test`);
 }
 
-async function freePort() {
-  const server = createServer();
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const port = server.address().port;
-  await new Promise((resolve) => server.close(resolve));
-  return port;
-}
-
 test("real independent Postgres sessions serialize migration, setup, and recovery", async () => {
   for (const name of ["initdb", "pg_ctl", "openssl"]) requireBinary(name);
-  const temp = mkdtempSync(join(tmpdir(), "pigboard-owner-race-"));
-  const data = join(temp, "data");
-  const log = join(temp, "postgres.log");
-  const cert = join(temp, "server.crt");
-  const key = join(temp, "server.key");
-  let running = false;
+  let fixture;
+  let primaryError;
   let appServer;
   const clients = [];
   try {
-    execFileSync("initdb", ["-D", data, "-A", "trust", "--no-instructions"], { stdio: "pipe" });
-    execFileSync("openssl", ["req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
-      "-subj", "/CN=localhost", "-addext", "subjectAltName=DNS:localhost",
-      "-keyout", key, "-out", cert], { stdio: "pipe" });
-    chmodSync(key, 0o600);
-    const port = await freePort();
-    writeFileSync(join(data, "postgresql.conf"),
-      `\nssl = on\nssl_cert_file = '${cert}'\nssl_key_file = '${key}'\nunix_socket_directories = '${temp}'\n`, { flag: "a" });
-    try {
-      execFileSync("pg_ctl", ["-D", data, "-l", log, "-o",
-        `-h localhost -p ${port}`, "-w", "start"], { stdio: "pipe" });
-    } catch (error) {
-      let serverLog = "PostgreSQL did not write a log";
-      try { serverLog = readFileSync(log, "utf8"); } catch { /* Startup may fail before log creation. */ }
-      throw new Error(`Disposable PostgreSQL startup failed:\n${serverLog}`, { cause: error });
-    }
-    running = true;
+    fixture = await createLocalTlsPostgres();
+    const { temp, port, cert } = fixture;
     for (let i = 0; i < 2; i += 1) {
       const client = new pg.Client({ host: "localhost", port,
         database: "postgres", user: process.env.USER,
@@ -321,10 +292,24 @@ test("real independent Postgres sessions serialize migration, setup, and recover
       ["0".repeat(64)]);
     assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });
     assert.deepEqual(await inspectAuthority(first), { status: "schema_conflict" });
+  } catch (error) {
+    primaryError = error;
   } finally {
-    if (appServer?.listening) await new Promise((resolve) => appServer.close(resolve));
-    for (const client of clients) try { await client.end(); } catch { /* Cleanup. */ }
-    if (running) spawnSync("pg_ctl", ["-D", data, "-m", "immediate", "-w", "stop"], { stdio: "pipe" });
-    rmSync(temp, { recursive: true, force: true });
+    const cleanupErrors = [];
+    if (appServer?.listening) {
+      try {
+        await new Promise((resolve, reject) => appServer.close((error) => error ? reject(error) : resolve()));
+      } catch (error) { cleanupErrors.push(error); }
+    }
+    for (const client of clients) {
+      try { await client.end(); } catch (error) { cleanupErrors.push(error); }
+    }
+    if (fixture) {
+      try { fixture.cleanup(); } catch (error) { cleanupErrors.push(error); }
+    }
+    if (cleanupErrors.length) throw new AggregateError(
+      primaryError ? [primaryError, ...cleanupErrors] : cleanupErrors,
+      "Owner PostgreSQL test cleanup failed; all original and cleanup errors follow");
   }
+  if (primaryError) throw primaryError;
 });
