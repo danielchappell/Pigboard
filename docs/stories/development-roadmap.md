@@ -151,12 +151,14 @@ Acceptance Criteria
 - Starting an eligible test Task creates one traceable attempt and returns the provider link or an honest unresolved state.
 - A repeated command or competing caller resumes the same attempt without launching another job.
 - A changed ticket or lost ownership prevents stale work from being accepted.
+- A caller who loses the selected issue's audience after inspection cannot start it; the result reveals no newly restricted ticket facts.
 - If the Free database cannot admit the reservation, no provider launch occurs and the caller sees the failed or uncertain state.
 
 Technical Acceptance Criteria
 
 - Persist immutable launch intent, including the selected project-board pair/version, before the provider call and enforce D2’s ownership/recovery rules.
 - Check current authority and reserve the effect in one transaction on the pinned original root endpoint. Reject a secret or connection override pointing to an older Neon child before reads or sends; a pre-S29 revision has no recovery path.
+- At send time, before a rich Jira read or effect reservation, re-prove the initiating caller's current Pigboard grant and the selected issue's current caller-specific audience using D1's chosen rule. Recheck each linked blocker's audience before using its status. An earlier S02b result, Jira service read or approved Cursor disclosure audience alone cannot authorize the send. Denied or unknown audience yields generic unavailable without ticket facts or provider launch.
 - Use configured role/repository and keep coordinator credentials out of the prompt.
 - Before storing copied source, a prepared request or a sealed credential, document that class's audience, lifetime and deletion, including restored copies.
 
@@ -164,7 +166,7 @@ Testing Strategy
 
 - Manual QA: Start the same synthetic ticket twice through mocked provider calls and confirm one attempt and one accepted provider identity.
 - Access and setup: Use an isolated store, authorized test ticket and mocked runner; meaningful live work needs separately established execution authority.
-- Automated regression: Cover claim contention, database quota/unavailability before reservation, ambiguous launch recovery, changed-pair and stale-input rejection, and no read/send when the configured database target is a historical child.
+- Automated regression: Cover claim contention, database quota/unavailability before reservation, ambiguous launch recovery, changed-pair and stale-input rejection, selected-issue or blocker audience revoked after S02b, and no rich read/reservation/send on denied or unknown selected-issue audience or a historical-child database target.
 
 ## S26 — Observe and validate a saved provider result
 
