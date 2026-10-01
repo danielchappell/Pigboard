@@ -58,10 +58,14 @@ test("the owner client verifies TLS and session identity without returning a pas
   let ended = false;
   const queries = [];
   class RecordingClient {
-    constructor(value) { config = value; }
+    constructor(value) {
+      config = value;
+      this.connection = { stream: { encrypted: true, authorized: true,
+        getProtocol: () => "TLSv1.3" } };
+    }
     async connect() {}
     async query(sql) { queries.push(sql); return { rows: [{ role: OWNER_TARGET.role,
-      database: OWNER_TARGET.database, ssl: true }] }; }
+      database: OWNER_TARGET.database, ssl: false }] }; }
     async end() { ended = true; }
   }
   try {
@@ -86,6 +90,20 @@ test("the owner client verifies TLS and session identity without returning a pas
       (error) => error instanceof OwnerError &&
         error.reason === "owner_connection_unverified" &&
         !error.message.includes("owner-private-password"));
+    for (const stream of [undefined, { encrypted: false, authorized: true },
+      { encrypted: true, authorized: false, getProtocol: () => "TLSv1.3" },
+      { encrypted: true, authorized: true, getProtocol: () => "TLSv1.1" },
+      { encrypted: true, authorized: true }]) {
+      queries.length = 0;
+      ended = false;
+      class UnverifiedTransport extends RecordingClient {
+        constructor(value) { super(value); this.connection = { stream }; }
+      }
+      await assert.rejects(connectOwner(file, { ClientClass: UnverifiedTransport }),
+        { reason: "owner_connection_unverified" });
+      assert.deepEqual(queries, []);
+      assert.equal(ended, true);
+    }
     writeFileSync(file, urlFor({ ...OWNER_TARGET, host: "child.invalid" }), { mode: 0o600 });
     let constructed = 0;
     class NeverConnect { constructor() { constructed += 1; } }

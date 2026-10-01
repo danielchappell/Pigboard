@@ -14,8 +14,6 @@ export const DIAGNOSTIC_SQL = `
 SELECT json_build_object(
   'user', current_user,
   'database', current_database(),
-  'ssl', (SELECT json_build_object('enabled', ssl, 'version', version)
-          FROM pg_stat_ssl WHERE pid = pg_backend_pid()),
   'role', (SELECT json_build_object(
       'login', rolcanlogin, 'superuser', rolsuper, 'createdb', rolcreatedb,
       'createrole', rolcreaterole, 'replication', rolreplication,
@@ -162,11 +160,8 @@ export function evaluateSnapshot(snapshot) {
   checks.push(snapshot.user === ROOT_TARGET.role && snapshot.database === ROOT_TARGET.database ?
     check("identity", "pass", "pinned_identity", "The session uses the pinned database and role.") :
     check("identity", "fail", "identity_mismatch", "The session database or role differs from the pin."));
-  const ssl = snapshot.ssl;
-  checks.push(ssl?.enabled === true && typeof ssl.version === "string" && ssl.version.length > 0 ?
-    check("tls", "pass", "verified_tls_session", "The session uses TLS with the client's verify-full policy.") :
-    ssl?.enabled === false ? check("tls", "fail", "tls_disabled", "The session did not use TLS.") :
-      check("tls", "unverified", "tls_unavailable", "TLS session state could not be established."));
+  checks.push(check("tls", "unverified", "client_tls_unverified",
+    "A database snapshot cannot establish the client's TLS transport."));
   const role = snapshot.role;
   const expectedRole = { login: true, superuser: false, createdb: false,
     createrole: false, replication: false, bypassrls: false };
@@ -229,13 +224,21 @@ export async function runPreflight({ targetHost = ROOT_TARGET.host, passfile, sp
   let snapshot;
   try {
     snapshot = JSON.parse(response.output.trim());
+    if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
+      throw new Error("invalid_report");
+    }
   } catch {
     checks.push(check("connection", "unverified", "invalid_report", "The database returned an unreadable diagnostic report."));
     return result([...checks, ...OMITTED_AFTER_PRECHECK.slice(1).map((id) =>
       check(id, "unverified", "invalid_report", "This check was not completed."))], targetHost);
   }
   checks.push(check("connection", "pass", "query_completed", "The pinned database diagnostic query completed."));
-  return result([...checks, ...evaluateSnapshot(snapshot)], targetHost);
+  // A successful query under the fixed clean libpq verify-full policy proves
+  // this client's transport. SQL backend statistics cannot provide that proof.
+  const evaluated = evaluateSnapshot(snapshot).map((item) => item.id === "tls" ?
+    check("tls", "pass", "verified_tls_session",
+      "The client completed its query with mandatory certificate and hostname verification.") : item);
+  return result([...checks, ...evaluated], targetHost);
 }
 
 export function formatPreflightText(report) {

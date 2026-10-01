@@ -1,12 +1,12 @@
 import pg from "pg";
 import { ROOT_TARGET, checkRootTarget } from "./root-target.js";
+import { hasVerifiedPostgresTls } from "./postgres-tls.js";
 
 const { Client } = pg;
 const CONNECTION_TIMEOUT_MS = 30_000;
 const QUERY_TIMEOUT_MS = 5_000;
 const DIAGNOSTIC_SQL = `
-  SELECT current_user AS role, current_database() AS database,
-    (SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()) AS ssl
+  SELECT current_user AS role, current_database() AS database
 `;
 const AFTER_PIN = ["connection", "identity", "tls"];
 // Node/OpenSSL X509 verification failures must not be described as transient
@@ -228,14 +228,18 @@ export async function diagnoseNeonRoot(secret, options = {}) {
     if (secondPin.status !== "pass") {
       return report([secondPin, ...omitted(AFTER_PIN, "not_attempted")], expectedTarget);
     }
+    if (!hasVerifiedPostgresTls(client)) {
+      return report([rootCheck,
+        check("connection", "pass", "connected", "The root connection completed."),
+        ...omitted(["identity"], "tls_not_active"),
+        check("tls", "fail", "tls_not_active", "The client transport is not verified TLS.")], expectedTarget);
+    }
     const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client);
     const row = response.rows?.[0];
     const identity = row?.role === expectedTarget.role && row?.database === expectedTarget.database ?
       check("identity", "pass", "expected_identity", "The session uses the pinned role and database.") :
       check("identity", "fail", "identity_mismatch", "The session identity differs from the pinned role or database.");
-    const tls = row?.ssl === true ?
-      check("tls", "pass", "verified_tls", "The session uses TLS with a verified server hostname.") :
-      check("tls", "fail", "tls_not_active", "The database session did not report TLS.");
+    const tls = check("tls", "pass", "verified_tls", "The client transport uses TLS with a verified server hostname.");
     return report([rootCheck, check("connection", "pass", "connected", "The root connection completed."), identity, tls], expectedTarget);
   } catch (error) {
     const failure = connectionFailure(error);
@@ -276,12 +280,12 @@ export async function openPinnedRuntimeClient(secret, options = {}) {
     if (pinCheck(candidate, expectedTarget).status !== "pass") {
       throw new PinnedNeonError("target_mismatch");
     }
+    if (!hasVerifiedPostgresTls(client)) throw new PinnedNeonError("tls_not_active");
     const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client);
     const row = response.rows?.[0];
     if (row?.role !== expectedTarget.role || row?.database !== expectedTarget.database) {
       throw new PinnedNeonError("identity_mismatch");
     }
-    if (row?.ssl !== true) throw new PinnedNeonError("tls_not_active");
     return { client, close: () => closeClient(client) };
   } catch (error) {
     await closeClient(client);
