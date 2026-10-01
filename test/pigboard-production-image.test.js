@@ -7,7 +7,7 @@ const CONTAINER = "b".repeat(64);
 const LABEL = "dev.pigboard.image-check";
 
 function fixture({ foreign = false, foreignContainer = false, lostReply = false, exited = false,
-  healthy = true, removalFails = false, buildFails = false } = {}) {
+  healthy = true, removalFails = false, buildFails = false, inventoryFails = false } = {}) {
   let identity;
   let name;
   let tag;
@@ -37,7 +37,7 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
           return lostReply ? fail() : ok(CONTAINER);
         }
         const [kind, action] = args;
-        if (action === "ls") return ok((kind === "container" ? containerExists : imageExists) ? "aabbcc" : "");
+        if (action === "ls") return inventoryFails ? fail() : ok((kind === "container" ? containerExists : imageExists) ? "aabbcc" : "");
         if (action === "inspect") {
           assert.equal(args[2], kind === "container" ? name : tag);
           const object = { Id: kind === "container" ? CONTAINER : IMAGE,
@@ -117,7 +117,42 @@ test("cleanup failure keeps an otherwise healthy result failed", async () => {
   assert.ok(result.checks.some((entry) => entry.id === "health" && entry.status === "pass"));
   assert.equal(result.status, "fail");
   assert.ok(result.checks.some((entry) => entry.reason === "removal_failed"));
+  assert.equal(result.resources.container.id, CONTAINER);
+  assert.equal(result.resources.container.cleanup, "retained");
+  assert.equal(result.resources.image.id, IMAGE);
+  assert.equal(result.resources.image.cleanup, "retained");
+  assert.ok(result.resources.container.name.endsWith(result.resources.ownershipValue));
   onlyOwnedRemoval(f.commands, ["container", "image"]);
+});
+
+test("unverified cleanup inventory retains exact run references without claiming deletion", async () => {
+  const f = fixture({ lostReply: true, inventoryFails: true });
+  const result = await checkProductionImage(f.dependencies);
+  assert.equal(result.status, "fail");
+  assert.equal(result.resources.container.id, null);
+  assert.equal(result.resources.container.cleanup, "unverified");
+  assert.equal(result.resources.image.cleanup, "unverified");
+  assert.ok(result.resources.container.name.endsWith(result.resources.ownershipValue));
+  assert.ok(result.resources.image.tag.endsWith(result.resources.ownershipValue));
+  assert.equal(result.resources.ownershipLabel, LABEL);
+  onlyOwnedRemoval(f.commands, []);
+});
+
+test("text and JSON failed results identify only this run for safe reconciliation", async () => {
+  for (const format of ["text", "json"]) {
+    const f = fixture({ removalFails: true });
+    const output = [];
+    assert.equal(await runImageCheckCommand(["--format", format], {
+      output: (value) => output.push(value), check: () => checkProductionImage(f.dependencies) }), 1);
+    const rendered = output[0];
+    assert.match(rendered, /pigboard-image-check/u);
+    assert.ok(rendered.includes(CONTAINER));
+    assert.match(rendered, /retained/u);
+    assert.ok(rendered.includes(LABEL));
+    assert.ok(!rendered.includes("credential-like"));
+    assert.ok(!rendered.includes("synthetic-image-check"));
+    onlyOwnedRemoval(f.commands, ["container", "image"]);
+  }
 });
 
 test("failed build remains failure and does not delete absent resources", async () => {

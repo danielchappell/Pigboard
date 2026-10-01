@@ -77,6 +77,9 @@ export async function checkProductionImage({ docker = dockerCommand,
   const name = `pigboard-image-check-${identity}`;
   const tag = `pigboard-image-check:${identity}`;
   const result = { schemaVersion: 1, status: "fail", image: null, checks: [],
+    resources: { ownershipLabel: LABEL, ownershipValue: identity,
+      container: { name, id: null, cleanup: "unverified" },
+      image: { tag, id: null, cleanup: "unverified" } },
     omissions: ["live_neon_access", "caller_grants", "fly_deployment"] };
   const record = (id, status, reason, code) => result.checks.push({ id, status,
     ...(reason ? { reason } : {}), ...(Number.isInteger(code) ? { exitCode: code } : {}) });
@@ -89,19 +92,36 @@ export async function checkProductionImage({ docker = dockerCommand,
   let image;
   let passed = false;
 
-  async function cleanup(kind, target) {
+  async function presence(kind, target) {
     const listed = await command([kind, "ls", ...(kind === "container" ? ["--all",
       "--filter", `name=^/${target}$`] : [target]), "--format", "{{.ID}}"]);
+    return { ...listed, present: listed.ok ? Boolean(listed.stdout.trim()) : null };
+  }
+
+  async function cleanup(kind, target) {
+    const reference = result.resources[kind];
+    const listed = await presence(kind, target);
     if (!listed.ok) { record(`cleanup_${kind}`, "fail", "inventory_unverified", listed.code); return; }
-    if (!listed.stdout.trim()) { record(`cleanup_${kind}`, "pass", "absent"); return; }
+    if (!listed.present) { reference.cleanup = "absent"; record(`cleanup_${kind}`, "pass", "absent"); return; }
     const object = await inspect(kind, target);
     if (!owned(object) || (kind === "image" ? !/^sha256:[a-f0-9]{64}$/.test(object.Id) :
       !/^[a-f0-9]{64}$/.test(object.Id))) {
       record(`cleanup_${kind}`, "fail", "ownership_unverified"); return;
     }
+    reference.id = object.Id;
     // IDs avoid deleting a different object if a name/tag changes after inspection.
     const removed = await command([kind, "rm", ...(kind === "container" ? ["--force"] :
       ["--no-prune"]), object.Id]);
+    if (removed.ok) reference.cleanup = "removed";
+    else {
+      // A failed reply alone does not prove the object still exists.
+      const remaining = await presence(kind, target);
+      if (remaining.ok && !remaining.present) reference.cleanup = "absent";
+      else if (remaining.present) {
+        const current = await inspect(kind, target);
+        if (owned(current) && current.Id === object.Id) reference.cleanup = "retained";
+      }
+    }
     record(`cleanup_${kind}`, removed.ok ? "pass" : "fail",
       removed.ok ? "removed_owned_object" : "removal_failed", removed.code);
   }
@@ -115,6 +135,7 @@ export async function checkProductionImage({ docker = dockerCommand,
       record("image", "fail", "ownership_unverified"); return result;
     }
     result.image = image.Id;
+    result.resources.image.id = image.Id;
     const synthetic = new URL(`postgresql://${ROOT_TARGET.role}:synthetic-image-check@${ROOT_TARGET.host}:${ROOT_TARGET.port}/${ROOT_TARGET.database}`);
     synthetic.searchParams.set("sslmode", "verify-full");
     const started = await command(["run", "--detach", "--name", name,
@@ -128,6 +149,7 @@ export async function checkProductionImage({ docker = dockerCommand,
       if (!owned(container) || container.Image !== image.Id) {
         record("health", "fail", "container_unverified"); return result;
       }
+      if (/^[a-f0-9]{64}$/.test(container.Id)) result.resources.container.id = container.Id;
       if (!container.State?.Running) {
         record("health", "fail", "container_exited", container.State?.ExitCode); return result;
       }
@@ -162,6 +184,9 @@ export async function runImageCheckCommand(args, { output = console.log,
   const result = await check();
   output(format === "json" ? JSON.stringify(result) : [
     `status: ${result.status}`, `image: ${result.image ?? "unverified"}`,
+    `ownership: ${result.resources.ownershipLabel}=${result.resources.ownershipValue}`,
+    `container: ${result.resources.container.name} (${result.resources.container.id ?? "ID unverified"}); cleanup: ${result.resources.container.cleanup}`,
+    `imageTag: ${result.resources.image.tag}; cleanup: ${result.resources.image.cleanup}`,
     ...result.checks.map((entry) => `${entry.status}: ${entry.id}${entry.reason ? ` (${entry.reason})` : ""}`),
     `omissions: ${result.omissions.join(", ")}`
   ].join("\n"));
