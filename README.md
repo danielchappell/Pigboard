@@ -75,7 +75,7 @@ their own current grant with `GET /v1/authority/me` and a bearer credential.
 The host does not select a Jira board or expose a public API. The
 [first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
 private Fly setup, safe credential use, diagnostic results, restart and rollback.
-The host is not live merely because this code or a passing local test exists.
+Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [current two-PR plan](docs/plans/pigboard-private-owner-access.md) completes private owner access, then one separate agent, then stops for regroup. Board selection is outside this batch. The host is not live merely because this code or a passing local test exists.
 
 With the private Fly Machine, Neon runtime login and an owner-specific WireGuard
 route verified, the bootstrapped owner can inspect only their current grant with

@@ -1,6 +1,23 @@
 # Ski Stack development plan
 
-Updated 28 September 2026. This is the active development queue. It follows the
+## Active delivery queue — approved 1 October 2026
+
+The owner approved restarting with **two total PRs: complete private human owner access, then complete separate one-agent access; stop for regroup**. All code, tests, documentation, plans, reviews and prerequisites count inside those two PRs. No automatic third PR. Preserve PR #35 unmerged and its local user change. S02a/S02b/S04/S26/S05/S06 are later product goals, outside this recovery batch; none of those six is implemented or live-verified by the first-host foundations.
+
+| Order | Usable outcome | Dependency and current stage |
+| --- | --- | --- |
+| 1 | Private owner identity/grant inspection, unissued denial, unchanged credential after restart and observed store wake | [Exact owning Story/implementation plan](plans/pigboard-private-owner-access.md); two independent plan reviewers CLEAN on `13ab111069ffca8599b04818600961e665355b57f595b52ca4f91ad0c080df76`; twelve paths; independent estimates 11–15h and 10–15h. Implementing packaging/check/docs; exact committed-code reviews, hosted CI, merge and live setup/access remain open. Current v2 authority reused unchanged. |
+| 2 | One agent's separate private access, durable enrollment/reconciliation/list/recovery and full grant/peer revoke | **Provisional — not ready for delivery.** Depends on PR1 live evidence; v3/common-lock ordering and complete lifecycle remain owning work. Preliminary independent 12–18h is an unresolved strict sizing gate; re-groom/review after PR1 or regroup if it cannot fit. |
+| Stop | Owner regroup | After both complete live outcomes, or an earlier real access/size/product decision invalidates the approved path. No selector or new batch without the owner's choice. |
+
+**Counters at implementation start:** recovery batch PRs used **0/2**; recovery outcomes live **0/2**; original six product outcomes implemented/live **0/0**. Local tests, merged source and live verification are separate evidence. Use one shared CPU/256 MiB and the dedicated Neon Free root for this first host; later S08's 1-GB coordinator estimate still needs load proof. The protected operator retains owner/provider credentials; normal callers receive only their own bearer and peer. No Safeguard, Jira or Cursor operation belongs to this slice.
+
+## Historical roadmap and evidence — 28 September 2026
+
+The following dated roadmap retains product direction, dependencies and historical evidence. Its first-pilot administration API, uninterrupted rotation and automatically expandable prerequisite sequence are superseded by the active queue above and the [dated first-service decision](designs/s02a-first-service.md#approved-pilot-decision--1-october-2026). Its later audience, effect, coordinator and recovery gates remain; later Story previews are not delivery-ready approvals.
+
+
+Recorded 28 September 2026. This is the historical roadmap behind the active queue above. It follows the
 [architecture direction](architecture-plan.md) and [working process](development-workflow.md).
 Earlier architecture and delivery-plan reviews were CLEAN for their recorded
 versions. Their [review record](development-review.md) identifies those
@@ -13,7 +30,7 @@ design and delivery-plan review gate; exact committed-code review, PR checks
 and live acceptance remain separate. Historical verdicts do not approve
 changed code or documents. This plan does not claim unresolved discovery is finished.
 
-## Current goal and next work — 28 September 2026
+## Historical goal and next work — 28 September 2026
 
 Deliver the six authorized Pigboard outcomes in order: S02a project and board
 selection, S02b read-only ticket eligibility, S04 shared run inspection, S26
@@ -69,7 +86,7 @@ store and pair selector. D3a–D3e0 have since merged those first host, root,
 owner and caller-inspection foundations. Remaining D3e1/D3e2/D3r/D3f authority
 and scope work must be delivered or sized as complete prerequisites before the
 pair selector; the current S02a-only first-pass inventory is 14–18 files and
-still needs a reviewed under-two-day plan. The final PR count may exceed six. Each slice
+still needs a reviewed under-two-day plan. That old expansion statement is withdrawn: an approved batch cap includes every prerequisite; inability to fit triggers regroup. Each slice
 still needs its own resolved prerequisites, reviewed implementation plan,
 exact committed-code review and current-head checks; the stack order does not
 turn a blocked Story into a ready one.
@@ -134,8 +151,8 @@ entire roadmap as one project-sized branch.
 
 The product architecture covers the whole direction. Later Story previews give
 that direction a delivery shape without inventing implementation contracts or
-claiming an estimate before discovery. **All Stories except S01 and S03 remain
-Provisional — not ready for delivery.** S01 and S03 are independently reviewed and merged;
+claiming an estimate before discovery. **All later roadmap Stories except S01 and S03 remain
+Provisional — not ready for delivery.** The new owner-access Story is separately ready at its exact plan gate above. S01 and S03 are independently reviewed and merged;
 live discovery and hosted acceptance remain outstanding as recorded below.
 Each preview must be sized and, if necessary, split after
 its blocking Tasks. No estimated file/day count below is a delivery commitment.
