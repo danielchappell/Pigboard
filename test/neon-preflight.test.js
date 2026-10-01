@@ -13,7 +13,6 @@ import { buildPsqlInvocation, checkPassfile, evaluateSnapshot,
 const command = fileURLToPath(new URL("../scripts/check-neon-root.mjs", import.meta.url));
 const goodSnapshot = {
   user: ROOT_TARGET.role, database: ROOT_TARGET.database,
-  ssl: { enabled: true, version: "TLSv1.3" },
   role: { login: true, superuser: false, createdb: false, createrole: false,
     replication: false, bypassrls: false },
   otherRoleMembership: false, dbConnect: true, dbCreate: false,
@@ -94,7 +93,8 @@ test("psql invocation pins host and TLS without inherited PG secrets", () => {
 });
 
 test("effective CREATE and inherited privilege violations cannot pass", () => {
-  assert.ok(evaluateSnapshot(goodSnapshot).every((item) => item.status === "pass"));
+  assert.ok(evaluateSnapshot(goodSnapshot).filter((item) => item.id !== "tls")
+    .every((item) => item.status === "pass"));
   const database = evaluateSnapshot({ ...goodSnapshot, dbCreate: true });
   assert.equal(database.find((item) => item.id === "database_privileges").status, "fail");
   const schema = evaluateSnapshot({ ...goodSnapshot,
@@ -154,9 +154,31 @@ test("complete check gives one safe JSON/text result; partial report is unverifi
   assert.ok(!human.includes("secret-must-never-print"));
   const partial = await runPreflight({ passfile: "/private/pgpass", uid: 12,
     lstat: () => ({ isFile: () => true, isSymbolicLink: () => false, uid: 12, mode: 0o600 }),
-    spawnCommand: fakeSpawn({ ...goodSnapshot, ssl: null }) });
+    spawnCommand: fakeSpawn({ ...goodSnapshot, role: null }) });
   assert.equal(partial.status, "unverified");
-  assert.ok(partial.omissions.includes("tls"));
+  assert.ok(partial.omissions.includes("role_attributes"));
+  assert.equal(partial.checks.find((item) => item.id === "tls").status, "pass");
+});
+
+test("TLS proof belongs to the fixed client process, never backend SQL flags", async () => {
+  for (const ssl of [undefined, null, { enabled: false }, { enabled: true, version: "TLSv1.3" }]) {
+    const snapshot = { ...goodSnapshot, ssl };
+    assert.equal(evaluateSnapshot(snapshot).find((item) => item.id === "tls").status, "unverified");
+    const report = await runPreflight({ passfile: "/private/pgpass", uid: 12,
+      lstat: privateMetadata, spawnCommand: fakeSpawn(snapshot) });
+    assert.equal(report.status, "pass");
+    assert.equal(report.checks.find((item) => item.id === "tls").reason, "verified_tls_session");
+  }
+  for (const output of ["not-json", "null", "[]", "true", '"snapshot"']) {
+    const report = await runPreflight({ passfile: "/private/pgpass", uid: 12,
+      lstat: privateMetadata, spawnCommand: fakeChild((child) => {
+        child.stdout.emit("data", Buffer.from(output));
+        child.emit("close", 0, null);
+      }) });
+    assert.equal(report.status, "unverified");
+    assert.ok(report.omissions.includes("tls"));
+    assert.equal(report.checks.find((item) => item.id === "connection").reason, "invalid_report");
+  }
 });
 
 test("connection failure and usage never disclose a supplied secret", async () => {
@@ -186,6 +208,7 @@ test("nonzero psql, timeout and oversized output fail closed with named omission
   assert.equal(nonzero.status, "fail");
   assert.equal(nonzero.checks.find((item) => item.id === "connection").reason, "connection_failed");
   assert.ok(nonzero.omissions.includes("fixture_grants"));
+  assert.ok(nonzero.omissions.includes("tls"));
 
   let timedOutChild;
   const timeout = await runPreflight({ ...options, timeoutMs: 5,
@@ -193,6 +216,7 @@ test("nonzero psql, timeout and oversized output fail closed with named omission
   assert.equal(timeout.status, "fail");
   assert.equal(timeout.checks.find((item) => item.id === "connection").reason, "client_timeout");
   assert.equal(timedOutChild.killed, true);
+  assert.ok(timeout.omissions.includes("tls"));
 
   let largeChild;
   const oversized = await runPreflight({ ...options,
@@ -203,5 +227,6 @@ test("nonzero psql, timeout and oversized output fail closed with named omission
   assert.equal(oversized.status, "fail");
   assert.equal(oversized.checks.find((item) => item.id === "connection").reason, "client_output_too_large");
   assert.equal(largeChild.killed, true);
+  assert.ok(oversized.omissions.includes("tls"));
   assert.ok(!JSON.stringify(oversized).includes(" ".repeat(1024)));
 });

@@ -7,6 +7,17 @@ privileges, and can read and insert into one disposable owner-created table but
 cannot update or delete it. It does not create a role, configure Fly, select a
 Jira board, or prove that S02a is ready.
 
+TLS evidence is measured at the client boundary. Neon can terminate client TLS
+at its proxy, so PostgreSQL's `pg_stat_ssl` describes a different connection and
+cannot establish whether this client is encrypted. This diagnostic launches
+`psql` with a clean environment, mandatory `PGSSLMODE=verify-full`, system trust,
+and the pinned hostname. Only successful, parsed query completion under that
+policy supplies the `tls` check. A SQL snapshot alone leaves client TLS
+unverified; backend SSL flags cannot make it pass or fail. A failed, timed-out,
+oversized or malformed process result cannot certify TLS. This does not make a
+claim about provider-internal transport. See [Neon's security model](https://github.com/neondatabase/website/blob/main/content/docs/security/security-overview.md)
+and [PostgreSQL backend statistics](https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-SSL-VIEW).
+
 ## Prerequisites
 
 Use Node.js 20+ and PostgreSQL `psql`/libpq 17 or later. The reviewed non-secret

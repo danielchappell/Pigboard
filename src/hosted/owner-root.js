@@ -2,6 +2,7 @@ import { constants, fstatSync, lstatSync, openSync, readFileSync, closeSync } fr
 import { isAbsolute, dirname } from "node:path";
 import pg from "pg";
 import { ROOT_TARGET } from "./root-target.js";
+import { hasVerifiedPostgresTls } from "./postgres-tls.js";
 
 export const OWNER_TARGET = Object.freeze(JSON.parse(readFileSync(
   new URL("../../config/neon-owner-root.json", import.meta.url), "utf8"
@@ -106,11 +107,11 @@ export async function connectOwner(filePath, options = {}) {
   });
   try {
     await client.connect();
+    if (!hasVerifiedPostgresTls(client)) throw new OwnerError("owner_connection_unverified");
     const result = await client.query(`SELECT current_user AS role,
-      current_database() AS database,
-      (SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()) AS ssl`);
+      current_database() AS database`);
     const row = result.rows?.[0];
-    if (row?.role !== target.role || row?.database !== target.database || row?.ssl !== true) {
+    if (row?.role !== target.role || row?.database !== target.database) {
       throw new OwnerError("owner_identity_mismatch");
     }
     // A role-level search_path must not redirect migration DDL or authority queries.
