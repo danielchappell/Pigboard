@@ -1,6 +1,19 @@
 # D3 Task: S02a authority and first shared store
 
-28 September 2026. **Technical decision for review, not a ready Story.** This note narrows the remaining authority and first pair-write path in Pigboard's six ordered product outcomes. The [selected hosting design](hosted-fly-neon-free.md) and [delivery queue](../delivery-plan.md) place the hosted entry before S02a. D3a–D3e0 are merged technical prerequisites; their live acceptance remains open. The original combined S02a estimate included foundations that now exist, so the remaining work is re-inventoried below. Further complete prerequisite PRs may increase the PR count. This note does not grant Jira access or claim live gates passed.
+## Approved pilot decision — 1 October 2026
+
+The owner approved **private human owner access, then complete separate one-agent access, at most two total PRs, then regroup**. S02a selection is outside this batch. The [owning owner plan](../plans/pigboard-private-owner-access.md) reuses v2 unchanged, packages its SQL imports, uses one shared CPU/256 MiB and verifies live root/private access, denial, restart and observed sleep. It has two independent exact-artifact CLEAN plan reviews; code/CI/merge/live gates remain separate.
+
+The second slice is **Provisional — not ready for delivery**. The protected operator may enroll/inspect/list/fully revoke one active agent with distinct bearer and private peer; durable identity/token preparation precedes activation. Exact active-request reconciliation precedes mutation generation CAS; lost delivery is inspected, not repeated. Active-first listing survives bounded history. It owns v3/common transaction advisory-lock ordering: explicit READ COMMITTED, an awaited standalone lock statement, then current reads, retaining the lock through the authorized transaction. Runtime authority stays SELECT-only. Quiesce old operators and requests before upgrade; receipt rejection alone does not fence an in-flight old mutation. Standalone snapshot inspection and `/me` retain their existing contracts.
+
+The later selector uses an operator-maintained, fail-closed approved project configuration and the same final current-authority order. General administration HTTP API, atomic two-token rotation, multiple human/agent invitations and separate viewer roles are deferred for this pilot. Later issue/run audience and effect/recovery gates remain. The reviewed architecture Task is SHA256 `0e222333e9c5b4e565dd0dd320e7e1941915cb6e2682f7235f3191396aeaf15b`; its CLEAN verdict establishes no implementation or live acceptance. Agent sizing remains unresolved (preliminary independent 12–18h); it must fit strict Story limits or trigger regroup, not a third prerequisite PR.
+
+## Historical 28 September proposal — superseded first-pilot delivery and authority path
+
+The proposal below records earlier assumptions and estimates. Its service-admin API, uninterrupted rotation, row-lock participation and permission to add prerequisite PRs are superseded by the dated decision above. Preserve later audience, pair/effect ordering and recovery requirements when selection is re-groomed; these old inventories are not ready Stories or approval to expand this batch.
+
+
+28 September 2026. **Technical decision for review, not a ready Story.** This note narrows the remaining authority and first pair-write path in Pigboard's six ordered product outcomes. The [selected hosting design](hosted-fly-neon-free.md) and [delivery queue](../delivery-plan.md) place the hosted entry before S02a. D3a–D3e0 are merged technical prerequisites; their live acceptance remains open. The original combined S02a estimate included foundations that now exist, so the remaining work is re-inventoried below. This historical proposal did not enforce the agreed batch cap; the approved decision above now does. This note does not grant Jira access or claim live gates passed.
 
 ## Outcome and evidence
 
@@ -33,7 +46,7 @@ The original 22–26-file combined estimate was made before D3a–D3e0 merged an
 
 After those prerequisites, a preliminary **S02a-only** changed-file inventory is 14–18 files: Jira project/board metadata and association client (2), pair schema/transaction and authority integration (3–4), host selection routes (1–2), human/agent command surface (1–2), meaningful behavior and failure tests (4–5), and guide/Story/plan/review updates (3). This includes supporting files rather than hiding them; an exact inventory and under-two-day estimate are required after the live D1/D3 facts and predecessor contracts are settled. If either limit fails, split into another complete technical outcome before implementing S02a. None of the existing D3a–D3e0 code proves the still-open live SQL, Machine, owner/agent grant or Jira-service access gates.
 
-**Consequence:** the S02a preview remains **Provisional — not ready for delivery**. Resolve the D3e1 size/design issue, deliver the remaining distinct authority and project-scope prerequisites, and prove the relevant live D1/D3 gates before grooming the pair-selection Story. Reuse the merged private host, root pin, owner bootstrap and protected caller command. The owner's six ordered product outcomes remain the delivery path; the standing Story limits can require additional complete prerequisite PRs without changing that order.
+**Consequence:** the S02a preview remains **Provisional — not ready for delivery**. Resolve the D3e1 size/design issue, deliver the remaining distinct authority and project-scope prerequisites, and prove the relevant live D1/D3 gates before grooming the pair-selection Story. Reuse the merged private host, root pin, owner bootstrap and protected caller command. The owner's six ordered product outcomes remain the delivery path; any failed Story limit now requires regroup within the approved cap, without automatically adding a prerequisite PR.
 
 ## Author principle assessment
 

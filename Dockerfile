@@ -8,6 +8,7 @@ RUN npm ci --omit=dev && npm cache clean --force
 
 COPY config/neon-pilot-root.json ./config/neon-pilot-root.json
 COPY src/hosted ./src/hosted
+COPY sql ./sql
 COPY scripts/run-pigboard-host.mjs ./scripts/run-pigboard-host.mjs
 
 USER node

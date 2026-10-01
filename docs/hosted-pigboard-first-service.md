@@ -1,6 +1,6 @@
 # Run the first private Pigboard service
 
-This service is an operator-only first host for the future project-and-board selector. It holds the restricted Pigboard Neon credential on one private Fly Machine. It exposes `GET /health` and, after authority migration version 2, `GET /v1/authority/me` on Fly's private network. The latter returns only the authenticated caller's current principal and grants. The root diagnostic is a one-shot command inside the Machine, not an HTTP route. There is no Jira credential, saved project-board pair or Cursor action in this slice. A green health check means the process is live; it does not mean Neon, Jira or a customer flow is ready.
+This private service gives the bootstrapped human owner a current identity-and-grant inspection command. The approved 1 October pilot completes owner access first, then one separate agent; the project-and-board selector is later work. It holds the restricted Pigboard Neon credential on one private Fly Machine. It exposes `GET /health` and, after authority migration version 2, `GET /v1/authority/me` on Fly's private network. The latter returns only the authenticated caller's current principal and grants. The root diagnostic is a one-shot command inside the Machine, not an HTTP route. There is no Jira credential, saved project-board pair or Cursor action in this slice. A green health check means the process is live; it does not mean Neon, Jira or a customer flow is ready.
 
 ## Before the first deploy
 
@@ -12,15 +12,28 @@ Local validation before deployment:
 
 ```bash
 npm ci
+node --test test/pigboard-production-image.test.js
+npm run --silent check:pigboard-image -- --format json
 npm test
 fly config validate
 ```
+
+The image check requires Docker and registry/package access. It builds the actual pinned Dockerfile, including its imported SQL, and runs its normal unprivileged command on one CPU/256 MiB. A synthetic runtime URL satisfies the nonsecret pin; `/health` does not contact Neon. The published port is loopback-only and temporary. The command records safe build/start/health/cleanup stages and image identity in text or JSON; `--help` explains prerequisites. Exit 0 requires healthy startup and successful cleanup. Missing Docker, failed build, early exit, the fixed 20-second startup deadline, unsafe ownership or failed cleanup gives exit 1. Raw subprocess logs are withheld. Inspect the named failing stage and Docker availability; never use global prune as recovery. Cleanup inspects UUID ownership and removes only exact check resource IDs. A foreign or unverified resource is left untouched and reported. Ordinary `npm test` covers cleanup failures without a Docker daemon; this actual image run is separate from database or live access proof. Results include the nonsecret UUID ownership label/value, exact container name/image tag, any ownership-verified IDs, and cleanup state (`removed`, `absent`, `retained` or `unverified`). `absent` is an observation at inspection time; a failed build/start reply remains failed and may require later reconciliation. A failed removal reports `retained` only after re-observing that exact owned ID; otherwise it remains `unverified`.
+
+For interrupted or failed cleanup, retain that result before another check. Inspect only its `container.name` or `image.tag`, printing the ID and `dev.pigboard.image-check` label, and compare the label with `resources.ownershipValue`. For example:
+
+```bash
+docker container inspect --format '{{.Id}} {{index .Config.Labels "dev.pigboard.image-check"}}' <container-name-from-result>
+docker image inspect --format '{{.Id}} {{index .Config.Labels "dev.pigboard.image-check"}}' <image-tag-from-result>
+```
+
+If the label differs or inspection fails, leave it untouched and resolve Docker access/identity first. If it matches, remove only the just-verified container ID with `docker container rm --force <verified-container-id>`, then the verified image ID with `docker image rm --no-prune <verified-image-id>`. Re-inspect the exact names/IDs afterward and record the result. Do not force image removal, guess another run's UUID or use global prune. The result never supplies a real credential or raw container logs.
 
 The service can be started locally only with the private runtime URL in its environment. `npm run --silent host:pigboard` listens on port 8080. A local `GET /health` returns `{"schemaVersion":1,"status":"live"}` without contacting Neon. `npm run --silent host:pigboard -- --diagnose-root` prints one JSON result and exits; use it only in an authorized operator environment.
 
 ## Create the private app and deploy
 
-The app name in `fly.toml` is `pigboard-pilot-jdc`. Before creating it, check that name and the organization are still the intended Pigboard resources. From this repository checkout, create the app without a Machine, public IP, database or other auto-provisioned service:
+The app name in `fly.toml` is `pigboard-pilot-jdc`. The dedicated app and its private address were already allocated as of 1 October. Inspect `fly apps list --org pigboard`, `fly ips list --app pigboard-pilot-jdc` and `fly machine list --app pigboard-pilot-jdc` first; preserve existing resources. Create only if verified absent, after checking that name and organization are the intended Pigboard resources. From this repository checkout, create the app without a Machine, public IP, database or other auto-provisioned service:
 
 ```bash
 fly launch --copy-config --name pigboard-pilot-jdc --org pigboard --region fra \
@@ -44,7 +57,7 @@ fly ips list --app pigboard-pilot-jdc
 fly checks list --app pigboard-pilot-jdc
 ```
 
-Check that the **actual** state is exactly one shared-cpu-1x/1 GB Machine in Frankfurt, no public IP, and a passing `/health` check. A build or green health result does not replace that inspection. Record the deployed Git revision, image digest, Machine ID, region, checks and initial Fly/Neon usage. This always-on pilot Machine costs money even while Neon Free compute sleeps; watch actual Fly billing and Neon Free usage rather than treating an estimate as a spending cap.
+Check that the **actual** state is exactly one shared-cpu-1x/256 MiB Machine in Frankfurt, no public IP, and a passing `/health` check. A build or green health result does not replace that inspection. Record the deployed Git revision, image digest, Machine ID, region, checks and initial Fly/Neon usage. This always-on pilot Machine costs money even while Neon Free compute sleeps; watch actual Fly billing and Neon Free usage rather than treating an estimate as a spending cap.
 
 Run the database diagnostic inside that same Machine:
 
@@ -68,7 +81,7 @@ npm run --silent caller:me -- --token-file /absolute/private/owner-generation-N.
 npm run --silent caller:me -- --token-file /absolute/private/owner-generation-N.token --format json
 ```
 
-The path is a filename, **not the token**. The command accepts one `pb1_` token plus at most one final newline from a regular nonsymlink mode-0600 file in a user-owned mode-0700 directory. It sends only to the source-controlled `pigboard-pilot-jdc.flycast`/private IPv6 pin, does not follow redirects, and has one 45-second total deadline including Neon Free wake, root validation and grant read. It never prints the bearer. The default text result says verified and shows only the caller's principal, generation and grants; JSON has the same validated fields for a noninteractive agent. A named human or agent recipient can use their **own** token and private peer only after later D3e issuance. Recipient peers are mapped by stable recipient key, unlike the owner's principal-ID peer. No recipient has the owner bearer or an admin action through this command.
+The path is a filename, **not the token**. The command accepts one `pb1_` token plus at most one final newline from a regular nonsymlink mode-0600 file in a user-owned mode-0700 directory. It sends only to the source-controlled `pigboard-pilot-jdc.flycast`/private IPv6 pin, does not follow redirects, and has one 45-second total deadline including Neon Free wake, root validation and grant read. It never prints the bearer. The default text result says verified and shows only the caller's principal, generation and grants; JSON has the same validated fields for a noninteractive agent. A named human or agent recipient can use their **own** token and private peer only after the approved separate agent lifecycle is delivered and live-verified. General human invitations remain deferred. Recipient peers are mapped by stable recipient key, unlike the owner's principal-ID peer. No recipient has the owner bearer or an admin action through this command.
 
 A 200 JSON response from the service contains `schemaVersion`, `status: "ok"`, team, generation, the caller's own principal ID/name/kind and `grants`. A valid 401 is `denied`: the credential is not current, and the response reveals no owner identity. To test that live path without disrupting the owner, use a separately protected, correctly shaped but **unissued** test token; a malformed token file instead fails locally before any request. A valid 503 is `unavailable`: root, TLS, schema/grant proof or the database read was not verified, so inspect the private host and Neon and retry later. A transport timeout, changed pin, unsafe file, unexpected HTTP status, malformed response or failed route is `unverified` with `current_grant` omitted; it does **not** prove revocation. The command never echoes raw response text or follows a redirect. Consult [owner inspection and recovery](hosted-pigboard-authority.md#interrupted-setup-and-recovery) for a lost or replaced owner credential; do not repeat a mutation because a read was uncertain. The server sets `Cache-Control: no-store`.
 
@@ -76,10 +89,12 @@ After a Machine restart, inspect again with the same current credential and conf
 
 ## Check wake, restart and rollback
 
-For the live wake check, leave that Fly Machine running and observe the pinned Neon production compute marked **SUSPENDED** in the Pigboard console. Run the same Machine's diagnostic again and record whether a fresh verified connection passes after wake, or which bounded check remains unverified. Check liveness separately with `fly checks list --app pigboard-pilot-jdc`. Then restart that Machine and repeat both checks:
+For the live wake check, leave that Fly Machine running and observe the pinned Neon production compute marked **SUSPENDED** in the Pigboard console. Run the same Machine's diagnostic again and record whether a fresh verified connection passes after wake, or which bounded check remains unverified. Check liveness separately with `fly checks list --app pigboard-pilot-jdc`. Repeat owner inspection with the unchanged bearer after observed wake, recording identity/generation/grants or the bounded unavailable/unverified result. Then restart that Machine and repeat the diagnostic, health and same-bearer owner inspection:
 
 ```bash
 fly machine restart <machine-id> --app pigboard-pilot-jdc
 ```
 
-For a disposable code-image rollback, record the prior image reference from `fly releases --image --app pigboard-pilot-jdc`, deploy the test revision, then redeploy the prior image with `fly deploy --image <prior-image> --app pigboard-pilot-jdc --no-public-ips --ha=false`. Confirm the resulting image and exactly one Machine, then repeat health and root diagnostic. Keep the current secret and pin; do not run a reverse migration. This slice makes no database write and cannot prove that a saved pair survives rollback. S02a owns that later test. A failed or incomplete live check remains an open gate, even when local tests pass.
+For the first deployment there is no prior serving image. If it fails, inspect the exact newly created dedicated Pigboard Machine ID, then stop/destroy only that Machine to restore the recorded zero-Machine/no-serving state. Verify the list is empty. Retain verified schema and protected credentials; record any staged runtime secret and private address that remain. This is not a database rollback. Never destroy an unrelated Machine or reverse migrations.
+
+For a later disposable code-image rollback, record the prior image reference from `fly releases --image --app pigboard-pilot-jdc`, deploy the test revision, then redeploy the prior image with `fly deploy --image <prior-image> --app pigboard-pilot-jdc --no-public-ips --ha=false`. Confirm the resulting image and exactly one Machine, then repeat health and root diagnostic. Keep the current secret and pin; do not run a reverse migration. The running inspection host makes no database write; protected owner setup does write authority. This owner-access slice and cannot prove that a saved pair survives rollback. S02a owns that later test. A failed or incomplete live check remains an open gate, even when local tests pass.
