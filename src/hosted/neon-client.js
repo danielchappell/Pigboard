@@ -221,6 +221,7 @@ export async function diagnoseNeonRoot(secret, options = {}) {
     tlsCa: options.tlsCa, connectionTimeoutMs, queryTimeoutMs
   }));
   let connected = false;
+  let verifiedTls;
   try {
     await withinDeadline(() => client.connect(), connectionTimeoutMs, client);
     connected = true;
@@ -234,18 +235,19 @@ export async function diagnoseNeonRoot(secret, options = {}) {
         ...omitted(["identity"], "tls_not_active"),
         check("tls", "fail", "tls_not_active", "The client transport is not verified TLS.")], expectedTarget);
     }
+    verifiedTls = check("tls", "pass", "verified_tls", "The client transport uses TLS with a verified server hostname.");
     const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client);
     const row = response.rows?.[0];
     const identity = row?.role === expectedTarget.role && row?.database === expectedTarget.database ?
       check("identity", "pass", "expected_identity", "The session uses the pinned role and database.") :
       check("identity", "fail", "identity_mismatch", "The session identity differs from the pinned role or database.");
-    const tls = check("tls", "pass", "verified_tls", "The client transport uses TLS with a verified server hostname.");
-    return report([rootCheck, check("connection", "pass", "connected", "The root connection completed."), identity, tls], expectedTarget);
+    return report([rootCheck, check("connection", "pass", "connected", "The root connection completed."), identity, verifiedTls], expectedTarget);
   } catch (error) {
     const failure = connectionFailure(error);
     const checks = connected ?
       [rootCheck, check("connection", "pass", "connected", "The root connection completed."),
-        ...omitted(["identity", "tls"], failure.reason)] :
+        ...omitted(["identity"], failure.reason),
+        ...(verifiedTls ? [verifiedTls] : omitted(["tls"], failure.reason))] :
       [rootCheck, failure, ...omitted(["identity", "tls"], failure.reason)];
     return report(checks, expectedTarget);
   } finally {

@@ -93,6 +93,40 @@ test("the diagnostic keeps TLS errors, timeouts, and the secret out of results",
   assert.equal(JSON.stringify(timeout).includes(password), false);
 });
 
+test("completed transport remains verified when identity SQL fails or times out", async () => {
+  const password = "query-error-secret";
+  for (const mode of ["rejection", "timeout"]) {
+    let queries = 0;
+    let closes = 0;
+    let destroys = 0;
+    class FailedIdentity {
+      constructor() {
+        this.connection = { stream: { ...verifiedSocket(), destroy() { destroys += 1; } } };
+      }
+      async connect() {}
+      async query() {
+        queries += 1;
+        if (mode === "timeout") return new Promise(() => {});
+        throw new Error(`private query detail: ${password}`);
+      }
+      async end() { closes += 1; }
+    }
+    const result = await diagnoseNeonRoot(urlFor(ROOT_TARGET, password), {
+      ClientClass: FailedIdentity, queryTimeoutMs: 20
+    });
+    assert.equal(result.status, "unverified");
+    assert.equal(result.checks.find((item) => item.id === "connection").status, "pass");
+    assert.equal(result.checks.find((item) => item.id === "tls").status, "pass");
+    assert.equal(result.checks.find((item) => item.id === "tls").reason, "verified_tls");
+    assert.equal(result.checks.find((item) => item.id === "identity").status, "unverified");
+    assert.deepEqual(result.omissions, ["identity"]);
+    assert.equal(queries, 1);
+    assert.equal(closes, 1);
+    assert.equal(destroys, mode === "timeout" ? 1 : 0);
+    assert.equal(JSON.stringify(result).includes(password), false);
+  }
+});
+
 test("the diagnostic uses an explicit verified-TLS config and only a read query", async () => {
   let config;
   let sql;
