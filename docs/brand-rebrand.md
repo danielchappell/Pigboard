@@ -105,11 +105,12 @@ owner approved a distinct Pigboard palette while retaining the structure and
 logo; the current [website design](designs/pigboard-website.md#experience-and-visual-fidelity)
 supersedes these colors.
 
-Originally: reuse Rovito's actual visual system: graphite `#272c33`, white, teal `#58c9ce`,
-deep teal `#187b80`, coral `#f58d6c`, yellow `#f0c45a`, system/Avenir Next fonts,
-rounded controls, generous spacing, visible keyboard focus and reduced-motion
-support. Keep the graphite background flat. The warm cream background belongs
-to the original mascot reference; the website should match Rovito's graphite.
+The original decision called for Rovito's visual system: graphite `#272c33`,
+white, teal `#58c9ce`, deep teal `#187b80`, coral `#f58d6c`, yellow `#f0c45a`,
+system/Avenir Next fonts, rounded controls, generous spacing, visible keyboard
+focus and reduced-motion support. It called for a flat graphite background
+instead of the original mascot reference's warm cream. Those website colors
+have been superseded by the Pigboard palette above.
 
 ## Website architecture and journey
 
