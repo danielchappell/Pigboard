@@ -227,3 +227,21 @@ verdicts and CI results remain historical evidence for their named revisions.
 The subsequent marketing refinement is a separate task: lead with customer
 outcomes for a lead with an existing technical team, using the recovered product
 and competitive research. The owner requested that it follow palette completion.
+
+## Palette committed-code verdicts
+
+Two fresh independent Sol reviewers returned CLEAN on
+`07fd9282de0ce329198311d44aaaa823ea496612` against `6b4297e`. Both covered
+9/9 changed files, the 1/1 documentation repair and a second sweep. The product
+reviewer covered 6/6 affected contracts and the technical reviewer 5/5. The
+product review's P3 ambiguous historical graphite instruction was a real
+in-scope issue, corrected to past tense with an explicit supersession statement.
+No other in-scope finding remains. The technical reviewer independently reran
+7/7 Node tests and verified the documented contrast minima.
+
+Each independently assessed all seven principles: consistent color roles;
+discoverable links, selection and focus; preserved approved artwork and layout;
+one token palette and shared aliases; unchanged security/authority boundaries;
+equal semantic pages and noninteractive build instructions; measured contrast,
+verified hashes and honest preview/review/CI limits. Neither claims fresh browser
+QA. This evidence-only update does not change the reviewed website files.
