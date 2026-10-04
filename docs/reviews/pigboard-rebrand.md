@@ -98,8 +98,8 @@ This is documentation/design artifact review, not runtime-code review. The
 original draft's status finding is resolved by the direction's current-evidence
 link and explicit current-main baseline. A later product review of bookkeeping
 commit `d89b3b6` correctly found that the final gate still needed a second fresh
-reviewer. `fresh_brand_technical` is independently reviewing the committed
-artifacts; the gate remains incomplete until its findings are resolved.
+reviewer. The completed fresh review below closes that gap after its evidence
+count finding was corrected.
 
 Coverage correction: the earlier product-plan and committed-artifact reports
 stated 20 acceptance/technical criteria. The actual plan has 19: B1a has six
@@ -129,3 +129,34 @@ separate from the independent verdicts above.
 
 Bookkeeping records the individual reviews and remaining gate accurately.
 PR checks, merge, deployment and final artwork approval remain separate.
+
+
+## Fresh review gate and publication preparation
+
+`fresh_brand_technical`, fresh independent Sol, reviewed the full committed
+stack at `d89b3b6` and returned NOT CLEAN solely for the coverage-count error.
+It re-reviewed the two-file correction at
+`7f5df31ac7751745d8571e3ebe43addb6c6393c9` and returned CLEAN. Coverage:
+14/14 B1a files, 14/14 B1b files, 26/26 unique files, 19/19 criteria and 6/6
+testing bullets. Its second sweep checked every changed file and compatibility,
+history, source and release boundary. Independently verified 152/152 relative
+links, all three PNGs and original pig, pinned Rovito source and unchanged
+runtime/package/tests. Its seven-principle assessment: intuitive name/outcome;
+discoverable working guides/assets for humans and agents; delightful retained
+mascot and setup; token-saving single direction/queue; secure unchanged signed
+history, credentials and production authority; equal worker guidance and
+compatible structured APIs; dependable corrected counts and explicit
+candidate/current/released boundaries. No in-scope finding remains.
+
+`final_brand_product_review` returned CLEAN for the two-file correction at
+`7f5df31`, inspected 2/2 files and every changed hunk, and completed a second
+sweep. Its earlier complete implementation review and corrected 19/19 criterion
+assessment still apply. Own principles for the correction: intuitive status;
+discoverable revisions; delightful concise recovery; token-saving central
+evidence; secure authority; equal human/agent-readable records; dependable
+transparent historical counts and review state.
+
+The two distinct fresh reviewers have completed the substantive artifact gate.
+The continuation review above is additional evidence. Publication bookkeeping
+is checked as a bounded delta before PR creation. Hosted checks, merge,
+deployment and final artwork selection remain separate.
