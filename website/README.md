@@ -14,8 +14,10 @@ go -C website build -o ../dist/pigboard-site ./cmd/site
 ./dist/pigboard-site
 ```
 
-Open <http://127.0.0.1:8772/>. Stop with Ctrl-C. Rebuild after editing HTML, CSS,
-JavaScript or artwork; the server reads the generated files on each request.
+Open <http://127.0.0.1:8772/>. Stop with Ctrl-C before rebuilding after editing
+HTML, CSS, JavaScript or artwork, then start the server again. The rooted server
+keeps the directory it opened at startup; a successful build replaces that
+directory, so a running preview must restart to use the new output.
 Use `./dist/pigboard-site -listen 127.0.0.1:8773` for another port. Keep preview
 listeners on loopback. Missing or malformed generated output stops startup with
 an error; rebuild before retrying. `/healthz` reports process health; `/readyz`
@@ -67,10 +69,14 @@ backup could not be removed; inspect it and remove that named backup when safe.
 
 ## Source and delivery boundary
 
-The shared visual tokens, styles, page patterns and Go serving approach come from
+The shared components, spacing, page patterns and Go serving approach come from
 Rovito revision `32875af00a19241541296bbb10543ec29fcb7a42`: `website/`,
 `internal/website`, `Dockerfile.oauth` and `deploy/fly/oauth.toml`. Internal CSS
-names such as `--rv-*` retain that shared origin. Pigboard adapts the copy, opaque
+names such as `--rv-*` retain that component interface. Pigboard owns its plum
+(`#2d2233`), ivory (`#fff5e9`), rose (`#eeb7cf`) and amber (`#f1c777`) palette.
+Rose marks links and selected tabs; amber marks primary actions and focus.
+Neutral graphite frames preserve the opaque approved logo exports.
+Pigboard adapts the copy, opaque
 wordmark crop, laptop hero composition and progressive enhancement; all three owner-approved PNGs under
 `assets/brand/pigboard/` are copied byte-for-byte and checked against pinned hashes.
 Tab panels are readable before JavaScript; copy controls remain hidden until

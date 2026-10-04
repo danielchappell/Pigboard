@@ -100,7 +100,12 @@ for visual feedback. The owner approved the three-logo series on 4 October 2026 
 The asset guide records production-export limits; tiny favicons may still need
 a simpler derivative and their own small-size check.
 
-Reuse Rovito's actual visual system: graphite `#272c33`, white, teal `#58c9ce`,
+The following was the original shared-color decision. On 4 October 2026, the
+owner approved a distinct Pigboard palette while retaining the structure and
+logo; the current [website design](designs/pigboard-website.md#experience-and-visual-fidelity)
+supersedes these colors.
+
+Originally: reuse Rovito's actual visual system: graphite `#272c33`, white, teal `#58c9ce`,
 deep teal `#187b80`, coral `#f58d6c`, yellow `#f0c45a`, system/Avenir Next fonts,
 rounded controls, generous spacing, visible keyboard focus and reduced-motion
 support. Keep the graphite background flat. The warm cream background belongs

@@ -12,7 +12,7 @@ Acceptance Criteria
 - Method explains the supported development journey and human decisions, clearly labeling its feature example as illustrative.
 - Availability distinguishes existing private-repository tools from future hosted capability and states who can access them.
 - All three pages work on desktop and mobile, with keyboard navigation and readable substantive content when JavaScript is disabled.
-- The site uses the approved Pigboard PNGs unchanged and Rovito's visual system, section patterns and interactions.
+- The site uses the approved Pigboard PNGs unchanged, Pigboard's own palette, and Rovito's component system, section patterns and interactions.
 - A maintainer can build and run the site locally, with a clear error and the previous complete output preserved when a replacement build fails.
 
 Technical Acceptance Criteria
@@ -23,7 +23,7 @@ Technical Acceptance Criteria
 - Stage and validate output before replacing an owned generated directory, with backup restoration and explicit recovery paths on failure.
 - Enforce GET/HEAD, route and path boundaries, no directory listings, and Rovito's restrictive website security headers.
 - Make readiness describe the website's built files only, use bounded HTTP timeouts, and shut down cleanly on termination.
-- Keep the Story within the 19-file inventory below and verify its exact committed revision before opening a PR.
+- Keep the Story within the 20-file inventory below and verify its exact committed revision before opening a PR.
 
 Testing Strategy
 
@@ -41,13 +41,15 @@ Baseline `533a1c9d99e2c6ba01d08c2796625a54be59fccf`. Reuse the independently
 CLEAN [website design](../designs/pigboard-website.md), hash
 `d335696e4d3bd2f9680453bf8fabd586520db2337c2b04a38835e3de5455d149`,
 and pinned Rovito source `32875af00a19241541296bbb10543ec29fcb7a42`.
-This is W1, one usable local website and one PR. Estimate: 12–14 human hours,
+This is W1, one usable local website and one PR. The owner-approved palette
+refinement preserves the reviewed architecture and adds only the superseded
+brand-color note to the file inventory. Estimate: 12–14 human hours,
 including copy, tests, browser checks, documentation and review preparation.
 W2 production packaging/pipeline and W3 release remain separate. The owner chose
 GitHub Actions; production app and domain remain unresolved. W1 adds repository checks,
 not a deployment workflow.
 
-### Exact inventory — 19 files
+### Exact inventory — 20 files
 
 1. `docs/designs/pigboard-website.md` — reviewed architecture and whole delivery path.
 2. `docs/plans/pigboard-website.md` — this Story, implementation plan and estimate.
@@ -59,7 +61,7 @@ not a deployment workflow.
 8. `website/pages/index.html` — outcome, intended customer, illustrative journey and working actions.
 9. `website/pages/method.html` — readable method and human decisions in Rovito's guide layout.
 10. `website/pages/status.html` — current private tools and unavailable public hosted access.
-11. `website/theme.css` — copied Rovito tokens and controls, with provenance.
+11. `website/theme.css` — Pigboard color tokens and shared Rovito controls, with provenance.
 12. `website/styles.css` — Rovito layout with Pigboard crop/hero adjustments and responsive checks.
 13. `website/app.js` — progressive tab enhancement and copy feedback using the reference behavior.
 14. `website/go.mod` — isolated standard-library website module, Go 1.26.6.
@@ -68,6 +70,7 @@ not a deployment workflow.
 17. `website/cmd/site/main.go` — loopback preview/server entry, startup validation and bounded shutdown.
 18. `website/website.test.mjs` — build/recovery/metadata/asset/link regressions.
 19. `.github/workflows/website.yml` — Node build/tests and Go race/vet checks for this repository.
+20. `docs/brand-rebrand.md` — label the original shared-color decision as superseded by the owner-approved Pigboard palette.
 
 Existing approved assets are read from `assets/brand/pigboard/`; do not duplicate
 or alter them. Generated output is `dist/website/`, already ignored. No package

@@ -52,7 +52,7 @@ The private Node/PostgreSQL host uses the existing root Dockerfile and Fly app
 | Layer | Rovito reference | Pigboard application |
 | --- | --- | --- |
 | Authoring and build | Plain HTML pages, shared layout, CSS and small vanilla JS; dependency-free Node build | Same source/build pattern under `website/`, using the approved assets already in the repository |
-| Design | Graphite theme, teal links, coral buttons, Avenir/system fonts; large character/wordmark hero; tabs, feature columns, guide sidebar, shared header/footer | Reuse theme tokens, stylesheet and JS behavior; adapt copy and the artwork's crop coordinates |
+| Design | Graphite theme, teal links, coral buttons, Avenir/system fonts; large character/wordmark hero; tabs, feature columns, guide sidebar, shared header/footer | Reuse components, layout and JS behavior with Pigboard's own plum/ivory/rose/amber palette; adapt copy and artwork crop coordinates |
 | Serving | Go `net/http` handler serves built files; GET/HEAD, strict local CSP, cache headers, no directory listings, direct page routes | Same Go handler pattern in a standalone website module; one server for local preview and the website container |
 | Container | Go 1.26.6 Bookworm build, static binary, Debian Bookworm slim, CA roots, UID/GID 65532, port 8080; allowlisted build context | Same stages/runtime and allowlist; only public site files and the website binary enter the image |
 | Fly | `cdg`, one shared CPU, 256 MB, one warm Machine, HTTPS, readiness check, remote image build, `--ha=false` | Same sizing, region, lifecycle, TLS, checks and deploy pattern for a Pigboard website target |
@@ -106,6 +106,14 @@ public route, check security/cache headers, and write a machine-readable report.
 No secrets appear in files, image layers, command output or the report.
 
 ## Experience and visual fidelity
+
+Owner refinement on 2026-10-04: retain the approved structure and logo but give
+Pigboard its own color scheme. Use plum `#2d2233`, ivory `#fff5e9`, rose `#eeb7cf`
+and amber `#f1c777`, with related plum surfaces. Rose carries links and active
+navigation; amber carries primary actions and keyboard focus. The existing
+opaque artwork sits in neutral graphite frames without tinting or regeneration.
+This supersedes the original shared-color choice, preserving the reviewed
+component structure and Node/Go/GitHub Actions/Fly architecture.
 
 Keep Rovito's section rhythm, navigation, typography, buttons, responsive
 breakpoints and guide layout. The approved Pigboard lockup replaces its terrier

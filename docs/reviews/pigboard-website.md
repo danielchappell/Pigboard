@@ -183,3 +183,47 @@ Linux ARM64 Fly CLI archive can be reused when this slice is groomed. Its
 [deployment guidance](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments)
 documents environment controls and serialized deployment. No app, credential,
 DNS, production image or GitHub deployment setting was created or changed here.
+
+## Owner-approved palette refinement — 4 October 2026
+
+The owner retained the structure and approved logo, requested a separate color
+scheme from Rovito, then explicitly approved the plum/rose/amber palette. This
+bounded visual follow-up reuses the reviewed W1 architecture, interactions and
+recovery contracts. It does not restart product or infrastructure design.
+
+Pigboard now has plum `#2d2233`, ivory `#fff5e9`, rose `#eeb7cf` and amber
+`#f1c777`, with related plum surfaces. Rose identifies links/selected controls;
+amber identifies primary actions and focus. The root class is `pigboard-theme`;
+shared `--rv-*` component aliases are preserved and documented. Neutral frames
+accommodate the opaque original art without tinting or changing its bytes.
+The old brand-color decision is explicitly labeled superseded, making the
+whole PR 20 files. Typography, layout, copy, behavior, server and CI are unchanged.
+
+The palette was built and 7/7 existing Node website tests passed, including the
+independent approved-artwork hash assertions and all routes/links. Relative-
+luminance calculations across all four page surface colors found minimum text
+contrast of 5.08:1 (muted), 6.79:1 (secondary), 10.35:1 (ivory), 6.54:1 (rose)
+and 7.00:1 (amber). Action text across normal/hover/active colors is at least
+7.74:1; control borders are at least 3.75:1. No mirror-image unit tests were added
+for this reversible styling change. The owner saw and approved the palette.
+Agent browser inspection was unavailable because the in-app tab connection timed
+out; fresh automated screenshots/responsive checks are not claimed for this pass.
+
+Rebuilding exposed an existing preview-guide error: the rooted Go server retains
+its startup directory, so replacing that directory requires restarting the
+preview. The guide now tells maintainers to stop, rebuild and restart. The local
+preview was restarted and `/readyz` returned `{"ok":true}`. No server code changed.
+
+Author principles: Intuitive—familiar structure with consistent color roles;
+Discoverable—selected tabs, links and focus remain distinguishable;
+Delightful—owner-approved variation and unchanged mascot; Token saver—shared
+component aliases and one palette; Secure—no request, credential or service
+change; Agents are equal—same semantic pages and noninteractive build, with
+clearer restart guidance; Dependable—measured contrast, checked asset hashes,
+explicit browser-verification limit and separate hosted CI evidence.
+
+Fresh independent review of this committed palette delta follows. Earlier CLEAN
+verdicts and CI results remain historical evidence for their named revisions.
+The subsequent marketing refinement is a separate task: lead with customer
+outcomes for a lead with an existing technical team, using the recovered product
+and competitive research. The owner requested that it follow palette completion.
