@@ -1,6 +1,6 @@
 # Run a Cursor cloud job
 
-Ski Stack can prepare, start, and retrieve a single Cursor cloud job through
+Pigboard can prepare, start, and retrieve a single Cursor cloud job through
 the CLI or JavaScript library. This first runner supports plan mode and one
 optional GitHub repository. It does not connect the job to a Kanban ticket or
 run the existing GitHub/Codex daemon in the cloud.
@@ -37,7 +37,7 @@ npm run --silent cursor -- prepare \
   --prompt-file question.txt \
   --model gpt-5.6-sol \
   --param reasoning=none \
-  --name "Ski Stack test" > /tmp/ski-cursor-request.json
+  --name "Pigboard test" > /tmp/ski-cursor-request.json
 ```
 
 Preparation is offline. It generates the `bc-<uuid>` agent ID before any model
@@ -71,7 +71,7 @@ npm run --silent cursor -- get --agent-id bc-YOUR_UUID --run-id run-YOUR_UUID
 ```
 
 `get` never starts a model. Poll at a reasonable interval while the run is
-active. If you only have the saved agent ID, omit `--run-id`: Ski Stack reads
+active. If you only have the saved agent ID, omit `--run-id`: Pigboard reads
 the agent's run list and accepts exactly one run. If someone added a follow-up
 in Cursor, it asks for the original run ID instead of silently reading a
 different answer. The returned URL opens the same agent in Cursor for inspection.

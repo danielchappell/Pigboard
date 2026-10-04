@@ -2,7 +2,7 @@
 
 Problem to solve
 
-Ski Stack cannot yet send work to Cursor through its own commands or library.
+Pigboard cannot yet send work to Cursor through its own commands or library.
 The live API probe showed that a launch can succeed even when the client times out.
 Callers need to retrieve that work without paying for a duplicate job.
 

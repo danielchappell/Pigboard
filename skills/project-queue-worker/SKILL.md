@@ -23,7 +23,7 @@ object and source of truth.
 End every run with:
 
 ```md
-## Ski Stack Handoff
+## Pigboard Handoff
 
 State:
 Evidence:

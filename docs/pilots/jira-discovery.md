@@ -15,21 +15,21 @@ investigates the configured repository. Everyone working on the ticket can see
 the run's progress, findings, evidence, and next decision in Jira.
 
 The pilot uses one team, INT only, one repository, the `researcher` role, Cursor
-as the candidate execution provider, and one active job. Ski Stack's coordinator
+as the candidate execution provider, and one active job. Pigboard's coordinator
 must run on shared infrastructure so a developer's laptop can be off.
 
 ## The ticket journey
 
 1. A teammate writes a Task with a specific question and enough context to
    recognize a useful answer, then adds `ai-enabled`.
-2. They move it to **Ready to Work**. Ski Stack checks project, issue type,
+2. They move it to **Ready to Work**. Pigboard checks project, issue type,
    label, status, configured repository, dependencies, and existing run ownership.
-3. Ski Stack records the request and starts the configured discovery agent.
+3. Pigboard records the request and starts the configured discovery agent.
    A ticket comment distinguishes queued work from an accepted provider run.
 4. After the provider accepts the run, the ticket moves to **In Progress**.
    Its progress comment contains the run link and stays current.
 5. The agent returns findings, evidence, open questions, and a recommended next
-   step. Ski Stack validates the result and publishes it on the same ticket.
+   step. Pigboard validates the result and publishes it on the same ticket.
 6. A usable answer moves the ticket to **Product Acceptance** for human review.
    A question or failure remains clearly marked as needing attention; it does
    not silently advance. A human decides what happens next.
@@ -48,7 +48,7 @@ users should not need to move a ticket out and back just to make it visible.
 
 ## What the agent receives and returns
 
-Ski Stack supplies the question, relevant ticket context, configured repository
+Pigboard supplies the question, relevant ticket context, configured repository
 and revision, role instructions, and a run identifier. The repository and role
 come from configuration, not model guesses or instructions in ticket comments.
 
@@ -59,7 +59,7 @@ The expected answer contains:
 - A recommended next step and the main tradeoff.
 - Any question that needs a human answer.
 
-The owner selected [Ski Stack itself](https://github.com/danielchappell/ski-stack)
+The owner selected [Pigboard itself](https://github.com/danielchappell/ski-stack)
 on 21 September. Its selected revision is
 `5e48c3def05fa8dc840d51ae6683113b9faa0ba2`.
 
@@ -79,7 +79,7 @@ remains a product target; it is not permission for substantial work-account runs
 
 Use Cursor's documented `plan` mode for the prepared API probe and disable
 automatic PR creation. Prompt instructions are not enforced permission or
-spending limits. Ski Stack's Jira and orchestration credentials stay outside
+spending limits. Pigboard's Jira and orchestration credentials stay outside
 the agent context.
 
 ## Visible failure and recovery
