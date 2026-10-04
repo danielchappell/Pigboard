@@ -63,9 +63,58 @@ planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
   retained references; token-saving exceptions; secure signed history and
   credentials; equal noninteractive contracts; dependable commit-scoped recovery.
 
-B1a/B1b implementation follows that plan. Final committed-artifact reviews are
-still pending; no implementation CLEAN verdict is implied by plan review.
+B1a/B1b implementation follows that plan. The completed committed-artifact
+reviews are recorded below; plan review alone does not establish their result.
 Author principle assessments are in the direction and plan. They do not replace
 independent review. No hosted CI, merge, release or final artwork approval is
 claimed. The three logo candidates have been visually inspected in the original
 review; their PNG bytes are unchanged in this worktree.
+
+## Committed artifact review and local validation
+
+Reviewed baseline: `ab258f6dcf4678ef0e4df85b8f029e3766a32301`.
+B1a: `7944989d5272e63203c55bb615bf692c0d3610f2` (14 files).
+B1b implementation: `def5729d4527f9df08e710424dcb6c333299985a` (13 files).
+
+- `final_brand_product_review`, fresh independent Sol: CLEAN for both commits.
+  Examined 26/26 unique files, 20/20 acceptance/technical criteria and 6/6
+  verification bullets; directly viewed all three assets and both reference
+  artworks. Second sweep found no in-scope gap. Its own principles assessment:
+  intuitive outcome/name; discoverable sources and usable guides; delightful
+  faithful pig/Rovito artwork; token-saving single queue and necessary limits;
+  secure preserved runtime/history; equal worker/human instructions; dependable
+  distinction between candidates, current tools, ambitions and release.
+- `brand_artifact_technical_review`, independent Sol continuation/correction
+  reviewer: CLEAN for both commits. This reviewer also examined the original
+  stale-checkout draft and is not a new fresh agent for this round. Re-inspected
+  14/14 B1a files, 13/13 B1b files, 26/26 unique files, 20/20 criteria and 6/6
+  verification bullets; second sweep found no issue. Own principles: intuitive
+  naming with working commands; discoverable human/agent guides and assets;
+  delightful preserved setup/style; token-saving one source/queue; secure signed
+  history and production boundaries; equal noninteractive contracts; dependable
+  baseline/status/capability/recovery distinctions.
+
+This is documentation/design artifact review, not runtime-code review. The
+reviewer's earlier status finding is resolved by the direction's current-evidence
+link and explicit current-main baseline. No unresolved in-scope finding remains.
+
+Author validation: 108 relative link occurrences resolve at B1a and 103 in B1b's
+changed documents; the combined changed set has 152, all resolving. The exact
+historical probe is unchanged. Runtime source, scripts, tests, package manifests
+and captured probe JSON have no diff. The retained recovery/historical queue
+matches main apart from the intended display-name substitution. Whitespace
+checks passed. No runtime tests are needed for these prose/assets changes.
+
+The original pig was compared directly; the three generated PNGs retain their
+original bytes. Browser inspection verified the mascot on graphite and cream
+and the compact avatar at 128 px. The asset guide records alpha/background and
+favicon limitations. These are candidate assets for owner feedback.
+
+Author implementation assessment: intuitive purpose and name; discoverable
+working links; delightful consistent character/style; token-saving central
+sources; secure preserved operational identifiers; equal worker guidance;
+dependable exact evidence and honest implementation limits. This assessment is
+separate from the independent verdicts above.
+
+The final bookkeeping commit only records these completed reviews and queue
+status. PR checks, merge, deployment and final artwork approval remain separate.
