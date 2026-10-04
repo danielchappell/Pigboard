@@ -14,8 +14,8 @@ work does not advance its outcomes or authorize another recovery PR.
 
 | Order | Outcome | Stage and dependency | Size including docs/review |
 | --- | --- | --- | --- |
-| B1a | Introduce the Pigboard product identity and mascot series | Committed as `7944989`; design, plan and fresh artifact reviews CLEAN; publication/checks next | Documentation/design Task; 14 files, about 6 human hours |
-| B1b | Complete naming in technical guides and historical narrative | Committed as `def5729`; plan and fresh artifact reviews CLEAN; publication/checks next | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
+| B1a | Introduce the Pigboard product identity and mascot series | [PR #38](https://github.com/danielchappell/ski-stack/pull/38) open at reviewed `0a829ef`; latest hosted checks on PR; owner merge pending | Documentation/design Task; 14 files, about 6 human hours |
+| B1b | Complete naming in technical guides and historical narrative | [PR #39](https://github.com/danielchappell/ski-stack/pull/39) open, stacked on #38; artifact gate CLEAN at `6e7a2f0`; latest checks on PR; owner merge pending | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
 | B3 | Resolve runtime identity compatibility | Discovery pending; new writes and old signed history need an explicit migration contract | Task; scope before sizing dependent Stories |
 | B4 | Build the Rovito-based website path | Exact source/design recovered; page map, copy and production target to resolve | Task first; local preview need not wait for production ownership |
 | Later | Runtime rename and marketing website | Provisional — not ready for delivery | Groom complete Stories after applicable B3/B4 decisions; each <=20 files and <2 human days |

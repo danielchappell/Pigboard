@@ -160,3 +160,29 @@ The two distinct fresh reviewers have completed the substantive artifact gate.
 The continuation review above is additional evidence. Publication bookkeeping
 is checked as a bounded delta before PR creation. Hosted checks, merge,
 deployment and final artwork selection remain separate.
+
+
+## Published PRs
+
+[Identity and artwork PR #38](https://github.com/danielchappell/ski-stack/pull/38)
+uses `main` as its base, with reviewed head
+`0a829ef0a7f8ea6ae0cf20412e0f87782e091bed`.
+[Technical documentation PR #39](https://github.com/danielchappell/ski-stack/pull/39)
+is stacked on `codex/pigboard-identity`, with publication head
+`6e7a2f05d664e765676e74c23cf7a68ac51edead`.
+
+Both fresh reviewers returned CLEAN on both exact publication heads. Each
+inspected 2/2 final bookkeeping files, verified both 14-file PR boundaries and
+completed a second sweep while carrying the complete 26-file/19-criterion/six-
+testing-bullet assessment forward. Each independently confirmed all seven
+principles remain met: clear status and discoverable revisions, bounded
+correction and concise evidence, preserved authority and equal human/agent
+records, transparent counts and separate release stages. The stacking merge
+preserved tree `c030b0b916e4c961a7526c5f4d23a784d3c4359e` exactly.
+
+GitHub starts the repository's Node/PostgreSQL checks for each PR head. Consult
+the linked PRs for current head-specific results; no hosted pass is inferred
+from the local documentation checks. This final record adds only PR links and
+completed review facts. No merge, deployment or owner artwork selection has
+occurred. Merge #38 first; recheck #39's resulting base, file tree and checks
+before owner merge.
