@@ -6,7 +6,7 @@ import {createHash, randomUUID} from 'node:crypto';
 export const source = dirname(fileURLToPath(import.meta.url));
 export const assetSource = resolve(source, '../assets/brand/pigboard');
 export const artwork = Object.freeze({
-  'mascot-board-v1.png': '2c71d6bb56c00d716d7f686660021f7f1518a7ae1761f36c44e620dbb144e0cd',
+  'mascot-board-v2.png': 'edf1a941bdd3169d61cce533b4f770da4c8ee7179217f2c7583388796680a54f',
   'lockup-graphite-v1.png': '58bebdc91db30033ac9070bafdc951d5fb064328a88b64c11dd82b15df755bac',
   'avatar-graphite-v1.png': '1ee65c0d994cf39c0d10857140c99b7127d1056257d199e442f3671e309cb9d8'
 });
@@ -97,7 +97,7 @@ export function build({out = resolve(source,'../dist/website'), origin = process
   for (const file of ['app.js','styles.css','theme.css']) outputs.set(file, readFileSync(join(sourceDir,file)));
   for (const [file, expected] of Object.entries(artwork)) {
     const bytes = readFileSync(join(assetsDir,file));
-    if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error('Approved artwork changed: '+file);
+    if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error('Pinned artwork changed: '+file);
     outputs.set('assets/'+file, bytes);
   }
   outputs.set('robots.txt', mode.preview ? 'User-agent: *\nDisallow: /\n' : 'User-agent: *\nAllow: /\nSitemap: '+mode.origin+'/sitemap.xml\n');

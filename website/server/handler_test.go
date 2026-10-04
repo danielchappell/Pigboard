@@ -16,7 +16,8 @@ func fixture() fstest.MapFS {
 		"method.html":                {Data: []byte("method")},
 		"version.json":               {Data: []byte(`{"commit":"local","preview":true}`)},
 		"styles.css":                 {Data: []byte("body {}")},
-		"assets/mascot-board-v1.png": {Data: []byte("0123456789")},
+		"assets/mascot-board-v2.png": {Data: []byte("0123456789")},
+		"assets/mascot-board-v1.png": {Data: []byte("retired original")},
 		"unlisted.txt":               {Data: []byte("not generated")},
 		".private":                   {Data: []byte("not public")},
 	}
@@ -30,6 +31,8 @@ func TestRoutesAndBoundaries(t *testing.T) {
 	}{
 		{"GET", "/", 200, "<h1>Pigboard</h1>"}, {"HEAD", "/", 200, ""},
 		{"GET", "/index.html", 200, "<h1>Pigboard</h1>"}, {"GET", "/method.html", 200, "method"},
+		{"GET", "/assets/mascot-board-v2.png", 200, "0123456789"}, {"HEAD", "/assets/mascot-board-v2.png", 200, ""},
+		{"GET", "/assets/mascot-board-v1.png", 404, "404 page not found\n"},
 		{"GET", "/missing", 404, "404 page not found\n"}, {"GET", "/unlisted.txt", 404, "404 page not found\n"}, {"GET", "/assets/", 404, "404 page not found\n"},
 		{"GET", "/assets", 404, "404 page not found\n"}, {"GET", "/.private", 404, "404 page not found\n"},
 		{"GET", "/%2e%2e/.private", 404, "404 page not found\n"}, {"GET", "/assets/%5csecret", 404, "404 page not found\n"},
@@ -89,7 +92,7 @@ func TestStaticMetadataAndRanges(t *testing.T) {
 	if w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("stale version policy")
 	}
-	r := httptest.NewRequest("GET", "/assets/mascot-board-v1.png", nil)
+	r := httptest.NewRequest("GET", "/assets/mascot-board-v2.png", nil)
 	r.Header.Set("Range", "bytes=2-5")
 	w = httptest.NewRecorder()
 	handler.ServeHTTP(w, r)

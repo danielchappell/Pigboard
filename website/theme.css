@@ -1,43 +1,44 @@
-/* Pigboard / Plum, Rose and Amber
- * Pigboard's palette, using the shared Rovito component and spacing system.
- * The --rv-* aliases preserve that component interface; colors belong to Pigboard.
- * Approved artwork remains unchanged in assets/brand/pigboard/.
+/* Pigboard / Sunshine, Cobalt, Coral and Mint
+ * Pigboard colors on the shared Rovito component and spacing interface.
+ * Historical --rv-* names are compatibility aliases, not literal color names.
  */
 .pigboard-theme {
-  color-scheme: dark;
-  --pb-plum: #2d2233;
-  --pb-ivory: #fff5e9;
-  --pb-rose: #eeb7cf;
-  --pb-amber: #f1c777;
-  --rv-graphite: var(--pb-plum);
-  --rv-white: var(--pb-ivory);
-  --rv-teal: var(--pb-rose);
-  --rv-teal-deep: #8e5875;
-  --rv-coral: var(--pb-amber);
-  --rv-yellow: var(--pb-amber);
-  --rv-bg: var(--rv-graphite);
-  --rv-surface: #382b40;
-  --rv-surface-raised: #46354f;
-  --rv-surface-inset: #251c2b;
-  --rv-text: var(--rv-white);
-  --rv-text-secondary: #d6c5d2;
-  --rv-text-muted: #bea9b9;
-  --rv-border: #66516f;
-  --rv-control-border: #a68daf;
-  --rv-link: var(--rv-teal);
-  --rv-focus: var(--pb-amber);
-  --rv-action: var(--rv-coral);
-  --rv-action-hover: #ffdb98;
-  --rv-action-active: #deb364;
-  --rv-on-action: var(--pb-plum);
-  --rv-success: #88d5ae;
-  --rv-success-bg: #253e35;
-  --rv-warning: var(--rv-yellow);
-  --rv-warning-bg: #453c29;
-  --rv-danger: #ffaba5;
-  --rv-danger-bg: #483137;
-  --rv-info: var(--rv-teal);
-  --rv-info-bg: #412d3d;
+  color-scheme: light;
+  --pb-sun: #ffe36a;
+  --pb-paper: #fffaf0;
+  --pb-blue: #244de8;
+  --pb-ink: #183159;
+  --pb-coral: #ff8c73;
+  --pb-mint: #a7e4ca;
+  --rv-graphite: var(--pb-paper);
+  --rv-white: var(--pb-ink);
+  --rv-teal: var(--pb-ink);
+  --rv-teal-deep: var(--pb-ink);
+  --rv-coral: var(--pb-blue);
+  --rv-yellow: var(--pb-sun);
+  --rv-bg: var(--pb-paper);
+  --rv-surface: #ffffff;
+  --rv-surface-raised: #fff0a4;
+  --rv-surface-inset: var(--pb-paper);
+  --rv-text: var(--pb-ink);
+  --rv-text-secondary: #30415b;
+  --rv-text-muted: #30415b;
+  --rv-border: #929a9d;
+  --rv-control-border: var(--pb-ink);
+  --rv-link: var(--pb-ink);
+  --rv-focus: var(--pb-ink);
+  --rv-action: var(--pb-blue);
+  --rv-action-hover: #1635b9;
+  --rv-action-active: #102987;
+  --rv-on-action: #ffffff;
+  --rv-success: #164b39;
+  --rv-success-bg: var(--pb-mint);
+  --rv-warning: var(--pb-ink);
+  --rv-warning-bg: var(--pb-sun);
+  --rv-danger: #671d1d;
+  --rv-danger-bg: var(--pb-coral);
+  --rv-info: var(--pb-ink);
+  --rv-info-bg: #bdd8ff;
   --rv-font-display: ui-rounded, "Avenir Next", system-ui, sans-serif;
   --rv-font-body: "Avenir Next", system-ui, -apple-system, "Segoe UI", sans-serif;
   --rv-font-code: ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -89,11 +90,11 @@
   gap: var(--rv-space-2);
   min-height: 48px;
   padding: 0.7rem 1.15rem;
-  border: 1px solid transparent;
+  border: 2px solid var(--pb-ink);
   border-radius: var(--rv-radius-control);
   background: var(--rv-action);
   color: var(--rv-on-action);
-  font: 700 var(--rv-text-sm)/1.3 var(--rv-font-body);
+  font: 800 var(--rv-text-sm)/1.3 var(--rv-font-body);
   text-align: center;
   text-decoration: none;
   cursor: pointer;

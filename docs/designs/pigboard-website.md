@@ -109,7 +109,8 @@ No secrets appear in files, image layers, command output or the report.
 
 ## Experience and visual fidelity
 
-Owner refinement on 2026-10-04: retain the approved structure and logo but give
+Historical first palette refinement on 2026-10-04 (superseded by the
+[bold visual follow-up](pigboard-bold-visuals.md)): retain the approved structure and logo but give
 Pigboard its own color scheme. Use plum `#2d2233`, ivory `#fff5e9`, rose `#eeb7cf`
 and amber `#f1c777`, with related plum surfaces. Rose carries links and active
 navigation; amber carries primary actions and keyboard focus. The existing
