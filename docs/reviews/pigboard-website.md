@@ -131,3 +131,55 @@ Browser: at 1280×720 the heading begins at y202 and the primary action ends at
 spacing measurements. The full 324-test Linux result above predates these
 website-only repairs; affected checks were rerun, and current-head hosted checks
 will run the full suite. Fresh updated-commit review remains next.
+
+## Updated committed-code verdicts
+
+Both independent Sol reviewers returned CLEAN on
+`6f021755d477df2227e49d2cb269cfa45d370be9` after the repairs above.
+Each covered the original 19/19 files, 10/10 repair files, 13/13 criteria,
+5/5 testing items, 3/3 pages and a second sweep.
+
+The product reviewer verified the responsive grid and progressive-control source,
+unchanged asset hashes, generated output, access claims and CI boundary. It reran
+7/7 Node tests and syntax. Updated browser access was unavailable to that reviewer;
+its visual conclusion uses the inspected source, earlier independent baseline and
+recorded author screenshots. Go was absent from its shell. Its own seven-principle
+assessment found the three experience principles repaired and no remaining gaps
+in concise content, public boundaries, human/agent access or dependable evidence.
+
+The technical reviewer independently compared the 12 generated public paths with
+the handler allowlist, verified the rooted-file and placeholder regressions, and
+reran 7/7 Node tests, Go 1.26.6 race tests, vet, syntax and diff checks. Its own
+seven-principle assessment found the Secure gap repaired and the other principles
+preserved through direct routes, useful help, progressive interactions, shared
+content, equal noninteractive access and tested recovery/lifecycle behavior.
+
+The author also reran the complete disposable Linux/PostgreSQL suite on this
+updated code: **324/324 pass, zero skips**. Website runtime sources are unchanged
+by the following evidence/queue update. Hosted CI, owner merge and production
+release still require their own results.
+
+## Production setup discovery
+
+On 2026-10-04, read-only Fly inspection found `rovito-oauth` in `personal` and
+`pigboard-pilot-jdc` in the `pigboard` organization, with no existing dedicated
+Pigboard website app. GitHub reported no repository environments, variables or
+secret names. This is current setup evidence, not permission to reuse either app
+or its credentials.
+
+The owner selected GitHub/GitHub Actions. The proposed public target is
+`pigboard.scubapig.software` in a dedicated website app in the existing `pigboard`
+organization; a question for the owner is pending. W2/W3 remain at that named
+target decision before production implementation/provisioning. Retain the actual
+Rovito Go 1.26.6, Debian/nonroot Docker, cdg/shared-CPU/256MB Fly configuration,
+readiness and graceful shutdown approach. The GitHub pipeline must retain
+main/repository/current-revision guards, serial deployment, an app-scoped token,
+pinned Fly CLI, exact-revision smoke and recorded rollback state. Do not copy
+Rovito OAuth, downloads, database or Bitbucket-specific credentials.
+
+GitHub's current [runner reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+confirms `ubuntu-24.04-arm` for private repositories, so the matching official
+Linux ARM64 Fly CLI archive can be reused when this slice is groomed. Its
+[deployment guidance](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/control-deployments)
+documents environment controls and serialized deployment. No app, credential,
+DNS, production image or GitHub deployment setting was created or changed here.
