@@ -50,8 +50,8 @@ Plan artifact: rebrand lane in `docs/delivery-plan.md`, SHA-256
 `6387cb54480b9739f70b5b44c3ee1db2ec99c1cef5678ba29b79f5c11d94e63e`, before
 planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
 
-- `main_brand_plan_product`: 3/3 sections, 20/20 acceptance/technical criteria,
-  6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
+- `main_brand_plan_product`: 3/3 sections; reported 20/20 acceptance/technical
+  criteria (see the transparent recount below); 6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
   omitted naming/evidence/recovery requirement. Own principles: intuitive name
   and outcome; discoverable human/agent links; delightful preserved setup/style;
   token-saving explicit inventories/queue; secure unchanged signed evidence;
@@ -77,7 +77,7 @@ B1a: `7944989d5272e63203c55bb615bf692c0d3610f2` (14 files).
 B1b implementation: `def5729d4527f9df08e710424dcb6c333299985a` (13 files).
 
 - `final_brand_product_review`, fresh independent Sol: CLEAN for both commits.
-  Examined 26/26 unique files, 20/20 acceptance/technical criteria and 6/6
+  Examined 26/26 unique files, 19/19 acceptance/technical criteria and 6/6
   verification bullets; directly viewed all three assets and both reference
   artworks. Second sweep found no in-scope gap. Its own principles assessment:
   intuitive outcome/name; discoverable sources and usable guides; delightful
@@ -87,16 +87,27 @@ B1b implementation: `def5729d4527f9df08e710424dcb6c333299985a` (13 files).
 - `brand_artifact_technical_review`, independent Sol continuation/correction
   reviewer: CLEAN for both commits. This reviewer also examined the original
   stale-checkout draft and is not a new fresh agent for this round. Re-inspected
-  14/14 B1a files, 13/13 B1b files, 26/26 unique files, 20/20 criteria and 6/6
-  verification bullets; second sweep found no issue. Own principles: intuitive
+  14/14 B1a files, 13/13 B1b files, 26/26 unique files; reported 20/20 criteria
+  (see the recount below) and 6/6 verification bullets; second sweep found no issue. Own principles: intuitive
   naming with working commands; discoverable human/agent guides and assets;
   delightful preserved setup/style; token-saving one source/queue; secure signed
   history and production boundaries; equal noninteractive contracts; dependable
   baseline/status/capability/recovery distinctions.
 
 This is documentation/design artifact review, not runtime-code review. The
-reviewer's earlier status finding is resolved by the direction's current-evidence
-link and explicit current-main baseline. No unresolved in-scope finding remains.
+original draft's status finding is resolved by the direction's current-evidence
+link and explicit current-main baseline. A later product review of bookkeeping
+commit `d89b3b6` correctly found that the final gate still needed a second fresh
+reviewer. `fresh_brand_technical` is independently reviewing the committed
+artifacts; the gate remains incomplete until its findings are resolved.
+
+Coverage correction: the earlier product-plan and committed-artifact reports
+stated 20 acceptance/technical criteria. The actual plan has 19: B1a has six
+acceptance and five technical criteria; B1b has four of each. Original reported counts are labeled above; the correct denominator is 19. The six testing bullets bring the total to 25,
+consistent with the technical plan review. This recount does not add a new
+requirement or change an earlier review's scope. `final_brand_product_review`
+independently recounted and reconfirmed 19/19 criteria, 26/26 files and 6/6 testing
+bullets, with no omitted requirement and its implementation CLEAN unchanged.
 
 Author validation: 108 relative link occurrences resolve at B1a and 103 in B1b's
 changed documents; the combined changed set has 152, all resolving. The exact
@@ -116,5 +127,5 @@ sources; secure preserved operational identifiers; equal worker guidance;
 dependable exact evidence and honest implementation limits. This assessment is
 separate from the independent verdicts above.
 
-The final bookkeeping commit only records these completed reviews and queue
-status. PR checks, merge, deployment and final artwork approval remain separate.
+Bookkeeping records the individual reviews and remaining gate accurately.
+PR checks, merge, deployment and final artwork approval remain separate.
