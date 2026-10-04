@@ -114,11 +114,19 @@ the present page outcome and was not silently added to the slice.
 
 ## Delivery state
 
-The implementation above has two independent CLEAN committed-code reviews. This
-companion update records their evidence and updates the queue; its exact commit
-receives an affected-document review before the stacked PR is opened. The PR
-will identify the final reviewed revision and current hosted checks.
+The implementation above has two independent CLEAN committed-code reviews.
+Both reviewers also returned CLEAN for evidence-document revision
+`526de3c5f68b9ade060c77080a2d00eb00aa580d`: 2/2 affected documents, preserved
+17/17 overall coverage, all criteria and principles, and a second sweep.
 
-Hosted CI and PR publication remain the next stages. Owner aesthetic acceptance,
-merge and production release remain separate. W1a depends on PR #40; W2/W3
-production target decisions remain unchanged. No recovery-batch work is included.
+[PR #41](https://github.com/danielchappell/ski-stack/pull/41) is open against
+`codex/pigboard-website` and depends on PR #40. Its description identifies the
+final reviewed revision; [Checks](https://github.com/danielchappell/ski-stack/pull/41/checks)
+provides hosted results for the current head. This publication bookkeeping also
+receives an affected-document review; do not treat a historical verdict as
+covering a later implementation change.
+
+Owner aesthetic acceptance, merge and production release remain separate.
+W2/W3 production target decisions remain unchanged. No recovery-batch work is
+included. Merge W1 first, reconcile the follow-up base, verify the tested tree and
+current checks, then merge only under owner authority.
