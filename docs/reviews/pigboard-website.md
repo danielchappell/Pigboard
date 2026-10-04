@@ -317,8 +317,9 @@ clear, and local/review/CI/release evidence is separate.
 Two fresh independent Sol reviewers returned CLEAN on
 `c6e3f012e91b015c74381c0665b98a0ff22bff7c` against `9947f9a`. Each inspected
 9/9 changed files, 6/6 acceptance and 7/7 technical criteria, 3/3 pages and
-metadata descriptions, 3/3 tab bindings, 6/6 guide anchors and the whole PR's
-20/20 paths. The technical reviewer also enumerated 5/5 testing items and
+metadata descriptions, 3/3 tab bindings and 6/6 guide anchors. Both verified the whole PR still has
+20 changed paths; these content reviews covered the nine-file copy delta.
+The technical reviewer also enumerated 5/5 testing items and
 independently reran 7/7 Node tests. Both completed a second sweep and found no
 in-scope issue. The product reviewer inspected the desktop screenshot; both
 identify the browser checks as author evidence rather than their own browser run.
