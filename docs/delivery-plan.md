@@ -14,11 +14,11 @@ work does not advance its outcomes or authorize another recovery PR.
 
 | Order | Outcome | Stage and dependency | Size including docs/review |
 | --- | --- | --- | --- |
-| B1a | Introduce the Pigboard product identity and mascot series | Logos approved; [PR #38](https://github.com/danielchappell/ski-stack/pull/38) open; current reviews/checks on PR; owner merge pending | Documentation/design Task; 14 files, about 6 human hours |
-| B1b | Complete naming in technical guides and historical narrative | [PR #39](https://github.com/danielchappell/ski-stack/pull/39) open, stacked on #38; current reviews/checks on PR; owner merge pending | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
+| B1a | Introduce the Pigboard product identity and mascot series | Logos approved; [PR #38](https://github.com/danielchappell/ski-stack/pull/38) merged as `6020e17`; reviewed tree preserved | Documentation/design Task; 14 files, about 6 human hours |
+| B1b | Complete naming in technical guides and historical narrative | [PR #39](https://github.com/danielchappell/ski-stack/pull/39) merged as `533a1c9`; reviewed tree preserved | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
 | B3 | Resolve runtime identity compatibility | Discovery pending; new writes and old signed history need an explicit migration contract | Task; scope before sizing dependent Stories |
-| B4 | Build the Rovito-based website path | Exact source/design recovered; page map, copy and production target to resolve | Task first; local preview need not wait for production ownership |
-| Later | Runtime rename and marketing website | Provisional — not ready for delivery | Groom complete Stories after applicable B3/B4 decisions; each <=20 files and <2 human days |
+| B4 / W1 | Build the Rovito-based website path | [Design](designs/pigboard-website.md) reviewed CLEAN; [local website plan](plans/pigboard-website.md) reviewed CLEAN; implementation and local verification in progress | One 19-file Story, 12–14 human hours; [evidence](reviews/pigboard-website.md) |
+| W2 / W3 | Match website deployment infrastructure, then release | Provisional — not ready for delivery; GitHub Actions selected by owner; app and domain remain unresolved | Same Rovito Go/Docker/Fly pattern; scoped implementation and live verification after decisions |
 | Release | Publish and verify | Target/domain and owner release authority required | Exact-revision checks, route/health checks and rollback |
 
 ### B1a — Introduce the Pigboard product identity and mascot series
