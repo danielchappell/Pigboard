@@ -80,7 +80,7 @@ export function build({out = resolve(source,'../dist/website'), origin = process
   const layout = readFileSync(join(sourceDir,'layout.html'),'utf8');
   const outputs = new Map();
   const render = (text, values) => text.replace(/\{\{(\w+)\}\}/g, (_, key) => {
-    if (!(key in values)) throw new Error('Unknown page placeholder: '+key);
+    if (!Object.hasOwn(values, key)) throw new Error('Unknown page placeholder: '+key);
     return values[key];
   });
   for (const [file,title,description] of routes) {

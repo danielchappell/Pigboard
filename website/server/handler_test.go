@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -10,12 +12,13 @@ import (
 
 func fixture() fstest.MapFS {
 	return fstest.MapFS{
-		"index.html":      {Data: []byte("<h1>Pigboard</h1>")},
-		"method.html":     {Data: []byte("method")},
-		"version.json":    {Data: []byte(`{"commit":"local","preview":true}`)},
-		"styles.css":      {Data: []byte("body {}")},
-		"assets/logo.png": {Data: []byte("0123456789")},
-		".private":        {Data: []byte("not public")},
+		"index.html":                 {Data: []byte("<h1>Pigboard</h1>")},
+		"method.html":                {Data: []byte("method")},
+		"version.json":               {Data: []byte(`{"commit":"local","preview":true}`)},
+		"styles.css":                 {Data: []byte("body {}")},
+		"assets/mascot-board-v1.png": {Data: []byte("0123456789")},
+		"unlisted.txt":               {Data: []byte("not generated")},
+		".private":                   {Data: []byte("not public")},
 	}
 }
 func TestRoutesAndBoundaries(t *testing.T) {
@@ -27,7 +30,7 @@ func TestRoutesAndBoundaries(t *testing.T) {
 	}{
 		{"GET", "/", 200, "<h1>Pigboard</h1>"}, {"HEAD", "/", 200, ""},
 		{"GET", "/index.html", 200, "<h1>Pigboard</h1>"}, {"GET", "/method.html", 200, "method"},
-		{"GET", "/missing", 404, "404 page not found\n"}, {"GET", "/assets/", 404, "404 page not found\n"},
+		{"GET", "/missing", 404, "404 page not found\n"}, {"GET", "/unlisted.txt", 404, "404 page not found\n"}, {"GET", "/assets/", 404, "404 page not found\n"},
 		{"GET", "/assets", 404, "404 page not found\n"}, {"GET", "/.private", 404, "404 page not found\n"},
 		{"GET", "/%2e%2e/.private", 404, "404 page not found\n"}, {"GET", "/assets/%5csecret", 404, "404 page not found\n"},
 		{"GET", "/v1/authority/me", 404, "404 page not found\n"}, {"POST", "/", 405, "Method not allowed\n"},
@@ -86,7 +89,7 @@ func TestStaticMetadataAndRanges(t *testing.T) {
 	if w.Header().Get("Cache-Control") != "no-store" {
 		t.Fatal("stale version policy")
 	}
-	r := httptest.NewRequest("GET", "/assets/logo.png", nil)
+	r := httptest.NewRequest("GET", "/assets/mascot-board-v1.png", nil)
 	r.Header.Set("Range", "bytes=2-5")
 	w = httptest.NewRecorder()
 	handler.ServeHTTP(w, r)
@@ -97,5 +100,39 @@ func TestStaticMetadataAndRanges(t *testing.T) {
 	handler.ServeHTTP(w, httptest.NewRequest("HEAD", "/readyz", nil))
 	if w.Code != 200 || w.Body.Len() != 0 {
 		t.Fatal("HEAD probe body")
+	}
+}
+
+func TestRootedFilesystemRejectsSymlinkEscape(t *testing.T) {
+	parent := t.TempDir()
+	dir := filepath.Join(parent, "site")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for name, data := range map[string]string{"index.html": "<h1>Pigboard</h1>", "version.json": `{"commit":"local"}`} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(data), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(parent, "secret.txt"), []byte("OUTSIDE_SENTINEL"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	// Even an allowlisted filename cannot escape the root through a symlink.
+	if err := os.Symlink("../secret.txt", filepath.Join(dir, "styles.css")); err != nil {
+		t.Fatal(err)
+	}
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	site := root.FS()
+	if err := Validate(site); err != nil {
+		t.Fatal(err)
+	}
+	w := httptest.NewRecorder()
+	Handler(site).ServeHTTP(w, httptest.NewRequest("GET", "/styles.css", nil))
+	if w.Code != 404 || strings.Contains(w.Body.String(), "OUTSIDE_SENTINEL") {
+		t.Fatalf("escaped public root: %d %s", w.Code, w.Body)
 	}
 }

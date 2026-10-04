@@ -24,6 +24,7 @@
         announce('Text selected. Use your copy shortcut.');
       }
     });
+    button.hidden = false;
   });
   document.querySelectorAll('[data-tablist]').forEach(list => {
     const tabs = Array.from(list.querySelectorAll('[data-panel]'));

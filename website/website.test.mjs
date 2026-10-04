@@ -39,6 +39,7 @@ test('complete preview has working local links, semantic pages and unchanged app
   }
   const home=read(options.out,'index.html');
   assert.match(home,/data-tablist[^>]*hidden/);
+  assert.match(home,/data-copy="feature-brief" hidden/);
   for (const panel of [...home.matchAll(/<section[^>]*class="command-panel"[^>]*>/g)]) assert.doesNotMatch(panel[0],/hidden/);
   assert.equal([...home.matchAll(/class="command-panel"/g)].length,3);
   for (const [file,hash] of Object.entries(expectedArtwork)) {
@@ -70,6 +71,8 @@ test('failed source validation preserves the old build; successful replacement r
   writeFileSync(join(options.out,'obsolete.html'),'old route');
   const sourceDir=join(options.root,'source'); cpSync(source,sourceDir,{recursive:true});
   writeFileSync(join(sourceDir,'pages/index.html'),'{{unknown}}');
+  assert.throws(()=>build({...options,sourceDir}),/Unknown page placeholder/);
+  writeFileSync(join(sourceDir,'pages/index.html'),'{{constructor}}');
   assert.throws(()=>build({...options,sourceDir}),/Unknown page placeholder/);
   assert.equal(read(options.out,'index.html'),before);
   assert.equal(read(options.out,'obsolete.html'),'old route');

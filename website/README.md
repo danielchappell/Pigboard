@@ -47,7 +47,8 @@ The repository's ordinary `npm test` also discovers the website Node tests;
 its existing PostgreSQL integration prerequisites still apply to the full suite.
 Browser checks cover desktop/mobile, every primary link, keyboard tabs, copy
 feedback and readable content without JavaScript. The preview and eventual
-container use the same Go executable and restrictive public-file handler.
+container use the same Go executable, generated-file allowlist and rooted
+filesystem handler, which rejects symlink escapes.
 
 ## Build recovery
 
@@ -70,9 +71,10 @@ The shared visual tokens, styles, page patterns and Go serving approach come fro
 Rovito revision `32875af00a19241541296bbb10543ec29fcb7a42`: `website/`,
 `internal/website`, `Dockerfile.oauth` and `deploy/fly/oauth.toml`. Internal CSS
 names such as `--rv-*` retain that shared origin. Pigboard adapts the copy, opaque
-wordmark crop and progressive enhancement; all three owner-approved PNGs under
+wordmark crop, laptop hero composition and progressive enhancement; all three owner-approved PNGs under
 `assets/brand/pigboard/` are copied byte-for-byte and checked against pinned hashes.
-Tab panels are readable before JavaScript; script initialization adds tab roles,
+Tab panels are readable before JavaScript; copy controls remain hidden until
+their handler is ready. Script initialization adds tab roles,
 keyboard selection and hiding. Clipboard denial selects the text with feedback.
 
 GitHub and GitHub Actions are the owner's chosen source and CI platform. The

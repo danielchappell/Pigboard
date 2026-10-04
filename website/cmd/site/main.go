@@ -20,7 +20,12 @@ func main() {
 	listen := flag.String("listen", "127.0.0.1:8772", "listen address (loopback by default)")
 	directory := flag.String("site", "dist/website", "built public website directory")
 	flag.Parse()
-	site := os.DirFS(*directory)
+	root, err := os.OpenRoot(*directory)
+	if err != nil {
+		log.Fatalf("cannot open website directory; run node website/build.mjs: %v", err)
+	}
+	defer root.Close()
+	site := root.FS()
 	if err := server.Validate(site); err != nil {
 		log.Fatal(err)
 	}

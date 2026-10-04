@@ -96,3 +96,38 @@ workflow does not deploy or use production secrets.
 These are author/local results for the implementation prepared for commit.
 Fresh independent committed-code reviews and hosted checks remain required.
 No website deployment or production provisioning has occurred.
+
+## First committed-code review and repairs
+
+Both independent Sol reviewers examined commit
+`a0f34b2f847892fad35e755c2faca768ec1c2a7f` and returned NOT CLEAN.
+Each covered 19/19 changed files, 6/6 acceptance criteria, 7/7 technical criteria,
+5/5 testing bullets, 3/3 pages and a second sweep of the affected contracts.
+
+- Product reviewer: P2 headline/action below the first 1280×720 screen; P3 an
+  inert copy button in the script-free page. Both are real in-scope experience
+  defects. The hero now places the unchanged art beside the lead at desktop and
+  tablet sizes; mobile remains stacked. Copy controls appear only after their
+  handler is installed. Its independent principle assessment found these gaps
+  in intuitive/discoverable/delightful behavior; concise content, noninteractive
+  agent access, explicit availability and recovery met the other principles.
+- Technical reviewer: P2 unlisted files and symlinks could expose content outside
+  the generated site. This is a real in-scope boundary defect. The handler now
+  allows only generated public filenames and the executable uses Go's rooted
+  filesystem. A real-filesystem regression covers an allowlisted symlink escape,
+  alongside an unlisted-file denial. Its independent Secure assessment identified
+  that gap; direct routes/setup, progressive content, shared build, equal human/
+  agent access and observable recovery met the remaining principles.
+- Author also corrected inherited-object placeholder names being accepted;
+  the builder now requires an own template value and tests that rejection.
+
+Affected validation after repairs: 7/7 Node regressions, JS syntax, generated
+build, Go race tests and vet pass. The updated executable again refused bad
+startup and passed live route/header/readiness and SIGINT/SIGTERM checks.
+Browser: at 1280×720 the heading begins at y202 and the primary action ends at
+439px; at 1024×768 the action ends at 393px with no horizontal overflow. The
+390px mobile layout and live copy feedback pass. The script-free fixture shows
+3/3 panels with the copy control hidden. These supersede the earlier hero
+spacing measurements. The full 324-test Linux result above predates these
+website-only repairs; affected checks were rerun, and current-head hosted checks
+will run the full suite. Fresh updated-commit review remains next.
