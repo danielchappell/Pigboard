@@ -22,7 +22,7 @@ Live production configuration has not been verified by this rebrand.
 
 ## Current design review
 
-Artifact: `docs/brand-rebrand.md`, SHA-256
+Design artifact before the owner-approval status update: `docs/brand-rebrand.md`, SHA-256
 `33f1ea82ab62d3ec74fdddbcb2a5912765c51f334b24ade65e754424be0cb3c8`.
 
 `main_brand_design_product` (fresh independent Sol): CLEAN. Examined 8/8
@@ -119,7 +119,7 @@ checks passed. No runtime tests are needed for these prose/assets changes.
 The original pig was compared directly; the three generated PNGs retain their
 original bytes. Browser inspection verified the mascot on graphite and cream
 and the compact avatar at 128 px. The asset guide records alpha/background and
-favicon limitations. These are candidate assets for owner feedback.
+favicon limitations. They were candidates during this review; owner approval is recorded below.
 
 Author implementation assessment: intuitive purpose and name; discoverable
 working links; delightful consistent character/style; token-saving central
@@ -183,6 +183,14 @@ preserved tree `c030b0b916e4c961a7526c5f4d23a784d3c4359e` exactly.
 GitHub starts the repository's Node/PostgreSQL checks for each PR head. Consult
 the linked PRs for current head-specific results; no hosted pass is inferred
 from the local documentation checks. This final record adds only PR links and
-completed review facts. No merge, deployment or owner artwork selection has
-occurred. Merge #38 first; recheck #39's resulting base, file tree and checks
+completed review facts. No merge or deployment has occurred. Merge #38 first; recheck #39's resulting base, file tree and checks
 before owner merge.
+
+
+## Owner artwork approval
+
+On 4 October 2026, after viewing the series, the owner said: “Logos look good,
+I'm happy with them.” This approves the three visual assets. The files are
+unchanged; their export and favicon limitations remain documented. Earlier
+candidate-status statements describe the review stage before this approval.
+This approval does not authorize a production deployment or PR merge.
