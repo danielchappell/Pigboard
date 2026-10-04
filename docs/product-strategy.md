@@ -1,7 +1,8 @@
 # Pigboard product strategy and positioning
 
 Product name chosen by the owner on 21 September 2026: **Pigboard**.
-Earlier architecture, research and implementation records use the name Ski Stack.
+Pigboard is the name used throughout current documentation. Exact historical
+evidence and operational compatibility identifiers retain their original names.
 
 21 September 2026. Conversation decision record and positioning hypotheses.
 The owner endorsed the product direction below. Customer demand, differentiation,
@@ -17,7 +18,7 @@ method. Give it a feature, and it coordinates small, reviewed changes against
 the agreed outcome, involving people at the decisions that matter.
 
 The owner endorsed this direction on 21 September 2026 and identified the existing
-Ski Stack process as a working starting point from their experience. Reuse that
+Pigboard process as a working starting point from their experience. Reuse that
 process; first settle the architecture, ordered roadmap and core functionality.
 Then improve the method through observed delivery outcomes. This is authority
 to develop the foundation, not a claim that the hosted product has already passed

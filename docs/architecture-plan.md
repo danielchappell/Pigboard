@@ -1,4 +1,4 @@
-# Ski Stack architecture and development direction
+# Pigboard architecture and development direction
 
 Updated 26 September 2026 for the Pigboard pilot. High-level design for
 independent review. This defines the
@@ -8,7 +8,7 @@ requires this design gate before grooming the delivery plan.
 
 ## Pigboard direction and foundation boundary
 
-The owner has chosen an opinionated AI SDLC, using the existing Ski Stack method
+The owner has chosen an opinionated AI SDLC, using the existing Pigboard method
 as the starting process. Settle the architecture and dependency-ordered roadmap,
 then deliver the core in small usable slices. Improve the method after we can
 operate and observe it on that foundation. Commercial discovery is not a blocker
@@ -38,7 +38,7 @@ Agents publish work and evidence back to the ticket. Humans retain the decisions
 and permissions assigned to them. A control agent can use MCP to inspect the
 same team and create work through the same authorized application commands.
 
-Ski Stack is a hosted service. Coordination and cloud execution continue with
+Pigboard is a hosted service. Coordination and cloud execution continue with
 developers' laptops off, and authorized teammates can see progress. Roles,
 skills, workflow mappings and runner configuration are reusable packages rather
 than individual UI setup. Cursor and Codex are intended integrations, with
@@ -55,7 +55,7 @@ Prove one complete hosted journey before expanding to a general SaaS:
 - One team, Jira Pigboard `PIG`, one configured repository, one researcher role and one
   active cloud job, with Cursor as the first candidate provider.
 - An authorized teammate labels a Task `ai-enabled` while it is in To Do.
-- Ski Stack reports queued, then provider-accepted progress, and publishes
+- Pigboard reports queued, then provider-accepted progress, and publishes
   findings and evidence for human review. Pigboard's `In Review` column is the
   human handoff status; transition remains manual unless D1 verifies a
   full server-enforced eligibility guard.

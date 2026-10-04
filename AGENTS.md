@@ -1,7 +1,10 @@
-# Ski Stack Repo Guidance
+# Pigboard Repo Guidance
 
-Ski Stack is a queue-driven agent work system. Keep the default surface flat:
-skills and agent role cards are reusable assets; the queue runtime is optional.
+Pigboard is an opinionated AI development process. The [README](README.md)
+records the available tools and their limits; the [product strategy](docs/product-strategy.md)
+and [brand direction](docs/brand-rebrand.md) define the intended outcome and identity.
+Keep the default surface flat: skills and agent role cards are reusable assets;
+the queue runtime is optional.
 
 Do not reintroduce a mandatory chief-of-staff hierarchy, local-only `.scuba`
 control plane, or default wide subagent swarm. If a workflow needs orchestration,
@@ -17,14 +20,15 @@ APIs unless a dependency removes real complexity.
 
 The product is named Pigboard. Its agreed direction is an opinionated AI SDLC
 whose supported development method we maintain and improve. Settle the architecture,
-ordered roadmap and core functionality first, using the existing Ski Stack process
+ordered roadmap and core functionality first, using the existing Pigboard process
 as the starting method. [Product definition](docs/product.md) records that decision.
 Board/runner adapters, packages and MCP enable the method; unrestricted workflow
-configurability is not the customer promise. The current implementation remains
-the GitHub Projects/local Codex MVP; product goals are not shipped capabilities.
+configurability is not the customer promise. The current implementation and
+acceptance limits are documented in the README; product goals are not shipped
+capabilities.
 
 The following principles are adopted from Rovito's ratified working agreement.
-Their meaning is preserved, with product-specific wording adapted to Ski Stack.
+Their meaning is preserved, with product-specific wording adapted to Pigboard.
 
 ### Product principles
 
@@ -34,7 +38,7 @@ board and runner integrations, MCP, packages, authentication, and documentation.
 1. **Intuitive.** Work the way users reasonably expect. Use familiar language,
    consistent commands and sensible defaults. Everyday work should not require
    understanding board APIs, runner internals, or claim protocols.
-2. **Discoverable.** Help users find what Ski Stack can do and learn while using it.
+2. **Discoverable.** Help users find what Pigboard can do and learn while using it.
    Give humans useful help, examples and guided choices. Give agents clear tool
    descriptions, structured inputs and actionable errors.
 3. **Delightful experience.** Respect the user's time and attention. Avoid
@@ -80,15 +84,15 @@ A CLEAN verdict requires this check and no unresolved in-scope gaps. Proposed
 scope increases still require the user's approval before implementation.
 
 
-## How we design and develop Ski Stack
+## How we design and develop Pigboard
 
-These are working rules for the humans and agents building Ski Stack/Pigboard.
+These are working rules for the humans and agents building Pigboard.
 They do not silently become runtime or package requirements. The chosen product
 direction is opinionated, but each customer-visible process rule and fast path
 still needs an explicit scoped design and verification.
 
 Follow [our development lifecycle](docs/development-workflow.md) for substantive
-software work. Use Ski Stack's own roles to develop Ski Stack: Planner and
+software work. Use Pigboard's own roles to develop Pigboard: Planner and
 Researcher -> Architect -> independent design review -> Groomer -> Implementation
 Planner and independent plan review -> Implementer -> fresh independent
 committed-code review -> PR/Babysit -> Ready for Owner.
@@ -114,7 +118,7 @@ verified outcomes. A skipped gate requires an honest retrospective review.
 Always use `write-pr-sized-stories` when writing, splitting, or revising our
 development work items. Resolve that installed skill from the active skill
 catalog so this guidance works on other teammates' machines too.
-For Ski Stack development, every Story must:
+For Pigboard development, every Story must:
 
 - Deliver one complete, usable behavior or technical outcome.
 - Fit in a single reviewable PR changing no more than 20 files in total,

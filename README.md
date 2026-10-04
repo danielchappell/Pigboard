@@ -1,11 +1,28 @@
-# Ski Stack
+# Pigboard
 
-Ski Stack gives you a flat set of reusable AI worker roles and skills, plus an
-optional queue runtime that can drive those workers from a project-management
-board.
+Pigboard is an opinionated AI development process. We are building it to take a
+feature through product discovery and small, reviewed changes, while your team
+controls product decisions and what ships. We maintain and improve the method.
+
+Our initial audience is engineering leads with an existing application, quality
+standards and developers already using coding agents. The aim is to reduce the
+coordination between sessions: preserving decisions, handing over context,
+getting the right reviews and understanding what is ready.
+
+This repository includes reusable worker roles and skills, the GitHub Projects/
+local Codex runtime, a standalone Cursor command, offline workflow preview,
+Jira metadata diagnostics and first-host/owner foundations. The guides below
+explain each available tool and its limits. These foundations do not yet establish
+complete hosted Jira delivery or live acceptance.
+
+Start with the [product definition](docs/product.md),
+[strategy and intended market](docs/product-strategy.md),
+[brand direction](docs/brand-rebrand.md), or [approved logos](assets/brand/pigboard/README.md).
+Our visual identity pairs the established scuba pig with a floating Kanban board
+in the Rovito family.
 
 The skills and agents stay usable manually. The setup/runtime layer is separate:
-it can create a GitHub Project, provision the fields Ski Stack needs, claim work,
+it can create a GitHub Project, provision the fields Pigboard needs, claim work,
 print a worker prompt, and apply the worker result back to the board.
 
 ## Agents
@@ -116,11 +133,11 @@ For local `gh` auth, grant GitHub Projects scopes once:
 gh auth refresh --scopes project
 ```
 
-Clone and test:
+Clone and test (the repository URL retains its existing identifier):
 
 ```bash
-git clone git@github.com:danielchappell/ski-stack.git
-cd ski-stack
+git clone git@github.com:danielchappell/ski-stack.git pigboard
+cd pigboard
 npm ci
 npm test
 ```
@@ -143,10 +160,10 @@ GitHub/Codex daemon are separate workflows.
 
 Follow the [development workflow](docs/development-workflow.md) and
 [architecture plan](docs/architecture-plan.md) before choosing implementation
-work. These describe how we develop Ski Stack; they are not customer runtime
+work. These describe how we develop Pigboard; they are not customer runtime
 requirements.
 
-Ski Stack is intentionally small and dependency-light. For most local work,
+Pigboard is intentionally small and dependency-light. For most local work,
 start with:
 
 ```bash
@@ -170,7 +187,7 @@ intentionally validating a real Project.
 
 ## Create A GitHub Project
 
-Create a GitHub Project and provision the Ski Stack fields/options:
+Create a GitHub Project and provision the Pigboard fields/options:
 
 ```bash
 npm run setup:github-project
@@ -181,7 +198,7 @@ By default, this runs interactively. It uses the authenticated GitHub user from
 enroll. If you run it from a cloned GitHub repo, it offers `remote.origin.url` as
 the first repo.
 
-By default, setup copies the bundled Ski Stack Kanban template so the Project has
+By default, setup copies the bundled Pigboard Kanban template so the Project has
 `Queue Board` and `All Items` views. To force a plain API-created Project:
 
 ```bash

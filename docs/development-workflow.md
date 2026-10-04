@@ -1,8 +1,8 @@
-# How we develop Ski Stack
+# How we develop Pigboard
 
 These are the owner's standing instructions for substantive software lifecycle
 work across projects: discovery, design, architecture, grooming, planning,
-implementation, review and release. Use the Rovito/Ski Stack process below.
+implementation, review and release. Use the Rovito/Pigboard process below.
 They govern how we develop products, not requirements imposed on their users.
 Do not apply the full ceremony to an ordinary question or a trivial edit.
 Explicit task instructions and repository-specific constraints still apply.
@@ -161,7 +161,7 @@ review; do not repeat identical checks merely for ceremony.
 At handoff, record exact state and outstanding work. Historical evidence remains
 historical; do not mark implementation complete by rewriting a plan or ticket.
 
-## Applying Ski Stack to itself
+## Applying Pigboard to itself
 
 Use the existing roles as our development process. This does not require a new
 runtime feature or an automated board before we can follow it.
@@ -191,16 +191,16 @@ Keep the current runtime handoff contract unchanged in this documentation Task.
 
 Recorded 21 September 2026 from Rovito's working agreement at origin/main
 32875af00a19241541296bbb10543ec29fcb7a42, its independently reviewed lifecycle
-designs and active delivery records, Ski Stack's role cards and adversarial-review
+designs and active delivery records, Pigboard's role cards and adversarial-review
 skill, and the owner's corrections in this task. The owner explicitly requires
 architecture and development mapping before grooming/selecting the first Story.
 
 Rovito records different stack merge strategies at different times. Do not copy
-its queue-specific merge authorization into Ski Stack. Ski Stack retains its
+its queue-specific merge authorization into Pigboard. Pigboard retains its
 owner-merge boundary. This working agreement requires independent committed-code
 review before opening a PR; generic skill advice to open earlier does not waive
 that gate. Repository-specific checks are npm test; Rovito's Go/native release
-commands are not Ski Stack requirements.
+commands are not Pigboard requirements.
 
 The active product architecture is in [architecture-plan.md](architecture-plan.md).
 It leads to the delivery plan after the design gate; existing pilots are evidence,

@@ -1,6 +1,6 @@
-# Architecture
+# Pigboard runtime architecture
 
-Ski Stack separates reusable agent capability from queue-driven automation.
+Pigboard separates reusable agent capability from queue-driven automation.
 
 ## Principles
 
