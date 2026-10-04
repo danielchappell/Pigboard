@@ -6,23 +6,25 @@ as well as its style. The three Pigboard logos are approved.
 
 ## Outcome and visitor journey
 
-Give an engineering lead a clear account of Pigboard: an opinionated AI
-development process being built to carry a feature from discovery to small,
-reviewed changes, with the team directing the product and deciding what ships.
-The site should make that destination understandable and distinguish it from
-the tools and limits available now. It must not claim proven market fit, measured
-savings, autonomous correctness or a publicly available hosted product.
+Give a product or engineering lead with an existing technical team a clear
+customer promise: delegate delivery while retaining project-level control. The
+owner selected this audience and asked for outcomes, observability, control and
+dependability to lead the copy. Explain the supported AI software development
+lifecycle as the mechanism behind those benefits.
 
-The visitor reads the home page, explores the maintained method, then checks
-current availability. Primary action: “Explore the method”; secondary action:
-“What's available”. All destinations work for a visitor without repository
-access. The GitHub repository is private, so it is not a public onboarding CTA.
-Do not invent a waitlist, contact address, pricing, downloads or account flow.
+The site must distinguish this intended product from current private tools.
+It must not claim proven market fit, measured savings, autonomous correctness,
+public hosted access or battle-tested hosted operation. The visitor reads the
+home page, explores the delivery journey, then checks current availability.
+Primary action: “See the delivery journey”; secondary action: “What's available”.
+All destinations work without repository access. The private GitHub repository
+is not a public onboarding CTA. Do not invent a waitlist, contact address,
+pricing, downloads or account flow.
 Agents can read the same ordinary HTML, follow links and inspect version metadata;
 there is no separate marketing API or mandatory JavaScript navigation.
 
-Pages: `/` introduces the outcome and audience; `/method.html` explains discovery,
-design, small increments, independent review and human decisions;
+Pages: `/` introduces the outcome and audience; `/method.html` explains how the intended journey helps the team direct,
+inspect and accept work, supported by discovery, verification and review;
 `/status.html` separates implemented repository tools from hosted product goals.
 A sample feature journey is explicitly illustrative, with no claim it ran.
 The current-status page states that hosted access is not publicly available,
@@ -183,3 +185,100 @@ in B3; website work does not migrate signed history or package identifiers.
 | Secure | Public files only, restrictive headers, isolated app/token, no private host/database/board path; production choices remain explicit. |
 | Agents are equal | Semantic HTML, direct URLs, exact version metadata and noninteractive build/server/smoke interfaces. |
 | Dependable | Claims, preview, reviewed code, CI, owner approval and deployed revision stay distinct; failed build/deploy and rollback have observable outcomes. |
+
+## Customer promise refinement — 4 October 2026
+
+This supersedes the website's initial process-led wording and the candidate
+marketing language in `docs/product-strategy.md`; it does not change the product
+architecture or claim its goals have shipped. The owner approved the palette
+first, then requested this refinement and selected a lead with an existing
+technical team as the first audience.
+
+### Evidence and judgment
+
+The product definition and strategy already establish an opinionated AI SDLC,
+team ownership, meaningful human decisions, visible evidence and dependable
+recovery as the direction. The September 21 build-versus-buy research found
+substantial overlap in agent orchestration, review and progress visibility. It
+is historical research, not a fresh competitor comparison. Do not claim these
+capabilities are unique or disparage alternatives. The value still to prove is
+less coordination per accepted feature, with quality and cost kept visible.
+
+The owner reports successful use of the starting development method. That is
+not proof of battle-tested hosted delivery for customer teams. Keep that phrase
+as an internal product standard until repeated accepted outcomes, changes of
+requirements, failures/recovery and teammate handoffs establish it. There is
+no measured ROI or validated willingness to pay to advertise.
+
+The problem is not a missing list of features. The old page led with maintaining
+our method, small changes and review mechanics. A lead buys progress they can
+trust and direct. Reframe the same agreed direction around that outcome.
+
+### Message hierarchy and alternatives
+
+- Lead: **Delegate delivery. Stay in control.**
+- Category: **AI software delivery for technical teams.**
+- Supporting promise: **We're building Pigboard to carry your team's work from idea to delivery.
+  Set priorities, see what is ready and what needs attention, and make release
+  decisions with evidence you can inspect.**
+- Three benefits: **Know where delivery stands; Make the decisions that matter;
+  Keep the whole team moving.** Support each with a concrete customer situation.
+- Explain why the complete lifecycle matters: one supported approach carrying
+  context, decisions and evidence from an idea to acceptance, including when
+  requirements change or work is interrupted. Do not promise zero supervision.
+
+“Robust, observable AI SDLC” names a category and qualities but does not explain
+the customer's gain. “Manage the project, not every agent” names the burden but
+undersells the delivered outcome. “Ship faster” would imply unmeasured results.
+Use the chosen promise, supported by tangible examples and clear development
+status, without a speed multiplier or unique-capability claim.
+
+### Page roles and proof
+
+Home keeps the approved section structure and art. Its opening names the
+customer outcome and in-development status. The three-panel invoice-export
+example shows direction, an in-flight request for PDF export while CSV is
+already underway, and acceptance evidence. The lead sees the scope/verification
+impact, chooses to finish CSV first and keeps PDF queued. This makes steering
+work visible rather than reducing control to approval at the beginning and end.
+It is labeled illustrative beside the example; it is not a fabricated run.
+Benefits explain visibility, decision authority and continuity for the whole
+team. Detailed PR sizing and our process-maintenance work do not lead the page.
+
+Method translates the lifecycle into the lead's experience: agree a useful
+outcome, understand a recommendation before deciding, inspect progress and
+evidence, and recover interrupted work. Make the intended/future status clear
+at the top. Reviews and checks support confidence; they never imply guaranteed
+correctness or automatic release authority. Existing authority boundaries stay.
+
+Availability answers whether someone can use it now. Public hosted access is
+not open. Existing experimental tools require authorized private-repository
+access; summarize them without a catalogue of internal provisioning details.
+Remove internal market-validation commentary from customer-facing copy; keep
+it here and in the product strategy. No signup is invented to fill a CTA slot.
+
+Metadata must make the same qualified promise when seen apart from the page.
+Agents and search previews must not receive a stronger availability claim than
+human readers. Architecture, colors, assets, routes, interactions and provider
+contracts remain unchanged. This is a bounded correction within W1.
+
+### Observable success and author principles
+
+A lead should be able to identify the audience, intended outcome, retained
+authority and present availability from the first screen and linked pages.
+Every benefit should point to a customer situation; no claim of performance,
+uniqueness or hosted reliability lacks evidence. A demo must later prove one
+accepted feature with changed requirements, a recovered failure and a teammate
+handoff. Measure coordination effort, rework/defects and cost per accepted
+feature, rather than agent activity or PR count. These measures are not results.
+
+Intuitive: plain outcomes and familiar decisions. Discoverable: the lead finds
+journey, evidence and access status through working public links. Delightful:
+less internal jargon and no fake signup. Token saver: concise shared copy,
+optional method detail and no repeated capability disclaimers. Secure: retained
+authority is clear; no new permissions or public access. Agents are equal:
+semantic pages and metadata carry the same claim boundaries. Dependable: future
+intent, illustrative example and current tools are visibly distinguished;
+reliability remains a standard to prove.
+
+Independent review of this refinement precedes the copy implementation plan.

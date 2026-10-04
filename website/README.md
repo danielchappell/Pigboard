@@ -1,7 +1,8 @@
 # Pigboard website
 
 The public marketing website has Home, Method and Availability pages. It describes
-Pigboard's intended product and clearly identifies today's private tools. It does
+the intended delivery outcome for a lead with an existing technical team and
+clearly identifies today's private tools. It does
 not expose the private host, offer hosted signup, or require credentials to run.
 
 ## Build and preview
@@ -89,3 +90,15 @@ protected deployment controls. Production app/domain, credentials, release and
 live verification remain separate. This slice changes no private-host service,
 DNS or production deployment. See the [design](../docs/designs/pigboard-website.md),
 [plan](../docs/plans/pigboard-website.md) and [evidence](../docs/reviews/pigboard-website.md).
+
+## Copy and claim boundaries
+
+The current positioning refinement is in the
+[website design](../docs/designs/pigboard-website.md#customer-promise-refinement--4-october-2026).
+It supersedes the earlier process-led marketing candidate. Lead with delivery,
+project visibility, informed decisions and team continuity; explain the supported
+method as the mechanism. Keep examples illustrative and hosted capability
+future-oriented, including in page descriptions. Do not claim battle-tested
+hosted operation, quantified savings, uniqueness or guaranteed correctness
+without evidence. Availability must describe actual access without an invented
+signup or contact channel.

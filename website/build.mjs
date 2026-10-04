@@ -11,9 +11,9 @@ export const artwork = Object.freeze({
   'avatar-graphite-v1.png': '1ee65c0d994cf39c0d10857140c99b7127d1056257d199e442f3671e309cb9d8'
 });
 export const routes = [
-  ['index.html', 'Pigboard · A development process you can delegate to', 'An opinionated AI development process, from discovery to small, reviewed changes. Your team directs the product and decides what ships.'],
-  ['method.html', 'The method · Pigboard', 'Explore the development method behind Pigboard: discovery, design, small increments, independent review and human decisions.'],
-  ['status.html', 'Availability · Pigboard', 'What works in the private Pigboard repository today, and what remains in development before public hosted access.']
+  ['index.html', 'Pigboard · Delegate delivery. Stay in control.', 'Pigboard is in development: AI software delivery for technical teams, built around project visibility, informed decisions and evidence your team can inspect.'],
+  ['method.html', 'The delivery journey · Pigboard', 'Explore the delivery experience Pigboard is being built to support: set direction, steer work in progress and assess the evidence before release.'],
+  ['status.html', 'Availability · Pigboard', 'Pigboard is in development. Public hosted access is not open; current experimental tools require authorized access to the private repository.']
 ];
 const manifestName = '.pigboard-build.json';
 const schema = 'pigboard.website.build.v1';

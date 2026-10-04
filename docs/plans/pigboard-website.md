@@ -8,7 +8,7 @@ as Rovito, with an honest explanation of Pigboard's present availability.
 
 Acceptance Criteria
 
-- Home explains Pigboard's intended outcome and audience, with working Method and Availability links.
+- Home addresses a lead with an existing technical team, explains the intended delivery outcome and retained control, and links to Method and Availability.
 - Method explains the supported development journey and human decisions, clearly labeling its feature example as illustrative.
 - Availability distinguishes existing private-repository tools from future hosted capability and states who can access them.
 - All three pages work on desktop and mobile, with keyboard navigation and readable substantive content when JavaScript is disabled.
@@ -43,7 +43,7 @@ CLEAN [website design](../designs/pigboard-website.md), hash
 and pinned Rovito source `32875af00a19241541296bbb10543ec29fcb7a42`.
 This is W1, one usable local website and one PR. The owner-approved palette
 refinement preserves the reviewed architecture and adds only the superseded
-brand-color note to the file inventory. Estimate: 12–14 human hours,
+brand-color note to the file inventory. Revised estimate after the bounded copy correction: 14–15 human hours,
 including copy, tests, browser checks, documentation and review preparation.
 W2 production packaging/pipeline and W3 release remain separate. The owner chose
 GitHub Actions; production app and domain remain unresolved. W1 adds repository checks,
@@ -147,3 +147,75 @@ there is no database, remote account, DNS or live rollback to perform.
 
 Current independent verdicts and exact revisions belong in the companion
 [review record](../reviews/pigboard-website.md), not in mutable claims here.
+
+## Outcome-led copy correction
+
+The owner requested this after approving the palette. Reuse the W1 architecture,
+page structure, palette, art and behavior. Two fresh independent Sol reviewers
+returned CLEAN on the refined website design, SHA-256
+`6a1e8c88c69bdf79f56d58f56dca48ed3a2a9473119d52f86b738e5642dae1ed`.
+Their product concerns about overbroad verification language and lack of an
+in-flight steering example are resolved in that artifact. No new product
+capability or delivery milestone is being implemented.
+
+### Changes and boundaries
+
+This correction touches nine files already inside the 20-file W1 inventory:
+
+- `website/pages/index.html`: outcome-led hero for technical teams, three
+  customer benefits and an illustrative direction/steering/acceptance journey.
+  Keep all IDs, anchors, tab/panel bindings and progressive controls intact.
+- `website/pages/method.html`: explain the intended lead/team experience,
+  concrete PDF-versus-CSV steering, inspectable evidence and recovery. Preserve
+  the three existing anchors and human release authority.
+- `website/pages/status.html`: concise current availability and private-tool
+  access, clear future hosted direction; remove internal market-validation and
+  provisioning detail from the customer page. Preserve its three anchors.
+- `website/build.mjs`: update only the three title/description entries; qualify
+  future capability in descriptions independently of page body text.
+- `website/README.md`: explain the audience, claim boundaries and content source.
+- `docs/designs/pigboard-website.md`: record the reviewed positioning refinement.
+- `docs/plans/pigboard-website.md`: this scoped correction and updated estimate.
+- `docs/reviews/pigboard-website.md`: separate design, plan, code and validation.
+- `docs/delivery-plan.md`: exact stage and the remaining deployment decisions.
+
+Do not edit CSS, scripts, assets, serving/build logic, integrations or deployment
+for this correction. No new dependencies, form, account flow, contact channel or
+public-access promise. The whole W1 remains one usable three-page website,
+20 files and 14–15 human hours, below two working days.
+
+### Copy acceptance and verification
+
+Retain the six Story acceptance criteria and seven technical criteria above.
+The first screen must name AI software delivery, the team context, the delivery
+outcome, retained control and in-development status. Benefits must illustrate
+project visibility, meaningful decisions and team continuity. Include an
+in-flight requirement change with scope/verification impact and a priority
+decision. Label the example illustrative, and do not invent a successful run.
+Method and Availability remain useful public destinations. No unmeasured time
+savings, uniqueness, correctness guarantee or battle-tested hosted claim.
+
+Run the existing seven Node website regressions, syntax and diff checks. They
+cover generated routes, metadata, link/anchor validity and unchanged approved
+artwork. Do not add tests that pin marketing phrases. Stop the local preview
+before rebuilding; restart its rooted Go server afterward. Read each generated
+page and its metadata, compare the copy to source evidence, then check desktop
+and mobile wrapping, navigation and the changed tab labels with keyboard and
+copy feedback. Read the source fallback to confirm all panels still render
+without JavaScript. If browser access remains unavailable, state the incomplete
+visual check rather than claiming success.
+
+Commit before two fresh independent Sol code reviews; fix in-scope findings and
+review the updated committed diff. Push the existing PR, update its description
+and verify current-head GitHub Actions. CSS and runtime tests from the palette
+remain applicable to unchanged code; hosted CI runs the full suite. Production
+setup/release and owner merge stay separate. A copy rollback restores the prior
+committed page/metadata set, rebuilds and restarts the preview; it has no account
+or persisted customer effects.
+
+Author principles: Intuitive—customer outcomes and concrete decisions lead;
+Discoverable—journey, evidence and availability remain linked; Delightful—clear
+copy without internal implementation jargon or invented signup; Token saver—
+concise page roles with detail optional; Secure—no access or authority change;
+Agents are equal—same semantic copy and independently qualified metadata;
+Dependable—illustrative/future/current claims and review/CI/release remain distinct.

@@ -245,3 +245,69 @@ one token palette and shared aliases; unchanged security/authority boundaries;
 equal semantic pages and noninteractive build instructions; measured contrast,
 verified hashes and honest preview/review/CI limits. Neither claims fresh browser
 QA. This evidence-only update does not change the reviewed website files.
+
+## Outcome-led copy design and plan
+
+The owner selected a lead with an existing technical team and requested the
+copy correction after approving the palette. Recovered product definition,
+strategy and dated competitive research support a sharper promise without
+restarting product discovery. The reviewed promise is “Delegate delivery. Stay
+in control.” The mechanism is an opinionated AI SDLC; customer benefits are
+project visibility, informed decisions and continuity across the team.
+
+Two fresh independent Sol design reviewers returned CLEAN on SHA-256
+`6a1e8c88c69bdf79f56d58f56dca48ed3a2a9473119d52f86b738e5642dae1ed`.
+Product coverage: 13/13 headings, 9/9 customer claims, 4/4 presentation contracts.
+Technical coverage: 2/2 changed regions, 4/4 refinement subsections, 3/3 page
+roles, current pages, metadata entries and source documents, 1/1 W1 inventory.
+Both made a second sweep and independently assessed all seven principles.
+Two P2 product findings were real in-scope issues and were fixed: replace
+“verified software” with inspectable evidence and retained release decisions;
+show an in-flight PDF request during CSV work so control includes steering.
+Their principle assessments found plain outcomes, public next steps, concise
+customer language, clear authority, equal HTML/metadata claims and honest
+future/illustrative/current states after those repairs.
+
+Two further fresh independent Sol plan reviewers returned CLEAN on SHA-256
+`7ec658aef9bad1388c8b34ffd3bde3216d14b65a7ea5676d2a774a4b52d4717f`.
+Each covered 9/9 correction files, 6/6 acceptance and 7/7 technical criteria,
+5/5 testing bullets, 3/3 pages/metadata, 3/3 tab bindings and 6/6 guide anchors,
+with a second sweep. The technical reviewer also checked 20/20 full-PR paths.
+Neither found an in-scope issue. Both independently assessed all seven:
+intuitive outcome/control, discoverable journey/status, clearer customer copy,
+concise shared pages, unchanged security authority, equal semantic/metadata
+access and dependable evidence/recovery. The revised total estimate is 14–15
+human hours, within W1's 20 files and less than two working days.
+
+## Copy implementation and current local checks
+
+The three pages now lead with customer outcomes, demonstrate an in-flight
+priority decision, and distinguish intended hosted delivery from private tools.
+Page titles and descriptions use the same claim boundaries. Internal market
+validation and provisioning details remain in project docs. No fake signup or
+unsupported battle-tested, ROI or unique-capability claim was introduced.
+
+- 7/7 Node website tests, build, syntax and diff checks pass. Existing regressions
+  cover links, anchors, script-free panels and approved-artwork hashes.
+- Browser access recovered through a fresh in-app tab. This supersedes the
+  earlier palette browser limitation: the approved palette was inspected at
+  1280px and 390px. All three page routes remain usable.
+- Updated copy: 1280px desktop and 390px mobile homepage inspected; mobile
+  Home/Method/Availability widths equal viewport width with no overflow.
+  Desktop hero copy fits between y192 and y453, including action and status.
+- Updated tab labels work with ArrowRight, End and Home; copy feedback confirms
+  the revised example was copied. All three rendered descriptions were read
+  and retain intended/future/current availability distinctions.
+- The source and Node regressions confirm all 3/3 panels are visible without
+  script initialization. This pass does not claim a changed browser JS setting.
+- Preview was stopped, rebuilt and restarted before these browser checks.
+  Palette/evidence head `9947f9a` passed all four GitHub Actions checks; this
+  copy change still needs committed-code review and current-head CI.
+
+Author principles: Intuitive—named audience and delivery/control promise;
+Discoverable—working journey, decision and availability links; Delightful—
+concrete customer choices and readable mobile copy; Token saver—short benefits
+with method detail one link away; Secure—unchanged runtime and explicit team
+authority; Agents are equal—qualified metadata matches readable semantic HTML;
+Dependable—examples and future goals are labeled, uncertainty and access remain
+clear, and local/review/CI/release evidence is separate.
