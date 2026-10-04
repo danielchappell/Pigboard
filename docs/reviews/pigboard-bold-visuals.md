@@ -88,9 +88,37 @@ marketing prose, links, route structure, application scripts or deployment.
   and `/private/tmp/pigboard-cutout-proof.jpg` (alpha composites). These are local
   session evidence, not required repository/build inputs.
 
+## Committed-code review
+
+Reviewed implementation: `8e96a48d4b4f8dd85303ed0e57a8a9e32cfddf74`, compared
+with W1 baseline `c2520a246b5dffda68dc7b4b479f758c6049cf11`.
+Fresh independent Sol reviewers `bold_code_product` and `bold_code_technical`
+returned CLEAN. Each examined all 17/17 changed files, all 6/6 acceptance criteria,
+5/5 technical criteria and 5/5 testing bullets, with a second sweep. They inspected
+actual source, screenshots and original/new asset consistency. Both independently
+reran Node 7/7; technical also independently reran Go 1.26.6 race and vet.
+Live browser/HTTP evidence remains author evidence, not independently repeated.
+
+Both independently assessed all seven principles: familiar page structure and
+controls (Intuitive), visible states and semantic labels (Discoverable), requested
+bold color and clean mascot (Delightful), unchanged concise copy/shared tokens
+(Token saver), finite pinned assets without new authority (Secure), semantic HTML
+and noninteractive checks for agents alongside human visuals (Agents are equal),
+and recoverable artwork/builds with honest stage evidence (Dependable). No
+unresolved in-scope findings remained.
+
+Adjacent follow-up: the unused shared `.rv-button--secondary:active` style can
+inherit dark text on a dark active surface. None of the three routes uses that
+class; correct that state before introducing secondary buttons. This is outside
+the present page outcome and was not silently added to the slice.
+
 ## Delivery state
 
-Implementation is prepared for its first commit and fresh independent committed-
-code reviews. Hosted CI, PR creation, owner merge and production release are
-separate pending stages. W1a depends on PR #40; W2/W3 production target decisions
-remain unchanged. No recovery-batch work is included.
+The implementation above has two independent CLEAN committed-code reviews. This
+companion update records their evidence and updates the queue; its exact commit
+receives an affected-document review before the stacked PR is opened. The PR
+will identify the final reviewed revision and current hosted checks.
+
+Hosted CI and PR publication remain the next stages. Owner aesthetic acceptance,
+merge and production release remain separate. W1a depends on PR #40; W2/W3
+production target decisions remain unchanged. No recovery-batch work is included.
