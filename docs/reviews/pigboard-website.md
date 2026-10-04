@@ -311,3 +311,25 @@ with method detail one link away; Secure—unchanged runtime and explicit team
 authority; Agents are equal—qualified metadata matches readable semantic HTML;
 Dependable—examples and future goals are labeled, uncertainty and access remain
 clear, and local/review/CI/release evidence is separate.
+
+## Copy committed-code verdicts
+
+Two fresh independent Sol reviewers returned CLEAN on
+`c6e3f012e91b015c74381c0665b98a0ff22bff7c` against `9947f9a`. Each inspected
+9/9 changed files, 6/6 acceptance and 7/7 technical criteria, 3/3 pages and
+metadata descriptions, 3/3 tab bindings, 6/6 guide anchors and the whole PR's
+20/20 paths. The technical reviewer also enumerated 5/5 testing items and
+independently reran 7/7 Node tests. Both completed a second sweep and found no
+in-scope issue. The product reviewer inspected the desktop screenshot; both
+identify the browser checks as author evidence rather than their own browser run.
+
+Both independently assessed all seven principles: clear lead/outcome/control;
+working public navigation and guide anchors; concrete steering example and
+readable hierarchy; concise shared pages with optional detail; unchanged access
+and human authority; semantic pages and equally qualified metadata; explicit
+current/future/illustrative states and honest recovery/release boundaries.
+
+Author also inspected updated Method and Availability at 1280px after the
+commit; both have readable hierarchy and no horizontal overflow. This final
+evidence/queue update changes no website source. Hosted checks for the pushed
+head are recorded on PR #40; owner merge and production release remain separate.
