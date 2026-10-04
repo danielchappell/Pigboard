@@ -22,7 +22,7 @@ Live production configuration has not been verified by this rebrand.
 
 ## Current design review
 
-Artifact: `docs/brand-rebrand.md`, SHA-256
+Design artifact before the owner-approval status update: `docs/brand-rebrand.md`, SHA-256
 `33f1ea82ab62d3ec74fdddbcb2a5912765c51f334b24ade65e754424be0cb3c8`.
 
 `main_brand_design_product` (fresh independent Sol): CLEAN. Examined 8/8
@@ -99,6 +99,15 @@ boundaries; equal noninteractive APIs; dependable corrected review counts.
 Author validation for B1a: 108 relative links resolve; whitespace passes; all
 three PNGs viewed at full and reduced size, dimensions/alpha inspected. Runtime,
 scripts, tests, package manifests and captured probe JSON are unchanged. No
-runtime tests are needed for this documentation/design Task. Artwork remains
-candidate material. Final publication bookkeeping is reviewed as a bounded
+runtime tests are needed for this documentation/design Task. The owner approved the
+three-logo series after viewing it on 4 October 2026; export limits remain. Final publication bookkeeping is reviewed as a bounded
 delta; hosted checks, owner merge and release remain separate.
+
+
+## Owner artwork approval
+
+On 4 October 2026, after viewing the series, the owner said: “Logos look good,
+I'm happy with them.” This approves the three visual assets. The files are
+unchanged; their export and favicon limitations remain documented. Earlier
+candidate-status statements describe the review stage before this approval.
+This approval does not authorize a production deployment or PR merge.

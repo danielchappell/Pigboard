@@ -1,8 +1,8 @@
-# Pigboard logo candidates
+# Pigboard logos
 
-4 October 2026. Generated candidates for the owner's rebrand request, using the
-established Scubapig mascot and Rovito visual family. These are ready for visual
-feedback; they are not yet owner-approved final artwork.
+4 October 2026. The owner approved this three-logo series after visual review.
+It uses the established Scubapig mascot and Rovito visual family. The export and
+small-icon limitations below still apply when preparing production assets.
 
 ## The series
 
@@ -12,7 +12,7 @@ feedback; they are not yet owner-approved final artwork.
 | [Graphite wordmark](lockup-graphite-v1.png) | Wide brand composition and marketing reference | 1536 × 1024 PNG, graphite background |
 | [Compact avatar](avatar-graphite-v1.png) | Profile/brand avatar at medium sizes | 1254 × 1254 PNG, graphite background |
 
-![Pigboard wordmark candidate](lockup-graphite-v1.png)
+![Pigboard wordmark](lockup-graphite-v1.png)
 
 ## Identity and use
 
@@ -76,4 +76,4 @@ Principles: **Intuitive**—familiar pig/board subject; **Discoverable**—clear
 purposes and alt-text guidance; **Delightful experience**—consistent character
 family; **Token saver**—one asset guide with provenance; **Secure**—no credentials
 or external account changes; **Agents are equal**—stable file names and explicit
-usage/status; **Dependable**—candidates, original bytes and limitations are named.
+usage/status; **Dependable**—owner approval, original bytes and export limitations are named.

@@ -96,8 +96,9 @@ Produce a coherent series: a transparent pig-and-board mascot, a graphite
 horizontal wordmark composition, and a compact avatar/logo composition.
 Use the same character reference for all three. Save source images in the repo,
 record prompts and provenance, inspect anatomy/text/alpha, and show the series
-for visual feedback. Generated candidates are not owner-approved final artwork.
-Tiny favicons may need a simpler derivative after the master is selected.
+for visual feedback. The owner approved the three-logo series on 4 October 2026 after viewing it.
+The asset guide records production-export limits; tiny favicons may still need
+a simpler derivative and their own small-size check.
 
 Reuse Rovito's actual visual system: graphite `#272c33`, white, teal `#58c9ce`,
 deep teal `#187b80`, coral `#f58d6c`, yellow `#f0c45a`, system/Avenir Next fonts,

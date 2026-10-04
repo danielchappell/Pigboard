@@ -17,7 +17,7 @@ complete hosted Jira delivery or live acceptance.
 
 Start with the [product definition](docs/product.md),
 [strategy and intended market](docs/product-strategy.md),
-[brand direction](docs/brand-rebrand.md), or [logo candidates](assets/brand/pigboard/README.md).
+[brand direction](docs/brand-rebrand.md), or [approved logos](assets/brand/pigboard/README.md).
 Our visual identity pairs the established scuba pig with a floating Kanban board
 in the Rovito family.
 
