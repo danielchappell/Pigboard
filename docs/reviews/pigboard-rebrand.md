@@ -50,8 +50,8 @@ Plan artifact: rebrand lane in `docs/delivery-plan.md`, SHA-256
 `6387cb54480b9739f70b5b44c3ee1db2ec99c1cef5678ba29b79f5c11d94e63e`, before
 planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
 
-- `main_brand_plan_product`: 3/3 sections, 20/20 acceptance/technical criteria,
-  6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
+- `main_brand_plan_product`: 3/3 sections; reported 20/20 acceptance/technical
+  criteria (see the recount below); 6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
   omitted naming/evidence/recovery requirement. Own principles: intuitive name
   and outcome; discoverable human/agent links; delightful preserved setup/style;
   token-saving explicit inventories/queue; secure unchanged signed evidence;
@@ -63,9 +63,42 @@ planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
   retained references; token-saving exceptions; secure signed history and
   credentials; equal noninteractive contracts; dependable commit-scoped recovery.
 
-B1a/B1b implementation follows that plan. Final committed-artifact reviews are
-still pending; no implementation CLEAN verdict is implied by plan review.
+B1a/B1b implementation follows that plan. Independent final artifact review is
+separate from plan review; completed results and corrections are recorded below.
 Author principle assessments are in the direction and plan. They do not replace
 independent review. No hosted CI, merge, release or final artwork approval is
 claimed. The three logo candidates have been visually inspected in the original
 review; their PNG bytes are unchanged in this worktree.
+
+
+## Committed identity artifact review
+
+B1a implementation is `7944989d5272e63203c55bb615bf692c0d3610f2`.
+Two fresh independent Sol reviewers examined it alongside the stacked B1b
+technical-documentation Task. `final_brand_product_review` completed 26/26
+combined files and reconfirmed 19/19 criteria and 6/6 testing bullets; CLEAN.
+`fresh_brand_technical` inspected 14/14 B1a files and 14/14 B1b files (26 unique),
+19/19 criteria and 6/6 testing bullets. Its only finding in the combined record
+was the evidence-count error; it returned CLEAN for the transparent correction
+at `7f5df31ac7751745d8571e3ebe43addb6c6393c9`. Both completed second sweeps
+and independently assessed all seven principles.
+
+Coverage correction: the original product-plan report stated 20 criteria. The
+actual plan has 19: B1a six acceptance plus five technical criteria; B1b four of
+each. Six testing bullets bring the total to 25. The original reported count is
+labeled above; the final product reviewer independently reconfirmed 19/19.
+
+Product review: intuitive name/outcome; discoverable working sources/guides;
+delightful faithful pig/Rovito artwork; token-saving single queue; secure
+preserved runtime/history; equal worker/human instructions; dependable
+candidate/current/ambition/release distinctions. Technical review: intuitive
+working commands; discoverable assets/exceptions; delightful retained setup;
+token-saving central evidence; secure exact signed-history and production
+boundaries; equal noninteractive APIs; dependable corrected review counts.
+
+Author validation for B1a: 108 relative links resolve; whitespace passes; all
+three PNGs viewed at full and reduced size, dimensions/alpha inspected. Runtime,
+scripts, tests, package manifests and captured probe JSON are unchanged. No
+runtime tests are needed for this documentation/design Task. Artwork remains
+candidate material. Final publication bookkeeping is reviewed as a bounded
+delta; hosted checks, owner merge and release remain separate.
