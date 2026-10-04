@@ -1,9 +1,9 @@
 # GitHub Projects Adapter
 
-GitHub Projects is the first queue backend for Ski Stack.
+GitHub Projects is the first queue backend for Pigboard.
 
 GitHub Projects are owned by a user or organization, not by a single repo. A
-single Project can hold issues and PRs from multiple repos. Ski Stack treats the
+single Project can hold issues and PRs from multiple repos. Pigboard treats the
 Project as the shared queue and uses each item's linked `owner/repo` as worker
 partitioning metadata.
 
@@ -100,7 +100,7 @@ adapter slice. Reviewer-created implementation PRs include
 dependents.
 
 GitHub does not expose public Project view create/update mutations. Setup copies
-the bundled Ski Stack template Project by default to automate the Kanban layout.
+the bundled Pigboard template Project by default to automate the Kanban layout.
 Custom installs can override it with `SKI_TEMPLATE_PROJECT_ID` or
 `--template-project-id`. Without a template, setup provisions the fields and
 prints the manual board configuration steps.

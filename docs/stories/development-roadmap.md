@@ -96,7 +96,7 @@ Testing Strategy
 
 Problem to solve
 
-Ski Stack needs a repeatable manual Cursor operation before hosted launch or automatic scheduling. A lost create response must not lead callers to buy a duplicate run.
+Pigboard needs a repeatable manual Cursor operation before hosted launch or automatic scheduling. A lost create response must not lead callers to buy a duplicate run.
 
 Acceptance Criteria
 
@@ -569,7 +569,7 @@ Testing Strategy
 - Access and setup: Use the selected source-control test project and current-check fixtures.
 - Automated regression: Cover stale checks, unresolved feedback and owner handoff without merge.
 
-## S16 — Install a Ski Stack package for Cursor
+## S16 — Install a Pigboard package for Cursor
 
 Problem to solve
 
@@ -577,7 +577,7 @@ Teammates should not recreate each role and skill by clicking through a UI. Curs
 
 Acceptance Criteria
 
-- A teammate installs one selected version and can discover and invoke its supported Ski Stack roles/skills.
+- A teammate installs one selected version and can discover and invoke its supported Pigboard roles/skills.
 - Missing capabilities or incompatible configuration produce a clear non-destructive diagnostic.
 
 Technical Acceptance Criteria
@@ -591,7 +591,7 @@ Testing Strategy
 - Access and setup: Requires the verified Cursor installation surface; do not change the work account’s compute allowance.
 - Automated regression: Cover installed asset/version identity and unsupported capability diagnostics.
 
-## S17 — Install a Ski Stack package for Codex
+## S17 — Install a Pigboard package for Codex
 
 Problem to solve
 
@@ -639,7 +639,7 @@ Testing Strategy
 
 Problem to solve
 
-A control agent cannot yet inspect Ski Stack through a supported tool contract. UI workarounds waste context and obscure authorization.
+A control agent cannot yet inspect Pigboard through a supported tool contract. UI workarounds waste context and obscure authorization.
 
 Acceptance Criteria
 

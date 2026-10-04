@@ -1,23 +1,27 @@
 # Development workflow, architecture and delivery review
 
+Naming note, 4 October 2026: current narrative uses Pigboard. All review verdicts
+below remain historical and apply only to their recorded hashes/revisions.
+The rebrand has separate [review evidence](reviews/pigboard-rebrand.md).
+
 21 September 2026. This record separates independent review from author checks,
 implementation evidence and permission to release. No runtime was implemented or
 external service activated by this planning Task.
 
 ## Scope and recovered process
 
-The owner required the Rovito development lifecycle globally and in Ski Stack,
+The owner required the Rovito development lifecycle globally and in Pigboard,
 then clarified the ordering: map the product/feature architecture and development
 path, review it, groom ordered PR-sized Stories, review each concrete plan, then
-implement and independently review committed code. Use Ski Stack's own roles.
+implement and independently review committed code. Use Pigboard's own roles.
 An arbitrary provider-adapter slice cannot substitute for the development map.
 
 Sources checked: Rovito origin/main working agreement at `32875af`, its 12 September
 lifecycle design/review record and active roadmap, its 13 September repository
-account plan, Ski Stack role cards/architecture/core boundaries, and the owner's
+account plan, Pigboard role cards/architecture/core boundaries, and the owner's
 write-pr-sized-stories skill. Local Rovito main was stale and lacked AGENTS.md;
 the committed origin/main file was used. Queue-specific Rovito merge authorization
-and Go/native release commands were not imported into Ski Stack.
+and Go/native release commands were not imported into Pigboard.
 
 The global file is the owner's Codex-home `AGENTS.md`. OpenAI's
 [documented instruction discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
@@ -303,7 +307,7 @@ promoted by this documentation.
 ## Pigboard method and foundation alignment — 21 September 2026
 
 The owner endorsed an opinionated AI SDLC that Pigboard maintains and improves,
-using the existing Ski Stack process as the starting method. Architecture,
+using the existing Pigboard process as the starting method. Architecture,
 ordered delivery and core functionality come first. This decision supersedes the
 previous recommendation to make commercial discovery/comparative experiments a
 prerequisite to the foundation. D0 remains later commercial work; its prior

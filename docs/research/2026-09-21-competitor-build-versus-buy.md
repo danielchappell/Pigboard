@@ -1,4 +1,4 @@
-# Ski Stack: build-versus-buy research
+# Pigboard: build-versus-buy research
 
 21 September 2026. Product and technical discovery, not a release claim or an
 approved replacement architecture. Current vendor docs, dated announcements,
@@ -19,7 +19,7 @@ agentic-engineering project template. Our comparison must include those features
 not a deliberately weak webhook-to-chat example. [C1, C2, C3, C4, A2, A8, A11]
 
 The strongest candidate customer promise is: **choose your existing project,
-repository and delivery playbook; Ski Stack checks readiness, installs the
+repository and delivery playbook; Pigboard checks readiness, installs the
 supported process, keeps work moving and shows the decisions you need to make.**
 The value to prove is lower setup, maintenance and supervision effort per accepted
 feature, without more rework, defects or unexpected cost. Legitimate admin and
@@ -46,7 +46,7 @@ reviewed plans, implementation, independent committed-code review and owner
 acceptance. It must support changing requirements, partial failures and a second
 teammate. Routing is deterministic. Human assignees remain intact. A control
 agent may use MCP; it is optional. The development working agreement guides how
-we build Ski Stack; customer playbooks must remain configurable.
+we build Pigboard; customer playbooks must remain configurable.
 
 The company Cursor account is limited to trivial adapter checks. This research
 launched no agents and ran no paid model task. Opening Cursor's editor did create
@@ -95,7 +95,7 @@ configured reviewer models require execution evidence. [C3, C4, C6]
 Cursor also provides PR Routing & Approval with repository policy files and
 signals from its review tools. It can wait for those checks before approval;
 it is explicitly not a substitute for full code review. This further weakens a
-generic claim that Ski Stack uniquely turns standards into review gates. [C15]
+generic claim that Pigboard uniquely turns standards into review gates. [C15]
 
 ### Three programmatic surfaces that must not be confused
 
@@ -210,10 +210,10 @@ idea-to-deployment graph and difficulty building an external operator view.
 That is unusually relevant qualitative evidence, but it is one self-report,
 not a verified product limitation, market size or willingness to pay. [C12]
 
-### Route C — Thin Ski Stack Jira adapter and managed coordination
+### Route C — Thin Pigboard Jira adapter and managed coordination
 
 Use Jira for shared work/decisions, established Cloud Agents for execution, and
-only the measured missing lifecycle responsibilities in Ski Stack. The adapter
+only the measured missing lifecycle responsibilities in Pigboard. The adapter
 normalizes project/status/label/dependency facts and performs permitted ticket
 updates; the deterministic policy remains in core. Inputs can initially arrive
 through one scoped automation/webhook or a reconciliation scan. The concrete
@@ -242,7 +242,7 @@ or setup service is a legitimate outcome if the custom runtime is unnecessary.
 “Assembly” below means existing ingredients need configuration or glue; it does
 not mean the competitor lacks the capability. “Unresolved” needs verification.
 
-| ID / intended outcome | Cursor-based route | Atlassian-based route | What remains to prove for Ski Stack |
+| ID / intended outcome | Cursor-based route | Atlassian-based route | What remains to prove for Pigboard |
 | --- | --- | --- | --- |
 | R1 Deterministic opt-in/status routing; human assignee | Jira conditions/webhooks; native mentions preserve assignee | Conditions and native/third-party actions | Correct mapping, permission checks and duplicate-event behavior in the actual project. |
 | R2 Product and engineering specialists | Custom subagents/packages | Rovo/Studio role agents | Useful challenge and complete context; roles alone are already available. |
@@ -307,7 +307,7 @@ Automation Send web request behavior. [F2-F4]
 ## 7. Cost and operational ownership
 
 There are separate meters: Jira deterministic automation steps, Rovo agent credits,
-Rovo Dev review credits, external provider usage, and any Ski Stack hosting/support.
+Rovo Dev review credits, external provider usage, and any Pigboard hosting/support.
 Current Atlassian documentation pools automation steps at organization level and
 announces extra-step billing from December 3, 2026 at $0.50/1,000 excess steps.
 An illustrative 10,000 excess steps is $5 under that announced rate. It is not this
@@ -317,7 +317,7 @@ Rovo credits separately. [A21-A23]
 Cursor Automations consume cloud/model usage, charged to personal or team execution
 identity. General service-account API keys have a separately documented Enterprise
 entitlement; do not infer that an integration's built-in service identity gives a
-Teams customer an equivalent API key for Ski Stack. [C2, C13, C14]
+Teams customer an equivalent API key for Pigboard. [C2, C13, C14]
 
 The useful comparison is total setup and maintenance time plus agent/review/retry
 usage per accepted feature. Baseline subscriptions, included allowances, optional

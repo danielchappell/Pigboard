@@ -11,12 +11,12 @@ No Jira settings/tickets, source-control grants, or deployments were changed.
 The proposed journey is supported by documented platform capabilities. Cursor
 is a reasonable first execution candidate. Programmatic launch, retrieval after
 a lost response, duplicate-create rejection, and final output now have live
-evidence. Repository access and the complete Jira integration remain unverified. The owner selected [Ski Stack itself](https://github.com/danielchappell/ski-stack).
+evidence. Repository access and the complete Jira integration remain unverified. The owner selected [Pigboard itself](https://github.com/danielchappell/ski-stack).
 GitHub metadata confirms a private repository with `main` as its default branch.
 A fresh GitHub API read pins the pilot to
 [`5e48c3def05fa8dc840d51ae6683113b9faa0ba2`](https://github.com/danielchappell/ski-stack/commit/5e48c3def05fa8dc840d51ae6683113b9faa0ba2).
 
-Use a small hosted Ski Stack coordinator to retain deterministic routing and run
+Use a small hosted Pigboard coordinator to retain deterministic routing and run
 ownership. Jira remains the team's shared entry point. Cursor supplies execution
 and run inspection. Exact hosting, durable storage, and integration credentials
 remain choices for the next delivery slice, not approved infrastructure.
@@ -64,7 +64,7 @@ is public beta. Its documented contract provides:
 | Pick a model | Use `GET /v1/models` and select an available ID. |
 
 The `agentId` option cannot be combined with session `envVars`. Avoid passing
-Ski Stack credentials to the execution environment. Agent-level `IDLE` is not
+Pigboard credentials to the execution environment. Agent-level `IDLE` is not
 proof of success: use run-level status and validate the answer. A provider's
 `FINISHED` means the turn ended, not that a human accepted the findings.
 
@@ -88,7 +88,7 @@ cost, and second-user access remain unverified.
 
 ## Jira adapter and trigger
 
-Use a project-scoped notification rule to wake Ski Stack. The coordinator
+Use a project-scoped notification rule to wake Pigboard. The coordinator
 reloads the ticket and applies the configured routing policy. A periodic scan
 also covers missed notifications and labels added after a status move. Rules
 should not contain per-role prompts, lease policy, or a second scheduler.
@@ -120,12 +120,12 @@ Cursor's [native Jira integration](https://cursor.com/docs/integrations/jira)
 can launch agents from assignments or mentions and publish progress and results.
 It currently requires Teams or Enterprise plus Jira and Cursor administrator
 setup. It is useful prior art, but its documented repository selection includes
-content heuristics and recent activity. It does not document Ski Stack's required
+content heuristics and recent activity. It does not document Pigboard's required
 status-to-role lifecycle and ownership policy.
 
 The pilot should have one launch path. Do not also assign the same ticket to
 Cursor or mention it as another launcher. Reuse provider execution and its run
-UI while keeping Ski Stack's routing explicit.
+UI while keeping Pigboard's routing explicit.
 
 ## Pilot access check and trivial browser result
 
@@ -144,6 +144,9 @@ Observed in the signed-in UI on 21 September:
 
 One real cloud run was submitted through the browser with GPT-5.6 Sol Medium,
 no repository, and no additional context:
+
+The following is the exact historical probe prompt; its original naming is
+preserved as evidence.
 
 > Reply exactly SKI_STACK_CURSOR_PROBE_OK. This is a minimal connectivity test for the Ski Stack Cursor adapter. Do not call tools, inspect files, create files, run commands, browse, or perform any other work.
 

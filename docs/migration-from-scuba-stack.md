@@ -1,6 +1,7 @@
 # Migration From Scuba Stack
 
-Ski Stack is a restart, not a rename.
+The move from Scuba Stack to this project was an architectural restart.
+The Pigboard rebrand retains the boundaries below.
 
 ## Kept
 
@@ -30,6 +31,6 @@ Ski Stack is a restart, not a rename.
 ## Rule
 
 If a Scuba Stack asset assumes one live window, local transcript recovery, or a
-standing manager layer, it must be rewritten before it enters Ski Stack's default
+standing manager layer, it must be rewritten before it enters Pigboard's default
 surface.
 

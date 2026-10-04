@@ -244,7 +244,7 @@ Testing Strategy
 
 Problem to solve
 
-The first pilot covers one researcher. The existing Ski Stack method must run
+The first pilot covers one researcher. The existing Pigboard method must run
 through hosted product and engineering handoffs without model text granting
 authority or silently advancing a ticket. Carry that baseline forward before
 changing the method.

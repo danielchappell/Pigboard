@@ -51,7 +51,7 @@ Plan artifact: rebrand lane in `docs/delivery-plan.md`, SHA-256
 planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
 
 - `main_brand_plan_product`: 3/3 sections; reported 20/20 acceptance/technical
-  criteria (see the recount below); 6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
+  criteria (see the transparent recount below); 6/6 testing bullets and 26/26 unique inventory paths; second sweep found no
   omitted naming/evidence/recovery requirement. Own principles: intuitive name
   and outcome; discoverable human/agent links; delightful preserved setup/style;
   token-saving explicit inventories/queue; secure unchanged signed evidence;
@@ -63,45 +63,128 @@ planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
   retained references; token-saving exceptions; secure signed history and
   credentials; equal noninteractive contracts; dependable commit-scoped recovery.
 
-B1a/B1b implementation follows that plan. Independent final artifact review is
-separate from plan review; completed results and corrections are recorded below.
+B1a/B1b implementation follows that plan. The completed committed-artifact
+reviews are recorded below; plan review alone does not establish their result.
 Author principle assessments are in the direction and plan. They do not replace
 independent review. At that review stage, no hosted CI, merge, release or final
 artwork approval was claimed; later owner approval is recorded below. The three logo candidates have been visually inspected in the original
 review; their PNG bytes are unchanged in this worktree.
 
+## Committed artifact review and local validation
 
-## Committed identity artifact review
+Reviewed baseline: `ab258f6dcf4678ef0e4df85b8f029e3766a32301`.
+B1a: `7944989d5272e63203c55bb615bf692c0d3610f2` (14 files).
+B1b implementation: `def5729d4527f9df08e710424dcb6c333299985a` (13 files).
 
-B1a implementation is `7944989d5272e63203c55bb615bf692c0d3610f2`.
-Two fresh independent Sol reviewers examined it alongside the stacked B1b
-technical-documentation Task. `final_brand_product_review` completed 26/26
-combined files and reconfirmed 19/19 criteria and 6/6 testing bullets; CLEAN.
-`fresh_brand_technical` inspected 14/14 B1a files and 14/14 B1b files (26 unique),
-19/19 criteria and 6/6 testing bullets. Its only finding in the combined record
-was the evidence-count error; it returned CLEAN for the transparent correction
-at `7f5df31ac7751745d8571e3ebe43addb6c6393c9`. Both completed second sweeps
-and independently assessed all seven principles.
+- `final_brand_product_review`, fresh independent Sol: CLEAN for both commits.
+  Examined 26/26 unique files, 19/19 acceptance/technical criteria and 6/6
+  verification bullets; directly viewed all three assets and both reference
+  artworks. Second sweep found no in-scope gap. Its own principles assessment:
+  intuitive outcome/name; discoverable sources and usable guides; delightful
+  faithful pig/Rovito artwork; token-saving single queue and necessary limits;
+  secure preserved runtime/history; equal worker/human instructions; dependable
+  distinction between candidates, current tools, ambitions and release.
+- `brand_artifact_technical_review`, independent Sol continuation/correction
+  reviewer: CLEAN for both commits. This reviewer also examined the original
+  stale-checkout draft and is not a new fresh agent for this round. Re-inspected
+  14/14 B1a files, 13/13 B1b files, 26/26 unique files; reported 20/20 criteria
+  (see the recount below) and 6/6 verification bullets; second sweep found no issue. Own principles: intuitive
+  naming with working commands; discoverable human/agent guides and assets;
+  delightful preserved setup/style; token-saving one source/queue; secure signed
+  history and production boundaries; equal noninteractive contracts; dependable
+  baseline/status/capability/recovery distinctions.
 
-Coverage correction: the original product-plan report stated 20 criteria. The
-actual plan has 19: B1a six acceptance plus five technical criteria; B1b four of
-each. Six testing bullets bring the total to 25. The original reported count is
-labeled above; the final product reviewer independently reconfirmed 19/19.
+This is documentation/design artifact review, not runtime-code review. The
+original draft's status finding is resolved by the direction's current-evidence
+link and explicit current-main baseline. A later product review of bookkeeping
+commit `d89b3b6` correctly found that the final gate still needed a second fresh
+reviewer. The completed fresh review below closes that gap after its evidence
+count finding was corrected.
 
-Product review: intuitive name/outcome; discoverable working sources/guides;
-delightful faithful pig/Rovito artwork; token-saving single queue; secure
-preserved runtime/history; equal worker/human instructions; dependable
-candidate/current/ambition/release distinctions. Technical review: intuitive
-working commands; discoverable assets/exceptions; delightful retained setup;
-token-saving central evidence; secure exact signed-history and production
-boundaries; equal noninteractive APIs; dependable corrected review counts.
+Coverage correction: the earlier product-plan and committed-artifact reports
+stated 20 acceptance/technical criteria. The actual plan has 19: B1a has six
+acceptance and five technical criteria; B1b has four of each. Original reported counts are labeled above; the correct denominator is 19. The six testing bullets bring the total to 25,
+consistent with the technical plan review. This recount does not add a new
+requirement or change an earlier review's scope. `final_brand_product_review`
+independently recounted and reconfirmed 19/19 criteria, 26/26 files and 6/6 testing
+bullets, with no omitted requirement and its implementation CLEAN unchanged.
 
-Author validation for B1a: 108 relative links resolve; whitespace passes; all
-three PNGs viewed at full and reduced size, dimensions/alpha inspected. Runtime,
-scripts, tests, package manifests and captured probe JSON are unchanged. No
-runtime tests are needed for this documentation/design Task. The owner approved the
-three-logo series after viewing it on 4 October 2026; export limits remain. Final publication bookkeeping is reviewed as a bounded
-delta; hosted checks, owner merge and release remain separate.
+Author validation: 108 relative link occurrences resolve at B1a and 103 in B1b's
+changed documents; the combined changed set has 152, all resolving. The exact
+historical probe is unchanged. Runtime source, scripts, tests, package manifests
+and captured probe JSON have no diff. The retained recovery/historical queue
+matches main apart from the intended display-name substitution. Whitespace
+checks passed. No runtime tests are needed for these prose/assets changes.
+
+The original pig was compared directly; the three generated PNGs retain their
+original bytes. Browser inspection verified the mascot on graphite and cream
+and the compact avatar at 128 px. The asset guide records alpha/background and
+favicon limitations. They were candidates during this review; owner approval is recorded below.
+
+Author implementation assessment: intuitive purpose and name; discoverable
+working links; delightful consistent character/style; token-saving central
+sources; secure preserved operational identifiers; equal worker guidance;
+dependable exact evidence and honest implementation limits. This assessment is
+separate from the independent verdicts above.
+
+Bookkeeping records the individual reviews and remaining gate accurately.
+PR checks, merge, deployment and final artwork approval remain separate.
+
+
+## Fresh review gate and publication preparation
+
+`fresh_brand_technical`, fresh independent Sol, reviewed the full committed
+stack at `d89b3b6` and returned NOT CLEAN solely for the coverage-count error.
+It re-reviewed the two-file correction at
+`7f5df31ac7751745d8571e3ebe43addb6c6393c9` and returned CLEAN. Coverage:
+14/14 B1a files, 14/14 B1b files, 26/26 unique files, 19/19 criteria and 6/6
+testing bullets. Its second sweep checked every changed file and compatibility,
+history, source and release boundary. Independently verified 152/152 relative
+links, all three PNGs and original pig, pinned Rovito source and unchanged
+runtime/package/tests. Its seven-principle assessment: intuitive name/outcome;
+discoverable working guides/assets for humans and agents; delightful retained
+mascot and setup; token-saving single direction/queue; secure unchanged signed
+history, credentials and production authority; equal worker guidance and
+compatible structured APIs; dependable corrected counts and explicit
+candidate/current/released boundaries. No in-scope finding remains.
+
+`final_brand_product_review` returned CLEAN for the two-file correction at
+`7f5df31`, inspected 2/2 files and every changed hunk, and completed a second
+sweep. Its earlier complete implementation review and corrected 19/19 criterion
+assessment still apply. Own principles for the correction: intuitive status;
+discoverable revisions; delightful concise recovery; token-saving central
+evidence; secure authority; equal human/agent-readable records; dependable
+transparent historical counts and review state.
+
+The two distinct fresh reviewers have completed the substantive artifact gate.
+The continuation review above is additional evidence. Publication bookkeeping
+is checked as a bounded delta before PR creation. Hosted checks, merge,
+deployment and final artwork selection remain separate.
+
+
+## Published PRs
+
+[Identity and artwork PR #38](https://github.com/danielchappell/ski-stack/pull/38)
+uses `main` as its base, with reviewed head
+`0a829ef0a7f8ea6ae0cf20412e0f87782e091bed`.
+[Technical documentation PR #39](https://github.com/danielchappell/ski-stack/pull/39)
+is stacked on `codex/pigboard-identity`, with publication head
+`6e7a2f05d664e765676e74c23cf7a68ac51edead`.
+
+Both fresh reviewers returned CLEAN on both exact publication heads. Each
+inspected 2/2 final bookkeeping files, verified both 14-file PR boundaries and
+completed a second sweep while carrying the complete 26-file/19-criterion/six-
+testing-bullet assessment forward. Each independently confirmed all seven
+principles remain met: clear status and discoverable revisions, bounded
+correction and concise evidence, preserved authority and equal human/agent
+records, transparent counts and separate release stages. The stacking merge
+preserved tree `c030b0b916e4c961a7526c5f4d23a784d3c4359e` exactly.
+
+GitHub starts the repository's Node/PostgreSQL checks for each PR head. Consult
+the linked PRs for current head-specific results; no hosted pass is inferred
+from the local documentation checks. This final record adds only PR links and
+completed review facts. No merge or deployment has occurred. Merge #38 first; recheck #39's resulting base, file tree and checks
+before owner merge.
 
 
 ## Owner artwork approval

@@ -10,7 +10,7 @@ Make sure local GitHub auth has Projects scopes:
 gh auth refresh --scopes project
 ```
 
-Create a GitHub Project with the Ski Stack fields/options:
+Create a GitHub Project with the Pigboard fields/options:
 
 ```bash
 npm run setup:github-project
@@ -20,7 +20,7 @@ The setup command is interactive by default. It creates the Project at the
 GitHub user/org level, prompts for repos to enroll, and can import the current
 open issues and PRs from those repos into the Project.
 
-By default, setup copies the bundled Ski Stack Kanban template. To force a plain
+By default, setup copies the bundled Pigboard Kanban template. To force a plain
 API-created Project:
 
 ```bash
@@ -40,7 +40,7 @@ GITHUB_PROJECT_NUMBER=1 \
 npm run import:github-repos
 ```
 
-Or choose an existing GitHub Project and preview the fields Ski Stack needs:
+Or choose an existing GitHub Project and preview the fields Pigboard needs:
 
 ```bash
 npm run schema:github-projects
