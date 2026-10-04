@@ -66,8 +66,8 @@ planned display-name edits. Two fresh independent Sol plan reviews were CLEAN:
 B1a/B1b implementation follows that plan. Independent final artifact review is
 separate from plan review; completed results and corrections are recorded below.
 Author principle assessments are in the direction and plan. They do not replace
-independent review. No hosted CI, merge, release or final artwork approval is
-claimed. The three logo candidates have been visually inspected in the original
+independent review. At that review stage, no hosted CI, merge, release or final
+artwork approval was claimed; later owner approval is recorded below. The three logo candidates have been visually inspected in the original
 review; their PNG bytes are unchanged in this worktree.
 
 
