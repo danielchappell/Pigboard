@@ -1,7 +1,8 @@
 # Pigboard product definition
 
 Product name chosen by the owner on 21 September 2026: **Pigboard**.
-Earlier architecture, research and implementation records use the name Ski Stack.
+Pigboard is the name used throughout current documentation. Exact historical
+evidence and operational compatibility identifiers retain their original names.
 
 Agreed product direction, 20 September 2026. This defines the product to design;
 it is not a claim that the SaaS, Jira adapter, MCP, or hosted cloud coordination
@@ -13,7 +14,7 @@ standalone Cursor command. Hosted Jira/cloud operation is not shipped.
 
 On 21 September 2026 the owner chose Pigboard as a maintained development method:
 we choose, enforce, operate, validate and improve the supported AI SDLC.
-The existing Ski Stack process is the starting method, reported by the owner to
+The existing Pigboard process is the starting method, reported by the owner to
 work in their use. First settle the architecture, delivery roadmap and core
 functionality, then carry that method onto the hosted foundation and improve it
 from observed outcomes. Hosted acceptance and broader reliability remain to prove.

@@ -1,4 +1,113 @@
-# Ski Stack development plan
+# Pigboard development plan
+
+## Pigboard rebrand — requested 4 October 2026
+
+The owner requested a consistent Pigboard identity using the existing product
+and market-positioning decisions, the established scuba pig with a floating
+virtual Kanban board, and ultimately Rovito's marketing-site style, design,
+hosting and architecture. [Brand direction](brand-rebrand.md) maps that outcome;
+[rebrand evidence](reviews/pigboard-rebrand.md) records exact reviews and checks.
+
+This new rebrand work lives in the same queue. The recovery batch below retains
+its scope, two-total-PR cap, unresolved decisions and owner authority. Branding
+work does not advance its outcomes or authorize another recovery PR.
+
+| Order | Outcome | Stage and dependency | Size including docs/review |
+| --- | --- | --- | --- |
+| B1a | Introduce the Pigboard product identity and mascot series | Direction reconciled with verified remote main; plan review pending | Documentation/design Task; 14 files, about 6 human hours |
+| B1b | Complete naming in technical guides and historical narrative | Follows B1a; same product decisions and preservation rules | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
+| B3 | Resolve runtime identity compatibility | Discovery pending; new writes and old signed history need an explicit migration contract | Task; scope before sizing dependent Stories |
+| B4 | Build the Rovito-based website path | Exact source/design recovered; page map, copy and production target to resolve | Task first; local preview need not wait for production ownership |
+| Later | Runtime rename and marketing website | Provisional — not ready for delivery | Groom complete Stories after applicable B3/B4 decisions; each <=20 files and <2 human days |
+| Release | Publish and verify | Target/domain and owner release authority required | Exact-revision checks, route/health checks and rollback |
+
+### B1a — Introduce the Pigboard product identity and mascot series
+
+Problem to solve
+
+The project is still introduced under its former name and as a collection of
+worker roles. Readers need the Pigboard purpose, intended audience and visual
+identity alongside an accurate account of the available implementation.
+
+Acceptance Criteria
+
+- Entry-point and product documents consistently use Pigboard.
+- The README states the product outcome and intended audience before current setup options.
+- Existing capability guides and live-acceptance limits remain accurate.
+- Three matching logo candidates show the established scuba pig with a floating virtual Kanban board in Rovito's style.
+- Assets, usage notes and product/design sources are discoverable from the README.
+- The active recovery queue and historical review authority are preserved.
+
+Technical Acceptance Criteria
+
+- Change only the 14-file inventory below, preserving existing decisions and operational identifiers.
+- Use the real repository remote with an explicit `pigboard` clone destination.
+- Preserve the original pig identity, cloven hooves, scuba gear and Rovito palette.
+- Keep source PNGs in the repository and record their provenance and export limitations.
+- Keep candidate artwork, implemented behavior, intended product and production release distinct.
+
+Testing Strategy
+
+- Manual QA: follow the README product/setup/asset links and view each logo at full and reduced sizes.
+- Access and setup: local repository and image assets; no account, live Project mutation or cloud execution required.
+- Automated regression: check relative links, remaining old names, image dimensions/alpha and diff whitespace; no new runtime tests for documentation/assets.
+
+B1a inventory: `AGENTS.md`, `README.md`, `ARCHITECTURE.md`, `docs/product.md`,
+`docs/product-strategy.md`, `docs/architecture-plan.md`, `docs/delivery-plan.md`,
+`docs/development-workflow.md`, `docs/brand-rebrand.md`,
+`docs/reviews/pigboard-rebrand.md`, and the four files under
+`assets/brand/pigboard/` (`README.md` and three candidate PNGs).
+
+### B1b — Complete naming in technical guides and historical narrative
+
+Problem to solve
+
+Technical guides, worker instructions and earlier delivery narratives still use
+the former product name. People and agents need consistent naming while exact
+historical evidence and working commands remain trustworthy.
+
+Acceptance Criteria
+
+- Technical-guide prose and worker instructions use Pigboard.
+- Historical narrative uses the current product name without changing verdicts or outcomes.
+- Exact captured prompts, JSON responses, credential names, URLs and hashes remain intact.
+- A remaining-name audit identifies every intentional historical or compatibility exception.
+
+Technical Acceptance Criteria
+
+- Change the 12 existing Markdown files below plus queue/review bookkeeping, at most 14 files.
+- Preserve runtime code, signed handoff bodies, state directories and configuration identifiers.
+- Label historical review hashes as belonging to their original artifacts.
+- Preserve newer Cursor and hosted capability documentation from current main.
+
+Testing Strategy
+
+- Manual QA: follow the technical guides and inspect the worker handoff example for the current name and usable commands.
+- Access and setup: local Markdown and implementation source only.
+- Automated regression: check relative links, exact evidence preservation, remaining names and diff whitespace; no new runtime tests.
+
+B1b inventory: `docs/mvp-runbook.md`, `docs/migration-from-scuba-stack.md`,
+`docs/github-projects.md`, `docs/cursor-cloud.md`, `docs/development-review.md`,
+`docs/research/2026-09-21-competitor-build-versus-buy.md`,
+`docs/tasks/architecture-decisions.md`, `docs/pilots/jira-discovery.md`,
+`docs/pilots/jira-discovery-feasibility.md`, `docs/stories/development-roadmap.md`,
+`docs/stories/run-cursor-cloud-job.md`, `skills/project-queue-worker/SKILL.md`,
+plus `docs/delivery-plan.md` and `docs/reviews/pigboard-rebrand.md` if updated.
+
+For both Tasks, use literal display-name replacement except for the README's
+outcome-first introduction, clarified historical naming notes, exact-quote
+exception and the Scuba Stack migration clarification. Validate against the
+current-main baseline and keep each planned change independently reviewable.
+Rollback reverts only the relevant rebrand commit. No state migration or live
+release occurs. The older dirty checkout remains untouched by these Tasks.
+
+Author assessment: **Intuitive**—one name and outcome-first entry; **Discoverable**—
+working human guides, agent instructions and artwork links; **Delightful**—retain
+working setup and the accepted visual family; **Token saver**—one queue and clear
+sources; **Secure**—preserve signed history, credentials and production authority;
+**Agents are equal**—update role guidance with human copy; **Dependable**—retain
+current-main capability limits, exact evidence and honest candidate/release state.
+
 
 ## Active delivery queue — approved 1 October 2026
 
@@ -62,7 +171,7 @@ provisional prerequisites, not permission to start an oversized partial PR.
 ## Owner decision and delivery sequence
 
 Pigboard's [product direction](product-strategy.md) is an opinionated AI SDLC
-that we maintain and improve. The owner identifies the existing Ski Stack process
+that we maintain and improve. The owner identifies the existing Pigboard process
 as a working starting point and directs us to settle the architecture, roadmap
 and core functionality before iterating on the development method.
 
@@ -304,7 +413,7 @@ ready implementation.
 | S14 | Independently review the committed result | M3; D5, S13 or an existing committed candidate; no self-review substitution. |
 | S28 | Publish one non-draft PR for the reviewed commit | M3; D5, S14; recover an ambiguous create before another write. |
 | S15 | Reconcile PR feedback and report readiness to the owner | M3; D5, S28 or an existing reviewed PR, source-control checks/feedback contract; no merge authority change. |
-| S16 | Install one versioned Ski Stack role/skill package for Cursor | M4; D6, supported Cursor installation mechanism and M1 configuration contract. |
+| S16 | Install one versioned Pigboard role/skill package for Cursor | M4; D6, supported Cursor installation mechanism and M1 configuration contract. |
 | S17 | Install the equivalent supported package for Codex | M4; D6, supported Codex mechanism; independent of S16 implementation. |
 | S18 | Preview and apply one package upgrade without losing local configuration | M4; D6, one installed package from S16 or S17. |
 | S19 | Inspect the team and a ticket run through MCP | M5; D7, shared application inspection from M2. |
