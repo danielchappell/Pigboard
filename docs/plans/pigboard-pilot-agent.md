@@ -11,7 +11,7 @@ The narrowed design hash is
 independent Sol CLEAN design reviews. These are historical plan/design gates,
 not committed-code review, CI, release or live evidence.
 
-## Implementation evidence — 5 October 2026
+## Initial implementation evidence — 012c1eb, 5 October 2026
 
 - npm ci completed on Node22.17.0; remote main readback remains approved baseline.
 - First focused real TLS PostgreSQL/owner regression passed5/5; protected file/CLI
@@ -76,6 +76,66 @@ not committed-code review, CI, release or live evidence.
 7. Dependable: exact UUID/token retry and fully-revoked no-write results prevent
    repeated issuance. Unknown SQL/inspection is not absence; local preparation,
    SQL completion, handoff, peer/removal, image/CI and release are separate states.
+
+## Committed-code review and bounded P2 repair — 5 October 2026
+
+Round1 reviewed exact commit `012c1eb7de30d1a3e8ffa47762a4821cbb0bfbfb`
+against baseline `533a1c9d99e2c6ba01d08c2796625a54be59fccf`. Independent
+product review was NOT CLEAN with one P2; independent technical review was CLEAN.
+Both completed changed-file/requirement/contract coverage, second sweeps and all
+seven principles. The **aggregate round1 gate was NOT CLEAN**; neither the
+technical verdict nor passing tests covered the missing recovery case.
+
+Root classified the product P2 as a real in-scope status honesty defect. An absent
+requested UUID with a provided digest already bound to another active or revoked
+principal was incorrectly reported as successful absent. Enrollment already
+refused that token, but status is the recovery decision after an unknown reply.
+The repair makes global digest binding decisive regardless of whether the target
+principal exists. A foreign binding returns refused/identity_conflict, no verified
+authority and nonzero CLI exit. A genuinely unissued immutable file still returns
+absent; no token or digest is disclosed and no authority is changed.
+
+The feedback diff uses three existing paths: authority-bootstrap, its real
+PostgreSQL regression and this counted evidence record. The entire PR remains
+15/20 paths; SQL001/002, migration source, runtime grants and enrollment scope are
+unchanged. This is one bounded unpublished feedback commit, not a new PR or product
+scope. Fresh independent reviews of the updated committed revision remain pending.
+
+Validation for the repaired tree:
+
+- `node --test test/authority-bootstrap.test.js test/agent-cli.test.js` passed
+  8/8, zero skipped. Actual managed-file CLI and direct real-DB status refuse active
+  and permanently revoked foreign digests under an absent UUID; an unissued file
+  remains absent before and after revocation. Complete principal, credential,
+  grant, event and generation snapshots are unchanged by every status check.
+- Required `npm test` passed 324/324, zero failures/skipped, without weakening
+  timing, fixture or infrastructure. Evidence logs are preserved separately with
+  the `pigboard-pilot-agent-p2-` prefix in the external review directory.
+- Packaged authority source changed, so actual image proof was repeated rather
+  than reusing the first commit's image. Normal unchanged checker passed build,
+  start, health and owned container/image cleanup for
+  `sha256:f10a30c2a95a402d3ef693aca52302122b725189e6701c89dd0f2c083367deae`,
+  ownership UUID `73871442-18a6-4dba-a929-dac2dab9f3a3`. This supersedes the earlier
+  image for current packaged-source validation; no fallback or timeout change.
+- `git diff --check` passed. No packaged source changed after this fresh image
+  proof. Hosted CI, PR/push, merge/deploy and live v3/agent acceptance remain open.
+
+Author feedback assessment, separate from independent review:
+
+1. Intuitive: status now distinguishes a bound conflicting bearer from an
+   unissued intent, so both human and agent recovery get the right next step.
+2. Discoverable: existing documented identity_conflict and exit contract now
+   covers the missing case; no new command or input is needed.
+3. Delightful experience: a contradictory file is refused immediately instead
+   of causing a misleading absent result and avoidable failed enrollment.
+4. Token saver: one status answer carries the essential conflict without extra
+   diagnostic calls or exposing history, bearer or digest.
+5. Secure: fail-closed binding applies to active and inactive foreign credentials;
+   existing enrollment/permission boundaries and immutable token custody remain.
+6. Agents are equal: human text and noninteractive agent JSON share refusal,
+   authority omission and nonzero exit; valid unissued intents still reconcile.
+7. Dependable: real SQL/file-CLI regression proves honest state and no mutations;
+   historical review/image evidence remains historical until fresh code reviews.
 
 ## Approved plan source — retained verbatim
 

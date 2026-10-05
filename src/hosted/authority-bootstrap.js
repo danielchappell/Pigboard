@@ -743,7 +743,9 @@ export async function inspectAgent(client, { principalId = null, token = null } 
     if (token !== null) {
       const credential = await matchingAgentCredential(client, principalId, token);
       context.credentialMatch = credential?.principal_id === principalId;
-      if (context.principal && !context.credentialMatch) throw new AuthorityError("identity_conflict");
+      if (!context.credentialMatch && (credential || context.principal)) {
+        throw new AuthorityError("identity_conflict");
+      }
     }
     if (context.principal && !consistentAgent(context) && !inactiveAgent(context)) {
       throw new AuthorityError("authority_conflict");

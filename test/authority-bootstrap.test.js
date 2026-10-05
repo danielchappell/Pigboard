@@ -7,7 +7,7 @@ import { test } from "node:test";
 import pg from "pg";
 import { createLocalTlsPostgres } from "./support/local-tls-postgres.js";
 import { authorityCatalogChecksum, changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
-  prepareCredentialDirectory, verifyCallerToken, enrollAgent, inspectAgent, revokeAgent } from "../src/hosted/authority-bootstrap.js";
+  prepareCredentialDirectory, prepareAgentCredential, verifyCallerToken, enrollAgent, inspectAgent, revokeAgent } from "../src/hosted/authority-bootstrap.js";
 import { inspectOwnGrant } from "../src/hosted/authority-self.js";
 import { startHealthServer } from "../src/hosted/health-server.js";
 import { runAgentCommand } from "../scripts/manage-pigboard-agent.mjs";
@@ -452,6 +452,41 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.match(cliText, /status: active/);
     assert.doesNotMatch(cliText, /pb1_|digest/);
     assert.equal((await requestGrant(cliToken)).status, 200);
+    const authoritySnapshot = async () => (await first.query(`SELECT
+      (SELECT jsonb_agg(a ORDER BY team_key) FROM public.pigboard_team_authority a) AS authority,
+      (SELECT jsonb_agg(p ORDER BY id) FROM public.pigboard_principals p) AS principals,
+      (SELECT jsonb_agg(c ORDER BY id) FROM public.pigboard_credentials c) AS credentials,
+      (SELECT jsonb_agg(g ORDER BY id) FROM public.pigboard_grants g) AS grants,
+      (SELECT jsonb_agg(e ORDER BY generation) FROM public.pigboard_authority_events e) AS events`)).rows[0];
+    const unissuedFile = prepareAgentCredential({ home: temp });
+    const beforeStatus = await authoritySnapshot();
+    assert.equal((await inspectAgent(first, unissuedFile)).status, "absent");
+    assert.equal(await runAgentCommand(["status", ...cliBase, "--credential-file", unissuedFile.credentialFile], cliOptions), 0);
+    const unissuedStatus = JSON.parse(cliLines.pop());
+    assert.equal(unissuedStatus.status, "absent");
+    assert.equal(unissuedStatus.authority.principal, null);
+    assert.equal(unissuedStatus.authority.credentialMatch, false);
+    assert.deepEqual(await authoritySnapshot(), beforeStatus);
+    // A syntactically valid file for an absent UUID is contradictory when its
+    // bearer is already bound elsewhere, not an unissued durable intent.
+    const foreignFile = prepareAgentCredential({ home: temp });
+    writeFileSync(foreignFile.credentialFile, `${cliToken}\n`);
+    const assertForeignStatusRefused = async () => {
+      const before = await authoritySnapshot();
+      const inspected = await inspectAgent(first,
+        { principalId: foreignFile.principalId, token: cliToken });
+      assert.deepEqual(inspected, { status: "refused", reason: "identity_conflict", authority: null });
+      assert.equal(await runAgentCommand(["status", ...cliBase, "--credential-file", foreignFile.credentialFile], cliOptions), 1);
+      const output = cliLines.pop();
+      const status = JSON.parse(output);
+      assert.equal(status.status, "refused");
+      assert.equal(status.reason, "identity_conflict");
+      assert.equal(status.authority, null);
+      assert.doesNotMatch(output, /pb1_|"digest"|"token"/);
+      assert.deepEqual(await authoritySnapshot(), before);
+      assert.equal((await first.query("SELECT id FROM public.pigboard_principals WHERE id=$1", [foreignFile.principalId])).rows.length, 0);
+    };
+    await assertForeignStatusRefused(); // Foreign digest is currently active.
     const revokeRetryRace = await Promise.all([revokeAgent(first, { principalId: cliId }),
       enrollAgent(second, { principalId: cliId, token: cliToken })]);
     assert.equal(revokeRetryRace[0].status, "revoked");
@@ -461,6 +496,11 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(await runAgentCommand(["revoke", ...cliBase, "--principal-id", cliId.toUpperCase()], cliOptions), 0);
     const cliRevoke = JSON.parse(cliLines.pop());
     assert.equal(cliRevoke.status, "already_revoked");
+    await assertForeignStatusRefused(); // The same foreign digest is permanently revoked.
+    const afterRevokedForeignStatus = await authoritySnapshot();
+    assert.equal(await runAgentCommand(["status", ...cliBase, "--credential-file", unissuedFile.credentialFile], cliOptions), 0);
+    assert.equal(JSON.parse(cliLines.pop()).status, "absent");
+    assert.deepEqual(await authoritySnapshot(), afterRevokedForeignStatus);
     assert.deepEqual(cliRevoke.omissions, ["peer_removal_unverified"]);
     assert.equal((await requestGrant(preservedOwnerToken)).status, 200);
     assert.equal((await inspectAuthority(first)).owner.principalId, activeOwner.principalId);
