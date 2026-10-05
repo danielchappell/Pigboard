@@ -1,0 +1,13 @@
+**
+!Dockerfile.website
+!Dockerfile.website.dockerignore
+!website
+!website/go.mod
+!website/server
+!website/server/handler.go
+!website/cmd
+!website/cmd/site
+!website/cmd/site/main.go
+!dist
+!dist/website-image
+!dist/website-image/**
