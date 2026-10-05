@@ -15,8 +15,10 @@ Usage:
 The URL file and its parent must be owner-only. The credential is saved once in
 ~/.config/pigboard/owner-credentials/ and is never printed. On an unknown result,
 inspect before retrying; on an undelivered credential, inspect then recover.
-Create the restricted pigboard_app role before migrating; migration v2 gives it
-only the columns needed for private self-inspection.
+Create the restricted pigboard_app role before migrating. Migration v3 retains
+SELECT-only self-inspection, adds agent events and permanent digest uniqueness.
+Quiesce old operators and fence private Flycast ingress before upgrading; use
+only a v3-compatible operator and image for forward recovery.
 The guide is docs/hosted-pigboard-authority.md.`;
 
 function parse(args) {
@@ -78,6 +80,7 @@ const NEXT_ACTION = Object.freeze({
   owner_connection_unverified: "Check Neon availability, owner login and TLS; inspect after restoring the connection.",
   invalid_owner_name: "Use a nonempty single-line owner name of at most 120 characters.",
   invalid_expected_generation: "Use the positive generation returned by a fresh inspection.",
+  generation_exhausted: "Stop and inspect the authority generation under owner custody.",
   owner_change_failed: "Inspect current owner state before deciding whether any explicit retry is safe."
 });
 

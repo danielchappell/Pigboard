@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -7,9 +7,10 @@ import { test } from "node:test";
 import pg from "pg";
 import { createLocalTlsPostgres } from "./support/local-tls-postgres.js";
 import { authorityCatalogChecksum, changeOwner, digestCallerToken, inspectAuthority, migrateAuthority,
-  prepareCredentialDirectory, verifyCallerToken } from "../src/hosted/authority-bootstrap.js";
+  prepareCredentialDirectory, verifyCallerToken, enrollAgent, inspectAgent, revokeAgent } from "../src/hosted/authority-bootstrap.js";
 import { inspectOwnGrant } from "../src/hosted/authority-self.js";
 import { startHealthServer } from "../src/hosted/health-server.js";
+import { runAgentCommand } from "../scripts/manage-pigboard-agent.mjs";
 import { runOwnerCommand } from "../scripts/bootstrap-pigboard-owner.mjs";
 
 function requireBinary(name) {
@@ -70,8 +71,39 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(JSON.parse(pendingOutput[0]).status, "migration_required");
     assert.match(JSON.parse(pendingOutput[0]).nextAction, /migration/);
     assert.deepEqual(await migrateAuthority(legacy),
-      { status: "upgraded", schemaVersion: 2, generation: 0 });
+      { status: "upgraded", schemaVersion: 3, generation: 0 });
     assert.equal((await inspectAuthority(legacy)).status, "schema_current");
+    // Upgrade an actual v2 database with its original receipts and duplicate history.
+    await first.query("CREATE DATABASE pigboard_legacy_v2");
+    const v2 = new pg.Client({ host: "localhost", port, database: "pigboard_legacy_v2",
+      user: process.env.USER, ssl: { rejectUnauthorized: true, servername: "localhost",
+        ca: readFileSync(cert, "utf8") } });
+    await v2.connect(); clients.push(v2);
+    await v2.query(firstMigration);
+    const v1Catalog = await authorityCatalogChecksum(v2);
+    await v2.query(runtimeMigration);
+    const v2Catalog = await authorityCatalogChecksum(v2);
+    for (const [version, source, catalog] of [[1, firstMigration, v1Catalog], [2, runtimeMigration, v2Catalog]]) {
+      await v2.query("INSERT INTO pigboard_schema_migrations(version,checksum,catalog_checksum) VALUES($1,$2,$3)",
+        [version, createHash("sha256").update(source).digest("hex"), catalog]);
+    }
+    assert.equal((await inspectAuthority(v2)).status, "migration_required");
+    const duplicatePrincipal = randomUUID();
+    await v2.query("INSERT INTO pigboard_principals(id,name,kind) VALUES($1,'Historical','human')", [duplicatePrincipal]);
+    for (let index = 0; index < 2; index++) await v2.query(`INSERT INTO pigboard_credentials
+      (id,principal_id,digest_version,digest,issued_generation,active) VALUES($1,$2,'sha256-v1',$3,1,false)`,
+      [randomUUID(), duplicatePrincipal, "f".repeat(64)]);
+    assert.deepEqual(await migrateAuthority(v2), { status: "schema_conflict" });
+    assert.equal((await v2.query("SELECT count(*)::int AS n FROM pigboard_schema_migrations")).rows[0].n, 2);
+    await v2.query("DELETE FROM pigboard_credentials WHERE id=(SELECT id FROM pigboard_credentials LIMIT 1)");
+    assert.deepEqual(await migrateAuthority(v2), { status: "upgraded", schemaVersion: 3, generation: 0 });
+    const upgradedReceipts = (await v2.query("SELECT version,checksum,catalog_checksum FROM pigboard_schema_migrations ORDER BY version")).rows;
+    assert.equal(upgradedReceipts.length, 3);
+    assert.equal(upgradedReceipts[0].catalog_checksum, v1Catalog);
+    assert.notEqual(upgradedReceipts[2].catalog_checksum, v2Catalog);
+    // The immutable v2 operator accepts only one/two receipts (baseline schemaState).
+    assert.equal([1, 2].includes(upgradedReceipts.length), false);
+    assert.equal((await inspectAuthority(v2)).status, "schema_current");
     const migrations = await Promise.all([migrateAuthority(first), migrateAuthority(second)]);
     assert.deepEqual(migrations.map((item) => item.status).sort(), ["already_current", "applied"]);
     assert.deepEqual(migrations.map((item) => item.generation), [0, 0]);
@@ -80,7 +112,7 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     await first.query("SET search_path = pg_catalog, public");
     await second.query("SET search_path = pg_catalog, public");
     assert.equal((await inspectAuthority(first)).status, "schema_current");
-    assert.deepEqual(migrations.map((item) => item.schemaVersion), [2, 2]);
+    assert.deepEqual(migrations.map((item) => item.schemaVersion), [3, 3]);
     const app = new pg.Client({ host: "localhost", port, database: "postgres",
       user: "pigboard_app", ssl: { rejectUnauthorized: true,
         servername: "localhost", ca: readFileSync(cert, "utf8") } });
@@ -110,7 +142,7 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(inspection.owner.principalId, issued.principalId);
     assert.equal(inspection.owner.active, true);
     const rerun = await migrateAuthority(first);
-    assert.deepEqual(rerun, { status: "already_current", schemaVersion: 2, generation: 1 });
+    assert.deepEqual(rerun, { status: "already_current", schemaVersion: 3, generation: 1 });
     const originalCredential = (await first.query(
       "SELECT digest_version, digest, active FROM pigboard_credentials WHERE principal_id = $1",
       [issued.principalId])).rows[0];
@@ -278,9 +310,164 @@ test("real independent Postgres sessions serialize migration, setup, and recover
     assert.equal(stable.generation, 3);
     assert.equal(stable.owner.name, "Owner After Lost Reply");
     assert.equal((await inspectAuthority(first)).generation, 4);
+    // Agent lifecycle uses real independent sessions, SQL grants and HTTP; no fake lock.
+    const intent = () => ({ principalId: randomUUID(), token: `pb1_${randomUUID().replaceAll("-", "").padEnd(43, "A")}` });
+    const recoveryRacer = intent();
+    const [ownerRecovery, agentDuringRecovery] = await Promise.all([
+      changeOwner(first, { name: "Owner During Agent Race", expectGeneration: 4 }),
+      enrollAgent(second, recoveryRacer)
+    ]);
+    // Agent enrollment may win first, making the guarded owner generation stale.
+    assert.equal(agentDuringRecovery.status, "enrolled");
+    let preservedOwnerToken;
+    if (ownerRecovery.status === "recovered") preservedOwnerToken = ownerRecovery.token;
+    else {
+      assert.equal(ownerRecovery.status, "stale_generation");
+      const recovery = await changeOwner(first, { name: "Owner After Agent Race",
+        expectGeneration: (await inspectAuthority(first)).generation });
+      assert.equal(recovery.status, "recovered");
+      preservedOwnerToken = recovery.token;
+    }
+    assert.equal((await revokeAgent(second, { principalId: recoveryRacer.principalId })).status, "revoked");
+    const activeOwner = (await inspectAuthority(first)).owner;
+    const ownerBeforeAgent = await first.query("SELECT digest FROM pigboard_credentials WHERE principal_id=$1 AND active", [activeOwner.principalId]);
+    assert.equal((await requestGrant(preservedOwnerToken)).status, 200);
+    const one = intent(); const two = intent();
+    await first.query("SET default_transaction_isolation='repeatable read'");
+    await second.query("SET default_transaction_isolation='serializable'");
+    const concurrent = await Promise.all([enrollAgent(first, one), enrollAgent(second, two)]);
+    assert.deepEqual(concurrent.map((item) => item.status).sort(), ["enrolled", "refused"]);
+    assert.equal(concurrent.find((item) => item.status === "refused").reason, "agent_exists");
+    const used = concurrent[0].status === "enrolled" ? one : two;
+    const afterEnroll = await inspectAgent(first);
+    assert.equal(afterEnroll.status, "active");
+    assert.equal(afterEnroll.authority.principal.id, used.principalId);
+    assert.deepEqual(afterEnroll.authority.grantActiveRoles, ["connection_admin"]);
+    const retries = await Promise.all([enrollAgent(first, used), enrollAgent(second, used)]);
+    assert.deepEqual(retries.map((row) => row.status), ["already_active", "already_active"]);
+    const noWrite = retries[1];
+    assert.equal(noWrite.status, "already_active");
+    assert.equal(noWrite.authority.generation, afterEnroll.authority.generation);
+    assert.equal((await inspectAgent(first, used)).authority.credentialMatch, true);
+    assert.equal((await inspectAgent(first, { principalId: activeOwner.principalId })).status, "refused");
+    assert.equal((await revokeAgent(first, { principalId: activeOwner.principalId })).status, "refused");
+    const agentHTTP = await requestGrant(used.token);
+    assert.equal(agentHTTP.status, 200);
+    assert.equal((await agentHTTP.json()).principal.kind, "agent");
+    const mismatched = await enrollAgent(first, { ...used, token: intent().token });
+    assert.equal(mismatched.reason, "identity_conflict");
+    // A stored future-generation credential fails inspection but can still be fully revoked.
+    await first.query("UPDATE pigboard_credentials SET issued_generation=$1 WHERE principal_id=$2",
+      [afterEnroll.authority.generation + 10, used.principalId]);
+    assert.equal((await inspectAgent(second)).reason, "authority_conflict");
+    await first.query("UPDATE pigboard_credentials SET issued_generation=$1 WHERE principal_id=$2",
+      [afterEnroll.authority.generation, used.principalId]);
+    // Full revoke removes every credential, even when the target's active shape is contradictory.
+    const secondBearer = intent().token;
+    await first.query(`INSERT INTO pigboard_credentials(id,principal_id,digest_version,digest,issued_generation)
+      VALUES($1,$2,'sha256-v1',$3,$4)`,
+      [randomUUID(), used.principalId, digestCallerToken(secondBearer), afterEnroll.authority.generation]);
+    assert.equal((await inspectAgent(second)).status, "unknown");
+    const lostAgentRevoke = await revokeAgent(lostCommitReply, { principalId: used.principalId });
+    assert.equal(lostAgentRevoke.status, "unknown");
+    assert.equal(lostAgentRevoke.reason, "outcome_unknown");
+    assert.equal((await requestGrant(used.token)).status, 401);
+    assert.equal((await requestGrant(secondBearer)).status, 401);
+    const revoked = await inspectAgent(first, used);
+    assert.equal(revoked.status, "revoked");
+    const repeatedRevoke = await revokeAgent(second, { principalId: used.principalId });
+    assert.equal(repeatedRevoke.status, "already_revoked");
+    assert.equal(repeatedRevoke.authority.generation, revoked.authority.generation);
+    assert.equal((await enrollAgent(first, used)).reason, "credential_revoked");
+    const another = intent();
+    const lostEnrollment = await enrollAgent(lostCommitReply, another);
+    assert.equal(lostEnrollment.status, "unknown");
+    assert.equal((await inspectAgent(first, another)).status, "active");
+    assert.equal((await enrollAgent(first, another)).status, "already_active");
+    const rebound = await enrollAgent(first, { ...intent(), token: another.token });
+    assert.equal(rebound.reason, "identity_conflict");
+    await assert.rejects(first.query(`INSERT INTO pigboard_credentials(id,principal_id,digest_version,digest,issued_generation,active)
+      VALUES($1,$2,'sha256-v1',$3,1,false)`, [randomUUID(), another.principalId, digestCallerToken(used.token)]),
+      { code: "23505" });
+    const humanImposter = randomUUID();
+    await first.query("INSERT INTO pigboard_principals(id,name,kind) VALUES($1,'pilot-agent','human')", [humanImposter]);
+    assert.equal((await inspectAgent(second)).reason, "authority_conflict");
+    await first.query("DELETE FROM pigboard_principals WHERE id=$1", [humanImposter]);
+    const extra = randomUUID();
+    await first.query("INSERT INTO pigboard_principals(id,name,kind) VALUES($1,'other-agent','agent')", [extra]);
+    await first.query("INSERT INTO pigboard_grants(principal_id,role) VALUES($1,'connection_admin')", [extra]);
+    assert.equal((await revokeAgent(second, { principalId: another.principalId })).reason, "authority_conflict");
+    await first.query("DELETE FROM pigboard_grants WHERE principal_id=$1", [extra]);
+    await first.query("DELETE FROM pigboard_principals WHERE id=$1", [extra]);
+    const beforeRace = (await inspectAuthority(first)).generation;
+    // Hold the actual row lock, start revoke, then advance generation before releasing it.
+    await first.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+    await first.query("SELECT generation FROM pigboard_team_authority WHERE team_key='pilot' FOR UPDATE");
+    let lockReached;
+    const waiting = new Promise((resolve) => { lockReached = resolve; });
+    const wrappedSecond = { query: async (sql, params) => {
+      if (sql.includes("FOR UPDATE")) lockReached();
+      return second.query(sql, params);
+    } };
+    const blockedRevoke = revokeAgent(wrappedSecond, { principalId: another.principalId });
+    await waiting;
+    await first.query("UPDATE pigboard_team_authority SET generation=$1 WHERE team_key='pilot'", [beforeRace + 1]);
+    await first.query("COMMIT");
+    const freshRevoke = await blockedRevoke;
+    assert.equal(freshRevoke.status, "revoked");
+    assert.equal(freshRevoke.authority.generation, beforeRace + 2);
+    assert.equal((await inspectAuthority(first)).owner.principalId, activeOwner.principalId);
+    assert.deepEqual((await first.query("SELECT digest FROM pigboard_credentials WHERE principal_id=$1 AND active", [activeOwner.principalId])).rows,
+      ownerBeforeAgent.rows);
+    const latest = await inspectAgent(first);
+    assert.equal(latest.status, "revoked");
+    assert.equal(latest.authority.principal.id, another.principalId);
+    assert.equal((await inspectAgent(first, { principalId: randomUUID() })).status, "absent");
+    // Bound overflow without changing owner authority or allowing an unsafe increment.
+    const generation = (await inspectAuthority(first)).generation;
+    await first.query("UPDATE pigboard_team_authority SET generation=$1 WHERE team_key='pilot'", [Number.MAX_SAFE_INTEGER]);
+    assert.equal((await enrollAgent(second, intent())).reason, "generation_exhausted");
+    await first.query("UPDATE pigboard_team_authority SET generation=$1 WHERE team_key='pilot'", [generation]);
+    const cliLines = [];
+    const cliOptions = { home: temp, output: (line) => cliLines.push(line), openConnection: newClient };
+    const cliBase = ["--owner-url-file", "/unused/test/path", "--format", "json"];
+    assert.equal(await runAgentCommand(["enroll", ...cliBase], cliOptions), 0);
+    const cliEnrollment = JSON.parse(cliLines.pop());
+    assert.deepEqual(Object.keys(cliEnrollment), ["schemaVersion", "command", "status", "reason", "authority", "local", "omissions", "nextAction"]);
+    assert.equal(cliEnrollment.status, "enrolled");
+    assert.equal(cliEnrollment.local.status, "prepared_locally");
+    assert.deepEqual(cliEnrollment.omissions, ["delivery_unverified", "peer_unverified"]);
+    const cliToken = readFileSync(cliEnrollment.local.credentialFile, "utf8").trim();
+    const cliId = cliEnrollment.authority.principal.id;
+    const cliFile = ["--credential-file", cliEnrollment.local.credentialFile];
+    assert.equal(await runAgentCommand(["enroll", ...cliBase, ...cliFile], cliOptions), 0);
+    assert.equal(JSON.parse(cliLines.pop()).status, "already_active");
+    assert.equal(await runAgentCommand(["status", ...cliBase, ...cliFile], cliOptions), 0);
+    const cliStatus = JSON.parse(cliLines.pop());
+    assert.equal(cliStatus.status, "active");
+    assert.equal(cliStatus.authority.credentialMatch, true);
+    assert.equal(await runAgentCommand(["status", "--owner-url-file", "/unused/test/path", "--principal-id", cliId], cliOptions), 0);
+    const cliText = cliLines.pop();
+    assert.match(cliText, new RegExp(`generation: ${cliStatus.authority.generation}`));
+    assert.match(cliText, /status: active/);
+    assert.doesNotMatch(cliText, /pb1_|digest/);
+    assert.equal((await requestGrant(cliToken)).status, 200);
+    const revokeRetryRace = await Promise.all([revokeAgent(first, { principalId: cliId }),
+      enrollAgent(second, { principalId: cliId, token: cliToken })]);
+    assert.equal(revokeRetryRace[0].status, "revoked");
+    assert.ok(["already_active", "refused"].includes(revokeRetryRace[1].status));
+    if (revokeRetryRace[1].status === "refused") assert.equal(revokeRetryRace[1].reason, "credential_revoked");
+    assert.equal((await requestGrant(cliToken)).status, 401);
+    assert.equal(await runAgentCommand(["revoke", ...cliBase, "--principal-id", cliId.toUpperCase()], cliOptions), 0);
+    const cliRevoke = JSON.parse(cliLines.pop());
+    assert.equal(cliRevoke.status, "already_revoked");
+    assert.deepEqual(cliRevoke.omissions, ["peer_removal_unverified"]);
+    assert.equal((await requestGrant(preservedOwnerToken)).status, 200);
+    assert.equal((await inspectAuthority(first)).owner.principalId, activeOwner.principalId);
+    const finalGeneration = (await inspectAuthority(first)).generation;
     await first.query("UPDATE pigboard_grants SET active = false WHERE role = 'owner' AND active");
     assert.deepEqual(await changeOwner(second, { name: "Unsafe New Bootstrap" }),
-      { status: "owner_missing_needs_repair", generation: 4 });
+      { status: "owner_missing_needs_repair", generation: finalGeneration });
     await first.query("DROP INDEX public.pigboard_one_active_owner");
     assert.deepEqual(await migrateAuthority(second), { status: "schema_conflict" });
     assert.deepEqual(await inspectAuthority(first), { status: "schema_conflict" });

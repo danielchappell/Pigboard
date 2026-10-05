@@ -29,7 +29,10 @@
     "provision:github-project": "node scripts/provision-github-project.mjs",
     "release:github": "node scripts/release-github-claim.mjs",
     "schema:github-projects": "node scripts/print-github-project-schema.mjs",
-    "setup:github-project": "node scripts/setup-github-project.mjs"
+    "setup:github-project": "node scripts/setup-github-project.mjs",
+    "agent:enroll": "node scripts/manage-pigboard-agent.mjs enroll",
+    "agent:status": "node scripts/manage-pigboard-agent.mjs status",
+    "agent:revoke": "node scripts/manage-pigboard-agent.mjs revoke"
   },
   "engines": {
     "node": ">=20"

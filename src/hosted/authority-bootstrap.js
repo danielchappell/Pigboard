@@ -1,11 +1,14 @@
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { constants, closeSync, existsSync, fstatSync, fsyncSync, lstatSync,
   mkdirSync, openSync, readFileSync, realpathSync, writeSync } from "node:fs";
+import * as fs from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, isAbsolute, join } from "node:path";
 
 const SQL = readFileSync(new URL("../../sql/001-pigboard-authority.sql", import.meta.url), "utf8");
 const READ_SQL = readFileSync(new URL("../../sql/002-pigboard-owner-read.sql", import.meta.url), "utf8");
+const AGENT_SQL = readFileSync(new URL("../../sql/003-pigboard-pilot-agent.sql", import.meta.url), "utf8");
+const AGENT_CHECKSUM = createHash("sha256").update(AGENT_SQL).digest("hex");
 const CHECKSUM = createHash("sha256").update(SQL).digest("hex");
 const READ_CHECKSUM = createHash("sha256").update(READ_SQL).digest("hex");
 const TABLES = ["pigboard_schema_migrations", "pigboard_team_authority",
@@ -187,16 +190,16 @@ async function schemaState(client) {
   } catch {
     return { status: "schema_conflict" };
   }
-  if (![1, 2].includes(receipts.length) || receipts[0].version !== 1 ||
-      receipts[0].checksum !== CHECKSUM ||
-      (receipts.length === 2 &&
-       (receipts[1].version !== 2 || receipts[1].checksum !== READ_CHECKSUM))) {
+  const checksums = [CHECKSUM, READ_CHECKSUM, AGENT_CHECKSUM];
+  if (receipts.length < 1 || receipts.length > checksums.length ||
+      receipts.some((receipt, index) => receipt.version !== index + 1 ||
+        receipt.checksum !== checksums[index] ||
+        !/^[0-9a-f]{64}$/u.test(receipt.catalog_checksum))) {
     return { status: "schema_conflict" };
   }
   try {
     const catalog = await authorityCatalogChecksum(client);
-    if (catalog !== receipts[0].catalog_checksum ||
-        (receipts.length === 2 && catalog !== receipts[1].catalog_checksum)) {
+    if (catalog !== receipts.at(-1).catalog_checksum) {
       return { status: "schema_conflict" };
     }
   } catch {
@@ -208,14 +211,14 @@ async function schemaState(client) {
   if (authority.rows.length !== 1) return { status: "schema_conflict" };
   const generation = Number(authority.rows[0].generation);
   if (!Number.isSafeInteger(generation) || generation < 0) return { status: "schema_conflict" };
-  if (receipts.length === 2) {
+  if (receipts.length >= 2) {
     try {
       if (!(await runtimeReadGrantsCurrent(client))) return { status: "schema_conflict" };
     } catch {
       return { status: "schema_conflict" };
     }
   }
-  return { status: receipts.length === 2 ? "schema_current" : "migration_required",
+  return { status: receipts.length === 3 ? "schema_current" : "migration_required",
     schemaVersion: receipts.length,
     generation };
 }
@@ -255,7 +258,7 @@ export async function inspectAuthority(client) {
 export async function migrateAuthority(client) {
   let committing = false;
   try {
-    await client.query("BEGIN");
+    await client.query("BEGIN ISOLATION LEVEL READ COMMITTED");
     await client.query("SELECT pg_advisory_xact_lock($1)", [MIGRATION_LOCK]);
     const before = await schemaState(client);
     if (before.status === "schema_conflict") {
@@ -275,11 +278,23 @@ export async function migrateAuthority(client) {
       await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (1, $1, $2)`, [CHECKSUM, catalog]);
     }
-    if (before.status !== "schema_current") {
+    if (before.status === "schema_absent" || before.schemaVersion === 1) {
       await client.query(READ_SQL);
       const catalog = await authorityCatalogChecksum(client);
       await client.query(`INSERT INTO public.pigboard_schema_migrations
         (version, checksum, catalog_checksum) VALUES (2, $1, $2)`, [READ_CHECKSUM, catalog]);
+    }
+    if (before.status !== "schema_current") {
+      const duplicates = await client.query(`SELECT 1 FROM public.pigboard_credentials
+        GROUP BY digest_version, digest HAVING count(*) > 1 LIMIT 1`);
+      if (duplicates.rows.length) {
+        await client.query("ROLLBACK");
+        return { status: "schema_conflict" };
+      }
+      await client.query(AGENT_SQL);
+      const catalog = await authorityCatalogChecksum(client);
+      await client.query(`INSERT INTO public.pigboard_schema_migrations
+        (version, checksum, catalog_checksum) VALUES (3, $1, $2)`, [AGENT_CHECKSUM, catalog]);
     }
     const after = await schemaState(client);
     if (after.status !== "schema_current") throw new AuthorityError("schema_conflict");
@@ -287,7 +302,7 @@ export async function migrateAuthority(client) {
     await client.query("COMMIT");
     return { status: before.status === "schema_absent" ? "applied" :
       before.status === "migration_required" ? "upgraded" : "already_current",
-    schemaVersion: 2, generation: after.generation };
+    schemaVersion: 3, generation: after.generation };
   } catch {
     if (!committing) {
       try { await client.query("ROLLBACK"); } catch { /* Connection may be lost. */ }
@@ -328,17 +343,23 @@ export async function changeOwner(client, { name, expectGeneration = null } = {}
   }
   let committing = false;
   try {
-    await client.query("BEGIN");
-    const schema = await schemaState(client);
-    if (schema.status !== "schema_current") {
+    await client.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+    const present = await tablePresence(client);
+    if (TABLES.some((table) => !present.get(table))) {
       await client.query("ROLLBACK");
-      return schema;
+      return { status: TABLES.every((table) => !present.get(table)) ?
+        "schema_absent" : "schema_conflict" };
     }
     const authority = await client.query(
       "SELECT generation FROM public.pigboard_team_authority WHERE team_key = 'pilot' FOR UPDATE"
     );
     if (authority.rows.length !== 1) throw new AuthorityError("schema_conflict");
-    const currentGeneration = Number(authority.rows[0].generation);
+    const schema = await schemaState(client);
+    if (schema.status !== "schema_current") {
+      await client.query("ROLLBACK");
+      return schema;
+    }
+    const currentGeneration = schema.generation;
     const owner = await client.query(`SELECT p.id, p.name FROM public.pigboard_grants g
       JOIN public.pigboard_principals p ON p.id = g.principal_id
       WHERE g.role = 'owner' AND g.active`);
@@ -356,6 +377,7 @@ export async function changeOwner(client, { name, expectGeneration = null } = {}
       await client.query("ROLLBACK");
       return { status: "stale_generation", generation: currentGeneration };
     }
+    if (currentGeneration === Number.MAX_SAFE_INTEGER) throw new AuthorityError("generation_exhausted");
     if (expectGeneration !== null) {
       await client.query("UPDATE public.pigboard_credentials SET active = false WHERE principal_id = $1 AND active", [active.id]);
       await client.query("UPDATE public.pigboard_grants SET active = false WHERE principal_id = $1 AND active", [active.id]);
@@ -402,7 +424,7 @@ function syncDirectory(path, identity) {
   }
 }
 
-export function prepareCredentialDirectory(home = homedir()) {
+function prepareDirectory(home, leaf) {
   try {
     const homeIdentity = safeDirectory(home);
     const config = join(home, ".config");
@@ -411,7 +433,7 @@ export function prepareCredentialDirectory(home = homedir()) {
     const app = join(config, "pigboard");
     if (!existsSync(app)) mkdirSync(app, { mode: 0o700 });
     const appIdentity = safeDirectory(app, 0o700);
-    const directory = join(app, "owner-credentials");
+    const directory = join(app, leaf);
     if (!existsSync(directory)) mkdirSync(directory, { mode: 0o700 });
     const identity = safeDirectory(directory, 0o700);
     // Persist every ancestor entry before a database commit can issue a token.
@@ -482,4 +504,331 @@ export function deliverCredential(prepared, generation, token) {
     if (directoryFd !== undefined) closeSync(directoryFd);
     if (fd !== undefined) closeSync(fd);
   }
+}
+
+export function prepareCredentialDirectory(home = homedir()) {
+  return prepareDirectory(home, "owner-credentials");
+}
+
+const AGENT_NAME = "pilot-agent";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
+const AGENT_FILE = /^agent-([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\.token$/u;
+
+function agentFileIdentity(prepared, path, ops) {
+  const current = safeDirectory(prepared.directory, 0o700);
+  if (current.dev !== prepared.identity.dev || current.ino !== prepared.identity.ino ||
+      current.resolved !== prepared.identity.resolved ||
+      path !== join(prepared.directory, basename(path))) {
+    throw new AuthorityError("unsafe_credential_file");
+  }
+  let stat;
+  try { stat = ops.lstatSync(path); }
+  catch (error) {
+    throw new AuthorityError(error?.code === "ENOENT" ?
+      "credential_file_missing" : "unsafe_credential_file");
+  }
+  if (!stat.isFile() || stat.uid !== process.getuid() ||
+      (stat.mode & 0o777) !== 0o600 || stat.nlink !== 1 || stat.size !== 48) {
+    throw new AuthorityError("unsafe_credential_file");
+  }
+  return stat;
+}
+
+// File operations can be injected only by in-process tests; the CLI has no overrides.
+export function prepareAgentCredential({ home = homedir(), credentialFile = null,
+  durable = true, ops = fs } = {}) {
+  const directory = join(home, ".config", "pigboard", "agent-credentials");
+  let prepared;
+  if (durable) prepared = prepareDirectory(home, "agent-credentials");
+  else {
+    safeDirectory(home);
+    safeDirectory(join(home, ".config"));
+    safeDirectory(join(home, ".config", "pigboard"), 0o700);
+    prepared = { directory, identity: safeDirectory(directory, 0o700) };
+  }
+  let path = credentialFile;
+  let principalId;
+  let token;
+  let fd;
+  let fileIdentity;
+  const existing = credentialFile !== null;
+  try {
+    if (existing) {
+      if (typeof path !== "string" || !isAbsolute(path) ||
+          !AGENT_FILE.test(basename(path)) ||
+          path !== join(prepared.directory, basename(path))) {
+        throw new AuthorityError("unsafe_credential_file");
+      }
+      principalId = AGENT_FILE.exec(basename(path))[1];
+      fileIdentity = agentFileIdentity(prepared, path, ops);
+      fd = ops.openSync(path, ops.constants.O_RDONLY | ops.constants.O_NOFOLLOW);
+      const opened = ops.fstatSync(fd);
+      if (opened.dev !== fileIdentity.dev || opened.ino !== fileIdentity.ino ||
+          !opened.isFile() || opened.uid !== process.getuid() ||
+          (opened.mode & 0o777) !== 0o600 || opened.nlink !== 1 || opened.size !== 48) {
+        throw new AuthorityError("unsafe_credential_file");
+      }
+      const bytes = Buffer.alloc(49);
+      let length = 0;
+      while (length < bytes.length) {
+        const count = ops.readSync(fd, bytes, length, bytes.length - length, length);
+        if (count === 0) break;
+        length += count;
+      }
+      const content = bytes.subarray(0, length).toString("utf8");
+      if (length !== 48 || !/^pb1_[A-Za-z0-9_-]{43}\n$/u.test(content)) {
+        throw new AuthorityError("invalid_credential_file");
+      }
+      token = content.slice(0, -1);
+    } else {
+      if (!durable) throw new AuthorityError("credential_file_missing");
+      principalId = randomUUID();
+      token = newToken();
+      path = join(prepared.directory, `agent-${principalId}.token`);
+      fd = ops.openSync(path, ops.constants.O_WRONLY | ops.constants.O_CREAT |
+        ops.constants.O_EXCL | ops.constants.O_NOFOLLOW, 0o600);
+      const opened = ops.fstatSync(fd);
+      if (!opened.isFile() || opened.uid !== process.getuid() ||
+          (opened.mode & 0o777) !== 0o600 || opened.nlink !== 1) {
+        throw new AuthorityError("unsafe_credential_file");
+      }
+      fileIdentity = opened;
+      const bytes = Buffer.from(`${token}\n`, "utf8");
+      let written = 0;
+      while (written < bytes.length) {
+        const count = ops.writeSync(fd, bytes, written, bytes.length - written);
+        if (!Number.isSafeInteger(count) || count < 1 || count > bytes.length - written) {
+          throw new AuthorityError("unsafe_credential_file");
+        }
+        written += count;
+      }
+    }
+    if (durable) ops.fsyncSync(fd);
+    const final = agentFileIdentity(prepared, path, ops);
+    const descriptor = ops.fstatSync(fd);
+    if (final.dev !== fileIdentity.dev || final.ino !== fileIdentity.ino ||
+        descriptor.dev !== fileIdentity.dev || descriptor.ino !== fileIdentity.ino ||
+        descriptor.size !== 48) throw new AuthorityError("unsafe_credential_file");
+    if (durable) syncDirectory(prepared.directory, prepared.identity);
+    return { principalId, token, credentialFile: path,
+      localStatus: existing ? "read_existing" : "prepared_locally" };
+  } catch (error) {
+    if (error instanceof AuthorityError) throw error;
+    throw new AuthorityError("unsafe_credential_file");
+  } finally {
+    if (fd !== undefined) ops.closeSync(fd);
+  }
+}
+
+function validAgentIntent(principalId, token) {
+  if (typeof principalId !== "string" || !UUID.test(principalId) ||
+      typeof token !== "string" || !/^pb1_[A-Za-z0-9_-]{43}$/u.test(token)) {
+    throw new AuthorityError("identity_conflict");
+  }
+}
+
+async function lockAuthority(client) {
+  const present = await tablePresence(client);
+  if (TABLES.some((table) => !present.get(table))) {
+    throw new AuthorityError(TABLES.every((table) => !present.get(table)) ?
+      "schema_absent" : "schema_conflict");
+  }
+  const lock = await client.query(
+    "SELECT generation FROM public.pigboard_team_authority WHERE team_key = 'pilot' FOR UPDATE"
+  );
+  if (lock.rows.length !== 1) throw new AuthorityError("schema_conflict");
+}
+
+async function currentAgentSchema(client) {
+  const schema = await schemaState(client);
+  if (schema.status !== "schema_current") throw new AuthorityError(schema.status);
+  const owner = await client.query(`SELECT p.id, p.kind,
+    (SELECT count(*)::int FROM public.pigboard_credentials c
+      WHERE c.principal_id=p.id AND c.active) AS credential_count,
+    (SELECT count(*)::int FROM public.pigboard_credentials c
+      WHERE c.principal_id=p.id AND c.active AND c.digest_version='sha256-v1'
+        AND c.digest ~ '^[0-9a-f]{64}$' AND c.issued_generation <= $1) AS valid_count,
+    (SELECT array_agg(g2.role ORDER BY g2.role) FROM public.pigboard_grants g2
+      WHERE g2.principal_id=p.id AND g2.active) AS roles
+    FROM public.pigboard_grants g JOIN public.pigboard_principals p ON p.id=g.principal_id
+    WHERE g.role='owner' AND g.active`, [schema.generation]);
+  const row = owner.rows[0];
+  if (owner.rows.length !== 1 || row.kind !== "human" || row.credential_count !== 1 ||
+      row.valid_count !== 1 || JSON.stringify(row.roles) !== '["connection_admin","owner"]') {
+    throw new AuthorityError("owner_invalid");
+  }
+  return schema;
+}
+
+async function agentContext(client, principalId = null, generation = Number.MAX_SAFE_INTEGER) {
+  // Aggregate current inconsistencies, then select exactly one target; never expose a roster.
+  const aggregate = await client.query(`WITH states AS (
+    SELECT p.id, p.name, p.kind,
+      EXISTS(SELECT 1 FROM public.pigboard_credentials c WHERE c.principal_id=p.id AND c.active)
+      OR EXISTS(SELECT 1 FROM public.pigboard_grants g WHERE g.principal_id=p.id AND g.active) AS active,
+      EXISTS(SELECT 1 FROM public.pigboard_grants g WHERE g.principal_id=p.id AND g.active AND g.role='owner') AS owns,
+      (SELECT count(*) FROM public.pigboard_credentials c WHERE c.principal_id=p.id AND c.active) AS credential_count,
+      (SELECT count(*) FROM public.pigboard_credentials c WHERE c.principal_id=p.id AND c.active
+        AND c.issued_generation <= $2) AS valid_count,
+      (SELECT count(*) FROM public.pigboard_grants g WHERE g.principal_id=p.id AND g.active) AS grant_count,
+      EXISTS(SELECT 1 FROM public.pigboard_grants g WHERE g.principal_id=p.id AND g.active
+        AND g.role='connection_admin') AS connects
+    FROM public.pigboard_principals p
+  ) SELECT count(*) FILTER (WHERE name='pilot-agent' AND kind!='agent')::int AS human_count,
+    count(*) FILTER (WHERE kind='agent' AND active)::int AS active_count,
+    count(*) FILTER (WHERE kind='agent' AND active AND (name!='pilot-agent' OR owns OR
+      (id::text IS DISTINCT FROM $1::text AND
+        (credential_count!=1 OR valid_count!=1 OR grant_count!=1 OR NOT connects))))::int AS invalid_count,
+    min(id::text) FILTER (WHERE kind='agent' AND active) AS active_id FROM states`, [principalId, generation]);
+  const state = aggregate.rows[0];
+  if (state.human_count || state.active_count > 1 || state.invalid_count) {
+    throw new AuthorityError("authority_conflict");
+  }
+  let selectedId = principalId ?? state.active_id;
+  if (!selectedId) {
+    selectedId = (await client.query(`SELECT principal_id FROM public.pigboard_authority_events
+      WHERE event_type='agent_enrolled' ORDER BY generation DESC LIMIT 1`)).rows[0]?.principal_id ?? null;
+  }
+  if (!selectedId) return { principal: null, credentialActiveCount: 0, grantActiveRoles: [],
+    credentialMatch: null, activeId: state.active_id };
+  const principal = (await client.query(
+    "SELECT id, name, kind FROM public.pigboard_principals WHERE id=$1", [selectedId])).rows[0];
+  if (!principal) return { principal: null, credentialActiveCount: 0, grantActiveRoles: [],
+    credentialMatch: null, activeId: state.active_id };
+  if (principal.kind !== "agent" || principal.name !== AGENT_NAME) {
+    throw new AuthorityError("identity_conflict");
+  }
+  const credentials = (await client.query(`SELECT count(*) FILTER (WHERE active)::int AS active_count,
+    count(*) FILTER (WHERE active AND issued_generation <= $2)::int AS valid_count
+    FROM public.pigboard_credentials WHERE principal_id=$1`, [selectedId, generation])).rows[0];
+  const owns = await client.query("SELECT 1 FROM public.pigboard_grants WHERE principal_id=$1 AND role='owner'", [selectedId]);
+  if (owns.rows.length) throw new AuthorityError("identity_conflict");
+  const grants = await client.query(`SELECT role FROM public.pigboard_grants
+    WHERE principal_id=$1 AND active ORDER BY role`, [selectedId]);
+  return { principal, credentialActiveCount: credentials.active_count,
+    grantActiveRoles: grants.rows.map((row) => row.role), credentialMatch: null,
+    activeId: state.active_id, validCredentialCount: credentials.valid_count };
+}
+
+function agentAuthority(schema, context) {
+  const { activeId: _private, validCredentialCount: _count, ...publicContext } = context;
+  return { schemaVersion: 3, generation: schema.generation, ...publicContext };
+}
+
+function consistentAgent(context) {
+  return context.credentialActiveCount === 1 && context.validCredentialCount === 1 &&
+    JSON.stringify(context.grantActiveRoles) === '["connection_admin"]';
+}
+
+function inactiveAgent(context) {
+  return context.credentialActiveCount === 0 && context.grantActiveRoles.length === 0;
+}
+
+async function matchingAgentCredential(client, principalId, token) {
+  const matches = await client.query(`SELECT principal_id, active, issued_generation
+    FROM public.pigboard_credentials WHERE digest_version='sha256-v1' AND digest=$1`,
+  [digestCallerToken(token)]);
+  return matches.rows.length === 1 ? matches.rows[0] : null;
+}
+
+export async function inspectAgent(client, { principalId = null, token = null } = {}) {
+  let inTransaction = false;
+  try {
+    if (principalId !== null && !UUID.test(principalId)) throw new AuthorityError("identity_conflict");
+    if (token !== null) validAgentIntent(principalId, token);
+    await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+    inTransaction = true;
+    const schema = await currentAgentSchema(client);
+    const context = await agentContext(client, principalId, schema.generation);
+    if (token !== null) {
+      const credential = await matchingAgentCredential(client, principalId, token);
+      context.credentialMatch = credential?.principal_id === principalId;
+      if (context.principal && !context.credentialMatch) throw new AuthorityError("identity_conflict");
+    }
+    if (context.principal && !consistentAgent(context) && !inactiveAgent(context)) {
+      throw new AuthorityError("authority_conflict");
+    }
+    await client.query("COMMIT");
+    inTransaction = false;
+    return { status: !context.principal ? "absent" : inactiveAgent(context) ? "revoked" : "active",
+      reason: null, authority: agentAuthority(schema, context) };
+  } catch (error) {
+    if (inTransaction) try { await client.query("ROLLBACK"); } catch { /* Safe inspection only. */ }
+    return { status: error instanceof AuthorityError && error.reason === "identity_conflict" ?
+      "refused" : "unknown", reason: error instanceof AuthorityError ? error.reason :
+      "inspection_unverified", authority: null };
+  }
+}
+
+async function mutateAgent(client, command, { principalId, token = null }) {
+  let committing = false;
+  try {
+    if (!UUID.test(principalId)) throw new AuthorityError("identity_conflict");
+    if (command === "enroll") validAgentIntent(principalId, token);
+    await client.query("BEGIN ISOLATION LEVEL READ COMMITTED");
+    await lockAuthority(client);
+    const schema = await currentAgentSchema(client);
+    const context = await agentContext(client, principalId, schema.generation);
+    let status;
+    if (command === "enroll") {
+      const credential = await matchingAgentCredential(client, principalId, token);
+      if (credential && !credential.active) throw new AuthorityError("credential_revoked");
+      if (credential && credential.principal_id !== principalId) throw new AuthorityError("identity_conflict");
+      if (context.principal) {
+        if (!credential || !consistentAgent(context) ||
+            Number(credential.issued_generation) > schema.generation) {
+          throw new AuthorityError("identity_conflict");
+        }
+        context.credentialMatch = true;
+        await client.query("ROLLBACK");
+        return { status: "already_active", reason: null, authority: agentAuthority(schema, context) };
+      }
+      if (credential) throw new AuthorityError("identity_conflict");
+      if (context.activeId) throw new AuthorityError("agent_exists");
+      if (schema.generation === Number.MAX_SAFE_INTEGER) throw new AuthorityError("generation_exhausted");
+      const generation = schema.generation + 1;
+      await client.query("INSERT INTO public.pigboard_principals(id,name,kind) VALUES ($1,$2,'agent')",
+        [principalId, AGENT_NAME]);
+      await client.query(`INSERT INTO public.pigboard_credentials
+        (id,principal_id,digest_version,digest,issued_generation) VALUES ($1,$2,'sha256-v1',$3,$4)`,
+      [randomUUID(), principalId, digestCallerToken(token), generation]);
+      await client.query("INSERT INTO public.pigboard_grants(principal_id,role) VALUES ($1,'connection_admin')", [principalId]);
+      context.principal = { id: principalId, name: AGENT_NAME, kind: "agent" };
+      context.credentialActiveCount = 1;
+      context.validCredentialCount = 1;
+      context.grantActiveRoles = ["connection_admin"];
+      context.credentialMatch = true;
+      status = "enrolled";
+    } else {
+      if (!context.principal || inactiveAgent(context)) {
+        await client.query("ROLLBACK");
+        return { status: context.principal ? "already_revoked" : "absent", reason: null,
+          authority: agentAuthority(schema, context) };
+      }
+      if (context.grantActiveRoles.includes("owner")) throw new AuthorityError("identity_conflict");
+      if (schema.generation === Number.MAX_SAFE_INTEGER) throw new AuthorityError("generation_exhausted");
+      await client.query("UPDATE public.pigboard_credentials SET active=false WHERE principal_id=$1 AND active", [principalId]);
+      await client.query("UPDATE public.pigboard_grants SET active=false WHERE principal_id=$1 AND active", [principalId]);
+      context.credentialActiveCount = 0;
+      context.grantActiveRoles = [];
+      status = "revoked";
+    }
+    const generation = schema.generation + 1;
+    await client.query(`INSERT INTO public.pigboard_authority_events
+      (generation,event_type,principal_id,previous_principal_id) VALUES ($1,$2,$3,NULL)`,
+    [generation, command === "enroll" ? "agent_enrolled" : "agent_revoked", principalId]);
+    await client.query("UPDATE public.pigboard_team_authority SET generation=$1 WHERE team_key='pilot'", [generation]);
+    committing = true;
+    await client.query("COMMIT");
+    return { status, reason: null, authority: agentAuthority({ generation }, context) };
+  } catch (error) {
+    if (!committing) try { await client.query("ROLLBACK"); } catch { /* No raw driver output. */ }
+    return { status: committing ? "unknown" : "refused", reason: committing ? "outcome_unknown" :
+      error instanceof AuthorityError ? error.reason : "agent_change_failed", authority: null };
+  }
+}
+
+export function enrollAgent(client, intent) { return mutateAgent(client, "enroll", intent); }
+export function revokeAgent(client, { principalId }) {
+  return mutateAgent(client, "revoke", { principalId });
 }
