@@ -15,7 +15,8 @@ test("owner command gives bounded help, usage, and connection failures", async (
   assert.equal(await runOwnerCommand(["--help"], { output }), 0);
   assert.match(lines.pop(), /inspect before retrying/i);
   assert.equal(await runOwnerCommand(["migrate", "--help"], { output }), 0);
-  assert.match(lines.pop(), /owner:migrate/);
+  assert.match(lines.at(-1), /owner:migrate/);
+  assert.match(lines.pop(), /Migration v3/);
   assert.equal(await runOwnerCommand(["recover", "--owner-url-file", "/private/file",
     "--name", "New"], { output }), 2);
   assert.equal(JSON.parse(lines.pop()).status, "invalid_usage");

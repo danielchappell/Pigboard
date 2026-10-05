@@ -87,12 +87,12 @@ not establish live readiness.
 `npm run --silent host:pigboard` starts a small private HTTP service. The
 operator can run `npm run --silent host:pigboard -- --diagnose-root` to check a
 fresh, pinned Neon root connection. Both commands need a private
-`PIGBOARD_NEON_URL`. After owner migration version 2, a caller can inspect only
+`PIGBOARD_NEON_URL`. With authority migration version 3, a caller can inspect only
 their own current grant with `GET /v1/authority/me` and a bearer credential.
 The host does not select a Jira board or expose a public API. The
 [first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
 private Fly setup, safe credential use, diagnostic results, restart and rollback.
-Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [active delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-1-october-2026) records **2/2 approved PR slots used**: merged owner PR #36 and TLS repair PR #37. Complete owner live acceptance, then regroup. Separate agent access is provisional and needs an explicit increase in the total PR count. Board selection is outside this batch. The host is not live merely because this code or a passing local test exists.
+Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [active delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-4-october-2026) records the new two-PR batch: fixed agent connect/disconnect, then approved named read-only Jira discovery, followed by regroup. Prior owner PR #36/TLS PR #37 and4 October owner live proof are historical evidence. New-code committed review, hosted CI, merge/deployment and agent live acceptance remain separate. The host is not accepted merely because source or local tests exist.
 
 With the private Fly Machine, Neon runtime login and an owner-specific WireGuard
 route verified, the bootstrapped owner can inspect only their current grant with
@@ -102,9 +102,9 @@ token stays in an owned mode-0600 file under an owned mode-0700 directory; the
 command accepts no URL or token argument and does not change grants. A valid 401
 is denial, a valid 503 is service unavailability, and a bad route or response is
 unverified. The [private-service guide](docs/hosted-pigboard-first-service.md#inspect-a-current-owner-grant)
-explains peer setup, recovery and the still-open live acceptance gate. Named
-human and agent recipients can use their own credentials only after later
-issuance; this command does not administer grants.
+explains peer setup, recovery and live acceptance. The fixed agent uses its own
+credential and distinct peer through the protected lifecycle below; general
+invitations remain deferred. This command does not administer grants.
 
 ## Set up the first Pigboard owner
 
@@ -115,6 +115,24 @@ the one-time caller credential to a private owner file, never to terminal output
 The [owner setup guide](docs/hosted-pigboard-authority.md) gives the ordered steps
 and interruption recovery. These commands are not a normal service API; local
 tests alone do not prove live Neon setup or make the first host ready.
+
+## Connect the fixed pilot agent
+
+Protected operators can run `npm run --silent agent:enroll -- --help` for fixed
+pilot-agent enroll/status/revoke. A durable UUID-named private token file precedes
+SQL activation; exact-file retry reconciles the same identity. Tokens/digests
+never appear in output. Use `agent:status` after unknown replies, and explicit
+UUID revoke before replacing a lost bearer. Database completion is separate from
+recipient delivery and distinct peer proof. Full disconnect requires valid next-
+call denial, exact peer removal and preserved owner access. The [authority guide](docs/hosted-pigboard-authority.md#connect-inspect-and-disconnect-the-fixed-agent)
+gives human steps and the same noninteractive JSON contract for agents.
+
+The migration is forward-only v3; private ingress and old operators must be
+fenced/quiesced during upgrade. Follow the [fenced upgrade procedure](docs/hosted-pigboard-first-service.md#upgrade-v3-with-private-ingress-fenced),
+since stopping an autostart-enabled Machine alone cannot close Flycast traffic.
+These commands are available in this checkout; see the [plan and evidence](docs/plans/pigboard-pilot-agent.md)
+for review/test/release/live status. Read-only Jira discovery remains provisional;
+saved selection, rotation, arbitrary agent names and HTTP administration are deferred.
 
 ## Quick Setup
 

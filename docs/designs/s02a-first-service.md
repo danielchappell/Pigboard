@@ -1,6 +1,30 @@
 # D3 Task: S02a authority and first shared store
 
-## Approved pilot decision — 1 October 2026
+## Current narrowed batch — 5 October 2026
+
+The owner approved two new complete outcomes: fixed pilot-agent connect/disconnect,
+then approved named Jira metadata discovery for owner and agent, then regroup.
+The independently CLEAN narrowed design and approved concrete [PR1 plan](../plans/pigboard-pilot-agent.md)
+replace the earlier journal/roster/common-advisory and saved-selection expectations
+for this batch. PR1 uses protected enroll/status/revoke, immutable UUID bearer file
+before activation, permanent digest uniqueness, explicit READ COMMITTED and fresh
+reads after the existing authority row lock. Runtime authority remains SELECT-only.
+Full live outcome includes independent agent bearer/peer, own /me, complete revoke,
+next-call denial, exact peer removal and owner preservation. V3 upgrade requires
+verified Flycast fencing, not Machine stop alone.
+
+PR2 is **Provisional — not ready for delivery** until D1 dedicated service metadata
+facts and PR1 committed/live contracts are settled. It only discovers approved
+named metadata. Saved pair/correction, board-filter eligibility, effects and
+uninterrupted rotation remain deferred; S02a is partial, not completed. The current
+[two-PR queue](../delivery-plan.md#active-delivery-queue--approved-4-october-2026)
+keeps local tests, independent review, hosted CI, merge, deployment and live proof
+separate. Historical passages below record earlier decisions; they do not restore
+superseded batch requirements or claim current live state.
+
+<a id="approved-pilot-decision--1-october-2026"></a>
+
+## Historical approved pilot decision — 1 October 2026
 
 The owner approved **private human owner access, then complete separate one-agent access, at most two total PRs, then regroup**. S02a selection is outside this batch. The [owning owner plan](../plans/pigboard-private-owner-access.md) reuses v2 unchanged, packages its SQL imports, uses one shared CPU/256 MiB and verifies live root/private access, denial, restart and observed sleep. It has two independent exact-artifact CLEAN plan reviews; code/CI/merge/live gates remain separate.
 

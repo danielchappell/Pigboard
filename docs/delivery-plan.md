@@ -1,5 +1,26 @@
 # Pigboard development plan
 
+## Active delivery queue — approved 4 October 2026
+
+One current queue: exactly two new PRs, then regroup. Preserve unrelated PR #35/user
+edits and independent PR #40/41 branding work. The prior owner recovery batch used
+2/2 PRs (36/37);4 October owner live acceptance is historical and does not count as
+agent acceptance. Fresh owner baseline readback5 October remained UUID
+31dbd3b2-2330-4235-a52d-237ea24979d1, generation1, owner+connection_admin.
+
+| Order | Outcome and dependencies | Current stage |
+| --- | --- | --- |
+| 1 | [Fixed agent connect/disconnect](stories/pigboard-pilot-agent.md), using existing owner/root/private host; independent of Jira D1 | [Exact approved plan and implementation evidence](plans/pigboard-pilot-agent.md): design and two round2 Sol plan reviews CLEAN; source implementation/local verification in progress. Committed-code reviews, PR/current CI, authorized merge/deploy and full live proof pending. |
+| 2 | Approved named read-only Jira project/board discovery for owner and agent; depends on D1 dedicated identity/read-shape/pagination and PR1 committed/live contract | **Provisional — not ready for delivery.** Credential confirmation/custody and D1 proof remain unresolved. No saved pair/correction/filter eligibility/effects restored. |
+| Stop | Regroup after 2/2 | No automatic third prerequisite/repair PR; S02a remains partial. |
+
+Current new-batch counters: PRs opened 0/2, outcomes live 0/2. Implementation is not
+live acceptance. PR1 has 15 counted paths and an independently accepted 12–15.75h
+plan, including tests/docs/review repair/PR/live work. A credible estimate >=16h or
+additional necessary path requires scope/size reconciliation before expansion.
+Record exact committed-code review, local/hosted/image/deployed/live revisions in
+the counted plan record and root's authoritative external queue.
+
 ## Pigboard rebrand — requested 4 October 2026
 
 The owner requested a consistent Pigboard identity using the existing product
@@ -109,7 +130,9 @@ sources; **Secure**—preserve signed history, credentials and production author
 current-main capability limits, exact evidence and honest candidate/release state.
 
 
-## Active delivery queue — approved 1 October 2026
+<a id="active-delivery-queue--approved-1-october-2026"></a>
+
+## Historical delivery queue — approved 1 October 2026
 
 The owner approved restarting with **two total PRs: complete private human owner access, then complete separate one-agent access; stop for regroup**. All code, tests, documentation, plans, reviews and prerequisites count inside those two PRs. No automatic third PR. Preserve PR #35 unmerged and its local user change. S02a/S02b/S04/S26/S05/S06 are later product goals, outside this recovery batch; none of those six is implemented or live-verified by the first-host foundations.
 
@@ -119,7 +142,7 @@ The owner approved restarting with **two total PRs: complete private human owner
 | 2 | One agent's separate private access, durable enrollment/reconciliation/list/recovery and full grant/peer revoke | **Provisional — not ready for delivery.** Depends on owner live evidence. Combining agent access with the TLS repair was independently NOT CLEAN at 12–20h/14–21h. Re-groom/review the distinct complete lifecycle after owner acceptance; never substitute owner-token sharing. |
 | Stop | Owner regroup | The hard two-total-PR cap remains. A third PR for the separate agent requires an explicit owner count change. While that choice is pending, complete the authorized repair and owner live acceptance within PR #37. No selector or new batch is authorized. |
 
-**Current counters:** recovery batch PRs used **2/2** (PR #36 merged; PR #37 open); recovery outcomes live **0/2**; original six product outcomes implemented/live **0/0**. A requested batch-count choice remains unresolved. Local tests, merged source and live verification are separate evidence. The 1 October pre-deployment snapshot was zero Fly Machines, only the pinned private IPv6, no runtime login and no Pigboard tables; repeat those checks before any mutation. Use one shared CPU/256 MiB and the dedicated Neon Free root for this first host; later S08's 1-GB coordinator estimate still needs load proof. The protected operator retains owner/provider credentials; normal callers receive only their own bearer and peer. No Safeguard, Jira or Cursor operation belongs to this slice.
+**Historical counters (1 October):** recovery batch PRs used **2/2** (PR #36 merged; PR #37 open); recovery outcomes live **0/2**; original six product outcomes implemented/live **0/0**. A requested batch-count choice remains unresolved. Local tests, merged source and live verification are separate evidence. The 1 October pre-deployment snapshot was zero Fly Machines, only the pinned private IPv6, no runtime login and no Pigboard tables; repeat those checks before any mutation. Use one shared CPU/256 MiB and the dedicated Neon Free root for this first host; later S08's 1-GB coordinator estimate still needs load proof. The protected operator retains owner/provider credentials; normal callers receive only their own bearer and peer. No Safeguard, Jira or Cursor operation belongs to this slice.
 
 ## Historical roadmap and evidence — 28 September 2026
 
@@ -440,7 +463,9 @@ CLEAN review before its Story previews can be sized and promoted. D5 carries the
 existing method into hosted handoffs; later changes to the method are separate
 slices supported by evidence from operating that baseline.
 
-## Current work and evidence
+<a id="current-work-and-evidence"></a>
+
+## Historical work and evidence — earlier milestones
 
 - S01 (22 September): implemented on `codex/workflow-profile-preview`, explicitly
   stacked on the documentation Task at `6d44a924e403634c871dedeaa9069dc2ab1408ae`.
