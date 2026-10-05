@@ -57,7 +57,30 @@ This author assessment is not an independent committed-code review.
 - Fly config validation, Go 1.26.6 race tests/vet, shell syntax and diff whitespace
   passed. The sandbox denied loopback sockets on a repeat Node run; the identical
   suite passed with local socket access. Exact committed-code review and hosted
-  CI remain pending and must be recorded independently.
+  CI remain pending and must be recorded independently. The code gate below now
+  records the completed independent review separately.
+
+## Independent committed-code gate
+
+Two fresh independent Sol reviewers returned CLEAN for implementation commit
+`00113de931156b52829caf172175c0d2c870e2a3`, against base
+`ec71a7db237eacd137d752c50fb3adfbf5ebf939`. Product/experience/documentation and
+technical/security/failure/test lenses each inspected 15/15 changed files,
+6/6 acceptance criteria, 6/6 technical criteria, 4/4 testing sections, the
+implementation contracts and a second sweep. Neither found an unresolved
+in-scope issue. Each independently passed all 21 Node tests with loopback access
+and checked shell syntax and diff whitespace. Both assessed all seven principles;
+the product reviewer also independently inspected DNS/neighbor baseline files.
+
+Their principle conclusions: one canonical visitor address and familiar release
+path are intuitive; prerequisites and actionable errors make operation
+discoverable; approved visuals and no visitor setup preserve experience; shared
+finite contracts and structured reports save context; isolated app/environment,
+non-root image and guarded main deployment protect boundaries; noninteractive
+commands and readable guides serve agents and humans; exact revision checks and
+honest recovery states are dependable. Live/browser release acceptance remains
+pending. The final evidence-only documentation update requires reviewer recheck;
+this verdict does not silently cover later code changes.
 
 ## Infrastructure and production preservation
 
@@ -81,6 +104,6 @@ This author assessment is not an independent committed-code review.
   comparison in `pigboard-neighbors-after-dns.json` confirms both configurations
   and Machine images unchanged, and all four Rovito HTTP responses match.
 
-Remaining: fresh exact-commit code reviews, PR/current-head CI, authorized merges,
+Remaining: final documentation recheck, PR/current-head CI, authorized merges,
 first main deployment, canonical HTTP/browser acceptance and final neighboring
 production comparison. Issued TLS and configured DNS alone do not mean live.
