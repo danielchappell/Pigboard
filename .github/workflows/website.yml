@@ -2,6 +2,7 @@ name: Website
 on:
   push:
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -16,10 +17,47 @@ jobs:
         with:
           go-version: '1.26.6'
           cache: false
-      - run: node --test website/website.test.mjs
+      - run: node --test website/*.test.mjs
       - run: node --check website/app.js
-      - run: node website/build.mjs
       - run: go test -race ./...
         working-directory: website
       - run: go vet ./...
         working-directory: website
+      - run: sh website/container-check.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-container-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/website-release/
+          if-no-files-found: ignore
+  deploy:
+    needs: website
+    if: >-
+      github.repository == 'danielchappell/ski-stack' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      vars.PIGBOARD_WEBSITE_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: website-production
+      url: https://pigboard.scubapig.software
+    concurrency:
+      group: pigboard-website-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: sh scripts/install-website-fly.sh
+      - run: node website/deploy.mjs
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: website-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dist/website-release/
+          if-no-files-found: error
