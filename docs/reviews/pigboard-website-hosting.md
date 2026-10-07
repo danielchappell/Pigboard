@@ -1,10 +1,69 @@
 # Pigboard website hosting evidence
 
-5 October 2026. This record covers the 15-file W2 Story and separate W3 release
-Task. The approved copy and bold appearance are unchanged. W1/PR40 and W1a/PR41
-are prerequisites; their current merge confirmation remains pending. Automatic
-approval review rejected inferring that earlier branding-PR merge authority
-covered these website PRs. Nothing has been deployed.
+This record covers the 15-file W2 Story and the separate W3 release Task. The
+approved copy and bold appearance are unchanged; the marketing website is live.
+
+## Verified launch — 7 October 2026
+
+The owner explicitly approved merging PR40, PR41 and PR43 and launching. They
+merged in order as `24abc79b2afef8e1f09bbc2512f6b3ba9549b7cd`,
+`fe1e476e713d923c0037ce0ededab47fea4909bf` and
+`20c1d7ce086a0becf151fb1fface25400fcadb96`. The reviewed website tree survived
+unchanged; unrelated main private-agent work was preserved.
+
+- Main full-repository CI [37682903882](https://github.com/danielchappell/ski-stack/actions/runs/37682903882)
+  and website/container CI [37682903970](https://github.com/danielchappell/ski-stack/actions/runs/37682903970)
+  passed for `20c1d7ce086a0becf151fb1fface25400fcadb96` before enabling deployment.
+- Production [run 37684086251](https://github.com/danielchappell/ski-stack/actions/runs/37684086251)
+  succeeded for that exact revision. Its release artifact reports `deployed`,
+  `previous: null`; hosted live smoke passed all 18 HTTP checks. An independent
+  local invocation against the public hostname also passed all 18 checks.
+- [Canonical website](https://pigboard.scubapig.software/) serves Home, Method and
+  Availability with production metadata. [Version metadata](https://pigboard.scubapig.software/version.json)
+  reports the currently served commit and origin with `preview: false`.
+  HTTP redirects 301 to HTTPS; Fly reports the certificate issued/verified/active.
+- One started website Machine `871476a60e4518`, `cdg`, shared 1 CPU/256 MB,
+  passing readiness, image `website-20c1d7ce086a0becf151fb1fface25400fcadb96`,
+  immutable digest `sha256:31a70c5f71705948e5ae2abb13f657bc09713157caaa25df01a5b99d573a4aa3`.
+  The deployment used pinned Fly CLI 0.4.99. Local login's automatic CLI update
+  to 0.4.113 did not change the workflow pin or production neighbors.
+- Live desktop and 390px mobile QA retained the approved palette/transparent pig.
+  All three pages were inspected, primary navigation and keyboard journey-tab
+  selection worked, and Home/Method/Availability had no horizontal overflow.
+  Local screenshots: `/private/tmp/pigboard-live-desktop-20261007.jpg`,
+  `pigboard-live-mobile-20261007.jpg`, `pigboard-live-method-mobile-20261007.jpg`.
+- Fresh before/after comparisons preserved all 12 DNS rows, including the ten
+  pre-existing records and two Pigboard additions. Both `rovito-oauth` and
+  `pigboard-pilot-jdc` configurations and Machine images matched. Rovito home,
+  version, health and readiness matched the fresh pre-launch HTTP baseline.
+  This proves these specific surfaces; it is not private-product live acceptance.
+  Local comparison files are `/private/tmp/pigboard-dns-{before,after}-launch-20261007.json`,
+  `pigboard-neighbors-{before,after}-launch-20261007.json` and
+  `pigboard-rovito-{before,after}-launch-20261007.json`.
+
+The W3 implementation and operational acceptance are complete. This three-file
+release-documentation follow-up reuses the reviewed design/plan and changes no
+website assets, serving code, workflow, deployment configuration or private
+runtime. It updates the operator guide, this evidence and the website queue;
+independent committed-documentation review and publication are its remaining gates.
+No new runtime tests are needed for this documentation-only delta. The initial
+release above remains historical evidence when later main commits are deployed.
+
+Author principles for the documentation follow-up: Intuitive—status identifies
+the public address and current version; Discoverable—portable CI links and local
+comparison paths make evidence findable; Delightful—removes obsolete setup status
+without changing visitor experience; Token saver—consolidated exact revisions
+avoid reconstruction; Secure—no credential or permission changes and no token
+bytes recorded; Agents are equal—revision/evidence links support agents while
+plain instructions support humans; Dependable—initial release, current version,
+local/hosted/live checks and private-product limitations remain distinct.
+
+## Historical setup context — 5 October 2026
+
+At the initial snapshot, W1/PR40 and W1a/PR41 were unmerged prerequisites.
+Automatic approval review had rejected inferring that earlier branding-PR merge
+authority covered these website PRs. No deployment had occurred then; the owner's
+7 October confirmation and verified launch above supersede that setup state.
 
 ## Independent design and plan gates
 
@@ -82,7 +141,7 @@ honest recovery states are dependable. Live/browser release acceptance remains
 pending. The final evidence-only documentation update requires reviewer recheck;
 this verdict does not silently cover later code changes.
 
-## Infrastructure and production preservation
+## Infrastructure and production preservation — 5 October setup snapshot
 
 - New `pigboard-website` app in existing `pigboard` organization; shared IPv4
   `66.241.125.12`, IPv6 `2a09:8280:1::1a7:f33a:0`. No Machine deployed.
@@ -104,6 +163,7 @@ this verdict does not silently cover later code changes.
   comparison in `pigboard-neighbors-after-dns.json` confirms both configurations
   and Machine images unchanged, and all four Rovito HTTP responses match.
 
-Remaining: final documentation recheck, PR/current-head CI, authorized merges,
-first main deployment, canonical HTTP/browser acceptance and final neighboring
-production comparison. Issued TLS and configured DNS alone do not mean live.
+At the 5 October snapshot, final documentation recheck, PR/current-head CI,
+authorized merges, first deployment, browser acceptance and production comparison
+remained. Those gates are now evidenced in the 7 October launch record above.
+Issued TLS and configured DNS alone never established live acceptance.

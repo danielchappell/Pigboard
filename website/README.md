@@ -103,11 +103,12 @@ server with Go 1.26.6 and Debian Bookworm, running as UID/GID 65532. Its allowli
 build context contains only that server and generated public files. The approved
 copy and artwork are unchanged. The private product app is not part of this release.
 
-**Release status:** infrastructure is configured, but no production deployment
-has been performed as of 5 October 2026. Follow the
-[delivery queue](../docs/delivery-plan.md) and
-[hosting evidence](../docs/reviews/pigboard-website-hosting.md) for the current
-review, merge, CI and live-verification states.
+**Release status:** the marketing website is live and was verified on 7 October
+2026. Its initial release was `20c1d7ce086a0becf151fb1fface25400fcadb96`;
+[version.json](https://pigboard.scubapig.software/version.json) identifies the
+currently served revision. Follow the [delivery queue](../docs/delivery-plan.md)
+and [hosting evidence](../docs/reviews/pigboard-website-hosting.md) for review,
+CI and live verification. The hosted Pigboard product remains in development.
 
 Deployment prerequisites:
 
