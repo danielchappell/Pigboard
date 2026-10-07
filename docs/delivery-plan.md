@@ -35,11 +35,11 @@ work does not advance its outcomes or authorize another recovery PR.
 
 | Order | Outcome | Stage and dependency | Size including docs/review |
 | --- | --- | --- | --- |
-| B1a | Introduce the Pigboard product identity and mascot series | Logos approved; [PR #38](https://github.com/danielchappell/ski-stack/pull/38) open; current reviews/checks on PR; owner merge pending | Documentation/design Task; 14 files, about 6 human hours |
-| B1b | Complete naming in technical guides and historical narrative | [PR #39](https://github.com/danielchappell/ski-stack/pull/39) open, stacked on #38; current reviews/checks on PR; owner merge pending | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
+| B1a | Introduce the Pigboard product identity and mascot series | Logos approved; [PR #38](https://github.com/danielchappell/ski-stack/pull/38) merged as `6020e17`; reviewed tree preserved | Documentation/design Task; 14 files, about 6 human hours |
+| B1b | Complete naming in technical guides and historical narrative | [PR #39](https://github.com/danielchappell/ski-stack/pull/39) merged as `533a1c9`; reviewed tree preserved | Documentation Task; 12 existing files plus queue/review updates, 14 maximum; about 3 human hours |
 | B3 | Resolve runtime identity compatibility | Discovery pending; new writes and old signed history need an explicit migration contract | Task; scope before sizing dependent Stories |
-| B4 | Build the Rovito-based website path | Exact source/design recovered; page map, copy and production target to resolve | Task first; local preview need not wait for production ownership |
-| Later | Runtime rename and marketing website | Provisional — not ready for delivery | Groom complete Stories after applicable B3/B4 decisions; each <=20 files and <2 human days |
+| B4 / W1 | Build the Rovito-based website path with Pigboard identity | Palette and outcome-led copy complete; design/plan and committed copy `c6e3f01` reviewed CLEAN by two fresh Sol reviewers per gate; 7/7 website tests and desktop/mobile navigation, tabs, copy and metadata checks pass. [PR #40](https://github.com/danielchappell/ski-stack/pull/40) open; current-head hosted results on [Checks](https://github.com/danielchappell/ski-stack/pull/40/checks). Owner merge remains separate | One 20-file Story including palette and copy refinements, revised 14–15 human hours; [evidence](reviews/pigboard-website.md) |
+| W2 / W3 | Match website deployment infrastructure, then release | Provisional — not ready for delivery; GitHub Actions selected by owner; dedicated app in existing Pigboard organization and `pigboard.scubapig.software` awaiting owner target decision | Same Rovito Go/Docker/Fly pattern; scoped implementation and live verification after decisions |
 | Release | Publish and verify | Target/domain and owner release authority required | Exact-revision checks, route/health checks and rollback |
 
 ### B1a — Introduce the Pigboard product identity and mascot series

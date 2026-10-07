@@ -1,0 +1,156 @@
+/* Pigboard / Plum, Rose and Amber
+ * Pigboard's palette, using the shared Rovito component and spacing system.
+ * The --rv-* aliases preserve that component interface; colors belong to Pigboard.
+ * Approved artwork remains unchanged in assets/brand/pigboard/.
+ */
+.pigboard-theme {
+  color-scheme: dark;
+  --pb-plum: #2d2233;
+  --pb-ivory: #fff5e9;
+  --pb-rose: #eeb7cf;
+  --pb-amber: #f1c777;
+  --rv-graphite: var(--pb-plum);
+  --rv-white: var(--pb-ivory);
+  --rv-teal: var(--pb-rose);
+  --rv-teal-deep: #8e5875;
+  --rv-coral: var(--pb-amber);
+  --rv-yellow: var(--pb-amber);
+  --rv-bg: var(--rv-graphite);
+  --rv-surface: #382b40;
+  --rv-surface-raised: #46354f;
+  --rv-surface-inset: #251c2b;
+  --rv-text: var(--rv-white);
+  --rv-text-secondary: #d6c5d2;
+  --rv-text-muted: #bea9b9;
+  --rv-border: #66516f;
+  --rv-control-border: #a68daf;
+  --rv-link: var(--rv-teal);
+  --rv-focus: var(--pb-amber);
+  --rv-action: var(--rv-coral);
+  --rv-action-hover: #ffdb98;
+  --rv-action-active: #deb364;
+  --rv-on-action: var(--pb-plum);
+  --rv-success: #88d5ae;
+  --rv-success-bg: #253e35;
+  --rv-warning: var(--rv-yellow);
+  --rv-warning-bg: #453c29;
+  --rv-danger: #ffaba5;
+  --rv-danger-bg: #483137;
+  --rv-info: var(--rv-teal);
+  --rv-info-bg: #412d3d;
+  --rv-font-display: ui-rounded, "Avenir Next", system-ui, sans-serif;
+  --rv-font-body: "Avenir Next", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rv-font-code: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --rv-text-xs: 0.8125rem;
+  --rv-text-sm: 0.875rem;
+  --rv-text-base: 1rem;
+  --rv-text-lg: 1.125rem;
+  --rv-text-xl: 1.5rem;
+  --rv-text-2xl: 2rem;
+  --rv-text-display: clamp(2rem, 4vw, 3.75rem);
+  --rv-leading-body: 1.6;
+  --rv-leading-heading: 1.14;
+  --rv-radius-sm: 0.5rem;
+  --rv-radius-control: 0.75rem;
+  --rv-radius-panel: 1.25rem;
+  --rv-space-1: 0.25rem;
+  --rv-space-2: 0.5rem;
+  --rv-space-3: 0.75rem;
+  --rv-space-4: 1rem;
+  --rv-space-6: 1.5rem;
+  --rv-space-8: 2rem;
+  --rv-space-12: 3rem;
+  --rv-space-16: 4rem;
+  --rv-reading-width: 65ch;
+  --rv-duration-fast: 140ms;
+  --rv-ease: ease-out;
+  background: var(--rv-bg);
+  color: var(--rv-text);
+  font-family: var(--rv-font-body);
+  font-size: var(--rv-text-base);
+  line-height: var(--rv-leading-body);
+}
+
+.pigboard-theme :where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--rv-focus);
+  outline-offset: 4px;
+}
+
+.pigboard-theme ::selection {
+  color: var(--rv-on-action);
+  background: var(--rv-teal);
+}
+
+.pigboard-theme .rv-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--rv-space-2);
+  min-height: 48px;
+  padding: 0.7rem 1.15rem;
+  border: 1px solid transparent;
+  border-radius: var(--rv-radius-control);
+  background: var(--rv-action);
+  color: var(--rv-on-action);
+  font: 700 var(--rv-text-sm)/1.3 var(--rv-font-body);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--rv-duration-fast) var(--rv-ease), border-color var(--rv-duration-fast) var(--rv-ease);
+}
+.pigboard-theme .rv-button:hover { background: var(--rv-action-hover); }
+.pigboard-theme .rv-button:active { background: var(--rv-action-active); }
+.pigboard-theme .rv-button--secondary {
+  color: var(--rv-text);
+  background: transparent;
+  border-color: var(--rv-control-border);
+}
+.pigboard-theme .rv-button--secondary:hover { background: var(--rv-surface-raised); }
+.pigboard-theme .rv-button:disabled {
+  color: var(--rv-text-muted);
+  background: var(--rv-surface-raised);
+  border-color: var(--rv-border);
+  cursor: not-allowed;
+}
+.pigboard-theme .rv-link {
+  color: var(--rv-link);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+.pigboard-theme .rv-link:hover { color: var(--rv-white); }
+.pigboard-theme .rv-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--rv-control-border);
+  border-radius: var(--rv-radius-control);
+  color: var(--rv-text);
+  background: var(--rv-surface-inset);
+  font: inherit;
+}
+.pigboard-theme .rv-input::placeholder { color: var(--rv-text-muted); }
+.pigboard-theme .rv-input[aria-invalid="true"] { border-color: var(--rv-danger); }
+.pigboard-theme .rv-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--rv-radius-sm);
+  font-size: var(--rv-text-sm);
+  font-weight: 600;
+}
+.pigboard-theme .rv-status--success { color: var(--rv-success); background: var(--rv-success-bg); }
+.pigboard-theme .rv-status--warning { color: var(--rv-warning); background: var(--rv-warning-bg); }
+.pigboard-theme .rv-status--danger { color: var(--rv-danger); background: var(--rv-danger-bg); }
+.pigboard-theme .rv-status--info { color: var(--rv-info); background: var(--rv-info-bg); }
+.pigboard-theme .rv-code {
+  color: var(--rv-text);
+  font-family: var(--rv-font-code);
+  font-size: var(--rv-text-sm);
+  overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pigboard-theme { --rv-duration-fast: 0ms; }
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2d2233">
+  <meta name="description" content="{{description}}">
+  <meta name="robots" content="{{robots}}">
+  <meta property="og:title" content="{{title}}">
+  <meta property="og:description" content="{{description}}">
+  <meta property="og:image" content="{{origin}}/assets/lockup-graphite-v1.png">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="{{origin}}{{canonical}}">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="/theme.css">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body class="pigboard-theme">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="wordmark" href="/" aria-label="Pigboard home"><img src="/assets/lockup-graphite-v1.png" width="1536" height="1024" alt=""></a>
+    <nav aria-label="Main navigation"><a href="/method.html" {{methodActive}}>The method</a><a class="nav-download" href="/status.html" {{statusActive}}>Availability</a></nav>
+  </header>
+  <main id="main">{{content}}</main>
+  <footer class="site-footer wrap">
+    <div><a class="wordmark" href="/" aria-label="Pigboard home"><img src="/assets/lockup-graphite-v1.png" width="1536" height="1024" alt=""></a><p>A little help from Scubapig Software.</p></div>
+    <nav aria-label="Footer navigation"><a href="/method.html">The method</a><a href="/status.html">What's available</a><a href="https://rovito.scubapig.software/">Meet Rovito</a></nav>
+    <p class="footer-small">Built by Scubapig Software<br>This website uses no analytics or cookies.</p>
+  </footer>
+  <div class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>
