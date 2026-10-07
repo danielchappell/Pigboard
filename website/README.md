@@ -73,13 +73,22 @@ backup could not be removed; inspect it and remove that named backup when safe.
 The shared components, spacing, page patterns and Go serving approach come from
 Rovito revision `32875af00a19241541296bbb10543ec29fcb7a42`: `website/`,
 `internal/website`, `Dockerfile.oauth` and `deploy/fly/oauth.toml`. Internal CSS
-names such as `--rv-*` retain that component interface. Pigboard owns its plum
-(`#2d2233`), ivory (`#fff5e9`), rose (`#eeb7cf`) and amber (`#f1c777`) palette.
-Rose marks links and selected tabs; amber marks primary actions and focus.
-Neutral graphite frames preserve the opaque approved logo exports.
-Pigboard adapts the copy, opaque
-wordmark crop, laptop hero composition and progressive enhancement; all three owner-approved PNGs under
-`assets/brand/pigboard/` are copied byte-for-byte and checked against pinned hashes.
+names such as `--rv-*` retain that component interface, with semantic aliases
+adapted to Pigboard's light theme. Pigboard uses sunshine yellow (`#ffe36a`),
+cobalt (`#244de8`), deep blue (`#183159`), coral (`#ff8c73`), mint (`#a7e4ca`)
+and warm paper (`#fffaf0`). Header/hero use yellow, benefits use a blue field
+with colored panels, and the closing section uses coral. Dark links and white
+text on blue actions keep the color roles readable.
+
+The header/footer wordmark is semantic HTML in the existing rounded font family.
+The hero uses `mascot-board-v2.png`: the pig and translucent board with transparent
+surroundings, copied unmodified from the generated source and hash-checked.
+Original approved exports remain in `assets/brand/pigboard/`; the graphite
+lockup remains the social-sharing image. No opacity, tint or opaque frame is
+applied to the hero. The [asset guide](../assets/brand/pigboard/README.md) records
+provenance, the exact new prompt and export limits. The earlier plum theme is
+historical; the [bold visual follow-up](../docs/designs/pigboard-bold-visuals.md)
+records the owner's new happy, colorful, bold direction.
 Tab panels are readable before JavaScript; copy controls remain hidden until
 their handler is ready. Script initialization adds tab roles,
 keyboard selection and hiding. Clipboard denial selects the text with feedback.

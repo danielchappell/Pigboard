@@ -16,7 +16,7 @@ var publicFiles = map[string]bool{
 	"index.html": true, "method.html": true, "status.html": true,
 	"app.js": true, "styles.css": true, "theme.css": true,
 	"robots.txt": true, "sitemap.xml": true, "version.json": true,
-	"assets/mascot-board-v1.png": true, "assets/lockup-graphite-v1.png": true,
+	"assets/mascot-board-v2.png": true, "assets/lockup-graphite-v1.png": true,
 	"assets/avatar-graphite-v1.png": true,
 }
 

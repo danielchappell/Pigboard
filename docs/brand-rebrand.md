@@ -102,8 +102,10 @@ a simpler derivative and their own small-size check.
 
 The following was the original shared-color decision. On 4 October 2026, the
 owner approved a distinct Pigboard palette while retaining the structure and
-logo; the current [website design](designs/pigboard-website.md#experience-and-visual-fidelity)
-supersedes these colors.
+logo. The owner later rejected plum and requested a happy, colorful, bold
+site with a transparent hero. The current
+[visual direction](designs/pigboard-bold-visuals.md) supersedes both earlier
+website palettes; the approved outcome-led copy stays unchanged.
 
 The original decision called for Rovito's visual system: graphite `#272c33`,
 white, teal `#58c9ce`, deep teal `#187b80`, coral `#f58d6c`, yellow `#f0c45a`,

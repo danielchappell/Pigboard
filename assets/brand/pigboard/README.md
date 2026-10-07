@@ -8,11 +8,31 @@ small-icon limitations below still apply when preparing production assets.
 
 | Asset | Use | Source |
 | --- | --- | --- |
-| [Pig and board](mascot-board-v1.png) | Flexible hero/illustration on a dark background | 1536 × 1024 PNG, RGBA with transparent pixels |
+| [Original pig and board](mascot-board-v1.png) | Retained original export with dark board; superseded for the website hero | 1536 × 1024 PNG, RGBA with transparent pixels |
 | [Graphite wordmark](lockup-graphite-v1.png) | Wide brand composition and marketing reference | 1536 × 1024 PNG, graphite background |
 | [Compact avatar](avatar-graphite-v1.png) | Profile/brand avatar at medium sizes | 1254 × 1254 PNG, graphite background |
 
 ![Pigboard wordmark](lockup-graphite-v1.png)
+
+## Current website hero
+
+The owner's later feedback requested happy, colorful, bold styling, one header
+wordmark and a clean transparent hero. The website now uses
+[mascot-board-v2.png](mascot-board-v2.png), a new 1536 × 1024 RGBA cutout of the
+same pig and board. The original three exports remain unchanged. The revised
+website and cutout are presented for owner visual review; the earlier series'
+approval does not imply acceptance of this new site direction.
+
+V2 has transparent surroundings and a translucent board, without a broad visible
+glow on the yellow, coral and mint browser proof. Alpha spans 0–254; 53.58% of
+pixels are fully transparent. The pig is nearly opaque and the glass board is
+intentionally translucent. Inspect the actual composited result at its intended
+size instead of treating nonzero hidden RGB values as a visible background.
+Do not add CSS opacity, an opaque frame, a color tint or a crop to the hero.
+The website header/footer use semantic text in the rounded font family. The
+original graphite lockup remains the standalone social-sharing composition.
+
+V2 SHA-256: `edf1a941bdd3169d61cce533b4f770da4c8ee7179217f2c7583388796680a54f`.
 
 ## Identity and use
 
@@ -22,8 +42,8 @@ illustrative Kanban board. It does not depict an available Pigboard dashboard.
 Prose uses **Pigboard**; the wordmark uses **pigboard** with Rovito's rounded white
 letters and a coral dot above the i.
 
-Use the graphite composition on Rovito's `#272c33` family of backgrounds.
-The transparent mascot includes soft colored edge glow and should be checked
+Use the retained graphite composition where a standalone dark composition is
+appropriate. The original v1 mascot includes soft colored edge glow and should be checked
 against its final background. Its alpha ranges from 0 to 254; it is not a
 pixel-perfect opaque cutout. The graphite images are generated raster scenes,
 so their backgrounds should not be assumed to be a perfectly uniform CSS color.
@@ -77,3 +97,12 @@ purposes and alt-text guidance; **Delightful experience**—consistent character
 family; **Token saver**—one asset guide with provenance; **Secure**—no credentials
 or external account changes; **Agents are equal**—stable file names and explicit
 usage/status; **Dependable**—owner approval, original bytes and export limitations are named.
+
+## Transparent cutout edit prompt
+
+Generated with the built-in imagegen tool on 4 October 2026, using
+`mascot-board-v1.png` as the edit target and `transparent_background: true`.
+Generation ID: `exec-38f696bf-424d-4b86-b0ca-8b74b563dfa4`. The resulting PNG was
+copied into the repository unchanged. Exact prompt:
+
+> Edit target: the provided Pigboard mascot PNG. Make a precise production-ready transparent cutout for a bright yellow website. Preserve the same friendly peach-pink scuba pig, proportions, expression, triangular ears, glossy eyes, teal mask and flippers, black professional BCD and regulator, coherent hoses, yellow tank, split cloven hooves, pose and existing soft rounded 3D clay/plastic rendering. Preserve the floating three-column virtual Kanban board and colored cards, the interaction of the right hoof moving the coral card, and the bubbles. Keep the existing landscape composition and full body, with a little clear space around the whole silhouette. CHANGE ONLY the background and edge treatment: remove ALL broad colored glow, haze, smoky lighting, black or gray background, drop-shadow ground, rectangular panels and backdrop. Outside the pig, bubbles and board should be truly transparent alpha=0, not a painted checkerboard. Pig and equipment should remain opaque and naturally shaded; the board may remain translucent glass within its clean outer edge. Clean antialiasing on silhouette, no halo. No text, no wordmark, no new objects. It must sit cleanly on yellow, coral, mint or cream UI backgrounds.

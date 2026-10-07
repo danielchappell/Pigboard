@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 import {build, buildMode, promote, source, assetSource} from './build.mjs';
 
 const expectedArtwork = {
-  'mascot-board-v1.png':'2c71d6bb56c00d716d7f686660021f7f1518a7ae1761f36c44e620dbb144e0cd',
+  'mascot-board-v2.png':'edf1a941bdd3169d61cce533b4f770da4c8ee7179217f2c7583388796680a54f',
   'lockup-graphite-v1.png':'58bebdc91db30033ac9070bafdc951d5fb064328a88b64c11dd82b15df755bac',
   'avatar-graphite-v1.png':'1ee65c0d994cf39c0d10857140c99b7127d1056257d199e442f3671e309cb9d8'
 };
@@ -19,7 +19,7 @@ function fixture(t) {
 }
 const read = (out,file) => readFileSync(join(out,file),'utf8');
 
-test('complete preview has working local links, semantic pages and unchanged approved artwork', t => {
+test('complete preview has working local links, semantic pages and pinned artwork', t => {
   const options=fixture(t); build(options);
   const files=['index.html','method.html','status.html'];
   for (const file of files) {
@@ -77,9 +77,9 @@ test('failed source validation preserves the old build; successful replacement r
   assert.equal(read(options.out,'index.html'),before);
   assert.equal(read(options.out,'obsolete.html'),'old route');
   const assetsDir=join(options.root,'artwork'); cpSync(assetSource,assetsDir,{recursive:true});
-  writeFileSync(join(assetsDir,'mascot-board-v1.png'),'changed');
-  assert.throws(()=>build({...options,assetsDir}),/Approved artwork changed/);
-  rmSync(join(assetsDir,'mascot-board-v1.png'));
+  writeFileSync(join(assetsDir,'mascot-board-v2.png'),'changed');
+  assert.throws(()=>build({...options,assetsDir}),/Pinned artwork changed/);
+  rmSync(join(assetsDir,'mascot-board-v2.png'));
   assert.throws(()=>build({...options,assetsDir}),/ENOENT/);
   assert.equal(read(options.out,'index.html'),before);
   build(options); assert.equal(existsSync(join(options.out,'obsolete.html')),false);
