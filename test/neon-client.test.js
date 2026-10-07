@@ -8,7 +8,7 @@ import { createSecureContext, TLSSocket } from "node:tls";
 import { createLocalTlsPostgres } from "./support/local-tls-postgres.js";
 import { ROOT_TARGET } from "../src/hosted/root-target.js";
 import { checkRuntimeTarget, diagnoseNeonRoot, openPinnedRuntimeClient,
-  PinnedNeonError } from "../src/hosted/neon-client.js";
+  PinnedNeonError, queryWithAbort } from "../src/hosted/neon-client.js";
 
 function urlFor(target, password = "private-test-password") {
   return `postgresql://${encodeURIComponent(target.role)}:${encodeURIComponent(password)}@${target.host}:${target.port}/${encodeURIComponent(target.database)}?sslmode=require`;
@@ -222,6 +222,66 @@ test("a stalled application connection is bounded and reports no private URL", a
   }), (error) => error instanceof PinnedNeonError &&
     error.reason === "temporarily_unavailable" && !error.message.includes(password));
   assert.ok(Date.now() - started < 2_000);
+});
+
+test("an aborted pending application connect destroys the owned stream and never waits for late callback", async () => {
+  const controller = new AbortController();
+  let settleConnect;
+  let destroys = 0;
+  let closes = 0;
+  class LateConnect {
+    constructor() {
+      this.connection = { stream: { ...verifiedSocket(), destroy() { destroys++; } } };
+    }
+    connect() { return new Promise(resolve => { settleConnect = resolve; }); }
+    async query() { throw new Error("must not query after abort"); }
+    async end() { closes++; }
+  }
+  const pending = openPinnedRuntimeClient(urlFor(ROOT_TARGET), {
+    ClientClass: LateConnect, signal: controller.signal });
+  await new Promise(resolve => setImmediate(resolve));
+  controller.abort();
+  await assert.rejects(pending, PinnedNeonError);
+  assert.ok(destroys >= 1);
+  assert.ok(closes >= 1);
+  settleConnect();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(destroys >= 2);
+});
+
+test("abort after connect but during root query destroys the current stream and closes", async () => {
+  const controller = new AbortController();
+  let queried = false;
+  let destroys = 0;
+  let closes = 0;
+  class StalledRoot {
+    constructor() {
+      this.connection = { stream: { ...verifiedSocket(), destroy() { destroys++; } } };
+    }
+    async connect() {}
+    query() { queried = true; return new Promise(() => {}); }
+    async end() { closes++; }
+  }
+  const pending = openPinnedRuntimeClient(urlFor(ROOT_TARGET), {
+    ClientClass: StalledRoot, signal: controller.signal });
+  while (!queried) await new Promise(resolve => setImmediate(resolve));
+  controller.abort();
+  await assert.rejects(pending, PinnedNeonError);
+  assert.ok(destroys >= 1);
+  assert.ok(closes >= 1);
+});
+
+test("a stalled grant query rejects on route abort without awaiting its driver callback", async () => {
+  const controller = new AbortController();
+  let started = false;
+  const client = { query: () => { started = true; return new Promise(() => {}); } };
+  const pending = queryWithAbort(client, controller.signal, "SELECT 1");
+  while (!started) await new Promise(resolve => setImmediate(resolve));
+  controller.abort();
+  await assert.rejects(pending, PinnedNeonError);
+  const sqlError = Object.assign(new Error("private SQL detail"), { code: "42501" });
+  await assert.rejects(queryWithAbort({ query: async () => { throw sqlError; } },
+    new AbortController().signal, "SELECT 1"), error => error === sqlError);
 });
 
 function available(binary) {

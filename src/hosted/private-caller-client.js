@@ -213,3 +213,124 @@ export async function inspectPrivateCaller({ tokenFile, request = httpRequest,
     }
   });
 }
+
+const CHOICES_BYTES = 64 * 1024;
+const CHOICES_DEADLINE_MS = 95_000;
+const CHOICE_OMISSIONS = ["pair_selection", "board_filter_eligibility", "issue_access"];
+const CHOICE_FAILURES = {
+  denied: new Set(["invalid_credential", "grant_denied"]),
+  unavailable: new Set(["authority_unverified", "jira_unavailable"]),
+  uncertain: new Set(["metadata_unverified"])
+};
+
+function choiceUnverified(reason) {
+  return { schemaVersion: 1, status: "unverified", reason,
+    omissions: ["approved_choices"],
+    nextAction: "Check the protected token file and private Pigboard route, then retry discovery." };
+}
+
+function validChoiceName(value) {
+  return typeof value === "string" && value.trim().length > 0 &&
+    [...value].length <= 120 && !UNSAFE_NAME.test(value);
+}
+
+function validChoiceId(value) { return typeof value === "string" && /^[1-9]\d*$/u.test(value); }
+
+function exact(value, keys) { return onlyKeys(value, keys); }
+
+function validatedChoices(httpStatus, headers, bytes) {
+  if (!/^application\/json(?:;\s*charset=utf-8)?$/iu.test(headers["content-type"] ?? "") ||
+      headers["cache-control"] !== "no-store") return choiceUnverified("invalid_response");
+  let value;
+  try { value = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)); }
+  catch { return choiceUnverified("invalid_response"); }
+  if (value?.schemaVersion !== 1 || typeof value.nextAction !== "string" ||
+      value.nextAction.length > 512 || /[\p{Cc}\p{Cf}]/u.test(value.nextAction)) {
+    return choiceUnverified("invalid_response");
+  }
+  if (httpStatus === 200 && value.status === "complete" &&
+      exact(value, ["schemaVersion", "status", "site", "projects", "omissions", "nextAction"]) &&
+      value.site === "scubapig.atlassian.net" && Array.isArray(value.projects) &&
+      value.projects.length === 1 && Array.isArray(value.omissions) &&
+      value.omissions.length === CHOICE_OMISSIONS.length &&
+      value.omissions.every((item, index) => item === CHOICE_OMISSIONS[index])) {
+    const project = value.projects[0];
+    if (exact(project, ["id", "key", "name", "boards"]) &&
+        project.id === "10001" && project.key === "PIG" &&
+        validChoiceName(project.name) && Array.isArray(project.boards) &&
+        project.boards.length <= 200) {
+      let previous = 0n;
+      const seen = new Set();
+      for (const board of project.boards) {
+        if (!exact(board, ["id", "name", "type"]) || !validChoiceId(board.id) ||
+            !validChoiceName(board.name) || !validChoiceName(board.type) ||
+            BigInt(board.id) <= previous || seen.has(board.id)) return choiceUnverified("invalid_response");
+        previous = BigInt(board.id);
+        seen.add(board.id);
+      }
+      return value;
+    }
+  }
+  const expected = { denied: 401, unavailable: 503, uncertain: 502 };
+  if (expected[value.status] === httpStatus &&
+      exact(value, ["schemaVersion", "status", "reason", "omissions", "nextAction"]) &&
+      CHOICE_FAILURES[value.status]?.has(value.reason) &&
+      Array.isArray(value.omissions) && value.omissions.length === 1 &&
+      value.omissions[0] === "approved_choices") return value;
+  return choiceUnverified("invalid_response");
+}
+
+export async function discoverPrivateJira({ tokenFile, request = httpRequest,
+  deadlineMs = CHOICES_DEADLINE_MS, fileOps = fs } = {}) {
+  let token;
+  try { token = readCallerTokenFile(tokenFile, { ops: fileOps }); }
+  catch (error) { return choiceUnverified(error instanceof CallerClientError ? error.reason : "unsafe_token_file"); }
+  if (!validTarget(PRIVATE_SERVICE) || !Number.isSafeInteger(deadlineMs) || deadlineMs < 1) {
+    return choiceUnverified("private_target_unverified");
+  }
+  return new Promise((resolve) => {
+    let settled = false;
+    let ended = false;
+    let clientRequest;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+    const timer = setTimeout(() => {
+      finish(choiceUnverified("deadline_exceeded"));
+      clientRequest?.destroy();
+    }, deadlineMs);
+    try {
+      clientRequest = request({ host: PRIVATE_SERVICE.ip, port: PRIVATE_SERVICE.port,
+        method: "GET", path: "/v1/jira/choices",
+        headers: { Host: PRIVATE_SERVICE.host, Authorization: `Bearer ${token}`,
+          Accept: "application/json" } }, (response) => {
+        let size = 0;
+        const chunks = [];
+        response.on("data", (chunk) => {
+          size += chunk.length;
+          if (size > CHOICES_BYTES) {
+            finish(choiceUnverified("invalid_response"));
+            clientRequest.destroy();
+            return;
+          }
+          chunks.push(chunk);
+        });
+        response.on("end", () => {
+          ended = true;
+          finish(validatedChoices(response.statusCode, response.headers, Buffer.concat(chunks)));
+        });
+        response.on("close", () => {
+          if (!ended) finish(choiceUnverified("transport_unverified"));
+        });
+      });
+      clientRequest.on("error", () => finish(choiceUnverified("transport_unverified")));
+      clientRequest.end();
+    } catch {
+      clientRequest?.destroy();
+      finish(choiceUnverified("transport_unverified"));
+    }
+  });
+}

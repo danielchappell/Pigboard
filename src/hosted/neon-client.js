@@ -166,20 +166,42 @@ function connectionFailure(error) {
     "The root connection did not complete. Its cause is unknown; retry the operator diagnostic after checking the service and Neon status.");
 }
 
-async function withinDeadline(operation, timeoutMs, client) {
+async function withinDeadline(operation, timeoutMs, client, signal) {
   let timer;
+  let onAbort;
+  let expired = false;
   try {
+    if (signal?.aborted) throw new PinnedNeonError("temporarily_unavailable");
+    const work = Promise.resolve().then(operation);
+    // An aborted connect can settle after bounded close. Reclaim its current
+    // stream without waiting for a callback that pg may suppress after end().
+    if (signal) work.then(() => {
+      if (expired || signal.aborted) {
+        client.connection?.stream?.destroy();
+        Promise.resolve().then(() => client.end()).catch(() => {});
+      }
+    }, () => {});
     return await Promise.race([
-      Promise.resolve().then(operation),
+      work,
       new Promise((_, reject) => {
         timer = setTimeout(() => {
+          expired = true;
           client.connection?.stream?.destroy();
           reject(Object.assign(new Error("deadline"), { code: "PIGBOARD_TIMEOUT" }));
         }, timeoutMs);
-      })
+      }),
+      ...(signal ? [new Promise((_, reject) => {
+        onAbort = () => {
+          expired = true;
+          reject(new PinnedNeonError("temporarily_unavailable"));
+        };
+        signal.addEventListener("abort", onAbort, { once: true });
+        if (signal.aborted) onAbort();
+      })] : [])
     ]);
   } finally {
     clearTimeout(timer);
+    if (onAbort) signal.removeEventListener("abort", onAbort);
   }
 }
 
@@ -263,6 +285,28 @@ export class PinnedNeonError extends Error {
   }
 }
 
+// The discovery route uses this for the grant SELECT after root verification.
+// It never waits for a driver callback that may not run after stream destruction.
+export function queryWithAbort(client, signal, ...args) {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) { reject(new PinnedNeonError("temporarily_unavailable")); return; }
+    let settled = false;
+    const finish = (fn, value) => {
+      if (settled) return;
+      settled = true;
+      signal.removeEventListener("abort", onAbort);
+      fn(value);
+    };
+    const onAbort = () => finish(reject, new PinnedNeonError("temporarily_unavailable"));
+    signal.addEventListener("abort", onAbort, { once: true });
+    Promise.resolve().then(() => {
+      if (signal.aborted) throw new PinnedNeonError("temporarily_unavailable");
+      return client.query(...args);
+    }).then(value => finish(resolve, value), error => finish(reject,
+      signal.aborted ? new PinnedNeonError("temporarily_unavailable") : error));
+  });
+}
+
 // The expected target and ClientClass seams are for isolated tests. The hosted
 // entry point uses the source-controlled runtime root pin without overrides.
 export async function openPinnedRuntimeClient(secret, options = {}) {
@@ -274,22 +318,30 @@ export async function openPinnedRuntimeClient(secret, options = {}) {
     Math.min(options.queryTimeoutMs, QUERY_TIMEOUT_MS) : QUERY_TIMEOUT_MS;
   const { check: rootCheck, candidate } = prepare(secret, expectedTarget);
   if (rootCheck.status !== "pass") throw new PinnedNeonError(rootCheck.reason);
+  if (options.signal?.aborted) throw new PinnedNeonError("temporarily_unavailable");
   const client = new ClientClass(clientConfig(candidate, expectedTarget, {
     tlsCa: options.tlsCa, connectionTimeoutMs, queryTimeoutMs
   }));
+  const onAbort = () => client.connection?.stream?.destroy();
+  options.signal?.addEventListener("abort", onAbort, { once: true });
   try {
-    await withinDeadline(() => client.connect(), connectionTimeoutMs, client);
+    await withinDeadline(() => client.connect(), connectionTimeoutMs, client, options.signal);
     if (pinCheck(candidate, expectedTarget).status !== "pass") {
       throw new PinnedNeonError("target_mismatch");
     }
     if (!hasVerifiedPostgresTls(client)) throw new PinnedNeonError("tls_not_active");
-    const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client);
+    const response = await withinDeadline(() => client.query(DIAGNOSTIC_SQL), queryTimeoutMs, client, options.signal);
     const row = response.rows?.[0];
     if (row?.role !== expectedTarget.role || row?.database !== expectedTarget.database) {
       throw new PinnedNeonError("identity_mismatch");
     }
-    return { client, close: () => closeClient(client) };
+    if (options.signal?.aborted) throw new PinnedNeonError("temporarily_unavailable");
+    return { client, close: async () => {
+      options.signal?.removeEventListener("abort", onAbort);
+      await closeClient(client);
+    } };
   } catch (error) {
+    options.signal?.removeEventListener("abort", onAbort);
     await closeClient(client);
     throw error instanceof PinnedNeonError ? error :
       new PinnedNeonError(connectionFailure(error).reason);

@@ -7,7 +7,9 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY config/neon-pilot-root.json ./config/neon-pilot-root.json
+COPY config/pigboard-approved-jira.json ./config/pigboard-approved-jira.json
 COPY src/hosted ./src/hosted
+COPY src/jira ./src/jira
 COPY sql ./sql
 COPY scripts/run-pigboard-host.mjs ./scripts/run-pigboard-host.mjs
 

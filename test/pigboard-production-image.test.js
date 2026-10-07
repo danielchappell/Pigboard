@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import { checkProductionImage, runImageCheckCommand } from "../scripts/check-pigboard-production-image.mjs";
 
 const IMAGE = `sha256:${"a".repeat(64)}`;
@@ -7,7 +8,8 @@ const CONTAINER = "b".repeat(64);
 const LABEL = "dev.pigboard.image-check";
 
 function fixture({ foreign = false, foreignContainer = false, lostReply = false, exited = false,
-  healthy = true, removalFails = false, buildFails = false, inventoryFails = false } = {}) {
+  healthy = true, removalFails = false, buildFails = false, inventoryFails = false,
+  runTimeout = false, hostPort = 32123 } = {}) {
   let identity;
   let name;
   let tag;
@@ -23,6 +25,7 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
       now: () => time,
       pause: async (ms) => { time += ms; },
       health: async () => healthy,
+      choiceDenial: async () => true,
       docker: async (args) => {
         commands.push(args);
         if (args[0] === "build") {
@@ -33,9 +36,10 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
         }
         if (args[0] === "run") {
           name = args[args.indexOf("--name") + 1];
-          containerExists = true;
-          return lostReply ? fail() : ok(CONTAINER);
+          containerExists = !runTimeout;
+          return runTimeout ? { ...fail(), timedOut: true } : lostReply ? fail() : ok(CONTAINER);
         }
+        if (args[0] === "exec") return ok();
         const [kind, action] = args;
         if (action === "ls") return inventoryFails ? fail() : ok((kind === "container" ? containerExists : imageExists) ? "aabbcc" : "");
         if (action === "inspect") {
@@ -44,7 +48,7 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
             Config: { Labels: { [LABEL]: foreign || (foreignContainer && kind === "container") ? "another-check" : identity } } };
           if (kind === "container") Object.assign(object, { Image: IMAGE,
             State: { Running: !exited, ExitCode: exited ? 1 : 0 },
-            NetworkSettings: { Ports: { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: "32123" }] } } });
+            NetworkSettings: { Ports: { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: String(hostPort) }] } } });
           return ok(JSON.stringify([object]));
         }
         if (action === "rm") {
@@ -87,6 +91,15 @@ test("lost run reply reconciles and removes only exact owned objects, without cl
   assert.ok(!JSON.stringify(result).includes("credential-like"));
 });
 
+test("Docker creation timeout is distinct from the service startup deadline", async () => {
+  const f = fixture({ runTimeout: true });
+  const result = await checkProductionImage(f.dependencies);
+  assert.equal(result.status, "fail");
+  assert.ok(result.checks.some(entry => entry.id === "start" &&
+    entry.reason === "docker_start_deadline"));
+  onlyOwnedRemoval(f.commands, ["image"]);
+});
+
 test("a foreign container is retained, with no attempt to remove its identity", async () => {
   const f = fixture({ foreignContainer: true });
   const result = await checkProductionImage(f.dependencies);
@@ -101,6 +114,33 @@ test("startup deadline fails and cleans only owned objects", async () => {
   assert.equal(result.status, "fail");
   assert.ok(result.checks.some((entry) => entry.reason === "startup_deadline"));
   onlyOwnedRemoval(f.commands, ["container", "image"]);
+});
+
+test("truncated denial body settles the real probe and cleans exact owned objects", async () => {
+  const server = createServer((_req, response) => {
+    response.writeHead(401, { "content-type": "application/json", "cache-control": "no-store",
+      "content-length": "1000" });
+    response.write("{");
+    setTimeout(() => response.destroy(), 10);
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const f = fixture({ hostPort: server.address().port });
+  const { choiceDenial: _stub, ...dependencies } = f.dependencies;
+  let watchdog;
+  try {
+    const result = await Promise.race([checkProductionImage(dependencies),
+      new Promise((_, reject) => { watchdog = setTimeout(() => reject(
+        new Error("interrupted denial probe did not settle and clean up")), 1200); })]);
+    assert.equal(result.status, "fail");
+    assert.ok(result.checks.some(entry => entry.id === "jira_denial" &&
+      entry.reason === "unauthenticated_route_unverified"));
+    onlyOwnedRemoval(f.commands, ["container", "image"]);
+    assert.equal(result.resources.container.cleanup, "removed");
+    assert.equal(result.resources.image.cleanup, "removed");
+  } finally {
+    clearTimeout(watchdog);
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test("early process exit fails and cleans only owned objects", async () => {
@@ -151,6 +191,7 @@ test("text and JSON failed results identify only this run for safe reconciliatio
     assert.ok(rendered.includes(LABEL));
     assert.ok(!rendered.includes("credential-like"));
     assert.ok(!rendered.includes("synthetic-image-check"));
+    assert.ok(rendered.includes("live_jira_access"));
     onlyOwnedRemoval(f.commands, ["container", "image"]);
   }
 });
@@ -167,14 +208,17 @@ test("CLI documents prerequisites, rejects overrides, and reports safe structure
   const write = (value) => output.push(value);
   const noCheck = () => { throw new Error("must not run"); };
   assert.equal(await runImageCheckCommand(["--help"], { output: write, check: noCheck }), 0);
-  assert.match(output.pop(), /Docker.*registry\/package access/u);
+  const help = output.pop();
+  assert.match(help, /Docker.*registry\/package access/u);
+  assert.match(help, /live Jira access/u);
   assert.equal(await runImageCheckCommand(["--url", "https://example.com"], { output: write, check: noCheck }), 2);
   const f = fixture();
   assert.equal(await runImageCheckCommand(["--format", "json"], { output: write,
-    check: () => checkProductionImage(f.dependencies) }), 0);
+    check: () => checkProductionImage(f.dependencies) }), 0, output.at(-1));
   const result = JSON.parse(output.at(-1));
-  assert.equal(result.status, "pass");
+  assert.equal(result.status, "pass", JSON.stringify(result.checks));
   assert.equal(result.image, IMAGE);
-  assert.deepEqual(result.omissions, ["live_neon_access", "caller_grants", "fly_deployment"]);
+  assert.deepEqual(result.omissions, ["live_neon_access", "live_jira_access",
+    "caller_grants", "fly_deployment"]);
   onlyOwnedRemoval(f.commands, ["container", "image"]);
 });
