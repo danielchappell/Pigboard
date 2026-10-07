@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
 import { checkProductionImage, runImageCheckCommand } from "../scripts/check-pigboard-production-image.mjs";
 
 const IMAGE = `sha256:${"a".repeat(64)}`;
@@ -8,7 +9,7 @@ const LABEL = "dev.pigboard.image-check";
 
 function fixture({ foreign = false, foreignContainer = false, lostReply = false, exited = false,
   healthy = true, removalFails = false, buildFails = false, inventoryFails = false,
-  runTimeout = false } = {}) {
+  runTimeout = false, hostPort = 32123 } = {}) {
   let identity;
   let name;
   let tag;
@@ -47,7 +48,7 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
             Config: { Labels: { [LABEL]: foreign || (foreignContainer && kind === "container") ? "another-check" : identity } } };
           if (kind === "container") Object.assign(object, { Image: IMAGE,
             State: { Running: !exited, ExitCode: exited ? 1 : 0 },
-            NetworkSettings: { Ports: { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: "32123" }] } } });
+            NetworkSettings: { Ports: { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: String(hostPort) }] } } });
           return ok(JSON.stringify([object]));
         }
         if (action === "rm") {
@@ -113,6 +114,33 @@ test("startup deadline fails and cleans only owned objects", async () => {
   assert.equal(result.status, "fail");
   assert.ok(result.checks.some((entry) => entry.reason === "startup_deadline"));
   onlyOwnedRemoval(f.commands, ["container", "image"]);
+});
+
+test("truncated denial body settles the real probe and cleans exact owned objects", async () => {
+  const server = createServer((_req, response) => {
+    response.writeHead(401, { "content-type": "application/json", "cache-control": "no-store",
+      "content-length": "1000" });
+    response.write("{");
+    setTimeout(() => response.destroy(), 10);
+  });
+  await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
+  const f = fixture({ hostPort: server.address().port });
+  const { choiceDenial: _stub, ...dependencies } = f.dependencies;
+  let watchdog;
+  try {
+    const result = await Promise.race([checkProductionImage(dependencies),
+      new Promise((_, reject) => { watchdog = setTimeout(() => reject(
+        new Error("interrupted denial probe did not settle and clean up")), 1200); })]);
+    assert.equal(result.status, "fail");
+    assert.ok(result.checks.some(entry => entry.id === "jira_denial" &&
+      entry.reason === "unauthenticated_route_unverified"));
+    onlyOwnedRemoval(f.commands, ["container", "image"]);
+    assert.equal(result.resources.container.cleanup, "removed");
+    assert.equal(result.resources.image.cleanup, "removed");
+  } finally {
+    clearTimeout(watchdog);
+    await new Promise(resolve => server.close(resolve));
+  }
 });
 
 test("early process exit fails and cleans only owned objects", async () => {

@@ -64,7 +64,9 @@ function probeHealth(port, timeout) {
 function probeChoiceDenial(port, timeout) {
   return new Promise((resolve) => {
     let settled = false;
-    const finish = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+    const finish = (ok) => {
+      if (!settled) { settled = true; clearTimeout(deadline); resolve(ok); }
+    };
     const req = request({ hostname: "127.0.0.1", port, path: "/v1/jira/choices",
       method: "GET" }, (res) => {
       let body = "";
@@ -80,10 +82,12 @@ function probeChoiceDenial(port, timeout) {
             !Object.hasOwn(value, "projects") && res.headers["cache-control"] === "no-store");
         } catch { finish(false); }
       });
+      res.on("error", () => finish(false));
+      res.on("aborted", () => finish(false));
+      res.on("close", () => { if (!res.complete) finish(false); });
     });
     const deadline = setTimeout(() => { req.destroy(); finish(false); }, timeout);
     req.on("error", () => finish(false));
-    req.on("close", () => clearTimeout(deadline));
     req.end();
   });
 }
