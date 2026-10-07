@@ -134,11 +134,10 @@ export async function discoverApprovedJira({ config, clientId, clientSecret,
     "content-type": "application/x-www-form-urlencoded", Accept: "application/json"
   }, body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret,
     grant_type: "client_credentials" }) }, { fetchImpl, signal, remaining });
-  if (auth.status !== "ok") return auth.status === "uncertain" ?
-    fail("unavailable", "jira_unavailable") : auth;
+  if (auth.status !== "ok") return auth;
   const token = auth.value?.access_token;
   if (typeof token !== "string" || token.length < 1 || token.length > 8192 ||
-      !/^[\x21-\x7e]+$/u.test(token)) return fail("unavailable", "jira_unavailable");
+      !/^[\x21-\x7e]+$/u.test(token)) return fail("uncertain", "metadata_unverified");
   const context = { fetchImpl, signal, remaining,
     base: `https://api.atlassian.com/ex/jira/${config.cloudId}`, token };
   const identity = await boundedJson(`${context.base}/rest/api/3/myself`, {

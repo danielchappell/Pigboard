@@ -18,7 +18,7 @@ Requires Docker and registry/package access. Builds the repository Dockerfile,
 starts its normal unprivileged command on one CPU/256 MiB, checks loopback-only
 /health, then removes only this check's labelled resources. Failures are not
 skipped. Raw Docker logs and credentials are never printed. This proves image
-liveness, not Neon access, caller grants or a deployed service.
+liveness, not Neon or live Jira access, caller grants or a deployed service.
 Guide: docs/hosted-pigboard-first-service.md`;
 
 function dockerCommand(args, timeout) {
@@ -111,7 +111,7 @@ export async function checkProductionImage({ docker = dockerCommand,
     resources: { ownershipLabel: LABEL, ownershipValue: identity,
       container: { name, id: null, cleanup: "unverified" },
       image: { tag, id: null, cleanup: "unverified" } },
-    omissions: ["live_neon_access", "caller_grants", "fly_deployment"] };
+    omissions: ["live_neon_access", "live_jira_access", "caller_grants", "fly_deployment"] };
   const record = (id, status, reason, code) => result.checks.push({ id, status,
     ...(reason ? { reason } : {}), ...(Number.isInteger(code) ? { exitCode: code } : {}) });
   const command = async (args, bound = 5000) => {

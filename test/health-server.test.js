@@ -172,3 +172,45 @@ test("expired choices request aborts stalled authority without a Jira lookup", a
     assert.equal(lookups, 0);
   } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
 });
+
+test("wall-clock expiry after each stage or serialization withholds choices before a delayed timer", async () => {
+  const token = `pb1_${"A".repeat(43)}`;
+  const agent = { status: "ok", team: "pilot", principal: { id: "agent-1", kind: "agent" },
+    grants: ["connection_admin"] };
+  for (const stage of ["first_grant", "jira", "final_grant", "serialization"]) {
+    let clock = 0;
+    let grants = 0;
+    let lookups = 0;
+    let aborted = false;
+    const board = { id: "2", type: "simple" };
+    Object.defineProperty(board, "name", { enumerable: true, get() {
+      if (stage === "serialization") clock = 5001;
+      return "PRIVATE BOARD NAME";
+    } });
+    const server = await startHealthServer({ host: "127.0.0.1", port: 0,
+      choiceDeadlineMs: 5000, now: () => clock,
+      inspectSelf: async (_token, signal) => {
+        signal.addEventListener("abort", () => { aborted = true; }, { once: true });
+        grants += 1;
+        if ((stage === "first_grant" && grants === 1) ||
+            (stage === "final_grant" && grants === 2)) clock = 5001;
+        return agent;
+      },
+      discoverChoices: async () => {
+        lookups += 1;
+        if (stage === "jira") clock = 5001;
+        return { status: "complete", site: "scubapig.atlassian.net", projects: [
+          { id: "10001", key: "PIG", name: "Pigboard", boards: [board] }] };
+      } });
+    try {
+      await assert.rejects(fetch(`http://127.0.0.1:${server.address().port}/v1/jira/choices`,
+        { headers: { Authorization: `Bearer ${token}` } }), undefined, stage);
+      assert.equal(aborted, true, stage);
+      assert.equal(lookups, stage === "first_grant" ? 0 : 1, stage);
+      assert.equal(grants, ["first_grant", "jira"].includes(stage) ? 1 : 2, stage);
+    } finally {
+      server.closeAllConnections();
+      await new Promise(resolve => server.close(resolve));
+    }
+  }
+});

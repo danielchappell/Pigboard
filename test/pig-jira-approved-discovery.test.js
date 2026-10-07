@@ -94,10 +94,35 @@ test("missing host secrets, aborted reads and provider denial never expose names
   const controller = new AbortController();
   controller.abort();
   const aborted = await discover(fixture().fetchImpl, { signal: controller.signal });
-  assert.equal(aborted.status, "unavailable");
+  assert.deepEqual(aborted, { status: "uncertain", reason: "metadata_unverified" });
   const denied = await discover(async () => reply({ private: "secret" }, 403));
   assert.equal(denied.status, "unavailable");
   assert.ok(!JSON.stringify(denied).includes("secret"));
+});
+
+test("OAuth access refusal stays unavailable while uncertain replies and timeout stay uncertain", async () => {
+  for (const status of [401, 403, 302, 503]) {
+    const result = await discover(async () => reply({ private: "provider detail" }, status));
+    assert.deepEqual(result, [401, 403].includes(status) ?
+      { status: "unavailable", reason: "jira_unavailable" } :
+      { status: "uncertain", reason: "metadata_unverified" });
+    assert.equal(JSON.stringify(result).includes("provider detail"), false);
+  }
+  for (const body of ["{", "x".repeat(256 * 1024 + 1)]) {
+    assert.deepEqual(await discover(async () => new Response(body)),
+      { status: "uncertain", reason: "metadata_unverified" });
+  }
+  for (const body of [null, {}, { access_token: "" }, { access_token: 23 },
+    { access_token: "bad\nvalue" }, { access_token: "x".repeat(8193) }]) {
+    let requests = 0;
+    const result = await discover(async () => { requests += 1; return reply(body); });
+    assert.deepEqual(result, { status: "uncertain", reason: "metadata_unverified" });
+    assert.equal(requests, 1);
+  }
+  const timedOut = await discover((_url, init) => new Promise((_, reject) => {
+    init.signal.addEventListener("abort", () => reject(new Error("synthetic timeout")), { once: true });
+  }), { deadlineAt: Date.now() + 10 });
+  assert.deepEqual(timedOut, { status: "uncertain", reason: "metadata_unverified" });
 });
 
 test("board access refusal on either page stays unavailable without partial names", async () => {
@@ -135,7 +160,7 @@ test("streaming provider denial and redirect release unread bodies before the de
       return new Response(stream, { status });
     };
     const result = await discover(fetchImpl, { signal: controller.signal });
-    assert.equal(result.status, "unavailable");
+    assert.equal(result.status, status === 403 ? "unavailable" : "uncertain");
     assert.equal(cancelled, true);
     assert.equal(aborted, true);
     controller.abort();

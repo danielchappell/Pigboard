@@ -98,10 +98,17 @@ export function createHealthServer({ inspectSelf, discoverChoices,
       }, choiceDeadlineMs);
       const onClose = () => { if (!response.writableEnded) controller.abort(); };
       response.once("close", onClose);
+      const expired = () => {
+        if (now() >= deadlineAt) {
+          controller.abort();
+          if (!response.writableEnded && !response.destroyed) response.destroy();
+        }
+        return controller.signal.aborted || response.destroyed;
+      };
       try {
         const first = await raceAbort(() => typeof inspectSelf === "function" ?
           inspectSelf(token, controller.signal, deadlineAt) : null, controller.signal);
-        if (controller.signal.aborted || response.destroyed) return;
+        if (expired()) return;
         if (!grantAllowed(first)) {
           const denied = first?.status === "denied" || first?.status === "ok";
           sendJson(response, denied ? 401 : 503, choiceFailure(denied ? "denied" : "unavailable",
@@ -111,7 +118,7 @@ export function createHealthServer({ inspectSelf, discoverChoices,
         }
         const choices = await raceAbort(() => typeof discoverChoices === "function" ?
           discoverChoices({ signal: controller.signal, deadlineAt }) : null, controller.signal);
-        if (controller.signal.aborted || response.destroyed) return;
+        if (expired()) return;
         if (choices?.status !== "complete") {
           const unavailable = choices?.status === "unavailable";
           sendJson(response, unavailable ? 503 : 502,
@@ -121,7 +128,7 @@ export function createHealthServer({ inspectSelf, discoverChoices,
         }
         const final = await raceAbort(() => inspectSelf(token, controller.signal, deadlineAt),
           controller.signal);
-        if (controller.signal.aborted || response.destroyed) return;
+        if (expired()) return;
         if (!grantAllowed(final) || final.principal.id !== first.principal.id ||
             final.principal.kind !== first.principal.kind) {
           const denied = final?.status === "denied" || final?.status === "ok";
@@ -136,6 +143,7 @@ export function createHealthServer({ inspectSelf, discoverChoices,
           sendJson(response, 502, choiceFailure("uncertain", "metadata_unverified"));
           return;
         }
+        if (expired()) return;
         sendJson(response, 200, body);
       } finally {
         clearTimeout(timeout);

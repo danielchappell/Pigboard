@@ -191,6 +191,7 @@ test("text and JSON failed results identify only this run for safe reconciliatio
     assert.ok(rendered.includes(LABEL));
     assert.ok(!rendered.includes("credential-like"));
     assert.ok(!rendered.includes("synthetic-image-check"));
+    assert.ok(rendered.includes("live_jira_access"));
     onlyOwnedRemoval(f.commands, ["container", "image"]);
   }
 });
@@ -207,7 +208,9 @@ test("CLI documents prerequisites, rejects overrides, and reports safe structure
   const write = (value) => output.push(value);
   const noCheck = () => { throw new Error("must not run"); };
   assert.equal(await runImageCheckCommand(["--help"], { output: write, check: noCheck }), 0);
-  assert.match(output.pop(), /Docker.*registry\/package access/u);
+  const help = output.pop();
+  assert.match(help, /Docker.*registry\/package access/u);
+  assert.match(help, /live Jira access/u);
   assert.equal(await runImageCheckCommand(["--url", "https://example.com"], { output: write, check: noCheck }), 2);
   const f = fixture();
   assert.equal(await runImageCheckCommand(["--format", "json"], { output: write,
@@ -215,6 +218,7 @@ test("CLI documents prerequisites, rejects overrides, and reports safe structure
   const result = JSON.parse(output.at(-1));
   assert.equal(result.status, "pass", JSON.stringify(result.checks));
   assert.equal(result.image, IMAGE);
-  assert.deepEqual(result.omissions, ["live_neon_access", "caller_grants", "fly_deployment"]);
+  assert.deepEqual(result.omissions, ["live_neon_access", "live_jira_access",
+    "caller_grants", "fly_deployment"]);
   onlyOwnedRemoval(f.commands, ["container", "image"]);
 });
