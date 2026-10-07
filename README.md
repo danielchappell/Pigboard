@@ -11,7 +11,7 @@ getting the right reviews and understanding what is ready.
 
 This repository includes reusable worker roles and skills, the GitHub Projects/
 local Codex runtime, a standalone Cursor command, offline workflow preview,
-Jira metadata diagnostics and first-host/owner foundations. The guides below
+Jira metadata diagnostics, private grant inspection and approved Jira name discovery. The guides below
 explain each available tool and its limits. These foundations do not yet establish
 complete hosted Jira delivery or live acceptance.
 
@@ -89,7 +89,7 @@ operator can run `npm run --silent host:pigboard -- --diagnose-root` to check a
 fresh, pinned Neon root connection. Both commands need a private
 `PIGBOARD_NEON_URL`. With authority migration version 3, a caller can inspect only
 their own current grant with `GET /v1/authority/me` and a bearer credential.
-The host does not select a Jira board or expose a public API. The
+The host lists approved Jira names but does not save a board selection or expose a public API. The
 [first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
 private Fly setup, safe credential use, diagnostic results, restart and rollback.
 Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [active delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-4-october-2026) records the new two-PR batch: fixed agent connect/disconnect, then approved named read-only Jira discovery, followed by regroup. Prior owner PR #36/TLS PR #37 and4 October owner live proof are historical evidence. New-code committed review, hosted CI, merge/deployment and agent live acceptance remain separate. The host is not accepted merely because source or local tests exist.
@@ -131,7 +131,7 @@ The migration is forward-only v3; private ingress and old operators must be
 fenced/quiesced during upgrade. Follow the [fenced upgrade procedure](docs/hosted-pigboard-first-service.md#upgrade-v3-with-private-ingress-fenced),
 since stopping an autostart-enabled Machine alone cannot close Flycast traffic.
 These commands are available in this checkout; see the [plan and evidence](docs/plans/pigboard-pilot-agent.md)
-for review/test/release/live status. Read-only Jira discovery remains provisional;
+for review/test/release/live status. The read-only `jira:choices` command is in the [private-service guide](docs/hosted-pigboard-first-service.md#discover-approved-jira-names);
 saved selection, rotation, arbitrary agent names and HTTP administration are deferred.
 
 ## Quick Setup

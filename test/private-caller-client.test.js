@@ -9,8 +9,9 @@ import test from "node:test";
 import { pathToFileURL } from "node:url";
 import { deliverCredential, prepareCredentialDirectory } from "../src/hosted/authority-bootstrap.js";
 import { inspectPrivateCaller, PRIVATE_SERVICE, readCallerTokenFile,
-  CallerClientError } from "../src/hosted/private-caller-client.js";
+  CallerClientError, discoverPrivateJira } from "../src/hosted/private-caller-client.js";
 import { runCallerCommand } from "../scripts/inspect-pigboard-caller.mjs";
+import { runJiraChoicesCommand } from "../scripts/discover-pigboard-jira.mjs";
 
 const OWNER_TOKEN = `pb1_${"O".repeat(43)}`;
 const AGENT_TOKEN = `pb1_${"A".repeat(43)}`;
@@ -307,4 +308,58 @@ test("the real CLI has safe help, usage and pre-network refusal", () => {
   assert.equal(usage.status, 2);
   assert.match(usage.stdout, /invalid_usage/);
   assert.equal(usage.stderr, "");
+});
+
+test("Jira discovery uses the pinned private route and renders complete choices", async () => {
+  const owner = privateFile(OWNER_TOKEN);
+  const result = { schemaVersion: 1, status: "complete", site: "scubapig.atlassian.net",
+    projects: [{ id: "10001", key: "PIG", name: "Pigboard", boards: [
+      { id: "2", name: "KAN board", type: "simple" },
+      { id: "35", name: "Pigboard Selection QA", type: "kanban" }] }],
+    omissions: ["pair_selection", "board_filter_eligibility", "issue_access"],
+    nextAction: "Review names; saving a pair comes later." };
+  try {
+    await fixture((_request, response) => respond(response, 200, result,
+      { "cache-control": "no-store" }), async ({ request, calls }) => {
+      assert.deepEqual(await discoverPrivateJira({ tokenFile: owner.path, request }), result);
+      assert.equal(calls[0].path, "/v1/jira/choices");
+      assert.equal(calls[0].host, PRIVATE_SERVICE.ip);
+      assert.equal(calls[0].headers.Authorization, `Bearer ${OWNER_TOKEN}`);
+      const lines = [];
+      assert.equal(await runJiraChoicesCommand(["--token-file", owner.path], {
+        discover: options => discoverPrivateJira({ ...options, request }),
+        output: line => lines.push(line) }), 0);
+      assert.match(lines[0], /KAN board \(2, simple\)/u);
+      assert.match(lines[0], /Not yet: pair selection/u);
+      assert.ok(!lines[0].includes(OWNER_TOKEN));
+    });
+  } finally { owner.cleanup(); }
+});
+
+test("Jira discovery refuses partial, secret-bearing or changed schemas", async () => {
+  const item = privateFile(AGENT_TOKEN);
+  try {
+    for (const body of [
+      { schemaVersion: 1, status: "complete", projects: [], nextAction: "Partial" },
+      { schemaVersion: 1, status: "complete", site: "scubapig.atlassian.net",
+        projects: [{ id: "10001", key: "PIG", name: "Pigboard", boards: [
+          { id: "35", name: "QA", type: "kanban" }, { id: "2", name: "KAN", type: "simple" }] }],
+        omissions: ["pair_selection", "board_filter_eligibility", "issue_access"],
+        nextAction: "Continue" },
+      { schemaVersion: 1, status: "denied", reason: "invalid_credential",
+        omissions: ["approved_choices"], nextAction: "Raw secret", projects: [] }
+    ]) {
+      await fixture((_request, response) => respond(response, 200, body,
+        { "cache-control": "no-store" }), async ({ request }) => {
+        const actual = await discoverPrivateJira({ tokenFile: item.path, request });
+        assert.equal(actual.status, "unverified");
+        assert.equal(JSON.stringify(actual).includes("Raw secret"), false);
+      });
+    }
+    const lines = [];
+    assert.equal(await runJiraChoicesCommand(["--help"], { output: line => lines.push(line) }), 0);
+    assert.match(lines[0], /read-only/u);
+    assert.equal(await runJiraChoicesCommand(["--format", "json"], { output: line => lines.push(line) }), 2);
+    assert.equal(JSON.parse(lines[1]).status, "unverified");
+  } finally { item.cleanup(); }
 });

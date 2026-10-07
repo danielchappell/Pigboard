@@ -7,7 +7,8 @@ const CONTAINER = "b".repeat(64);
 const LABEL = "dev.pigboard.image-check";
 
 function fixture({ foreign = false, foreignContainer = false, lostReply = false, exited = false,
-  healthy = true, removalFails = false, buildFails = false, inventoryFails = false } = {}) {
+  healthy = true, removalFails = false, buildFails = false, inventoryFails = false,
+  runTimeout = false } = {}) {
   let identity;
   let name;
   let tag;
@@ -23,6 +24,7 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
       now: () => time,
       pause: async (ms) => { time += ms; },
       health: async () => healthy,
+      choiceDenial: async () => true,
       docker: async (args) => {
         commands.push(args);
         if (args[0] === "build") {
@@ -33,9 +35,10 @@ function fixture({ foreign = false, foreignContainer = false, lostReply = false,
         }
         if (args[0] === "run") {
           name = args[args.indexOf("--name") + 1];
-          containerExists = true;
-          return lostReply ? fail() : ok(CONTAINER);
+          containerExists = !runTimeout;
+          return runTimeout ? { ...fail(), timedOut: true } : lostReply ? fail() : ok(CONTAINER);
         }
+        if (args[0] === "exec") return ok();
         const [kind, action] = args;
         if (action === "ls") return inventoryFails ? fail() : ok((kind === "container" ? containerExists : imageExists) ? "aabbcc" : "");
         if (action === "inspect") {
@@ -85,6 +88,15 @@ test("lost run reply reconciles and removes only exact owned objects, without cl
   assert.ok(f.commands.some((args) => args[0] === "container" && args[1] === "inspect"));
   onlyOwnedRemoval(f.commands, ["container", "image"]);
   assert.ok(!JSON.stringify(result).includes("credential-like"));
+});
+
+test("Docker creation timeout is distinct from the service startup deadline", async () => {
+  const f = fixture({ runTimeout: true });
+  const result = await checkProductionImage(f.dependencies);
+  assert.equal(result.status, "fail");
+  assert.ok(result.checks.some(entry => entry.id === "start" &&
+    entry.reason === "docker_start_deadline"));
+  onlyOwnedRemoval(f.commands, ["image"]);
 });
 
 test("a foreign container is retained, with no attempt to remove its identity", async () => {
@@ -171,9 +183,9 @@ test("CLI documents prerequisites, rejects overrides, and reports safe structure
   assert.equal(await runImageCheckCommand(["--url", "https://example.com"], { output: write, check: noCheck }), 2);
   const f = fixture();
   assert.equal(await runImageCheckCommand(["--format", "json"], { output: write,
-    check: () => checkProductionImage(f.dependencies) }), 0);
+    check: () => checkProductionImage(f.dependencies) }), 0, output.at(-1));
   const result = JSON.parse(output.at(-1));
-  assert.equal(result.status, "pass");
+  assert.equal(result.status, "pass", JSON.stringify(result.checks));
   assert.equal(result.image, IMAGE);
   assert.deepEqual(result.omissions, ["live_neon_access", "caller_grants", "fly_deployment"]);
   onlyOwnedRemoval(f.commands, ["container", "image"]);

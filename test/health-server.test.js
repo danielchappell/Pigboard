@@ -90,3 +90,85 @@ test("malformed and revoked bearers have one generic response, while a handler f
     await new Promise((resolve) => failed.close(resolve));
   }
 });
+
+test("Jira choices require a current grant before lookup and the same principal before disclosure", async () => {
+  const token = `pb1_${"A".repeat(43)}`;
+  const agent = { status: "ok", team: "pilot", generation: 4,
+    principal: { id: "agent-1", kind: "agent" }, grants: ["connection_admin"] };
+  const names = { status: "complete", site: "scubapig.atlassian.net", projects: [
+    { id: "10001", key: "PIG", name: "Pigboard", boards: [
+      { id: "2", name: "KAN board", type: "simple" }] }] };
+  let grants = [agent, { ...agent, generation: 5 }];
+  let lookups = 0;
+  const server = await startHealthServer({ host: "127.0.0.1", port: 0,
+    inspectSelf: async () => grants.shift(),
+    discoverChoices: async () => { lookups++; return names; } });
+  try {
+    const url = `http://127.0.0.1:${server.address().port}/v1/jira/choices`;
+    const missing = await fetch(url);
+    assert.equal(missing.status, 401);
+    assert.equal(lookups, 0);
+    const complete = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(complete.status, 200);
+    assert.equal((await complete.json()).projects[0].boards[0].id, "2");
+    assert.equal(complete.headers.get("cache-control"), "no-store");
+    assert.equal(lookups, 1);
+    grants = [{ ...agent, grants: [] }];
+    const ungranted = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    assert.equal(ungranted.status, 401);
+    assert.equal(lookups, 1);
+  } finally { await new Promise(resolve => server.close(resolve)); }
+});
+
+test("revoke, principal change and authority outage during Jira lookup withhold buffered names", async () => {
+  const token = `pb1_${"A".repeat(43)}`;
+  const agent = { status: "ok", team: "pilot", generation: 4,
+    principal: { id: "agent-1", kind: "agent" }, grants: ["connection_admin"] };
+  for (const final of [
+    { status: "denied" },
+    { ...agent, principal: { id: "agent-2", kind: "agent" } },
+    { status: "unavailable" }
+  ]) {
+    let calls = 0;
+    const server = await startHealthServer({ host: "127.0.0.1", port: 0,
+      inspectSelf: async () => ++calls === 1 ? agent : final,
+      discoverChoices: async () => ({ status: "complete", site: "scubapig.atlassian.net",
+        projects: [{ id: "10001", key: "PIG", name: "PRIVATE BOARD NAME", boards: [] }] }) });
+    try {
+      const response = await fetch(`http://127.0.0.1:${server.address().port}/v1/jira/choices`,
+        { headers: { Authorization: `Bearer ${token}` } });
+      assert.equal(response.status, final.status === "unavailable" ? 503 : 401);
+      const body = await response.text();
+      assert.ok(!body.includes("PRIVATE BOARD NAME"));
+      assert.ok(!body.includes("10001"));
+      assert.equal(calls, 2);
+    } finally { await new Promise(resolve => server.close(resolve)); }
+  }
+});
+
+test("expired choices request aborts stalled authority without a Jira lookup", async () => {
+  const token = `pb1_${"A".repeat(43)}`;
+  let aborted = false;
+  let lookups = 0;
+  const server = await startHealthServer({ host: "127.0.0.1", port: 0,
+    choiceDeadlineMs: 20,
+    inspectSelf: async (_token, signal) => {
+      signal.addEventListener("abort", () => { aborted = true; }, { once: true });
+      return new Promise(() => {});
+    },
+    discoverChoices: async () => { lookups++; return null; } });
+  try {
+    const started = Date.now();
+    const request = fetch(`http://127.0.0.1:${server.address().port}/v1/jira/choices`,
+      { headers: { Authorization: `Bearer ${token}` } });
+    let watchdog;
+    try {
+      await assert.rejects(Promise.race([request, new Promise((_, reject) => {
+        watchdog = setTimeout(() => reject(new Error("server did not close expired choices response")), 300);
+      })]), error => !/server did not close/u.test(error.message));
+    } finally { clearTimeout(watchdog); }
+    assert.ok(Date.now() - started < 300);
+    assert.equal(aborted, true);
+    assert.equal(lookups, 0);
+  } finally { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }
+});

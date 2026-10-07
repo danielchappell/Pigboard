@@ -61,6 +61,33 @@ function probeHealth(port, timeout) {
   });
 }
 
+function probeChoiceDenial(port, timeout) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => { if (!settled) { settled = true; resolve(ok); } };
+    const req = request({ hostname: "127.0.0.1", port, path: "/v1/jira/choices",
+      method: "GET" }, (res) => {
+      let body = "";
+      res.on("data", (chunk) => {
+        body += chunk;
+        if (body.length > 4096) { req.destroy(); finish(false); }
+      });
+      res.on("end", () => {
+        try {
+          const value = JSON.parse(body);
+          finish(res.statusCode === 401 && value.schemaVersion === 1 &&
+            value.status === "denied" && value.reason === "invalid_credential" &&
+            !Object.hasOwn(value, "projects") && res.headers["cache-control"] === "no-store");
+        } catch { finish(false); }
+      });
+    });
+    const deadline = setTimeout(() => { req.destroy(); finish(false); }, timeout);
+    req.on("error", () => finish(false));
+    req.on("close", () => clearTimeout(deadline));
+    req.end();
+  });
+}
+
 function inspected(result) {
   if (!result.ok) return null;
   try {
@@ -71,7 +98,7 @@ function inspected(result) {
 
 // Dependencies are a unit-test seam only; production CLI exposes no overrides.
 export async function checkProductionImage({ docker = dockerCommand,
-  health = probeHealth, now = Date.now,
+  health = probeHealth, choiceDenial = probeChoiceDenial, now = Date.now,
   pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms)) } = {}) {
   const identity = randomUUID();
   const name = `pigboard-image-check-${identity}`;
@@ -91,6 +118,7 @@ export async function checkProductionImage({ docker = dockerCommand,
   const owned = (object) => object?.Config?.Labels?.[LABEL] === identity;
   let image;
   let passed = false;
+  let healthPort;
 
   async function presence(kind, target) {
     const listed = await command([kind, "ls", ...(kind === "container" ? ["--all",
@@ -111,7 +139,7 @@ export async function checkProductionImage({ docker = dockerCommand,
     reference.id = object.Id;
     // IDs avoid deleting a different object if a name/tag changes after inspection.
     const removed = await command([kind, "rm", ...(kind === "container" ? ["--force"] :
-      ["--no-prune"]), object.Id]);
+      ["--no-prune"]), object.Id], 20_000);
     if (removed.ok) reference.cleanup = "removed";
     else {
       // A failed reply alone does not prove the object still exists.
@@ -138,10 +166,13 @@ export async function checkProductionImage({ docker = dockerCommand,
     result.resources.image.id = image.Id;
     const synthetic = new URL(`postgresql://${ROOT_TARGET.role}:synthetic-image-check@${ROOT_TARGET.host}:${ROOT_TARGET.port}/${ROOT_TARGET.database}`);
     synthetic.searchParams.set("sslmode", "verify-full");
+    // Docker itself can take longer than the service's separate 20s health bound
+    // while creating the container on the local engine.
     const started = await command(["run", "--detach", "--name", name,
       "--label", `${LABEL}=${identity}`, "--cpus", "1", "--memory", "256m",
-      "--publish", "127.0.0.1::8080", "--env", `PIGBOARD_NEON_URL=${synthetic.href}`, image.Id]);
-    if (!started.ok) { record("start", "fail", "run_outcome_unverified", started.code); return result; }
+      "--publish", "127.0.0.1::8080", "--env", `PIGBOARD_NEON_URL=${synthetic.href}`, image.Id], 30_000);
+    if (!started.ok) { record("start", "fail", started.timedOut ?
+      "docker_start_deadline" : "run_outcome_unverified", started.code); return result; }
     record("start", "pass");
     const deadline = now() + STARTUP_MS;
     while (now() < deadline) {
@@ -160,11 +191,20 @@ export async function checkProductionImage({ docker = dockerCommand,
       if (!port || port > 65535) { record("health", "fail", "loopback_port_unverified"); return result; }
       if (now() >= deadline) break;
       if (await health(port, Math.max(1, Math.min(1000, deadline - now())))) {
-        record("health", "pass"); passed = true; break;
+        record("health", "pass"); passed = true; healthPort = port; break;
       }
       await pause(Math.min(200, Math.max(0, deadline - now())));
     }
     if (!passed) record("health", "fail", "startup_deadline");
+    if (passed) {
+      const imported = await command(["exec", name, "node", "--input-type=module", "-e",
+        "import('/app/src/jira/approved-discovery.js').then(async m => { const fs = await import('node:fs'); const value = JSON.parse(fs.readFileSync('/app/config/pigboard-approved-jira.json', 'utf8')); if (!m.validApprovedJira(value)) process.exitCode = 1; })"], 5000);
+      record("jira_import", imported.ok ? "pass" : "fail",
+        imported.ok ? undefined : "approved_jira_not_packaged", imported.code);
+      const denied = await choiceDenial(healthPort, 1000);
+      record("jira_denial", denied ? "pass" : "fail",
+        denied ? undefined : "unauthenticated_route_unverified");
+    }
   } catch {
     record("check", "fail", "check_unverified");
   } finally {

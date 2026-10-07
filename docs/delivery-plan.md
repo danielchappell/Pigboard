@@ -2,24 +2,15 @@
 
 ## Active delivery queue — approved 4 October 2026
 
-One current queue: exactly two new PRs, then regroup. Preserve unrelated PR #35/user
-edits and independent PR #40/41 branding work. The prior owner recovery batch used
-2/2 PRs (36/37);4 October owner live acceptance is historical and does not count as
-agent acceptance. Fresh owner baseline readback5 October remained UUID
-31dbd3b2-2330-4235-a52d-237ea24979d1, generation1, owner+connection_admin.
+One current queue: exactly two new PRs, then regroup. PR #42 delivered and live-verified the fixed pilot agent; this PR2 slice is approved named read-only Jira discovery. Preserve unrelated user edits and the independently merged website work. The prior owner recovery batch used 2/2 PRs (36/37). Exact owner and replacement-agent private grant proof was refreshed 7 October at generation4; neither grant check proves Jira discovery.
 
 | Order | Outcome and dependencies | Current stage |
 | --- | --- | --- |
-| 1 | [Fixed agent connect/disconnect](stories/pigboard-pilot-agent.md), using existing owner/root/private host; independent of Jira D1 | [Exact approved plan and implementation evidence](plans/pigboard-pilot-agent.md): design and two round2 Sol plan reviews CLEAN; source implementation/local verification in progress. Committed-code reviews, PR/current CI, authorized merge/deploy and full live proof pending. |
-| 2 | Approved named read-only Jira project/board discovery for owner and agent; depends on D1 dedicated identity/read-shape/pagination and PR1 committed/live contract | **Provisional — not ready for delivery.** Credential confirmation/custody and D1 proof remain unresolved. No saved pair/correction/filter eligibility/effects restored. |
+| 1 | [Fixed agent connect/disconnect](stories/pigboard-pilot-agent.md), using existing owner/root/private host; independent of Jira D1 | [PR #42](https://github.com/danielchappell/ski-stack/pull/42) merged as `abe5f309c1a2e3cb7cf45b31113ab04f74746d02` with reviewed tree; owner/agent handoff, distinct peer, revoke and replacement live accepted 5 October. |
+| 2 | Approved named read-only Jira project/board discovery for owner and agent; depends on dedicated Scubapig identity/pagination and PR1 live contract | Design and Story/implementation plan each have two fresh independent Sol CLEAN reviews. D1 paged metadata and owner/agent current grants are verified. Initial implementation `f5b4204` received two exact-code NOT CLEAN reviews for bounded HTTP/provider response cleanup. The unpublished branch is rebased on current main `9b9f08c2b4561d0b7786c44b572637c1d3566176` (unrelated PR #44 website evidence preserved); in-scope repairs and fresh exact-code reviews remain before PR/checks, authorized deploy and live acceptance. [Plan](plans/pigboard-jira-named-discovery.md) and [review record](reviews/pigboard-jira-named-discovery.md). No saved pair/correction/filter eligibility/effects restored. |
 | Stop | Regroup after 2/2 | No automatic third prerequisite/repair PR; S02a remains partial. |
 
-Current new-batch counters: PRs opened 0/2, outcomes live 0/2. Implementation is not
-live acceptance. PR1 has 15 counted paths and an independently accepted 12–15.75h
-plan, including tests/docs/review repair/PR/live work. A credible estimate >=16h or
-additional necessary path requires scope/size reconciliation before expansion.
-Record exact committed-code review, local/hosted/image/deployed/live revisions in
-the counted plan record and root's authoritative external queue.
+Current new-batch counters: PRs opened 1/2, outcomes live 1/2. PR2's reviewed plan counts at most20 changed paths and an independently accepted 12.5–15.75 human hours including tests, docs, reviews, PR and live work. A credible estimate >=16h or necessary 21st path requires scope/size reconciliation before expansion. Record exact committed-code review, local/hosted/image/deployed/live revisions separately in the counted review record and root's authoritative external queue. Full S02a saved selection remains for regroup after 2/2; no automatic third PR.
 
 ## Pigboard rebrand — requested 4 October 2026
 
