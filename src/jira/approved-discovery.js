@@ -154,9 +154,8 @@ export async function discoverApprovedJira({ config, clientId, clientSecret,
   if (matches.length !== 1) return fail("uncertain", "metadata_unverified");
   const boards = await pages(`/rest/agile/1.0/board?projectKeyOrId=${approved.id}`,
     board, config, context);
-  if (boards.status !== "ok" || boards.values.length > config.maxBoards) {
-    return fail("uncertain", "metadata_unverified");
-  }
+  if (boards.status !== "ok") return boards;
+  if (boards.values.length > config.maxBoards) return fail("uncertain", "metadata_unverified");
   return { status: "complete", site: config.site, projects: [{ ...matches[0],
     boards: boards.values.sort(numericIdOrder) }] };
 }

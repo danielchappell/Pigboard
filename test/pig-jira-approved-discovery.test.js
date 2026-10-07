@@ -100,6 +100,27 @@ test("missing host secrets, aborted reads and provider denial never expose names
   assert.ok(!JSON.stringify(denied).includes("secret"));
 });
 
+test("board access refusal on either page stays unavailable without partial names", async () => {
+  const firstPage = { startAt: 0, maxResults: 1, total: 2, isLast: false,
+    values: [{ id: 35, name: "PRIVATE BOARD NAME", type: "kanban" }] };
+  for (const status of [401, 403]) {
+    for (const deniedStart of [0, 1]) {
+      const f = fixture({ boardPages: { 0: firstPage } });
+      const fetchImpl = async (url, init) => {
+        const parsed = new URL(url);
+        if (parsed.pathname.endsWith("/board") &&
+            Number(parsed.searchParams.get("startAt")) === deniedStart) {
+          return reply({ private: "PRIVATE BOARD NAME" }, status);
+        }
+        return f.fetchImpl(url, init);
+      };
+      const result = await discover(fetchImpl);
+      assert.deepEqual(result, { status: "unavailable", reason: "jira_unavailable" });
+      assert.equal(JSON.stringify(result).includes("PRIVATE BOARD NAME"), false);
+    }
+  }
+});
+
 test("streaming provider denial and redirect release unread bodies before the deadline listener goes away", async () => {
   for (const status of [403, 302]) {
     let cancelled = false;
