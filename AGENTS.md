@@ -1,3 +1,7 @@
+> **Project management moved to Jira on 23 October 2026.** [Pigboard Product backlog](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70) owns current scope, priority, dependencies, status and next work. [PGB-50](https://scubapig.atlassian.net/browse/PGB-50) holds the source reconciliation and handover record. Queue/status statements below are dated historical snapshots; technical design and engineering rules still apply unless a linked newer decision supersedes them. Update Jira when work changes.
+
+See [project management](docs/project-management.md) for the human and agent workflow.
+
 # Pigboard Repo Guidance
 
 Pigboard is an opinionated AI development process. The [README](README.md)
@@ -112,7 +116,7 @@ open the PR after the code gate. Author review never substitutes for independenc
 
 Continue authorized work through these gates without routine permission prompts.
 Preserve scope, real access/decision gates and the owner's merge authority. Keep
-one active delivery queue; distinguish planned, reviewed, implemented and live-
+one active delivery queue in Jira; distinguish planned, reviewed, implemented and live-
 verified outcomes. A skipped gate requires an honest retrospective review.
 
 Always use `write-pr-sized-stories` when writing, splitting, or revising our
