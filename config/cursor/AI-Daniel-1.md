@@ -42,7 +42,9 @@ published revision `12675375bc8710f197f9ceba43f56a2d845fbd0d` on private branch
 reached the command, but finished **Install failed**: it could not fetch the private
 Pigboard source. No skills were installed. The automation remains inactive.
 
-Optional dedicated read-only deploy-key support is prepared in the versioned command;
+Optional dedicated read-only deploy-key support passed both independent reviews at
+`4e71014415679a04a935d763f1b759fea7651b63`; all 208 repository tests passed. It is
+prepared in the versioned command;
 live key registration and the `PIGBOARD_DEPLOY_KEY` environment secret await explicit
 access approval. After approval, publish the reviewed authentication revision, update
 the saved command/pin, configure the secret and rerun a draft Build. Inspect the
