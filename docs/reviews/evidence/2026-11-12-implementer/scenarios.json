@@ -1,0 +1,1950 @@
+{
+  "case1": {
+    "invocation": {
+      "run": "run-1",
+      "visit": "visit-1",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case2": {
+    "invocation": {
+      "run": "run-2",
+      "visit": "visit-2",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F2",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "NOT CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": [
+          {
+            "id": "P1",
+            "severity": "blocking",
+            "classification": "required scope increase",
+            "requirement": "R1",
+            "evidence": "Requested save depends on an unowned billing repository contract absent from this ticket",
+            "humanDecision": "Define separate repository ownership/story before this change"
+          }
+        ]
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case3": {
+    "invocation": {
+      "run": "run-3",
+      "visit": "visit-3",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F3",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "NOT CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": [
+          {
+            "id": "P2",
+            "severity": "major",
+            "classification": "in scope",
+            "requirement": "R2",
+            "evidence": "Proposed plan validates UI only; existing save handler must reject direct over-length input too",
+            "correction": "Use existing shared validation hook; add regression, stays within same files"
+          }
+        ]
+      },
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case4": {
+    "invocation": {
+      "run": "run-4",
+      "visit": "visit-4",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F4",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": {
+        "hash": "accepted-plan",
+        "requirementsVersion": "req1",
+        "review": {
+          "reviewerId": "isolated-reviewer-1",
+          "model": "fixture-grok",
+          "effort": "high",
+          "independent": true,
+          "verdict": "CLEAN",
+          "coverage": {
+            "requirements": "2/2",
+            "steps": "3/3",
+            "contracts": "4/4"
+          },
+          "secondSweep": "complete; no additional findings",
+          "principles": {
+            "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+            "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+            "Delightful": "No gap in supplied bounded fixture: same page feedback",
+            "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+            "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+            "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+            "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+          },
+          "findings": []
+        },
+        "steps": [
+          "Use existing shared validation hook",
+          "add regression tests",
+          "update guide and QA routes"
+        ],
+        "applicable": true
+      },
+      "rework": true,
+      "findings": [
+        {
+          "id": "Q1",
+          "classification": "confirmed in-scope",
+          "requirement": "R2",
+          "evidence": "Boundary check uses >=120 instead of >120; fix comparator within accepted validation plan"
+        }
+      ]
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": {
+      "id": 44,
+      "url": "fixture://pr/44",
+      "state": "open",
+      "draft": false,
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "base": "b1",
+      "story": "INT-F4"
+    },
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case5": {
+    "invocation": {
+      "run": "run-5",
+      "visit": "visit-5",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F5",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "pending",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval",
+      "historicalGreen": {
+        "head": "old-h",
+        "checks": [
+          "unit passed",
+          "build passed"
+        ]
+      }
+    },
+    "behavior": "wait_expired"
+  },
+  "case6": {
+    "invocation": {
+      "run": "run-6",
+      "visit": "visit-6",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": false,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F6",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case7": {
+    "invocation": {
+      "run": "run-7",
+      "visit": "visit-7",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F7",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "pr_timeout_committed"
+  },
+  "case8": {
+    "invocation": {
+      "run": "run-8",
+      "visit": "visit-8",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F8",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "transition_timeout_read_unavailable"
+  },
+  "case9": {
+    "invocation": {
+      "run": "run-9",
+      "visit": "visit-9",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F9",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "failed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval",
+      "failure": {
+        "type": "confirmed in-scope code defect",
+        "evidence": "Unit test C2: comparator rejects length 120; existing accepted validation step covers correction",
+        "finding": "CI1"
+      }
+    },
+    "behavior": "fix_ci"
+  },
+  "case10": {
+    "invocation": {
+      "run": "run-10",
+      "visit": "visit-10",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F10",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  },
+  "case11": {
+    "invocation": {
+      "run": "run-11",
+      "visit": "visit-11",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "ip",
+      "exclusiveOwner": true,
+      "duplicate": false,
+      "authorizedWrites": true,
+      "repository": "fixture://repo/shop",
+      "model": "fixture-grok",
+      "phaseProfiles": {
+        "plan": "high",
+        "review": "high",
+        "execute": "medium"
+      },
+      "independentReviewSupported": true,
+      "destinations": {
+        "In Review": "review",
+        "Blocked": "blocked"
+      },
+      "finiteWait": {
+        "mechanism": "fixture-wait",
+        "deadline": "finite-fixture-deadline"
+      },
+      "evidenceAudience": "developer and QA",
+      "evidenceDestination": "fixture://evidence"
+    },
+    "ticket": {
+      "key": "INT-F11",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "ip",
+      "assignee": "Daniel",
+      "requirementsVersion": "req1",
+      "repository": "fixture://repo/shop",
+      "boundary": "Order note field in existing editor; existing tenant authorization; no new storage/service",
+      "requirements": [
+        {
+          "id": "R1",
+          "text": "Save an order note up to 120 characters using the existing order record"
+        },
+        {
+          "id": "R2",
+          "text": "Reject a 121-character note without changing the stored note"
+        }
+      ],
+      "cases": [
+        {
+          "id": "C1",
+          "requirements": [
+            "R1"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "prepared test employee",
+          "preconditions": "existing own-tenant order in supplied nonproduction preview",
+          "data": "note = hello",
+          "steps": [
+            "open existing order editor",
+            "enter note hello",
+            "save",
+            "reopen same order"
+          ],
+          "expected": "Saved feedback and note hello retained",
+          "evidence": "screenshots of Saved and retained note",
+          "cleanup": "restore original note with prescribed editor action"
+        },
+        {
+          "id": "C2",
+          "requirements": [
+            "R2"
+          ],
+          "skills": [
+            "qa-ui"
+          ],
+          "actor": "same prepared employee",
+          "data": "121-character note",
+          "steps": [
+            "edit same order",
+            "enter 121-character note",
+            "save",
+            "reopen order"
+          ],
+          "expected": "length error and previous note retained",
+          "evidence": "error and unchanged-note screenshots",
+          "cleanup": "none; invalid edit has no persistent effect"
+        }
+      ],
+      "priorPlan": null,
+      "rework": false
+    },
+    "repository": {
+      "remote": "fixture://repo/shop",
+      "branch": "bot/int-f1",
+      "head": "h0",
+      "baseBranch": "main",
+      "base": "b1",
+      "cleanCheckout": true,
+      "AGENTS": "Follow existing editor validation; tests and docs required; one PR. No extra independent code-review gate. No merge authority.",
+      "CONTRIBUTING": "Run npm test then push branch and create a non-draft PR using the prepared connector. CI required: unit and build.",
+      "template": "Problem / Changes / Tests / Story",
+      "files": {
+        "editor.ts": "Existing note input and tenant-scoped save; length validation absent.",
+        "editor.test.ts": "Existing length rejection pattern on another field.",
+        "guide.md": "Order editor use."
+      },
+      "namedSkillPreparation": "qa-ui requires original cases, exact UI routes, prepared identity/environment bindings, expected screenshots and bounded cleanup. Environment supplied separately."
+    },
+    "pr": null,
+    "reviewResults": [
+      {
+        "reviewerId": "isolated-reviewer-1",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "NOT CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": [
+          {
+            "id": "P2",
+            "severity": "major",
+            "classification": "in scope",
+            "requirement": "R2",
+            "evidence": "Proposed plan validates UI only; existing save handler must reject direct over-length input too",
+            "correction": "Use existing shared validation hook; add regression, stays within same files"
+          }
+        ]
+      },
+      {
+        "reviewerId": "isolated-reviewer-2",
+        "model": "fixture-grok",
+        "effort": "high",
+        "independent": true,
+        "verdict": "CLEAN",
+        "coverage": {
+          "requirements": "2/2",
+          "steps": "3/3",
+          "contracts": "4/4"
+        },
+        "secondSweep": "complete; no additional findings",
+        "principles": {
+          "Intuitive": "No gap in supplied bounded fixture: existing Save flow",
+          "Discoverable": "No gap in supplied bounded fixture: documented input and errors",
+          "Delightful": "No gap in supplied bounded fixture: same page feedback",
+          "Token saver": "No gap in supplied bounded fixture: bounded change and handoff",
+          "Secure": "No gap in supplied bounded fixture: existing tenant authorization",
+          "Agents are equal": "No gap in supplied bounded fixture: explicit case and structured feedback",
+          "Dependable": "No gap in supplied bounded fixture: saved value and failure visible"
+        },
+        "findings": []
+      }
+    ],
+    "ci": {
+      "required": [
+        "unit",
+        "build"
+      ],
+      "head": "h1",
+      "base": "b1",
+      "mergeRevision": "m-h1-b1",
+      "checks": [
+        {
+          "name": "unit",
+          "status": "passed",
+          "testsExecuted": 18
+        },
+        {
+          "name": "build",
+          "status": "passed",
+          "testsExecuted": 1
+        }
+      ],
+      "conflicts": false,
+      "otherReadiness": "ready except independent PR approval"
+    },
+    "behavior": "normal"
+  }
+}

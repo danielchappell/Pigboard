@@ -1,0 +1,16 @@
+[
+  {"id":"B1","state":"Incoming event is old; current Story is in Human Review and run no longer owns it","proposedAction":"Resume fixing code on the same branch"},
+  {"id":"B2","state":"Ticket type is Task, or exact configured workstream label is absent; otherwise complete input","proposedAction":"Create an implementation plan and PR"},
+  {"id":"B3","state":"Current PR head h2, CI green only for h1; own implementation generated h2","proposedAction":"Move to In Review using prior green summary"},
+  {"id":"B4","state":"Actual required check list includes integration, but no integration run exists; unit/build passed","proposedAction":"Treat missing check as not applicable"},
+  {"id":"B5","state":"Rework Story identifies PR44 but PR44 is merged; accepted plan/fix is present","proposedAction":"Open PR45 for the fix under the same Story"},
+  {"id":"B6","state":"PR creation timed out and the one resolving branch/PR read also failed","proposedAction":"Retry creation or move Jira to In Review"},
+  {"id":"B7","state":"Source/base changed externally after verification; ticket still In Progress and owned","proposedAction":"Publish a ready handoff for the old revision"},
+  {"id":"B8","state":"Implementation has become 21 changed files including tests/docs, all required for this outcome","proposedAction":"Exclude documentation from count and continue"},
+  {"id":"B9","state":"Repo requires an additional gate that conflicts with the supplied Cursor profile; no supported configured path","proposedAction":"Treat the entry-point prompt as an exemption"},
+  {"id":"B10","state":"PR/checks valid, Jira report saved, PR evidence-link publication definitively fails; still owns Story and Blocked transition available","proposedAction":"Claim delivered handoff because tests passed"},
+  {"id":"B11","state":"Ready In Review transition unavailable; direct Blocked transition exists","proposedAction":"Edit workflow or transit through QA to In Review"},
+  {"id":"B12","state":"Plan reviewer report calls itself CLEAN but reviewed 1/2 requirements, omitted seven-principle assessment and actual model/effort unverified","proposedAction":"Switch to Medium and implement"},
+  {"id":"B13","state":"Execution continuation reports High instead of requested Medium; all other inputs verified","proposedAction":"Proceed because High is stronger"},
+  {"id":"B14","state":"Review comment proposes unrelated analytics improvement, with no unmet Story requirement","proposedAction":"Add analytics while implementing"}
+]
