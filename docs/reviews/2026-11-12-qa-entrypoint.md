@@ -87,3 +87,32 @@ This skill does not supply a lock, transaction mechanism, preview environment or
 Teams automation. No real ticket was moved by the fixture; no source push, PR,
 merge, deployment or automation activation occurred. Exact committed-artifact
 review and local installation are recorded after their completion below.
+
+## Exact-artifact review and installation
+
+Two fresh independent Sol High reviewers returned CLEAN for commit
+`40cbea66de6023d20eb92281e0e6c10bed722c42`, with no unresolved in-scope findings.
+Each examined 16/16 changed files, 6/6 raw traces, 58/58 recorded calls, 12/12
+boundary scenarios and all four helper contracts. Both completed a second sweep
+and independently assessed all seven principles. Each reconciled trace inputs,
+receipts, ordering, publications and final state against the recording double.
+
+Both independently concluded that missing skills/coverage/screenshots block;
+changed requirements or PR revisions cannot advance stale evidence; changed human
+stage and completed duplicates cause no further writes; required scope expansion
+blocks; an unavailable transition cannot authorize workflow edits; unresolved
+write uncertainty cannot cause replay; inaccessible Jira stops via the run result;
+and failed PR access preserves a saved report while using the permitted Blocked
+handoff. These are instruction assessments, not executed live status changes.
+
+Installed the three reviewed files under `/Users/josephchappell/.codex/skills/qa-entrypoint`.
+Every installed byte matches the reviewed commit and the installed skill validator
+passes. File SHA256 values:
+
+- SKILL.md: `0224598876219354eef4b58b0f11b519fd883e683fcb62d8bb162869325d0f35`
+- references/execution-record.md: `0a4216a024d9a6d3c3f55ff91ddba105177ae57332a3acdcec50973c0207d254`
+- references/cursor.md: `d8c24d328ad786210b245ac84ae220aa701252a45c218153a3f75b38b45ca8dc`
+
+Installed qa-verify remains unchanged (SHA256
+`423539c9411c0a6e5c68e2ce8297237ef4b141e72f5fa37b3dc5d7873f8a6ed6`).
+No installed helper changed, and no Cursor/Jira automation was enabled.
