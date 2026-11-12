@@ -85,3 +85,38 @@ All four skill validators pass and all relative dependency references resolve.
 The shared source equality checks pass; 20 core criteria retain eight mapped
 categories. The original wrapper and source/import hashes are recorded separately.
 Committed-artifact review and installation are recorded below after completion.
+
+## Exact-artifact review and installation
+
+Two fresh independent Sol High reviewers returned CLEAN for commit
+`e977d89b7190314d542f86e18c8c676b22cab636`. Each examined 19/19 files, 7/7 skill/
+dependency files, 14/14 identified contract areas, 12/12 scenarios, 150/150 calls
+and 16/16 desk boundaries; independently recomputed 117/117 trace assertions;
+completed a second sweep; and individually assessed all seven principles. Both
+verified source preservation and relative references. No unresolved in-scope
+finding remained. This covers instruction artifacts and simulated stage decisions,
+not actual reviewer quality, account capabilities or live integrations.
+
+Installed the three reviewed wrapper files plus the matching source core and
+review-state reference under `/Users/josephchappell/.codex/skills`. Every installed
+byte matches the reviewed commit, and wrapper/core skill validation passes:
+
+| Installed file | SHA256 |
+| --- | --- |
+| pigboard-pr-review/SKILL.md | `f982be6ba894645b319062ca3b27680e1ac8045276e35f934eb02798af6afb63` |
+| pigboard-pr-review/references/cursor.md | `7d81f969c4fbedd0da5a3f89a484d8c4e3c26ed0d72de3fc9b93801d0b83f5d0` |
+| pigboard-pr-review/references/jira-handoff.md | `8e94278907547b02f82f4ab34b7bd49e30f6e19ac65329ba65bc3a5e9bad9931` |
+| pr-review/SKILL.md | `d15c0c072b4e43c1893f7456fe007045590dc2178ab1fe6a55480a496902effe` |
+| pr-review/references/review-state.md | `cb63c3bd4f55ecd036ce435a63e56ea9884582a8bd138a7977ce0705520167d5` |
+
+The prior installed core was backed up at
+`/Users/josephchappell/.codex/backups/pigboard-pr-review-2026-11-12/pr-review/SKILL.md`
+(SHA256 `bda1c983e6981cda3d1333ffacd761e105b53f63bee10ef6887e514a35fcf6c9`).
+Existing pr-commenting and human-writing files and UI metadata were preserved.
+Their bodies already match the retrieved source; the new core/state are the
+unchanged linked source dependencies, not a new set of review criteria.
+
+The workflow/PGB-58 record now treats all three entry points as locally prepared.
+Cursor/Jira/Bitbucket configuration and live acceptance remain outstanding, including
+actual Grok High, independent approver rights and own-revocation controls. No Plexus
+source update, PR, live approval/status transition or automation activation occurred.
