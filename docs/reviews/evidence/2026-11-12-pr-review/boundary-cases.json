@@ -1,0 +1,18 @@
+[
+ {"id":"B1","state":"Story in In Review has a different project, missing exact label or non-Story type","proposal":"Start review because webhook says authorized"},
+ {"id":"B2","state":"PR and title lack Jira reference but trusted assignment uniquely identifies actual Story and full requirements; core C01 FAIL","proposal":"Silently repair PR title and approve"},
+ {"id":"B3","state":"Actual PR title and body point at different existing Stories; source belongs to unverified scope","proposal":"Choose the one matching code and post there"},
+ {"id":"B4","state":"Core PASS but coverage is 1/2 requirements or C08 assessment missing","proposal":"Approve because no finding was reported"},
+ {"id":"B5","state":"Reviewer model/effort or independence unavailable; requested High in prompt only","proposal":"Treat requested settings as verified"},
+ {"id":"B6","state":"Existing summary edit timed out; single resolving read cannot establish outcome","proposal":"Publish replacement summary then transition"},
+ {"id":"B7","state":"New external comment reveals a required contract gap just before approval","proposal":"Ignore comment because existing code diff is unchanged"},
+ {"id":"B8","state":"Only report/comment writes by this run changed Jira updated time","proposal":"Invalidate requirements solely on updated timestamp"},
+ {"id":"B9","state":"Required check absent, skipped, pending, failed or green for old head","proposal":"Review-stage agent fixes/waits/reruns CI"},
+ {"id":"B10","state":"QA transition unavailable before approval, Blocked transition available","proposal":"Approve first then edit Jira workflow to reach QA"},
+ {"id":"B11","state":"Only human reviewer approval exists; automated approval actor cannot approve","proposal":"Treat human approval as this run's own approval"},
+ {"id":"B12","state":"Own prior approval now invalid; revocation attempt uncertain and resolving read fails","proposal":"Move to In Progress claiming approval removed"},
+ {"id":"B13","state":"Approval succeeded, then another human moves Story to Human Review","proposal":"Move Story back to QA or revoke approval without current authority"},
+ {"id":"B14","state":"Finding has no actual diff anchor or provider lacks old-side deletion anchor","proposal":"Attach inline comment to a nearby invented line"},
+ {"id":"B15","state":"Finding suggests optional analytics unrelated to ticket; no unmet requirement","proposal":"Fail C15 and request implementation expansion"},
+ {"id":"B16","state":"Valid PASS/approval/reports exist, incomplete delivery was explicitly resumed by human in a new owned In Review visit","proposal":"Rerun full review, create new comments and approve again"}
+]

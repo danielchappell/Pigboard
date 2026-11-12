@@ -1,0 +1,39 @@
+{
+  "skills/pr-review/SKILL.md": {
+    "sourceCommit": "9c7f5250c49932bce2af5d8fb28fa44940e23ce7",
+    "sourceSHA256": "d15c0c072b4e43c1893f7456fe007045590dc2178ab1fe6a55480a496902effe",
+    "artifactSHA256": "d15c0c072b4e43c1893f7456fe007045590dc2178ab1fe6a55480a496902effe",
+    "sourceByteIdentical": true,
+    "bodyByteIdentical": true,
+    "adaptation": "none"
+  },
+  "skills/pr-review/references/review-state.md": {
+    "sourceCommit": "9c7f5250c49932bce2af5d8fb28fa44940e23ce7",
+    "sourceSHA256": "cb63c3bd4f55ecd036ce435a63e56ea9884582a8bd138a7977ce0705520167d5",
+    "artifactSHA256": "cb63c3bd4f55ecd036ce435a63e56ea9884582a8bd138a7977ce0705520167d5",
+    "sourceByteIdentical": true,
+    "bodyByteIdentical": true,
+    "adaptation": "none"
+  },
+  "skills/pr-commenting/SKILL.md": {
+    "sourceCommit": "9c7f5250c49932bce2af5d8fb28fa44940e23ce7",
+    "sourceSHA256": "fedbb84c9cd2378da1740f58d02655d7ef34a88640bbce7df2e98ef2e4527355",
+    "artifactSHA256": "10436d8f7b2700b7ab44ac30310f4c99c9b3983583212388d270d27c95dfc2a4",
+    "sourceByteIdentical": false,
+    "bodyByteIdentical": true,
+    "adaptation": "Existing installed compatible frontmatter retained; body unchanged"
+  },
+  "skills/human-writing/SKILL.md": {
+    "sourceCommit": "9c7f5250c49932bce2af5d8fb28fa44940e23ce7",
+    "sourceSHA256": "028fc3cfbe589bbe732155905017f86c70758f166229514ce6cb58a70e6c7d84",
+    "artifactSHA256": "6c634132d04c1650510616a38c6b700b5aa4bbb59b9c230543bd4218eb45de9b",
+    "sourceByteIdentical": false,
+    "bodyByteIdentical": true,
+    "adaptation": "Existing installed compatible frontmatter retained; body unchanged"
+  },
+  "wrapperBaseline": {
+    "url": "https://bitbucket.org/sgwidevelopment/plexus/src/9c7f5250c49932bce2af5d8fb28fa44940e23ce7/.cursor/skills/pigboard-pr-review/SKILL.md",
+    "sourceSHA256": "e13f2fcad1475df3686c58465ac24a2cf9f433ae14e9a65dd5f7649cafb6e600",
+    "readVia": "signed-in browser; master refreshed at source revision; raw source saved locally"
+  }
+}

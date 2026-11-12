@@ -1,0 +1,4200 @@
+{
+  "case1": {
+    "invocation": {
+      "runId": "run1",
+      "visitId": "visit1",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case2": {
+    "invocation": {
+      "runId": "run2",
+      "visitId": "visit2",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "FAIL",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "FAIL",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "FAIL",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [
+        {
+          "id": "F1",
+          "severity": "High",
+          "criterion": "C09",
+          "category": "Jira requirements",
+          "classification": "confirmed in-scope defect",
+          "requirement": "R2",
+          "evidence": "editor.ts new line8 uses >=120: a 120-character note is incorrectly rejected",
+          "expected": "120 accepted; 121 rejected",
+          "correction": "Use >120 and retain boundary regression",
+          "threadId": "thread-F1",
+          "anchor": {
+            "path": "editor.ts",
+            "side": "new",
+            "line": 8
+          }
+        }
+      ],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case3": {
+    "invocation": {
+      "runId": "run3",
+      "visitId": "visit3",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "FAIL",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "UNVERIFIED",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "FAIL",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "FAIL",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "UNVERIFIED",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "1/2",
+        "secondSweep": "completed"
+      },
+      "findings": [
+        {
+          "id": "F1",
+          "severity": "High",
+          "criterion": "C09",
+          "category": "Jira requirements",
+          "classification": "confirmed in-scope defect",
+          "requirement": "R2",
+          "evidence": "editor.ts new line8 uses >=120: a 120-character note is incorrectly rejected",
+          "expected": "120 accepted; 121 rejected",
+          "correction": "Use >120 and retain boundary regression",
+          "threadId": "thread-F1",
+          "anchor": {
+            "path": "editor.ts",
+            "side": "new",
+            "line": 8
+          }
+        }
+      ],
+      "gaps": [
+        {
+          "id": "U1",
+          "required": true,
+          "evidence": "Required auth contract inaccessible; cannot assess changed tenant authorization",
+          "humanAction": "Provide authorized contract/source access"
+        }
+      ],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case4": {
+    "invocation": {
+      "runId": "run4",
+      "visitId": "visit4",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "FAIL",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "FAIL",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "FAIL",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [
+        {
+          "id": "S1",
+          "severity": "High",
+          "criterion": "C15",
+          "classification": "required scope increase",
+          "requirement": "R1",
+          "evidence": "Accepted storage interface cannot persist notes without changing a second owned repository; source and contract inspect show missing capability",
+          "humanAction": "Review/split repository scope before implementation",
+          "anchor": null
+        }
+      ],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case5": {
+    "invocation": {
+      "runId": "run5",
+      "visitId": "visit5",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "discussion",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": true
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [
+        {
+          "id": "D1",
+          "text": "Thanks, the linked explanation answers my question.",
+          "version": "v2",
+          "requiresCodeChange": false
+        }
+      ],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal",
+    "priorReview": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution",
+      "report": "fixture://prior-summary"
+    }
+  },
+  "case6": {
+    "invocation": {
+      "runId": "run6",
+      "visitId": "visit6",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "approval_timeout_committed"
+  },
+  "case7": {
+    "invocation": {
+      "runId": "run7",
+      "visitId": "visit7",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "approval_timeout_unknown"
+  },
+  "case8": {
+    "invocation": {
+      "runId": "run8",
+      "visitId": "visit8",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "qa_transition_denied"
+  },
+  "case9": {
+    "invocation": {
+      "runId": "run9",
+      "visitId": "visit9",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": true
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "FAIL",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "FAIL",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "FAIL",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [
+        {
+          "id": "F1",
+          "severity": "High",
+          "criterion": "C09",
+          "category": "Jira requirements",
+          "classification": "confirmed in-scope defect",
+          "requirement": "R2",
+          "evidence": "editor.ts new line8 uses >=120: a 120-character note is incorrectly rejected",
+          "expected": "120 accepted; 121 rejected",
+          "correction": "Use >120 and retain boundary regression",
+          "threadId": "thread-F1",
+          "anchor": {
+            "path": "editor.ts",
+            "side": "new",
+            "line": 8
+          }
+        }
+      ],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case10": {
+    "invocation": {
+      "runId": "run10",
+      "visitId": "visit10",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "head_changes_after_approval"
+  },
+  "case11": {
+    "invocation": {
+      "runId": "run11",
+      "visitId": "visit11",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": false,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": true,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "human-review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  },
+  "case12": {
+    "invocation": {
+      "runId": "run12",
+      "visitId": "visit12",
+      "project": "INT",
+      "label": "AI-Daniel-1",
+      "expectedStatus": "review",
+      "ownership": true,
+      "duplicate": false,
+      "authority": {
+        "postPR": true,
+        "postJira": true,
+        "approve": true,
+        "revokeOwn": true,
+        "transition": true
+      },
+      "model": "fixture-grok",
+      "effort": "high",
+      "independentFromImplementation": true,
+      "reviewer": "review-bot",
+      "approvalActor": "review-bot",
+      "approvalActorEligible": true,
+      "allowedRepo": "fixture://repo/shop",
+      "mode": "stage-entry",
+      "destinations": {
+        "QA": "qa",
+        "In Progress": "ip",
+        "Blocked": "blocked"
+      },
+      "toolRoute": "rovito-safeguard",
+      "toolsReady": false,
+      "skillsReady": true,
+      "cacheIgnoredUntracked": true,
+      "privateStore": "fixture://private-review",
+      "evidenceAudience": "developer and QA",
+      "commentInputsVersion": "comments1",
+      "noChangedInputs": false
+    },
+    "ticket": {
+      "key": "INT-P1",
+      "type": "Story",
+      "project": "INT",
+      "labels": [
+        "AI-Daniel-1"
+      ],
+      "status": "review",
+      "requirementsVersion": "r1",
+      "repo": "fixture://repo/shop",
+      "scope": "Order notes only; one repo/PR; three changed files, under one day",
+      "requirements": {
+        "R1": "Save note on existing tenant-scoped order",
+        "R2": "Accept length120; reject121 without mutation"
+      },
+      "cases": [
+        {
+          "id": "C1",
+          "requirement": "R1",
+          "skill": "qa-ui",
+          "actor": "prepared test employee",
+          "steps": [
+            "open order",
+            "save hello",
+            "reopen"
+          ],
+          "expected": "hello retained",
+          "evidence": "saved/reopened screenshots",
+          "cleanup": "restore original note"
+        },
+        {
+          "id": "C2",
+          "requirement": "R2",
+          "skill": "qa-ui",
+          "actor": "prepared employee",
+          "steps": [
+            "save120",
+            "save121",
+            "reopen"
+          ],
+          "expected": "120 saved, 121 error, last valid note retained",
+          "evidence": "boundary/error screenshots",
+          "cleanup": "restore original note"
+        }
+      ],
+      "handoff": "fixture://implementation/h1",
+      "contentFingerprint": "r1"
+    },
+    "pr": {
+      "id": 101,
+      "url": "fixture://bitbucket/pr/101",
+      "repo": "fixture://repo/shop",
+      "state": "open",
+      "draft": false,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "branch": "bot/int-p1",
+      "author": "implementation-bot",
+      "title": "INT-P1: Save notes",
+      "description": "Implements INT-P1; QA C1/C2 artifacts at fixture://qa/h1",
+      "checks": {
+        "head": "h1",
+        "target": "b1",
+        "required": [
+          "unit",
+          "build"
+        ],
+        "results": {
+          "unit": "passed",
+          "build": "passed"
+        },
+        "executedTests": 18
+      },
+      "conflicts": false,
+      "files": [
+        "editor.ts",
+        "editor.test.ts",
+        "guide.md"
+      ],
+      "fullComparisonAvailable": true,
+      "diffAnchors": [
+        {
+          "path": "editor.ts",
+          "side": "new",
+          "line": 8
+        }
+      ],
+      "threads": [
+        {
+          "id": "thread-F1",
+          "finding": "F1",
+          "status": "open"
+        }
+      ],
+      "summaryId": "summary-existing",
+      "comments": [],
+      "otherApprovals": [
+        {
+          "actor": "human-reviewer",
+          "approved": true
+        }
+      ],
+      "ownApproval": false
+    },
+    "repoRules": "Use shared criteria, preserve note tenant authorization and existing error pattern, required unit/build and docs; reviewer cannot merge, code or deploy. All source/comparison/evidence available in prepared fixture.",
+    "core": {
+      "verdict": "PASS",
+      "reviewer": "review-bot",
+      "model": "fixture-grok",
+      "effort": "high",
+      "independent": true,
+      "source": "h1",
+      "target": "b1",
+      "diffBase": "b1",
+      "requirementsVersion": "r1",
+      "criteria": {
+        "C01": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C1"
+        },
+        "C02": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C2"
+        },
+        "C03": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C3"
+        },
+        "C04": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C4"
+        },
+        "C05": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C5"
+        },
+        "C06": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C6"
+        },
+        "C07": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C7"
+        },
+        "C08": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C8"
+        },
+        "C09": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C9"
+        },
+        "C10": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C10"
+        },
+        "C11": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C11"
+        },
+        "C12": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C12"
+        },
+        "C13": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C13"
+        },
+        "C14": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C14"
+        },
+        "C15": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C15"
+        },
+        "C16": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C16"
+        },
+        "C17": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C17"
+        },
+        "C18": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C18"
+        },
+        "C19": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C19"
+        },
+        "C20": {
+          "result": "PASS",
+          "evidence": "fixture://evidence/C20"
+        }
+      },
+      "categories": {
+        "Jira requirements": {
+          "checks": [
+            "C01",
+            "C09",
+            "C10"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/0"
+        },
+        "Scope and design": {
+          "checks": [
+            "C06",
+            "C15"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/1"
+        },
+        "Security and review integrity": {
+          "checks": [
+            "C02",
+            "C20"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/2"
+        },
+        "Compatibility and regressions": {
+          "checks": [
+            "C03",
+            "C04",
+            "C11"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/3"
+        },
+        "Reliability and operations": {
+          "checks": [
+            "C05",
+            "C16",
+            "C17",
+            "C18"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/4"
+        },
+        "Tests and verification": {
+          "checks": [
+            "C07",
+            "C08"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/5"
+        },
+        "Repository fit and maintainability": {
+          "checks": [
+            "C12",
+            "C13",
+            "C14"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/6"
+        },
+        "Documentation and usability": {
+          "checks": [
+            "C19"
+          ],
+          "result": "PASS",
+          "evidence": "fixture://category/7"
+        }
+      },
+      "coverage": {
+        "requirements": "2/2",
+        "files": "3/3",
+        "contracts": "2/2",
+        "secondSweep": "completed"
+      },
+      "findings": [],
+      "gaps": [],
+      "principles": {
+        "Intuitive": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Discoverable": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Delightful": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Token saver": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Secure": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Agents are equal": "Assessed against actual supplied rules; supported in this fictional snapshot",
+        "Dependable": "Assessed against actual supplied rules; supported in this fictional snapshot"
+      },
+      "qaArtifacts": "Original C1/C2 requirements, expected results, qa-ui order and prepared routes inspected against committed source; no case redefinition",
+      "evidenceKind": "fictional supplied core assessment, not real source execution"
+    },
+    "behavior": "normal"
+  }
+}
