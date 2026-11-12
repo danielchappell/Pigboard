@@ -60,6 +60,7 @@ test('failed fetch, dependency smoke check and changed source preserve previous 
 });
 test('unsafe roots and unmanaged destinations are rejected before preparation', async t => {
   const o = await fixture(t);
+  await assert.rejects(installCursorSkills({ ...o, root: path.parse(o.app).root }, fakeInstall), /separate/);
   await assert.rejects(installCursorSkills({ ...o, root: path.join(o.app, 'unsafe') }, fakeInstall), /separate/);
   await assert.rejects(installCursorSkills({ ...o, root: path.dirname(o.app) }, fakeInstall), /separate/);
   await assert.rejects(installCursorSkills({ ...o, root: path.join(o.source, 'unsafe') }, fakeInstall), /Git checkout/);

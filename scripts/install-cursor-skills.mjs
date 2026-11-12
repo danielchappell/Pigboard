@@ -8,7 +8,10 @@ import { fileURLToPath } from 'node:url';
 import { prepare } from './prepare-pigboard-skills.mjs';
 
 const bundle = JSON.parse(await readFile(new URL('../config/skill-bundle.json', import.meta.url)));
-const inside = (root, candidate) => candidate === root || candidate.startsWith(root + path.sep);
+const inside = (root, candidate) => {
+  const relative = path.relative(root, candidate);
+  return relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative);
+};
 async function statIfPresent(file) {
   try { return await lstat(file); } catch (e) { if (e.code !== 'ENOENT') throw e; }
 }

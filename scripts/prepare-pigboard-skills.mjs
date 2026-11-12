@@ -7,7 +7,10 @@ import { fileURLToPath } from 'node:url';
 
 const bundle = JSON.parse(await readFile(new URL('../config/skill-bundle.json', import.meta.url), 'utf8'));
 const digest = value => createHash('sha256').update(value).digest('hex');
-const inside = (root, candidate) => candidate === root || candidate.startsWith(root + path.sep);
+const inside = (root, candidate) => {
+  const relative = path.relative(root, candidate);
+  return relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative);
+};
 function command(executable, args, cwd) {
   try { return execFileSync(executable, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 600000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } }).trim(); }
   catch { throw new Error(`${executable} failed during preparation; check access, ref and dependencies. No release selected.`); }

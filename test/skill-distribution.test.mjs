@@ -45,6 +45,7 @@ test('missing helper and symlink cannot publish a release',async t=>{
 });
 test('reject app paths, other git worktrees and symlink aliases',async t=>{
  const o=await fixture(t);
+ await assert.rejects(prepare({...o,cache:path.parse(o.app).root},install),/separate/);
  await assert.rejects(prepare({...o,cache:path.join(o.app,'cache')},install),/separate/);
  await assert.rejects(prepare({...o,cache:path.join(o.source,'cache')},install),/Git checkout/);
  const alias=path.join(path.dirname(o.app),'alias');await symlink(o.app,alias);
