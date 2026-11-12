@@ -1,0 +1,35 @@
+[
+  {
+    "caseId": "UI-1",
+    "step": "start",
+    "file": "UI-1-start.jpg",
+    "time": "2026-11-12T19:18:53.753Z"
+  },
+  {
+    "caseId": "UI-1",
+    "step": "result",
+    "file": "UI-1-result.jpg",
+    "time": "2026-11-12T19:19:10.212Z",
+    "state": "Browser tab: 1, Title: \"Prescribed UI QA fixture\", URL: \"http://127.0.0.1:64427/?case=pass\".\n1 AXWebArea Prescribed UI QA fixture, URL: 127.0.0.1:64427/?case=pass\n\t2 container\n\t\t3 heading Save a display name, Value: 1\n\t\t\t4 text Save a display name\n\t\t5 text Local synthetic fixture · revision ui-fixture-v1\n\t\t6 text Actor: Demo QA\n\t\t7 container content\n\t\t\t8 container form\n\t\t\t\t9 text Display name\n\t\t\t\t10 text field (settable) Display name, Value: Demo, ID: name\n\t\t\t\t11 button Save name\n\t\t\t12 text Saved: Demo\n\nThe focused UI element is 11 button Save name"
+  },
+  {
+    "caseId": "UI-2",
+    "step": "start",
+    "file": "UI-2-start.jpg",
+    "time": "2026-11-12T19:19:14.720Z"
+  },
+  {
+    "caseId": "UI-2",
+    "step": "result",
+    "file": "UI-2-result.jpg",
+    "time": "2026-11-12T19:19:28.144Z",
+    "state": "Browser tab: 1, Title: \"Prescribed UI QA fixture\", URL: \"http://127.0.0.1:64427/?case=fail\".\n1 AXWebArea Prescribed UI QA fixture, URL: 127.0.0.1:64427/?case=fail\n\t2 container\n\t\t3 heading Save a display name, Value: 1\n\t\t\t4 text Save a display name\n\t\t5 text Local synthetic fixture · revision ui-fixture-v1\n\t\t6 text Actor: Demo QA\n\t\t7 container content\n\t\t\t8 container form\n\t\t\t\t9 text Display name\n\t\t\t\t10 text field (settable) Display name, Value: Demo, ID: name\n\t\t\t\t11 button Save name\n\t\t\t12 text Saved: Other\n\nThe focused UI element is 11 button Save name"
+  },
+  {
+    "caseId": "UI-3",
+    "step": "start-blocked",
+    "file": "UI-3-blocked.jpg",
+    "time": "2026-11-12T19:19:34.474Z",
+    "state": "Browser tab: 1, Title: \"Prescribed UI QA fixture\", URL: \"http://127.0.0.1:64427/?case=blocked\".\n1 AXWebArea Prescribed UI QA fixture, URL: 127.0.0.1:64427/?case=blocked\n\t2 container\n\t\t3 heading Save a display name, Value: 1\n\t\t\t4 text Save a display name\n\t\t5 text Local synthetic fixture · revision ui-fixture-v1\n\t\t6 text Test identity unavailable\n\t\t7 container content\n\t\t\t8 heading Sign-in required, Value: 2\n\t\t\t\t9 text Sign-in required\n\t\t\t10 text Your test session has expired. Ask the environment owner to restore access.\n\nThe focused UI element is 1 AXWebArea Prescribed UI QA fixture, URL: 127.0.0.1:64427/?case=blocked"
+  }
+]

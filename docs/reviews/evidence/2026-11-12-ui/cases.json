@@ -1,0 +1,113 @@
+{
+  "ticket": "PGB-61 local skill validation",
+  "requirementVersion": "ui-contract-v1",
+  "requirement": "A signed-in Demo QA actor can enter a display name and see Saved: followed by that name after Save name.",
+  "sourceRevision": "ui-fixture-v1",
+  "deployedRevision": "ui-fixture-v1",
+  "environment": "synthetic local fixture; no customer data, persistence or external effects",
+  "baseUrl": "http://127.0.0.1:64427",
+  "actor": "Demo QA; fixture-prepared identity, no credentials",
+  "skill": "qa-ui",
+  "computerUse": "Codex CUA in-app browser; current tool instructions; normal desktop viewport",
+  "evidenceDestination": "/Users/josephchappell/ski-stack/docs/reviews/evidence/2026-11-12-ui",
+  "screenshotMethod": "CUA screenshot bytes saved as JPEG; inspect images and verify retained file paths",
+  "allowedActions": "Navigate only supplied local routes; enter Demo; click Save name; inspect and capture screenshots; close the single owned tab",
+  "waits": "normal tool observations only; synchronous UI update",
+  "cleanup": "close the owned tab after the job; no data deletion",
+  "order": [
+    "UI-1",
+    "UI-2",
+    "UI-3",
+    "UI-4"
+  ],
+  "cases": [
+    {
+      "id": "UI-1",
+      "url": "http://127.0.0.1:64427/?case=pass",
+      "independent": true,
+      "prerequisites": [
+        "revision ui-fixture-v1",
+        "actor Demo QA available"
+      ],
+      "steps": [
+        "Observe start and capture screenshot",
+        "Enter Demo in Display name",
+        "Click Save name",
+        "Observe result and capture screenshot"
+      ],
+      "expected": "Saved: Demo",
+      "evidence": [
+        "start screenshot",
+        "result screenshot or observed blocker screenshot",
+        "actual actions and expected/actual result"
+      ],
+      "cleanup": "none per case; close owned tab after job"
+    },
+    {
+      "id": "UI-2",
+      "url": "http://127.0.0.1:64427/?case=fail",
+      "independent": true,
+      "prerequisites": [
+        "revision ui-fixture-v1",
+        "actor Demo QA available"
+      ],
+      "steps": [
+        "Observe start and capture screenshot",
+        "Enter Demo in Display name",
+        "Click Save name",
+        "Observe result and capture screenshot"
+      ],
+      "expected": "Saved: Demo",
+      "evidence": [
+        "start screenshot",
+        "result screenshot or observed blocker screenshot",
+        "actual actions and expected/actual result"
+      ],
+      "cleanup": "none per case; close owned tab after job"
+    },
+    {
+      "id": "UI-3",
+      "url": "http://127.0.0.1:64427/?case=blocked",
+      "independent": true,
+      "prerequisites": [
+        "revision ui-fixture-v1",
+        "actor Demo QA available"
+      ],
+      "steps": [
+        "Observe start and capture screenshot",
+        "Enter Demo in Display name",
+        "Click Save name",
+        "Observe result and capture screenshot"
+      ],
+      "expected": "Saved: Demo",
+      "evidence": [
+        "start screenshot",
+        "result screenshot or observed blocker screenshot",
+        "actual actions and expected/actual result"
+      ],
+      "cleanup": "none per case; close owned tab after job"
+    },
+    {
+      "id": "UI-4",
+      "url": "http://127.0.0.1:64427/?case=pass",
+      "independent": true,
+      "prerequisites": [
+        "revision ui-fixture-v1",
+        "actor Demo QA available"
+      ],
+      "steps": [
+        "Observe start and capture screenshot",
+        "Enter Demo in Display name",
+        "Click Save name",
+        "Observe result and capture screenshot"
+      ],
+      "expected": "Saved: Demo",
+      "evidence": [
+        "start screenshot",
+        "result screenshot or observed blocker screenshot",
+        "actual actions and expected/actual result"
+      ],
+      "cleanup": "none per case; close owned tab after job"
+    }
+  ]
+}

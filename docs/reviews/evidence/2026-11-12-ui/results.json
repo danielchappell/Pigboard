@@ -1,0 +1,96 @@
+{
+  "scope": "Actual local computer-use fixture; not live Cursor or PR acceptance",
+  "tool": "Codex CUA in-app browser, native accessibility-backed typeText/click and screenshots",
+  "requirementVersion": "ui-contract-v1",
+  "sourceRevision": "ui-fixture-v1",
+  "deployedRevision": "ui-fixture-v1",
+  "caseDefinitionSha256": "c732176e8e3b23df14ae58f2395638d9a569baca2d584f4a7675783528f63e9e",
+  "fixtureSha256": "dcb4094fdf9fc262b0e74201488169ac48b160476cdba9afbfd0d8e691ab64b8",
+  "aggregate": "BLOCKED",
+  "counts": {
+    "assigned": 4,
+    "pass": 1,
+    "fail": 1,
+    "blocked": 1,
+    "notRun": 1
+  },
+  "cases": [
+    {
+      "id": "UI-1",
+      "status": "PASS",
+      "actual": "Actor Demo QA, entered Demo, clicked Save name, saw Saved: Demo",
+      "expected": "Saved: Demo",
+      "screenshots": [
+        "UI-1-start.jpg",
+        "UI-1-result.jpg"
+      ]
+    },
+    {
+      "id": "UI-2",
+      "status": "FAIL",
+      "actual": "Actor Demo QA, entered Demo, clicked Save name, saw Saved: Other",
+      "expected": "Saved: Demo",
+      "screenshots": [
+        "UI-2-start.jpg",
+        "UI-2-result.jpg"
+      ]
+    },
+    {
+      "id": "UI-3",
+      "status": "BLOCKED",
+      "actual": "Test identity unavailable; Sign-in required. No input or submission attempted.",
+      "expected": "Prepared Demo QA actor can execute case",
+      "screenshots": [
+        "UI-3-blocked.jpg"
+      ]
+    },
+    {
+      "id": "UI-4",
+      "status": "NOT RUN",
+      "reason": "Job stopped at UI-3 access blocker; did not navigate to this case.",
+      "screenshots": []
+    }
+  ],
+  "humanAction": "Restore the prepared test identity and provide a deliberate resume handoff; preserve UI-2 defect for implementation rework.",
+  "resumeStage": "QA after human resolution, same reviewed revision",
+  "cleanup": "Owned browser tab closed; no fixture data persisted; no unrelated tabs changed",
+  "evidenceRetrieval": "All five saved files reopened and decoded as JPEG after tab close. Images inspected during computer use.",
+  "revisions": "Requirement definitions and fixture remained unchanged; visible revision ui-fixture-v1 in screenshots. This synthetic label is not a real deployment attestation.",
+  "screenshots": [
+    {
+      "file": "UI-1-result.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "93de2ffaf4a4ffb992e520a53ec5755ca8da5e5212c0227847ea19d3adb4c1e1",
+      "bytes": 22413
+    },
+    {
+      "file": "UI-1-start.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8094b7aa4b1d965576c1948380e0a3145dc793efdca58893de553a5bc430d373",
+      "bytes": 22032
+    },
+    {
+      "file": "UI-2-result.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "e83d8b56437ccf2a7ea610c884ef9f9f7180343259d81f11b840350d41f0b212",
+      "bytes": 22412
+    },
+    {
+      "file": "UI-2-start.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8094b7aa4b1d965576c1948380e0a3145dc793efdca58893de553a5bc430d373",
+      "bytes": 22032
+    },
+    {
+      "file": "UI-3-blocked.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "6f16714c0b25061783e20d4c2a25ad94ae288b50266e277822335d1563a41458",
+      "bytes": 24706
+    }
+  ]
+}
