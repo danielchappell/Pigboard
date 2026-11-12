@@ -1,0 +1,1462 @@
+{
+  "status": "blocked",
+  "calls": [
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-mixed_blocker",
+          "qaVisitId": "visit-mixed_blocker",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready",
+            "R3": "Visible record alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C3",
+              "requirements": [
+                "R3"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S3",
+                  "skill": "qa-ui",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S3"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C3"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "call_skill",
+      "args": {
+        "stepId": "S1",
+        "skill": "qa-api",
+        "caseId": "C1",
+        "requirements": {
+          "R1": "API shows record alpha ready"
+        },
+        "requirementVersion": "requirements-v1",
+        "expected": "record alpha is ready",
+        "artifact": "reviewed://S1",
+        "children": [
+          {
+            "stepId": "S1.1",
+            "skill": "qa-bruno",
+            "artifact": "reviewed://request-1"
+          }
+        ],
+        "source": "head-a",
+        "target": "base-a",
+        "deployed": "head-a",
+        "actor": "qa-demo",
+        "data": "synthetic record alpha",
+        "actions": "read-only observations",
+        "evidenceDestination": "fixture://reports",
+        "cleanup": "none"
+      },
+      "result": {
+        "caseId": "C1",
+        "result": "FAIL",
+        "actual": "record alpha failed",
+        "skill": "qa-api",
+        "version": "reviewed-local",
+        "steps": [
+          {
+            "id": "S1",
+            "skill": "qa-api"
+          },
+          {
+            "id": "S1.1",
+            "skill": "qa-bruno",
+            "recordId": "alpha"
+          }
+        ],
+        "evidence": [
+          "fixture://C1"
+        ],
+        "cleanup": "none",
+        "source": "head-a",
+        "deployed": "head-a",
+        "findingId": "F1"
+      }
+    },
+    {
+      "action": "read_evidence",
+      "args": {
+        "ref": "fixture://C1"
+      },
+      "result": {
+        "exists": true,
+        "retrievable": true,
+        "audience": "QA reviewer and owning developer",
+        "source": "head-a",
+        "deployed": "head-a",
+        "checks": 2,
+        "actual": "HTTP 200, id alpha, state failed",
+        "kind": "simulated API receipt"
+      }
+    },
+    {
+      "action": "call_skill",
+      "args": {
+        "stepId": "S2",
+        "skill": "qa-database",
+        "caseId": "C2",
+        "requirements": {
+          "R2": "Database observation shows same alpha ready"
+        },
+        "requirementVersion": "requirements-v1",
+        "expected": "record alpha is ready",
+        "artifact": "reviewed://S2",
+        "recordId": "alpha",
+        "source": "head-a",
+        "target": "base-a",
+        "deployed": "head-a",
+        "actor": "qa-demo",
+        "data": "synthetic record alpha",
+        "actions": "read-only observations",
+        "evidenceDestination": "fixture://reports",
+        "cleanup": "none"
+      },
+      "result": {
+        "caseId": "C2",
+        "result": "BLOCKED",
+        "actual": "read-only credential expired",
+        "skill": "qa-database",
+        "version": "reviewed-local",
+        "steps": [
+          {
+            "id": "S2",
+            "skill": "qa-database"
+          }
+        ],
+        "evidence": [],
+        "cleanup": "none",
+        "source": "head-a",
+        "deployed": "head-a",
+        "humanAction": "restore prepared read-only access"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-mixed_blocker",
+          "qaVisitId": "visit-mixed_blocker",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready",
+            "R3": "Visible record alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C3",
+              "requirements": [
+                "R3"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S3",
+                  "skill": "qa-ui",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S3"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C3"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "publish_ticket",
+      "args": {
+        "runId": "run-mixed_blocker",
+        "qaVisitId": "visit-mixed_blocker",
+        "ticket": "DEMO-1",
+        "pr": "fixture://pr/1",
+        "requirementVersion": "requirements-v1",
+        "requirements": {
+          "R1": "API shows record alpha ready",
+          "R2": "Database observation shows same alpha ready",
+          "R3": "Visible record alpha ready"
+        },
+        "revisions": {
+          "source": "head-a",
+          "target": "base-a",
+          "deployed": "head-a"
+        },
+        "profile": {
+          "model": "fixture-grok",
+          "effort": "high"
+        },
+        "environment": "mock connector; synthetic alpha; no live acceptance",
+        "testVerdict": "BLOCKED",
+        "deliveryOutcome": "PENDING",
+        "intendedDestination": "Blocked",
+        "actualStatus": "qa",
+        "reason": "C2 prepared read-only credential expired; stop all dispatch immediately; preserve earlier F1",
+        "coverage": {
+          "requirementsAssessed": 1,
+          "requirementsTotal": 3,
+          "casesAssessed": 1,
+          "casesTotal": 3,
+          "PASS": 0,
+          "FAIL": 1,
+          "BLOCKED": 1,
+          "NOT_RUN": 1
+        },
+        "cases": [
+          {
+            "id": "C1",
+            "requirements": [
+              "R1"
+            ],
+            "expected": "alpha ready",
+            "actual": "HTTP 200 id alpha state failed, 2 checks",
+            "result": "FAIL",
+            "findingId": "F1",
+            "evidence": "fixture://C1"
+          },
+          {
+            "id": "C2",
+            "requirements": [
+              "R2"
+            ],
+            "expected": "same alpha ready",
+            "actual": "read-only credential expired; no observation",
+            "result": "BLOCKED",
+            "blockerId": "B1",
+            "evidence": []
+          },
+          {
+            "id": "C3",
+            "requirements": [
+              "R3"
+            ],
+            "expected": "visible alpha ready",
+            "actual": "NOT RUN after B1; stop applies even to independent case",
+            "result": "NOT RUN",
+            "blockedBy": "B1"
+          }
+        ],
+        "stepLedger": [
+          {
+            "id": "S1",
+            "owner": "entrypoint",
+            "skill": "qa-api",
+            "version": "reviewed-local",
+            "status": "executed"
+          },
+          {
+            "id": "S1.1",
+            "owner": "S1",
+            "skill": "qa-bruno",
+            "status": "executed once through wrapper",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S2",
+            "owner": "entrypoint",
+            "skill": "qa-database",
+            "version": "reviewed-local",
+            "status": "attempted; BLOCKED",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S3",
+            "owner": "entrypoint",
+            "skill": "qa-ui",
+            "status": "NOT RUN",
+            "blockedBy": "B1"
+          }
+        ],
+        "evidenceInspection": "Only C1 simulated evidence retrieved; current head-a, intended audience; C2 explicitly returned no evidence and blocked",
+        "findings": [
+          {
+            "id": "F1",
+            "requirement": "R1",
+            "scope": "in-scope",
+            "reproduction": "S1/S1.1 read record alpha",
+            "expected": "ready",
+            "actual": "failed",
+            "impact": "ready API contract violated",
+            "evidence": "fixture://C1"
+          }
+        ],
+        "blockers": [
+          {
+            "id": "B1",
+            "caseId": "C2",
+            "actual": "read-only credential expired",
+            "humanAction": "restore prepared read-only access",
+            "intendedResumeStage": "QA after deliberate eligible entry"
+          }
+        ],
+        "cleanup": "none prescribed",
+        "limitations": "Mock receipts only; prepared artifact validation, real tooling and image inspection abstracted by evaluation fixture; trace sequence supplies execution order",
+        "humanAction": "Human restores prepared read-only access and reenters QA deliberately; F1 remains for owning developer; no automatic resume",
+        "freshness": "Immediately prepublication reread confirms ownership, stage, requirements and revisions unchanged"
+      },
+      "result": {
+        "saved": true,
+        "id": "report-1",
+        "url": "fixture://reports/mixed_blocker",
+        "body": {
+          "runId": "run-mixed_blocker",
+          "qaVisitId": "visit-mixed_blocker",
+          "ticket": "DEMO-1",
+          "pr": "fixture://pr/1",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready",
+            "R3": "Visible record alpha ready"
+          },
+          "revisions": {
+            "source": "head-a",
+            "target": "base-a",
+            "deployed": "head-a"
+          },
+          "profile": {
+            "model": "fixture-grok",
+            "effort": "high"
+          },
+          "environment": "mock connector; synthetic alpha; no live acceptance",
+          "testVerdict": "BLOCKED",
+          "deliveryOutcome": "PENDING",
+          "intendedDestination": "Blocked",
+          "actualStatus": "qa",
+          "reason": "C2 prepared read-only credential expired; stop all dispatch immediately; preserve earlier F1",
+          "coverage": {
+            "requirementsAssessed": 1,
+            "requirementsTotal": 3,
+            "casesAssessed": 1,
+            "casesTotal": 3,
+            "PASS": 0,
+            "FAIL": 1,
+            "BLOCKED": 1,
+            "NOT_RUN": 1
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "expected": "alpha ready",
+              "actual": "HTTP 200 id alpha state failed, 2 checks",
+              "result": "FAIL",
+              "findingId": "F1",
+              "evidence": "fixture://C1"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "expected": "same alpha ready",
+              "actual": "read-only credential expired; no observation",
+              "result": "BLOCKED",
+              "blockerId": "B1",
+              "evidence": []
+            },
+            {
+              "id": "C3",
+              "requirements": [
+                "R3"
+              ],
+              "expected": "visible alpha ready",
+              "actual": "NOT RUN after B1; stop applies even to independent case",
+              "result": "NOT RUN",
+              "blockedBy": "B1"
+            }
+          ],
+          "stepLedger": [
+            {
+              "id": "S1",
+              "owner": "entrypoint",
+              "skill": "qa-api",
+              "version": "reviewed-local",
+              "status": "executed"
+            },
+            {
+              "id": "S1.1",
+              "owner": "S1",
+              "skill": "qa-bruno",
+              "status": "executed once through wrapper",
+              "recordId": "alpha"
+            },
+            {
+              "id": "S2",
+              "owner": "entrypoint",
+              "skill": "qa-database",
+              "version": "reviewed-local",
+              "status": "attempted; BLOCKED",
+              "recordId": "alpha"
+            },
+            {
+              "id": "S3",
+              "owner": "entrypoint",
+              "skill": "qa-ui",
+              "status": "NOT RUN",
+              "blockedBy": "B1"
+            }
+          ],
+          "evidenceInspection": "Only C1 simulated evidence retrieved; current head-a, intended audience; C2 explicitly returned no evidence and blocked",
+          "findings": [
+            {
+              "id": "F1",
+              "requirement": "R1",
+              "scope": "in-scope",
+              "reproduction": "S1/S1.1 read record alpha",
+              "expected": "ready",
+              "actual": "failed",
+              "impact": "ready API contract violated",
+              "evidence": "fixture://C1"
+            }
+          ],
+          "blockers": [
+            {
+              "id": "B1",
+              "caseId": "C2",
+              "actual": "read-only credential expired",
+              "humanAction": "restore prepared read-only access",
+              "intendedResumeStage": "QA after deliberate eligible entry"
+            }
+          ],
+          "cleanup": "none prescribed",
+          "limitations": "Mock receipts only; prepared artifact validation, real tooling and image inspection abstracted by evaluation fixture; trace sequence supplies execution order",
+          "humanAction": "Human restores prepared read-only access and reenters QA deliberately; F1 remains for owning developer; no automatic resume",
+          "freshness": "Immediately prepublication reread confirms ownership, stage, requirements and revisions unchanged"
+        }
+      }
+    },
+    {
+      "action": "ensure_pr_link",
+      "args": {
+        "report": "fixture://reports/mixed_blocker"
+      },
+      "result": {
+        "accessible": true,
+        "pr": "fixture://pr/1",
+        "report": "fixture://reports/mixed_blocker"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-mixed_blocker",
+          "qaVisitId": "visit-mixed_blocker",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready",
+            "R3": "Visible record alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C3",
+              "requirements": [
+                "R3"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S3",
+                  "skill": "qa-ui",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S3"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C3"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [
+          {
+            "id": "report-1",
+            "url": "fixture://reports/mixed_blocker",
+            "body": {
+              "runId": "run-mixed_blocker",
+              "qaVisitId": "visit-mixed_blocker",
+              "ticket": "DEMO-1",
+              "pr": "fixture://pr/1",
+              "requirementVersion": "requirements-v1",
+              "requirements": {
+                "R1": "API shows record alpha ready",
+                "R2": "Database observation shows same alpha ready",
+                "R3": "Visible record alpha ready"
+              },
+              "revisions": {
+                "source": "head-a",
+                "target": "base-a",
+                "deployed": "head-a"
+              },
+              "profile": {
+                "model": "fixture-grok",
+                "effort": "high"
+              },
+              "environment": "mock connector; synthetic alpha; no live acceptance",
+              "testVerdict": "BLOCKED",
+              "deliveryOutcome": "PENDING",
+              "intendedDestination": "Blocked",
+              "actualStatus": "qa",
+              "reason": "C2 prepared read-only credential expired; stop all dispatch immediately; preserve earlier F1",
+              "coverage": {
+                "requirementsAssessed": 1,
+                "requirementsTotal": 3,
+                "casesAssessed": 1,
+                "casesTotal": 3,
+                "PASS": 0,
+                "FAIL": 1,
+                "BLOCKED": 1,
+                "NOT_RUN": 1
+              },
+              "cases": [
+                {
+                  "id": "C1",
+                  "requirements": [
+                    "R1"
+                  ],
+                  "expected": "alpha ready",
+                  "actual": "HTTP 200 id alpha state failed, 2 checks",
+                  "result": "FAIL",
+                  "findingId": "F1",
+                  "evidence": "fixture://C1"
+                },
+                {
+                  "id": "C2",
+                  "requirements": [
+                    "R2"
+                  ],
+                  "expected": "same alpha ready",
+                  "actual": "read-only credential expired; no observation",
+                  "result": "BLOCKED",
+                  "blockerId": "B1",
+                  "evidence": []
+                },
+                {
+                  "id": "C3",
+                  "requirements": [
+                    "R3"
+                  ],
+                  "expected": "visible alpha ready",
+                  "actual": "NOT RUN after B1; stop applies even to independent case",
+                  "result": "NOT RUN",
+                  "blockedBy": "B1"
+                }
+              ],
+              "stepLedger": [
+                {
+                  "id": "S1",
+                  "owner": "entrypoint",
+                  "skill": "qa-api",
+                  "version": "reviewed-local",
+                  "status": "executed"
+                },
+                {
+                  "id": "S1.1",
+                  "owner": "S1",
+                  "skill": "qa-bruno",
+                  "status": "executed once through wrapper",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S2",
+                  "owner": "entrypoint",
+                  "skill": "qa-database",
+                  "version": "reviewed-local",
+                  "status": "attempted; BLOCKED",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S3",
+                  "owner": "entrypoint",
+                  "skill": "qa-ui",
+                  "status": "NOT RUN",
+                  "blockedBy": "B1"
+                }
+              ],
+              "evidenceInspection": "Only C1 simulated evidence retrieved; current head-a, intended audience; C2 explicitly returned no evidence and blocked",
+              "findings": [
+                {
+                  "id": "F1",
+                  "requirement": "R1",
+                  "scope": "in-scope",
+                  "reproduction": "S1/S1.1 read record alpha",
+                  "expected": "ready",
+                  "actual": "failed",
+                  "impact": "ready API contract violated",
+                  "evidence": "fixture://C1"
+                }
+              ],
+              "blockers": [
+                {
+                  "id": "B1",
+                  "caseId": "C2",
+                  "actual": "read-only credential expired",
+                  "humanAction": "restore prepared read-only access",
+                  "intendedResumeStage": "QA after deliberate eligible entry"
+                }
+              ],
+              "cleanup": "none prescribed",
+              "limitations": "Mock receipts only; prepared artifact validation, real tooling and image inspection abstracted by evaluation fixture; trace sequence supplies execution order",
+              "humanAction": "Human restores prepared read-only access and reenters QA deliberately; F1 remains for owning developer; no automatic resume",
+              "freshness": "Immediately prepublication reread confirms ownership, stage, requirements and revisions unchanged"
+            }
+          }
+        ],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "transition",
+      "args": {
+        "statusId": "blocked"
+      },
+      "result": {
+        "transitioned": true,
+        "statusId": "blocked"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-mixed_blocker",
+          "qaVisitId": "visit-mixed_blocker",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "blocked",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready",
+            "R3": "Visible record alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C3",
+              "requirements": [
+                "R3"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S3",
+                  "skill": "qa-ui",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S3"
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C3"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [
+          {
+            "id": "report-1",
+            "url": "fixture://reports/mixed_blocker",
+            "body": {
+              "runId": "run-mixed_blocker",
+              "qaVisitId": "visit-mixed_blocker",
+              "ticket": "DEMO-1",
+              "pr": "fixture://pr/1",
+              "requirementVersion": "requirements-v1",
+              "requirements": {
+                "R1": "API shows record alpha ready",
+                "R2": "Database observation shows same alpha ready",
+                "R3": "Visible record alpha ready"
+              },
+              "revisions": {
+                "source": "head-a",
+                "target": "base-a",
+                "deployed": "head-a"
+              },
+              "profile": {
+                "model": "fixture-grok",
+                "effort": "high"
+              },
+              "environment": "mock connector; synthetic alpha; no live acceptance",
+              "testVerdict": "BLOCKED",
+              "deliveryOutcome": "PENDING",
+              "intendedDestination": "Blocked",
+              "actualStatus": "qa",
+              "reason": "C2 prepared read-only credential expired; stop all dispatch immediately; preserve earlier F1",
+              "coverage": {
+                "requirementsAssessed": 1,
+                "requirementsTotal": 3,
+                "casesAssessed": 1,
+                "casesTotal": 3,
+                "PASS": 0,
+                "FAIL": 1,
+                "BLOCKED": 1,
+                "NOT_RUN": 1
+              },
+              "cases": [
+                {
+                  "id": "C1",
+                  "requirements": [
+                    "R1"
+                  ],
+                  "expected": "alpha ready",
+                  "actual": "HTTP 200 id alpha state failed, 2 checks",
+                  "result": "FAIL",
+                  "findingId": "F1",
+                  "evidence": "fixture://C1"
+                },
+                {
+                  "id": "C2",
+                  "requirements": [
+                    "R2"
+                  ],
+                  "expected": "same alpha ready",
+                  "actual": "read-only credential expired; no observation",
+                  "result": "BLOCKED",
+                  "blockerId": "B1",
+                  "evidence": []
+                },
+                {
+                  "id": "C3",
+                  "requirements": [
+                    "R3"
+                  ],
+                  "expected": "visible alpha ready",
+                  "actual": "NOT RUN after B1; stop applies even to independent case",
+                  "result": "NOT RUN",
+                  "blockedBy": "B1"
+                }
+              ],
+              "stepLedger": [
+                {
+                  "id": "S1",
+                  "owner": "entrypoint",
+                  "skill": "qa-api",
+                  "version": "reviewed-local",
+                  "status": "executed"
+                },
+                {
+                  "id": "S1.1",
+                  "owner": "S1",
+                  "skill": "qa-bruno",
+                  "status": "executed once through wrapper",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S2",
+                  "owner": "entrypoint",
+                  "skill": "qa-database",
+                  "version": "reviewed-local",
+                  "status": "attempted; BLOCKED",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S3",
+                  "owner": "entrypoint",
+                  "skill": "qa-ui",
+                  "status": "NOT RUN",
+                  "blockedBy": "B1"
+                }
+              ],
+              "evidenceInspection": "Only C1 simulated evidence retrieved; current head-a, intended audience; C2 explicitly returned no evidence and blocked",
+              "findings": [
+                {
+                  "id": "F1",
+                  "requirement": "R1",
+                  "scope": "in-scope",
+                  "reproduction": "S1/S1.1 read record alpha",
+                  "expected": "ready",
+                  "actual": "failed",
+                  "impact": "ready API contract violated",
+                  "evidence": "fixture://C1"
+                }
+              ],
+              "blockers": [
+                {
+                  "id": "B1",
+                  "caseId": "C2",
+                  "actual": "read-only credential expired",
+                  "humanAction": "restore prepared read-only access",
+                  "intendedResumeStage": "QA after deliberate eligible entry"
+                }
+              ],
+              "cleanup": "none prescribed",
+              "limitations": "Mock receipts only; prepared artifact validation, real tooling and image inspection abstracted by evaluation fixture; trace sequence supplies execution order",
+              "humanAction": "Human restores prepared read-only access and reenters QA deliberately; F1 remains for owning developer; no automatic resume",
+              "freshness": "Immediately prepublication reread confirms ownership, stage, requirements and revisions unchanged"
+            }
+          }
+        ],
+        "currentTransitions": {}
+      }
+    },
+    {
+      "action": "finish",
+      "args": {
+        "testVerdict": "BLOCKED",
+        "deliveryOutcome": "COMPLETED",
+        "intendedDestination": "Blocked",
+        "actualStatus": "blocked",
+        "reason": "Credential prerequisite B1 stops whole job after earlier F1; no S3 invocation; report/PR access and direct Blocked transition confirmed; human restoration and deliberate eligible entry required",
+        "coverage": {
+          "requirementsAssessed": 1,
+          "requirementsTotal": 3,
+          "casesAssessed": 1,
+          "casesTotal": 3,
+          "PASS": 0,
+          "FAIL": 1,
+          "BLOCKED": 1,
+          "NOT_RUN": 1
+        },
+        "report": "fixture://reports/mixed_blocker",
+        "transitionReceipt": {
+          "transitioned": true,
+          "statusId": "blocked"
+        },
+        "findings": [
+          "F1"
+        ],
+        "limitations": "Mock-only receipts; no live acceptance"
+      },
+      "result": {
+        "retained": true
+      }
+    }
+  ],
+  "executed": [
+    "S1",
+    "S2"
+  ],
+  "reports": [
+    {
+      "id": "report-1",
+      "url": "fixture://reports/mixed_blocker",
+      "body": {
+        "runId": "run-mixed_blocker",
+        "qaVisitId": "visit-mixed_blocker",
+        "ticket": "DEMO-1",
+        "pr": "fixture://pr/1",
+        "requirementVersion": "requirements-v1",
+        "requirements": {
+          "R1": "API shows record alpha ready",
+          "R2": "Database observation shows same alpha ready",
+          "R3": "Visible record alpha ready"
+        },
+        "revisions": {
+          "source": "head-a",
+          "target": "base-a",
+          "deployed": "head-a"
+        },
+        "profile": {
+          "model": "fixture-grok",
+          "effort": "high"
+        },
+        "environment": "mock connector; synthetic alpha; no live acceptance",
+        "testVerdict": "BLOCKED",
+        "deliveryOutcome": "PENDING",
+        "intendedDestination": "Blocked",
+        "actualStatus": "qa",
+        "reason": "C2 prepared read-only credential expired; stop all dispatch immediately; preserve earlier F1",
+        "coverage": {
+          "requirementsAssessed": 1,
+          "requirementsTotal": 3,
+          "casesAssessed": 1,
+          "casesTotal": 3,
+          "PASS": 0,
+          "FAIL": 1,
+          "BLOCKED": 1,
+          "NOT_RUN": 1
+        },
+        "cases": [
+          {
+            "id": "C1",
+            "requirements": [
+              "R1"
+            ],
+            "expected": "alpha ready",
+            "actual": "HTTP 200 id alpha state failed, 2 checks",
+            "result": "FAIL",
+            "findingId": "F1",
+            "evidence": "fixture://C1"
+          },
+          {
+            "id": "C2",
+            "requirements": [
+              "R2"
+            ],
+            "expected": "same alpha ready",
+            "actual": "read-only credential expired; no observation",
+            "result": "BLOCKED",
+            "blockerId": "B1",
+            "evidence": []
+          },
+          {
+            "id": "C3",
+            "requirements": [
+              "R3"
+            ],
+            "expected": "visible alpha ready",
+            "actual": "NOT RUN after B1; stop applies even to independent case",
+            "result": "NOT RUN",
+            "blockedBy": "B1"
+          }
+        ],
+        "stepLedger": [
+          {
+            "id": "S1",
+            "owner": "entrypoint",
+            "skill": "qa-api",
+            "version": "reviewed-local",
+            "status": "executed"
+          },
+          {
+            "id": "S1.1",
+            "owner": "S1",
+            "skill": "qa-bruno",
+            "status": "executed once through wrapper",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S2",
+            "owner": "entrypoint",
+            "skill": "qa-database",
+            "version": "reviewed-local",
+            "status": "attempted; BLOCKED",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S3",
+            "owner": "entrypoint",
+            "skill": "qa-ui",
+            "status": "NOT RUN",
+            "blockedBy": "B1"
+          }
+        ],
+        "evidenceInspection": "Only C1 simulated evidence retrieved; current head-a, intended audience; C2 explicitly returned no evidence and blocked",
+        "findings": [
+          {
+            "id": "F1",
+            "requirement": "R1",
+            "scope": "in-scope",
+            "reproduction": "S1/S1.1 read record alpha",
+            "expected": "ready",
+            "actual": "failed",
+            "impact": "ready API contract violated",
+            "evidence": "fixture://C1"
+          }
+        ],
+        "blockers": [
+          {
+            "id": "B1",
+            "caseId": "C2",
+            "actual": "read-only credential expired",
+            "humanAction": "restore prepared read-only access",
+            "intendedResumeStage": "QA after deliberate eligible entry"
+          }
+        ],
+        "cleanup": "none prescribed",
+        "limitations": "Mock receipts only; prepared artifact validation, real tooling and image inspection abstracted by evaluation fixture; trace sequence supplies execution order",
+        "humanAction": "Human restores prepared read-only access and reenters QA deliberately; F1 remains for owning developer; no automatic resume",
+        "freshness": "Immediately prepublication reread confirms ownership, stage, requirements and revisions unchanged"
+      }
+    }
+  ],
+  "prLinks": [
+    {
+      "report": "fixture://reports/mixed_blocker"
+    }
+  ],
+  "transitionCount": 1,
+  "writesAvailable": true,
+  "finalResult": {
+    "testVerdict": "BLOCKED",
+    "deliveryOutcome": "COMPLETED",
+    "intendedDestination": "Blocked",
+    "actualStatus": "blocked",
+    "reason": "Credential prerequisite B1 stops whole job after earlier F1; no S3 invocation; report/PR access and direct Blocked transition confirmed; human restoration and deliberate eligible entry required",
+    "coverage": {
+      "requirementsAssessed": 1,
+      "requirementsTotal": 3,
+      "casesAssessed": 1,
+      "casesTotal": 3,
+      "PASS": 0,
+      "FAIL": 1,
+      "BLOCKED": 1,
+      "NOT_RUN": 1
+    },
+    "report": "fixture://reports/mixed_blocker",
+    "transitionReceipt": {
+      "transitioned": true,
+      "statusId": "blocked"
+    },
+    "findings": [
+      "F1"
+    ],
+    "limitations": "Mock-only receipts; no live acceptance"
+  }
+}

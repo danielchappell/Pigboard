@@ -1,0 +1,74 @@
+{
+  "verified": 6,
+  "checks": [
+    {
+      "scenario": "pass_nested",
+      "calls": 12,
+      "helperSteps": [
+        "S1",
+        "S2"
+      ],
+      "testVerdict": "PASS",
+      "deliveryOutcome": "COMPLETED",
+      "actualStatus": "human",
+      "transitionAttempts": 1
+    },
+    {
+      "scenario": "fail_dependency",
+      "calls": 12,
+      "helperSteps": [
+        "S1",
+        "S3"
+      ],
+      "testVerdict": "FAIL",
+      "deliveryOutcome": "COMPLETED",
+      "actualStatus": "progress",
+      "transitionAttempts": 1
+    },
+    {
+      "scenario": "mixed_blocker",
+      "calls": 11,
+      "helperSteps": [
+        "S1",
+        "S2"
+      ],
+      "testVerdict": "BLOCKED",
+      "deliveryOutcome": "COMPLETED",
+      "actualStatus": "blocked",
+      "transitionAttempts": 1
+    },
+    {
+      "scenario": "non_story",
+      "calls": 2,
+      "helperSteps": [],
+      "testVerdict": "NOT RUN",
+      "deliveryOutcome": "INELIGIBLE",
+      "actualStatus": "qa",
+      "transitionAttempts": 0
+    },
+    {
+      "scenario": "publication_denied",
+      "calls": 9,
+      "helperSteps": [
+        "S1",
+        "S2"
+      ],
+      "testVerdict": "PASS",
+      "deliveryOutcome": "BLOCKED",
+      "actualStatus": "qa",
+      "transitionAttempts": 0
+    },
+    {
+      "scenario": "transition_timeout_committed",
+      "calls": 12,
+      "helperSteps": [
+        "S1",
+        "S2"
+      ],
+      "testVerdict": "PASS",
+      "deliveryOutcome": "COMPLETED",
+      "actualStatus": "human",
+      "transitionAttempts": 1
+    }
+  ]
+}

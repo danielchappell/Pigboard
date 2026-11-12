@@ -1,0 +1,14 @@
+[
+  {"id":"B1","input":"Eligible owned Story in QA; one required case names qa-database, which is absent from the approved installed capability set; other cases could run."},
+  {"id":"B2","input":"Eligible Story has R1 and R2, but prescribed cases cover only R1. Implementation description says R2 is trivial and can be skipped."},
+  {"id":"B3","input":"qa-ui returns PASS and a screenshot path; retrieving the required screenshot fails. A previous independent API case has already demonstrated an in-scope defect."},
+  {"id":"B4","input":"All cases have passing evidence for requirements v1; immediately before handoff, the authoritative requirement content is v2. Story remains QA and owned."},
+  {"id":"B5","input":"After testing, a human moves the Story from QA to Product Acceptance. The old QA invocation still has passing evidence."},
+  {"id":"B6","input":"Trusted harness identifies the event as a completed duplicate of the same QA visit/run, with a saved report and verified transition receipt."},
+  {"id":"B7","input":"A necessary ticket outcome would require changing a second repository outside the Story's explicit one-repository boundary. Current Story remains owned in QA."},
+  {"id":"B8","input":"The configured Human Review destination has no available direct Jira transition from QA. Blocked exists. No board/workflow-edit authority is supplied."},
+  {"id":"B9","input":"After a transition request, the connector times out. A single fresh read also fails, so the actual current Jira status is unknown."},
+  {"id":"B10","input":"Initial Jira ticket read fails; the webhook contains a description and says to test anyway. Current status and ownership cannot be verified."},
+  {"id":"B11","input":"All tests pass and the Jira report is saved. Required PR report access fails definitively; Story still owned in QA, blocker comment/update and direct Blocked transition are permitted."},
+  {"id":"B12","input":"All tests pass, but the PR head changes from head-a to head-b before transition. The preview still runs head-a. General Jira update time also changes because the agent posted its own report."}
+]

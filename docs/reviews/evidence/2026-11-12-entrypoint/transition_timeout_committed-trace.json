@@ -1,0 +1,1199 @@
+{
+  "status": "human",
+  "calls": [
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-transition_timeout_committed",
+          "qaVisitId": "visit-transition_timeout_committed",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [
+                "C1"
+              ],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "call_skill",
+      "args": {
+        "stepId": "S1",
+        "skill": "qa-api",
+        "caseId": "C1",
+        "requirements": {
+          "R1": "API shows record alpha ready"
+        },
+        "requirementVersion": "requirements-v1",
+        "expected": "record alpha is ready",
+        "artifact": "reviewed://S1",
+        "children": [
+          {
+            "stepId": "S1.1",
+            "skill": "qa-bruno",
+            "artifact": "reviewed://request-1"
+          }
+        ],
+        "source": "head-a",
+        "target": "base-a",
+        "deployed": "head-a",
+        "actor": "qa-demo",
+        "data": "synthetic record alpha",
+        "actions": "read-only observations",
+        "evidenceDestination": "fixture://reports",
+        "cleanup": "none"
+      },
+      "result": {
+        "caseId": "C1",
+        "result": "PASS",
+        "actual": "record alpha ready",
+        "skill": "qa-api",
+        "version": "reviewed-local",
+        "steps": [
+          {
+            "id": "S1",
+            "skill": "qa-api"
+          },
+          {
+            "id": "S1.1",
+            "skill": "qa-bruno",
+            "recordId": "alpha"
+          }
+        ],
+        "evidence": [
+          "fixture://C1"
+        ],
+        "cleanup": "none",
+        "source": "head-a",
+        "deployed": "head-a"
+      }
+    },
+    {
+      "action": "read_evidence",
+      "args": {
+        "ref": "fixture://C1"
+      },
+      "result": {
+        "exists": true,
+        "retrievable": true,
+        "audience": "QA reviewer and owning developer",
+        "source": "head-a",
+        "deployed": "head-a",
+        "checks": 2,
+        "actual": "HTTP 200, id alpha, state ready",
+        "kind": "simulated API receipt"
+      }
+    },
+    {
+      "action": "call_skill",
+      "args": {
+        "stepId": "S2",
+        "skill": "qa-database",
+        "caseId": "C2",
+        "requirements": {
+          "R2": "Database observation shows same alpha ready"
+        },
+        "requirementVersion": "requirements-v1",
+        "expected": "record alpha is ready",
+        "artifact": "reviewed://S2",
+        "recordId": "alpha",
+        "source": "head-a",
+        "target": "base-a",
+        "deployed": "head-a",
+        "actor": "qa-demo",
+        "data": "synthetic record alpha",
+        "actions": "read-only observations",
+        "evidenceDestination": "fixture://reports",
+        "cleanup": "none"
+      },
+      "result": {
+        "caseId": "C2",
+        "result": "PASS",
+        "actual": "alpha ready",
+        "skill": "qa-database",
+        "version": "reviewed-local",
+        "steps": [
+          {
+            "id": "S2",
+            "skill": "qa-database"
+          }
+        ],
+        "evidence": [
+          "fixture://C2"
+        ],
+        "cleanup": "none",
+        "source": "head-a",
+        "deployed": "head-a"
+      }
+    },
+    {
+      "action": "read_evidence",
+      "args": {
+        "ref": "fixture://C2"
+      },
+      "result": {
+        "exists": true,
+        "retrievable": true,
+        "audience": "QA reviewer and owning developer",
+        "source": "head-a",
+        "deployed": "head-a",
+        "rows": [
+          {
+            "id": "alpha",
+            "state": "ready"
+          }
+        ],
+        "truncated": false,
+        "cleanup": "confirmed",
+        "kind": "simulated database receipt"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-transition_timeout_committed",
+          "qaVisitId": "visit-transition_timeout_committed",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [
+                "C1"
+              ],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "publish_ticket",
+      "args": {
+        "runId": "run-transition_timeout_committed",
+        "qaVisitId": "visit-transition_timeout_committed",
+        "ticket": "DEMO-1",
+        "pr": "fixture://pr/1",
+        "requirementVersion": "requirements-v1",
+        "requirements": {
+          "R1": "API shows record alpha ready",
+          "R2": "Database observation shows same alpha ready"
+        },
+        "revisions": {
+          "source": "head-a",
+          "target": "base-a",
+          "deployed": "head-a"
+        },
+        "profile": {
+          "model": "fixture-grok",
+          "effort": "high"
+        },
+        "environment": "mock connector; synthetic alpha; no live acceptance",
+        "testVerdict": "PASS",
+        "deliveryOutcome": "PENDING",
+        "intendedDestination": "Human Review",
+        "actualStatus": "qa",
+        "reason": "Both prescribed cases satisfy original requirements in inspected simulated current evidence",
+        "coverage": {
+          "requirementsAssessed": 2,
+          "requirementsTotal": 2,
+          "casesAssessed": 2,
+          "casesTotal": 2,
+          "PASS": 2,
+          "FAIL": 0,
+          "BLOCKED": 0,
+          "NOT_RUN": 0
+        },
+        "cases": [
+          {
+            "id": "C1",
+            "requirements": [
+              "R1"
+            ],
+            "expected": "alpha ready",
+            "actual": "HTTP 200 id alpha state ready; two checks",
+            "result": "PASS",
+            "evidence": "fixture://C1"
+          },
+          {
+            "id": "C2",
+            "requirements": [
+              "R2"
+            ],
+            "expected": "same alpha ready",
+            "actual": "id alpha state ready; untruncated rows",
+            "result": "PASS",
+            "evidence": "fixture://C2"
+          }
+        ],
+        "stepLedger": [
+          {
+            "id": "S1",
+            "owner": "entrypoint",
+            "skill": "qa-api",
+            "version": "reviewed-local",
+            "status": "executed"
+          },
+          {
+            "id": "S1.1",
+            "owner": "S1",
+            "skill": "qa-bruno",
+            "status": "executed once through wrapper",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S2",
+            "owner": "entrypoint",
+            "skill": "qa-database",
+            "version": "reviewed-local",
+            "status": "executed",
+            "recordId": "alpha"
+          }
+        ],
+        "evidenceInspection": "Both simulated receipts retrieved, current head-a, intended audience QA reviewer and owning developer confirmed",
+        "findings": [],
+        "blockers": [],
+        "cleanup": "none prescribed; database cleanup confirmed",
+        "limitations": "Mock receipts only; artifact/security/tool checks abstracted by fixture; trace records order; not live acceptance",
+        "humanAction": "Human QA and owning developer review after successful handoff",
+        "freshness": "Prepublication reread confirms current QA ownership and unchanged requirements, PR and preview"
+      },
+      "result": {
+        "saved": true,
+        "id": "report-1",
+        "url": "fixture://reports/transition_timeout_committed",
+        "body": {
+          "runId": "run-transition_timeout_committed",
+          "qaVisitId": "visit-transition_timeout_committed",
+          "ticket": "DEMO-1",
+          "pr": "fixture://pr/1",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "revisions": {
+            "source": "head-a",
+            "target": "base-a",
+            "deployed": "head-a"
+          },
+          "profile": {
+            "model": "fixture-grok",
+            "effort": "high"
+          },
+          "environment": "mock connector; synthetic alpha; no live acceptance",
+          "testVerdict": "PASS",
+          "deliveryOutcome": "PENDING",
+          "intendedDestination": "Human Review",
+          "actualStatus": "qa",
+          "reason": "Both prescribed cases satisfy original requirements in inspected simulated current evidence",
+          "coverage": {
+            "requirementsAssessed": 2,
+            "requirementsTotal": 2,
+            "casesAssessed": 2,
+            "casesTotal": 2,
+            "PASS": 2,
+            "FAIL": 0,
+            "BLOCKED": 0,
+            "NOT_RUN": 0
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "expected": "alpha ready",
+              "actual": "HTTP 200 id alpha state ready; two checks",
+              "result": "PASS",
+              "evidence": "fixture://C1"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "expected": "same alpha ready",
+              "actual": "id alpha state ready; untruncated rows",
+              "result": "PASS",
+              "evidence": "fixture://C2"
+            }
+          ],
+          "stepLedger": [
+            {
+              "id": "S1",
+              "owner": "entrypoint",
+              "skill": "qa-api",
+              "version": "reviewed-local",
+              "status": "executed"
+            },
+            {
+              "id": "S1.1",
+              "owner": "S1",
+              "skill": "qa-bruno",
+              "status": "executed once through wrapper",
+              "recordId": "alpha"
+            },
+            {
+              "id": "S2",
+              "owner": "entrypoint",
+              "skill": "qa-database",
+              "version": "reviewed-local",
+              "status": "executed",
+              "recordId": "alpha"
+            }
+          ],
+          "evidenceInspection": "Both simulated receipts retrieved, current head-a, intended audience QA reviewer and owning developer confirmed",
+          "findings": [],
+          "blockers": [],
+          "cleanup": "none prescribed; database cleanup confirmed",
+          "limitations": "Mock receipts only; artifact/security/tool checks abstracted by fixture; trace records order; not live acceptance",
+          "humanAction": "Human QA and owning developer review after successful handoff",
+          "freshness": "Prepublication reread confirms current QA ownership and unchanged requirements, PR and preview"
+        }
+      }
+    },
+    {
+      "action": "ensure_pr_link",
+      "args": {
+        "report": "fixture://reports/transition_timeout_committed"
+      },
+      "result": {
+        "accessible": true,
+        "pr": "fixture://pr/1",
+        "report": "fixture://reports/transition_timeout_committed"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-transition_timeout_committed",
+          "qaVisitId": "visit-transition_timeout_committed",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [
+                "C1"
+              ],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [
+          {
+            "id": "report-1",
+            "url": "fixture://reports/transition_timeout_committed",
+            "body": {
+              "runId": "run-transition_timeout_committed",
+              "qaVisitId": "visit-transition_timeout_committed",
+              "ticket": "DEMO-1",
+              "pr": "fixture://pr/1",
+              "requirementVersion": "requirements-v1",
+              "requirements": {
+                "R1": "API shows record alpha ready",
+                "R2": "Database observation shows same alpha ready"
+              },
+              "revisions": {
+                "source": "head-a",
+                "target": "base-a",
+                "deployed": "head-a"
+              },
+              "profile": {
+                "model": "fixture-grok",
+                "effort": "high"
+              },
+              "environment": "mock connector; synthetic alpha; no live acceptance",
+              "testVerdict": "PASS",
+              "deliveryOutcome": "PENDING",
+              "intendedDestination": "Human Review",
+              "actualStatus": "qa",
+              "reason": "Both prescribed cases satisfy original requirements in inspected simulated current evidence",
+              "coverage": {
+                "requirementsAssessed": 2,
+                "requirementsTotal": 2,
+                "casesAssessed": 2,
+                "casesTotal": 2,
+                "PASS": 2,
+                "FAIL": 0,
+                "BLOCKED": 0,
+                "NOT_RUN": 0
+              },
+              "cases": [
+                {
+                  "id": "C1",
+                  "requirements": [
+                    "R1"
+                  ],
+                  "expected": "alpha ready",
+                  "actual": "HTTP 200 id alpha state ready; two checks",
+                  "result": "PASS",
+                  "evidence": "fixture://C1"
+                },
+                {
+                  "id": "C2",
+                  "requirements": [
+                    "R2"
+                  ],
+                  "expected": "same alpha ready",
+                  "actual": "id alpha state ready; untruncated rows",
+                  "result": "PASS",
+                  "evidence": "fixture://C2"
+                }
+              ],
+              "stepLedger": [
+                {
+                  "id": "S1",
+                  "owner": "entrypoint",
+                  "skill": "qa-api",
+                  "version": "reviewed-local",
+                  "status": "executed"
+                },
+                {
+                  "id": "S1.1",
+                  "owner": "S1",
+                  "skill": "qa-bruno",
+                  "status": "executed once through wrapper",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S2",
+                  "owner": "entrypoint",
+                  "skill": "qa-database",
+                  "version": "reviewed-local",
+                  "status": "executed",
+                  "recordId": "alpha"
+                }
+              ],
+              "evidenceInspection": "Both simulated receipts retrieved, current head-a, intended audience QA reviewer and owning developer confirmed",
+              "findings": [],
+              "blockers": [],
+              "cleanup": "none prescribed; database cleanup confirmed",
+              "limitations": "Mock receipts only; artifact/security/tool checks abstracted by fixture; trace records order; not live acceptance",
+              "humanAction": "Human QA and owning developer review after successful handoff",
+              "freshness": "Prepublication reread confirms current QA ownership and unchanged requirements, PR and preview"
+            }
+          }
+        ],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "transition",
+      "args": {
+        "statusId": "human"
+      },
+      "result": {
+        "error": "response timeout",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-transition_timeout_committed",
+          "qaVisitId": "visit-transition_timeout_committed",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Story",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "human",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [
+                "C1"
+              ],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [
+          {
+            "id": "report-1",
+            "url": "fixture://reports/transition_timeout_committed",
+            "body": {
+              "runId": "run-transition_timeout_committed",
+              "qaVisitId": "visit-transition_timeout_committed",
+              "ticket": "DEMO-1",
+              "pr": "fixture://pr/1",
+              "requirementVersion": "requirements-v1",
+              "requirements": {
+                "R1": "API shows record alpha ready",
+                "R2": "Database observation shows same alpha ready"
+              },
+              "revisions": {
+                "source": "head-a",
+                "target": "base-a",
+                "deployed": "head-a"
+              },
+              "profile": {
+                "model": "fixture-grok",
+                "effort": "high"
+              },
+              "environment": "mock connector; synthetic alpha; no live acceptance",
+              "testVerdict": "PASS",
+              "deliveryOutcome": "PENDING",
+              "intendedDestination": "Human Review",
+              "actualStatus": "qa",
+              "reason": "Both prescribed cases satisfy original requirements in inspected simulated current evidence",
+              "coverage": {
+                "requirementsAssessed": 2,
+                "requirementsTotal": 2,
+                "casesAssessed": 2,
+                "casesTotal": 2,
+                "PASS": 2,
+                "FAIL": 0,
+                "BLOCKED": 0,
+                "NOT_RUN": 0
+              },
+              "cases": [
+                {
+                  "id": "C1",
+                  "requirements": [
+                    "R1"
+                  ],
+                  "expected": "alpha ready",
+                  "actual": "HTTP 200 id alpha state ready; two checks",
+                  "result": "PASS",
+                  "evidence": "fixture://C1"
+                },
+                {
+                  "id": "C2",
+                  "requirements": [
+                    "R2"
+                  ],
+                  "expected": "same alpha ready",
+                  "actual": "id alpha state ready; untruncated rows",
+                  "result": "PASS",
+                  "evidence": "fixture://C2"
+                }
+              ],
+              "stepLedger": [
+                {
+                  "id": "S1",
+                  "owner": "entrypoint",
+                  "skill": "qa-api",
+                  "version": "reviewed-local",
+                  "status": "executed"
+                },
+                {
+                  "id": "S1.1",
+                  "owner": "S1",
+                  "skill": "qa-bruno",
+                  "status": "executed once through wrapper",
+                  "recordId": "alpha"
+                },
+                {
+                  "id": "S2",
+                  "owner": "entrypoint",
+                  "skill": "qa-database",
+                  "version": "reviewed-local",
+                  "status": "executed",
+                  "recordId": "alpha"
+                }
+              ],
+              "evidenceInspection": "Both simulated receipts retrieved, current head-a, intended audience QA reviewer and owning developer confirmed",
+              "findings": [],
+              "blockers": [],
+              "cleanup": "none prescribed; database cleanup confirmed",
+              "limitations": "Mock receipts only; artifact/security/tool checks abstracted by fixture; trace records order; not live acceptance",
+              "humanAction": "Human QA and owning developer review after successful handoff",
+              "freshness": "Prepublication reread confirms current QA ownership and unchanged requirements, PR and preview"
+            }
+          }
+        ],
+        "currentTransitions": {}
+      }
+    },
+    {
+      "action": "finish",
+      "args": {
+        "testVerdict": "PASS",
+        "deliveryOutcome": "COMPLETED",
+        "intendedDestination": "Human Review",
+        "actualStatus": "human",
+        "reason": "Both case receipts pass; report and PR access confirmed. Single transition returned response timeout/outcome unknown; exactly one read reconciled current Human Review. No replay or competing Blocked transition",
+        "coverage": {
+          "requirementsAssessed": 2,
+          "requirementsTotal": 2,
+          "casesAssessed": 2,
+          "casesTotal": 2,
+          "PASS": 2,
+          "FAIL": 0,
+          "BLOCKED": 0,
+          "NOT_RUN": 0
+        },
+        "report": "fixture://reports/transition_timeout_committed",
+        "prLinkVerified": true,
+        "transitionReceipt": {
+          "error": "response timeout",
+          "outcome": "unknown"
+        },
+        "reconciliation": "One reread verified human status; destination reached despite response timeout",
+        "limitations": "Mock-only receipts; no live acceptance"
+      },
+      "result": {
+        "retained": true
+      }
+    }
+  ],
+  "executed": [
+    "S1",
+    "S2"
+  ],
+  "reports": [
+    {
+      "id": "report-1",
+      "url": "fixture://reports/transition_timeout_committed",
+      "body": {
+        "runId": "run-transition_timeout_committed",
+        "qaVisitId": "visit-transition_timeout_committed",
+        "ticket": "DEMO-1",
+        "pr": "fixture://pr/1",
+        "requirementVersion": "requirements-v1",
+        "requirements": {
+          "R1": "API shows record alpha ready",
+          "R2": "Database observation shows same alpha ready"
+        },
+        "revisions": {
+          "source": "head-a",
+          "target": "base-a",
+          "deployed": "head-a"
+        },
+        "profile": {
+          "model": "fixture-grok",
+          "effort": "high"
+        },
+        "environment": "mock connector; synthetic alpha; no live acceptance",
+        "testVerdict": "PASS",
+        "deliveryOutcome": "PENDING",
+        "intendedDestination": "Human Review",
+        "actualStatus": "qa",
+        "reason": "Both prescribed cases satisfy original requirements in inspected simulated current evidence",
+        "coverage": {
+          "requirementsAssessed": 2,
+          "requirementsTotal": 2,
+          "casesAssessed": 2,
+          "casesTotal": 2,
+          "PASS": 2,
+          "FAIL": 0,
+          "BLOCKED": 0,
+          "NOT_RUN": 0
+        },
+        "cases": [
+          {
+            "id": "C1",
+            "requirements": [
+              "R1"
+            ],
+            "expected": "alpha ready",
+            "actual": "HTTP 200 id alpha state ready; two checks",
+            "result": "PASS",
+            "evidence": "fixture://C1"
+          },
+          {
+            "id": "C2",
+            "requirements": [
+              "R2"
+            ],
+            "expected": "same alpha ready",
+            "actual": "id alpha state ready; untruncated rows",
+            "result": "PASS",
+            "evidence": "fixture://C2"
+          }
+        ],
+        "stepLedger": [
+          {
+            "id": "S1",
+            "owner": "entrypoint",
+            "skill": "qa-api",
+            "version": "reviewed-local",
+            "status": "executed"
+          },
+          {
+            "id": "S1.1",
+            "owner": "S1",
+            "skill": "qa-bruno",
+            "status": "executed once through wrapper",
+            "recordId": "alpha"
+          },
+          {
+            "id": "S2",
+            "owner": "entrypoint",
+            "skill": "qa-database",
+            "version": "reviewed-local",
+            "status": "executed",
+            "recordId": "alpha"
+          }
+        ],
+        "evidenceInspection": "Both simulated receipts retrieved, current head-a, intended audience QA reviewer and owning developer confirmed",
+        "findings": [],
+        "blockers": [],
+        "cleanup": "none prescribed; database cleanup confirmed",
+        "limitations": "Mock receipts only; artifact/security/tool checks abstracted by fixture; trace records order; not live acceptance",
+        "humanAction": "Human QA and owning developer review after successful handoff",
+        "freshness": "Prepublication reread confirms current QA ownership and unchanged requirements, PR and preview"
+      }
+    }
+  ],
+  "prLinks": [
+    {
+      "report": "fixture://reports/transition_timeout_committed"
+    }
+  ],
+  "transitionCount": 1,
+  "writesAvailable": true,
+  "finalResult": {
+    "testVerdict": "PASS",
+    "deliveryOutcome": "COMPLETED",
+    "intendedDestination": "Human Review",
+    "actualStatus": "human",
+    "reason": "Both case receipts pass; report and PR access confirmed. Single transition returned response timeout/outcome unknown; exactly one read reconciled current Human Review. No replay or competing Blocked transition",
+    "coverage": {
+      "requirementsAssessed": 2,
+      "requirementsTotal": 2,
+      "casesAssessed": 2,
+      "casesTotal": 2,
+      "PASS": 2,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "NOT_RUN": 0
+    },
+    "report": "fixture://reports/transition_timeout_committed",
+    "prLinkVerified": true,
+    "transitionReceipt": {
+      "error": "response timeout",
+      "outcome": "unknown"
+    },
+    "reconciliation": "One reread verified human status; destination reached despite response timeout",
+    "limitations": "Mock-only receipts; no live acceptance"
+  }
+}

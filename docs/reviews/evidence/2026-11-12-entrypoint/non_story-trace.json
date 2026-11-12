@@ -1,0 +1,203 @@
+{
+  "status": "qa",
+  "calls": [
+    {
+      "action": "read_context",
+      "args": {},
+      "result": {
+        "config": {
+          "runId": "run-non_story",
+          "qaVisitId": "visit-non_story",
+          "project": "DEMO",
+          "label": "AI-Daniel-1",
+          "issueType": "Story",
+          "qaStatusId": "qa",
+          "destinations": {
+            "Human Review": "human",
+            "In Progress": "progress",
+            "Blocked": "blocked"
+          },
+          "exclusiveOwner": true,
+          "authorizedWrites": true,
+          "allowedSkills": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ],
+          "model": "fixture-grok",
+          "effort": "high",
+          "evidenceAudience": "QA reviewer and owning developer",
+          "evidenceDestination": "fixture://reports"
+        },
+        "ticket": {
+          "key": "DEMO-1",
+          "type": "Task",
+          "project": "DEMO",
+          "labels": [
+            "AI-Daniel-1"
+          ],
+          "status": "qa",
+          "assignee": "human-owner",
+          "repository": "example/demo",
+          "requirementVersion": "requirements-v1",
+          "requirements": {
+            "R1": "API shows record alpha ready",
+            "R2": "Database observation shows same alpha ready"
+          },
+          "cases": [
+            {
+              "id": "C1",
+              "requirements": [
+                "R1"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S1",
+                  "skill": "qa-api",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S1",
+                  "children": [
+                    {
+                      "id": "S1.1",
+                      "skill": "qa-bruno",
+                      "owner": "S1",
+                      "artifact": "reviewed://request-1"
+                    }
+                  ]
+                }
+              ],
+              "dependsOn": [],
+              "evidence": [
+                "fixture://C1"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            },
+            {
+              "id": "C2",
+              "requirements": [
+                "R2"
+              ],
+              "actor": "qa-demo",
+              "data": "synthetic record alpha",
+              "expected": "record alpha is ready",
+              "steps": [
+                {
+                  "id": "S2",
+                  "skill": "qa-database",
+                  "owner": "entrypoint",
+                  "artifact": "reviewed://S2"
+                }
+              ],
+              "dependsOn": [
+                "C1"
+              ],
+              "evidence": [
+                "fixture://C2"
+              ],
+              "cleanup": "none",
+              "actions": "read-only observations"
+            }
+          ],
+          "pr": "fixture://pr/1"
+        },
+        "pr": {
+          "url": "fixture://pr/1",
+          "open": true,
+          "repository": "example/demo",
+          "source": "head-a",
+          "target": "base-a",
+          "approval": "head-a",
+          "requiredCI": "green"
+        },
+        "preview": {
+          "ready": true,
+          "url": "https://preview.example.invalid",
+          "deployedRevision": "head-a",
+          "access": "prepared read-only synthetic identity"
+        },
+        "priorReports": [],
+        "currentTransitions": {
+          "Human Review": "human",
+          "In Progress": "progress",
+          "Blocked": "blocked"
+        }
+      }
+    },
+    {
+      "action": "finish",
+      "args": {
+        "testVerdict": "NOT RUN",
+        "deliveryOutcome": "INELIGIBLE",
+        "intendedDestination": null,
+        "actualStatus": "qa",
+        "reason": "Current issue type Task does not match configured Story eligibility; no helpers, publication, PR comment or transition authorized",
+        "coverage": {
+          "requirementsAssessed": 0,
+          "requirementsTotal": 2,
+          "casesAssessed": 0,
+          "casesTotal": 2,
+          "PASS": 0,
+          "FAIL": 0,
+          "BLOCKED": 0,
+          "NOT_RUN": 2
+        },
+        "cases": [
+          {
+            "id": "C1",
+            "result": "NOT RUN",
+            "reason": "ineligible issue type"
+          },
+          {
+            "id": "C2",
+            "result": "NOT RUN",
+            "reason": "ineligible issue type"
+          }
+        ],
+        "limitations": "Mock connector exercise only"
+      },
+      "result": {
+        "retained": true
+      }
+    }
+  ],
+  "executed": [],
+  "reports": [],
+  "prLinks": [],
+  "transitionCount": 0,
+  "writesAvailable": true,
+  "finalResult": {
+    "testVerdict": "NOT RUN",
+    "deliveryOutcome": "INELIGIBLE",
+    "intendedDestination": null,
+    "actualStatus": "qa",
+    "reason": "Current issue type Task does not match configured Story eligibility; no helpers, publication, PR comment or transition authorized",
+    "coverage": {
+      "requirementsAssessed": 0,
+      "requirementsTotal": 2,
+      "casesAssessed": 0,
+      "casesTotal": 2,
+      "PASS": 0,
+      "FAIL": 0,
+      "BLOCKED": 0,
+      "NOT_RUN": 2
+    },
+    "cases": [
+      {
+        "id": "C1",
+        "result": "NOT RUN",
+        "reason": "ineligible issue type"
+      },
+      {
+        "id": "C2",
+        "result": "NOT RUN",
+        "reason": "ineligible issue type"
+      }
+    ],
+    "limitations": "Mock connector exercise only"
+  }
+}
