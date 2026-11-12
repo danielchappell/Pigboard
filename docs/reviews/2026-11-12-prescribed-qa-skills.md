@@ -79,5 +79,32 @@ cases or uncertain cleanup. Human and agent responsibilities remain explicit.
 This validates local instructions and helper behavior, not Cursor execution, live
 credentials, a preview environment, Jira transition automation or human-review
 acceptance. Source repository publication and package/runtime upgrades are outside
-this adaptation. A fresh independent review of the committed artifacts follows;
-its verdict will be recorded separately. Local skill installation follows that gate.
+this adaptation.
+
+## Independent committed-artifact review and installation
+
+Two fresh independent Sol High reviewers returned CLEAN for commit
+`eb213cac887c9fc57196eb3ebbb313686f83890e` with no unresolved in-scope findings.
+Both examined 11/11 changed files, performed a second sweep and independently
+assessed all seven principles. The behavioral reviewer assessed 16/16 exercises;
+the technical reviewer checked 12/12 contracts and independently reran the unchanged
+PostgreSQL suite (12/12 passed). Both verified source resource identity and evidence
+integrity. These reviews cover that exact artifact revision, not future edits.
+
+The behavioral exercise distinguished working checks from assertion-engine errors,
+zero checks and missing requests. Missing SQL, necessary truncated results, stale
+deployments, expired access after a defect and uncertain writes all block. A valid
+empty query result can pass an expected-zero case. Observed defects survive later
+blockers; remaining cases are not run. Tests were interpreted from local receipts
+and fictional handoffs, not performed against customer systems.
+
+The technical reviewer investigated expected database denial: a generic reader
+INCOMPLETE/SQLSTATE receipt does not prove the failed operation or successful
+cleanup, so it cannot establish PASS. No code change or new capability was required.
+
+Installed all three reviewed folders in `/Users/josephchappell/.codex/skills`.
+All eight installed files match the committed evidence hashes and all three
+installed skill validators pass. Runtime dependencies are deliberately not copied
+into the installed folders: the chosen harness must prepare the locked dependencies
+before QA. They were installed and exercised only in the isolated validation copy.
+No Cursor automation was enabled and no upstream source push or PR was made.
