@@ -32,11 +32,22 @@ from the application repository. Install the versioned
 published commit. Keep Start Script empty for Pigboard. The command verifies the
 bundle and exposes `/opt/pigboard/skills` before a successful Build is snapshotted.
 
-Local validation: 207/207 repository tests, including 9/9 preparation/adapter fixtures.
+Local validation before the authentication delta: 207/207 repository tests, including 9/9 preparation/adapter fixtures.
 A real locked dependency installation also verified ten entrypoints, 23 source
 file hashes, `pg.Client` loading and Bruno 4.2.1 execution. This is local evidence,
-not a successful Cursor Build. Cloud install configuration, private Git access and
-Build receipt verification remain pending. The automation remains inactive.
+not a successful Cursor Build. The install command was saved in Cursor, pinned to
+published revision `12675375bc8710f197f9ceba43f56a2d845fbd0d` on private branch
+`codex/cursor-pigboard-skills`. Draft manual Build
+`bld-20261112-6e72c6e7-a274-4476-9608-1f74512a6afe` checked out Plexus `9c7f525` and
+reached the command, but finished **Install failed**: it could not fetch the private
+Pigboard source. No skills were installed. The automation remains inactive.
+
+Optional dedicated read-only deploy-key support is prepared in the versioned command;
+live key registration and the `PIGBOARD_DEPLOY_KEY` environment secret await explicit
+access approval. After approval, publish the reviewed authentication revision, update
+the saved command/pin, configure the secret and rerun a draft Build. Inspect the
+verification receipt before selecting a successful Build. Never activate the failed
+draft or treat its created snapshot as proof that installation succeeded.
 
 For refresh, keep the automation inactive, update the pinned commit and inspect the
 replacement Build before reactivation. A failed Build can leave the previous Build

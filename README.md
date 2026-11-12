@@ -91,6 +91,16 @@ the build user; sudo is used only to create that directory if absent. The stable
 link and releases are outside Plexus and belong to each isolated Build/agent VM.
 The adapter refuses unmanaged destinations and preserves the prior link on failure.
 
+If the Build has no GitHub authentication, use a dedicated read-only deploy key on
+the Pigboard repository and store its private key as the environment secret
+`PIGBOARD_DEPLOY_KEY`. Registering that access needs the repository owner's approval.
+The command uses GitHub SSH over port 443 with a pinned host key, writes the private
+key only to its temporary setup directory, removes the raw secret from child-process
+environments and deletes the temporary directory on exit. The key must not be pasted
+into the install command or agent instructions. Use an environment secret because
+personal user secrets are unavailable during Builds. Host-key changes require human
+verification against GitHub's published key; do not disable host verification.
+
 Keep the automation inactive while preparing and testing its first Build. Inspect
 the Build's JSON receipt for the expected commit and completed verification. Cursor
 can use a default image before its first successful Build, and retains its previous

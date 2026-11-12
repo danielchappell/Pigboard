@@ -70,3 +70,19 @@ state. Keep local tests, cloud Build success and full automation acceptance dist
 - Agents are equal: stable machine-readable path/receipt and human-readable Build logs.
 - Dependable: only a fully verified release changes the binding; failed Builds do not
   imply readiness, and activation remains off until all required evidence exists.
+
+## Access delta after the cloud trial
+
+The first draft Build reached the install script but could not fetch the private
+Pigboard repository. The pinned commit was independently verified as published.
+Add optional PIGBOARD_DEPLOY_KEY environment-secret support. Capture it into a
+non-exported shell variable and unset the raw environment variable before any child
+process. Write the key with mode 0600 in the existing owned temporary directory;
+unset the captured variable afterward. Pin GitHub's official Ed25519 host key for
+[ssh.github.com]:443, with strict host checking, BatchMode, IdentitiesOnly and no SSH
+agent identity. When present, select only the fixed SSH URL of the same Pigboard
+repository and pass it to bootstrap and prepare. No global Git config edits. Trap
+cleanup removes the temporary key on success/failure. Fixtures verify configuration,
+no secret inheritance, mode and cleanup. Live repository key registration and secret
+installation require the pending explicit access approval. This delta passed two
+independent Sol plan reviews before implementation; it does not authorize activation.
