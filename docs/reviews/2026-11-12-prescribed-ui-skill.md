@@ -66,3 +66,24 @@ remote screenshot upload/access, or Jira transition automation. Missing capabili
 on the chosen harness block execution until prepared by a human. PGB-60 continues
 to own preview provisioning. Source publication, PRs, merge and deployment remain
 outside this skill-authoring work.
+
+## Committed-artifact review and installation
+
+Two fresh independent Sol High reviewers returned CLEAN for exact commit
+`a96ea37f6d347dd4288afc0d8b64937a1ce1ad1d`, with no unresolved in-scope findings.
+Both examined 12/12 changed files, all 5/5 actual images and 8/8 contract bullets,
+performed a second sweep and assessed all seven principles independently. The
+behavior reviewer derived all four case outcomes from images/captures before
+reading the author results, then assessed 6/6 fictional handoffs. The technical
+reviewer checked 11/11 failure/authority/evidence scenarios. Both verified hashes,
+image retrieval and the exact evidence counts. They did not claim to rerun the
+browser interaction or prove live Cursor acceptance.
+
+Installed the reviewed skill at `/Users/josephchappell/.codex/skills/qa-ui/SKILL.md`;
+SHA256 `d300fb9a63b29507090badc61740ebaeeca0bbbf81bcaeb18c493999bda67e6b`.
+Its installed validator passes and bytes match the reviewed repository file.
+The prior installed file is preserved at
+`/Users/josephchappell/.codex/backups/qa-ui-prescribed-2026-11-12/SKILL.md`.
+The temporary fixture server was stopped after validation, and its request log
+shows only the three prescribed case navigations plus a browser favicon request.
+No fourth case was run. No source push, PR, merge, automation or deployment occurred.
