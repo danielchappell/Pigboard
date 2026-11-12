@@ -1,0 +1,391 @@
+{
+  "source_repository": "danielchappell/ai-working-kit",
+  "source_commit": "5bef5cf140bd5ea92e6600f0ff2a0be726e4c7ac",
+  "source_checked": "2026-11-12",
+  "scope": "Local fixture only; no live API or database acceptance",
+  "bruno": {
+    "results": [
+      {
+        "name": "pass",
+        "code": 0,
+        "output": "pass (200 OK) - 8 ms\nTests\n   \u2713 expected HTTP status\n   \u2713 expected state\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2713 PASS    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Passed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     2/2      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502     120      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/pass.json\n"
+      },
+      {
+        "name": "fail",
+        "code": 1,
+        "output": "fail (200 OK) - 8 ms\nTests\n   \u2715 expected state\n      expected 'ready' to equal 'complete'\n   \u2713 expected HTTP status\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2717 FAIL    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Failed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     1/2      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502     134      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/fail.json\n"
+      },
+      {
+        "name": "denial",
+        "code": 0,
+        "output": "denial (403 Forbidden) - 7 ms\nTests\n   \u2713 expected HTTP status\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2713 PASS    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Passed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     1/1      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502     131      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/denial.json\n"
+      },
+      {
+        "name": "zero",
+        "code": 0,
+        "output": "zero (200 OK) - 7 ms\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2713 PASS    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Passed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502      30      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/zero.json\n"
+      },
+      {
+        "name": "missing",
+        "code": 5,
+        "output": "Path not found: /private/tmp/pigboard-qa-adaptation-20261112/fixture/missing.bru\n"
+      }
+    ],
+    "hits": [
+      "/record",
+      "/record",
+      "/denied",
+      "/record"
+    ]
+  },
+  "reports": {
+    "pass": {
+      "definition": "meta {\n  name: pass\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56211/record\n  body: none\n  auth: none\n}\n\ntests {\n  test(\"expected HTTP status\", function () { expect(res.getStatus()).to.equal(200); });\n  test(\"expected state\", function () { expect(res.getBody().state).to.equal(\"ready\"); });\n}\n",
+      "report": [
+        {
+          "iterationIndex": 0,
+          "results": [
+            {
+              "test": {
+                "filename": "pass.bru"
+              },
+              "request": {
+                "method": "GET",
+                "url": "http://127.0.0.1:56211/record",
+                "headers": {}
+              },
+              "response": {
+                "status": 200,
+                "statusText": "OK",
+                "headers": {},
+                "data": {
+                  "id": "case-record-1",
+                  "state": "ready"
+                },
+                "url": "http://127.0.0.1/record",
+                "responseTime": 8,
+                "duration": 8,
+                "size": 38
+              },
+              "error": null,
+              "status": "pass",
+              "assertionResults": [],
+              "testResults": [
+                {
+                  "description": "expected HTTP status",
+                  "status": "pass",
+                  "uid": "ssWMr5w0zXAZLBFXaygi-"
+                },
+                {
+                  "description": "expected state",
+                  "status": "pass",
+                  "uid": "OWTlJkBxPIXFIuwBXSsH-"
+                }
+              ],
+              "preRequestTestResults": [],
+              "postResponseTestResults": [],
+              "shouldStopRunnerExecution": false,
+              "runDuration": 0.120080875,
+              "name": "pass",
+              "suitename": "/private/tmp/pigboard-qa-adaptation-20261112/fixture/pass",
+              "path": "pass",
+              "iterationIndex": 0
+            }
+          ],
+          "summary": {
+            "totalRequests": 1,
+            "passedRequests": 1,
+            "failedRequests": 0,
+            "errorRequests": 0,
+            "skippedRequests": 0,
+            "skippedByBail": 0,
+            "totalAssertions": 0,
+            "passedAssertions": 0,
+            "failedAssertions": 0,
+            "totalTests": 2,
+            "passedTests": 2,
+            "failedTests": 0,
+            "totalPreRequestTests": 0,
+            "passedPreRequestTests": 0,
+            "failedPreRequestTests": 0,
+            "totalPostResponseTests": 0,
+            "passedPostResponseTests": 0,
+            "failedPostResponseTests": 0
+          }
+        }
+      ]
+    },
+    "fail": {
+      "definition": "meta {\n  name: fail\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56211/record\n  body: none\n  auth: none\n}\n\ntests {\n  test(\"expected HTTP status\", function () { expect(res.getStatus()).to.equal(200); });\n  test(\"expected state\", function () { expect(res.getBody().state).to.equal(\"complete\"); });\n}\n",
+      "report": [
+        {
+          "iterationIndex": 0,
+          "results": [
+            {
+              "test": {
+                "filename": "fail.bru"
+              },
+              "request": {
+                "method": "GET",
+                "url": "http://127.0.0.1:56211/record",
+                "headers": {}
+              },
+              "response": {
+                "status": 200,
+                "statusText": "OK",
+                "headers": {},
+                "data": {
+                  "id": "case-record-1",
+                  "state": "ready"
+                },
+                "url": "http://127.0.0.1/record",
+                "responseTime": 8,
+                "duration": 8,
+                "size": 38
+              },
+              "error": null,
+              "status": "pass",
+              "assertionResults": [],
+              "testResults": [
+                {
+                  "description": "expected state",
+                  "status": "fail",
+                  "error": "expected 'ready' to equal 'complete'",
+                  "uid": "vj5wC7Nt_j-3W_n9QeLR7"
+                },
+                {
+                  "description": "expected HTTP status",
+                  "status": "pass",
+                  "uid": "5Gtb6yaxMimh_gBPgnPDG"
+                }
+              ],
+              "preRequestTestResults": [],
+              "postResponseTestResults": [],
+              "shouldStopRunnerExecution": false,
+              "runDuration": 0.133642167,
+              "name": "fail",
+              "suitename": "/private/tmp/pigboard-qa-adaptation-20261112/fixture/fail",
+              "path": "fail",
+              "iterationIndex": 0
+            }
+          ],
+          "summary": {
+            "totalRequests": 1,
+            "passedRequests": 0,
+            "failedRequests": 1,
+            "errorRequests": 0,
+            "skippedRequests": 0,
+            "skippedByBail": 0,
+            "totalAssertions": 0,
+            "passedAssertions": 0,
+            "failedAssertions": 0,
+            "totalTests": 2,
+            "passedTests": 1,
+            "failedTests": 1,
+            "totalPreRequestTests": 0,
+            "passedPreRequestTests": 0,
+            "failedPreRequestTests": 0,
+            "totalPostResponseTests": 0,
+            "passedPostResponseTests": 0,
+            "failedPostResponseTests": 0
+          }
+        }
+      ]
+    },
+    "denial": {
+      "definition": "meta {\n  name: denial\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56211/denied\n  body: none\n  auth: none\n}\n\ntests {\n  test(\"expected HTTP status\", function () { expect(res.getStatus()).to.equal(403); });\n}\n",
+      "report": [
+        {
+          "iterationIndex": 0,
+          "results": [
+            {
+              "test": {
+                "filename": "denial.bru"
+              },
+              "request": {
+                "method": "GET",
+                "url": "http://127.0.0.1:56211/denied",
+                "headers": {}
+              },
+              "response": {
+                "status": 403,
+                "statusText": "Forbidden",
+                "headers": {},
+                "data": {
+                  "error": "forbidden"
+                },
+                "url": "http://127.0.0.1/denied",
+                "responseTime": 7,
+                "duration": 7,
+                "size": 21
+              },
+              "error": null,
+              "status": "pass",
+              "assertionResults": [],
+              "testResults": [
+                {
+                  "description": "expected HTTP status",
+                  "status": "pass",
+                  "uid": "NN3sdZFBA2qkg1YZes2t6"
+                }
+              ],
+              "preRequestTestResults": [],
+              "postResponseTestResults": [],
+              "shouldStopRunnerExecution": false,
+              "runDuration": 0.130906,
+              "name": "denial",
+              "suitename": "/private/tmp/pigboard-qa-adaptation-20261112/fixture/denial",
+              "path": "denial",
+              "iterationIndex": 0
+            }
+          ],
+          "summary": {
+            "totalRequests": 1,
+            "passedRequests": 1,
+            "failedRequests": 0,
+            "errorRequests": 0,
+            "skippedRequests": 0,
+            "skippedByBail": 0,
+            "totalAssertions": 0,
+            "passedAssertions": 0,
+            "failedAssertions": 0,
+            "totalTests": 1,
+            "passedTests": 1,
+            "failedTests": 0,
+            "totalPreRequestTests": 0,
+            "passedPreRequestTests": 0,
+            "failedPreRequestTests": 0,
+            "totalPostResponseTests": 0,
+            "passedPostResponseTests": 0,
+            "failedPostResponseTests": 0
+          }
+        }
+      ]
+    },
+    "zero": {
+      "definition": "meta {\n  name: zero\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56211/record\n  body: none\n  auth: none\n}\n",
+      "report": [
+        {
+          "iterationIndex": 0,
+          "results": [
+            {
+              "test": {
+                "filename": "zero.bru"
+              },
+              "request": {
+                "method": "GET",
+                "url": "http://127.0.0.1:56211/record",
+                "headers": {}
+              },
+              "response": {
+                "status": 200,
+                "statusText": "OK",
+                "headers": {},
+                "data": {
+                  "id": "case-record-1",
+                  "state": "ready"
+                },
+                "url": "http://127.0.0.1/record",
+                "responseTime": 7,
+                "duration": 7,
+                "size": 38
+              },
+              "error": null,
+              "status": "pass",
+              "assertionResults": [],
+              "testResults": [],
+              "preRequestTestResults": [],
+              "postResponseTestResults": [],
+              "shouldStopRunnerExecution": false,
+              "runDuration": 0.029911792,
+              "name": "zero",
+              "suitename": "/private/tmp/pigboard-qa-adaptation-20261112/fixture/zero",
+              "path": "zero",
+              "iterationIndex": 0
+            }
+          ],
+          "summary": {
+            "totalRequests": 1,
+            "passedRequests": 1,
+            "failedRequests": 0,
+            "errorRequests": 0,
+            "skippedRequests": 0,
+            "skippedByBail": 0,
+            "totalAssertions": 0,
+            "passedAssertions": 0,
+            "failedAssertions": 0,
+            "totalTests": 0,
+            "passedTests": 0,
+            "failedTests": 0,
+            "totalPreRequestTests": 0,
+            "passedPreRequestTests": 0,
+            "failedPreRequestTests": 0,
+            "totalPostResponseTests": 0,
+            "passedPostResponseTests": 0,
+            "failedPostResponseTests": 0
+          }
+        }
+      ]
+    }
+  },
+  "initial_engine_failure": {
+    "pass": {
+      "definition": "meta {\n  name: pass\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56086/record\n  body: none\n  auth: none\n}\n\nassert {\n  res.status: eq 200\n  res.body.state: eq ready\n}\n",
+      "log": "pass (200 OK) - 7 ms\nError executing the script! TypeError: Cannot read properties of undefined (reading 'newContext')\n    at createManagedQuickJsContext (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/utils/index.js:8:21)\n    at executeQuickJsVm (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/index.js:124:29)\n    at evaluateJsExpressionBasedOnRuntime (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:344:12)\n    at AssertRuntime.runAssertions (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:470:21)\n    at runSingleRequest (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/runner/run-single-request.js:950:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runIteration (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1293:24)\n    at async Object.handler (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1499:33)\nError executing the script! TypeError: Cannot read properties of undefined (reading 'newContext')\n    at createManagedQuickJsContext (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/utils/index.js:8:21)\n    at executeQuickJsVm (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/index.js:124:29)\n    at evaluateJsExpressionBasedOnRuntime (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:344:12)\n    at AssertRuntime.runAssertions (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:470:21)\n    at runSingleRequest (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/runner/run-single-request.js:950:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runIteration (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1293:24)\n    at async Object.handler (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1499:33)\nError executing the script! TypeError: Cannot read properties of undefined (reading 'newContext')\n    at createManagedQuickJsContext (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/utils/index.js:8:21)\n    at executeQuickJsVm (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/index.js:124:29)\n    at evaluateJsTemplateLiteralBasedOnRuntime (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:332:12)\n    at evaluateRhsOperand (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:401:10)\n    at AssertRuntime.runAssertions (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:471:21)\n    at runSingleRequest (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/runner/run-single-request.js:950:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runIteration (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1293:24)\n    at async Object.handler (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1499:33)\nAssertions\n   \u2715 res.status: eq 200\n      expected undefined to equal 200\n   \u2713 res.body.state: eq ready\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2717 FAIL    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Failed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     1/2      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502      34      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/pass.json\n"
+    },
+    "denial": {
+      "definition": "meta {\n  name: denial\n  type: http\n  seq: 1\n}\nget {\n  url: http://127.0.0.1:56086/denied\n  body: none\n  auth: none\n}\n\nassert {\n  res.status: eq 403\n}\n",
+      "log": "denial (403 Forbidden) - 6 ms\nError executing the script! TypeError: Cannot read properties of undefined (reading 'newContext')\n    at createManagedQuickJsContext (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/utils/index.js:8:21)\n    at executeQuickJsVm (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/sandbox/quickjs/index.js:124:29)\n    at evaluateJsExpressionBasedOnRuntime (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:344:12)\n    at AssertRuntime.runAssertions (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/js/src/runtime/assert-runtime.js:470:21)\n    at runSingleRequest (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/runner/run-single-request.js:950:40)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async runIteration (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1293:24)\n    at async Object.handler (/private/tmp/pigboard-qa-adaptation-20261112/source/skills/qa-bruno/scripts/node_modules/@usebruno/cli/src/commands/run.js:1499:33)\nAssertions\n   \u2715 res.status: eq 403\n      expected undefined to equal 403\n\n\ud83d\udcca Execution Summary\n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Metric        \u2502    Result    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Status        \u2502    \u2717 FAIL    \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Requests      \u2502 1 (1 Failed) \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Tests         \u2502     0/0      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Assertions    \u2502     0/1      \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n\u2502 Duration (ms) \u2502      31      \u2502\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\nWrote json results to /tmp/pigboard-qa-adaptation-20261112/fixture/denial.json\n"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "skills/qa-api/SKILL.md",
+      "sha256": "f053dcefdc9c5b79405f68cd12b2ac4c157020ca5516b7255702ea9407d8fe84",
+      "source_git_blob": "e257422989ccd6a05de23dc08b7619e50da55e31",
+      "unchanged_from_source": false
+    },
+    {
+      "path": "skills/qa-bruno/SKILL.md",
+      "sha256": "e2dbd2e0d4768673255c67114586d3bcb807e1629245eb5b5b7807b51f3e18de",
+      "source_git_blob": "70f94b95cc7fd86c20f3ce569050b448b14d28ee",
+      "unchanged_from_source": false
+    },
+    {
+      "path": "skills/qa-bruno/scripts/package-lock.json",
+      "sha256": "e085467d41ddd78793a387df091531eb23b932d832964d0d584c9e83c5038b60",
+      "source_git_blob": "0b0c973b7aef20d104b462da97676c5e6c7773ce",
+      "unchanged_from_source": true
+    },
+    {
+      "path": "skills/qa-bruno/scripts/package.json",
+      "sha256": "09f22faa48343809c31cd8eef0d6ee4280aafde44daaad881972f272d58e7834",
+      "source_git_blob": "ff9699bf65d9f0df87bfd066686924c7ae43495b",
+      "unchanged_from_source": true
+    },
+    {
+      "path": "skills/qa-database/SKILL.md",
+      "sha256": "51c7e2a1ee88bba98b502dfea51cf09a801d094adc9ef0a62d180d82d1259b61",
+      "source_git_blob": "ae6c9c428db02df0ab12edbb975087e9a268e308",
+      "unchanged_from_source": false
+    },
+    {
+      "path": "skills/qa-database/scripts/package-lock.json",
+      "sha256": "f8a8841d0dc90c8beee6586cb2d1f36b5f14cef49fc8de27c629beea5d59543b",
+      "source_git_blob": "c71d1813accb49a89b0eebd1c4dffa3baff8f835",
+      "unchanged_from_source": true
+    },
+    {
+      "path": "skills/qa-database/scripts/package.json",
+      "sha256": "356b33afa1345c049ccbfd0b4cfad4fb648be45b0d122e05b74cc27d00f63350",
+      "source_git_blob": "62d8844cb7931fb279bda77a9dff63b68a7ffe7a",
+      "unchanged_from_source": true
+    },
+    {
+      "path": "skills/qa-database/scripts/read-postgres.mjs",
+      "sha256": "7dad94032016c48210ea115d0a62a7632d50f8193fb2fa621376e60b9f64f0d7",
+      "source_git_blob": "ea3cb61962a7cf585a9aa99217a17673ecdd6b99",
+      "unchanged_from_source": true
+    }
+  ]
+}
