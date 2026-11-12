@@ -1,0 +1,1 @@
+Complete the provided Jira ticket in the codebase specified by that ticket, following /opt/pigboard/skills/implementer-entrypoint/SKILL.md.

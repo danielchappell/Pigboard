@@ -1,29 +1,30 @@
 # AI-Daniel-1 implementer setup
 
 Target confirmed by owner: Bitbucket `sgwidevelopment/plexus`, base `master`.
-Project: Safeguard INT; exact Story label `AI-Daniel-1`; trigger: entry to In Progress.
-Use a generic authenticated webhook. Do not enable PR-open, scheduled or repair triggers.
+Project: Safeguard INT; Story label `AI-Daniel-1`; trigger: entry to In Progress.
 
-## Entry-point prompt
+## Agent instruction
 
-The deployment must supply the prepared run receipt and trusted Jira event fields.
-Do not paste placeholders into an enabled automation.
+Copy [implementer-prompt.txt](implementer-prompt.txt) into Cursor. That versioned file
+is the source of truth for the small invocation prompt. The Jira trigger supplies
+the ticket. The ticket specifies the codebase. Work instructions live in the skill.
 
-> Read the prepared Pigboard receipt for this run and load
-> `<receipt.skills>/implementer-entrypoint/SKILL.md`, including its Cursor profile.
-> Process only the supplied INT Story and In Progress visit for AI-Daniel-1.
-> Re-read the ticket and verify its target repository matches this allowed Plexus
-> checkout. Use Grok High planning and exactly one fresh independent High reviewer;
-> use the verified Medium execution phase after a clean in-scope plan. Follow the
-> target repository's AGENTS.md and CONTRIBUTING.md. Reuse the existing PR for fixes.
-> Verify current required CI before publishing the implementation handoff and moving
-> to In Review. Block missing capabilities or required scope expansion for a human.
-> Never merge, deploy, select another Story or invent missing execution inputs.
+Routing, label/status filtering, skill fetching and environment readiness belong in
+deterministic setup and Jira wiring, not in the agent prompt. Setup must expose the
+chosen release at `/opt/pigboard/skills` for each isolated run before work starts;
+that path is a required setup contract, not evidence it exists today. Preserve the
+release receipt outside the prompt for reproducibility. No model-led cloning,
+installation or environment repair is part of the invocation.
 
-## Current state
+## Saved state — 12 November 2026
 
-Setup inspection pending. No new automation is claimed saved or enabled by this file.
-The account must provide an environment, prepared receipt handoff, actual model
-controls, isolated reviewer, Jira/Bitbucket permissions, event serialization and
-retained evidence. A draft is not live acceptance. Remote publication of these local
-scripts and the skill release is a prerequisite to cloud use.
+[Cursor automation](https://cursor.com/t/safeguardglobal-engineering/automations/65bdee88-dee5-11f1-ba91-f63b1661ac50)
+was saved and visually read back as **Inactive**, with Plexus/master, a webhook
+trigger, Grok 4.7 High (Fast off), Open Pull Request, and the exact minimal prompt.
+Memories are removed. No run or live Jira trigger has been exercised.
+
+Environment installation, the stable per-run skill path, actual independent High
+reviewer/Medium execution controls, Jira/Bitbucket tools, webhook authentication,
+serialization and retained evidence remain unfinished setup. Those are configuration
+work, not instructions for an agent to investigate. Local scripts and their reviewed
+skill release still require remote publication before cloud setup can fetch them.
