@@ -29,6 +29,8 @@ blocked work. The separate Jira admission script selects new work for the stream
 - `skills/`: reusable instructions, references and prepared QA helpers.
 - `config/skill-bundle.json`: the ten execution skills included in this release.
 - `scripts/prepare-pigboard-skills.mjs`: deterministic fetch and refresh.
+- `scripts/install-cursor-skills.mjs`: verified installation at a stable skill path.
+- `config/cursor/environment-install.sh`: versioned Cursor Build install command.
 - `config/cursor/`: first automation instructions and setup record.
 - `docs/plans/2026-11-12-skill-distribution.md`: setup implementation plan.
 
@@ -73,12 +75,33 @@ Each invocation creates a separate release directory, even for an unchanged comm
 This avoids sharing mutable dependency installations between active agents. It costs
 Git/npm setup time but no model-led setup decisions. Existing runs keep their paths.
 
-Configure Cursor's environment preparation to run the command. To check for updates
-on every run, invoke it from a deterministic startup wrapper and pass the new receipt
-to that run. **This repository does not yet supply a verified Cursor startup adapter.**
-Do not assume exported shell variables survive Cursor Builds or that an asynchronous
-startup failure prevents model execution. Verify the receipt handoff and stop behavior
-in the configured environment before enabling Jira triggers.
+For Cursor, use the saved Plexus environment's **Install Script**, not agent
+instructions or a startup service. Copy the versioned
+[environment install command](config/cursor/environment-install.sh), preceded by
+`export PIGBOARD_REVISION=REVIEWED_40_CHARACTER_COMMIT`. The revision must already be
+published in the private Pigboard repository. The command uses prepared build Git
+authentication, installs the locked dependencies and verifies the source hashes,
+all ten entrypoints, `pg.Client` import and `bru --version` before exposing
+`/opt/pigboard/skills`. The agent prompt points directly to that existing path.
+
+For a single repository, the install working directory must be its checkout. Set
+`PIGBOARD_APP` explicitly if Cursor supplies another working directory. Node 20+,
+Git, npm and permission to create `/opt/pigboard` are prerequisites. Git/npm run as
+the build user; sudo is used only to create that directory if absent. The stable
+link and releases are outside Plexus and belong to each isolated Build/agent VM.
+The adapter refuses unmanaged destinations and preserves the prior link on failure.
+
+Keep the automation inactive while preparing and testing its first Build. Inspect
+the Build's JSON receipt for the expected commit and completed verification. Cursor
+can use a default image before its first successful Build, and retains its previous
+successful Build if a later one fails: a failed script is **not** an admission lock.
+[Cursor documents this Build lifecycle](https://cursor.com/docs/cloud-agent/builds).
+
+Refresh by disabling the automation, updating the pinned revision in the install
+configuration, and testing the resulting Build before reactivation. Changes to the
+out-of-band Pigboard repository do not by themselves guarantee a Cursor rebuild.
+Ordinary runs use the prepared snapshot without fetching skills or spending model
+tokens on setup. The Start Script does not install or refresh Pigboard skills.
 
 On failure the command exits nonzero and returns no success receipt. It does not
 silently select an older release. A human resolves access, missing skills or failed
@@ -90,8 +113,8 @@ when their runs have ended. The script performs no automatic cache pruning.
 
 Use a webhook trigger, the Plexus/master environment, and the prepared implementer
 entry point. The Jira rule must select Stories in INT with exactly `AI-Daniel-1`
-entering In Progress and provide the issue and event identity. Current ticket state,
-repo, ownership and label must be checked again before work. Rework resumes the same PR.
+entering In Progress and provide the issue and event identity. Deterministic Jira wiring checks current ticket state,
+repo, ownership and label before dispatch; these are not agent setup instructions. Rework resumes the same PR.
 
 The exact Grok High/Medium controls, isolated reviewer, Jira/Bitbucket tools,
 deduplication, evidence storage and finite CI wait must work before activation.
@@ -101,7 +124,8 @@ See [setup status](config/cursor/AI-Daniel-1.md) for actual configuration and bl
 
 ## Validation and status
 
-Run `node --test test/skill-distribution.test.mjs` for local fetch/refresh fixtures,
+Run `node --test test/skill-distribution.test.mjs test/cursor-environment.test.mjs`
+for local fetch/refresh and environment fixtures,
 or `npm test` for the full repository suite. Fixture dependency installs are simulated;
 they do not establish live npm access or Cursor behavior. Local preparation, remote
 publication, saved automation, activation and a successful real Story are separate

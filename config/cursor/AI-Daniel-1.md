@@ -23,8 +23,27 @@ was saved and visually read back as **Inactive**, with Plexus/master, a webhook
 trigger, Grok 4.7 High (Fast off), Open Pull Request, and the exact minimal prompt.
 Memories are removed. No run or live Jira trigger has been exercised.
 
-Environment installation, the stable per-run skill path, actual independent High
-reviewer/Medium execution controls, Jira/Bitbucket tools, webhook authentication,
-serialization and retained evidence remain unfinished setup. Those are configuration
-work, not instructions for an agent to investigate. Local scripts and their reviewed
-skill release still require remote publication before cloud setup can fetch them.
+## Deterministic environment setup
+
+[Personal Plexus environment](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/environments/e/9cb332e1-dee7-11f1-ba91-f63b1661ac50)
+was created using Skip & Save, without agent onboarding. Its configuration is separate
+from the application repository. Install the versioned
+[Build command](environment-install.sh), with `PIGBOARD_REVISION` set to the reviewed,
+published commit. Keep Start Script empty for Pigboard. The command verifies the
+bundle and exposes `/opt/pigboard/skills` before a successful Build is snapshotted.
+
+Local validation: 207/207 repository tests, including 9/9 preparation/adapter fixtures.
+A real locked dependency installation also verified ten entrypoints, 23 source
+file hashes, `pg.Client` loading and Bruno 4.2.1 execution. This is local evidence,
+not a successful Cursor Build. Cloud install configuration, private Git access and
+Build receipt verification remain pending. The automation remains inactive.
+
+For refresh, keep the automation inactive, update the pinned commit and inspect the
+replacement Build before reactivation. A failed Build can leave the previous Build
+active; do not infer fresh skills from the existence of an environment. The setup
+does not automatically follow Pigboard branch changes or refresh within agent work.
+
+Actual independent High reviewer/Medium execution controls, Jira/Bitbucket tools,
+webhook authentication, serialization and retained evidence remain unfinished setup.
+Those are configuration work, not instructions for an agent to investigate. Environment
+readiness alone does not establish end-to-end workflow readiness.
