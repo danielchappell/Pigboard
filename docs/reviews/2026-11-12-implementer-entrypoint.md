@@ -94,3 +94,32 @@ it is not actual screenshot or source verification. The local skill validator,
 relative links and whitespace checks pass. Repository runtime tests were not rerun
 for these instruction-only assets. Installation and committed-artifact reviews
 remain separately recorded below.
+
+## Exact-artifact review and installation
+
+Two fresh independent Sol High reviewers returned CLEAN for commit
+`1b1b6d888603f97ba35d70909395eebbbdbd29dc`. Each covered 14/14 changed files,
+11/11 scenarios/traces, 234/234 recorded calls and 14/14 desk-reviewed boundary
+cases, completed a second sweep and independently assessed all seven principles.
+Product coverage was 22/22 contract groups; technical coverage was 28/28. Both
+independently regenerated the 126 passing assertions and replayed all retained
+action choices against the committed driver with 234/234 matching receipts. This
+replay validates evidence consistency, not a new model journey or live integration.
+No unresolved in-scope finding remained. Neither reviewer edited the artifact.
+
+Installed exactly four files into
+`/Users/josephchappell/.codex/skills/implementer-entrypoint`. All installed bytes
+match the reviewed commit and the installed skill validator passes:
+
+| File | SHA256 |
+| --- | --- |
+| SKILL.md | `37e579989fa448271ccbb0d2af54ddfc892a5e9084953e98a5f770dd70a2066e` |
+| references/cursor.md | `07682c853461c8e892c02fb5ea017d8131573637c570a166e0bfe81f717828f2` |
+| references/plan-review.md | `82b6722f7f305f6c4b0369be0b96cbfc2e1ad5c62c92b9c8b4b448dccf966f07` |
+| references/handoff.md | `256df26e33eece5f724f90ebad0532fe3ac30ea2df3ecd8ca32d89aa53c26b82` |
+
+No existing skill was overwritten. The local workflow and PGB-58 delivery record
+now distinguish this delivered skill from the remaining PR-review entry point
+and live configuration/acceptance. Per-PR environments and Teams wiring remain
+separate. No source push, authoring PR, real workflow transition, automation,
+merge or deployment was performed for this slice.
