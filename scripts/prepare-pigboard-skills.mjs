@@ -62,6 +62,8 @@ export async function prepare({ source, ref, cache, app }, install = dir => comm
     command('git', ['-c', 'protocol.file.allow=always', 'fetch', '--quiet', '--depth=1', '--', source, ref], checkout);
     const commit = command('git', ['rev-parse', 'FETCH_HEAD^{commit}'], checkout);
     command('git', ['checkout', '--quiet', '--detach', commit], checkout);
+    const sourceRoot = path.join(checkout, 'skills');
+    if (!(await lstat(sourceRoot)).isDirectory() || await realpath(sourceRoot) !== sourceRoot) throw new Error('Skill root must be a real directory, not a symlink.');
     const output = path.join(staging, 'release');
     const skillRoot = path.join(output, 'skills');
     await mkdir(skillRoot, { recursive: true });

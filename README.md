@@ -30,7 +30,7 @@ blocked work. The separate Jira admission script selects new work for the stream
 - `config/skill-bundle.json`: the ten execution skills included in this release.
 - `scripts/prepare-pigboard-skills.mjs`: deterministic fetch and refresh.
 - `config/cursor/`: first automation instructions and setup record.
-- `docs/plans/2026-11-12-cursor-automation-mvp.md`: detailed agreed contract.
+- `docs/plans/2026-11-12-skill-distribution.md`: setup implementation plan.
 
 The older queue runtime remains preserved under `src/` and its existing commands.
 It is not required for this workflow. Its [historical guide](docs/legacy-runtime-readme.md)

@@ -55,3 +55,12 @@ test('concurrent installs publish separate stable receipts',async t=>{
  assert.equal(a.commit,b.commit);assert.notEqual(a.release,b.release);
  assert.equal((await readdir(o.cache)).length,2);
 });
+test('reject a symlink at the skills root before reading external data',async t=>{
+ const o=await fixture(t); const external=path.join(path.dirname(o.source),'external');
+ const {rename}=await import('node:fs/promises');
+ await rename(path.join(o.source,'skills'),external);
+ await symlink(external,path.join(o.source,'skills'));
+ git(o.source,'add','-A');git(o.source,'commit','-m','root symlink');
+ await assert.rejects(prepare(o,install),/symlink/);
+ assert.deepEqual(await readdir(o.cache),[]);
+});

@@ -11,8 +11,8 @@ Retained for reference. Current setup is in [README](../README.md).
 Pigboard is now the Jira-and-Cursor delivery workflow: prepared Stories, shared
 skills, Jira routing and Cursor Automations through implementation, review, QA and
 Human Review. The immediate objective is to make that workflow work for
-`AI-Daniel-1` on Safeguard INT. See the [agreed workflow](plans/2026-11-12-cursor-automation-mvp.md)
-and [rollout proposal](plans/2026-11-12-cursor-automation-rollout.md).
+`AI-Daniel-1` on Safeguard INT. See the agreed workflow (historical reference: `plans/2026-11-12-cursor-automation-mvp.md`)
+and rollout proposal (historical reference: `plans/2026-11-12-cursor-automation-rollout.md`).
 
 This is the current Pigboard product, not a separate workflow product under an
 older platform. The previous queue/runtime implementation and hosted-service plans
@@ -38,8 +38,8 @@ getting the right reviews and understanding what is ready.
 This repository currently provides reusable worker roles and skills plus a
 GitHub Projects/local Codex queue runtime. The hosted team service, Jira, cloud
 runners and MCP are product direction, not capabilities shipped by this checkout.
-See the [product definition](product.md), [strategy and intended market](product-strategy.md),
-and [brand direction](brand-rebrand.md). The [logo candidates](../assets/brand/pigboard/README.md)
+See the product definition (historical reference: `product.md`), strategy and intended market (historical reference: `product-strategy.md`),
+and brand direction (historical reference: `brand-rebrand.md`). The logo candidates (historical reference: `../assets/brand/pigboard/README.md`)
 use our scuba pig with a floating Kanban board in the Rovito visual family.
 
 The skills and agents stay usable manually. The setup/runtime layer is separate:
@@ -89,14 +89,14 @@ npm test
 
 ## Product direction
 
-The [product definition](product.md) describes the agreed SaaS direction,
+The product definition (historical reference: `product.md`) describes the agreed SaaS direction,
 Rovito-derived principles, and unresolved design decisions. The runtime below
 describes the current GitHub Projects/local Codex implementation.
 
 ## Development Map
 
-Follow the [development workflow](development-workflow.md) and
-[architecture plan](architecture-plan.md) before choosing implementation
+Follow the development workflow (historical reference: `development-workflow.md`) and
+architecture plan (historical reference: `architecture-plan.md`) before choosing implementation
 work. These describe how we develop Pigboard; they are not customer runtime
 requirements.
 
