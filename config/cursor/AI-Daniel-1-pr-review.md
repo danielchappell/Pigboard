@@ -35,6 +35,35 @@ Grok 4.7 High and the exact one-sentence prompt. Memories and automatic Open Pul
 Request were removed. Keep it inactive while the prerequisites below are unresolved.
 No live Jira event, review, approval, comment or ticket transition has been executed.
 
+### Credential-free follow-up — 13 November 2026
+
+The Cursor UI was checked again: both automations are inactive and show zero runs
+in the last seven days. The reviewer retains the exact versioned prompt, webhook,
+Grok 4.7 High and the prepared Plexus environment, with no attached tools/MCPs.
+The environment still selects Build `bld-20261113-8acfae55-7d48-43dc-ad53-6dae484c41c6`;
+the successful CLI Build above remains a draft. No new Build or agent was started.
+
+The custom MCP form exposes Command, Arguments and Secrets fields and a JSON editor.
+The selector distinguishes Team and User connections, but the inspected creation
+form does not establish registration scope or targeted restart/removal controls.
+No server was registered, no secret entered and no existing connection changed.
+The proposed canary name was not visible in the selector; this is not an exhaustive
+account-wide name-availability check.
+
+The disposable credential-free probe passed all 11 local tests. Its verified source
+SHA-256 is `c0ea42f108ac75b2cd8adbeb73a94a723ee40b90f80221c40f39979833c3c01d`.
+These tests establish local behavior only. Native Cursor marker delivery,
+later-turn reuse, fresh-process identity and cleanup remain unverified. The probe
+was not installed in Cursor. A native test needs an explicitly owned test scope
+that does not fetch or access Safeguard repositories, or separate approval for that
+access. Do not run it through either delivery automation.
+
+The owner requires explicit approval of exact targets and actions before any
+Safeguard Bitbucket or Jira access, including read-only identity checks. Account
+details are not authorization. Live fixture writes require separate approval.
+Keep the CLI route unchanged; MCP migration remains separate work. See the
+[access boundary](rovito-cli.md#configure-access-separately).
+
 The existing environment's successful Build pins
 `12675375bc8710f197f9ceba43f56a2d845fbd0d`; it already contains this entrypoint and all
 shared helpers. See the [environment record](AI-Daniel-1.md). Renaming the source
@@ -63,3 +92,40 @@ The webhook endpoint is available in the automation UI. Generate/store its auth
 header only as part of the protected Jira rule wiring; never commit it or put it in
 agent instructions. No connector or approval identity is silently substituted, and
 existing legacy PRSniffer configuration is unchanged.
+
+## Permanent CLI setup — preparation, 13 November 2026
+
+The owner saved environment-scoped `ROVITO_EMAIL` and `ROVITO_API_TOKEN` Runtime
+Secrets. The read-only check Build
+`bld-20261113-eb7de81a-60cc-43d1-a715-9dc874d9a3de` succeeded: the expected account
+email was confirmed, Plexus/master metadata matched, and Rovito 0.1.295 reported
+healthy identity and repository access. It used a temporary profile, removed after
+the check. It did not run a review, access Jira, or write to Bitbucket.
+
+The new [persistent setup](rovito-cli.md#persistent-profile) prepares the same
+verified identity/repository with read-only policy, isolated configuration and a
+skill-visible capability file. Local tests and a successful temporary-profile
+check do not prove that the permanent profile is installed in a selected Build;
+record the actual permanent-profile Build acceptance separately.
+
+Before a full review test:
+
+1. Prepare the reviewer token's missing `read:pullrequest:bitbucket`,
+   `write:pullrequest:bitbucket` and `read:pipeline:bitbucket` permissions, retaining
+   existing user/repository reads. Confirm an eligible approval identity for the
+   chosen PR. The current token is only for identity/repository checks and expires
+   on 20 November 2026. Credential replacement remains a user action.
+2. Explicitly prepare and verify the `review-write` CLI policy and authorized
+   comment/edit, approve and own-approval-removal behavior on a chosen test PR.
+   Token permissions and local policy are separate gates. Atlassian's PR-write
+   scope also includes merge; the CLI review policy and workflow must continue to
+   disallow merge. See [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
+3. Supply the test Story/PR with complete ticket requirements and passing CI;
+   configure Jira reads, reports and direct QA/In Progress/Blocked transitions.
+   Prepare retained evidence/review state and trusted run ownership/deduplication
+   for the end-to-end handoff test. Do not invent missing inputs.
+
+A read-only core review can be scoped separately from the publishing/handoff test,
+with ticket requirements supplied and no claim that the full entrypoint passed.
+No test or automation activation is authorized merely by completing this setup.
+MCP migration and per-PR QA environments remain separate work.

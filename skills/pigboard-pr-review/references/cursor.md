@@ -24,7 +24,8 @@ Prepare these capabilities and permissions before activation:
   same PR; complete paged Bitbucket comparison, comments/tasks and required CI.
 - The approved Rovito Bitbucket instructions and `rovito-safeguard` MCP. A Rovito
   CLI route may be explicitly selected and verified in setup; it is never a fallback
-  discovered after a failed tool call. Do not use GitHub commands for Bitbucket.
+  discovered after a failed tool call. For that configured route, read the
+  [prepared CLI contract](rovito-cli.md). Do not use GitHub commands for Bitbucket.
 - Shared pr-review, its review-state reference, human-writing and pr-commenting at
   the reviewed versions. The wrapper preserves their criteria and writing behavior.
 - Permission to post/edit review comments, publish Jira reports, approve as an
