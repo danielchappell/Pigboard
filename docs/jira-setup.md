@@ -133,20 +133,21 @@ property as the sole resume record. Capture its exact ID/type/context here after
 creation. A reason can remain in the detailed blocker report; no reason field has
 been created or promised as part of this card change.
 
-## Automation inventory: required, not yet created
+## Automation inventory: saved and deferred
 
 | Rule | Trigger and behavior | State |
 | --- | --- | --- |
-| Implementer dispatch | Eligible Story enters In Progress; send ticket/event to implementer webhook | Disabled draft `01a1d625-da52-7941-aa56-23ee14f08d02`; URL saved, credential generated but not yet stored in Jira; payload pending |
-| Reviewer dispatch | Eligible Story enters In Review; send ticket/current PR context to reviewer webhook | Disabled draft `01a1d627-62c6-7979-8b8a-161671203972`; URL/header/payload pending |
+| Implementer dispatch | Eligible Story enters In Progress; send ticket/event to implementer webhook | Disabled rule `01a1d625-da52-7941-aa56-23ee14f08d02`; URL, hidden header and compact JSON body saved; untested |
+| Reviewer dispatch | Eligible Story enters In Review; send ticket/current PR context to reviewer webhook | Disabled rule `01a1d627-62c6-7979-8b8a-161671203972`; URL, hidden header and compact JSON body saved; untested |
 | QA dispatch | Eligible Story enters QA; send ticket/current PR context to QA webhook | Disabled rule `01a1d628-6c13-79d1-ae52-dcd8bdbf56de`; URL, hidden header and compact JSON body saved; untested |
 | Capture blocked stage | Eligible Story enters Blocked; save previous status in Blocked at without destroying an existing valid target on duplicate processing | Deferred to PGB-62; not created |
 | Human resume | Explicit human request while Blocked; validate saved stage and transition to it, retaining current PR | Deferred to PGB-62; not created |
 
-Each rule must scope to INT, Story, exact AI-Daniel-1 label. Capture the actual
-rule actor, allow-other-rules setting, status IDs, payload/auth mechanism and rule
-ID when saved. Check rule-chaining behavior deliberately: a resume transition must
-reach the stage dispatcher, but duplicate events must not start competing workers.
+Each rule scopes to INT, Story, exact AI-Daniel-1 label. All retain the default
+**Automation for Jira** actor and allow other automations and user actions to
+trigger them, so deterministic admission and future resume transitions can reach
+the dispatcher. This setting is saved; chaining has not been live-tested.
+Duplicate events must not start competing workers.
 Do not claim native automation provides atomic workstream ownership without evidence.
 
 All three rules have a Work item transitioned trigger with the exact To status,
@@ -173,9 +174,9 @@ changes to **Copy auth header**. The copied text includes `Authorization: Bearer
 the Jira header name is `Authorization`, and its hidden value starts with `Bearer`
 (do not paste the `Authorization:` prefix into the value). Keep **Secure header**
 checked. Do not save the token in the browser password manager or source control.
-QA's saved rule has that hidden header and `Content-Type: application/json`.
-The implementer credential was generated but has not yet been stored in Jira.
-The reviewer credential has not yet been generated. Credential values are omitted.
+All three saved rules have their own matching hidden header and
+`Content-Type: application/json`. Credential values are omitted. Browser
+password-save prompts were dismissed. No webhook request was sent.
 
 QA's saved Custom data body is:
 
@@ -203,10 +204,39 @@ suppression. Those remain activation gates. The payload schema is Pigboard's dra
 convention, not a Cursor API schema. Its delivery to the runner is untested.
 Do not derive dispatch authority from arbitrary ticket prose or copied JSON alone.
 
-The other stage bodies should use the same shape with their exact stage; they have
-not been saved yet. **Delay execution until response** is currently unchecked;
+The other two saved bodies use the same shape with their exact stage.
+**Delay execution until response** is currently unchecked;
 there are no subsequent actions. Response/failure handling remains to be accepted.
 No **Validate web request** or **Test** action has been run: those may dispatch.
+
+### Saved exports
+
+The following are original Jira JSON exports downloaded after configuration,
+not generic import templates or a working installer:
+
+- [Implementer](../config/jira/exports/AI-Daniel-1-implementer.json)
+- [PR reviewer](../config/jira/exports/AI-Daniel-1-pr-review.json)
+- [QA](../config/jira/exports/AI-Daniel-1-qa.json)
+
+All three export `state: DISABLED`, `canOtherRuleTrigger: true`, INT-only scope,
+name-based target statuses, exact JQL guards, POST destinations and JSON bodies.
+The actor account ID is `557058:f58131cb-b67d-43c7-b30d-6b58d40bd077` (Automation
+for Jira); the owner is Joseph Chappell. Editing is owner-only, reading is
+unrestricted within Jira's applicable access rules, and failure notification is
+`FIRSTERROR`. Existing project permissions and identities were not changed.
+
+Jira exports omit hidden authorization values: the saved files contain an empty
+Authorization value with `headerSecure: true`. This does not mean the live rule's
+credential was removed. Importing elsewhere will require new destination-specific
+credentials and replacement of site, project, account and resource IDs. Never
+import these as a general customer configuration without that reconciliation.
+Keep imported rules disabled. Do not expect an export to restore secrets.
+
+Local inspection parsed all three exports and checked disabled state, chaining,
+stage/JQL/endpoint alignment, matching payload stage, JSON validity, and absence
+of the hidden authorization values. These are static checks, not dispatch tests.
+Final UI inspection showed all three Jira rules disabled and all three Cursor
+automations inactive with zero runs. No Story labels or transitions were changed.
 
 Human Review approval, UAT acceptance and production-deployment event wiring are
 not configured. Human review does not grant an AI agent permission to merge.
@@ -247,8 +277,11 @@ an automatic rollback. For Cursor recovery follow the matrix's pinned-Build proc
 
 ## Next work
 
-1. Complete the three disabled stage drafts' webhook and runtime Jira access wiring.
-2. Review the captured configuration and keep explicit remaining acceptance gates.
+1. Complete runtime Jira capability wiring, repository admission and deterministic
+   event/visit identity and duplicate ownership before dispatch testing.
+2. Review interactions with the existing project rules and verify the complete
+   handoff through an explicitly authorized bounded test; keep all rules inactive
+   until then. New-work admission remains separate work.
 3. PGB-62 later supplies the Blocked at field, card display and human resume rules.
 
 This checklist is the setup record, not a replacement for the PGB delivery queue.

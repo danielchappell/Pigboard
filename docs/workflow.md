@@ -52,7 +52,7 @@ The AI board has a separate Blocked column. Showing the previous stage on each
 card and resuming it through a human-requested automation are agreed follow-up
 work in [PGB-62](https://scubapig.atlassian.net/browse/PGB-62), not configured
 capabilities. The [Jira setup record](jira-setup.md) captures the board mappings,
-disabled rule drafts, installation IDs and remaining access dependencies for a
+disabled rules, installation IDs and remaining access dependencies for a
 future installer. Humans should not drag tickets to resume them.
 
 Human Review is for both the responsible developer and human QA reviewer. Agents
