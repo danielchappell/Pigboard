@@ -1,0 +1,30 @@
+{
+  "endpoint": "https://api2.cursor.sh/automations/webhook/5b14a3ea-df99-11f1-ba91-f63b1661ac50",
+  "payload": "{\"schema\":\"pigboard.transport-probe.v1\",\"eventId\":\"pb-20261113-duplicate-01\",\"workstream\":\"AI-Daniel-1\",\"testOnly\":true}",
+  "receipts": [
+    {
+      "attempt": 1,
+      "startedAt": "2026-11-13T19:38:56.658Z",
+      "completedAt": "2026-11-13T19:38:58.020Z",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "location": null,
+        "x-request-id": "0ddd20a8-2a94-4061-964f-ee1080fd78c0"
+      },
+      "body": "{\"success\":true,\"backgroundComposerId\":\"bc-0e99bd95-31a8-43e3-a66e-968b0a4e8166\"}"
+    },
+    {
+      "attempt": 2,
+      "startedAt": "2026-11-13T19:39:14.949Z",
+      "completedAt": "2026-11-13T19:39:28.736Z",
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "location": null,
+        "x-request-id": "b2aae317-3431-4091-b1d0-53605e3a2bdd"
+      },
+      "body": "{\"success\":true,\"backgroundComposerId\":\"bc-500fe9f4-b3b1-44ce-b20b-d515c04e6465\"}"
+    }
+  ]
+}

@@ -277,6 +277,13 @@ an automatic rollback. For Cursor recovery follow the matrix's pinned-Build proc
 
 ## Next work
 
+Subsequent owner decision: shared run storage/database is outside the MVP.
+[Bounded Cursor webhook test](cursor-webhook-test.md) records actual duplicate
+behavior, returned agent IDs, manual stopping and the remaining API cancellation
+check. The full numbered label identifies the sequential stream; worker routing
+will match Daniel's label family. Saved rules still use exact AI-Daniel-1.
+The items below do not require implementing the superseded PostgreSQL proposal.
+
 1. Complete runtime Jira capability wiring, repository admission and deterministic
    event/visit identity and duplicate ownership before dispatch testing.
 2. Review interactions with the existing project rules and verify the complete
