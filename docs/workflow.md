@@ -48,6 +48,13 @@ with the reason, evidence, human action needed and stage to resume. All blocked
 work waits for a human; no autonomous retry or scope expansion. The agent can
 record a failed transition if its Jira access itself is unavailable.
 
+The AI board has a separate Blocked column. Showing the previous stage on each
+card and resuming it through a human-requested automation are agreed follow-up
+work in [PGB-62](https://scubapig.atlassian.net/browse/PGB-62), not configured
+capabilities. The [Jira setup record](jira-setup.md) captures the board mappings,
+disabled rule drafts, installation IDs and remaining access dependencies for a
+future installer. Humans should not drag tickets to resume them.
+
 Human Review is for both the responsible developer and human QA reviewer. Agents
 do not merge. Product Acceptance follows human merge and UAT deployment; Done
 means production deployment. Those human and release stages are not agent triggers.
