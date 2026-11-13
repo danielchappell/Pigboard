@@ -22,6 +22,14 @@ put environment discovery or setup instructions into the automation prompt.
 
 ## Observed configuration — 13 November 2026
 
+**Setup only; keep both automations inactive until explicit owner go-live.** The
+[CLI draft Build](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/builds/bld-20261113-0ce83168-5eed-4aa2-8673-d14796319431)
+passed on Plexus master `1256cdb` at 10:24 Europe/Madrid. Downloaded receipts verify
+all ten skills, 23 source hashes, both helpers, and Rovito 0.1.295 checksum/version/help.
+The Build remains a draft; it has not replaced the selected environment snapshot.
+No credentials or approval identity were configured. A separate reviewer account
+is preferred; the owner's account is fallback, pending eligibility verification.
+
 The reviewer is configured with a webhook trigger, the prepared Plexus environment,
 Grok 4.7 High and the exact one-sentence prompt. Memories and automatic Open Pull
 Request were removed. Keep it inactive while the prerequisites below are unresolved.

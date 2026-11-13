@@ -140,8 +140,10 @@ they do not establish live npm access or Cursor behavior. Local preparation, rem
 publication, saved automation, activation and a successful real Story are separate
 milestones. [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks rollout.
 
-Live setup verified on 13 November 2026: the public-source Cursor Build passed and
-was activated, with all ten entrypoints, 23 source hashes and both helper dependencies
-verified before snapshot. AI-Daniel-1 was then enabled at the owner's request. This
-proves environment installation; an end-to-end Jira Story has not been run. See the
-[setup record](config/cursor/AI-Daniel-1.md) for the exact Build and remaining wiring.
+Setup verified on 13 November 2026: the draft Cursor Build passed with all ten
+entrypoints, 23 source hashes, both helpers and the pinned Rovito CLI verified.
+**Both automations are inactive.** The owner clarified that setup must not go live
+until explicitly authorized; the earlier implementer activation was reversed.
+No Jira labels were added or Story dispatched by this setup. See the
+[reviewer setup record](config/cursor/AI-Daniel-1-pr-review.md) for the draft Build,
+pending account choice and remaining wiring.
