@@ -86,10 +86,11 @@ readiness, complete case dispositions and honest unverified platform constraints
 
 ## Active queue
 
-1. Reviewer token: waiting for owner email verification, then prepare five scopes
-   and hand off final creation/save. Existing token/profile stays read-only.
-2. Structured contract and inactive automation setup: design/plan review pending.
-3. Publish, independent review, CI, merge and Cursor Build/UI verification.
+1. Reviewer token: five scopes prepared after email verification; owner creation
+   and Cursor secret replacement pending. Existing CLI profile stays read-only.
+2. Structured contract: design/plan CLEAN; implementation and scenario checks done;
+   committed-artifact review correction awaiting fresh review.
+3. Publish, CI, merge and inactive Cursor Build/UI verification.
 4. Jira automation wiring: explicitly deferred until above is ready.
 
 Planned file inventory (16 total): this plan; `skills/write-pr-sized-stories/SKILL.md`;
@@ -127,3 +128,11 @@ steps and readable evidence fields serve both audiences; dependable: phase readi
 and setup/live evidence remain separate. npm test passed 22/22, including installed
 writer/reference/example byte equality. Both changed skill validators passed.
 Independent scenario/committed-artifact review and live Cursor setup remain pending.
+
+Committed-artifact round 1: both independent Sol reviewers examined 16/16 changed
+files at 5111e00, completed second sweeps and seven-principle assessments, and
+reported NOT CLEAN for the same P3: the API/database example omitted the required
+Problem to solve label. The label is now added. Their independent UI and API/DB
+walkthroughs covered missing inputs, cross-repository scope, nested dispatch and
+output bindings without finding other defects. The technical reviewer independently
+passed 22/22 tests. Correction review remains pending; no live acceptance claimed.

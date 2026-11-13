@@ -74,6 +74,8 @@ GET operation and tenant permission rule are established in this fixture.
 
 ### Description
 
+Problem to solve
+
 The settings response omits the saved display name. API consumers need to show that
 name without querying the database themselves.
 
