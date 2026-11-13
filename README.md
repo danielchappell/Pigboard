@@ -154,10 +154,13 @@ they do not establish live npm access or Cursor behavior. Local preparation, rem
 publication, saved automation, activation and a successful real Story are separate
 milestones. [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks rollout.
 
-Setup verified on 13 November 2026: the draft Cursor Build passed with all ten
-entrypoints, 23 source hashes, both helpers and the pinned Rovito CLI verified.
-**Both automations are inactive.** The owner clarified that setup must not go live
-until explicitly authorized; the earlier implementer activation was reversed.
-No Jira labels were added or Story dispatched by this setup. See the
-[reviewer setup record](config/cursor/AI-Daniel-1-pr-review.md) for the draft Build,
-pending account choice and remaining wiring.
+Setup verified on 13 November 2026: all eleven skills and the permanent reviewer
+CLI are installed outside Plexus. The account/Plexus read checks passed, and a
+separate setup-only run verified explicit High and Medium Task selections.
+**Implementer, PR Reviewer and QA are all configured and inactive.** No Jira labels
+were added or Story dispatched. The [automation matrix](config/cursor/automations.md)
+records the selected Build, exact pins and remaining acceptance work.
+
+Next is Jira routing and capability wiring, followed by an explicitly authorized
+bounded end-to-end test. Review comments/approvals and Jira transitions have not
+been live-tested. Per-PR environments and MCP migration remain separate work.

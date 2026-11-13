@@ -20,7 +20,7 @@ the successful Build below verifies that path in the prepared snapshot. Preserve
 release receipt outside the prompt for reproducibility. No model-led cloning,
 installation or environment repair is part of the invocation.
 
-## Current state — 13 November 2026
+## Earlier setup observations — 13 November 2026
 
 **Setup only; not live.** The owner clarified that both automations must remain
 inactive until explicit go-live authorization. The implementer was disabled at
@@ -40,10 +40,10 @@ receipt confirms `/opt/pigboard/skills`, all ten entrypoints, 23 source hashes,
 locked dependencies and both `pg.Client` and `bru --version` smoke checks. The Build
 finished Success, then was activated for new agents. Start Script remains empty.
 
-The existing AI-Daniel-1 implementer automation was then enabled at the owner's
-explicit request. The UI read back **Active**, Plexus/master, Grok 4.7 High, webhook
+The implementer was briefly enabled during setup, before the owner clarified
+that go-live was not authorized. It was disabled again. The historical UI read **Active**, Plexus/master, Grok 4.7 High, webhook
 trigger and the unchanged one-sentence instruction. No Jira event or work agent was
-launched. Its overview currently reports zero MCP connections. This activation does
+launched. That overview reported zero MCP connections. This activation does
 not establish end-to-end workflow readiness: Jira rule/authentication wiring, actual
 independent High/Medium phase controls and connected ticket tools still require
 configuration and verification before live ticket dispatch.

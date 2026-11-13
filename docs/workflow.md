@@ -69,8 +69,9 @@ happens during a human-controlled environment Build, never through agent-led set
 
 [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks current work. All delivery automations remain inactive. The prepared
 Cursor environment does not yet prove a real Jira Story can complete. Verify Jira event/authentication/serialization wiring,
-connected Jira/Bitbucket tools, actual High/Medium phase controls and independent
-reviewer isolation before dispatching tickets. Use the [three-stage setup matrix](../config/cursor/automations.md), complete its
+connected Jira/Bitbucket tools and full handoffs before dispatching tickets.
+Explicit High/Medium Task selections were verified in a separate setup-only run;
+that is not real-Story or provider-write acceptance. Use the [three-stage setup matrix](../config/cursor/automations.md), complete its
 remaining capabilities, then verify an explicitly authorized bounded end-to-end Story.
 
 ## PR environment handoff — agreed contract, pending implementation
