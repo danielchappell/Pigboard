@@ -40,8 +40,35 @@ test('persistent reviewer profile stays isolated, read-only and credential-free'
   await t.test('invalid identity and unsupported policy cannot create a profile',()=>{
     assert.throws(()=>run(args.map(x=>x==='workspace/repo'?'../repo':x)));
     assert.throws(()=>run(args.map(x=>x==='reviewer@example.test'?'bad\nemail':x)));
-    assert.throws(()=>run([...args,'--policy','review-write']));
+    assert.throws(()=>run([...args,'--policy','admin']));
     assert.throws(()=>run([...args,'--email','another@example.test']));
+  });
+  await t.test('review-write is explicit, reusable and does not imply verified access',async()=>{
+    const writeRoot=path.join(tmp,'reviewer-write');
+    const writeArgs=[...args.map(x=>x===root?writeRoot:x),'--policy','review-write'];
+    const receipt=JSON.parse(run(writeArgs));
+    assert.equal(receipt.policy,'review-write');assert.equal(receipt.providerAccessVerified,false);
+    const writeConfigPath=path.join(writeRoot,'config/rovito/config.json');
+    const writeConfig=await fs.readFile(writeConfigPath,'utf8');
+    const writeCapability=await fs.readFile(path.join(writeRoot,'capability.json'),'utf8');
+    assert.equal(JSON.parse(writeConfig).profiles['pigboard-pr-review'].policy,'review-write');
+    assert.equal(JSON.parse(writeCapability).policy,'review-write');
+    assert.equal(JSON.parse(writeCapability).providerAccessVerified,false);
+    assert.equal(JSON.parse(writeCapability).fullReviewReady,false);
+    assert.doesNotMatch(writeConfig+writeCapability,/fixture-do-not-store|unrelated/);
+    assert.equal(JSON.parse(run(writeArgs)).reused,true);
+    assert.throws(()=>run([...args,'--policy','review-write']));
+    assert.equal(await fs.readFile(configPath,'utf8'),text);
+    assert.throws(()=>run(args.map(x=>x===root?writeRoot:x)));
+    assert.equal(await fs.readFile(writeConfigPath,'utf8'),writeConfig);
+    assert.equal(await fs.readFile(path.join(writeRoot,'capability.json'),'utf8'),writeCapability);
+  });
+  await t.test('invalid policy creates no destination',async()=>{
+    const invalidRoot=path.join(tmp,'invalid');
+    for(const policy of ['admin','automation','review','READ-ONLY']){
+      assert.throws(()=>run([...args.map(x=>x===root?invalidRoot:x),'--policy',policy]));
+      await assert.rejects(fs.stat(invalidRoot),{code:'ENOENT'});
+    }
   });
   await t.test('application and other checkout destinations are rejected',async()=>{
     assert.throws(()=>run(args.map(x=>x===root?path.join(app,'config'):x)));

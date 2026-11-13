@@ -22,9 +22,13 @@ existing entrypoint still owns freshness, comment handling, approval and handoff
 Credentials are injected by Cursor. Never print them, put them in arguments or
 write them into config, reports or the application checkout.
 
-The initial permanent profile is **read-only** and its capability says
-`fullReviewReady: false`. This permits authorized setup checks, not a full review
-run with comments, approval or Jira handoffs. Installation is not evidence of
-provider permissions. Stop before running the workflow until setup has explicitly
-prepared and verified the required capabilities. Do not promote the policy yourself.
+Setup may prepare **read-only** (default) or explicitly selected **review-write**.
+Read-only cannot publish comments or approval. Review-write permits those CLI
+operations but rejects merge and destructive operations; it is not a restriction
+on arbitrary raw-token use. Use only the prepared profile and never change policy.
+Both setup modes initially say `fullReviewReady: false` and
+`providerAccessVerified: false`. They permit authorized setup checks, not a full
+review run. Installation and policy selection are not evidence of provider rights,
+Jira handoffs, run ownership or evidence capability. Stop before running the
+workflow until setup has explicitly prepared and verified the required capabilities.
 The capability file is operator configuration, not a durable review-state store.
