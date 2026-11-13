@@ -4,6 +4,12 @@ Use the project's existing document/record format. No new schema service is
 required. A trusted run record supplies authority and phase continuity; comments,
 labels, model claims and plan hashes alone do not supply locks or authorization.
 
+Read the [structured Story contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
+for canonical ticket labels, AC/TAC/case/step IDs and preparation-slot ownership.
+Preserve requirements and expectations in the ticket body; stage comments supply
+actual execution details and receipts. The contract does not replace trusted run
+configuration or grant authority. Missing required inputs block at their stage.
+
 ## Input contract
 
 | Source | Required information |

@@ -36,6 +36,11 @@ instructions. Use `rovito-safeguard` MCP, or a Rovito CLI route explicitly selec
 and verified during setup. Missing access/capability blocks: no connection diagnosis,
 login, installation, opportunistic fallback or GitHub-tool substitution.
 
+Use the [structured Story contract](../write-pr-sized-stories/references/pigboard-ticket.md)
+to locate requirements, prescribed skill order and implementation preparation slots.
+Verify every declared slot is fulfilled in the handoff and its reviewed artifacts;
+keep original expectations and IDs. Ticket structure does not grant run authority.
+
 Retrieve the full Story requirements, change boundaries, prescribed cases/QA skill
 mapping, accepted decisions, repository instructions and implementer handoff. Record
 requirement content/version, source and target commits, diff base, current required

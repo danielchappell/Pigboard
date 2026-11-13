@@ -1,5 +1,20 @@
 {
   "schemaVersion": 1,
-  "skills": ["implementer-entrypoint", "pigboard-pr-review", "pr-review", "pr-commenting", "human-writing", "qa-entrypoint", "qa-api", "qa-bruno", "qa-database", "qa-ui"],
-  "dependencyDirectories": ["qa-bruno/scripts", "qa-database/scripts"]
+  "skills": [
+    "implementer-entrypoint",
+    "pigboard-pr-review",
+    "pr-review",
+    "pr-commenting",
+    "human-writing",
+    "qa-entrypoint",
+    "qa-api",
+    "qa-bruno",
+    "qa-database",
+    "qa-ui",
+    "write-pr-sized-stories"
+  ],
+  "dependencyDirectories": [
+    "qa-bruno/scripts",
+    "qa-database/scripts"
+  ]
 }

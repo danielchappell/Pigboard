@@ -1,5 +1,9 @@
 # AI-Daniel-1 PR reviewer setup
 
+Current configuration and rollout gaps are recorded in the
+[three-stage automation matrix](automations.md). Older Build/pin observations below
+are dated history; they do not override the matrix or authorize activation.
+
 [Cursor automation](https://cursor.com/t/safeguardglobal-engineering/automations/d6870b65-df37-11f1-ba91-f63b1661ac50)
 uses Safeguard INT, label `AI-Daniel-1`, and entry to In Review. Jira owns that
 filtering and provides the ticket and trusted visit/run identity. The configured
