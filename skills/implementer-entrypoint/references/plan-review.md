@@ -39,9 +39,18 @@ The author and reviewer separately assess:
 7. **Dependable:** success, partial results, failure and recovery remain distinguishable.
 
 Explain how each is met, a concrete gap/tradeoff, or why unaffected. Principles do
-not authorize scope expansion. Return reviewer identity/model/effort, exact plan
+not authorize scope expansion. Return reviewer identity and model/effort evidence
+under the configured harness profile, exact plan
 hash and source/base/requirements fingerprint, coverage, findings, second-sweep
 result and verdict. A required scope increase is NOT CLEAN with a human blocker;
 no revised scope may be treated as approved. In-scope corrections require an
 updated plan and a new independent round. The caller must not convert its own
 rebuttal into a CLEAN verdict or accept one based on partial inspection.
+
+For the verified [Cursor Task binding](cursor.md#verified-cursor-task-binding),
+distinguish requested model/effort, the parent's accepted Task ID and dispatch
+record, setup-observed model evidence, and any actual per-call metadata. The caller
+adds the accepted Task receipt when the review returns. If the response omits model
+telemetry, say so; do not invent it or ask the reviewer to infer its own model.
+Other harnesses retain actual model/effort verification. This evidence route does
+not waive independent inspection, fresh review context, coverage or any scope gate.

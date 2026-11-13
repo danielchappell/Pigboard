@@ -35,7 +35,8 @@ Record requirements/source/base fingerprint, plan revision/hash, ordered steps a
 likely files, requirement-to-change/test mapping, regression verification and docs,
 prepared QA artifacts, failure/compatibility behavior, file/time estimate and
 required repo gates. Include author seven-principle assessment. Keep immutable
-review rounds with actual reviewer/model/effort, coverage/second sweep, findings,
+review rounds with reviewer identity and model/effort evidence under the configured
+harness profile, coverage/second sweep, findings,
 dispositions and exact-plan verdict. CLEAN on an earlier plan never covers changed
 approach automatically. On rework, record the explicit basis for plan/evidence reuse.
 
@@ -43,7 +44,7 @@ approach automatically. On rework, record the explicit basis for plan/evidence r
 
 Retain one run/visit marker and these facts as structured fields or readable tables:
 
-- Ticket, requirement fingerprint, actual model/effort by phase and independent
+- Ticket, requirement fingerprint, model/effort evidence by phase and independent
   reviewer identity; timings, plan/review revisions and limitations.
 - Repository, branch, PR, source/base and check/merge revision; actual changed files
   and total, scope/time assessment, requirement-to-change/test references and docs.
@@ -58,6 +59,14 @@ Retain one run/visit marker and these facts as structured fields or readable tab
   an agent-local path alone does not make evidence available to remote reviewers.
 - Commit/push/PR/comment receipts, requested and actual verified Jira destination,
   transition receipt, partial/uncertain actions and human recovery/resume stage.
+
+For the verified [Cursor Task binding](cursor.md#verified-cursor-task-binding),
+record exact requested Task type/model/machine, accepted agent ID, setup acceptance
+reference and its observed model, plus actual per-call model metadata when exposed.
+Mark absent per-call telemetry explicitly; setup-observed model is not per-run
+telemetry. The executor receives the trusted phase assignment before editing; the
+parent adds the accepted task result/ID afterward without repeating completed
+actions. Other harnesses retain their actual model/effort verification requirements.
 
 Use `implementationOutcome` READY, BLOCKED or NOT RUN. READY means the accepted
 change, required verification, PR and artifacts are ready for independent review;

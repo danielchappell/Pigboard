@@ -9,12 +9,11 @@ capabilities, not claims about every Cursor version/account.
 | Independent plan review | Same configured Grok, High | One fresh independent reviewer per round; read only |
 | Implement / fix / verify / publish | Same configured Grok, Medium | Accepted plan and authorized repository/Jira actions |
 
-Pin the actual available Grok identifier during setup; record actual model, effort,
-phase and reviewer identity in each run. Do not invent an identifier, silently
-substitute a provider/effort or run all phases at one effort. Prompt text alone does
-not change settings or prove independent execution. The harness must support and
-verify the phase switch and isolated reviewer. Missing support is a configuration
-blocker before implementation. Subsequent PR review and QA are separate High runs.
+Pin the available Grok identifier and verify the phase binding during setup; record
+phase, reviewer identity and the evidence described below in each run. Do not invent
+an identifier, silently substitute a provider/effort or run every phase at one effort.
+Prompt prose alone does not select a model or prove independence. Missing verified
+phase support blocks implementation. PR review and QA remain separate High runs.
 
 The trusted invocation supplies:
 
@@ -54,26 +53,54 @@ This profile does not create Jira/Cursor automations, preview environments or Te
 alerts, and does not grant merge/deployment authority. Live setup must verify all
 of those relevant capabilities separately from local skill validation.
 
-## Prepared Cursor subagents
+## Verified Cursor Task binding
 
-Deterministic setup installs `pigboard-plan-review` and `pigboard-execution` into
-the cloud user's `~/.cursor/agents`, outside the app. Definitions pin Grok 4.7,
-High and Medium respectively, Fast off. The High automation parent owns phases
-1–2, including replanning. Invoke exactly one fresh `pigboard-plan-review` per
-review round with the existing review prompt and complete inputs; it is read-only.
-After CLEAN, invoke `pigboard-execution` in the shared checkout for phases 3–5,
-passing the actual ticket, accepted plan/review revisions, source/base, ownership,
-same-PR identity, prior receipts and prepared tool/evidence context. Do not duplicate
-those execution phases at High. Parent reports the returned outcome without
-repeating successful external actions.
+The current cloud harness does not register Pigboard names from user-agent files.
+Use the built-in Task type and actual model argument, not a custom subagent name
+or a model request embedded only in prompt prose:
 
-If the executor returns NEEDS_HIGH_PLAN, the parent revises at High and obtains
-one fresh High review before a Medium continuation. Preserve partial work, PR and
-receipts across that handoff. Required new scope always needs a human. Neither
-agent can change model setup, install definitions or use fallback effort silently.
+| Phase | subagent_type | model | machine |
+| --- | --- | --- | --- |
+| Independent plan review | generalPurpose | grok-4.7-high | {"type":"same_machine"} |
+| Implementation / fixes / verification / publication | generalPurpose | grok-4.7-medium | {"type":"same_machine"} |
 
-Installed files and requested settings are configuration evidence only. Before
-delivery, operator acceptance must establish user-agent discovery, fresh reviewer
-context, same checkout and actual High/Medium task metadata in this account.
-During a run verify actual tool/harness model metadata before relying on each phase;
-if unavailable or different, block. An agent saying it is High/Medium is not proof.
+These are non-Fast selections. The automation parent is Grok 4.7 High, Fast off.
+Before dispatch require these exact model slugs and generalPurpose in the current
+runtime's allowed capability list. Do not use inherit, -fast, alternate types or a
+new VM. Missing availability, rejected dispatch, conflicting model metadata or
+invalid setup evidence blocks without substitution. Any model/version/runner
+change requires renewed setup acceptance.
+
+The High parent owns phases 1–2, including replanning. Invoke exactly one fresh
+foreground review per round, with no resume, using the existing plan-review prompt
+and actual ticket/plan/source/base/instructions. Review is read-only by contract;
+generalPurpose does not establish a readonly sandbox. After CLEAN, invoke Medium
+execution with phases 3–5 of the shared entrypoint, actual ticket, accepted plan
+and review, source/base, checkout/PR identity, run ownership, previous receipts and
+prepared tools/evidence. Wait for the result. Do not repeat execution at High.
+
+The executor verifies the trusted phase assignment and retained inputs before
+editing. If the approach needs replanning, stop before those edits and return
+NEEDS_HIGH_PLAN with evidence and preserved state. Parent replans at High, obtains
+one fresh High review and dispatches a Medium continuation. Required new scope
+always follows the human BLOCKED route. Preserve the same PR and completed-action
+receipts. Parent reports the returned outcome without repeating external actions.
+
+### Selection evidence
+
+Setup acceptance in Cursor session
+[bc-b264dab4-d964-4f66-9bd1-a87eb138a5de](https://cursor.com/t/safeguardglobal-engineering/agents/bc-b264dab4-d964-4f66-9bd1-a87eb138a5de)
+on 13 November 2026 observed completed task cards for Grok 4.7 High and Medium,
+with distinct fresh agent IDs and matching checkout observations. This establishes
+the configured binding for the tested account/runtime, not a completed Story.
+
+Use that operator-verified binding with the actual explicit dispatch arguments.
+Record requested model/effort, Task type/machine, accepted result/agent ID and the
+setup acceptance reference. The child receives the trusted parent assignment;
+the parent retains the accepted receipt when it returns. Check any actual model
+metadata that the harness exposes and block conflicting selections. The current
+Task result does not echo model/effort: label it "per-call model telemetry not
+returned" instead of inventing it or claiming the setup observation happened in
+this run. A child's assertion of its own model is not evidence. Other harnesses
+retain their actual-model verification requirements. Missing coverage, fresh
+review context or required artifact evidence still prevents CLEAN.
