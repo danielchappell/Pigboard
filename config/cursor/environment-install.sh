@@ -9,7 +9,7 @@ unset PIGBOARD_DEPLOY_KEY
 umask 077
 : "${PIGBOARD_REVISION:?Set PIGBOARD_REVISION to the reviewed 40-character commit}"
 [[ "$PIGBOARD_REVISION" =~ ^[0-9a-f]{40}$ ]] || { echo 'Pigboard setup blocked: invalid revision.' >&2; exit 1; }
-PIGBOARD_SOURCE=https://github.com/danielchappell/ski-stack.git
+PIGBOARD_SOURCE=https://github.com/danielchappell/Pigboard.git
 PIGBOARD_APP="${PIGBOARD_APP:-$PWD}"
 export GIT_TERMINAL_PROMPT=0
 node -e 'if (Number(process.versions.node.split(".")[0]) < 20) process.exit(1)'
@@ -23,7 +23,7 @@ if [[ -n "$PIGBOARD_KEY_MATERIAL" ]]; then
   # GitHub's published Ed25519 host key: https://api.github.com/meta
   printf '%s\n' '[ssh.github.com]:443 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$PIGBOARD_BOOTSTRAP/known_hosts"
   export GIT_SSH_COMMAND="ssh -F /dev/null -i $PIGBOARD_BOOTSTRAP/deploy-key -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$PIGBOARD_BOOTSTRAP/known_hosts -o GlobalKnownHostsFile=/dev/null -o HostKeyAlgorithms=ssh-ed25519"
-  PIGBOARD_SOURCE=ssh://git@ssh.github.com:443/danielchappell/ski-stack.git
+  PIGBOARD_SOURCE=ssh://git@ssh.github.com:443/danielchappell/Pigboard.git
 fi
 git -C "$PIGBOARD_BOOTSTRAP" init --quiet
 if ! git -C "$PIGBOARD_BOOTSTRAP" fetch --quiet --depth=1 -- "$PIGBOARD_SOURCE" "$PIGBOARD_REVISION" 2>/dev/null; then

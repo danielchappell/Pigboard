@@ -53,7 +53,7 @@ Example (replace paths and the approved release ref with your setup values):
 
 ```sh
 node /opt/pigboard-setup/scripts/prepare-pigboard-skills.mjs \
-  --source https://github.com/danielchappell/ski-stack.git \
+  --source https://github.com/danielchappell/Pigboard.git \
   --ref APPROVED_RELEASE_REF \
   --cache /opt/pigboard-releases \
   --app /workspace/plexus
@@ -116,7 +116,7 @@ dependencies, then reruns setup. For a deliberate rollback, prepare a previously
 reviewed commit. Keep releases used by active runs; remove unused releases manually
 when their runs have ended. The script performs no automatic cache pruning.
 
-## First Cursor automation
+## Cursor automations
 
 Use a webhook trigger, the Plexus/master environment, and the prepared implementer
 entry point. The Jira rule must select Stories in INT with exactly `AI-Daniel-1`
@@ -127,7 +127,10 @@ The exact Grok High/Medium controls, isolated reviewer, Jira/Bitbucket tools,
 deduplication, evidence storage and finite CI wait must work before live ticket dispatch.
 The ticket supplies acceptance cases and the exact QA skills to run. Per-PR test
 environments remain separate work; QA consumes their URLs and deployed revisions.
-See [setup status](config/cursor/AI-Daniel-1.md) for actual configuration and blockers.
+See the [implementer setup](config/cursor/AI-Daniel-1.md) and
+[PR reviewer setup](config/cursor/AI-Daniel-1-pr-review.md) for actual configuration
+and blockers. The reviewer uses its own webhook and the versioned
+[review prompt](config/cursor/pr-review-prompt.txt).
 
 ## Validation and status
 

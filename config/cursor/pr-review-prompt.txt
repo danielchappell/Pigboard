@@ -1,0 +1,1 @@
+Review the open pull request for the provided Jira ticket in the codebase specified by that ticket, following /opt/pigboard/skills/pigboard-pr-review/SKILL.md.

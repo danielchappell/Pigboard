@@ -40,7 +40,7 @@ if (name === 'node' && args[0]?.endsWith('/install-cursor-skills.mjs')) fs.appen
     const records = (await readFile(evidence, 'utf8')).trim().split('\n').map(JSON.parse);
     const auth = records[0];
     assert.equal(auth.mode, 0o600);
-    assert.equal(auth.source, 'ssh://git@ssh.github.com:443/danielchappell/ski-stack.git');
+    assert.equal(auth.source, 'ssh://git@ssh.github.com:443/danielchappell/Pigboard.git');
     assert.match(auth.hosts, /^\[ssh.github.com\]:443 ssh-ed25519 /);
     for (const setting of ['BatchMode=yes', 'IdentitiesOnly=yes', 'IdentityAgent=none', 'StrictHostKeyChecking=yes', 'HostKeyAlgorithms=ssh-ed25519']) assert.ok(auth.ssh.includes(setting));
     assert.equal(records.length, fail ? 1 : 2);
