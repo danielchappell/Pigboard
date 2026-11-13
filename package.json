@@ -1,45 +1,14 @@
 {
-  "name": "ski-stack",
+  "name": "pigboard",
   "version": "0.1.0",
-  "description": "Flat skills plus queue-driven agent workers for project-management-backed delivery loops.",
-  "type": "module",
   "private": true,
-  "main": "src/index.js",
+  "description": "Shared Jira delivery skills and deterministic Cursor environment setup",
+  "type": "module",
   "scripts": {
-    "test": "node --test",
-    "check:pigboard-image": "node scripts/check-pigboard-production-image.mjs",
-    "host:pigboard": "node scripts/run-pigboard-host.mjs",
-    "owner:migrate": "node scripts/bootstrap-pigboard-owner.mjs migrate",
-    "owner:bootstrap": "node scripts/bootstrap-pigboard-owner.mjs bootstrap",
-    "owner:recover": "node scripts/bootstrap-pigboard-owner.mjs recover",
-    "owner:inspect": "node scripts/inspect-pigboard-authority.mjs",
-    "owner:runtime-login": "node scripts/setup-pigboard-runtime-login.mjs",
-    "caller:me": "node scripts/inspect-pigboard-caller.mjs",
-    "jira:metadata": "node scripts/check-pig-jira-metadata.mjs",
-    "jira:choices": "node scripts/discover-pigboard-jira.mjs",
-    "neon:preflight": "node scripts/check-neon-root.mjs",
-    "profile:check": "node scripts/check-workflow-profile.mjs",
-    "apply:github": "node scripts/apply-github-worker-result.mjs",
-    "check:github-project": "node scripts/check-github-project.mjs",
-    "claim:github": "node scripts/claim-github-worker.mjs",
-    "cursor": "node scripts/cursor-cloud.mjs",
-    "daemon:github": "node scripts/run-github-worker-daemon.mjs",
-    "import:github-repos": "node scripts/import-github-project-repos.mjs",
-    "logs:github": "node scripts/show-github-run-logs.mjs",
-    "migrate:delivery-lifecycle": "node scripts/migrate-delivery-lifecycle.mjs",
-    "provision:github-project": "node scripts/provision-github-project.mjs",
-    "release:github": "node scripts/release-github-claim.mjs",
-    "schema:github-projects": "node scripts/print-github-project-schema.mjs",
-    "setup:github-project": "node scripts/setup-github-project.mjs",
-    "agent:enroll": "node scripts/manage-pigboard-agent.mjs enroll",
-    "agent:status": "node scripts/manage-pigboard-agent.mjs status",
-    "agent:revoke": "node scripts/manage-pigboard-agent.mjs revoke"
+    "test": "node --test test/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT",
-  "dependencies": {
-    "pg": "^8.23.0"
-  }
+  "license": "MIT"
 }

@@ -1,457 +1,144 @@
-> **Project management moved to Jira on 23 October 2026.** [Pigboard Product backlog](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70) owns current scope, priority, dependencies, status and next work. [PGB-50](https://scubapig.atlassian.net/browse/PGB-50) holds the source reconciliation and handover record. Queue/status statements below are dated historical snapshots; technical design and engineering rules still apply unless a linked newer decision supersedes them. Update Jira when work changes.
-
-See [project management](docs/project-management.md) for the human and agent workflow.
-
 # Pigboard
 
-Pigboard is an opinionated AI development process. We are building it to take a
-feature through product discovery and small, reviewed changes, while your team
-controls product decisions and what ships. We maintain and improve the method.
+Pigboard is a shared set of skills and setup scripts for delivering Jira Stories
+with Cursor agents. Jira holds the requirements and progress. Cursor runs the work.
+The human owner remains accountable and approves what ships.
 
-Our initial audience is engineering leads with an existing application, quality
-standards and developers already using coding agents. The aim is to reduce the
-coordination between sessions: preserving decisions, handing over context,
-getting the right reviews and understanding what is ready.
+Start with Safeguard INT, label `AI-Daniel-1`, and Plexus on `master`. Each ticket
+names its target repository; that target must match an allowed repository in the
+configured Cursor environment. More repositories can be added later.
 
-This repository includes reusable worker roles and skills, the GitHub Projects/
-local Codex runtime, a standalone Cursor command, offline workflow preview,
-Jira metadata diagnostics, private grant inspection and approved Jira name discovery. The guides below
-explain each available tool and its limits. These foundations do not yet establish
-complete hosted Jira delivery or live acceptance.
+## How work moves
 
-Start with the [product definition](docs/product.md),
-[strategy and intended market](docs/product-strategy.md),
-[brand direction](docs/brand-rebrand.md), or [approved logos](assets/brand/pigboard/README.md).
-Our visual identity pairs the established scuba pig with a floating Kanban board
-in the Rovito family.
-
-The skills and agents stay usable manually. The setup/runtime layer is separate:
-it can create a GitHub Project, provision the fields Pigboard needs, claim work,
-print a worker prompt, and apply the worker result back to the board.
-
-## Agents
-
-The default worker roles are in `agents/`:
-
-| Agent | Use it for |
+| Jira stage | Owner and result |
 | --- | --- |
-| `planner` | Turn rough intent into a scoped work item. |
-| `architect` | Decide the technical approach before coding. |
-| `groomer` | Split large work into small, verifiable items. |
-| `implementation-planner` | Produce and adversarially review the concrete plan for one story. |
-| `implementer` | Build one scoped item against acceptance criteria. |
-| `qa` | Verify behavior with tests, app/API checks, or evidence. |
-| `reviewer` | Review diffs/plans for bugs, gaps, and drift. |
-| `pr-babysitter` | Run one bounded PR feedback/check cycle without merging. |
-| `researcher` | Answer a focused unknown that blocks progress. |
+| In Progress | Implementer plans with Grok High, gets one independent High plan review, implements with Medium, opens the PR and verifies current CI before moving to In Review. |
+| In Review | Independent High reviewer checks the ticket and PR; approval moves it to QA. |
+| QA | High QA agent runs the ticket's named skills and cases and retains evidence. Success moves the open PR to Human Review. |
+| Human Review | The human developer and human QA reviewer assess the PR before human merge. |
+| Product Acceptance | Human acceptance after deployment to UAT. |
+| Done | Verified production deployment. |
 
-The reusable skills live in `skills/`. They are not tied to the queue runtime;
-use them directly whenever they help.
+Confirmed fixes return to In Progress on the same PR. Missing access, incomplete
+instructions or required scope expansion blocks the ticket for a human. Discussion
+stays in Review or QA. Agents do not select new work, merge, deploy or keep retrying
+blocked work. The separate Jira admission script selects new work for the stream.
 
-## Preview a workflow offline
+## What is in this repository
 
-With Node.js 20+ and a checkout, validate a shareable Jira-to-worker configuration:
+- `skills/`: reusable instructions, references and prepared QA helpers.
+- `config/skill-bundle.json`: the ten execution skills included in this release.
+- `scripts/prepare-pigboard-skills.mjs`: deterministic fetch and refresh.
+- `scripts/install-cursor-skills.mjs`: verified installation at a stable skill path.
+- `config/cursor/environment-install.sh`: versioned Cursor Build install command.
+- `config/cursor/`: first automation instructions and setup record.
+- `docs/workflow.md`: ticket requirements, stage handoffs and remaining setup.
+- `test/`: installer, refresh, failure and bootstrap checks.
 
-```bash
-npm run --silent profile:check -- --file ski.workflow.example.json --format text
+The earlier platform, website, runtime and planning history are preserved in the
+[private legacy repository](https://github.com/danielchappell/pigboard-legacy). Access
+is limited to its authorized collaborators. This repository now contains only the
+MVP assets and their documentation, tests and CI. No hosted service is required.
+The cleanup does not remove old public Git history or shut down existing services.
+
+## Fetch the skills outside the application repository
+
+The setup machine needs Node.js 20+, Git, npm, network access to the approved Git
+source and npm registry. The Pigboard source repository is public; its HTTPS fetch
+needs no deploy key or GitHub credential. Use a reviewed Pigboard
+checkout for the setup command. The selected remote ref must contain the skills;
+local commits are not automatically available in Cursor.
+
+Example (replace paths and the approved release ref with your setup values):
+
+```sh
+node /opt/pigboard-setup/scripts/prepare-pigboard-skills.mjs \
+  --source https://github.com/danielchappell/ski-stack.git \
+  --ref APPROVED_RELEASE_REF \
+  --cache /opt/pigboard-releases \
+  --app /workspace/plexus
 ```
 
-This needs no credentials, dependencies or connected accounts and starts no agent
-work. A valid profile is a static route preview; `liveReady` remains `false`.
-The [workflow profile guide](docs/workflow-profile.md) covers copying/editing the
-file, JSON/stdin usage, error recovery and the live prerequisites still unchecked.
-
-## Check PIG Jira metadata
-
-For the Scubapig pilot, `npm run --silent jira:metadata -- --help` describes a
-read-only check of PIG project and board metadata with the dedicated Jira service
-account. The [Jira metadata guide](docs/pig-jira-metadata-preflight.md) explains
-protected OAuth files, the required read scopes, text/JSON results and recovery.
-The service credential is not yet live-verified; a passing local test or a
-completed metadata check does not validate a board pair or accept S02a.
-
-## Check the Pigboard database boundary
-
-An operator can run `npm run --silent neon:preflight -- --passfile /absolute/private/path`
-to check the dedicated Neon production root and the restricted runtime role. It
-requires a `pigboard_app` login, a private PostgreSQL password file and an
-owner-created disposable table. An infrastructure owner can run
-`npm run --silent owner:runtime-login -- --help` for instructions to create the
-restricted login and file; setup needs a private owner URL and project-scoped
-Neon API key. The diagnostic
-reports pass, fail or
-unverified in text, or with `--format json` for an operator agent. It never
-creates a role, changes grants, deploys Fly or selects a Jira board. The
-[Neon preflight guide](docs/hosted-neon-preflight.md) explains setup, cleanup and
-recovery. Until an actual scoped login and TLS connection pass, local tests do
-not establish live readiness.
-
-## Run the first private Pigboard host
-
-`npm run --silent host:pigboard` starts a small private HTTP service. The
-operator can run `npm run --silent host:pigboard -- --diagnose-root` to check a
-fresh, pinned Neon root connection. Both commands need a private
-`PIGBOARD_NEON_URL`. With authority migration version 3, a caller can inspect only
-their own current grant with `GET /v1/authority/me` and a bearer credential.
-The host lists approved Jira names but does not save a board selection or expose a public API. The
-[first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
-private Fly setup, safe credential use, diagnostic results, restart and rollback.
-Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [historical delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-4-october-2026) records the completed two-PR batch: fixed agent connect/disconnect, then approved named read-only Jira discovery, followed by regroup. Prior owner PR #36/TLS PR #37 and4 October owner live proof are historical evidence. New-code committed review, hosted CI, merge/deployment and agent live acceptance remain separate. The host is not accepted merely because source or local tests exist.
-
-With the private Fly Machine, Neon runtime login and an owner-specific WireGuard
-route verified, the bootstrapped owner can inspect only their current grant with
-`npm run --silent caller:me -- --token-file /absolute/private/owner.token`.
-`--format json` gives the same validated result to a noninteractive caller. The
-token stays in an owned mode-0600 file under an owned mode-0700 directory; the
-command accepts no URL or token argument and does not change grants. A valid 401
-is denial, a valid 503 is service unavailability, and a bad route or response is
-unverified. The [private-service guide](docs/hosted-pigboard-first-service.md#inspect-a-current-owner-grant)
-explains peer setup, recovery and live acceptance. The fixed agent uses its own
-credential and distinct peer through the protected lifecycle below; general
-invitations remain deferred. This command does not administer grants.
-
-## Set up the first Pigboard owner
-
-An infrastructure operator can run `npm run --silent owner:migrate -- --help`
-for the protected migration, first-owner bootstrap, inspection and guarded
-recovery commands. They use a private local `pigboard_owner` URL file and write
-the one-time caller credential to a private owner file, never to terminal output.
-The [owner setup guide](docs/hosted-pigboard-authority.md) gives the ordered steps
-and interruption recovery. These commands are not a normal service API; local
-tests alone do not prove live Neon setup or make the first host ready.
-
-## Connect the fixed pilot agent
-
-Protected operators can run `npm run --silent agent:enroll -- --help` for fixed
-pilot-agent enroll/status/revoke. A durable UUID-named private token file precedes
-SQL activation; exact-file retry reconciles the same identity. Tokens/digests
-never appear in output. Use `agent:status` after unknown replies, and explicit
-UUID revoke before replacing a lost bearer. Database completion is separate from
-recipient delivery and distinct peer proof. Full disconnect requires valid next-
-call denial, exact peer removal and preserved owner access. The [authority guide](docs/hosted-pigboard-authority.md#connect-inspect-and-disconnect-the-fixed-agent)
-gives human steps and the same noninteractive JSON contract for agents.
-
-The migration is forward-only v3; private ingress and old operators must be
-fenced/quiesced during upgrade. Follow the [fenced upgrade procedure](docs/hosted-pigboard-first-service.md#upgrade-v3-with-private-ingress-fenced),
-since stopping an autostart-enabled Machine alone cannot close Flycast traffic.
-These commands are available in this checkout; see the [plan and evidence](docs/plans/pigboard-pilot-agent.md)
-for review/test/release/live status. The read-only `jira:choices` command is in the [private-service guide](docs/hosted-pigboard-first-service.md#discover-approved-jira-names);
-saved selection, rotation, arbitrary agent names and HTTP administration are deferred.
-
-## Quick Setup
-
-Requirements:
-
-- Node.js 20+
-- GitHub CLI authenticated with `gh auth login`, or a `GITHUB_TOKEN`/`GH_TOKEN`
-  with Project and repo access
-- PostgreSQL server tools `initdb` and `pg_ctl`, plus `openssl`, for the real
-  local TLS database tests included in `npm test`. Install PostgreSQL and put
-  its server binary directory on `PATH`; CI installs these tools before testing.
-
-For local `gh` auth, grant GitHub Projects scopes once:
-
-```bash
-gh auth refresh --scopes project
-```
-
-Clone and test (the repository URL retains its existing identifier):
-
-```bash
-git clone git@github.com:danielchappell/ski-stack.git pigboard
-cd pigboard
-npm ci
-npm test
-```
-
-## Product direction
-
-The [product definition](docs/product.md) describes the agreed SaaS direction,
-Rovito-derived principles, and unresolved design decisions. The queue runtime
-remains the GitHub Projects/local Codex implementation; the Cursor runner is separate.
-
-## Cursor Cloud Jobs
-
-Use `npm run --silent cursor -- --help` to prepare, start, and retrieve a Cursor
-cloud job with a stable provider ID. The [Cursor runner guide](docs/cursor-cloud.md)
-includes model discovery, JSON inputs/results, and recovery after a lost launch
-response. This is a standalone plan-mode runner; board routing and the existing
-GitHub/Codex daemon are separate workflows.
-
-## Development Map
-
-Follow the [development workflow](docs/development-workflow.md) and
-[architecture plan](docs/architecture-plan.md) before choosing implementation
-work. These describe how we develop Pigboard; they are not customer runtime
-requirements.
-
-Pigboard is intentionally small and dependency-light. For most local work,
-start with:
-
-```bash
-npm test
-```
-
-Key areas:
-
-- `agents/` and `skills/` are reusable instruction assets.
-- `src/core/` owns statuses, worker types, claim ids, and adapter contracts.
-- `src/runtime/` owns dispatch, prompt assembly, and worker-result application.
-- `src/adapters/github-projects/` contains GitHub Projects queue behavior.
-- `src/provisioners/github-projects/` contains Project setup, validation, and
-  field provisioning.
-- `scripts/` exposes the CLI workflows described below.
-
-Live GitHub commands use the current token and Project env. Claim commands are
-not read-only: they can write lease fields, increment attempts, and update the
-last worker run. Use mocked tests for adapter behavior unless you are
-intentionally validating a real Project.
-
-## Create A GitHub Project
-
-Create a GitHub Project and provision the Pigboard fields/options:
-
-```bash
-npm run setup:github-project
-```
-
-By default, this runs interactively. It uses the authenticated GitHub user from
-`gh auth token`, asks for the Project title, and prompts for repositories to
-enroll. If you run it from a cloned GitHub repo, it offers `remote.origin.url` as
-the first repo.
-
-By default, setup copies the bundled Pigboard Kanban template so the Project has
-`Queue Board` and `All Items` views. To force a plain API-created Project:
-
-```bash
-npm run setup:github-project -- --no-template
-```
-
-Custom installations can override the template with `SKI_TEMPLATE_PROJECT_ID` or
-`--template-project-id`. Without a template, setup still creates/provisions the
-manual GitHub view steps: switch to Board layout and use `Status` as the column
-field.
-
-GitHub Projects are user/org-level boards. One Project can contain issues and
-PRs from many repos, and workers can later filter by repo.
-
-For repeatable setup, the same command still accepts env/flags:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_OWNER_TYPE=organization \
-npm run setup:github-project -- --title "Delivery Queue" --repo your-org/app --repo your-org/api
-```
-
-The command prints:
-
-- Project URL
-- Project number
-- `GITHUB_OWNER`
-- `GITHUB_PROJECT_NUMBER`
-- `SKI_REPOSITORIES`, when repos were selected
-
-Use those values for the worker commands.
-
-Add or import more repos into an existing Project later:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-npm run import:github-repos
-```
-
-## Check Or Repair A Project
-
-Preview the required schema:
-
-```bash
-npm run schema:github-projects
-```
-
-Validate an existing Project:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-npm run check:github-project
-```
-
-Provision missing fields/options on an existing Project:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-npm run provision:github-project -- --apply
-```
-
-## Manual Worker Loop
-
-Put an issue or PR into the Project with:
-
-- `Status`: one of `Planning`, `Architecture`, `Grooming`, `Ready`,
-  `Implementation Planning`, `Implementation`, `QA`, `Review`, or `Babysit`
-- `Priority`: `P0`, `P1`, `P2`, or `P3`
-
-Moving a card into a worker column makes it eligible. `Worker Type` is optional
-override routing when a card in a shared status should be claimed by only one
-worker type. The queue engine also requires every dependency to be completed.
-
-For issue-backed work, author dependencies with GitHub's native **Blocked by**
-relationship on the source issue. Open, not-planned, unreadable, missing, or
-cyclic blockers make the item unavailable without moving its Project card.
-Draft issues and PR-backed cards do not expose dependency edges in the current
-adapter. No custom Project dependency field is required.
-
-Claim the next item for a worker and print the prompt:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-SKI_WORKER_TYPE=implementer \
-npm run claim:github -- --hold
-```
-
-Limit a worker to one or more repos in the shared Project:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-SKI_WORKER_TYPE=qa \
-SKI_REPOSITORIES=your-org/app,your-org/api \
-npm run claim:github -- --hold
-```
-
-Leave `SKI_REPOSITORIES` unset for a worker that can pull from any repo in the
-Project. Candidates are ordered by Priority, Project position, then stable item
-id. When nothing is available, the claim command prints bounded reason codes for
-the items it skipped.
-
-After a human or external model completes the prompt, apply the JSON result:
-
-```bash
-cat result.json | \
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-npm run apply:github -- 'ski.<claim-payload>'
-```
-
-Release a held claim without applying a result:
-
-```bash
-GITHUB_OWNER=your-org \
-GITHUB_PROJECT_NUMBER=1 \
-npm run release:github -- 'ski.<claim-payload>'
-```
-
-## Local Worker Daemon
-
-The local daemon runs this delivery chain:
-
-- `implementation-planner` claims `Implementation Planning`, runs Codex in a
-  read-only detached worktree, verifies at least two completed adversarial
-  review subagents and a clean final round, then advances to `Implementation`.
-- `implementer` claims `Implementation` and advances completed diffs to
-  `Review` on a deterministic `ski/issue-N` branch. It does not create a PR.
-- `reviewer` claims `Review` read-only, routes findings back to `Implementation`,
-  or creates/recovers a non-draft PR and advances clean work to `Babysit`.
-- `pr-babysitter` claims `Babysit`, addresses PR comments/CI feedback on the
-  same PR, and stays in `Babysit` after waiting or pushing one scoped fix.
-- The lifecycle reconciler moves an authorized PR-description `+1` to
-  `Ready for Owner`; only the owner merges. Approval removal returns to
-  `Babysit`, while merge or successful source-issue closure moves to `Done`.
-
-`architect` and `groomer` stay manual in this slice. Their role cards emit
-standardized handoffs, and Grooming puts implementation stories into
-`Implementation Planning`. `QA` remains available only for legacy/manual use.
-
-The daemon uses local ChatGPT-authenticated Codex, not API-key billing. Startup
-runs `codex login status` and fails if local ChatGPT auth cannot be verified.
-It also runs a Codex isolation smoke check before accepting work.
-
-Create a worker config:
-
-```bash
-cp ski.workers.example.json ski.workers.json
-```
-
-Edit `ski.workers.json` so each repo entry has the local checkout path and the
-commands that are safe to run before/after Codex. Every runnable worker slot
-must also set `model`; the daemon passes it directly to `codex exec --model` and
-refuses to start if it is missing or blank. `type` controls queue routing while
-`model` controls the model that performs that role. Set optional
-`reasoningEffort` to `none`, `low`, `medium`, `high`, or `xhigh` to pass Codex's
-`model_reasoning_effort` configuration override. Repo commands are run with a
-scrubbed environment and network denied.
-
-Each slot may set its own `rolePath`. The repository-wide `workerRole` override
-is retained only as a deprecated fallback. The example config uses
-`gpt-5.6-sol` for planning/review and `gpt-5.6-terra` for implementation and
-babysitting, all with `xhigh` reasoning.
-
-Start the daemon:
-
-```bash
-GITHUB_TOKEN=... \
-GITHUB_OWNER=your-user-or-org \
-GITHUB_PROJECT_NUMBER=1 \
-GITHUB_WEBHOOK_SECRET=change-me \
-SKI_HANDOFF_SECRET=$(openssl rand -hex 32) \
-SKI_WORKER_CONFIG=./ski.workers.json \
-npm run daemon:github
-```
-
-By default the daemon listens locally at:
-
-```text
-http://127.0.0.1:8787/webhooks/github
-```
-
-For real GitHub webhooks, expose that endpoint through your tunnel and register
-the public tunnel URL in GitHub with the same `GITHUB_WEBHOOK_SECRET`. If you
-are only testing locally without GitHub, `-- --insecure-local-webhook` is
-allowed on loopback only.
-
-Each worker slot can restrict the repos it claims with `repository` or
-`repositories`. Leave the allow-list empty only for a worker that can pull from
-any enrolled repo in the shared Project.
-
-Full Codex streams stay local under `SKI_RUN_LOG_DIR` or
-`~/.ski-stack/runs`. GitHub only receives concise sanitized status/evidence.
-Machine-authoritative stage handoffs are visible signed issue comments. They
-require `SKI_HANDOFF_SECRET` of at least 32 bytes and are accepted only from the
-configured daemon GitHub login. Ordinary issue bodies/comments remain untrusted
-prompt context.
-
-Retrieve local logs:
-
-```bash
-npm run logs:github -- --issue "Build webhook worker" --latest
-npm run logs:github -- --pr 42 --worker reviewer
-npm run logs:github -- --status Review --tail 60
-npm run logs:github -- --run run-id --json
-```
-
-## Runtime Shape
-
-```text
-GitHub Project
-  -> GitHub webhook wakes the local daemon
-  -> adapter loads a normalized queue snapshot and native dependencies
-  -> core engine orders available work by Priority and Project position
-  -> coordinator claims one candidate with a structured lease envelope
-  -> daemon loads and verifies signed stage handoffs
-  -> daemon prepares an isolated stage-specific worktree
-  -> Codex runs locally and writes a structured result
-  -> daemon revalidates dependency availability before final side effects
-  -> Project status advances or blocks with sanitized evidence
-```
-
-Reviewer-created implementation PRs include a harness-owned
-`Closes owner/repo#N` line. Merging the PR closes the source issue and can unlock
-native dependents. Issue webhooks wake every worker partition; periodic
-reconciliation covers missed events.
-
-GitHub Projects is the first integration. The adapter boundary is intentionally
-separate so Jira, Linear, or a transactional queue can be added later without
-changing the skills or agent role cards.
+The cache must be outside the application and every Git checkout. Public HTTPS needs no credential. For a private fork, use prepared Git authentication;
+never put passwords or tokens in the source URL or prompt.
+The command fetches the requested ref, copies the complete allowlisted skill folders,
+rejects symlinks and installs the locked Bruno/Postgres dependencies with `npm ci`.
+Dependency lifecycle scripts are disabled. No application files are modified.
+
+Success prints one JSON receipt with `commit`, `release`, `skills` and `manifest`
+absolute paths. Retain that receipt for the run. The automation reads its entry point
+from the returned `skills` path, for example `implementer-entrypoint/SKILL.md`.
+Sibling references continue to work. The manifest records source file hashes and the
+runtime platform. Dependency installation is part of successful preparation.
+
+## Refresh and recovery
+
+Run the same command to refresh. A moving branch resolves to its fetched commit;
+use a commit or protected release ref when you need a specific reviewed version.
+Each invocation creates a separate release directory, even for an unchanged commit.
+This avoids sharing mutable dependency installations between active agents. It costs
+Git/npm setup time but no model-led setup decisions. Existing runs keep their paths.
+
+For Cursor, use the saved Plexus environment's **Install Script**, not agent
+instructions or a startup service. Copy the versioned
+[environment install command](config/cursor/environment-install.sh), preceded by
+`export PIGBOARD_REVISION=REVIEWED_40_CHARACTER_COMMIT`. The revision must already be
+published in the public Pigboard repository. The command fetches it over HTTPS,
+installs the locked dependencies and verifies the source hashes,
+all ten entrypoints, `pg.Client` import and `bru --version` before exposing
+`/opt/pigboard/skills`. The agent prompt points directly to that existing path.
+
+For a single repository, the install working directory must be its checkout. Set
+`PIGBOARD_APP` explicitly if Cursor supplies another working directory. Node 20+,
+Git, npm and permission to create `/opt/pigboard` are prerequisites. Git/npm run as
+the build user; sudo is used only to create that directory if absent. The stable
+link and releases are outside Plexus and belong to each isolated Build/agent VM.
+The adapter refuses unmanaged destinations and preserves the prior link on failure.
+
+The current public Pigboard setup needs no deploy key or environment secret. The
+optional deploy-key support added during the earlier private-source trial is unused.
+
+Keep the automation inactive while preparing and testing its first Build. Inspect
+the Build's JSON receipt for the expected commit and completed verification. Cursor
+can use a default image before its first successful Build, and retains its previous
+successful Build if a later one fails: a failed script is **not** an admission lock.
+[Cursor documents this Build lifecycle](https://cursor.com/docs/cloud-agent/builds).
+
+Refresh by disabling the automation, updating the pinned revision in the install
+configuration, and testing the resulting Build before reactivation. Changes to the
+out-of-band Pigboard repository do not by themselves guarantee a Cursor rebuild.
+Ordinary runs use the prepared snapshot without fetching skills or spending model
+tokens on setup. The Start Script does not install or refresh Pigboard skills.
+
+On failure the command exits nonzero and returns no success receipt. It does not
+silently select an older release. A human resolves access, missing skills or failed
+dependencies, then reruns setup. For a deliberate rollback, prepare a previously
+reviewed commit. Keep releases used by active runs; remove unused releases manually
+when their runs have ended. The script performs no automatic cache pruning.
+
+## First Cursor automation
+
+Use a webhook trigger, the Plexus/master environment, and the prepared implementer
+entry point. The Jira rule must select Stories in INT with exactly `AI-Daniel-1`
+entering In Progress and provide the issue and event identity. Deterministic Jira wiring checks current ticket state,
+repo, ownership and label before dispatch; these are not agent setup instructions. Rework resumes the same PR.
+
+The exact Grok High/Medium controls, isolated reviewer, Jira/Bitbucket tools,
+deduplication, evidence storage and finite CI wait must work before live ticket dispatch.
+The ticket supplies acceptance cases and the exact QA skills to run. Per-PR test
+environments remain separate work; QA consumes their URLs and deployed revisions.
+See [setup status](config/cursor/AI-Daniel-1.md) for actual configuration and blockers.
+
+## Validation and status
+
+Run `npm ci` then `npm test` for the ten local fetch/refresh, environment and
+bootstrap checks. Fixture dependency installs are simulated;
+they do not establish live npm access or Cursor behavior. Local preparation, remote
+publication, saved automation, activation and a successful real Story are separate
+milestones. [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks rollout.
+
+Live setup verified on 13 November 2026: the public-source Cursor Build passed and
+was activated, with all ten entrypoints, 23 source hashes and both helper dependencies
+verified before snapshot. AI-Daniel-1 was then enabled at the owner's request. This
+proves environment installation; an end-to-end Jira Story has not been run. See the
+[setup record](config/cursor/AI-Daniel-1.md) for the exact Build and remaining wiring.
