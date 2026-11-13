@@ -1,0 +1,16 @@
+{
+  "commit": "12675375bc8710f197f9ceba43f56a2d845fbd0d",
+  "release": "/opt/pigboard/releases/12675375bc8710f197f9ceba43f56a2d845fbd0d-ad18559426dc80c2-d6793fb7-a051-4812-9965-ada66cbad85a",
+  "skills": "/opt/pigboard/releases/12675375bc8710f197f9ceba43f56a2d845fbd0d-ad18559426dc80c2-d6793fb7-a051-4812-9965-ada66cbad85a/skills",
+  "manifest": "/opt/pigboard/releases/12675375bc8710f197f9ceba43f56a2d845fbd0d-ad18559426dc80c2-d6793fb7-a051-4812-9965-ada66cbad85a/manifest.json",
+  "stableSkills": "/opt/pigboard/skills",
+  "verification": {
+    "entrypoints": 10,
+    "sourceFiles": 23,
+    "dependencies": "verified",
+    "smokeChecks": [
+      "pg.Client",
+      "bru --version"
+    ]
+  }
+}

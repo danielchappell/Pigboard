@@ -16,14 +16,39 @@ that path is a required setup contract, not evidence it exists today. Preserve t
 release receipt outside the prompt for reproducibility. No model-led cloning,
 installation or environment repair is part of the invocation.
 
-## Saved state — 12 November 2026
+## Current state — 13 November 2026
+
+The owner explicitly authorized making the entire existing repository public,
+including its older configuration and metadata. GitHub visibility is public, and an
+anonymous HTTPS download of the pinned implementer skill matches its committed hash.
+No deploy key was created or installed.
+
+[Successful Build](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/builds/bld-20261113-277cc7ee-c12a-43bb-a1ea-eccdbb01f08f)
+ran the saved deterministic Install Script against Plexus master (`9c7f525`) and
+Pigboard `12675375bc8710f197f9ceba43f56a2d845fbd0d`. It exited 0 and the downloaded
+receipt confirms `/opt/pigboard/skills`, all ten entrypoints, 23 source hashes,
+locked dependencies and both `pg.Client` and `bru --version` smoke checks. The Build
+finished Success, then was activated for new agents. Start Script remains empty.
+
+The existing AI-Daniel-1 implementer automation was then enabled at the owner's
+explicit request. The UI read back **Active**, Plexus/master, Grok 4.7 High, webhook
+trigger and the unchanged one-sentence instruction. No Jira event or work agent was
+launched. Its overview currently reports zero MCP connections. This activation does
+not establish end-to-end workflow readiness: Jira rule/authentication wiring, actual
+independent High/Medium phase controls and connected ticket tools still require
+configuration and verification before live ticket dispatch.
+
+Evidence: [Build receipt](../../docs/reviews/evidence/cursor-environment/build-success-receipt.json),
+[rollout record](../../docs/reviews/2026-11-13-cursor-public-build.md).
+
+## Historical saved state — 12 November 2026
 
 [Cursor automation](https://cursor.com/t/safeguardglobal-engineering/automations/65bdee88-dee5-11f1-ba91-f63b1661ac50)
 was saved and visually read back as **Inactive**, with Plexus/master, a webhook
 trigger, Grok 4.7 High (Fast off), Open Pull Request, and the exact minimal prompt.
 Memories are removed. No run or live Jira trigger has been exercised.
 
-## Deterministic environment setup
+## Initial setup and failed private-source trial — 12 November 2026
 
 [Personal Plexus environment](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/environments/e/9cb332e1-dee7-11f1-ba91-f63b1661ac50)
 was created using Skip & Save, without agent onboarding. Its configuration is separate

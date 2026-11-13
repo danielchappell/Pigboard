@@ -41,7 +41,8 @@ explains that earlier system. Further platform development is deferred.
 ## Fetch the skills outside the application repository
 
 The setup machine needs Node.js 20+, Git, npm, network access to the approved Git
-source and npm registry, and prepared Git authentication. Use a reviewed Pigboard
+source and npm registry. The Pigboard source repository is public; its HTTPS fetch
+needs no deploy key or GitHub credential. Use a reviewed Pigboard
 checkout for the setup command. The selected remote ref must contain the skills;
 local commits are not automatically available in Cursor.
 
@@ -49,14 +50,14 @@ Example (replace paths and the approved release ref with your setup values):
 
 ```sh
 node /opt/pigboard-setup/scripts/prepare-pigboard-skills.mjs \
-  --source git@github.com:danielchappell/ski-stack.git \
+  --source https://github.com/danielchappell/ski-stack.git \
   --ref APPROVED_RELEASE_REF \
   --cache /opt/pigboard-releases \
   --app /workspace/plexus
 ```
 
-The cache must be outside the application and every Git checkout. Git access uses
-existing credentials; never put passwords or tokens in the source URL or prompt.
+The cache must be outside the application and every Git checkout. Public HTTPS needs no credential. For a private fork, use prepared Git authentication;
+never put passwords or tokens in the source URL or prompt.
 The command fetches the requested ref, copies the complete allowlisted skill folders,
 rejects symlinks and installs the locked Bruno/Postgres dependencies with `npm ci`.
 Dependency lifecycle scripts are disabled. No application files are modified.
@@ -79,8 +80,8 @@ For Cursor, use the saved Plexus environment's **Install Script**, not agent
 instructions or a startup service. Copy the versioned
 [environment install command](config/cursor/environment-install.sh), preceded by
 `export PIGBOARD_REVISION=REVIEWED_40_CHARACTER_COMMIT`. The revision must already be
-published in the private Pigboard repository. The command uses prepared build Git
-authentication, installs the locked dependencies and verifies the source hashes,
+published in the public Pigboard repository. The command fetches it over HTTPS,
+installs the locked dependencies and verifies the source hashes,
 all ten entrypoints, `pg.Client` import and `bru --version` before exposing
 `/opt/pigboard/skills`. The agent prompt points directly to that existing path.
 
@@ -91,15 +92,8 @@ the build user; sudo is used only to create that directory if absent. The stable
 link and releases are outside Plexus and belong to each isolated Build/agent VM.
 The adapter refuses unmanaged destinations and preserves the prior link on failure.
 
-If the Build has no GitHub authentication, use a dedicated read-only deploy key on
-the Pigboard repository and store its private key as the environment secret
-`PIGBOARD_DEPLOY_KEY`. Registering that access needs the repository owner's approval.
-The command uses GitHub SSH over port 443 with a pinned host key, writes the private
-key only to its temporary setup directory, removes the raw secret from child-process
-environments and deletes the temporary directory on exit. The key must not be pasted
-into the install command or agent instructions. Use an environment secret because
-personal user secrets are unavailable during Builds. Host-key changes require human
-verification against GitHub's published key; do not disable host verification.
+The current public Pigboard setup needs no deploy key or environment secret. The
+optional deploy-key support added during the earlier private-source trial is unused.
 
 Keep the automation inactive while preparing and testing its first Build. Inspect
 the Build's JSON receipt for the expected commit and completed verification. Cursor
@@ -134,9 +128,15 @@ See [setup status](config/cursor/AI-Daniel-1.md) for actual configuration and bl
 
 ## Validation and status
 
-Run `node --test test/skill-distribution.test.mjs test/cursor-environment.test.mjs`
+Run `node --test test/skill-distribution.test.mjs test/cursor-environment.test.mjs test/cursor-bootstrap.test.mjs`
 for local fetch/refresh and environment fixtures,
 or `npm test` for the full repository suite. Fixture dependency installs are simulated;
 they do not establish live npm access or Cursor behavior. Local preparation, remote
 publication, saved automation, activation and a successful real Story are separate
 milestones. [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks rollout.
+
+Live setup verified on 13 November 2026: the public-source Cursor Build passed and
+was activated, with all ten entrypoints, 23 source hashes and both helper dependencies
+verified before snapshot. AI-Daniel-1 was then enabled at the owner's request. This
+proves environment installation; an end-to-end Jira Story has not been run. See the
+[setup record](config/cursor/AI-Daniel-1.md) for the exact Build and remaining wiring.
