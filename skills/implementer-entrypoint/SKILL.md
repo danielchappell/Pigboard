@@ -58,8 +58,11 @@ principles as specified in the [review prompt](references/plan-review.md).
 Invoke exactly one fresh independent High plan reviewer per round using that
 prompt. Supply the actual ticket, plan revision, source/base, repository instructions
 and evidence, not just the author's conclusions. Record reviewer identity and
-actual model/effort. An author reviewing its own plan, an incomplete report, or
-unverified independence/model effort cannot satisfy this gate.
+model/effort evidence under the configured harness profile. Cursor uses its
+setup-verified explicit Task binding and dispatch receipts; label absent per-call
+telemetry, never invent it. Other harnesses retain actual model/effort verification.
+An author reviewing its own plan, an incomplete report, or a phase lacking its
+profile's required independence/model evidence cannot satisfy this gate.
 
 Classify findings against the ticket: correct confirmed in-scope issues and obtain
 one independent re-review of the changed plan; explain invalid findings with
@@ -78,9 +81,11 @@ A review of a plan is not a review of the eventual code or permission to merge.
 ## 3. Implement and verify
 
 After CLEAN, hand off through the configured harness to Medium execution. Verify
-actual model/effort and the retained plan/requirements/checkout before editing;
-requested settings or a prompt claiming Medium are not evidence. Missing phase
-handoff support blocks. Implement only accepted work and confirmed in-scope fixes,
+the profile's model-selection evidence and retained plan/requirements/checkout
+before editing. For Cursor this requires the trusted parent assignment through
+the setup-verified explicit Medium Task binding; a prompt merely claiming Medium
+does not select it. Missing or invalid binding, unsupported phase handoff, or
+conflicting observed model metadata blocks. Implement only accepted work and confirmed in-scope fixes,
 following repo instructions and required verification. Update affected docs.
 
 Prepare the concrete execution details for the ticket's named QA skills: selected

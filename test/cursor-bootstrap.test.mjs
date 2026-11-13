@@ -27,7 +27,6 @@ if (name === 'git' && args.includes('fetch')) {
 }
 if (name === 'git' && args.includes('rev-parse')) console.log(args.includes('HEAD') ? process.env.PIGBOARD_REVISION : process.env.PIGBOARD_APP);
 if (name === 'node' && args[0]?.endsWith('/install-cursor-skills.mjs')) fs.appendFileSync(process.env.EVIDENCE, JSON.stringify({installed:true,args})+'\\n');
-if (name === 'node' && args[0]?.endsWith('/install-cursor-agents.mjs')) fs.appendFileSync(process.env.EVIDENCE, JSON.stringify({agents:true,args})+'\\n');
 `;
   for (const name of ['git', 'node', 'sudo']) {
     await writeFile(path.join(bin, name), probe); await chmod(path.join(bin, name), 0o755);
@@ -44,12 +43,8 @@ if (name === 'node' && args[0]?.endsWith('/install-cursor-agents.mjs')) fs.appen
     assert.equal(auth.source, 'ssh://git@ssh.github.com:443/danielchappell/Pigboard.git');
     assert.match(auth.hosts, /^\[ssh.github.com\]:443 ssh-ed25519 /);
     for (const setting of ['BatchMode=yes', 'IdentitiesOnly=yes', 'IdentityAgent=none', 'StrictHostKeyChecking=yes', 'HostKeyAlgorithms=ssh-ed25519']) assert.ok(auth.ssh.includes(setting));
-    assert.equal(records.length, fail ? 1 : 3);
-    if (!fail) {
-      assert.ok(records[1].args.includes(auth.source));
-      assert.equal(records[2].agents,true);
-      assert.deepEqual(records[2].args.slice(1),['--app',app]);
-    }
+    assert.equal(records.length, fail ? 1 : 2);
+    if (!fail) assert.ok(records[1].args.includes(auth.source));
     await assert.rejects(stat(auth.root), { code: 'ENOENT' });
   }
 });

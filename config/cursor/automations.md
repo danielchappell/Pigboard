@@ -7,7 +7,7 @@ skills, model controls and prepared capabilities are ready.
 
 | Stage | Automation | Versioned prompt | Installed entrypoint | Model |
 | --- | --- | --- | --- | --- |
-| In Progress | [AI-Daniel-1 Implementer](https://cursor.com/t/safeguardglobal-engineering/automations/65bdee88-dee5-11f1-ba91-f63b1661ac50) | [implementer-prompt.txt](implementer-prompt.txt) | `/opt/pigboard/skills/implementer-entrypoint/SKILL.md` | Grok 4.7 High parent; High reviewer/Medium executor definitions prepared; runtime verification pending |
+| In Progress | [AI-Daniel-1 Implementer](https://cursor.com/t/safeguardglobal-engineering/automations/65bdee88-dee5-11f1-ba91-f63b1661ac50) | [implementer-prompt.txt](implementer-prompt.txt) | `/opt/pigboard/skills/implementer-entrypoint/SKILL.md` | Grok 4.7 High parent; tested explicit High review / Medium execution Task controls |
 | In Review | [AI-Daniel-1 PR Reviewer](https://cursor.com/t/safeguardglobal-engineering/automations/d6870b65-df37-11f1-ba91-f63b1661ac50) | [pr-review-prompt.txt](pr-review-prompt.txt) | `/opt/pigboard/skills/pigboard-pr-review/SKILL.md` | Grok 4.7 High, Fast off |
 | QA | [AI-Daniel-1 QA](https://cursor.com/t/safeguardglobal-engineering/automations/5e23ff45-df81-11f1-ba91-f63b1661ac50) | [qa-prompt.txt](qa-prompt.txt) | `/opt/pigboard/skills/qa-entrypoint/SKILL.md` | Grok 4.7 High, Fast off |
 
@@ -35,18 +35,21 @@ uses its [structured ticket contract](../../skills/write-pr-sized-stories/refere
 and examples. The three stage entrypoints link the same contract. Having the
 writer installed does not start a grooming automation or load all skills as context.
 
-Cursor documents [custom subagent models](https://cursor.com/docs/subagents),
-including explicit model parameters and user-level definitions outside a repo.
-The pinned setup installs [High plan review](agents/pigboard-plan-review.md) and
-[Medium execution](agents/pigboard-execution.md) definitions in the cloud user's
-`~/.cursor/agents`, outside Plexus. Identical files reuse; conflicts are preserved
-for an operator. Project definitions must not shadow those names. The High parent
-delegates through the [phase contract](../../skills/implementer-entrypoint/references/cursor.md).
-Installation reports `actualModelVerified: false`. Build acceptance must record
-the destination and both definition hashes; a separate authorized runtime test must
-prove discovery, isolated reviewer, actual effort metadata and checkout continuity.
-Until then, phase readiness remains pending. Never substitute a prose claim or
-silently run all phases at High. No change to the one-line automation prompt.
+The later phase Build `bld-20261113-6159d5c3-112c-41a9-997f-1c9bf6bab5f5`
+successfully installed custom user-agent files, but the runtime rejected their
+names. That mechanism is superseded and its installer removed. Fresh Builds use
+the existing shared skill's [explicit Task binding](../../skills/implementer-entrypoint/references/cursor.md#verified-cursor-task-binding):
+generalPurpose with grok-4.7-high for review and grok-4.7-medium for execution,
+same_machine, foreground, fresh review contexts. The one-line prompt is unchanged.
+
+The bounded [setup run](https://cursor.com/t/safeguardglobal-engineering/agents/bc-b264dab4-d964-4f66-9bd1-a87eb138a5de)
+completed both explicit Task selections. Cursor task cards showed High and Medium;
+distinct child IDs and matching checkout observations were retained. There was no
+Story execution, code change or provider write. The Task response omits model/effort
+telemetry: per-run records must distinguish accepted dispatch controls from the
+operator's setup-observed model. Missing/invalid selectors or conflicting metadata
+block. Model/version/runner changes require renewed acceptance. The corrected
+source still needs a refreshed Build before use; no automation is enabled here.
 
 Later Jira wiring owns project/label/status filtering, new-work admission, webhook
 authentication, repository allowlist, event/visit identity and duplicate ownership.
