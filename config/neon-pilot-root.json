@@ -1,9 +1,0 @@
-{
-  "projectId": "purple-pine-29285744",
-  "branchId": "br-delicate-snow-b27m6vma",
-  "endpointId": "ep-raspy-dust-b2a3yxki",
-  "host": "ep-raspy-dust-b2a3yxki.c-6.eu-central-1.aws.neon.tech",
-  "port": 5432,
-  "database": "pigboard",
-  "role": "pigboard_app"
-}

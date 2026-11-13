@@ -1,219 +1,183 @@
-> **Project management moved to Jira on 23 October 2026.** [Pigboard Product backlog](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70) owns current scope, priority, dependencies, status and next work. [PGB-50](https://scubapig.atlassian.net/browse/PGB-50) holds the source reconciliation and handover record. Queue/status statements below are dated historical snapshots; technical design and engineering rules still apply unless a linked newer decision supersedes them. Update Jira when work changes.
+# Developing Pigboard
 
-See [project management](docs/project-management.md) for the human and agent workflow.
+Pigboard is the Jira/Cursor skills-and-scripts MVP. Read [README.md](README.md) and
+[the workflow contract](docs/workflow.md) before changing behavior. The former
+platform is preserved in [the private archive](https://github.com/danielchappell/pigboard-legacy).
+Do not restore hosted services, queues, website deployment or orchestration without
+an explicitly scoped decision. Jira PGB owns scope, priority and status;
+[PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks this rollout.
 
-# Pigboard Repo Guidance
+Run `git status --short --branch` before editing; preserve unrelated work. Use plain
+Node.js APIs for setup scripts and `npm test` for the retained installation tests.
+The root package has no production dependencies. Helper dependencies stay locked
+inside the relevant skill. Keep complete skill folders and sibling references;
+`config/skill-bundle.json` is the installation allowlist. Keep skill preparation
+outside application repositories and out of agent prompts. Pin reviewed published
+revisions; inspect a successful Cursor Build before enabling a changed environment.
 
-Pigboard is an opinionated AI development process. The [README](README.md)
-records the available tools and their limits; the [product strategy](docs/product-strategy.md)
-and [brand direction](docs/brand-rebrand.md) define the intended outcome and identity.
-Keep the default surface flat: skills and agent role cards are reusable assets;
-the queue runtime is optional.
+The development agreement below governs work on Pigboard itself. The customer
+workflow intentionally uses one independent plan reviewer and is defined in the
+entrypoint skills; do not impose Pigboard's two-reviewer development gate on it.
 
-Do not reintroduce a mandatory chief-of-staff hierarchy, local-only `.scuba`
-control plane, or default wide subagent swarm. If a workflow needs orchestration,
-make it an explicit worker or adapter feature.
+## Working agreement
 
-Use the adapter boundary for project-management systems. GitHub Projects is the
-first adapter, not the core model.
+These are the owner's standing instructions for substantive software lifecycle
+work across projects: discovery, design, architecture, grooming, planning,
+implementation, review and release. Use the Rovito/Pigboard process below.
+They govern how we develop products, not requirements imposed on their users.
+Do not apply the full ceremony to an ordinary question or a trivial edit.
+Explicit task instructions and repository-specific constraints still apply.
 
-For code changes, keep the runtime dependency-light. Prefer standard Node.js
-APIs unless a dependency removes real complexity.
+## Map the work before choosing the first slice
 
-## Product direction and defining principles
+Follow this order:
 
-The product is named Pigboard. Its agreed direction is an opinionated AI SDLC
-whose supported development method we maintain and improve. Settle the architecture,
-ordered roadmap and core functionality first, using the existing Pigboard process
-as the starting method. [Product definition](docs/product.md) records that decision.
-Board/runner adapters, packages and MCP enable the method; unrestricted workflow
-configurability is not the customer promise. The current implementation and
-acceptance limits are documented in the README; product goals are not shipped
-capabilities.
+**Ideation -> product discovery -> technical discovery -> architecture/design ->
+independent design review -> grooming and ordered delivery plan -> independent
+plan review -> implementation -> independent committed-code review -> PR/checks ->
+authorized merge/release and verification.**
 
-The following principles are adopted from Rovito's ratified working agreement.
-Their meaning is preserved, with product-specific wording adapted to Pigboard.
+1. Recover the intended outcome, users, agreed scope, non-goals, constraints,
+   existing decisions, current code and active roadmap. Separate verified facts,
+   assumptions, proposals and unresolved questions. Preserve work already done.
+2. Product discovery defines the human and agent journeys and observable success.
+   Technical discovery resolves facts that determine feasibility, contracts,
+   security boundaries, reuse and estimates. Use focused Tasks for real unknowns.
+3. Create the high-level architecture and development plan for the intended
+   product or feature before selecting an implementation slice. Describe component
+   responsibilities, data/authority ownership, interfaces, failure/recovery,
+   rollout and verification. Show the path from today's system to the intended
+   outcome and candidate dependency-ordered milestones. Consider alternatives.
+   Design enough to see the whole path; do not prebuild speculative foundations.
+4. Obtain independent adversarial design reviews. Fix in-scope findings and
+   re-review to CLEAN before grooming that design into delivery-ready Stories.
+5. Groom the reviewed design with `write-pr-sized-stories`. Map the whole agreed
+   scope into ordered slices with dependencies, outcomes and verification. Keep
+   uncertain later work provisional; detailed design evolves as evidence arrives.
+   Choose the first Story because the roadmap and dependencies justify it, not
+   because it is the easiest adapter or most convenient experiment.
+6. Review the delivery plan for design fidelity, coverage, real dependencies,
+   usable increments and size. Before each Story, recheck current code and write
+   a concrete implementation plan covering changes, contracts, tests, docs,
+   failure paths and rollout. Independently review it to CLEAN before coding.
+7. Implement the approved Story and plan. Update tests and user/agent documentation
+   together. Verify the smallest meaningful behavior first, then the required
+   repository checks. Record an author assessment separately from review evidence.
+8. Commit the implementation, then obtain fresh independent adversarial reviews
+   of the exact committed diff. Fix confirmed in-scope issues, commit fixes and
+   re-review the updated code until CLEAN before opening the PR. Design or plan
+   review cannot substitute for code review; self-review is never independent.
+9. Open/update the PR with the outcome, scope, reviewed commit, tests, docs and
+   limitations. Complete required checks for the current changes. Merge/deploy
+   only under the user's existing authorization and the repository's ownership
+   rules. Verify the resulting revision and any required live/release behavior.
 
-### Product principles
+For a bounded bug fix or an already-reviewed roadmap item, reuse the applicable
+product/design decisions; do not restart the whole project. Record what is reused
+and run the gates affected by the change. If earlier work skipped a gate, perform
+and label a retrospective review; never invent a prior approval or CLEAN result.
 
-These ratified principles guide every design and release, including the SaaS interface,
-board and runner integrations, MCP, packages, authentication, and documentation.
+## Small, complete Stories
 
-1. **Intuitive.** Work the way users reasonably expect. Use familiar language,
-   consistent commands and sensible defaults. Everyday work should not require
-   understanding board APIs, runner internals, or claim protocols.
-2. **Discoverable.** Help users find what Pigboard can do and learn while using it.
-   Give humans useful help, examples and guided choices. Give agents clear tool
-   descriptions, structured inputs and actionable errors.
-3. **Delightful experience.** Respect the user's time and attention. Avoid
-   unnecessary questions, repeated setup and confusing output. Delight means a
-   smooth, thoughtful experience, not decorative messages or clever slogans.
-4. **Token saver.** Help agents complete work with less unnecessary context and
-   fewer wasted calls. Return relevant information first, make detail available
-   when needed and clearly identify omissions. A shorter response that forces
-   five extra calls is not necessarily an improvement.
-5. **Secure.** Protect credentials, make permissions understandable and prevent
-   accidental consequential actions. Security should be proportionate to risk.
-   Making normal development unnecessarily difficult is not the goal; adding
-   prompts is not automatically making something safer.
-6. **Agents are equal.** Agent use is a primary product experience, not an
-   afterthought attached to a human interface. Agents get explicit inputs, useful
-   structured results and no interactive interruptions. Humans get readable
-   output and guidance. Both should accomplish intended workflows without
-   awkward workarounds; their interfaces need not work identically.
-7. **Dependable.** Behave consistently and describe outcomes honestly. Queued is
-   not finished; partially completed is not nothing happened. Errors should
-   explain what happened and how to continue without accidentally repeating work.
+Always use `write-pr-sized-stories` when writing, splitting or revising development
+work items. Every Story must deliver one complete usable behavior or technical
+outcome in **one PR, at most 20 changed files total, and less than two human working
+days**, including tests, configuration, documentation and PR preparation.
 
-Never save tokens by hiding essential information, create delight by concealing
-failure, or use security as a blanket justification for avoidable friction.
-Apply these principles when planning, reviewing and releasing changes. They
-guide decisions; they are not permission to expand a PR's agreed scope.
+Split before implementation if any limit cannot be met. Do not relax the limits,
+hide supporting files or create inert plumbing to make a Story appear small.
+Research, discovery, decisions, design-only and documentation-only work are Tasks.
+Resolve a Task before declaring its dependent Story ready when its answer changes
+scope, interfaces, security, feasibility or sizing. Requested previews of later
+Stories must say **Provisional — not ready for delivery**.
 
-### Principles check in every plan and review
+Use the skill's short title, Problem to solve, Acceptance Criteria, Technical
+Acceptance Criteria and Testing Strategy. Keep dependencies, estimates and review
+records in the delivery plan rather than adding ceremony to each Story.
 
-Every plan, adversarial plan review and adversarial PR review must explicitly
-assess the plan or work against all seven principles above. The author must do
-this during planning and again when reviewing the implementation before a PR.
-Each independent reviewer must make their own assessment, not simply accept
-the author's conclusion.
+## Independent review gates
 
-Keep the check brief and concrete: for each principle, explain how it is met,
-identify a gap or tradeoff, or explain why the change does not affect it. Use
-examples and test evidence where useful. Consider human and agent experiences
-separately where they differ.
+Use fresh independent **Sol** agents with complementary lenses for substantive
+architecture, delivery/implementation plans and committed-code reviews. Use at
+least two distinct reviewers per round: one for product experience, goal/design
+fidelity and documentation; one for correctness, boundaries, security, failure
+recovery and tests. Each must still assess all seven principles below. This is
+explicit authorization to delegate those bounded review tasks. If Sol or an
+independent reviewer is unavailable, report the incomplete gate; do not silently
+replace independence with the author's own pass.
 
-Include this requirement in every independent review request and report.
-A CLEAN verdict requires this check and no unresolved in-scope gaps. Proposed
-scope increases still require the user's approval before implementation.
+Give reviewers the actual artifact/revision, agreed goals and non-goals, relevant
+source, acceptance criteria and verification evidence. Reviewers inspect the
+artifact independently before accepting author conclusions. Require:
 
+- Coverage: enumerate the agreed review surface, walk every requirement/file/contract
+  in it, and report examined/total counts plus a second sweep for missed findings.
+  Reject a report without this denominator; partial coverage cannot be CLEAN.
+- Concrete, evidenced findings with severity and references; separate speculation.
+- Their own seven-principle assessment, including human/agent differences.
+- A CLEAN or NOT CLEAN verdict for that exact artifact/revision.
 
-## How we design and develop Pigboard
+Classify findings as real in-scope issues, out-of-scope follow-ups, or invalid with
+evidence. Fix the root cause of real issues, not merely a reviewer's proposed
+patch. Review changes and affected behavior again; a stale verdict does not cover
+new code. CLEAN means every required reviewer completed the gate and no unresolved
+in-scope findings remain. It does not authorize new product decisions or releases.
+Do not turn review into an unbounded architecture exercise or add hypothetical
+hardening. Genuine scope changes require the user; record adjacent findings.
 
-These are working rules for the humans and agents building Pigboard.
-They do not silently become runtime or package requirements. The chosen product
-direction is opinionated, but each customer-visible process rule and fast path
-still needs an explicit scoped design and verification.
+## Seven defining principles
 
-Follow [our development lifecycle](docs/development-workflow.md) for substantive
-software work. Use Pigboard's own roles to develop Pigboard: Planner and
-Researcher -> Architect -> independent design review -> Groomer -> Implementation
-Planner and independent plan review -> Implementer -> fresh independent
-committed-code review -> PR/Babysit -> Ready for Owner.
+1. **Intuitive.** Familiar language, consistent behavior and sensible defaults;
+   everyday work should not require knowledge of internal APIs or machinery.
+2. **Discoverable.** Humans get useful help, examples and guided choices; agents
+   get clear capabilities, structured inputs and actionable errors.
+3. **Delightful experience.** Respect time and attention. Avoid repeated setup,
+   unnecessary questions and confusing output. Smooth use matters, not decoration.
+4. **Token saver.** Return relevant information first, make detail available and
+   identify omissions. Fewer words that require many extra calls are not a gain.
+5. **Secure.** Protect credentials and permissions and prevent accidental
+   consequential actions. Friction must be proportionate; prompts alone are not
+   safety, and security does not justify obstructing normal authorized work.
+6. **Agents are equal.** Agent workflows are a primary experience with explicit
+   inputs, structured results and noninteractive execution. Humans get readable
+   guidance. Equal capability does not require identical interfaces.
+7. **Dependable.** Describe queued, completed, partial and failed outcomes honestly.
+   Explain recovery without causing completed work to be repeated accidentally.
 
-Map the product/feature architecture and dependency-ordered development path
-before choosing the first implementation slice. Groom only after the architecture
-review is CLEAN. Design at the appropriate level for the whole outcome, then
-detail each small slice when it is ready. Do not replace this with an arbitrary
-adapter-first Story or design the whole SaaS down to implementation details.
+The author and every independent reviewer assess all seven separately in each
+substantive design, plan and implementation review: explain how each is met,
+identify a concrete gap/tradeoff, or justify why it is unaffected. Names alone
+are not an assessment. Never hide essential information or failure to save tokens
+or create delight. These principles do not expand the agreed scope.
 
-Use at least two distinct, fresh independent Sol reviewers per substantive design,
-delivery/implementation-plan and committed-code review round. Give them
-complementary product/experience and technical/security lenses; each independently
-assesses all seven principles, coverage, documentation and actual evidence.
-Fix confirmed in-scope findings and re-review to CLEAN. Commit before code review;
-open the PR after the code gate. Author review never substitutes for independence.
+## Documentation, evidence and continuity
 
-Continue authorized work through these gates without routine permission prompts.
-Preserve scope, real access/decision gates and the owner's merge authority. Keep
-one active delivery queue in Jira; distinguish planned, reviewed, implemented and live-
-verified outcomes. A skipped gate requires an honest retrospective review.
+Documentation is part of the slice. Identify affected human guides, agent
+contracts, help and examples in the plan. Explain prerequisites, normal use,
+success and common recovery in plain language. Check examples and links; keep
+proposed/unreleased behavior distinct from what works now. Authors and reviewers
+check that a new user can follow the result without the original conversation.
+Explain when an internal change needs no user-facing documentation; no filler.
 
-Always use `write-pr-sized-stories` when writing, splitting, or revising our
-development work items. Resolve that installed skill from the active skill
-catalog so this guidance works on other teammates' machines too.
-For Pigboard development, every Story must:
+Keep local tests, live integration acceptance, hosted CI, merge and release
+verification separate. Name the tested/reviewed commit or artifact. Passing tests
+or a CLEAN plan alone is not release readiness. Never weaken tests, inflate
+timeouts or change shared infrastructure just to make a blocker disappear.
+Use meaningful regression coverage for behavior changes, not tests mirroring the
+implementation; documentation-only or trivial reversible edits need no new tests.
 
-- Deliver one complete, usable behavior or technical outcome.
-- Fit in a single reviewable PR changing no more than 20 files in total,
-  including tests, configuration, and documentation.
-- Take less than two human working days for an average developer familiar with
-  the codebase, including testing and PR preparation.
+Continue the authorized roadmap autonomously through its applicable gates.
+Do not stop for routine approval between stages or call a broad objective complete
+because one PR exists. Stop for a requested pause, real missing authority/access,
+or a consequential unresolved decision; continue independent useful work where
+possible. Preserve the user's merge/release authority rather than assuming it.
 
-Split the work if any limit cannot be met; do not relax the limits or create
-partial behavior just to fit. Research, discovery, decisions, and design-only
-or documentation-only work are Tasks. If a Task's answer determines the scope,
-contract, security behavior, feasibility, or estimate, resolve it before writing
-delivery-ready implementation Stories.
+Maintain one active delivery queue in PGB Jira with dependencies, current stage, review
+results, exact revisions, validation evidence, remaining decisions and next work.
+Approved slices may overlap through explicitly identified stacked PRs where the
+repository permits it. Follow that repository's merge strategy; verify the tested
+file tree survives. Code changes/conflict resolutions need relevant tests and
+review; do not repeat identical checks merely for ceremony.
 
-Use the skill's plain-language format: a short title, Problem to solve,
-Acceptance Criteria, Technical Acceptance Criteria, and Testing Strategy.
-Keep the seven-principle assessment in the plan or review record so it does not
-add sections to that work-item format.
-
-Treat agreed scope as a boundary. Record adjacent findings instead of turning a
-slice into an open-ended architecture exercise. Keep local test results, live
-integration evidence, and release readiness distinct. Update affected human and
-agent instructions as part of the change; do not claim an unimplemented design
-is available to users. Reuse the existing core policy and adapter boundaries.
-
-## Start Here
-
-- Run `git status --short --branch` before changing files.
-- Read `README.md`, `ARCHITECTURE.md`, and the relevant file under `docs/`
-  before changing runtime behavior.
-- Run `npm ci` in a fresh checkout, then use `npm test` as the default
-  verification command. The repo uses Node's built-in test runner and has
-  `pg` as a production dependency for the private Pigboard host.
-- Keep changes scoped. Documentation-only updates usually do not need new tests;
-  runtime, adapter, provisioning, and status changes do.
-
-## Project Map
-
-- `agents/`: reusable worker role cards. These are prompts/assets, not a
-  mandatory hierarchy.
-- `skills/`: reusable operating skills. Keep them directly usable outside the
-  queue runtime.
-- `src/core/`: shared statuses, worker types, normalized queue snapshots,
-  dependency-aware availability, claim ids, and adapter contract definitions.
-- `src/runtime/`: claim coordination, queue dispatch, prompt assembly, and
-  worker-result application.
-- `src/runners/`: execution-provider clients, separate from board adapters and
-  queue policy.
-- `src/adapters/github-projects/`: GitHub Projects queue adapter. Keep GitHub
-  specifics behind this boundary.
-- `src/provisioners/github-projects/`: GitHub Project field/template setup and
-  validation.
-- `scripts/`: CLI entry points for setup, schema validation, claims, result
-  application, and lease release.
-- `test/`: Node test files that enforce adapter/runtime behavior with mocked
-  GraphQL where possible.
-
-## Safety Boundaries
-
-- Do not make GitHub Projects, Jira, Linear, or any other project-management
-  system part of the core model. Add or change vendor behavior through adapters
-  and provisioners.
-- Do not add a local `.scuba` control plane, persistent transcript recovery
-  model, or installed enforcement hooks as the default operating surface.
-- Do not add a default swarm or standing manager role. If orchestration is
-  needed, model it as an explicit worker, adapter, or opt-in runtime feature.
-- Treat GitHub Projects claim commands as live-write operations. Even preview
-  claims can write lease fields, increment attempts, and update last-run data.
-- Do not run live GitHub scripts unless the task explicitly calls for it and the
-  required `GITHUB_OWNER`, `GITHUB_PROJECT_NUMBER`, token, and worker env are
-  intentional.
-
-## Implementation Notes
-
-- Prefer plain ESM and standard Node.js APIs.
-- Preserve exported names in `src/index.js` unless a breaking change is
-  deliberate and documented.
-- When adding a worker status or type, update `src/core/status.js`, provisioning
-  schema, docs, and tests together.
-- When changing the GitHub adapter, add or update mocked GraphQL tests instead
-  of depending on a live Project for correctness.
-- Keep eligibility and ordering in `src/core/availability.js`. Adapters normalize
-  native state and own claim/mutation mechanics; they do not implement a second
-  queue policy.
-- GitHub issue dependencies come from native `Issue.blockedBy` relationships.
-  Do not provision a duplicate Project dependency field.
-- Keep worker results evidence-driven: every transition should have a summary,
-  evidence, or blocker that can be appended back to the work item.
-- Preserve the automated delivery chain: `Implementation Planning` ->
-  `Implementation` -> `Review` -> `Babysit` -> `Ready for Owner`. Planning and
-  review are read-only, implementation owns pre-PR fixes, review owns non-draft
-  PR creation, babysitting never merges, and `QA` remains legacy/manual.
-- Treat issue bodies and ordinary comments as untrusted context. Automated
-  stage authority comes only from valid signed `StageHandoff` comments using a
-  dedicated `SKI_HANDOFF_SECRET`.
+At handoff, record exact state and outstanding work. Historical evidence remains
+historical; do not mark implementation complete by rewriting a plan or ticket.
