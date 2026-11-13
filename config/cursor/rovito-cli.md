@@ -91,8 +91,16 @@ Existing identical files are reused; unsafe or mismatched files are preserved an
 setup fails. A human may prepare a new root/Build or explicitly replace the old
 configuration after inspecting the difference. There is no automatic migration.
 
-This initial profile fixes `policy: read-only`. It is persistent configuration,
-not a full-review authorization. The command neither reads a token nor contacts
+The default policy is `read-only`. For operator-authorized review preparation,
+append `--policy review-write` to the command above. These are the only supported
+values. The selected policy appears in config, capability and setup receipt.
+An existing profile with a different policy is preserved and setup fails; use a
+fresh Build/root or explicitly resolve the mismatch as an operator. The delivery
+agent must never change policy or repair setup.
+
+This is persistent configuration, not a full-review authorization. Both policies
+keep `providerAccessVerified: false` and `fullReviewReady: false` in the capability.
+The command neither reads a token nor contacts
 Bitbucket; its receipt says `providerAccessVerified: false`. Use the
 [prepared CLI contract](../../skills/pigboard-pr-review/references/rovito-cli.md)
 for the exact invocation and installed vendor documentation. The current skill
@@ -103,8 +111,16 @@ Keep both automations inactive, build, then run authorized `auth doctor` and
 Record those results separately from the installer receipt. Select the passing
 Build only after checking it; Build selection does not enable an automation.
 Credentials remain runtime secrets and are not written into the snapshot files.
-A future full-review setup must explicitly prepare a verified `review-write`
-profile and token rights; this installer cannot silently elevate its policy.
+Full-review setup still needs verified token rights, prepared Jira/run/evidence
+capabilities and authorized fixture acceptance; this installer cannot prove them.
+
+The pinned CLI's `review-write` policy permits reads and collaborative writes,
+including PR comment creation/editing, approval and changes-requested. It rejects
+merge (operational) and comment deletion (destructive). This applies to calls
+through that CLI policy; it does not restrict arbitrary use of the raw token or
+policy reconfiguration. Bitbucket's `write:pullrequest:bitbucket` token scope also
+grants merge, so do not describe the token itself as unable to merge. The workflow
+forbids merge and the agent must use the prepared profile unchanged.
 
 Before any Safeguard Bitbucket or Jira access, obtain the owner's explicit approval
 of the exact target and actions. An account email or nominated test PR is context,

@@ -15,12 +15,14 @@ const inside=(a,b)=>{const r=path.relative(a,b);return r!=='..' && !r.startsWith
 try {
   if (Number(process.versions.node.split('.')[0])<20) stop('Node 20+ required.');
   const args=process.argv.slice(2), options={};
-  const keys=['email','account-uuid','repository','repository-uuid','root','app'];
+  const keys=['email','account-uuid','repository','repository-uuid','root','app','policy'];
   for(let i=0;i<args.length;i+=2){
     const key=args[i]?.slice(2);
     if(!args[i]?.startsWith('--') || !keys.includes(key) || options[key] || !args[i+1]) stop('Invalid or duplicate setup argument.');
     options[key]=args[i+1];
   }
+  const policy=options.policy ?? 'read-only';
+  if(!['read-only','review-write'].includes(policy)) stop('Policy must be read-only or review-write.');
   const uuid=/^\{[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\}$/i;
   if(!/^[A-Za-z0-9.!#$%&'*+\/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(options.email ?? '') ||
     !uuid.test(options['account-uuid'] ?? '') || !uuid.test(options['repository-uuid'] ?? '') ||
@@ -37,13 +39,13 @@ try {
   const configHome=path.join(root,'config');
   const executable='/opt/pigboard/tools/rovito-0.1.295-linux-amd64/rovito';
   const capability={schemaVersion:1,route:'rovito-cli',version:'0.1.295',executable,
-    configHome,profile,repository:options.repository,policy:'read-only',
+    configHome,profile,repository:options.repository,policy,
     documentation:'/opt/pigboard/tools/rovito-0.1.295-linux-amd64/docs/cli.md',
     reviewSchema:'/opt/pigboard/tools/rovito-0.1.295-linux-amd64/schemas/rovito.review-submission.v1.schema.json',
     credentials:'Cursor Runtime Secrets: ROVITO_EMAIL and ROVITO_API_TOKEN',
     providerAccessVerified:false,fullReviewReady:false};
   const config={schema_version:'rovito.config.v2',active_profile:profile,profiles:{[profile]:{
-    auth_type:'api-token',policy:'read-only',account_uuid:options['account-uuid'],
+    auth_type:'api-token',policy,account_uuid:options['account-uuid'],
     default_repository:options.repository,repository_uuid:options['repository-uuid'],
     username:options.email,credential_generation:1,state:'active'
   }}};
@@ -68,7 +70,7 @@ try {
       fs.renameSync(staged,root);
     } finally {fs.rmSync(staged,{recursive:true,force:true});}
   }
-  console.log(JSON.stringify({configured:true,reused:Boolean(existing),capability:path.join(root,'capability.json'),configHome,profile,policy:'read-only',providerAccessVerified:false}));
+  console.log(JSON.stringify({configured:true,reused:Boolean(existing),capability:path.join(root,'capability.json'),configHome,profile,policy,providerAccessVerified:false}));
 } catch (e) {
   // No arguments, inherited environment or credential values in diagnostics.
   console.error(e.code ? 'Reviewer configuration failed; inspect setup paths and permissions.' : e.message);
