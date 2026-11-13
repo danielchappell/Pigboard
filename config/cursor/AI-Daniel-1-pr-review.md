@@ -35,6 +35,9 @@ repository does not change those installed bytes. New setup commands use the pub
 
 ## Required configuration before activation
 
+- The owner selected the [Rovito CLI route](rovito-cli.md) while MCP is developed
+  separately. Its deterministic installer prepares the executable without account
+  credentials. Switch to MCP only after full Cursor automation acceptance.
 - Prepare and verify Jira plus the selected Bitbucket capability route from the
   [review profile](../../skills/pigboard-pr-review/references/cursor.md). The picker
   exposes a shared Atlassian MCP connection, but this alone does not establish the
