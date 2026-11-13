@@ -67,6 +67,14 @@ setup owns credentials/tools and retained evidence; the pipeline owns per-PR tar
 Do not put this authority into authoring prose. Configure real IDs at that later
 step; never guess them from a board column name. Teams alerts remain later wiring.
 
+Jira setup recorded later on 13 November: the separate INT AI board is configured,
+and the three matching Jira rules have scoped transition triggers, Cursor endpoints,
+hidden authorization headers and compact ticket-reference payloads. They are all
+disabled; all three Cursor automations remain inactive with zero runs. See the
+[Jira setup record and exports](../../docs/jira-setup.md) for exact settings,
+PGB-62's deferred blocked-stage work, and the runtime access/admission/duplicate
+handling gates still required before an authorized test. No dispatch was performed.
+
 ## Refresh and recovery
 
 Publish reviewed changes, update the environment's skill pin, preserve the current

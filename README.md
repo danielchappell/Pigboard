@@ -145,6 +145,10 @@ and blockers. The reviewer uses its own webhook and the versioned
 
 The [automation matrix](config/cursor/automations.md) is the current setup record
 for all three stages. Jira wiring and activation follow configuration acceptance.
+The [Jira setup specification](docs/jira-setup.md) records board filters, columns,
+blocked-stage resumption, rule requirements and the installation-specific IDs.
+It distinguishes saved settings from pending work so a future Pigboard installer
+can reproduce the setup. The installer itself is deferred.
 
 ## Validation and status
 
