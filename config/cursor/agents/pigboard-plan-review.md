@@ -12,4 +12,3 @@ repository instructions and evidence. Use a fresh independent context. Do not ed
 code, the plan, tickets or PRs. Return the complete review and actual runtime model/
 effort metadata when available; never substitute a requested setting for observed
 metadata. Missing inputs or unverifiable independence/effort cannot produce CLEAN.
-
