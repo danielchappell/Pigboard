@@ -1,8 +1,10 @@
+> **Project management moved to Jira on 23 October 2026.** [Pigboard Product backlog](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70) owns current scope, priority, dependencies, status and next work. [PGB-50](https://scubapig.atlassian.net/browse/PGB-50) holds the source reconciliation and handover record. Queue/status statements below are dated historical snapshots; technical design and engineering rules still apply unless a linked newer decision supersedes them. Update Jira when work changes.
+
 # Pigboard development plan
 
 ## Active delivery queue — approved 4 October 2026
 
-One current queue: exactly two new PRs, then regroup. PR #42 delivered and live-verified the fixed pilot agent; this PR2 slice is approved named read-only Jira discovery. Preserve unrelated user edits and the independently merged website work. The prior owner recovery batch used 2/2 PRs (36/37). Exact owner and replacement-agent private grant proof was refreshed 7 October at generation4; neither grant check proves Jira discovery.
+Historical approved batch: exactly two PRs, then regroup. Current management is in PGB; PR42/45 completed the 2/2 batch and owner regroup remains required. PR #42 delivered and live-verified the fixed pilot agent; this PR2 slice is approved named read-only Jira discovery. Preserve unrelated user edits and the independently merged website work. The prior owner recovery batch used 2/2 PRs (36/37). Exact owner and replacement-agent private grant proof was refreshed 7 October at generation4; neither grant check proves Jira discovery.
 
 | Order | Outcome and dependencies | Current stage |
 | --- | --- | --- |

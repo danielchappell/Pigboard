@@ -1,3 +1,7 @@
+> **Project management moved to Jira on 23 October 2026.** [Pigboard Product backlog](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70) owns current scope, priority, dependencies, status and next work. [PGB-50](https://scubapig.atlassian.net/browse/PGB-50) holds the source reconciliation and handover record. Queue/status statements below are dated historical snapshots; technical design and engineering rules still apply unless a linked newer decision supersedes them. Update Jira when work changes.
+
+See [project management](docs/project-management.md) for the human and agent workflow.
+
 # Pigboard
 
 Pigboard is an opinionated AI development process. We are building it to take a
@@ -92,7 +96,7 @@ their own current grant with `GET /v1/authority/me` and a bearer credential.
 The host lists approved Jira names but does not save a board selection or expose a public API. The
 [first-host operator guide](docs/hosted-pigboard-first-service.md) covers the
 private Fly setup, safe credential use, diagnostic results, restart and rollback.
-Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [active delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-4-october-2026) records the new two-PR batch: fixed agent connect/disconnect, then approved named read-only Jira discovery, followed by regroup. Prior owner PR #36/TLS PR #37 and4 October owner live proof are historical evidence. New-code committed review, hosted CI, merge/deployment and agent live acceptance remain separate. The host is not accepted merely because source or local tests exist.
+Before deployment, `npm run --silent check:pigboard-image -- --format json` builds the actual production image and checks its normal startup on one CPU/256 MiB with a synthetic URL, a temporary loopback port and ownership-checked cleanup. It requires Docker and registry/package access; `--help` explains failed stages. It proves liveness only. The [historical delivery queue](docs/delivery-plan.md#active-delivery-queue--approved-4-october-2026) records the completed two-PR batch: fixed agent connect/disconnect, then approved named read-only Jira discovery, followed by regroup. Prior owner PR #36/TLS PR #37 and4 October owner live proof are historical evidence. New-code committed review, hosted CI, merge/deployment and agent live acceptance remain separate. The host is not accepted merely because source or local tests exist.
 
 With the private Fly Machine, Neon runtime login and an owner-specific WireGuard
 route verified, the bootstrapped owner can inspect only their current grant with
