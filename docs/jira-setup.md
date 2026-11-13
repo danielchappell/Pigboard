@@ -16,7 +16,7 @@ that installer is deferred; this rollout captures its inputs and acceptance chec
 - A separate AI board makes ownership clear. Humans do not drag its tickets;
   automation performs transitions. Permission enforcement and dedicated identities
   are deferred. The human owner remains accountable.
-- Project, Story type, exact employee/bot label and status determine dispatch.
+- Project, Story type, exactly one numbered employee label and status determine dispatch.
   A deterministic admission script selects only new work. It does not manage rework.
 - Confirmed fixes return to In Progress on the same PR. Discussion remains in the
   current Review or QA stage. Scope expansion requires human resolution in Blocked.
@@ -44,7 +44,7 @@ future installer:
 | Input | Purpose |
 | --- | --- |
 | Jira site, project key/ID, main board and original filter/sub-filter | Scope and reversible board isolation |
-| Exact workstream label and accountable owner | Dispatch eligibility |
+| Employee label family, exact numbered workstream and accountable owner | Worker routing and sequential admission |
 | AI board name, location, filter and sharing | Dedicated delivery view |
 | Workflow status IDs and categories; column mappings | Use actual statuses, not display-name guesses |
 | Blocked-at field ID, type, context and card placement | Visible saved stage and deterministic resumption |
@@ -52,7 +52,7 @@ future installer:
 | Cursor environment, repository/base allowlist, skill revision and Build | Prepared execution environment |
 | Three automation IDs, webhook endpoints and secret references | Stage-specific dispatch |
 | Rule IDs, triggers, guards, actor, payload and disabled state | Reproducible rules and auditability |
-| Event/visit identity and ownership controls | Duplicate handling; acceptance required before activation |
+| Event/visit identity and ownership controls | Unresolved skill prerequisite; API/dispatcher work is deferred |
 | Provider identity, scope names and secret destinations | Credentials remain outside version control |
 
 Never store tokens, webhook API keys or private credential-bearing URLs here.
@@ -143,20 +143,40 @@ been created or promised as part of this card change.
 | Capture blocked stage | Eligible Story enters Blocked; save previous status in Blocked at without destroying an existing valid target on duplicate processing | Deferred to PGB-62; not created |
 | Human resume | Explicit human request while Blocked; validate saved stage and transition to it, retaining current PR | Deferred to PGB-62; not created |
 
-Each rule scopes to INT, Story, exact AI-Daniel-1 label. All retain the default
-**Automation for Jira** actor and allow other automations and user actions to
-trigger them, so deterministic admission and future resume transitions can reach
-the dispatcher. This setting is saved; chaining has not been live-tested.
-Duplicate events must not start competing workers.
-Do not claim native automation provides atomic workstream ownership without evidence.
+On 13 November at 23:26 Europe/Madrid, all three saved rules were updated to
+share one worker per stage across Daniel's numbered streams. Their names now use
+**AI-Daniel**, while their IDs and webhook destinations are unchanged. All remain
+**DISABLED**. The Automation for Jira actor and `canOtherRuleTrigger: true` remain
+unchanged. Chaining has not been live-tested.
 
-All three rules have a Work item transitioned trigger with the exact To status,
-and a trigger JQL condition of `project = "INT" AND issuetype = Story AND labels =
-"AI-Daniel-1" AND status = "<stage>"`. They contain a Send web request action (POST).
-Jira's **Save without enabling** saved them with **Disabled** visible. They have
-not been exercised and are not accepted working dispatchers.
-The success-page URL includes `__RULE_TURNED_ON` even when the visible toggle is
-Disabled; do not infer activation from that URL suffix.
+Each Work item transitioned trigger has the exact destination stage and two guards:
+
+1. JQL: `project = "INT" AND issuetype = Story AND status = "<stage>"`.
+2. Smart-value comparison: `,{{issue.labels.join(",")}},` **exactly matches regular
+   expression**:
+
+```text
+^(?:,(?!AI-Daniel-[0-9]+,)[^,]+)*,AI-Daniel-[0-9]+(?:,(?!AI-Daniel-[0-9]+,)[^,]+)*,$
+```
+
+The guard accepts exactly one full, case-sensitive `AI-Daniel-<digits>` label,
+with unrelated labels allowed. Missing or multiple Daniel stream labels are rejected.
+JQL labels do not support this wildcard family match. The first action creates a
+variable named `pigboardWorkstream`, with this smart value:
+
+```text
+{{issue.labels.join(",").match("(?:^|,)(AI-Daniel-[0-9]+)(?=,|$)")}}
+```
+
+The second action sends the authenticated POST. Keeping extraction in a separate
+variable avoids embedding quoted regex syntax inside JSON. Thirteen local regex
+boundary cases passed, including streams 1/2/3, unrelated labels, malformed values
+and ambiguous multiple streams. Actual Jira smart-value rendering remains untested.
+
+The boards still isolate **AI-Daniel-1 only**. Before using another numbered stream,
+update both AI-board inclusion and main-board exclusion; family routing alone does
+not isolate those tickets. No admission code or duplicate lock has been added.
+Native webhooks are not evidence of exclusive workstream ownership.
 
 ### Webhook settings
 
@@ -184,7 +204,7 @@ QA's saved Custom data body is:
 {
   "schema": "pigboard.jira-dispatch.v1",
   "stage": "QA",
-  "workstream": "AI-Daniel-1",
+  "workstream": "{{pigboardWorkstream}}",
   "jira": {
     "baseUrl": "https://safeguardworld.atlassian.net",
     "projectKey": "INT",
@@ -200,7 +220,8 @@ This compact reference directs the agent to the canonical ticket rather than
 copying all Jira fields into its context. The agent still needs prepared Jira read,
 comment and transition capabilities. This body does **not** provide a verified
 unique transition/visit ID, an ownership claim, repository admission or duplicate
-suppression. Those remain activation gates. The payload schema is Pigboard's draft
+suppression. The installed skills still require these guarantees; see the
+unresolved contract below. The payload schema is Pigboard's draft
 convention, not a Cursor API schema. Its delivery to the runner is untested.
 Do not derive dispatch authority from arbitrary ticket prose or copied JSON alone.
 
@@ -219,7 +240,8 @@ not generic import templates or a working installer:
 - [QA](../config/jira/exports/AI-Daniel-1-qa.json)
 
 All three export `state: DISABLED`, `canOtherRuleTrigger: true`, INT-only scope,
-name-based target statuses, exact JQL guards, POST destinations and JSON bodies.
+name-based target statuses, JQL and regex guards, the extraction variable, POST
+destinations and JSON bodies.
 The actor account ID is `557058:f58131cb-b67d-43c7-b30d-6b58d40bd077` (Automation
 for Jira); the owner is Joseph Chappell. Editing is owner-only, reading is
 unrestricted within Jira's applicable access rules, and failure notification is
@@ -233,7 +255,8 @@ import these as a general customer configuration without that reconciliation.
 Keep imported rules disabled. Do not expect an export to restore secrets.
 
 Local inspection parsed all three exports and checked disabled state, chaining,
-stage/JQL/endpoint alignment, matching payload stage, JSON validity, and absence
+stage/JQL/endpoint alignment, guard/operator, action order, variable and payload
+workstream, matching payload stage, JSON validity, and absence
 of the hidden authorization values. These are static checks, not dispatch tests.
 Final UI inspection showed all three Jira rules disabled and all three Cursor
 automations inactive with zero runs. No Story labels or transitions were changed.
@@ -257,17 +280,19 @@ The [automation matrix](../config/cursor/automations.md) records all three exist
 inactive automations, their IDs, minimal prompts, model bindings, environment and
 successful Build evidence. The [CLI setup](../config/cursor/rovito-cli.md) records
 provider capabilities. These remain the authoritative Cursor records; avoid
-duplicating changing version pins here. Runtime Jira capability wiring and actual
-webhook authentication/payload acceptance are still pending.
+duplicating changing version pins here. The approved team Atlassian connection is
+now saved on all three workers. One
+isolated Cursor read check passed; see [Jira access](../config/cursor/jira-access.md).
+Actual delivery writes and webhook payload acceptance remain untested.
 
 ## Verification and rollback record
 
-No rule activation, webhook dispatch or Story transition is authorized in this
-configuration task. Verification now consists of saved settings and disabled-state
-inspection. Later bounded acceptance must verify: label isolation (including
-unlabeled main-board issues), every status/column mapping, blocked-stage display,
-human resume and invalid-target handling, same-PR rework, duplicate handling, and
-each authenticated stage handoff. Record actual outcome separately from intent.
+The new delivery rules remain disabled and their Cursor workers inactive. No
+Story labels or transitions were changed. A separate, manually started read-only
+Cursor probe verified INT access; it did not invoke a delivery skill or webhook.
+Later authorized acceptance must verify the saved guards and payload rendering,
+board isolation, same-PR rework, permitted Jira/PR writes and authenticated stage
+handoffs. Blocked-stage display and resume belong to PGB-62, not this MVP check.
 
 Restore the original main sub-filter to reverse board isolation. Changing board
 filters/mappings does not itself reverse workflow or ticket changes. Preserve the
@@ -277,18 +302,38 @@ an automatic rollback. For Cursor recovery follow the matrix's pinned-Build proc
 
 ## Next work
 
-Subsequent owner decision: shared run storage/database is outside the MVP.
-[Bounded Cursor webhook test](cursor-webhook-test.md) records actual duplicate
-behavior, returned agent IDs, manual stopping and the remaining API cancellation
-check. The full numbered label identifies the sequential stream; worker routing
-will match Daniel's label family. Saved rules still use exact AI-Daniel-1.
-The items below do not require implementing the superseded PostgreSQL proposal.
+The original webhook MVP remains the current scope in
+[PGB-58](https://scubapig.atlassian.net/browse/PGB-58). Shared databases and an API
+dispatcher are outside it. The [bounded webhook test](cursor-webhook-test.md)
+confirmed that two identical requests create separate runs and recorded manual
+stopping. It did not test API launch/cancellation or prove duplicate prevention.
 
-1. Complete runtime Jira capability wiring, repository admission and deterministic
-   event/visit identity and duplicate ownership before dispatch testing.
-2. Review interactions with the existing project rules and verify the complete
-   handoff through an explicitly authorized bounded test; keep all rules inactive
-   until then. New-work admission remains separate work.
-3. PGB-62 later supplies the Blocked at field, card display and human resume rules.
+### Unresolved entrypoint contract
+
+The installed implementer, reviewer and QA skills require trusted visit/run IDs
+and exclusive ownership before delivery. The compact webhook body and saved Jira
+rules do not supply an atomic ownership guarantee. Attaching Atlassian fixes ticket
+access, not that contract. Do not invent identity from `issue.updated`, treat a
+label/comment as a lock, or claim the delivery workflow is ready. No skill rules
+were relaxed in this configuration change. The owner must agree the bounded MVP
+handling of this mismatch before a real delivery test; it must not silently force
+a database or dispatcher into the MVP.
+
+### Current and deferred work
+
+1. Prepare an explicitly authorized disposable Story/PR fixture for Jira/PR write
+   acceptance and end-to-end stage handoffs. First resolve the entrypoint mismatch
+   above, inspect interactions with the four existing project rules, and verify
+   actual Jira rendering. No existing production Story is a write fixture.
+2. PGB-61's frontend skill-authoring task is Done. Its live Cursor/PR acceptance is
+   still part of rollout; it does not deliver the preview pipeline in PGB-60.
+3. New-work admission, per-PR environments (PGB-60), and blocked-stage display/resume
+   (PGB-62) remain separate work. Teams alerts remain later wiring.
+4. After the MVP, follow the native dependency chain
+   [PGB-63](https://scubapig.atlassian.net/browse/PGB-63) (bounded API facts) →
+   [PGB-64](https://scubapig.atlassian.net/browse/PGB-64) (reviewed scope/design) →
+   [PGB-65](https://scubapig.atlassian.net/browse/PGB-65) (grooming). They are Tasks,
+   not implementation authorization. No general Cursor API key was created and no
+   API launch/cancel test was started.
 
 This checklist is the setup record, not a replacement for the PGB delivery queue.

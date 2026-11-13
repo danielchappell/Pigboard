@@ -57,23 +57,35 @@ entrypoints, 27 source files, locked dependencies, pg.Client and bru --version.
 Rovito 0.1.295 and the permanent review-write profile were freshly installed.
 The configuration-only profile receipt keeps providerAccessVerified false; the
 separate authorized read-check Build above is the live access evidence. No
-PR-write, Jira or real-Story acceptance is implied. All three automations remain
+PR-write, Jira write or real-Story acceptance is implied. All three automations remain
 inactive; selecting a Build did not enable them.
 
-Later Jira wiring owns project/label/status filtering, new-work admission, webhook
-authentication, repository allowlist, event/visit identity and duplicate ownership.
-Prepared connectors own ticket/PR reads, reports and direct transitions. Operator
-setup owns credentials/tools and retained evidence; the pipeline owns per-PR targets.
-Do not put this authority into authoring prose. Configure real IDs at that later
-step; never guess them from a board column name. Teams alerts remain later wiring.
+Jira owns project/label/status filtering and authenticated webhook routing.
+New-work admission is separate work. The pipeline owns per-PR targets. Credentials
+and tool preparation remain operator setup; none belong in authoring prose or the
+minimal entrypoint prompts. Trusted visit identity and exclusive ownership remain
+an unresolved prerequisite of the installed skills, not a capability established
+by these webhook rules. See the [current scope and contract gap](../../docs/jira-setup.md#unresolved-entrypoint-contract).
 
-Jira setup recorded later on 13 November: the separate INT AI board is configured,
-and the three matching Jira rules have scoped transition triggers, Cursor endpoints,
-hidden authorization headers and compact ticket-reference payloads. They are all
-disabled; all three Cursor automations remain inactive with zero runs. See the
-[Jira setup record and exports](../../docs/jira-setup.md) for exact settings,
-PGB-62's deferred blocked-stage work, and the runtime access/admission/duplicate
-handling gates still required before an authorized test. No dispatch was performed.
+At 23:18 Europe/Madrid on 13 November, the approved existing team **Atlassian**
+connection was saved on all three workers. Their exact prompts, selected Build,
+environment and High model remain unchanged. Each worker was saved without enabling;
+all three remain inactive and no delivery runs were started. This connection exposes
+the team's broader available Jira/Confluence tools, not an INT-only permission scope.
+
+One separate [read-only setup run](https://cursor.com/t/safeguardglobal-engineering/agents/bc-a52b5825-e517-4d7f-a97a-e81d1d5a0184)
+passed through that same connection. It read INT project/status/board information
+and listed transitions without performing them. It did not prove Jira writes,
+PR writes or delivery handoffs. The probe was restored to its original transport
+prompt, detached from Atlassian and left inactive. See the [access evidence and
+recovery instructions](jira-access.md).
+
+At 23:26 the three Jira rules were saved disabled with shared **AI-Daniel** routing:
+exactly one numbered label, full label preserved in the webhook payload. The boards
+still isolate only AI-Daniel-1. The [Jira setup record and exports](../../docs/jira-setup.md)
+capture exact guards and actions. Payload rendering and stage dispatch remain
+untested. No Story was labeled or transitioned. API dispatch, duplicate prevention
+and cancellation design are deferred to PGB-63–65; no database was added.
 
 ## Refresh and recovery
 
