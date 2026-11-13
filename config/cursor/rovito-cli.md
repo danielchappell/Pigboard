@@ -63,13 +63,48 @@ release's `docs/oauth.md`, `docs/cli.md` and review-submission schema for the ex
 supported interface. Provide their paths in the prepared capability instructions.
 
 The existing headless API-token route reads `ROVITO_EMAIL` and `ROVITO_API_TOKEN`.
-Keep the token in Cursor secrets, never in source, tickets, prompts or command-line
-arguments. A v2 profile at the user's standard config location needs the selected
-email, verified Bitbucket account UUID, `auth_type: api-token`, `policy: review-write`,
-Plexus repository name and UUID, active state and credential generation. These are
-configuration values, not permissions granted by a label. Do not invent UUIDs or
-borrow another person's identity. Profile metadata alone does not verify the token's
-actual actor; check the provider identity during setup.
+Keep these in Cursor Runtime Secrets, never in source, tickets, prompts or command
+arguments. The owner saved these for the verified account; the successful read-only
+check is recorded in the reviewer setup guide.
+
+### Persistent profile
+
+After the pinned tool/skill installers, run the reviewed, published
+`scripts/configure-reviewer-cli.mjs` with verified nonsecret values:
+
+```sh
+node configure-reviewer-cli.mjs \
+  --email VERIFIED_EMAIL \
+  --account-uuid '{VERIFIED_ACCOUNT_UUID}' \
+  --repository WORKSPACE/REPOSITORY \
+  --repository-uuid '{VERIFIED_REPOSITORY_UUID}'
+```
+
+Fetch this script from an exact Pigboard commit and verify its SHA-256 before
+execution, as with the tool installer above. Keep personal account values in the
+saved environment setup, not the public source. The command writes an isolated
+v2 profile and capability file under `/opt/pigboard/reviewer`, outside the app and
+all Git checkouts. `--app` defaults to the current checkout; `--root` can select an
+outside-checkout canonical location for isolated validation. The standard runtime
+path is fixed by the linked skill contract; a custom root is for setup tests only.
+Existing identical files are reused; unsafe or mismatched files are preserved and
+setup fails. A human may prepare a new root/Build or explicitly replace the old
+configuration after inspecting the difference. There is no automatic migration.
+
+This initial profile fixes `policy: read-only`. It is persistent configuration,
+not a full-review authorization. The command neither reads a token nor contacts
+Bitbucket; its receipt says `providerAccessVerified: false`. Use the
+[prepared CLI contract](../../skills/pigboard-pr-review/references/rovito-cli.md)
+for the exact invocation and installed vendor documentation. The current skill
+bundle must include that reference. Do not add setup instructions to the prompt.
+
+Keep both automations inactive, build, then run authorized `auth doctor` and
+`context show` using this persistent config and explicit profile/repository.
+Record those results separately from the installer receipt. Select the passing
+Build only after checking it; Build selection does not enable an automation.
+Credentials remain runtime secrets and are not written into the snapshot files.
+A future full-review setup must explicitly prepare a verified `review-write`
+profile and token rights; this installer cannot silently elevate its policy.
 
 Before any Safeguard Bitbucket or Jira access, obtain the owner's explicit approval
 of the exact target and actions. An account email or nominated test PR is context,

@@ -92,3 +92,40 @@ The webhook endpoint is available in the automation UI. Generate/store its auth
 header only as part of the protected Jira rule wiring; never commit it or put it in
 agent instructions. No connector or approval identity is silently substituted, and
 existing legacy PRSniffer configuration is unchanged.
+
+## Permanent CLI setup — preparation, 13 November 2026
+
+The owner saved environment-scoped `ROVITO_EMAIL` and `ROVITO_API_TOKEN` Runtime
+Secrets. The read-only check Build
+`bld-20261113-eb7de81a-60cc-43d1-a715-9dc874d9a3de` succeeded: the expected account
+email was confirmed, Plexus/master metadata matched, and Rovito 0.1.295 reported
+healthy identity and repository access. It used a temporary profile, removed after
+the check. It did not run a review, access Jira, or write to Bitbucket.
+
+The new [persistent setup](rovito-cli.md#persistent-profile) prepares the same
+verified identity/repository with read-only policy, isolated configuration and a
+skill-visible capability file. Local tests and a successful temporary-profile
+check do not prove that the permanent profile is installed in a selected Build;
+record the actual permanent-profile Build acceptance separately.
+
+Before a full review test:
+
+1. Prepare the reviewer token's missing `read:pullrequest:bitbucket`,
+   `write:pullrequest:bitbucket` and `read:pipeline:bitbucket` permissions, retaining
+   existing user/repository reads. Confirm an eligible approval identity for the
+   chosen PR. The current token is only for identity/repository checks and expires
+   on 20 November 2026. Credential replacement remains a user action.
+2. Explicitly prepare and verify the `review-write` CLI policy and authorized
+   comment/edit, approve and own-approval-removal behavior on a chosen test PR.
+   Token permissions and local policy are separate gates. Atlassian's PR-write
+   scope also includes merge; the CLI review policy and workflow must continue to
+   disallow merge. See [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
+3. Supply the test Story/PR with complete ticket requirements and passing CI;
+   configure Jira reads, reports and direct QA/In Progress/Blocked transitions.
+   Prepare retained evidence/review state and trusted run ownership/deduplication
+   for the end-to-end handoff test. Do not invent missing inputs.
+
+A read-only core review can be scoped separately from the publishing/handoff test,
+with ticket requirements supplied and no claim that the full entrypoint passed.
+No test or automation activation is authorized merely by completing this setup.
+MCP migration and per-PR QA environments remain separate work.
