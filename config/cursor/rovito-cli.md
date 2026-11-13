@@ -40,9 +40,11 @@ existing skill install command and pin unchanged. Keep **Start Script** empty.
 )
 ```
 
-Pause affected automations, build and inspect the receipt before selecting the new
-Build and restoring them. Success includes version, executable, hashes and completed
-version/help probes. Existing valid installs are reused; mismatches are preserved
+Keep affected automations inactive, build and inspect the receipt before selecting
+the new Build. A successful Build does not authorize activation; enable an
+automation only after explicit owner go-live authorization. Success includes
+version, executable, hashes and completed version/help probes. Existing valid
+installs are reused; mismatches are preserved
 and fail setup. A human resolves a failed installation or restores the previously
 verified Build/configuration. Never ask an agent to install or repair it.
 
@@ -69,8 +71,16 @@ configuration values, not permissions granted by a label. Do not invent UUIDs or
 borrow another person's identity. Profile metadata alone does not verify the token's
 actual actor; check the provider identity during setup.
 
-Read-only setup checks must establish the actual account, repository, PR snapshot,
-complete comparison/comments and CI. Then verify authorized comment/edit, approval
+Before any Safeguard Bitbucket or Jira access, obtain the owner's explicit approval
+of the exact target and actions. An account email or nominated test PR is context,
+not that approval. Do not sign in, switch accounts, handle credentials or query
+provider identity/repository/PR metadata during credential-free preparation.
+No Safeguard Jira test is currently authorized. Fixture writes require a separate
+explicit approval from read-only checks.
+
+Once specifically authorized, read-only setup checks must establish the actual
+account, repository, PR snapshot, complete comparison/comments and CI. Then verify
+authorized comment/edit, approval
 and own-approval-removal behavior on an explicitly chosen test PR. Keep Jira access
 and direct transitions, run ownership, durable evidence and duplicate handling as
 separate setup gates. A successful version/help probe cannot satisfy them.
