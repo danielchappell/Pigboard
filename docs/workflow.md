@@ -13,8 +13,9 @@ days. Split cross-repository work into linked Stories before execution.
 
 QA instructions name the skills in execution order. Each case supplies its ID,
 steps or prepared request/query, expected outcome, required test data/access and
-evidence requirements. Supply the PR, tested commit, environment URL and deployed
-revision before QA. Agents do not invent missing cases, discover environments or
+evidence requirements. Supply the PR and tested commit before QA. The pipeline
+will publish the environment URL and deployed revision in its PR comment, as
+described below; do not duplicate that environment handoff on the Jira ticket. Agents do not invent missing cases, discover environments or
 expand scope to make a ticket executable. Implementation records verification and
 prepared testing information for review and QA.
 
@@ -64,6 +65,27 @@ connected Jira/Bitbucket tools, actual High/Medium phase controls and independen
 reviewer isolation before dispatching tickets. Configure reviewer and QA automations
 against the same contracts and verify a bounded end-to-end Story.
 
-Per-PR environment provisioning is a separate pipeline task. QA consumes the URL
-and revision it is given. Teams blocker alerts are later Jira wiring; alert routing
+## PR environment handoff — agreed contract, pending implementation
+
+Per-PR environment provisioning and its comment producer are a separate pipeline
+task. The pipeline, not an agent, will publish or update a recognizable comment on
+the PR with its PR identity, environment URL, full deployed commit, readiness
+(`ready`, `building` or `failed`), and pipeline-run link. No credentials belong in
+that comment. The Jira ticket keeps requirements and prescribed cases; the PR
+comment is the canonical environment handoff.
+
+Before environment-dependent work, the consumer must verify the configured
+pipeline identity and exact PR/commit match. A heading or URL in an arbitrary
+comment is insufficient provenance. Missing, conflicting, failed or stale evidence
+blocks required environment-dependent work; agents neither discover alternatives
+nor create, repair or poll environments. The pipeline owns refresh on new commits.
+
+QA always needs its supplied target. Static PR review can proceed without a
+preview; runtime diagnostics require a ready matching environment. This change
+records the agreed interface only: comment format/producer identity and verified
+consumer handling still need implementation and acceptance. The installed skill
+bundle is unchanged; its generic supplied-environment checks do not prove this
+new comment contract is implemented.
+
+ Teams blocker alerts are later Jira wiring; alert routing
 does not belong in skills. No hosted Pigboard runtime is required for this MVP.
