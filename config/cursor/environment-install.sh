@@ -38,3 +38,4 @@ fi
 node "$PIGBOARD_BOOTSTRAP/scripts/install-cursor-skills.mjs" \
   --source "$PIGBOARD_SOURCE" --ref "$PIGBOARD_REVISION" \
   --app "$PIGBOARD_APP" --root /opt/pigboard
+node "$PIGBOARD_BOOTSTRAP/scripts/install-cursor-agents.mjs" --app "$PIGBOARD_APP"

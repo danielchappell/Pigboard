@@ -53,3 +53,27 @@ Block required scope increases or inability to complete the assignment.
 This profile does not create Jira/Cursor automations, preview environments or Teams
 alerts, and does not grant merge/deployment authority. Live setup must verify all
 of those relevant capabilities separately from local skill validation.
+
+## Prepared Cursor subagents
+
+Deterministic setup installs `pigboard-plan-review` and `pigboard-execution` into
+the cloud user's `~/.cursor/agents`, outside the app. Definitions pin Grok 4.7,
+High and Medium respectively, Fast off. The High automation parent owns phases
+1–2, including replanning. Invoke exactly one fresh `pigboard-plan-review` per
+review round with the existing review prompt and complete inputs; it is read-only.
+After CLEAN, invoke `pigboard-execution` in the shared checkout for phases 3–5,
+passing the actual ticket, accepted plan/review revisions, source/base, ownership,
+same-PR identity, prior receipts and prepared tool/evidence context. Do not duplicate
+those execution phases at High. Parent reports the returned outcome without
+repeating successful external actions.
+
+If the executor returns NEEDS_HIGH_PLAN, the parent revises at High and obtains
+one fresh High review before a Medium continuation. Preserve partial work, PR and
+receipts across that handoff. Required new scope always needs a human. Neither
+agent can change model setup, install definitions or use fallback effort silently.
+
+Installed files and requested settings are configuration evidence only. Before
+delivery, operator acceptance must establish user-agent discovery, fresh reviewer
+context, same checkout and actual High/Medium task metadata in this account.
+During a run verify actual tool/harness model metadata before relying on each phase;
+if unavailable or different, block. An agent saying it is High/Medium is not proof.
