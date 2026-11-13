@@ -27,7 +27,7 @@ blocked work. The separate Jira admission script selects new work for the stream
 ## What is in this repository
 
 - `skills/`: reusable instructions, references and prepared QA helpers.
-- `config/skill-bundle.json`: the ten execution skills included in this release.
+- `config/skill-bundle.json`: the ten execution skills and Story-writing skill included in this release.
 - `scripts/prepare-pigboard-skills.mjs`: deterministic fetch and refresh.
 - `scripts/install-cursor-skills.mjs`: verified installation at a stable skill path.
 - `config/cursor/environment-install.sh`: versioned Cursor Build install command.
@@ -85,7 +85,7 @@ instructions or a startup service. Copy the versioned
 `export PIGBOARD_REVISION=REVIEWED_40_CHARACTER_COMMIT`. The revision must already be
 published in the public Pigboard repository. The command fetches it over HTTPS,
 installs the locked dependencies and verifies the source hashes,
-all ten entrypoints, `pg.Client` import and `bru --version` before exposing
+all eleven entrypoints, `pg.Client` import and `bru --version` before exposing
 `/opt/pigboard/skills`. The agent prompt points directly to that existing path.
 
 For a single repository, the install working directory must be its checkout. Set
@@ -116,6 +116,17 @@ dependencies, then reruns setup. For a deliberate rollback, prepare a previously
 reviewed commit. Keep releases used by active runs; remove unused releases manually
 when their runs have ended. The script performs no automatic cache pruning.
 
+## Write an executable Story
+
+Use [write-pr-sized-stories](skills/write-pr-sized-stories/SKILL.md) and its
+[structured ticket contract](skills/write-pr-sized-stories/references/pigboard-ticket.md).
+Keep the familiar four sections, stable requirement/case/step IDs, explicit repository
+and base branch, scope boundaries, and named QA skills in execution order. The
+[examples](skills/write-pr-sized-stories/references/pigboard-example.md) show UI and
+API/database Stories. The implementer supplies only declared mechanical preparation
+details; it does not invent missing expectations. Native Jira fields, pipeline PR
+environment comments and trusted run settings retain their own responsibilities.
+
 ## Cursor automations
 
 Use a webhook trigger, the Plexus/master environment, and the prepared implementer
@@ -132,9 +143,12 @@ See the [implementer setup](config/cursor/AI-Daniel-1.md) and
 and blockers. The reviewer uses its own webhook and the versioned
 [review prompt](config/cursor/pr-review-prompt.txt).
 
+The [automation matrix](config/cursor/automations.md) is the current setup record
+for all three stages. Jira wiring and activation follow configuration acceptance.
+
 ## Validation and status
 
-Run `npm ci` then `npm test` for the ten local fetch/refresh, environment and
+Run `npm ci` then `npm test` for the local fetch/refresh, environment and
 bootstrap checks. Fixture dependency installs are simulated;
 they do not establish live npm access or Cursor behavior. Local preparation, remote
 publication, saved automation, activation and a successful real Story are separate

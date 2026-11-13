@@ -1,0 +1,1 @@
+Execute QA for the provided Jira ticket on its current open pull request, following /opt/pigboard/skills/qa-entrypoint/SKILL.md.

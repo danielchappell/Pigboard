@@ -6,6 +6,15 @@ and pull request. The human employee remains accountable.
 
 ## Ticket contract
 
+The [structured Story reference](../skills/write-pr-sized-stories/references/pigboard-ticket.md)
+is canonical for field labels, case ordering and preparation ownership. Use the
+[Story-writing skill](../skills/write-pr-sized-stories/SKILL.md) to produce it. Native
+Jira metadata stays in Jira fields; accepted requirements stay in the description;
+implementation/review/QA outputs use versioned handoff comments. All acceptance
+cases and expectations remain on the ticket, with reviewed executable artifacts
+linked from the implementation handoff.
+
+
 A ready Story names one codebase and base branch, its ownership boundaries, scope
 and exclusions, acceptance criteria, and the exact test strategy and cases. One
 Story produces one PR, at most 20 changed files and less than two human working
@@ -58,12 +67,11 @@ happens during a human-controlled environment Build, never through agent-led set
 
 ## Remaining rollout work
 
-[PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks current work. The verified
-Cursor environment and enabled implementer automation do not yet prove a real
-Jira Story can complete. Verify Jira event/authentication/serialization wiring,
+[PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks current work. All delivery automations remain inactive. The prepared
+Cursor environment does not yet prove a real Jira Story can complete. Verify Jira event/authentication/serialization wiring,
 connected Jira/Bitbucket tools, actual High/Medium phase controls and independent
-reviewer isolation before dispatching tickets. Configure reviewer and QA automations
-against the same contracts and verify a bounded end-to-end Story.
+reviewer isolation before dispatching tickets. Use the [three-stage setup matrix](../config/cursor/automations.md), complete its
+remaining capabilities, then verify an explicitly authorized bounded end-to-end Story.
 
 ## PR environment handoff — agreed contract, pending implementation
 

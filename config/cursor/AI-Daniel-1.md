@@ -1,5 +1,9 @@
 # AI-Daniel-1 implementer setup
 
+Current configuration and rollout gaps are recorded in the
+[three-stage automation matrix](automations.md). Older Build/pin observations below
+are dated history; they do not override the matrix or authorize activation.
+
 Target confirmed by owner: Bitbucket `sgwidevelopment/plexus`, base `master`.
 Project: Safeguard INT; Story label `AI-Daniel-1`; trigger: entry to In Progress.
 
