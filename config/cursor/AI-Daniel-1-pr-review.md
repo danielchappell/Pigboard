@@ -24,7 +24,7 @@ The pipeline-owned PR environment comment is defined in the
 Its producer and verified consumer behavior remain separate pending work. Do not
 put environment discovery or setup instructions into the automation prompt.
 
-## Observed configuration — 13 November 2026
+## Earlier configuration observations — 13 November 2026
 
 **Setup only; keep both automations inactive until explicit owner go-live.** The
 [CLI draft Build](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/builds/bld-20261113-0ce83168-5eed-4aa2-8673-d14796319431)
@@ -97,7 +97,7 @@ header only as part of the protected Jira rule wiring; never commit it or put it
 agent instructions. No connector or approval identity is silently substituted, and
 existing legacy PRSniffer configuration is unchanged.
 
-## Permanent CLI setup — preparation, 13 November 2026
+## Earlier permanent CLI preparation — 13 November 2026
 
 The owner saved environment-scoped `ROVITO_EMAIL` and `ROVITO_API_TOKEN` Runtime
 Secrets. The read-only check Build
@@ -112,22 +112,30 @@ skill-visible capability file. Local tests and a successful temporary-profile
 check do not prove that the permanent profile is installed in a selected Build;
 record the actual permanent-profile Build acceptance separately.
 
+## Current CLI acceptance and remaining review test
+
+The owner saved the replacement token in the same Cursor environment. It has
+`read:user:bitbucket`, `read:repository:bitbucket`, `read:pullrequest:bitbucket`,
+`write:pullrequest:bitbucket` and `read:pipeline:bitbucket`, expiring 20 November
+2026. The authorized account and Plexus read checks passed using that token in
+Build `bld-20261113-15ee43f7-bf69-40ed-8b43-c61cf657f092`; no provider writes occurred.
+The permanent CLI profile now uses `review-write`; see the matrix for the latest
+selected Build. No credential values are stored in this repository.
+
 Before a full review test:
 
-1. Prepare the reviewer token's missing `read:pullrequest:bitbucket`,
-   `write:pullrequest:bitbucket` and `read:pipeline:bitbucket` permissions, retaining
-   existing user/repository reads. Confirm an eligible approval identity for the
-   chosen PR. The current token is only for identity/repository checks and expires
-   on 20 November 2026. Credential replacement remains a user action.
-2. Explicitly prepare and verify the `review-write` CLI policy and authorized
-   comment/edit, approve and own-approval-removal behavior on a chosen test PR.
-   Token permissions and local policy are separate gates. Atlassian's PR-write
-   scope also includes merge; the CLI review policy and workflow must continue to
-   disallow merge. See [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
-3. Supply the test Story/PR with complete ticket requirements and passing CI;
-   configure Jira reads, reports and direct QA/In Progress/Blocked transitions.
-   Prepare retained evidence/review state and trusted run ownership/deduplication
-   for the end-to-end handoff test. Do not invent missing inputs.
+1. Confirm approval eligibility for the chosen test PR. The current actor is the
+   owner's account, not a separate bot account; identity checks do not establish
+   permission to approve a particular PR.
+2. On an explicitly authorized test PR, verify comment/edit, approve and
+   own-approval-removal behavior. Token scopes and installed policy are configured;
+   these live write behaviors remain untested. Atlassian PR-write also includes
+   merge, while CLI review policy and workflow disallow it. See
+   [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
+3. Supply the test Story/PR with complete requirements and passing CI, and configure
+   Jira reads, reports and direct QA/In Progress/Blocked transitions. Prepare
+   retained evidence/review state and trusted ownership/deduplication for the
+   end-to-end handoff. Do not invent missing inputs.
 
 A read-only core review can be scoped separately from the publishing/handoff test,
 with ticket requirements supplied and no claim that the full entrypoint passed.

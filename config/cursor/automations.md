@@ -27,7 +27,7 @@ enabling it. Selected successful Build
 `b5004d81f227ff7e3bea0680ea86c5d7a78e47dd`, Rovito 0.1.295 and review-write profile.
 The owner saved the five-scope token; account/Plexus read checks passed with zero
 remote writes. This Build contains the structured authoring contract. It predates
-the new phase definitions below. No PR-write acceptance, Jira run or delivery run
+the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
 The new bundle adds `write-pr-sized-stories` to the ten execution skills. Authoring
@@ -49,7 +49,16 @@ Story execution, code change or provider write. The Task response omits model/ef
 telemetry: per-run records must distinguish accepted dispatch controls from the
 operator's setup-observed model. Missing/invalid selectors or conflicting metadata
 block. Model/version/runner changes require renewed acceptance. The corrected
-source still needs a refreshed Build before use; no automation is enabled here.
+source was installed by successful Build
+`bld-20261113-8c16367f-906e-4d3f-9b87-22f49e242697`, selected on 13 November at
+18:18 Europe/Madrid. It pins reviewed commit
+`bb9ca3ab8b9a87d6b27a078cc0df40a5e94df301` from merged PR #56 and verifies eleven
+entrypoints, 27 source files, locked dependencies, pg.Client and bru --version.
+Rovito 0.1.295 and the permanent review-write profile were freshly installed.
+The configuration-only profile receipt keeps providerAccessVerified false; the
+separate authorized read-check Build above is the live access evidence. No
+PR-write, Jira or real-Story acceptance is implied. All three automations remain
+inactive; selecting a Build did not enable them.
 
 Later Jira wiring owns project/label/status filtering, new-work admission, webhook
 authentication, repository allowlist, event/visit identity and duplicate ownership.
