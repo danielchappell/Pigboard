@@ -1,5 +1,11 @@
 # Runtime access and dispatch guard
 
+**Superseded proposal:** the owner excluded a shared database from the MVP after
+this discovery review. Do not implement the PostgreSQL ledger below or make it an
+MVP activation prerequisite. The current workstream decision and bounded live
+webhook/stop results are in [the test record](../cursor-webhook-test.md). The earlier
+review applies only to the historical proposal's recorded hash.
+
 Status: discovery/design in progress, 13 November 2026. Not implemented or ready
 for activation. PGB-58 remains the rollout queue. All three Jira rules and Cursor
 automations stay inactive. No Story or PR writes are authorized by this design.
