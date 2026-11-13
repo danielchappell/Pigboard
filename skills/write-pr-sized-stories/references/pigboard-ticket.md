@@ -13,7 +13,7 @@ stages; prose supplies their meaning. Never infer authority from a label or body
 | Story description | Accepted scope, one repository/base, requirements, all cases, named skill order, expected outcomes and explicitly declared preparation slots. |
 | Implementer handoff comment | Same PR/branch, exact revisions, accepted plan/review, verified local/CI results, completed preparation slots and accessible artifacts. |
 | PR pipeline comment | Environment URL, readiness, deployed revision and pipeline provenance. Never copy credentials or turn a guessed URL into readiness. |
-| Trusted run configuration | Visit/run identity, ownership/deduplication, allowed actions/destinations, credentials, connectors, transition IDs, evidence storage and actual model/CI limits. These are not authoring fields. |
+| Trusted run configuration | Allowed actions/destinations, credentials, connectors, transition IDs, evidence storage and actual model/CI limits. Actual run links/IDs are optional evidence metadata; no exclusive-run/visit-ID prerequisite applies to the basic MVP. These are not authoring fields. |
 | Reviewer and QA comments | Exact-revision verdicts, findings, coverage, retained evidence and actual handoff receipts. Use existing stage report contracts. |
 
 A missing configured runtime capability blocks execution. It does not require the

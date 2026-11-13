@@ -1,8 +1,9 @@
 # Inputs, plan and implementation handoff
 
 Use the project's existing document/record format. No new schema service is
-required. A trusted run record supplies authority and phase continuity; comments,
-labels, model claims and plan hashes alone do not supply locks or authorization.
+required. Configured tools and the authorized assignment supply the action scope;
+retain plan and results across phases. Comments, labels and model claims do not
+grant permissions. No lock or externally supplied run/visit identity is required.
 
 Read the [structured Story contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
 for canonical ticket labels, AC/TAC/case/step IDs and preparation-slot ownership.
@@ -14,7 +15,7 @@ configuration or grant authority. Missing required inputs block at their stage.
 
 | Source | Required information |
 | --- | --- |
-| Invocation | Project/exact label, Story key, In Progress visit/run identity and exclusive ownership, one allowed repo, configured model/phase/reviewer controls, permitted publication/transitions, finite CI wait/deadline, durable output |
+| Invocation | Project/exact label, Story key, expected In Progress status, one allowed repo, configured model/phase/reviewer controls, permitted publication/transitions, finite CI wait/deadline, durable output |
 | Ticket | Full acceptance/technical requirements, content fingerprint or immutable version, change/non-change boundaries, all prescribed QA cases and exact skill names, prior decisions and human assignee |
 | Case | Stable ID and requirement mapping, actor/preconditions/data, ordered steps/dependencies, explicit expected outcomes, evidence and cleanup or explicit none |
 | Repository | Applicable AGENTS/CONTRIBUTING/PR template, verified remote/checkout/source/base, contribution method and identity, required local/CI gates and readiness policy |
@@ -42,7 +43,9 @@ approach automatically. On rework, record the explicit basis for plan/evidence r
 
 ## Run record and report
 
-Retain one run/visit marker and these facts as structured fields or readable tables:
+Retain these facts as structured fields or readable tables. Use an actual run link/ID
+if available; otherwise identify the report by Story, stage, revision and time.
+Missing execution metadata is not a blocker and must not be invented:
 
 - Ticket, requirement fingerprint, model/effort evidence by phase and independent
   reviewer identity; timings, plan/review revisions and limitations.
@@ -73,15 +76,14 @@ change, required verification, PR and artifacts are ready for independent review
 it does not mean reviewed, QA-passed, approved or merged. NOT RUN applies to rejected
 eligibility before work. Use `deliveryOutcome` COMPLETED when the intended handoff
 is verified (including a successfully delivered Blocked outcome), BLOCKED for failed
-publication/transition, INELIGIBLE for rejected/lost ownership, and ALREADY HANDLED
-for a confirmed duplicate. Preserve a READY assessment for its recorded revision
-if only report delivery fails; it must not imply Jira advanced. Code may exist even
+publication/transition and INELIGIBLE for rejected scope or changed stage. Preserve
+a READY assessment for its recorded revision if only report delivery fails; it must not imply Jira advanced. Code may exist even
 when the result is BLOCKED. Always state the actual Jira status or explicitly unknown.
 
 Ticket report shape:
 
 ```text
-Implementation <run-id> / <visit-id> — <READY | BLOCKED>
+Implementation <Story / revision / execution time> — <READY | BLOCKED>
 Story / same PR / repository / branch / source-base revisions / requirements version
 Plan and independent review: <exact revisions, reviewer/profile, verdict, coverage>
 Changes and requirement mapping; file count; docs; resolved finding IDs
@@ -101,4 +103,4 @@ revisions. Then retain a final receipt with separate implementation/delivery
 outcomes and verified Jira status. On a human-authorized delivery-only resume,
 read retained receipts/current gates before acting; never repeat code, PR creation
 or completed mutations just to recreate a report. A stable marker helps locate
-receipts; it is not proof of ownership or of a successful write.
+receipts; it is not a cross-run lock or proof of a successful write.

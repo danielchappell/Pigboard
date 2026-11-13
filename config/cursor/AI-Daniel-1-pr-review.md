@@ -5,8 +5,9 @@ Current configuration and rollout gaps are recorded in the
 are dated history; they do not override the matrix or authorize activation.
 
 [Cursor automation](https://cursor.com/t/safeguardglobal-engineering/automations/d6870b65-df37-11f1-ba91-f63b1661ac50)
-uses Safeguard INT, label `AI-Daniel-1`, and entry to In Review. Jira owns that
-filtering and provides the ticket and trusted visit/run identity. The configured
+uses Safeguard INT and entry to In Review. Jira filters exactly one numbered
+AI-Daniel label and provides the ticket reference and full label. The board
+currently isolates AI-Daniel-1 only. Run/visit identity is not required. The configured
 codebase is Plexus/master, using the existing Pigboard AI-Daniel-1 Plexus environment.
 
 ## Invocation and responsibilities
@@ -86,8 +87,9 @@ repository does not change those installed bytes. New setup commands use the pub
 - Verify a configured approval actor eligible for the same PR, independent review,
   own-approval revocation, complete paged comparisons/comments/CI and direct Jira
   transitions. The automation owner's name is not proof of approval eligibility.
-- Wire authenticated Jira In Review dispatch, exclusive ownership and duplicate
-  event handling. Configure durable review state and reviewer-accessible evidence.
+- Authenticated Jira In Review dispatch is saved disabled. Configure retained
+  review state and reviewer-accessible evidence. Exclusive-run proof, locks and
+  run/visit IDs are not basic MVP prerequisites; duplicate prevention is deferred.
 - Verify the supplied ticket/PR identity, exact current green CI and trusted handoff
   without invoking a model to discover missing setup. Exercise an explicitly chosen
   test Story/PR only after these prerequisites are ready.
@@ -134,8 +136,8 @@ Before a full review test:
    [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
 3. Supply the test Story/PR with complete requirements and passing CI, and configure
    Jira reads, reports and direct QA/In Progress/Blocked transitions. Prepare
-   retained evidence/review state and trusted ownership/deduplication for the
-   end-to-end handoff. Do not invent missing inputs.
+   retained evidence/review state for the end-to-end handoff. Do not invent missing
+   inputs. Missing optional run metadata is not a blocker.
 
 A read-only core review can be scoped separately from the publishing/handoff test,
 with ticket requirements supplied and no claim that the full entrypoint passed.

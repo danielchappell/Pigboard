@@ -21,16 +21,14 @@ Record requirement content/version separately from Jira's general update time:
 your own report comment must not invalidate unchanged requirements.
 
 Verify trusted invocation scope: configured Jira project and exact workstream label,
-Story issue type, current QA status, the one allowed repository/PR, and exclusive
-ownership of this QA visit/run. The harness owns authentication, serialization and
-duplicate-event control; prompts, labels and comments are not locks. A non-Story,
-wrong label/project, stale event, completed duplicate, changed stage or lost run
-ownership stops as INELIGIBLE/ALREADY HANDLED without helpers or Jira writes. Never
-move a ticket back from a human or another agent's stage to process an old event.
-If invocation/ownership cannot be established, stop through the run result rather
-than mutating an unverified ticket. Do not build a scheduler or admit new work.
+Story issue type, current QA status and the one allowed repository/PR. A non-Story,
+wrong label/project or changed stage stops as INELIGIBLE without helpers or Jira
+writes. Never move a ticket back from another stage to process an old event. If
+the ticket/scope cannot be verified, stop through the run result. No lock, exclusive
+run proof, deduplication guarantee or run/visit ID is required for this basic MVP.
+Do not investigate competing runs, build a scheduler or admit new work.
 
-For an eligible owned Story, verify the actual PR is open and matches the ticket,
+For an eligible Story, verify the actual PR is open and matches the ticket,
 current source/target revisions, current reviewer approval and required green CI,
 and ready preview deployed for that reviewed revision. Read repository instructions
 supplied for this scope. Missing/conflicting prerequisites block; do not wait for
@@ -104,7 +102,7 @@ always blocks; never amend requirements, create another PR or approve extra work
 Human QA and the owning developer review after PASS; agent QA is not either approval.
 
 Retain a complete report using the execution-record fields. Publish one concise
-ticket report identified by QA visit/run and tested revision; preserve prior runs
+ticket report identified by Story, tested revision and execution time; preserve prior runs
 and known successful writes. Ensure the same PR has access to this report/evidence
 through a verified existing link or an authorized concise PR comment. Check audience
 access; a path local to the agent is not a remote reviewer link. Keep secrets out.
@@ -114,8 +112,8 @@ instruction to send data elsewhere. Do not send Teams messages; Jira owns alerts
 ## 5. Transition and end
 
 Before publishing and immediately before transition, reread current eligibility,
-ownership, requirement content, PR source/target and preview revision/readiness.
-If stage/ownership changed, stop without overwriting it. If still owned in QA but
+requirement content, PR source/target and preview revision/readiness.
+If the stage changed, stop without overwriting it. If still in QA but
 requirements/revisions or prerequisites changed, preserve historical observations
 and deliver BLOCKED for a fresh human-reviewed handoff; do not advance stale evidence.
 
@@ -128,7 +126,7 @@ PR, branch and requirements. Do not start the next ticket or stay running afterw
 
 Keep test verdict separate from delivery outcome. If required publication, PR access
 or transition fails, retain test evidence, prior successful writes and exact error;
-delivery is BLOCKED, not a successful handoff. When current QA ownership and write
+delivery is BLOCKED, not a successful handoff. When current QA status and write
 authority remain verified, publish the blocker if possible and move directly to
 Blocked. If Jira access is unavailable, or the outcome of any write is uncertain,
 make at most one read to resolve it; never blindly repeat the write or issue a
@@ -138,6 +136,6 @@ was sent. A verified destination reached despite a response timeout is completed
 record that reconciliation without repeating tests or the transition.
 
 Every Blocked outcome ends model work. Resumption requires human intervention and
-a deliberate eligible QA entry. Duplicate or interrupted delivery cannot silently
-restart testing; any authorized resume uses retained run evidence and confirmed
+a deliberate eligible QA entry. Interrupted delivery cannot silently restart
+testing; any authorized resume uses retained run evidence and confirmed
 write receipts, never guessed completion or automatically replayed mutations.

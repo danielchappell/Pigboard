@@ -130,12 +130,16 @@ environment comments and trusted run settings retain their own responsibilities.
 ## Cursor automations
 
 Use a webhook trigger, the Plexus/master environment, and the prepared implementer
-entry point. The Jira rule must select Stories in INT with exactly `AI-Daniel-1`
-entering In Progress and provide the issue and event identity. Deterministic Jira wiring checks current ticket state,
-repo, ownership and label before dispatch; these are not agent setup instructions. Rework resumes the same PR.
+entry point. The saved Jira rules select INT Stories entering the matching stage with exactly
+one numbered `AI-Daniel-<digits>` label and pass the ticket reference and full label.
+The boards currently isolate AI-Daniel-1 only. The skill reads the current ticket
+and verifies its stage and allowed repository. Rework resumes the same PR.
 
 The exact Grok High/Medium controls, isolated reviewer, Jira/Bitbucket tools,
-deduplication, evidence storage and finite CI wait must work before live ticket dispatch.
+evidence storage and finite CI wait must work before live ticket dispatch.
+Exclusive-run proof, locks and run/visit IDs are not skill prerequisites. The owner
+manages repeated launches during the basic MVP; automatic duplicate prevention and
+cancellation remain post-MVP work. Current-stage reads do not prevent concurrent runs.
 The ticket supplies acceptance cases and the exact QA skills to run. Per-PR test
 environments remain separate work; QA consumes their URLs and deployed revisions.
 See the [implementer setup](config/cursor/AI-Daniel-1.md) and
@@ -165,6 +169,6 @@ separate setup-only run verified explicit High and Medium Task selections.
 were added or Story dispatched. The [automation matrix](config/cursor/automations.md)
 records the selected Build, exact pins and remaining acceptance work.
 
-Next is Jira routing and capability wiring, followed by an explicitly authorized
-bounded end-to-end test. Review comments/approvals and Jira transitions have not
+Jira routing and the shared Atlassian read connection are configured. Next is an
+explicitly authorized bounded delivery test with complete Story/PR inputs. Review comments/approvals and Jira transitions have not
 been live-tested. Per-PR environments and MCP migration remain separate work.

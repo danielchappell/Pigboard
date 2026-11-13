@@ -6,8 +6,8 @@ or immutable rounds. Retain conclusions/evidence, not private reasoning.
 
 ## Required inputs
 
-- Trusted project/exact-label/Story/run/visit scope, current In Review status and
-  exclusive ownership; approved repo/PR, posting/approval/own-revocation/transition
+- Configured project/exact-label/Story scope, current In Review status; approved
+  repo/PR, posting/approval/own-revocation/transition
   authority, independent Grok High profile and durable output.
 - Actual requirement text or immutable reference plus content fingerprint, scope,
   accepted decisions, all prescribed QA case IDs/skill mapping/order/expectations,
@@ -33,10 +33,14 @@ or scope blockers override rework routing without changing a core FAIL to INCOMP
 
 Use `deliveryOutcome` COMPLETED for a verified intended handoff (including Blocked),
 BLOCKED when required publication/approval/transition cannot complete, INELIGIBLE
-for rejected/lost scope, ALREADY_HANDLED for a verified completed duplicate, or
+for rejected scope or changed stage, or
 NO_CHANGE for completed discussion/no-new-input handling that stays In Review.
 COMPLETED does not mean the PR passed. Record observed Jira status or explicitly
 unknown, independent of intended destination.
+
+An actual Cursor run link/ID may identify the report. Otherwise use Story, stage,
+revision and execution time; missing run/visit metadata is not a blocker. Do not
+invent identity or use report markers as cross-run locks.
 
 In addition to core/state fields, retain:
 
@@ -62,7 +66,7 @@ In addition to core/state fields, retain:
 Jira summary shape:
 
 ```text
-PR review <run-id>/<visit-id> — <core verdict>; action <QA|In Progress|Blocked|Stay>
+PR review <Story / revision / execution time> — <core verdict>; action <QA|In Progress|Blocked|Stay>
 Story / same PR / source-target-base / requirements and rules version
 Review: <verified eight-category PR summary link>; coverage and material omissions
 Confirmed findings / unresolved evidence / required human scope decision
@@ -73,7 +77,7 @@ Requested handoff / actual Jira status / next owner or human recovery
 
 Do not promise approval before it is verified. A pre-approval Jira report can say
 approval pending and QA intended; retain the final approval/transition receipts in
-the durable run record. Any needed Jira report update occurs while still owned
+the retained execution record. Any needed Jira report update occurs while still
 in In Review; after the verified transition, end without further publication or
 moving the ticket back to repair a report. For a Blocked handoff, an
 accessible ticket recovery record or durable run output is sufficient; missing PR

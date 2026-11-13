@@ -20,9 +20,11 @@ The trusted invocation supplies:
 - Configured Jira project, exact workstream label, Story key, In Progress status
   and actual destination/transition mapping. First workstream: Safeguard INT board
   1234 with `AI-Daniel-1`; a board number is not a project or transition identifier.
-- Visit/event and run IDs, exclusive ownership, deduplication and durable records
-  across phase continuations. Rework ownership must serialize with other work in
-  the employee's stream. These are harness guarantees, not a skill-built scheduler.
+- Retained plan, phase results and action receipts across continuations. Record an
+  actual Cursor run link/ID when supplied; otherwise identify the execution by Story,
+  stage, revision and time. Missing run/visit IDs or a lock is not a blocker. Duplicate
+  prevention, cancellation and cross-run coordination are deferred; the operator
+  takes care around repeated launches during the basic MVP.
 - Authorized repository scope/checkout, branch/base, secure credentials and rights
   for code, push, PR, reports and Jira transitions. Scope comes from the project
   configuration plus the ticket's explicit one-repository boundary.
@@ -42,7 +44,7 @@ starts new work; reviewer/QA transitions route confirmed rework.
 Invocation shape:
 
 ```text
-Use implementer-entrypoint for <Story>, In Progress visit <visit-id>, run <run-id>.
+Use implementer-entrypoint for the assigned <Story> currently In Progress.
 Use the verified Grok High planning and isolated one-reviewer profile, then the
 verified Grok Medium execution continuation. Reuse the same PR for rework.
 Publish the evidence and move to In Review only after current required CI passes.
@@ -76,7 +78,7 @@ foreground review per round, with no resume, using the existing plan-review prom
 and actual ticket/plan/source/base/instructions. Review is read-only by contract;
 generalPurpose does not establish a readonly sandbox. After CLEAN, invoke Medium
 execution with phases 3–5 of the shared entrypoint, actual ticket, accepted plan
-and review, source/base, checkout/PR identity, run ownership, previous receipts and
+and review, source/base, checkout/PR identity, previous action receipts and
 prepared tools/evidence. Wait for the result. Do not repeat execution at High.
 
 The executor verifies the trusted phase assignment and retained inputs before
