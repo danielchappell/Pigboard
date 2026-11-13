@@ -18,6 +18,12 @@ installation or environment repair is part of the invocation.
 
 ## Current state — 13 November 2026
 
+**Setup only; not live.** The owner clarified that both automations must remain
+inactive until explicit go-live authorization. The implementer was disabled at
+10:22 Europe/Madrid; its overview showed zero runs in seven days. The earlier
+activation below is historical and does not authorize reactivation after a build.
+No Jira labels were added or Story dispatched by this setup.
+
 The owner explicitly authorized making the entire existing repository public,
 including its older configuration and metadata. GitHub visibility is public, and an
 anonymous HTTPS download of the pinned implementer skill matches its committed hash.
@@ -49,7 +55,8 @@ live environment repin is part of that cleanup.
 
 Disable the automation before changing its environment. Publish the reviewed
 revision, update the pin, run a draft Build and inspect its verification receipt
-before selecting that successful Build and reactivating. A failed Build can leave
+before selecting that successful Build. Reactivate only after explicit owner
+go-live authorization. A failed Build can leave
 the previous Build active; a snapshot's existence is not proof of fresh skills.
 Resolve failure manually and rebuild, or deliberately restore a known reviewed pin.
 
