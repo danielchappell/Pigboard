@@ -63,9 +63,12 @@ inactive; selecting a Build did not enable them.
 Jira owns project/label/status filtering and authenticated webhook routing.
 New-work admission is separate work. The pipeline owns per-PR targets. Credentials
 and tool preparation remain operator setup; none belong in authoring prose or the
-minimal entrypoint prompts. Trusted visit identity and exclusive ownership remain
-an unresolved prerequisite of the installed skills, not a capability established
-by these webhook rules. See the [current scope and contract gap](../../docs/jira-setup.md#unresolved-entrypoint-contract).
+minimal entrypoint prompts. The owner removed mandatory run/visit identity and
+exclusive ownership from the basic MVP skill contract. Duplicate prevention and
+cancellation remain deferred; the operator takes care around repeated launches.
+Actual run metadata is optional evidence. See the [scope correction](../../docs/jira-setup.md#basic-mvp-scope-correction).
+The corrected source must pass a new Build before its installed version is claimed;
+the earlier selected Build and its pin above remain historical installation evidence.
 
 At 23:18 Europe/Madrid on 13 November, the approved existing team **Atlassian**
 connection was saved on all three workers. Their exact prompts, selected Build,

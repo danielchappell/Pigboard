@@ -1,8 +1,8 @@
 # Inputs, step ownership and evidence handoff
 
 Use this contract with the project's existing record format; no new schema service
-or hidden persistent runtime is required. The harness provides a trusted run/QA-visit
-identity and exclusive execution. Jira supplies requirements and case definitions;
+or hidden persistent runtime is required. The configured assignment supplies scope
+and permitted actions. Jira supplies requirements and case definitions;
 reviewed artifacts supply execution details. Neither is permission to widen scope.
 
 Read the [structured Story contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
@@ -15,7 +15,7 @@ configuration or grant authority. Missing required inputs block at their stage.
 
 | Group | Required information |
 | --- | --- |
-| Invocation | Run ID, QA-visit/event identity, trusted publication/transition authority, exclusive ownership, configured project and workstream label, expected QA status and allowed destination IDs |
+| Invocation | Publication/transition authority, configured project and workstream label, expected QA status and allowed destination IDs |
 | Ticket | Issue ID/type/current status, assignee, one repo/change boundary, requirement content/version, complete testing strategy/cases, same linked PR |
 | PR/preview | Open PR, current source/target revisions, reviewer approval and required CI at those revisions, supplied preview URL/readiness/deployed revision |
 | Case | Stable ID, requirement IDs, actor/data/access, ordered step IDs and exact skill names, dependencies, original expected outcomes, executable artifacts at reviewed revision, necessary evidence, bounded observation schedule when applicable, cleanup |
@@ -48,7 +48,8 @@ as a distinct explicitly prescribed observation, not as an improvised recovery.
 
 Retain these fields, using structured objects or equivalent readable tables:
 
-- Run/QA-visit ID, ticket/PR links, retrieval/execution times, actual model/profile,
+- Actual run link/ID if supplied; otherwise Story/stage/revision/execution time.
+  Missing run/visit metadata is not a blocker. Retain ticket/PR links, actual model/profile,
   requirement fingerprint, source/target/deployed revisions, environment and material
   flags/stubs. State whether evidence is live, local, mocked or reused.
 - Requirement inventory and case-to-requirement mapping; assessed/total counts and
@@ -70,12 +71,11 @@ Retain these fields, using structured objects or equivalent readable tables:
   and uncertainty. A saved report does not prove a transition, and a status label
   does not prove test execution.
 
-Use `testVerdict` PASS, FAIL or BLOCKED; use NOT RUN only when eligibility/ownership
+Use `testVerdict` PASS, FAIL or BLOCKED; use NOT RUN only when ticket eligibility
 stopped the invocation before assessment. `deliveryOutcome` is COMPLETED when the
 intended handoff is verified (including a successful move to Blocked), BLOCKED when
-publication/transition cannot be completed, INELIGIBLE for rejected scope or lost
-stage ownership, and ALREADY HANDLED for a verified completed duplicate. COMPLETED
-does not mean tests passed. Keep the two fields separate in every final receipt.
+publication/transition cannot be completed, and INELIGIBLE for rejected scope or
+changed stage. COMPLETED does not mean tests passed. Keep the two fields separate in every final receipt.
 
 For coverage, “assessed” counts requirements/cases with enough executed or explicitly
 valid reused evidence for a product PASS/FAIL judgment. BLOCKED and NOT RUN remain
@@ -86,7 +86,7 @@ disposition, and a passing requirement needs every prescribed supporting case pa
 Ticket comment shape:
 
 ```text
-QA <run-id> / <QA-visit-id> — <PASS | FAIL | BLOCKED>
+QA <Story / revision / execution time> — <PASS | FAIL | BLOCKED>
 Story / PR / requirements version / source-target-deployed revisions
 Reason; coverage counts; environment and evidence limitations
 Case | Named skills | Expected | Observed | Result | Evidence

@@ -11,10 +11,12 @@ and reviewer identity in each run. The reviewer must be independent of implement
 No silent provider/effort substitution, inferred settings or second runtime reviewer.
 If the profile/independence cannot be established, stop before review execution.
 
-Provide trusted run/visit identity, exclusive ownership, deduplication and durable
-phase/run records. A supported comment/new-commit wake must belong to the currently
-owned In Review visit; a comment cannot start work in QA, Human Review or another
-stage. Discussion-only continuations stay in Review; confirmed fixes are handed to
+Retain review rounds and action receipts. An actual Cursor run link/ID is optional;
+otherwise identify execution by Story, stage, revision and time. Missing run/visit
+IDs or a lock is not a blocker. Duplicate prevention, cancellation and cross-run
+coordination are deferred; the operator takes care around repeated launches. A
+supported comment/new-commit wake must find the ticket currently In Review; a
+comment cannot start work in QA, Human Review or another stage. Discussion-only continuations stay in Review; confirmed fixes are handed to
 In Progress, and subsequent review requires its new eligible stage entry. Do not
 install extra triggers as part of using this skill.
 
@@ -45,8 +47,8 @@ compatible; unresolved conflicts need a human, not silent waivers.
 Invocation shape:
 
 ```text
-Use pigboard-pr-review for <Story>, PR <verified URL>, In Review visit <visit-id>,
-run <run-id>, under the verified Grok High independent-review profile.
+Use pigboard-pr-review for the assigned <Story> currently In Review, PR <verified
+URL>, under the verified Grok High independent-review profile.
 Use the shared criteria and existing threads. Publish the exact-revision review,
 then perform only its authorized approval and Jira handoff. Stop on a blocker.
 ```

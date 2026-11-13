@@ -57,9 +57,11 @@ as public source; the run link and this record are the shared evidence.
 
 ## Remaining acceptance and recovery
 
-No delivery run is authorized by this check. Before a real test, resolve the
-[entrypoint ownership contract gap](../../docs/jira-setup.md#unresolved-entrypoint-contract)
-and designate a disposable Story/PR for explicit write and handoff acceptance.
+No delivery run is authorized by this check. The owner removed the erroneous
+exclusive-run prerequisite in the [basic MVP scope correction](../../docs/jira-setup.md#basic-mvp-scope-correction).
+Refresh and verify that corrected skill bundle, then use an explicitly authorized
+disposable Story/PR for write and handoff acceptance. Duplicate prevention remains
+post-MVP; current-state checks are not cross-run locks.
 Actual Jira payload rendering, comments/transitions, PR comment/approval rights,
 same-PR rework and end-to-end handoffs remain unverified. Per-PR preview environments
 and blocked-stage resumption remain their separate tasks.

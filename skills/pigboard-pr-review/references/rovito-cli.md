@@ -29,6 +29,6 @@ on arbitrary raw-token use. Use only the prepared profile and never change polic
 Both setup modes initially say `fullReviewReady: false` and
 `providerAccessVerified: false`. They permit authorized setup checks, not a full
 review run. Installation and policy selection are not evidence of provider rights,
-Jira handoffs, run ownership or evidence capability. Stop before running the
+Jira handoffs or evidence capability. Stop before running the
 workflow until setup has explicitly prepared and verified the required capabilities.
 The capability file is operator configuration, not a durable review-state store.

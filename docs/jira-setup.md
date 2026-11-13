@@ -52,7 +52,7 @@ future installer:
 | Cursor environment, repository/base allowlist, skill revision and Build | Prepared execution environment |
 | Three automation IDs, webhook endpoints and secret references | Stage-specific dispatch |
 | Rule IDs, triggers, guards, actor, payload and disabled state | Reproducible rules and auditability |
-| Event/visit identity and ownership controls | Unresolved skill prerequisite; API/dispatcher work is deferred |
+| Optional execution metadata and duplicate/cancellation policy | Actual run links when available; automatic coordination deferred after MVP |
 | Provider identity, scope names and secret destinations | Credentials remain outside version control |
 
 Never store tokens, webhook API keys or private credential-bearing URLs here.
@@ -219,9 +219,10 @@ QA's saved Custom data body is:
 This compact reference directs the agent to the canonical ticket rather than
 copying all Jira fields into its context. The agent still needs prepared Jira read,
 comment and transition capabilities. This body does **not** provide a verified
-unique transition/visit ID, an ownership claim, repository admission or duplicate
-suppression. The installed skills still require these guarantees; see the
-unresolved contract below. The payload schema is Pigboard's draft
+unique transition/visit ID, an ownership claim or duplicate suppression. Those
+are not prerequisites of the corrected basic MVP skills. The skill verifies the
+ticket repository against its configured environment. See the scope correction
+below. The payload schema is Pigboard's draft
 convention, not a Cursor API schema. Its delivery to the runner is untested.
 Do not derive dispatch authority from arbitrary ticket prose or copied JSON alone.
 
@@ -308,22 +309,28 @@ dispatcher are outside it. The [bounded webhook test](cursor-webhook-test.md)
 confirmed that two identical requests create separate runs and recorded manual
 stopping. It did not test API launch/cancellation or prove duplicate prevention.
 
-### Unresolved entrypoint contract
+### Basic MVP scope correction
 
-The installed implementer, reviewer and QA skills require trusted visit/run IDs
-and exclusive ownership before delivery. The compact webhook body and saved Jira
-rules do not supply an atomic ownership guarantee. Attaching Atlassian fixes ticket
-access, not that contract. Do not invent identity from `issue.updated`, treat a
-label/comment as a lock, or claim the delivery workflow is ready. No skill rules
-were relaxed in this configuration change. The owner must agree the bounded MVP
-handling of this mismatch before a real delivery test; it must not silently force
-a database or dispatcher into the MVP.
+The owner explicitly removed exclusive-run ownership, serialization, deduplication
+and required run/visit identity from the skill contract. Those prerequisites were
+an authoring error, not a missing feature to build before this MVP. The corrected
+source skills execute an eligible assigned Story without proving a lock. Actual
+Cursor run links/IDs are optional report metadata; otherwise use Story, stage,
+revision and execution time. Do not invent IDs or treat comments as locks.
+
+The owner will take care around repeated launches while the basic workflow is
+evaluated. Automatic duplicate prevention and cancellation remain post-MVP. Skills
+still verify configured scope, current stage, repository/PR and requirements/revision
+freshness; retain action receipts; and stop on blockers or uncertain writes. These
+cooperative checks do not enforce cross-run exclusion. Publish and accept the
+corrected central bundle in a Cursor Build before testing delivery; the selected
+Build record in the automation matrix is the authority for installed bytes.
 
 ### Current and deferred work
 
 1. Prepare an explicitly authorized disposable Story/PR fixture for Jira/PR write
-   acceptance and end-to-end stage handoffs. First resolve the entrypoint mismatch
-   above, inspect interactions with the four existing project rules, and verify
+   acceptance and end-to-end stage handoffs. Inspect interactions with the four
+   existing project rules and verify
    actual Jira rendering. No existing production Story is a write fixture.
 2. PGB-61's frontend skill-authoring task is Done. Its live Cursor/PR acceptance is
    still part of rollout; it does not deliver the preview pipeline in PGB-60.

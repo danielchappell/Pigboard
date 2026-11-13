@@ -133,8 +133,9 @@ Once specifically authorized, read-only setup checks must establish the actual
 account, repository, PR snapshot, complete comparison/comments and CI. Then verify
 authorized comment/edit, approval
 and own-approval-removal behavior on an explicitly chosen test PR. Keep Jira access
-and direct transitions, run ownership, durable evidence and duplicate handling as
-separate setup gates. A successful version/help probe cannot satisfy them.
+and direct transitions plus retained evidence as separate setup gates. Exclusive
+run ownership, locks and run/visit IDs are not basic MVP skill prerequisites;
+automatic duplicate prevention is deferred. A successful version/help probe cannot satisfy them.
 
 Use the same explicit executable, profile and repository on every command. Preserve
 snapshot continuation arguments. Approval, comments and transitions require the

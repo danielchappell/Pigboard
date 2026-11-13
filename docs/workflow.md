@@ -63,9 +63,16 @@ means production deployment. Those human and release stages are not agent trigge
 
 Jira admission selects only new work for a stream such as `AI-Daniel-1`. It does
 not choose rework. Column owners make the next stage handoff. Project/label/status
-filtering, authorized repository selection, webhook authentication and duplicate
-event handling belong in deterministic Jira/Cursor wiring. The ticket repository
+filtering, authorized repository selection and webhook authentication belong in
+deterministic Jira/Cursor wiring. The ticket repository
 must be available to the selected environment; initially Plexus/master.
+
+The basic MVP does not provide automatic duplicate prevention, cross-run locks or
+API cancellation. Those belong to the deferred dispatcher evaluation. The owner
+takes care around repeated launches. Skills do not require exclusive ownership
+proof or run/visit IDs and do not investigate competing agents. They still read the
+current ticket before work and handoff, stop on changed stage/scope/revision, and
+retain receipts rather than repeat uncertain actions. These checks are not locks.
 
 Use the [setup guide](../README.md#fetch-the-skills-outside-the-application-repository)
 and [current automation record](../config/cursor/AI-Daniel-1.md). Skills are installed
@@ -75,7 +82,7 @@ happens during a human-controlled environment Build, never through agent-led set
 ## Remaining rollout work
 
 [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks current work. All delivery automations remain inactive. The prepared
-Cursor environment does not yet prove a real Jira Story can complete. Verify Jira event/authentication/serialization wiring,
+Cursor environment does not yet prove a real Jira Story can complete. Verify Jira event/authentication wiring,
 connected Jira/Bitbucket tools and full handoffs before dispatching tickets.
 Explicit High/Medium Task selections were verified in a separate setup-only run;
 that is not real-Story or provider-write acceptance. Use the [three-stage setup matrix](../config/cursor/automations.md), complete its

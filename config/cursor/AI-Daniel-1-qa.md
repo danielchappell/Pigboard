@@ -18,6 +18,8 @@ QA. No patches, approvals, new PRs, merges, deployments or environment repair.
 Required before a live QA run: complete structured ticket; reviewed execution
 artifacts; exact current source/target and approval/CI; matching ready pipeline PR
 environment comment; named installed tools and prepared access; retained evidence;
-trusted run/visit ownership and direct Jira reporting/transitions. Jira wiring,
+direct Jira reporting/transitions. No exclusive-run proof, lock or run/visit ID
+is required. Duplicate prevention is deferred; the owner takes care around
+repeated launches. Jira wiring,
 preview provisioning and the MCP route remain separate setup work. Missing inputs
 must not trigger discovery or retries. Human Review and later stages have no agent.
