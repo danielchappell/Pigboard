@@ -214,3 +214,46 @@ reconciles it before the next same-stream operation, and retains the first two a
 history. The last repair remains pending for P5. No request ceiling or product
 behavior changed; no live execution occurred. Exact revised review follows in PR
 evidence; prior CLEAN reviews cover only their named revision.
+
+### Scenario matrix design review — 14 November 2026
+
+Two fresh independent Sol reviewers examined both design artifacts and all 41
+scenarios against six governing contracts. Both completed second sweeps and assessed
+all seven principles plus unified configuration. The design verdicts for the
+following pre-correction artifact hashes were CLEAN; later corrections are recorded
+separately below.
+Scenario file SHA-256: 3ee27aa60d62b81ab49fa4cf034a758cb74f86266e9f40002f11553b079edc26.
+Discovery file SHA-256: 3e696bb510e5922619fc7697b53c36fb1218212432fecb4afac3be4376bd5fab.
+An initial product P2 was fixed by separating changes before intent (zero writes)
+from changes after publication (no transition, retain human hold). Initial repair
+queue authority is explicit. These are design results, not runtime/provider tests;
+no implementation Story is ready. Exact committed review remains a separate gate.
+
+
+### Scenario pause clarification review
+
+Codex requested that S02 and S40 label the queue-only pause behavior provisional
+at the point of use. Commit 09cd6a53f23eb422d7a5e0ba0e000ac49a6a6f59 makes that
+clarification. The retained product report covered 1/1 changed file, 2/2 changed
+rows, 41/41 matrix cases and 4/4 affected contracts: work opt-in/configuration/pause,
+release-one admission rules, stack queue/admission/pause, and handoff worker draining.
+The retained technical report covered 1/1 changed file and 2/2 rows, but did not
+supply an examined/total denominator for its affected-contract surface. Both
+reported CLEAN with second sweeps and principle assessments; that incomplete
+technical coverage record does not satisfy the repository's full review gate.
+These are historical reports, not a final verdict on the corrected PR.
+Historical scenario SHA-256 at 09cd6a5:
+51cf7e5203db4bfab1575993f5b5d5a99e6734c7b0f7b4a9a5c03b7867dd4ef9.
+
+### Final scenario corrections
+
+Codex also found that S19 wrongly offered a reviewer/QA path to rework A while B
+already occupies the same stream. S19 now explicitly starts with A in Human Review
+and assigns that transition only to authorized human-request automation. B's workers
+cannot transition A. The final complete review must cover all three changed files,
+all 41 scenarios and the six named governing documents: manager-work-contract,
+manager-stack-repair, manager-handoff-contract, manager-state,
+manager-admission-proof and manager-release-one. Its exact commit and separate
+product/technical reports are recorded on PR 69 after review, not assumed here.
+The owner has not approved the queue-only pause proposal. Publication does not
+approve it or establish implementation readiness.
