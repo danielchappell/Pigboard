@@ -1,7 +1,8 @@
 # The Pigboard crew
 
-Owner-approved names, 14 November 2026. Pigboard is the product. Its build pipeline
-is presented as a pig-themed construction crew, coordinated by Pig Boss.
+Owner-approved names, 14 November 2026. Pigboard is the product. Its planned build
+pipeline is presented as a pig-themed construction crew, coordinated by Pig Boss.
+The names are approved; the Pig Boss manager and its coordination are not shipped.
 
 | Crew name | Role | Description |
 | --- | --- | --- |
@@ -13,7 +14,7 @@ is presented as a pig-themed construction crew, coordinated by Pig Boss.
 Use these exact names and capitalization in marketing and character introductions.
 Pair each name with its plain-language role when introducing the crew.
 
-These four roles are the current build-pipeline lineup. Future system components
+These four roles are the approved build-pipeline lineup. Future system components
 are outside this naming decision. The construction theme describes the crew within
 Pigboard; Pigboard remains the product name.
 
