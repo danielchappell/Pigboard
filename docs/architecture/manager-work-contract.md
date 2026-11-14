@@ -1,5 +1,7 @@
 # Work and handoff contracts for the first manager
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 14 November 2026. Concrete discovery draft for PGB-67. The Epic and ticket
 examples are complete editable skeletons, not ready tickets or installed schemas.
 The [closure](manager-discovery-closure.md) records provider evidence and remaining

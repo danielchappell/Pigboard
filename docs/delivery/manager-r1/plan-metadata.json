@@ -1,0 +1,482 @@
+[
+  {
+    "id": "R1-01",
+    "title": "Validate an editable work document",
+    "dependencies": [],
+    "days": 1.5,
+    "files": [
+      "package.json",
+      "package-lock.json",
+      "contracts/epic-v1.schema.json",
+      "contracts/ticket-v1.schema.json",
+      "docs/architecture/contracts/pigboard-epic-v1.schema.json",
+      "docs/architecture/contracts/pigboard-ticket-v1.schema.json",
+      "scripts/validate-work.mjs",
+      "lib/contracts/parse.mjs",
+      "lib/contracts/schema.mjs",
+      "test/work-syntax.test.mjs",
+      "test/fixtures/work-syntax.json",
+      "docs/authoring.md",
+      "config/skill-bundle.json",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/architecture/manager-work-schema.md",
+      "docs/architecture/contracts/check_work_examples.py",
+      "docs/architecture/manager-work-contract.md",
+      "docs/architecture/examples/manager-ticket.yaml"
+    ]
+  },
+  {
+    "id": "R1-02",
+    "title": "Check the complete prescribed test plan",
+    "dependencies": [
+      "R1-01"
+    ],
+    "days": 1.5,
+    "files": [
+      "lib/contracts/work-semantics.mjs",
+      "lib/contracts/case-graph.mjs",
+      "scripts/validate-work.mjs",
+      "test/work-semantics.test.mjs",
+      "test/case-graph.test.mjs",
+      "test/fixtures/work-semantics.json",
+      "docs/authoring.md"
+    ]
+  },
+  {
+    "id": "R1-03",
+    "title": "Write complete Epic and ticket YAML",
+    "dependencies": [
+      "R1-01",
+      "R1-02"
+    ],
+    "days": 1.25,
+    "files": [
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/pigboard-ticket.md",
+      "skills/write-pr-sized-stories/references/pigboard-example.md",
+      "skills/write-pr-sized-stories/references/pigboard-epic.md",
+      "skills/write-pr-sized-stories/references/epic.yaml",
+      "skills/write-pr-sized-stories/references/ticket.yaml",
+      "test/story-authoring.test.mjs",
+      "docs/authoring.md"
+    ]
+  },
+  {
+    "id": "R1-04",
+    "title": "Validate assignment and handoff evidence",
+    "dependencies": [
+      "R1-01",
+      "R1-02"
+    ],
+    "days": 1.75,
+    "files": [
+      "contracts/handoff-v1.schema.json",
+      "contracts/work-pointer-v1.schema.json",
+      "docs/architecture/contracts/pigboard-handoff-v1.schema.json",
+      "docs/architecture/contracts/pigboard-work-pointer-v1.schema.json",
+      "lib/contracts/handoff.mjs",
+      "lib/contracts/canonical.mjs",
+      "lib/contracts/receipts.mjs",
+      "scripts/validate-handoff.mjs",
+      "test/handoff.test.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "docs/handoffs.md",
+      "config/skill-bundle.json",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/architecture/manager-handoff-contract.md",
+      "docs/architecture/contracts/check_work_examples.py",
+      "docs/architecture/examples/handoffs/admission.yaml"
+    ]
+  },
+  {
+    "id": "R1-21",
+    "title": "Configure Pig Boss for multiple projects",
+    "dependencies": [
+      "R1-04"
+    ],
+    "days": 1.5,
+    "files": [
+      "contracts/config-v1.schema.json",
+      "lib/config/parse.mjs",
+      "lib/config/projects.mjs",
+      "scripts/check-config.mjs",
+      "lib/config/diff.mjs",
+      "test/config-projects.test.mjs",
+      "test/fixtures/project-configs.json",
+      "docs/configuration.md",
+      "config/pigboss.example.yaml"
+    ]
+  },
+  {
+    "id": "R1-05",
+    "title": "Hand an implemented PR to review",
+    "dependencies": [
+      "R1-03",
+      "R1-04"
+    ],
+    "days": 1.5,
+    "files": [
+      "skills/implementer-entrypoint/SKILL.md",
+      "skills/implementer-entrypoint/references/cursor.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/implementer-entrypoint/references/plan-review.md",
+      "skills/implementer-jira/SKILL.md",
+      "skills/implementer-jira/references/publication.md",
+      "config/skill-bundle.json",
+      "test/implementer-contract.test.mjs",
+      "test/fixtures/implementer-transcripts.json",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-06",
+    "title": "Review and hand off the current PR",
+    "dependencies": [
+      "R1-04",
+      "R1-05"
+    ],
+    "days": 1.25,
+    "files": [
+      "skills/pigboard-pr-review/SKILL.md",
+      "skills/pigboard-pr-review/references/cursor.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "skills/reviewer-jira/SKILL.md",
+      "config/skill-bundle.json",
+      "test/reviewer-contract.test.mjs",
+      "test/fixtures/reviewer-transcripts.json",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-07",
+    "title": "Execute prescribed QA helper steps",
+    "dependencies": [
+      "R1-02",
+      "R1-04"
+    ],
+    "days": 1.5,
+    "files": [
+      "skills/qa-api/SKILL.md",
+      "skills/qa-bruno/SKILL.md",
+      "skills/qa-database/SKILL.md",
+      "skills/qa-ui/SKILL.md",
+      "test/qa-helper-contract.test.mjs",
+      "test/fixtures/qa-helper-cases.json",
+      "docs/qa-cases.md"
+    ]
+  },
+  {
+    "id": "R1-08",
+    "title": "Complete QA with an honest evidence ledger",
+    "dependencies": [
+      "R1-04",
+      "R1-06",
+      "R1-07"
+    ],
+    "days": 1.75,
+    "files": [
+      "skills/qa-entrypoint/SKILL.md",
+      "skills/qa-entrypoint/references/execution-record.md",
+      "skills/qa-entrypoint/references/cursor.md",
+      "skills/qa-jira/SKILL.md",
+      "config/skill-bundle.json",
+      "test/qa-entrypoint-contract.test.mjs",
+      "test/qa-observation.test.mjs",
+      "test/fixtures/qa-transcripts.json",
+      "docs/qa-cases.md",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-09",
+    "title": "Request rework through the human\u2019s assistant",
+    "dependencies": [
+      "R1-04"
+    ],
+    "days": 1.25,
+    "files": [
+      "skills/request-rework/SKILL.md",
+      "skills/request-rework/references/example.md",
+      "config/skill-bundle.json",
+      "test/request-rework.test.mjs",
+      "test/fixtures/human-rework.json",
+      "docs/using-pigboard.md",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-10",
+    "title": "Preview ready work from a complete snapshot",
+    "dependencies": [
+      "R1-02",
+      "R1-04",
+      "R1-21"
+    ],
+    "days": 1.75,
+    "files": [
+      "lib/manager/snapshot.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "scripts/manager-preview.mjs",
+      "test/manager-preview.test.mjs",
+      "test/fixtures/manager-candidates.json",
+      "docs/manager-preview.md"
+    ]
+  },
+  {
+    "id": "R1-11",
+    "title": "Preview the complete repair order",
+    "dependencies": [
+      "R1-10"
+    ],
+    "days": 1.5,
+    "files": [
+      "lib/manager/repair-policy.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "scripts/manager-preview.mjs",
+      "test/repair-policy.test.mjs",
+      "test/fixtures/manager-repairs.json",
+      "docs/manager-preview.md"
+    ]
+  },
+  {
+    "id": "R1-12",
+    "title": "Preview current Jira work with bounded reads",
+    "dependencies": [
+      "R1-11",
+      "R1-21"
+    ],
+    "days": 1.75,
+    "files": [
+      "contracts/config-v1.schema.json",
+      "config/pigboss.example.yaml",
+      "lib/config/parse.mjs",
+      "lib/jira/client.mjs",
+      "lib/jira/inventory.mjs",
+      "lib/jira/receipts.mjs",
+      "scripts/manager-preview.mjs",
+      "test/jira-preview.test.mjs",
+      "test/jira-security.test.mjs",
+      "test/fixtures/jira-pages.json",
+      "docs/manager-preview.md",
+      "docs/configuration.md"
+    ]
+  },
+  {
+    "id": "R1-13",
+    "title": "Install a disabled AWS preview",
+    "dependencies": [
+      "R1-12"
+    ],
+    "days": 1.75,
+    "files": [
+      "lib/aws/lambda.mjs",
+      "lib/aws/secrets.mjs",
+      "infra/aws/template.yaml",
+      "scripts/package-manager.mjs",
+      "scripts/deploy-manager.mjs",
+      "contracts/config-v1.schema.json",
+      "test/aws-package.test.mjs",
+      "test/aws-iam.test.mjs",
+      "test/fixtures/aws-config.json",
+      "docs/install-manager.md",
+      "docs/configuration.md",
+      "package.json",
+      "package-lock.json"
+    ]
+  },
+  {
+    "id": "R1-14",
+    "title": "Inspect durable scheduling state",
+    "dependencies": [
+      "R1-13"
+    ],
+    "days": 1.75,
+    "files": [
+      "lib/state/contract.mjs",
+      "lib/aws/dynamodb.mjs",
+      "scripts/manager-state.mjs",
+      "lib/aws/lambda.mjs",
+      "infra/aws/template.yaml",
+      "test/state-conformance.test.mjs",
+      "test/dynamodb-state.test.mjs",
+      "test/fixtures/state-history.json",
+      "docs/manager-state.md",
+      "docs/install-manager.md"
+    ]
+  },
+  {
+    "id": "R1-15",
+    "title": "Reconcile an uncertain attempt with evidence",
+    "dependencies": [
+      "R1-12",
+      "R1-14"
+    ],
+    "days": 1.5,
+    "files": [
+      "lib/manager/reconcile.mjs",
+      "scripts/manager-state.mjs",
+      "lib/aws/dynamodb.mjs",
+      "test/reconciliation.test.mjs",
+      "test/fixtures/reconciliation.json",
+      "docs/manager-state.md",
+      "docs/install-manager.md"
+    ]
+  },
+  {
+    "id": "R1-16",
+    "title": "Upgrade and remove the AWS installation safely",
+    "dependencies": [
+      "R1-14",
+      "R1-15"
+    ],
+    "days": 1.25,
+    "files": [
+      "scripts/deploy-manager.mjs",
+      "scripts/manager-state.mjs",
+      "lib/config/compatibility.mjs",
+      "infra/aws/template.yaml",
+      "test/install-lifecycle.test.mjs",
+      "test/fixtures/upgrade-state.json",
+      "docs/install-manager.md",
+      "docs/manager-state.md"
+    ]
+  },
+  {
+    "id": "R1-22",
+    "title": "Inspect Pig Boss operating health",
+    "dependencies": [
+      "R1-13",
+      "R1-14",
+      "R1-21"
+    ],
+    "days": 1.75,
+    "files": [
+      "lib/manager/scan-summary.mjs",
+      "lib/manager/health.mjs",
+      "lib/aws/scan-telemetry.mjs",
+      "lib/aws/health-reader.mjs",
+      "lib/aws/lambda.mjs",
+      "scripts/pigboss-health.mjs",
+      "test/manager-health.test.mjs",
+      "test/aws-health.test.mjs",
+      "test/fixtures/health-results.json",
+      "docs/operate-pigboss.md",
+      "contracts/config-v1.schema.json"
+    ]
+  },
+  {
+    "id": "R1-23",
+    "title": "Install Pig Boss health alarms",
+    "dependencies": [
+      "R1-16",
+      "R1-22"
+    ],
+    "days": 1.5,
+    "files": [
+      "infra/aws/health.yaml",
+      "infra/aws/template.yaml",
+      "lib/aws/lifecycle.mjs",
+      "scripts/check-manager-readiness.mjs",
+      "test/aws-health-package.test.mjs",
+      "test/aws-lifecycle.test.mjs",
+      "test/fixtures/health-package.json",
+      "docs/operate-pigboss.md",
+      "docs/install-manager.md",
+      "contracts/config-v1.schema.json"
+    ]
+  },
+  {
+    "id": "R1-17",
+    "title": "Admit a ready Story or Bug safely",
+    "dependencies": [
+      "R1-05",
+      "R1-06",
+      "R1-08",
+      "R1-12",
+      "R1-14",
+      "R1-15",
+      "R1-16"
+    ],
+    "days": 1.75,
+    "files": [
+      "lib/manager/apply.mjs",
+      "lib/jira/mutations.mjs",
+      "lib/aws/lambda.mjs",
+      "scripts/manager-apply.mjs",
+      "scripts/manager-state.mjs",
+      "test/new-admission.test.mjs",
+      "test/admission-failures.test.mjs",
+      "test/fixtures/admission-traces.json",
+      "docs/manager-operations.md",
+      "docs/install-manager.md"
+    ]
+  },
+  {
+    "id": "R1-18",
+    "title": "Admit queued rework on its existing PR",
+    "dependencies": [
+      "R1-09",
+      "R1-17"
+    ],
+    "days": 1.25,
+    "files": [
+      "lib/manager/apply.mjs",
+      "lib/manager/repair-admission.mjs",
+      "test/repair-admission.test.mjs",
+      "test/fixtures/repair-admissions.json",
+      "docs/manager-operations.md"
+    ]
+  },
+  {
+    "id": "R1-19",
+    "title": "Queue a completed dependent PR for repair",
+    "dependencies": [
+      "R1-18"
+    ],
+    "days": 1.5,
+    "files": [
+      "lib/manager/stack-queue.mjs",
+      "lib/manager/apply.mjs",
+      "test/stack-queue.test.mjs",
+      "test/fixtures/stack-traces.json",
+      "docs/manager-operations.md"
+    ]
+  },
+  {
+    "id": "R1-20",
+    "title": "Check a compatible release before enabling delivery",
+    "dependencies": [
+      "R1-03",
+      "R1-05",
+      "R1-06",
+      "R1-07",
+      "R1-08",
+      "R1-09",
+      "R1-19",
+      "R1-23"
+    ],
+    "days": 1.5,
+    "files": [
+      "config/skill-bundle.json",
+      "config/cursor/automations.md",
+      "config/cursor/implementer-prompt.txt",
+      "config/cursor/pr-review-prompt.txt",
+      "config/cursor/qa-prompt.txt",
+      "config/jira/exports/AI-Daniel-1-implementer.json",
+      "config/jira/exports/AI-Daniel-1-pr-review.json",
+      "config/jira/exports/AI-Daniel-1-qa.json",
+      "scripts/check-manager-readiness.mjs",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/manager-readiness.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/install-manager.md",
+      "docs/workflow.md",
+      "docs/using-pigboard.md"
+    ]
+  }
+]

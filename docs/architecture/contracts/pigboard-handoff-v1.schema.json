@@ -434,6 +434,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "project_id",
         "stream",
         "mode",
         "previous_assignment",
@@ -441,6 +442,11 @@
         "existing_pr"
       ],
       "properties": {
+        "project_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
         "stream": {
           "type": "string",
           "minLength": 1,

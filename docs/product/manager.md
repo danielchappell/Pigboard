@@ -1,15 +1,15 @@
-# Advance eligible work without AI scheduling
+# Pig Boss advances eligible work without AI scheduling
 
 The manager uses Jira work data and recorded evidence to select the next ticket.
 It does not run an AI, inspect agent transcripts or decide whether a PR is correct.
 
 | ID | Required behavior |
 | --- | --- |
-| M01 | A configured Pigboard opt-in label and an In Progress Epic enable admission. Full labels such as `AI-Daniel-1` identify sequential streams; the worker-type routing may ignore the numeric suffix. |
-| M02 | One full stream label belongs to at most one active opted-in Epic. Different numbered streams may run independently; their human planner is responsible for separating conflicting work. Conflicting active ownership holds that stream. |
+| M01 | A configured Pigboard opt-in label and an In Progress Epic enable admission. Jira site identity, immutable project ID and full labels such as `AI-Daniel-1` together identify sequential streams; the worker-type routing may ignore the numeric suffix. |
+| M02 | Within a Jira project, one full stream label belongs to at most one active opted-in Epic; identical labels in different projects are independent. Different numbered streams may run independently; their human planner is responsible for separating conflicting work. Conflicting active ownership holds that stream. |
 | M03 | Only Ready to Work Stories/Bugs are ordinary candidates. Other preparation statuses are ignored even if earlier in Epic order. An invalid ready ticket gets a reason and is skipped when independent valid work exists; unresolved required repairs cannot be bypassed this way. |
 | M04 | In Progress, In Review and QA occupy one automated slot across all worker types. Blocked, unresolved manager intent or inconsistent occupancy holds the stream. Human Review releases the automated slot. |
-| M05 | At most five tickets wait in Human Review per full stream, including Bugs and pending human cases. Admission requires room for the selected ticket to return. The same capacity rule applies to rework; active work is never interrupted to enforce it. |
+| M05 | At most five tickets wait in Human Review per project-scoped full stream, including Bugs and pending human cases. Admission requires room for the selected ticket to return. The same capacity rule applies to rework; active work is never interrupted to enforce it. |
 | M06 | Among eligible work, prerequisites needed by the repair chain come first, then queued repairs/required stack updates, then Bugs, then Stories. Epic order breaks ties. Unready unrelated work never overrides readiness. |
 | M07 | Required prerequisites need matching current automated completion evidence and Human Review or a later accepted stage. Removal, cancellation or missing evidence is not completion. Order alone is not a prerequisite. |
 | M08 | Confirmed repair on A waits while B completes its existing cycle. Then fix the recorded stack oldest first, one ticket/PR per cycle, before new unrelated work. No automatic run pause/cancel/resume is needed. |
@@ -28,3 +28,5 @@ and capacity semantics. These sources must be reconciled together during review.
 A human creates/formats a new Bug when a merged ticket needs new work. The manager
 prioritizes that ready Bug; it does not convert Stories or create Bugs automatically.
 An admission is not proof a Cursor run exists or that delivery occurs exactly once.
+
+The [Pig Boss company/health design](../architecture/pig-boss-operations.md) defines project scope, multi-project installation and current operating-health requirements.

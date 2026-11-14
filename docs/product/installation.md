@@ -4,7 +4,7 @@
 | --- | --- |
 | O01 | Deliver a customer-owned AWS Lambda package with DynamoDB state and no Scuba Pig runtime access, customer-data collection or telemetry. There is no SaaS tenancy or public admission endpoint in this release. |
 | O02 | Keep manager policy/application logic cloud-neutral, Jira behavior in its adapter, state guarantees in an interface, and DynamoDB/Lambda/IaC in AWS components. Only the AWS deployment ships; do not revive archived runtime code or build speculative providers. |
-| O03 | One canonical customer configuration owns allowed Jira projects, repositories, labels, status/type/actor mappings, budgets and secret references. Derive resource bindings and installation outputs; don't require humans to synchronize competing configuration files. Automatic Jira/Cursor provisioning is later work. |
+| O03 | One canonical customer configuration owns one Jira site, allowed projects and their repositories, labels and status/type/actor mappings, budgets and secret references. Derive resource bindings and installation outputs; don't require humans to synchronize competing configuration files. Automatic Jira/Cursor provisioning is later work. |
 | O04 | Deterministic environment setup fetches a reviewed pinned Pigboard skill bundle outside the application repository. Refresh occurs through the configured Build process; verify installed skills before enabling an updated environment. Keep agent prompts minimal and source-controlled behavior in skills. |
 | O05 | Separate Jira-owned work/status, customer configuration, operational state and secret ownership. DynamoDB stores installation, stream, attempt and retained-member records; not code, descriptions or transcripts. Preserve history in separate records, not a growing stream blob. |
 | O06 | The manager persists a conditional transition intent before its own Jira side effects. It verifies comment and admission-pointer publication, rechecks source facts, sends one directed transition, then conditionally confirms the outcome. Queueing B preserves its old admission pointer until later admission. Workers publish their own handoffs without accessing manager state. |
@@ -14,6 +14,9 @@
 | O10 | Install disabled with writes off, bounded invocation/read budgets, finite log retention and documented preview/enable/stop journeys. Verify complete service-account visibility and one admitting installation for its scheduling domain before enabling. |
 | O11 | Version configuration, work contracts and state separately. Compatible upgrades preserve unresolved work; incompatible rollback/restore cannot write until reconciled. Deletion/replacement retains the table; report retained resources and costs. No TTL unlock, migration engine or automated state retirement is added. |
 | O12 | Roll out authoring, validators, role skills, Story/Bug routing, environment bundle and manager as a compatible set with delivery off. Installed-package acceptance covers all three manager edges and failure holds. PGB-58 delivery acceptance and explicit owner activation follow; provider probes alone never authorize launch. |
+| O13 | Pig Boss supports multiple projects in one customer installation, with project-specific mappings and project-scoped stream/state identity. Equal labels across projects do not collide; moves/removal cannot discard retained work. Test mixed mappings and shared versus isolated failures. |
+| O14 | A read-only readable/JSON health command distinguishes disabled, starting, healthy, degraded, stale and unknown; shows current-revision completion freshness, errors, budget use and work holds without changing Jira/state. |
+| O15 | AWS packaging supplies missing-completion, error/throttle and capacity alarms, optional customer SNS routing, safe disabled/enable/upgrade behavior and an operator runbook. Monitoring stays customer-owned; no worker polling, automatic recovery or untested capacity promise. |
 
 The [state contract](../architecture/manager-state.md) and
 [release design](../architecture/manager-release-one.md) own the technical detail.
@@ -26,3 +29,5 @@ throttled final observation and unrun stale-completion/repair checks stay explic
 partial. The finished implementation must supply its own failure, concurrency,
 permission and lifecycle acceptance. Do not repeat an exploratory deployment merely
 to present a green discovery checklist.
+
+[Company scope and health contract](../architecture/pig-boss-operations.md) is the approved scope addition; 50-project scaling is a measured follow-on target.

@@ -1,0 +1,230 @@
+# Pig Boss delivery-plan technical review
+
+**Verdict: CLEAN for the exact revised 23-Story plan recorded below.** No unresolved confirmed in-scope findings. Independent technical/security/failure-recovery lens; this is a delivery-plan review, not implementation, installed acceptance, hosted CI, merge, release or activation approval.
+
+Reviewed working tree `/private/tmp/pigboard-product-requirements-20261114` over HEAD `2f747232db156babc329053d2f5448b21b2a5b6a`, 14 November 2026. Read AGENTS.md and CONTRIBUTING.md. Scope is the original manager release plus approved Pig Boss naming, company installation across projects, immutable project-scoped streams/admission binding and basic manager health. PGB-94 owns the measured 50-project follow-on; parsing 50 configuration entries makes no throughput claim.
+
+## Exact artifact
+
+- `docs/delivery/manager-r1/README.md`: `6b61849d4f5477ff0f213a74128698dc38201f0404b8c3c9f6cd4d6a9c26151c`
+- `docs/delivery/manager-r1/stories.md`: `41ecc4eb947a81de86fe03c74c2ecfeccba2f909e9da236791161fd17e2f52ca`
+- `docs/delivery/manager-r1/ticket-drafts.json`: `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`
+- `docs/delivery/manager-r1/plan-metadata.json`: `24e75028cd375b72a651e3fe59e64083e009cab0ebaee7a4a3e114f643a81144`
+- `docs/delivery/manager-r1/coverage.md`: `cd49cee0dda89951fc5cfa3f1aca5a3e617e81461cbe8dbe99e4bb79b57f5d11`
+- `docs/product/coverage.md`: `8477708ba76204874beea7701855d9fedc9aa966e2e0a4437aaa66311382397f`
+- `docs/product/follow-on-roadmap.md`: `433b7735473ea4c7117c440105a813cf98d0e679a118d3987b65b4d46432faa7`
+- `docs/architecture/pig-boss-operations.md`: `c3561141fddb0865716779add8e440f63173bbb914e00341ac2719e9b0270e06`
+
+## Coverage and method
+
+**23/23 Stories; 104/104 prescribed cases; 53/53 product requirements; 41/41 original scheduling scenarios; 16/16 delta cases examined.** The 16 additions comprise R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-20-H04, R1-21-H01–H03, R1-22-H01–H04 and R1-23-H01–H04. The 88 baseline case objects were compared against HEAD and are unchanged. Their full current instructions were read, rather than treating earlier CLEAN verdicts as a substitute for this review.
+
+Primary review surface is **8/8 artifact files** in the manifest. Supporting authority read: product README and all authoring/delivery/manager/installation requirement documents; architecture map; Pig Boss operations design; original scenario matrix; state and handoff contracts; the admission schema/example delta; contributor agreement; completed scoped design review. Existing linked design decisions were reused, not reopened as new discovery.
+
+Walked all Story outcomes, AC/TAC, human cases, dependencies, file inventories, time estimates, normal/failure/recovery paths and rollout gates. Programmatic cross-checks confirmed 23 unique ordered Stories, 104 matching Markdown/structured case IDs, every Story AC/TAC referenced by acceptance, native prerequisite drafts matching metadata order, and all forecasts within the agreed file/time boundaries. The 50 original requirement rows plus O13–O15 cover all 53 requirements; the scenario matrix and all 41 corresponding R1-11 cases agree. AT-01.1–AT-01.8, AT-02/PGB-58 and AT-03/PGB-92 were inspected separately from local cases.
+
+**Second sweep completed: 8/8 primary files, 23/23 Stories, 104/104 cases, 53/53 requirements and 41/41 original scenarios.** It traced repeated labels across projects, cross-project prerequisites, native project moves/key renames/removal, retained intent and stale finalization, partial/shared discovery, desired/actual schedule mismatch, missing completion, revision-only changes, secret-bearing errors, routing absence and the activation boundary. No further confirmed issue found.
+
+## Findings resolved during review
+
+1. Configuration ownership forecasts initially named two schema/example/parser sets. The final inventories consistently extend the sole `contracts/config-v1.schema.json`, `config/pigboss.example.yaml` and shared parser/guide. The explicit ownership paragraph resolves duplication and keeps generated cloud bindings as outputs. R1-21 now promises local configuration-change preview, so it does not depend on the later policy-preview Story.
+2. New Story TAC references initially left four criteria unmapped. Final case references cover them all. R1-22-H01 now explicitly inspects the required summary fields, bounds, fixed metric dimensions and duplicate points/maximum interpretation; H03 explicitly covers state precedence and current evidence. This fixes meaningful acceptance content as well as bookkeeping.
+
+Both were in-scope plan defects. The updated artifact and affected behavior were re-reviewed; neither remains open. No speculative hardening or additional product scope is required.
+
+## Technical conclusions
+
+Project identity is native, not author-supplied authority. R1-04 binds admission project_id and validates inherited assignment identity; R1-21 normalizes collision-free site/project/full-label keys; R1-10/12 separate policy from current provider facts; R1-14 preserves original identities and unresolved attempts. Moves/removal cannot release old occupancy; inaccessible shared scope holds the scan while known isolated conflicts do not block independently complete streams.
+
+Safe mutation remains owned by R1-17–19 after state, reconciliation and lifecycle are available. Conditional begin/finalize, retained intent, exact directed edges, publication/readback, changed-fact checks and no replay cover the important failure boundaries. The company addition neither adds worker authority nor promises launch deduplication.
+
+R1-22/23 form bounded complete outcomes: inspect manager health, then package operating alarms/lifecycle/readiness. Telemetry stays in the customer log group, health inspection is read-only, sparse error data differs from missing successful completion, old evidence cannot satisfy a new configuration, and either scheduler mismatch degrades. No SNS means explicitly no push alerts. Local fixtures do not prove CloudWatch delivery; AT-01.8 retains that installed obligation. Second-project access remains an explicit prerequisite to AT-01.7, never inferred from grooming.
+
+The dependency table is a valid partial/serial order; R1-21 precedes policy/live preview, health follows AWS/state/config, alarms follow lifecycle/health, and final readiness includes alarms plus the complete delivery chain. No ready Story depends on the deferred capacity investigation. All 23 forecasts are below two human days and at most 20 total changed files (maximum forecast 19, maximum estimate 1.75 days; 35.25 days total effort). These are plausible planning forecasts for the bounded contracts, not measured delivery promises. Concrete Story planning must still recheck actual source and split/re-review if a limit cannot fit. File reuse denotes extension of the same module, not duplicate implementations.
+
+## Seven-principle assessment
+
+- **Intuitive:** one installation, one customer configuration and familiar health states give humans a coherent operating model. Disabled requires observed stopped scheduling; business waits differ from broken scans.
+- **Discoverable:** readable/JSON validation, stable IDs, complete case instructions, direct evidence links and documented recovery make capabilities and failures inspectable for both people and agents.
+- **Delightful experience:** no per-board deployment or repeated configuration copying; local previews precede writes and independent complete streams can progress. Operator-only routing confirmation is explicit.
+- **Token saver:** deterministic previews and bounded summaries expose relevant decisions first while retaining the complete evidence ledger and explicit omissions; no worker polling is introduced.
+- **Secure:** configured destinations/actors remain trusted inputs; work text cannot grant scope. Native project binding, customer-only state/secrets/logs, scoped read-only health, sanitized failures and positive-only reconciliation preserve boundaries without new approval friction.
+- **Agents are equal:** structured configuration, results, exit codes and immutable identities support noninteractive consumers. Human-owned acceptance is explicit because approved helpers cannot execute these CLI/IaC/instruction checks; zero AI cases is never invented evidence.
+- **Dependable:** incomplete/failed scans, held work, starting/stale/unknown health and current evidence revisions remain distinct. Unknown effects survive restart/upgrade without replay. Local tests, installed package/worker acceptance, owner review and activation remain separate claims.
+
+Final CLEAN applies only to this manifest and this review lens. The other independent review and final owner review remain their own gates. Implementation plans, committed-code reviews, CI/Codex bot gates and installed acceptance have not been satisfied by reviewing this plan.
+
+
+## Native publication audit — CLEAN
+
+Publication-only audit of the supplied fresh Jira readback artifacts, 14 November 2026. No further Jira query or mutation was performed by this reviewer. The reviewed contract file remains exactly `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`, matching the original CLEAN manifest and publication receipt. README/Story introduction changes accurately report completed independent review and pending final owner review; they do not alter contracts or authorize implementation/activation. The current manifest below supersedes the earlier README/stories hashes for publication status text only.
+
+Coverage: **9/9 publication artifacts**, **23/23 native Stories**, **104/104 acceptance cases**, **54/54 directed dependency links**. Parsed every published YAML contract and compared the complete data tree with ticket-drafts.json after substituting only prerequisite Story IDs with their native keys. Each publication's YAML block bytes also exactly match publication-expected.json. Complete descriptions match after removal of Jira's harmless final newline; no other normalization was needed. All titles match. All 23 have parent PGB-66, To Do status, owner-review-required and no AI worker labels. R1-21/22/23 map to PGB-99/100/101.
+
+Dependency checks independently derived 51 Story prerequisite links from plan-metadata.json and verified the additional three operational links: PGB-90→PGB-91, PGB-91→PGB-92, PGB-58→PGB-92. The 25-issue final-link snapshot contains exactly the same 54 directed Blocks links as publication.json, with no missing or extra pair. The 104 case IDs are unique; all case contents are retained by full contract equality. The 88 original baseline cases were independently compared with HEAD again and remain exact.
+
+Second sweep: repeated **23/23** parent/status/label checks against the final-link snapshot, checked the **54/54** directions and operational gates, **104/104** case identities and **88/88** original case objects. No publication mismatch or new in-scope finding.
+
+Seven principles at publication: **Intuitive**—native titles and hierarchy preserve the approved human journey. **Discoverable**—native keys and dependency links connect the complete reviewable contracts. **Delightful**—publication introduces no repeated setup or premature worker assignment. **Token saver**—the exact YAML and cases survive; essential evidence is not shortened. **Secure**—no worker labels, readiness transition or expanded authority was introduced. **Agents are equal**—structured prerequisite keys and full human-case ownership remain machine-readable and honest. **Dependable**—the publication receipt matches readback, preserves operational gates and leaves implementation/activation pending. Technical design behavior is unchanged, so the earlier detailed principle assessment still applies.
+
+Current publication manifest:
+
+- `docs/delivery/manager-r1/README.md`: `e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b`
+- `docs/delivery/manager-r1/stories.md`: `181ef08caf6ab4d3c5558e54801b7c2f1bd10d26860eb336c72762c8483096a0`
+- `docs/delivery/manager-r1/ticket-drafts.json`: `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`
+- `docs/delivery/manager-r1/plan-metadata.json`: `24e75028cd375b72a651e3fe59e64083e009cab0ebaee7a4a3e114f643a81144`
+- `docs/delivery/manager-r1/coverage.md`: `cd49cee0dda89951fc5cfa3f1aca5a3e617e81461cbe8dbe99e4bb79b57f5d11`
+- `docs/delivery/manager-r1/publication.json`: `4291096890e1a61c799198ff1a3d18f104a3cc9518073f113f5c2c2e016cc63d`
+- `/private/tmp/pigboss-publication-expected.json`: `3ca3934b07ad436c1811361b6207dd001c5bfe4e803517f5f6c556938913adec`
+- `/private/tmp/pigboss-readback23.json`: `f757428a157cb4072bcdea5501a8ecbd98a21a704bb8d8a2816263cb3dc8897b`
+- `/private/tmp/pigboss-final-links.json`: `7a2b4c78af3a77a62926b3029bf04b3a6bf5889339ca8271d292da8330cbc37d`
+
+Final publication-audit verdict: **CLEAN** for these captured artifacts. This verifies publication fidelity, not current live execution, installed acceptance, CI, merge or release authorization.
+
+
+---
+
+## Final design and delivery-plan correction addendum — 15 November 2026
+
+**Final technical design verdict: CLEAN. Final technical delivery-plan verdict: CLEAN.** These verdicts cover the final artifacts at `5df7e2ff4202ccc409b9b2880163aa3b010d0561`, including the health-precedence correction. They record the design and plan conclusions of this reviewer's already completed bounded review, now with the current manifest; they do not invent a prior approval or substitute for the other independent reviewer or final owner review. Earlier manifests and verdicts remain historical evidence.
+
+Reused evidence: this independent reviewer examined **26/26 changed files, 53/53 product requirements, 23/23 Stories, 104/104 cases, 41/41 scenarios and 54/54 native links** at `6f6c6e3`, then reviewed the exact two-file coverage correction at `4ded278` and the exact four-file health correction at `5df7e2f`. Full detail is retained in `/private/tmp/pigboss-commit-technical.md`. This addendum carries that unchanged coverage and explicitly finalizes the affected design/plan artifact identity; it is not a claim that a second full review was run today.
+
+The health-precedence finding is fixed at `docs/architecture/pig-boss-operations.md:84–109`: explicit first-match evaluation is unknown, scheduler mismatch/degraded, intentional disabled, stale, current failure/capacity/alarm/degraded, starting, healthy. Secondary reasons stay visible. Lines 95–107 establish that recent failure cannot reset freshness and only `age > freshness` expires the window; equality remains within it. This resolves disabled-plus-old-data, expired-success-plus-recent-failure and failed-first-scan overlaps without changing read-only authority or safe-stop/drain requirements.
+
+The matching plan correction is `docs/delivery/manager-r1/stories.md:1608–1619` and structured R1-22-H02: overlap fixtures, exact-boundary expectations and TAC2 coverage agree with the design. The case count remains 104, all 88 baseline cases remain unchanged, and only this new-scope case changes. The other 22 Story contracts, dependencies, estimates and scope remain unchanged. PGB-100's new `/private/tmp/pigboss-health-readback.json` exactly matches the corrected contract after native prerequisite substitution; its prior snapshot is historical. Parent/status/owner-review/no-worker-label boundaries remain preserved.
+
+**Current verification and second sweep:** **7/7 manifest files** checked against their exact committed bytes; **4/4 health-fix files** and all **7/7 decision branches** rechecked for affected consistency; **23/23** schema/format checks pass, **104/104** unique cases remain, and the new native health contract matches. Coverage guides and delivery README consistently distinguish historical 50-requirement reviews from current 53-requirement/23-Story reviews and pending owner/installed gates; their local links resolve. The earlier second sweep covered all four changed files, overlap/boundary/exits/secondary reasons and the native receipt. Today's final manifest/consistency sweep found no new finding or omitted affected surface.
+
+Seven principles, assessed for both the final design and its corrected plan:
+
+- **Intuitive:** intentional stop, startup, current failure and expired success now produce predictable primary states.
+- **Discoverable:** the ordered table, overlap examples, complete acceptance case and linked review records explain the result to humans and agents.
+- **Delightful experience:** consistent diagnoses avoid repeated investigation or unnecessary repeat reviews; one customer configuration remains the operating model.
+- **Token saver:** one primary state retains all material secondary reasons and exact evidence references rather than dropping failure detail.
+- **Secure:** failed or invalid reads cannot produce misleading success; health remains read-only and grants no recovery, retry or activation authority.
+- **Agents are equal:** CLI, JSON and human guidance share the same order, exit semantics and exact freshness boundary; prescribed cases retain explicit human ownership.
+- **Dependable:** recent failure cannot erase stale success; known absence differs from unreadable evidence; uncertain work remains held and pending owner/installed gates stay visible.
+
+Current SHA256 manifest, superseding earlier hashes only for these final artifacts:
+
+```text
+c0ba36250e3a82010e7510c66c62d66299812289ebb71e1b1bb3f62eea727958  docs/architecture/pig-boss-operations.md
+c649cf9d308412972b1de61e50f529af18c58009fea94f1b11db3985f049b1ab  docs/delivery/manager-r1/ticket-drafts.json
+9ba1c820d34fecc9ad448139a19f22bc89f745a39bd8c37f0bdc3db1dfbefc9d  docs/delivery/manager-r1/stories.md
+8a71d9280604d39f61896656d25ecb62acbf1d490c280b627434ccf8f142a7ed  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No unresolved confirmed in-scope finding remains for these exact design/plan artifacts. No runtime implementation, installed AWS/Jira health acceptance, current delivery configuration, CI/Codex merge gate, owner approval, merge/release or activation is established by these verdicts.
+
+
+---
+
+## Startup alarm and current-design binding correction — technical review
+
+15 November 2026. **Final technical design verdict: CLEAN. Final technical delivery-plan verdict: CLEAN. Committed-change verdict: PASS (CLEAN)** for `791c83ebb43a4015ceb5c192b61f89389c8015a5` against `527fd83984459316be4a529b30898eae319e4dcb`. No confirmed unresolved in-scope finding. These are bounded corrections within PGB-93's proposed manager health/review-evidence scope, with no runtime implementation or activation.
+
+**Coverage:** **4/4 changed files**, the entire affected alarm/lifecycle design section, **1/1 changed case** (R1-23-H02), **3/3 current design-content bindings** and **7/7 final manifest files** examined. Earlier complete coverage of 26/26 files, 53/53 requirements, 23/23 Stories, 104/104 cases, 41/41 original scenarios and 54/54 dependency links is carried from this reviewer's recorded exact-revision reviews for unchanged content. This review does not claim another full discovery/review restart or invent prior approval.
+
+**Design correction.** `docs/architecture/pig-boss-operations.md:137–157` prevents immediate missing-completion alarms on enablement or a new revision. The alarm uses scan cadence periods, `ceil(freshness / cadence)` consecutive breaches, and an expression that returns a non-breaching alarm input through the revision's fixed startup deadline before checking actual completion presence. The mask is not published as a real completion and cannot satisfy the health command. Explicit activation occurs after resources are ready; failures, normal scans and retries cannot extend the deadline. After startup, continued absence is detected externally even if the manager never ran, without a later worker/timer enabling detection. Real error/throttle alarms remain effective.
+
+The reference composition is consistent with AWS's documented time-series `TIME_SERIES`, `EPOCH`, `IF` and `FILL` behavior. The documented FILL caveat for delayed newest data does not establish a defect in the prescribed consecutive-period rule; actual timing and ingestion remain installed acceptance obligations. [AWS metric math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+
+The conservative rule can require a further freshness window after initial grace if no first scan occurs; the design explicitly discloses that tradeoff, plus alignment/evaluation/ingestion delay, and claims no exact detection SLA. I checked a local deterministic no-emission example with cadence 300 seconds/freshness 900: no alarm through the deadline, three post-grace zero periods then alarm. This is arithmetic confirmation of the intended rule, not CloudWatch execution or provider acceptance.
+
+**Plan correction.** Existing R1-23-H02 at `docs/delivery/manager-r1/stories.md:1688–1699` now maps TAC2 and prescribes enable/config-only rotation, before/at/after expiry, never-started installation, no worker/timer assistance, no fake completion, non-resetting grace and effective real error alarms. Readable and structured cases agree. Only R1-23-H02 changes relative to the prior contract; the other 22 Story contracts are unchanged. All 104 cases remain, all 88 baseline case objects remain exact and all 154 AC/TAC identifiers retain coverage. Scope, dependencies and forecasts are unchanged.
+
+**Publication correction.** `publication.json` now labels `ba9cb49...` as `baseline_design_commit`, and separately binds the current operations/product-manager/product-installation artifacts by their actual SHA256 values. All **3/3 hashes match**. The reviewed draft-file hash also matches. Thus the receipt no longer represents the historical baseline commit as the current reviewed design.
+
+I independently checked all **23/23 current native YAML contracts and their raw YAML-byte hashes**: PGB-100 uses `/private/tmp/pigboss-health-readback.json`, PGB-101 uses `/private/tmp/pigboss-alarm-readback.json`, and the other 21 use their unchanged captured readbacks. Complete native objects equal current drafts after prerequisite-key substitution only. All retain PGB-66 parent, To Do status, owner-review-required and no AI worker labels. These are checked captured publication records, not fresh live execution or current installed configuration.
+
+**Verification and second sweep:** all **23/23 schema/format checks** pass; **104/104** unique cases, **88/88** original cases and **154/154** criterion mappings are preserved. Rechecked **4/4 fix files**, fixed-deadline/revision ownership, grace versus real completion, never-run detection, current error alarms, documented delay, native receipt and current design hashes. Final manifest/link checks and `git diff --check` pass. No new finding or omitted affected surface. The initial diagnostic normalized old YAML before hashing; I corrected it to check the actual stored YAML bytes, and all 23 receipt hashes match. This diagnostic adjustment was not a product defect.
+
+| Merge criterion | Result | Correction evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Startup/revision behavior and truthful review bindings complete the existing PGB-93 health/evidence scope; owner review stays pending. |
+| Scope and design | PASS | Uses customer CloudWatch alarm evaluation and the existing health contract, without a timer service, synthetic completion or runtime build. |
+| Security and review integrity | PASS | Grace grants no write/recovery authority; historical design identity is explicit and current content bindings are verified. |
+| Compatibility and regressions | PASS | Only one new-scope case changes; 88 baseline cases and all other 22 Story contracts remain exact. |
+| Reliability and operations | PASS | Startup grace cannot be extended by failure; a never-running manager is still detected externally; the conservative extra delay is explicit. |
+| Tests and verification | PASS | Controlled-clock expectations are complete; schema/native/hash/preservation/link checks pass, with installed AWS timing still unrun. |
+| Repository fit and maintainability | PASS | Extends the existing canonical package/health contract and case; no extra database, scheduler worker or competing configuration is added. |
+| Documentation and usability | PASS | Startup behavior, delay and evidence identity are readable and structured; humans and agents receive the same limits. |
+
+Seven principles, assessed for corrected design and plan:
+
+- **Intuitive:** intentional enablement/revision startup avoids a premature missing-scan alert while true errors remain visible.
+- **Discoverable:** fixed deadline, consecutive periods, eventual detection and acceptance instructions explain how and when evidence is evaluated.
+- **Delightful experience:** startup noise is reduced without a manual follow-up action or another service to operate.
+- **Token saver:** deterministic AWS evaluation and content-addressed review evidence avoid polling and rediscovery; the detection-delay tradeoff remains explicit.
+- **Secure:** the mask cannot fabricate a completion, reset on failures or gain consequential authority; customer-owned routing and read-only health boundaries remain.
+- **Agents are equal:** readable and structured cases preserve the same startup/revision rules and precise evidence hashes; human-owned acceptance is not invented as an automated pass.
+- **Dependable:** absence remains externally detectable when Pig Boss never executes, old revisions cannot satisfy current evidence, and historical/current review identities and pending installed/owner gates remain distinct.
+
+Final current-artifact SHA256 manifest, superseding prior hashes only for these artifacts at `791c83ebb43a4015ceb5c192b61f89389c8015a5`:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+df8b5234321d831af2acc825e4eb6490ab1252af3fbb8ea0baa614dcde51bec3  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+daec13a88c6463d94ebb1f6eb1d0c2e832948461481080ab723946a11030d038  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation was performed by this reviewer. These verdicts do not establish runtime implementation, installed alarm/worker acceptance, current-head CI/Codex approval, owner approval, merge/release or activation. Earlier evidence and manifests remain historical rather than being rewritten.
+
+## Preparation bindings correction — final technical review
+
+15 November 2026. **Design applicability: unchanged design remains CLEAN. Delivery-plan verdict: CLEAN. Committed-change verdict: PASS (CLEAN)** for exact source `bb832c47299962ed58dd40c46f9a711ae118056c` against `3309af2924e82612b950a25197f52c6cd932c630`. No unresolved confirmed in-scope finding. This bounded correction completes preparation metadata under the existing PGB-93 plan; it adds no requirement, runtime feature or activation authority.
+
+**Coverage:** **2/2 changed files** (`ticket-drafts.json`, `publication.json`), **8/8 affected contracts**, **104/104 consumer links**, **23/23 fixture/preparation pairs**, **23/23 native contracts** and **7/7 manifest artifacts**. Prior complete coverage of the unchanged 53 requirements, 23 Story outcomes, 41 scenarios and 54 dependency links remains applicable; no full review restart is claimed.
+
+**Finding resolved.** R1-21/22/23 now declare implementer-owned DATA-01/PREP-01 slots; R1-04/10/12/14/20 add omitted case consumers. Every fixture resolves to its preparation, owners agree, and used_by names DATA-01 plus exactly every human case in order. This satisfies the existing “Prepared details” contract in `docs/architecture/manager-work-schema.md`.
+
+The slots defer mechanical local fixtures/commands only, preserving prescribed scope, authority, expectations, evidence and cleanup. Human cases remain human-owned; dummy-provider boundaries remain explicit.
+
+Parsed comparisons prove only fixture/preparation metadata changes semantically; Unicode serialization changes preserve values. All **104/104 full case objects**, including the 88 baseline cases, remain exact; **154/154 AC/TAC** remain covered. Readable Stories, design, dependencies, forecasts and scope are unchanged.
+
+**Verification:** **23/23 schema/format checks** pass. Eight fresh `/private/tmp/pigboss-prep-readback.json` bodies plus 15 unchanged snapshots equal current drafts after native prerequisite substitution; all **23 raw YAML hashes**, the draft hash and three design bindings match. Eight `/private/tmp/pigboss-prep-before.json` bodies equal their original contracts. Parent, To Do status, owner-review labels and absence of AI labels are preserved. These are captured readbacks, not live acceptance.
+
+**Second sweep:** rechecked **2/2 files**, **104/104 ordered consumers**, **23/23 DATA/PREP pairs**, **8/8 original bodies**, unchanged guides and hash updates. Inventory and `git diff --check` pass. No omitted affected surface or finding; no runtime test was warranted.
+
+| Review criterion | Result | Evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Completes PGB-93's executable planning metadata without changing agreed product outcomes. |
+| Scope and design | PASS | Only preparation declarations and their publication receipt change; prior design applies unchanged. |
+| Security and review integrity | PASS | Slots preserve established authority/scope/expectations and use simulated local data; native status/labels remain inactive. |
+| Compatibility and regressions | PASS | All 104 complete case objects and unaffected contract values remain exact. |
+| Reliability and operations | PASS | Every case has an explicit implementer-owned fixture/command producer; no missing consumer or inferred completion remains. |
+| Tests and verification | PASS | Schema, full-case preservation, all consumer mappings, native bodies/raw hashes, design bindings and diff checks pass. |
+| Repository fit and maintainability | PASS | Reuses the existing DATA-01/PREP-01 convention and semantic contract consistently across all 23 Stories. |
+| Documentation and usability | PASS | Structured contracts now match the existing readable preparation instructions; humans and agents can resolve who supplies each case's fixtures. |
+
+Seven principles for this correction:
+
+- **Intuitive:** all cases use one consistent preparation convention.
+- **Discoverable:** explicit IDs, owners and consumers reveal setup responsibility.
+- **Delightful experience:** no rediscovery of omitted ownership is needed.
+- **Token saver:** shared per-Story slots preserve complete case coverage without duplication.
+- **Secure:** preparation cannot expand access/scope or rewrite results.
+- **Agents are equal:** structured bindings expose the same responsibilities as human guidance; human cases remain human-owned.
+- **Dependable:** all links resolve, case content survives, and publication remains distinct from execution.
+
+Final source-artifact SHA256 manifest at `bb832c47299962ed58dd40c46f9a711ae118056c`, superseding older hashes only for these files:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+34c8b44a09a1355c0a9ff827b67f02ee82e92fffc0607e382e26aed8265c7fc8  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+fe1eb14cb6d79d02b7445821daa219d1cf7d1615525489b3deaa84614a415871  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation was performed by this reviewer. These verdicts do not establish runtime implementation, installed AWS/worker acceptance, current-head CI/Codex approval, owner approval, merge/release or activation. Earlier findings, verdicts and manifests remain historical evidence.

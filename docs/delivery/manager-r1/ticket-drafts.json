@@ -28,7 +28,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -37,6 +37,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -201,7 +206,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -210,6 +215,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -410,7 +420,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -419,6 +429,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -573,6 +588,10 @@
         {
           "id": "AC4",
           "requirement": "It distinguishes an explicitly authorized blocked-result resumption from unauthorized replacement without producing an unblock action."
+        },
+        {
+          "id": "AC5",
+          "requirement": "Admission binds the immutable project ID; role receipts inherit it through their assignment and reject a moved issue or foreign-site receipt."
         }
       ],
       "technical_acceptance_criteria": {
@@ -583,7 +602,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -592,6 +611,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -636,7 +660,8 @@
               "DATA-01",
               "R1-04-H01",
               "R1-04-H02",
-              "R1-04-H03"
+              "R1-04-H03",
+              "R1-04-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -738,10 +763,247 @@
                   "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
                 ]
               }
+            },
+            {
+              "id": "R1-04-H04",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC5",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Two native projects with the same stream label; valid admission and moved-project/foreign-site variants.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Validate each complete receipt chain against trusted native metadata.",
+                "Move the assigned issue to the other project in the fixture and repeat."
+              ],
+              "expected": [
+                "Only the original site/project assignment validates; repeated labels alone confer no authority."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
             }
           ]
         },
         "automated_regression": "End-to-end local receipt validation with canonical encoding, authority, repair and resume counterexamples."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-21",
+    "title": "Configure Pig Boss for multiple projects",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "A company needs one installation and one editable configuration for several Jira projects. Per-project workflow differences and repeated labels must not create collisions.",
+      "prerequisites": [
+        {
+          "ticket": "R1-04",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A local configuration command validates one Jira site and multiple project IDs with explicit or inherited project mappings, repositories and worker prefixes."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Readable and JSON output shows resolved project scope and rejects duplicate IDs, ambiguous mappings and untrusted destinations without provider writes."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Preview of a configuration change identifies added/removed project scope and retained-work checks required before enablement; fifty project entries parse without imposing a ten-project cap."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own the canonical company configuration schema, normalization and zero-write local validation command; provide local configuration-change preview without policy scheduling or live provider discovery.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Own the canonical company configuration schema, normalization and zero-write local validation command; provide local configuration-change preview without policy scheduling or live provider discovery."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Use immutable project IDs and collision-free tuple encoding of site/project/full-label. Project keys and board IDs are display/context only."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "No new editable cloud binding file, secret values, global label uniqueness, automatic provisioning or multi-writer ownership service. Native metadata remains authoritative."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-21-H01",
+              "R1-21-H02",
+              "R1-21-H03"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "id": "R1-21-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "TAC2",
+                "TAC1"
+              ],
+              "prerequisites": [
+                "Valid two-project and fifty-project local configuration fixtures with equal labels and different workflow IDs.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Run local validation in readable and JSON modes.",
+                "Inspect resolved project maps and independent stream keys."
+              ],
+              "expected": [
+                "Both valid configurations pass; project mappings remain separate; parsing fifty entries is not a runtime throughput claim."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-21-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Duplicate project ID, missing inherited mapping, untrusted origin and secret-value fixtures.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Validate each fixture.",
+                "Inspect errors and captured output."
+              ],
+              "expected": [
+                "Errors name safe field paths; no secret contents, provider calls or writes."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-21-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Previous and next configs that add/remove a project and rename only a key.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Compare configurations with local preview.",
+                "Inspect required retained-state/readiness checks."
+              ],
+              "expected": [
+                "Output distinguishes key rename from identity removal; removal cannot authorize erasing prior state or enabling until retained work is checked."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance."
       },
       "open_questions": []
     }
@@ -788,7 +1050,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -797,6 +1059,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -961,7 +1228,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -970,6 +1237,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1135,7 +1407,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -1144,6 +1416,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1313,7 +1590,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -1322,6 +1599,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1485,7 +1767,7 @@
   },
   {
     "id": "R1-09",
-    "title": "Request rework through the human\u2019s assistant",
+    "title": "Request rework through the human’s assistant",
     "contract": {
       "schema": "pigboard-ticket/v1",
       "problem_to_solve": "A human who rejects an open PR needs to record actionable findings without starting a second worker. Story authoring should remain focused on specifications.",
@@ -1521,7 +1803,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -1530,6 +1812,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1661,7 +1948,7 @@
     "title": "Preview ready work from a complete snapshot",
     "contract": {
       "schema": "pigboard-ticket/v1",
-      "problem_to_solve": "An operator needs to see why a stream can or cannot start work before granting write access. The manager\u2019s core rules must run without AWS or Jira credentials.",
+      "problem_to_solve": "An operator needs to see why a stream can or cannot start work before granting write access. The manager’s core rules must run without AWS or Jira credentials.",
       "prerequisites": [
         {
           "ticket": "R1-02",
@@ -1669,6 +1956,10 @@
         },
         {
           "ticket": "R1-04",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-21",
           "required_outcome": "ai_qa_complete"
         }
       ],
@@ -1688,6 +1979,10 @@
         {
           "id": "AC4",
           "requirement": "Required repair work is reported as waiting for the repair-policy increment; it cannot be bypassed by admitting unrelated work. Preview performs zero writes."
+        },
+        {
+          "id": "AC5",
+          "requirement": "Equal labels in different projects have independent ownership, occupancy, repair selection and five-ticket caps; conflicting Epics in one project hold that stream."
         }
       ],
       "technical_acceptance_criteria": {
@@ -1698,7 +1993,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -1707,6 +2002,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1746,7 +2046,8 @@
             "used_by": [
               "DATA-01",
               "R1-10-H01",
-              "R1-10-H02"
+              "R1-10-H02",
+              "R1-10-H03"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -1768,7 +2069,7 @@
                 "TAC1"
               ],
               "prerequisites": [
-                "Complete snapshots S01\u2013S18, S30\u2013S40 with explicit expected result from the reviewed matrix."
+                "Complete snapshots S01–S18, S30–S40 with explicit expected result from the reviewed matrix."
               ],
               "steps": [
                 "Run manager-preview for each named fixture.",
@@ -1820,6 +2121,37 @@
                   "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
                 ]
               }
+            },
+            {
+              "id": "R1-10-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC5"
+              ],
+              "prerequisites": [
+                "Two projects each with AI-Maria-1; A has five Human Review tickets, B has room; second active owner variant within B.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Preview both projects.",
+                "Swap the full stream states between projects and repeat.",
+                "Introduce the same-project second active owner."
+              ],
+              "expected": [
+                "Capacity and selection follow project identity; B can progress while A is full, and same-project ownership conflict holds B without conflating A."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
             }
           ]
         },
@@ -1847,7 +2179,7 @@
         },
         {
           "id": "AC2",
-          "requirement": "It proposes queueing B only from actual stale parent lineage after A\u2019s full repaired completion; active or Blocked B is left alone."
+          "requirement": "It proposes queueing B only from actual stale parent lineage after A’s full repaired completion; active or Blocked B is left alone."
         },
         {
           "id": "AC3",
@@ -1866,7 +2198,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -1875,6 +2207,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -1884,7 +2221,7 @@
           },
           {
             "id": "TAC2",
-            "requirement": "Return typed decisions for only Ready to Work\u2192In Progress, Rework Queued\u2192In Progress and Human Review\u2192Rework Queued."
+            "requirement": "Return typed decisions for only Ready to Work→In Progress, Rework Queued→In Progress and Human Review→Rework Queued."
           }
         ]
       },
@@ -3124,7 +3461,7 @@
                 "AC4"
               ],
               "prerequisites": [
-                "A a1\u2192a2 repair, B old completion, C actual child; second A root arrives while B queued; independent D."
+                "A a1→a2 repair, B old completion, C actual child; second A root arrives while B queued; independent D."
               ],
               "steps": [
                 "Preview before A completes.",
@@ -3163,6 +3500,10 @@
         {
           "ticket": "R1-11",
           "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-21",
+          "required_outcome": "ai_qa_complete"
         }
       ],
       "acceptance_criteria": [
@@ -3181,6 +3522,10 @@
         {
           "id": "AC4",
           "requirement": "It resolves typed receipts through the supported provider representation and shows selections without writing Jira or operational state."
+        },
+        {
+          "id": "AC5",
+          "requirement": "Live preview resolves each project mapping and allowed cross-project prerequisites; project identity uses immutable IDs and incomplete shared inventory never yields free capacity."
         }
       ],
       "technical_acceptance_criteria": {
@@ -3191,7 +3536,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -3200,6 +3545,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -3244,7 +3594,8 @@
               "DATA-01",
               "R1-12-H01",
               "R1-12-H02",
-              "R1-12-H03"
+              "R1-12-H03",
+              "R1-12-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -3349,6 +3700,36 @@
                   "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
                 ]
               }
+            },
+            {
+              "id": "R1-12-H04",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC5"
+              ],
+              "prerequisites": [
+                "Two project IDs with different status/type mappings, equal labels, a cross-project prerequisite, renamed key, denied-project and isolated-stream-conflict variants.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Preview all variants through the simulated Jira adapter.",
+                "Compare mapped stages, dependency results, native IDs and mutation trace."
+              ],
+              "expected": [
+                "Correct mapping and prerequisite checks across projects; key rename preserves identity; known isolated conflict holds only affected scope; denied project with unknown shared impact holds all writes; no preview mutations."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
             }
           ]
         },
@@ -3395,7 +3776,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -3404,6 +3785,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -3417,7 +3803,7 @@
           },
           {
             "id": "TAC3",
-            "requirement": "Runtime IAM names only this installation\u2019s configured secret, log group and state resource; scheduler may invoke only its function. No resource deployment occurs as part of editing this Story."
+            "requirement": "Runtime IAM names only this installation’s configured secret, log group and state resource; scheduler may invoke only its function. No resource deployment occurs as part of editing this Story."
           }
         ]
       },
@@ -3559,6 +3945,10 @@
         {
           "id": "AC4",
           "requirement": "Read-only preview can consume retained IDs without changing state; no TTL unlock, automatic history/member retirement or replacement empty table is offered."
+        },
+        {
+          "id": "AC5",
+          "requirement": "Saved stream, member and attempt identities include site and immutable project ID; project moves/removal retain old occupancy and unresolved intent."
         }
       ],
       "technical_acceptance_criteria": {
@@ -3569,7 +3959,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -3578,6 +3968,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -3621,7 +4016,8 @@
             "used_by": [
               "DATA-01",
               "R1-14-H01",
-              "R1-14-H02"
+              "R1-14-H02",
+              "R1-14-H03"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -3697,6 +4093,37 @@
                   "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
                 ]
               }
+            },
+            {
+              "id": "R1-14-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC5"
+              ],
+              "prerequisites": [
+                "Same label in two projects, pending attempt in A, key rename, issue move and project-removal snapshots.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Inspect both streams.",
+                "Apply the metadata/configuration changes to fixture observations and inspect again.",
+                "Attempt a stale cross-project completion using the state contract harness."
+              ],
+              "expected": [
+                "Records never collide; rename preserves IDs; move/removal does not free old capacity or erase intent; stale completion is rejected and affected scope remains held."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
             }
           ]
         },
@@ -3743,7 +4170,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -3752,6 +4179,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -3916,7 +4348,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -3925,6 +4357,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -4047,6 +4484,515 @@
     }
   },
   {
+    "id": "R1-22",
+    "title": "Inspect Pig Boss operating health",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Operators cannot tell whether Pig Boss has finished its scans or is nearing its limits. A workstream waiting for a human must not look like a broken manager.",
+      "prerequisites": [
+        {
+          "ticket": "R1-13",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-14",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-21",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The scan wrapper emits sanitized versioned summaries and embedded metrics for complete, incomplete and failed scans, including budget use and separate work holds."
+        },
+        {
+          "id": "AC2",
+          "requirement": "A read-only command provides readable and JSON disabled/starting/healthy/degraded/stale/unknown results, evidence timestamps and AWS links with the documented exit codes."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Evidence belongs to the current code/configuration/enablement revision; missing telemetry and failed reads never become healthy, and desired/actual mismatch is degraded."
+        },
+        {
+          "id": "AC4",
+          "requirement": "Output explains capacity warnings and safe next steps without starting a scan, modifying Jira/state or claiming worker health."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own portable scan-summary and health evaluation, AWS logging/metrics adapter and read-only inspection CLI using the existing customer log group.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Own portable scan-summary and health evaluation, AWS logging/metrics adapter and read-only inspection CLI using the existing customer log group."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Follow docs/architecture/pig-boss-operations.md for fields, state precedence, freshness, fixed metric dimensions and maximum-based signal interpretation; no second state store."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Read-only operator permissions cover only needed configuration, logs, metrics and alarm observations; log no bodies/secrets/raw errors. Runtime uses its existing log-write scope."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-22-H01",
+              "R1-22-H02",
+              "R1-22-H03",
+              "R1-22-H04"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "id": "R1-22-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC4",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Complete empty scan, five-ticket wait, retained-uncertainty hold and 80-percent budget fixture.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Run scans in the local wrapper harness.",
+                "Run health command on recorded observations.",
+                "Inspect every required scan-summary field, fixed metric dimensions and duplicate completion points; verify maximum-based signal interpretation."
+              ],
+              "expected": [
+                "Empty/business-held scans remain complete with holds shown; capacity warning is degraded; no worker health or second scan is inferred.",
+                "All versioned summary fields and budget bounds are present; no ticket/stream metric dimension; duplicate points never inflate exact run counts."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-22-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Old success, recent failed scan, missing completion after crash, denied telemetry read and no first completion fixtures.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions.",
+                "Overlap fixtures: desired/observed disabled plus old success; expired success plus recent failure; failed first scan before/after expiry; schedule mismatch plus stale data; unreadable telemetry plus disabled intent; exact freshness boundary."
+              ],
+              "steps": [
+                "Evaluate before and after freshness deadline with a controlled clock.",
+                "Inspect JSON states and exit codes.",
+                "Evaluate every overlapping-condition fixture using the ordered health decision table, including exactly at and just beyond the freshness boundary."
+              ],
+              "expected": [
+                "Stale/failed/unknown/starting are distinct; missing or unreadable evidence is never healthy; command makes zero mutation calls.",
+                "First matching state follows unknown, schedule mismatch, intentional disabled, stale, current degraded, starting, healthy. Disabled plus old data stays disabled; expired success plus new failure is stale with failure retained as a secondary reason; a failed first scan is degraded before expiry and stale afterward; missing reads win as unknown. Age equal to freshness is within the window."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-22-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Desired/actual enabled and disabled combinations; old-code/config completion; new enablement generation.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Evaluate all combinations and current/old revisions.",
+                "Inspect state precedence and evidence source."
+              ],
+              "expected": [
+                "Disabled requires observed stopped schedule; either mismatch degrades; unknown observation remains unknown; old revisions cannot satisfy current health."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-22-H04",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC4",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Allowed/denied health-reader identities and provider errors containing dummy secrets.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Run readable and JSON inspection with each identity.",
+                "Inspect captured outputs, log events and action trace."
+              ],
+              "expected": [
+                "Only scoped observations succeed; denial reports unknown; secrets/bodies are absent; no Jira/state mutation or scan launch occurs."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-23",
+    "title": "Install Pig Boss health alarms",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "A stopped or failing manager cannot report its own absence. Customers need basic AWS alarms and a clear guide for operating the installation.",
+      "prerequisites": [
+        {
+          "ticket": "R1-16",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-22",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The AWS package creates missing-completion, Lambda error/throttle and budget-utilization alarms with generated links and optional customer SNS notification routing."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Installation starts disabled; enable, intentional stop and upgrade keep alarm actions and evidence revision aligned with canonical intent; an unexpected scheduler stop stays detectable."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Readiness checks required health resources, operator permissions and configuration; the guide explains all health states, notification confirmation, capacity limits and safe recovery."
+        },
+        {
+          "id": "AC4",
+          "requirement": "Removal reports retained resources and costs; no alarm retries work, clears uncertain state, changes concurrency or monitors Cursor."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own health IaC, lifecycle integration and operator/readiness documentation; reuse the existing AWS package and R1-22 metrics/command.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Own health IaC, lifecycle integration and operator/readiness documentation; reuse the existing AWS package and R1-22 metrics/command."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Use the current evidence revision, missing successful completion as breaching and absent sparse errors as non-breaching. Document provider ingestion/evaluation delays; use existing customer SNS routing when configured."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Keep fixed low-cardinality dimensions, finite retention and bounded IAM; customer controls access and optional subscriptions. No dashboard, Teams integration or extra database."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-23-H01",
+              "R1-23-H02",
+              "R1-23-H03",
+              "R1-23-H04"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "id": "R1-23-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "TAC2",
+                "TAC1"
+              ],
+              "prerequisites": [
+                "Synthesized stack and simulated normal/error/throttle/utilization/missing metric histories.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Inspect alarm dimensions, thresholds, missing-data handling and generated links.",
+                "Evaluate signal fixtures including duplicate completion points."
+              ],
+              "expected": [
+                "Missing completion is detectable externally; error and utilization alarms match configured intent; duplicate metrics cannot inflate exact run claims; no automated recovery action."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-23-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC4",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Disabled install, enable, intentional stop, unexpected scheduler stop, configuration-only upgrade and removal fixtures.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions.",
+                "Controlled-clock histories with no completion at enable, config-only revision rotation, just before/at/after freshness expiry, and an installation that never starts."
+              ],
+              "steps": [
+                "Run lifecycle harness for each transition.",
+                "Inspect action state, evidence revision and retained-resource report.",
+                "Evaluate startup and rotated-revision alarm histories through the full freshness window and beyond, without running a scan or a follow-up timer."
+              ],
+              "expected": [
+                "Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised.",
+                "No missing-completion alarm before the current enablement freshness window expires; continued absence eventually alarms without worker help. Pre-enable metric-math grace never counts as a real scan. Failures/retries cannot reset grace, old revisions cannot satisfy it, and real error alarms remain effective during startup."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-23-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC3",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "No SNS topic, permitted topic and denied/misconfigured topic fixtures; least-permission policy snapshots.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Run package/readiness checks and inspect guide.",
+                "Inspect action destinations and denied-access output."
+              ],
+              "expected": [
+                "No topic clearly means console/command-only; configured routing requires operator confirmation; failures are actionable; no vendor access or broad runtime health privileges."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-23-H04",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC3",
+                "AC4"
+              ],
+              "prerequisites": [
+                "Fresh operator with generated outputs and unhealthy fixture observations.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Follow documented inspect, stop, diagnose and restore-readiness steps.",
+                "Attempt an undocumented concurrency increase or uncertain-write replay in the guidance check."
+              ],
+              "expected": [
+                "Guide identifies evidence and safe resolution; advises no overlapping manager or blind replay; capacity numbers are measured claims only. Installed notification delivery remains a separate acceptance gate."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-17",
     "title": "Admit a ready Story or Bug safely",
     "contract": {
@@ -4089,7 +5035,7 @@
         },
         {
           "id": "AC2",
-          "requirement": "It verifies the admission comment and pointer, rechecks source facts, sends one configured Ready to Work\u2192In Progress transition and conditionally confirms the same attempt."
+          "requirement": "It verifies the admission comment and pointer, rechecks source facts, sends one configured Ready to Work→In Progress transition and conditionally confirms the same attempt."
         },
         {
           "id": "AC3",
@@ -4108,7 +5054,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -4117,6 +5063,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -4295,7 +5246,7 @@
       "acceptance_criteria": [
         {
           "id": "AC1",
-          "requirement": "When the stream/capacity/prerequisites permit, apply admits the oldest understood queued repair before unrelated Bugs/Stories through Rework Queued\u2192In Progress."
+          "requirement": "When the stream/capacity/prerequisites permit, apply admits the oldest understood queued repair before unrelated Bugs/Stories through Rework Queued→In Progress."
         },
         {
           "id": "AC2",
@@ -4318,7 +5269,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -4327,6 +5278,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -4485,7 +5441,7 @@
     "title": "Queue a completed dependent PR for repair",
     "contract": {
       "schema": "pigboard-ticket/v1",
-      "problem_to_solve": "When A\u2019s repair completes, a stale dependent B in Human Review needs updating. The manager must queue that specific PR without restarting unrelated or active work.",
+      "problem_to_solve": "When A’s repair completes, a stale dependent B in Human Review needs updating. The manager must queue that specific PR without restarting unrelated or active work.",
       "prerequisites": [
         {
           "ticket": "R1-18",
@@ -4495,11 +5451,11 @@
       "acceptance_criteria": [
         {
           "id": "AC1",
-          "requirement": "A coherent repaired parent completion plus B\u2019s actual stale lineage permits one Human Review\u2192Rework Queued transition with the recorded cause."
+          "requirement": "A coherent repaired parent completion plus B’s actual stale lineage permits one Human Review→Rework Queued transition with the recorded cause."
         },
         {
           "id": "AC2",
-          "requirement": "Queueing preserves B\u2019s old assignment pointer; later admission replaces it through the normal admission path."
+          "requirement": "Queueing preserves B’s old assignment pointer; later admission replaces it through the normal admission path."
         },
         {
           "id": "AC3",
@@ -4507,7 +5463,7 @@
         },
         {
           "id": "AC4",
-          "requirement": "A\u2192B\u2192C and a second A repair preserve every unresolved cause, require the latest coherent immediate parent and do not repeatedly queue already-consumed updates."
+          "requirement": "A→B→C and a second A repair preserve every unresolved cause, require the latest coherent immediate parent and do not repeatedly queue already-consumed updates."
         }
       ],
       "technical_acceptance_criteria": {
@@ -4518,7 +5474,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -4527,6 +5483,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -4589,7 +5550,7 @@
                 "TAC1"
               ],
               "prerequisites": [
-                "A completes a1\u2192a2 repair; B HR records A at a1; C ready."
+                "A completes a1→a2 repair; B HR records A at a1; C ready."
               ],
               "steps": [
                 "Apply queue-only decision.",
@@ -4621,7 +5582,7 @@
                 "TAC2"
               ],
               "prerequisites": [
-                "A\u2192B\u2192C chain plus independent D; A gets second repair while B queued."
+                "A→B→C chain plus independent D; A gets second repair while B queued."
               ],
               "steps": [
                 "Run queue/admit/complete fixtures through both repair rounds.",
@@ -4714,6 +5675,10 @@
         {
           "ticket": "R1-19",
           "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-23",
+          "required_outcome": "ai_qa_complete"
         }
       ],
       "acceptance_criteria": [
@@ -4736,6 +5701,10 @@
         {
           "id": "AC5",
           "requirement": "Readiness distinguishes local configuration checks, installed-package acceptance, PGB-58 delivery acceptance and explicit activation; none silently enables anything."
+        },
+        {
+          "id": "AC6",
+          "requirement": "Readiness verifies multi-project mappings and installed health resources/revision before enablement; displays Pig Boss consistently and links the operating guide."
         }
       ],
       "technical_acceptance_criteria": {
@@ -4746,7 +5715,7 @@
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",
-            "Activation, monitoring, Cursor deduplication, automatic recovery and new QA engines"
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
           ],
           "related_repositories": []
         },
@@ -4755,6 +5724,11 @@
             "id": "D03",
             "decision": "Story writing and human-invoked request-rework are separate skills.",
             "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
           }
         ],
         "constraints": [
@@ -4799,7 +5773,8 @@
               "DATA-01",
               "R1-20-H01",
               "R1-20-H02",
-              "R1-20-H03"
+              "R1-20-H03",
+              "R1-20-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -4904,6 +5879,36 @@
                 "owner": "human QA reviewer",
                 "steps": [
                   "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-20-H04",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC6"
+              ],
+              "prerequisites": [
+                "Pinned compatible release with two-project config, missing health resource and old evidence-revision variants.",
+                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+              ],
+              "steps": [
+                "Run readiness in each variant.",
+                "Inspect output and compare Jira/operational-state traces."
+              ],
+              "expected": [
+                "Only complete compatible mapping/resources pass; mismatch is actionable; no scan, activation or delivery mutation occurs."
+              ],
+              "evidence": [
+                "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable fixture/build output; no live changes."
                 ]
               }
             }
