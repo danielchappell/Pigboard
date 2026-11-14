@@ -1,0 +1,52 @@
+{
+  "issue_id": "10001",
+  "project_id": "10000",
+  "status_id": "10002",
+  "comment_id": "20001",
+  "actor_id": "fixture-actor",
+  "created": "2026-11-14T12:00:00.000+0000",
+  "updated": "2026-11-14T12:00:00.000+0000",
+  "record": {
+    "schema": "pigboard-handoff/v1",
+    "record_id": "ca17449a-df02-4906-b3aa-e7aeff74c316",
+    "operation_id": "ca17449a-df02-4906-b3aa-e7aeff74c316",
+    "ticket_id": "10001",
+    "requirements_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "assignment": null,
+    "role": "manager",
+    "kind": "admission",
+    "from_stage": "Ready to Work",
+    "to_stage": "In Progress",
+    "payload": {
+      "stream": "PROBE-Daniel-1",
+      "mode": "new_work",
+      "previous_assignment": null,
+      "requests": [],
+      "existing_pr": null
+    },
+    "resume_authorization": null
+  },
+  "pointer": {
+    "schema": "pigboard-work-pointer/v1",
+    "assignment": {
+      "ticket_id": "10001",
+      "comment_id": "20001",
+      "record_id": "ca17449a-df02-4906-b3aa-e7aeff74c316",
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  "item": {
+    "pk": {
+      "S": "PROBE#1"
+    },
+    "revision": {
+      "N": "1"
+    },
+    "attempt": {
+      "S": "fixture-attempt"
+    },
+    "state": {
+      "S": "pending"
+    }
+  }
+}

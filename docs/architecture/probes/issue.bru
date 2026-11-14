@@ -1,0 +1,38 @@
+meta {
+  name: issue
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base}}/rest/api/3/issue/{{issue_id}}?fields=status,project
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{jira_auth}}
+  Accept: application/json
+  Content-Type: application/json
+}
+
+script:pre-request {
+  if (bru.getVar("binding").observation !== "issue") throw new Error("PROBE_SELECTOR_MISMATCH");
+}
+
+tests {
+  const b = bru.getVar("binding");
+  test("issue identity and stage", function () {
+    expect(res.getStatus()).to.equal(200);
+    const d = res.getBody();
+    expect(d.id).to.equal(b.issue_id);
+    expect(d.fields.project.id).to.equal(b.project_id);
+    expect(d.fields.status.id).to.equal(b.expected.status_id);
+  });
+}
+
+settings {
+  followRedirects: false
+  maxRedirects: 0
+  timeout: 10000
+}

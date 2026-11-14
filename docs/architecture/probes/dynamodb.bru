@@ -1,0 +1,47 @@
+meta {
+  name: dynamodb
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base}}/
+  body: json
+  auth: awsv4
+}
+
+headers {
+  Content-Type: application/x-amz-json-1.0
+  X-Amz-Target: DynamoDB_20120810.GetItem
+}
+
+auth:awsv4 {
+  accessKeyId:
+  secretAccessKey:
+  sessionToken:
+  service: dynamodb
+  region: {{region}}
+  profileName: {{profile}}
+}
+
+body:json {
+  {{ddb_body}}
+}
+
+script:pre-request {
+  if (bru.getVar("binding").observation !== "dynamodb") throw new Error("PROBE_SELECTOR_MISMATCH");
+}
+
+tests {
+  const b = bru.getVar("binding");
+  test("strong state observation", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().Item).to.deep.equal(b.expected.item);
+  });
+}
+
+settings {
+  followRedirects: false
+  maxRedirects: 0
+  timeout: 10000
+}
