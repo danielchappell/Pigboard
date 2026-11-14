@@ -21,7 +21,10 @@ or activation is authorized. The owner reviews the complete fixed Story set firs
 
 ## Ticket extraction and readiness
 
-Proposed contract refinement for PGB-67:
+The [work contract and complete skeletons](manager-work-contract.md) refine PGB-67.
+These remain discovery drafts pending contract/protocol review.
+
+Extraction and readiness:
 
 1. Fetch Jira's structured description document. Walk its code-block nodes; do not
    parse rendered HTML, Markdown fences or conversational comments with regex.
@@ -113,34 +116,26 @@ DynamoDB read observations without adding a database skill. No live AWS QA proof
 has occurred. If the necessary prepared access/execution is unavailable, use the
 ticket's agreed human cases or block its AI-assigned cases; never invent support.
 
-## Stack repair: decision still open
+## Stack repair: owner-approved rule
 
-Agreed: do not interrupt active B; queue A; repair each affected PR oldest first;
-each implementer owns one ticket/PR; use Rework Queued for understood work and
-Blocked for human intervention. Humans own ordinary merge order and retargeting.
+On 14 November 2026 the owner approved [repairing the stack one PR at a time](manager-stack-repair.md).
+Actual recorded parent PR/revision determines required revalidation, not Epic order
+or AI impact classification. Active B finishes first; repair A on A's PR; after
+A's automated review/AI QA completes, the manager queues stale dependent B from
+Human Review to Rework Queued and later admits it normally. Continue descendants
+oldest first. Matching consumed repair evidence prevents repeating the update.
 
-The owner asked how we know A's repair affects B, and whether a new Bug could own
-all branch repairs. No automatic Human Review-to-Rework Queued rule is approved yet.
-
-Recommendation for the next scenario: record the actual parent PR and tested parent
-revision when publishing B. After confirmed repair of A passes QA, that relationship
-identifies B as needing stack update/revalidation; it does not prove B has a defect.
-Conservatively update/revalidate recorded descendants on their existing tickets/PRs,
-oldest first. Mere Epic order, routine merge or retargeting is not a repair trigger.
-The tradeoff is extra prescribed verification instead of AI impact classification.
-
-A single Bug editing all branches/PRs would change the accepted one-ticket/one-PR
-boundary and admission/ownership rules. Do not introduce it implicitly. If a PR
-has already merged or the fix needs additional scope, return to a human for a
-properly scoped Bug/decision. The exact handoff record, repeated-repair generations,
-revision checks and authority to queue a dependent in Human Review remain open.
+Each run still owns one ticket/repository/PR. Missing lineage, merged PRs or scope
+growth require human handling. The manager neither fixes nor merges branches.
+The exact machine-readable handoff, stale-provider preflight and transition safety
+remain contract/verification work; the cascade product decision is no longer open.
 
 ## What still prevents a fixed implementation backlog
 
 | Gate | Remaining result | Owner |
 | --- | --- | --- |
-| Work contract | Final schema, required/null rules, dependency satisfaction and complete examples | PGB-67 |
-| Repair handoff | Accepted cascade behavior, durable machine-readable repair/lineage evidence and role authority | PGB-67; owner decision for cascade |
+| Work contract | Review the concrete contract/skeletons, freeze machine schemas and prove handoff round trip | PGB-67 |
+| Repair handoff | Durable machine-readable repair/lineage evidence, repeat-repair handling and stale-provider preflight | PGB-67 |
 | Capacity and edits | Rework returning to the five-ticket queue; removals/cancellation/renumbering without hiding live work | PGB-67 |
 | Admission safety | Successful/uncertain outcome protocol, fresh known-issue reads, source-specific transition validation, operator reconciliation | PGB-68 |
 | Deployment lifecycle | Final IAM/auth matrix, request/size/time bounds, retention, install/upgrade/restore/removal and bounded fixture proof | PGB-68 |
@@ -158,6 +153,9 @@ Evidence required: inspect the supported workflow without writes; agree disposab
 AWS/Jira fixtures and narrowly authorize tests before provisioning or transitioning.
 Current documentation research is not actual IAM, workflow or failure-injection
 acceptance. Existing delivery automations remain inactive and untouched.
+
+See [admission discovery and bounded proof](manager-admission-proof.md) for the current
+read/write protocol, new platform evidence and the exact fixture work still needed.
 
 ## References and review boundary
 

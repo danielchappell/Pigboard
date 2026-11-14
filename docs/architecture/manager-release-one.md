@@ -12,7 +12,9 @@ Jira rules start Cursor, and workers retain their evidence and stage handoffs.
 
 The first release includes the deployment and operating instructions needed to use
 this safely, plus the agreed admission, readiness, priority, capacity and queued
-repair rules. It does not route Cursor launches through Pigboard.
+repair rules. It does not route Cursor launches through Pigboard. The manager also queues a
+recorded required stack update from Human Review into Rework Queued; queueing
+starts no worker. See [the approved stack rule](manager-stack-repair.md).
 
 Excluded: worker monitoring, duplicate-run prevention, worker run ledger, launch
 proxy, cancellation, automatic recovery, transcript collection, SaaS, shared tenant
@@ -110,8 +112,10 @@ requires a compatibility plan for the currently installed story contract.
    preventing B's completion sends B to Rework Queued with unfinished checks NOT RUN.
 8. Pausing the Epic stops admission, including rework. An already-active cycle can
    finish through review and QA to Human Review if no correction is required.
-9. Only the manager admits In Progress. Workers own In Review, QA, Human Review,
-   Rework Queued and Blocked according to role; discussion alone stays in stage.
+9. Only the manager admits In Progress. Workers own their role handoffs. The manager
+   additionally owns Human Review to Rework Queued for a recorded required stack
+   update. It never interrupts an active worker or clears Blocked. Discussion alone
+   stays in stage.
 10. Humans own PR merge/retarget and acceptance. Broader Epic context informs an
     implementer but never expands its ticket scope. Scope growth waits for a human.
 

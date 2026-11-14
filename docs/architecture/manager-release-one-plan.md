@@ -55,13 +55,16 @@ inside every Story.
 ## Scope freeze and changes
 
 Frozen outcome: securely install in customer-owned AWS Lambda and advance eligible
-work through the existing Jira dispatch path. Retain all ten design admission rules.
+work through the existing Jira dispatch path. Retain all ten design admission rules and the approved manager-owned stack queue
+transition described in [the stack contract](manager-stack-repair.md).
 Out: monitoring, duplicate-agent prevention, dispatch proxy, transcript storage,
 recovery/cancellation, SaaS, multi-cloud deployment and legacy code reuse.
 
 The owner approved customer-owned DynamoDB for admission state on 14 November 2026.
 [State ownership and upgrades](manager-state.md) define the new boundary;
 [discovery progress](manager-discovery.md) separates settled contracts from open gates.
+The approved [stack rule](manager-stack-repair.md), draft [work contract](manager-work-contract.md)
+and [bounded platform proof](manager-admission-proof.md) are the current discovery artifacts.
 The complete fixed Story set, scope coverage, dependencies, sizing and acceptance
 must be presented to the owner before implementation begins.
 

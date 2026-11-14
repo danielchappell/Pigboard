@@ -181,6 +181,7 @@ remains separate from the planned manager.
 
 [First manager scope](docs/architecture/manager-release-one.md) ·
 [State and upgrades](docs/architecture/manager-state.md) ·
+[Stack repair](docs/architecture/manager-stack-repair.md) ·
 [Discovery progress](docs/architecture/manager-discovery.md) ·
 [Ordered Jira work](docs/architecture/manager-release-one-plan.md) ·
 [Architecture guide](docs/architecture/target/review-guide.md) ·

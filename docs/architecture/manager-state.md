@@ -38,7 +38,7 @@ default. No indexes, streams, replication, monitoring records or generic databas
 framework are required for the current access pattern.
 
 Record types have a versioned envelope: record kind, schema version, installation
-and scheduling-domain identity, stable record ID and monotonic revision. An admission
+and scheduling-domain identity, stable record ID and monotonic revision. An admission/queue-transition
 record contains the full numbered stream, immutable Jira issue ID plus display key,
 Epic ID, attempt ID, intended source/target statuses, relevant configuration version,
 timestamps and an outcome code. A reconciliation records the operator, disposition,
@@ -68,7 +68,9 @@ alone do not establish portability. Only the DynamoDB adapter ships now.
 
 ## Uncertain Jira outcomes
 
-Before sending a permitted Jira transition, durably record the intent. Send no
+Before sending a permitted Jira transition, durably record the intent. This covers
+both admission and the approved Human Review-to-Rework Queued stack update; the
+record names which operation is intended. Send no
 transition unless that write is confirmed. Once an intent exists, all later scans
 hold that stream until its outcome is confirmed or a human reconciles it.
 
@@ -159,6 +161,9 @@ it is not a safe unlock or retry timer.
 and [UpdateReplacePolicy](https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-attribute-updatereplacepolicy.html)
 cover different resource-removal paths; the deployment design must address both.
 These are platform documentation facts, not live acceptance evidence.
+
+The approved stack-queue operation uses the same state contract, not a second
+store or retry mechanism.
 
 Monitoring, worker launch deduplication, automatic recovery, alternate clouds and
 additional storage engines remain follow-on work. DynamoDB approval changes the
