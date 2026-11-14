@@ -15,7 +15,8 @@ Jira round-trip proof are required before implementation Stories become ready.
 Names above are proposed for this release. The installed prose contract is not
 silently accepted as these schemas. The version is independent of state-record and
 deployment-configuration versions. The [examples](examples/) contain the Epic and
-ticket skeletons. The [handoff contract](manager-handoff-contract.md) now defines the exact encoding,
+ticket skeletons. The [schema draft](manager-work-schema.md) specifies exact start
+structure, populated examples and the separate semantic validation gates. The [handoff contract](manager-handoff-contract.md) now defines the exact encoding,
 assignment binding and publication order, with separate role skeletons and design
 schemas. It still requires independent review and provider round-trip proof;
 workers and validators must not treat design publication as installed behavior.

@@ -1,0 +1,1801 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pigboard:ticket-v1",
+  "title": "ticket-v1 start structure (discovery draft)",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "pigboard-ticket/v1"
+    },
+    "problem_to_solve": {
+      "type": "string",
+      "minLength": 1
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required_outcome": {
+            "const": "ai_qa_complete"
+          }
+        },
+        "required": [
+          "ticket",
+          "required_outcome"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/requirement"
+      },
+      "minItems": 1
+    },
+    "technical_acceptance_criteria": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "object",
+          "properties": {
+            "url": {
+              "type": "string",
+              "minLength": 1
+            },
+            "base_branch": {
+              "type": "string",
+              "minLength": 1
+            },
+            "change_boundary": {
+              "type": "string",
+              "minLength": 1
+            },
+            "out_of_scope": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "related_repositories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "responsibility": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "contract_reference": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "change_story": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "url",
+                  "responsibility",
+                  "contract_reference",
+                  "change_story"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "url",
+            "base_branch",
+            "change_boundary",
+            "out_of_scope",
+            "related_repositories"
+          ],
+          "additionalProperties": false
+        },
+        "accepted_decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision"
+          },
+          "minItems": 0
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirement"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "repository",
+        "accepted_decisions",
+        "constraints"
+      ],
+      "additionalProperties": false
+    },
+    "testing_strategy": {
+      "type": "object",
+      "properties": {
+        "testing_types": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "api",
+              "database",
+              "ui"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "environment": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "enum": [
+                "pipeline_pr_comment",
+                "configured_target"
+              ]
+            },
+            "target_reference": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "source",
+            "target_reference",
+            "required_capabilities"
+          ],
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "properties": {
+                "source": {
+                  "const": "pipeline_pr_comment"
+                },
+                "target_reference": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "source": {
+                  "const": "configured_target"
+                },
+                "target_reference": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tenant": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "identity_reference": {
+                "type": "string",
+                "minLength": 1
+              },
+              "access_owner": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "role",
+              "tenant",
+              "identity_reference",
+              "access_owner"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "fixtures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "initial_state": {
+                "type": "string",
+                "minLength": 1
+              },
+              "reference": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "preparation_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "owner": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "description",
+              "initial_state",
+              "reference",
+              "preparation_id",
+              "owner"
+            ],
+            "additionalProperties": false,
+            "oneOf": [
+              {
+                "properties": {
+                  "reference": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "preparation_id": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "reference": {
+                    "type": "null"
+                  },
+                  "preparation_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "preparation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "owner": {
+                "const": "implementer"
+              },
+              "supplies": {
+                "type": "string",
+                "minLength": 1
+              },
+              "used_by": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "preserves": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "id",
+              "owner",
+              "supplies",
+              "used_by",
+              "preserves"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "dispatch_order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/case"
+          },
+          "minItems": 0
+        },
+        "human_review": {
+          "type": "object",
+          "properties": {
+            "no_ai_cases_reason": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "execution": {
+                    "const": "human"
+                  },
+                  "owner_role": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "requirements": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "prerequisites": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 0
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "expected": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "cleanup": {
+                    "$ref": "#/$defs/cleanup"
+                  }
+                },
+                "required": [
+                  "id",
+                  "execution",
+                  "owner_role",
+                  "requirements",
+                  "prerequisites",
+                  "steps",
+                  "expected",
+                  "evidence",
+                  "cleanup"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "no_ai_cases_reason",
+            "cases"
+          ],
+          "additionalProperties": false
+        },
+        "automated_regression": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "testing_types",
+        "environment",
+        "actors",
+        "fixtures",
+        "preparation",
+        "dispatch_order",
+        "cases",
+        "human_review",
+        "automated_regression"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "cases": {
+                "maxItems": 0
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "dispatch_order": {
+                "maxItems": 0
+              },
+              "testing_types": {
+                "maxItems": 0
+              },
+              "human_review": {
+                "properties": {
+                  "no_ai_cases_reason": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "cases": {
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "dispatch_order": {
+                "minItems": 1
+              },
+              "testing_types": {
+                "minItems": 1
+              },
+              "human_review": {
+                "properties": {
+                  "no_ai_cases_reason": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "open_questions": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "required": [
+    "schema",
+    "problem_to_solve",
+    "prerequisites",
+    "acceptance_criteria",
+    "technical_acceptance_criteria",
+    "testing_strategy",
+    "open_questions"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "value": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/value"
+          },
+          "minItems": 0
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/value"
+          }
+        }
+      ]
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/value"
+      }
+    },
+    "decision": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "decision",
+        "reference"
+      ],
+      "additionalProperties": false
+    },
+    "requirement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirement": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "requirement"
+      ],
+      "additionalProperties": false
+    },
+    "cleanup": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "none",
+            "prescribed"
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "steps": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "reason",
+        "owner",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "mode": {
+              "const": "none"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "owner": {
+              "type": "null"
+            },
+            "steps": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "mode": {
+              "const": "prescribed"
+            },
+            "reason": {
+              "type": "null"
+            },
+            "owner": {
+              "type": "string",
+              "minLength": 1
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "reference",
+        "preparation_id"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "reference": {
+              "type": "string",
+              "minLength": 1
+            },
+            "preparation_id": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "reference": {
+              "type": "null"
+            },
+            "preparation_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "api": {
+      "type": "object",
+      "properties": {
+        "method": {
+          "enum": [
+            "GET",
+            "HEAD",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS"
+          ]
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "route": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "route_preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actor": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "request_selector": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selector_preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "expected_response": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "method",
+        "operation",
+        "route",
+        "route_preparation_id",
+        "actor",
+        "request_selector",
+        "selector_preparation_id",
+        "expected_status",
+        "expected_response"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "route": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "route_preparation_id": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "route": {
+                  "type": "null"
+                },
+                "route_preparation_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "request_selector": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "selector_preparation_id": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "request_selector": {
+                  "type": "null"
+                },
+                "selector_preparation_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "engine": {
+          "const": "postgresql"
+        },
+        "reader": {
+          "const": "qa-database/read-postgres.mjs"
+        },
+        "access_reference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "tenant": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "records": {
+              "type": "string",
+              "minLength": 1
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "max_rows": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          "required": [
+            "tenant",
+            "records",
+            "columns",
+            "max_rows"
+          ],
+          "additionalProperties": false
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/value"
+              },
+              "minItems": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameters_preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "parameter_bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "string",
+                "minLength": 1
+              },
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "input",
+              "index"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "engine",
+        "reader",
+        "access_reference",
+        "scope",
+        "parameters",
+        "parameters_preparation_id",
+        "observations",
+        "parameter_bindings"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "parameters": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/value"
+              },
+              "minItems": 0
+            },
+            "parameters_preparation_id": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "parameters": {
+              "type": "null"
+            },
+            "parameters_preparation_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "ui": {
+      "type": "object",
+      "properties": {
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "browser": {
+          "type": "string",
+          "minLength": 1
+        },
+        "device": {
+          "type": "string",
+          "minLength": 1
+        },
+        "viewport": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": [
+                "dimensions",
+                "supplied_default"
+              ]
+            },
+            "width": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "height": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reference": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "width",
+            "height",
+            "reference"
+          ],
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "properties": {
+                "mode": {
+                  "const": "dimensions"
+                },
+                "width": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "reference": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "mode": {
+                  "const": "supplied_default"
+                },
+                "width": {
+                  "type": "null"
+                },
+                "height": {
+                  "type": "null"
+                },
+                "reference": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        },
+        "entry_route": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "route_preparation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "screenshot_checkpoints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "surface",
+        "browser",
+        "device",
+        "viewport",
+        "entry_route",
+        "route_preparation_id",
+        "required_capabilities",
+        "screenshot_checkpoints"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "oneOf": [
+            {
+              "properties": {
+                "entry_route": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "route_preparation_id": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "entry_route": {
+                  "type": "null"
+                },
+                "route_preparation_id": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "caller": {
+          "type": "string",
+          "minLength": 1
+        },
+        "skill": {
+          "enum": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "inputs": {
+          "$ref": "#/$defs/inputs"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "from_step": {
+                "type": "string",
+                "minLength": 1
+              },
+              "output": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to_input": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "from_step",
+              "output",
+              "to_input"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "expected": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "prepared_artifact": {
+          "type": "object",
+          "properties": {
+            "reference": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "preparation_id": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "reference",
+            "preparation_id"
+          ],
+          "additionalProperties": false
+        },
+        "api": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/api"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "database": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/database"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ui": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ui"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "caller",
+        "skill",
+        "action",
+        "children",
+        "inputs",
+        "bindings",
+        "outputs",
+        "expected",
+        "evidence",
+        "prepared_artifact",
+        "api",
+        "database",
+        "ui"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "skill": {
+              "const": "qa-api"
+            },
+            "caller": {
+              "const": "qa-entrypoint"
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1,
+              "maxItems": 1
+            },
+            "prepared_artifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "api": {
+              "$ref": "#/$defs/api"
+            },
+            "database": {
+              "type": "null"
+            },
+            "ui": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "skill": {
+              "const": "qa-bruno"
+            },
+            "caller": {
+              "not": {
+                "const": "qa-entrypoint"
+              }
+            },
+            "children": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "prepared_artifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "api": {
+              "$ref": "#/$defs/api"
+            },
+            "database": {
+              "type": "null"
+            },
+            "ui": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "skill": {
+              "const": "qa-database"
+            },
+            "caller": {
+              "const": "qa-entrypoint"
+            },
+            "children": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "prepared_artifact": {
+              "$ref": "#/$defs/artifact"
+            },
+            "api": {
+              "type": "null"
+            },
+            "database": {
+              "$ref": "#/$defs/database"
+            },
+            "ui": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "properties": {
+            "skill": {
+              "const": "qa-ui"
+            },
+            "caller": {
+              "const": "qa-entrypoint"
+            },
+            "children": {
+              "type": "array",
+              "maxItems": 0
+            },
+            "prepared_artifact": {
+              "type": "object",
+              "properties": {
+                "reference": {
+                  "type": "null"
+                },
+                "preparation_id": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "reference",
+                "preparation_id"
+              ],
+              "additionalProperties": false
+            },
+            "api": {
+              "type": "null"
+            },
+            "database": {
+              "type": "null"
+            },
+            "ui": {
+              "$ref": "#/$defs/ui"
+            }
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution": {
+          "const": "ai"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "fixtures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "step": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required_outcome": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "step",
+              "required_outcome"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "observation": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": [
+                "synchronous",
+                "asynchronous"
+              ]
+            },
+            "schedule": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "deadline_seconds": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "step": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "completion": {
+              "enum": [
+                null,
+                "until_expected",
+                "all_observations"
+              ]
+            }
+          },
+          "required": [
+            "mode",
+            "schedule",
+            "deadline_seconds",
+            "step",
+            "completion"
+          ],
+          "additionalProperties": false,
+          "oneOf": [
+            {
+              "properties": {
+                "mode": {
+                  "const": "synchronous"
+                },
+                "schedule": {
+                  "type": "null"
+                },
+                "deadline_seconds": {
+                  "type": "null"
+                },
+                "step": {
+                  "type": "null"
+                },
+                "completion": {
+                  "type": "null"
+                }
+              }
+            },
+            {
+              "properties": {
+                "mode": {
+                  "const": "asynchronous"
+                },
+                "schedule": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 1,
+                  "prefixItems": [
+                    {
+                      "const": 0
+                    }
+                  ]
+                },
+                "deadline_seconds": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "step": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "completion": {
+                  "enum": [
+                    "until_expected",
+                    "all_observations"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "cleanup": {
+          "$ref": "#/$defs/cleanup"
+        },
+        "manual_qa": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "execution",
+        "purpose",
+        "requirements",
+        "actors",
+        "fixtures",
+        "preconditions",
+        "depends_on",
+        "observation",
+        "cleanup",
+        "manual_qa",
+        "steps"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
