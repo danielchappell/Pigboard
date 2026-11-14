@@ -147,3 +147,13 @@ uncertainty/no replay for each. The 12-transition ceiling includes setup and mus
 be revised before authorization if the eventual fixture cannot fit. Account signup
 is now reported as complete, with deployment acceptance still unproven. Fresh
 committed review and hosted gates apply again; no live probe is authorized.
+
+
+The hosted review at 395146c also found the release-level acceptance paragraph
+still focused on admission, despite the research probe covering all three edges.
+This is a valid in-scope gap. Release acceptance and the delivery-plan acceptance
+increment now explicitly cover the installed stack queue path, permissions, durable
+intent, retained uncertainty, no repeated repair and later oldest-first admission.
+The scoped deployment Mermaid diagram labels both permitted manager operations.
+Research proof remains distinct from installed-package acceptance. This correction
+requires fresh committed review and current-head hosted approval before merge.

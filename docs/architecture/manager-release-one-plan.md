@@ -42,8 +42,12 @@ https://github.com/danielchappell/Pigboard, main, without archived runtime reuse
 4. Coordinate queued repairs and affected stack updates. Consumer: workers and human
    reviewers. Role handoff skills, Jira configuration contract and admission logic
    must be mutually compatible; split by usable behavior, never enable half a chain.
-5. Accept the installed release on authorized fixtures, then separately authorize
-   pilot activation. Operational validation is a Task unless it changes code.
+5. Accept the installed release on authorized fixtures against all three manager
+   edges and their installed permissions, durable intents and uncertainty behavior
+   in [release acceptance](manager-release-one.md#release-acceptance-and-rollout),
+   including the actual parent-repair -> queue B -> admit B path. Raw API probe
+   results do not replace this package acceptance. Then separately authorize pilot
+   activation. Operational validation is a Task unless it changes code.
 
 Before any implementation Story is ready: one repository/PR, no more than 20 changed
 files total, less than two human working days including tests/docs/PR preparation;
