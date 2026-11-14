@@ -1,0 +1,157 @@
+[
+  {
+    "slug": "01-system",
+    "title": "One delivery loop",
+    "subtitle": "Jira holds the work. The manager coordinates it. Cursor workers do it. Humans decide what ships.",
+    "notes": [
+      "Read left to right, then follow the worker handoff back into Jira. The manager alone admits work into In Progress; workers retain their role-specific outcome transitions.",
+      "Monitoring supplies execution facts, not QA verdicts. PR environments are pipeline-owned separate work. Human approval/unblock action wiring is still to be specified.",
+      "This is the proposed target. The saved inactive MVP currently has direct Jira-to-Cursor webhooks; adoption would replace that direct dispatch path, not run both paths."
+    ],
+    "coverage": [
+      "Jira authority",
+      "manager vs worker authority",
+      "human ownership",
+      "proposed target vs current MVP"
+    ]
+  },
+  {
+    "slug": "02-manager",
+    "title": "Inside the manager",
+    "subtitle": "Three responsibilities share a small execution record. These are modules, not three separate services.",
+    "notes": [
+      "Admission chooses which ticket may begin. A stage event for In Review or QA goes to Dispatch for the already-admitted ticket. Pausing an Epic must not accidentally stop those finishing-stage launches.",
+      "A production dispatcher needs persistent coordination to suppress repeated deliveries. The mechanism is an open implementation choice; no database is selected here.",
+      "The observer reads Cursor status and checks for the role handoff. No transcript mirror, AI supervisor, automatic retry or automatic unblock is proposed."
+    ],
+    "coverage": [
+      "admission",
+      "dispatch",
+      "observation",
+      "shared record",
+      "adapter boundaries",
+      "paused-cycle routing"
+    ]
+  },
+  {
+    "slug": "03-admission",
+    "title": "Admit only the next eligible ticket",
+    "subtitle": "Eligibility comes before priority. Epic membership never makes an unready ticket executable.",
+    "notes": [
+      "The active slot covers the whole automated cycle, not merely the implementer process. In Review and QA occupy the same numbered stream.",
+      "Ready to Work is the existing new-work eligibility status. Rework Queued is the agreed separate repair path. No new preparation status is proposed.",
+      "A required Bug can precede its dependent queued repair. The five-ticket limit applies to new Bugs as well as new Stories. We still need to formalize abnormal repair/cap states without creating a deadlock.",
+      "An Epic that is not In Progress admits nothing; its existing cycle may still drain through review and QA. The opt-in label spelling remains undecided."
+    ],
+    "coverage": [
+      "readiness filter",
+      "priority",
+      "dependencies",
+      "cap",
+      "one active stream",
+      "repair exception"
+    ]
+  },
+  {
+    "slug": "04-handoffs",
+    "title": "Workers own evidence and handoffs",
+    "subtitle": "Only the manager moves work into In Progress. Worker skills decide their own evidence-backed outcomes.",
+    "notes": [
+      "Success flow is implementer \u2192 In Review, reviewer \u2192 QA, QA \u2192 Human Review. There is no worker arrow back to In Progress.",
+      "Confirmed repairs queue. An implementer can also queue when a known upstream repair prevents completion. An ordinary repair it can complete within its scope remains part of its job.",
+      "Workers publish records on Jira and relevant PR comments/evidence before their allowed handoff. Role skills constrain behavior; provider credentials still determine technical access."
+    ],
+    "coverage": [
+      "role transition matrix",
+      "evidence before handoff",
+      "rework vs blocked",
+      "discussion"
+    ]
+  },
+  {
+    "slug": "05-skills",
+    "title": "Small skills, composed for each role",
+    "subtitle": "The entry point chooses the prescribed sequence. Job skills execute. The role handoff skill updates Jira.",
+    "notes": [
+      "These are instruction responsibilities, not a proposal to spawn an agent per skill. The three worker types remain separate automations.",
+      "The central Pigboard bundle is fetched during deterministic environment setup outside the app repo. All required skills are available; entry points explicitly invoke what their role needs.",
+      "Implementer context includes the Epic, its ordered workstream and relevant neighboring PRs. That context does not enlarge the assigned Story scope.",
+      "QA uses only the prescribed case sequence; API assessment delegates request execution to its named Bruno child, not a duplicate top-level request."
+    ],
+    "coverage": [
+      "skill composition",
+      "models",
+      "central setup",
+      "no mega-skill",
+      "context boundary"
+    ]
+  },
+  {
+    "slug": "06-workstreams",
+    "title": "Independent streams, shared worker types",
+    "subtitle": "A numbered label is the capacity boundary. The suffix never selects a different worker automation.",
+    "notes": [
+      "Daniel-1, Maria-1 and Maria-2 are independent sequential streams. A full label belongs to only one active Epic. A person can have several distinct numbered streams.",
+      "Different streams reuse that person\u2019s configured implementer, reviewer and QA automation types. They do not create a separate automation for each suffix.",
+      "A stream stays occupied while its current ticket is in automated review or QA. Five waiting human reviews stop new admission, including Bugs. No UI here represents live tickets."
+    ],
+    "coverage": [
+      "parallel streams",
+      "full label capacity",
+      "shared automations",
+      "five-ticket cap"
+    ]
+  },
+  {
+    "slug": "07-rework",
+    "title": "Repair the stack without interrupting work",
+    "subtitle": "A has a confirmed defect. B is already running on top of A. C has not started.",
+    "notes": [
+      "This is the accepted human-review rework scenario. Do not pause the active Cursor run or assume it can resume with intact paid context. Let its current cycle finish.",
+      "If B cannot complete because A\u2019s known queued defect prevents its cases, B records NOT RUN for prevented checks, queues and ends. A\u2019s repair can then go first.",
+      "Stack relationships, findings and exact verification revisions must be available from durable ticket/PR context, not another agent\u2019s memory.",
+      "Human merge/retarget activity alone does not trigger automatic stack maintenance. This diagram concerns confirmed repairs and necessary downstream code changes."
+    ],
+    "coverage": [
+      "oldest-first repair",
+      "no interruption",
+      "same PR",
+      "known dependency wait",
+      "fresh verification"
+    ]
+  },
+  {
+    "slug": "08-pause",
+    "title": "Pause admission, finish the active cycle",
+    "subtitle": "A human moves the Epic out of In Progress. That is not a cancellation request.",
+    "notes": [
+      "Epic state gates admission, not every event. Review and QA for the already-active cycle must still be dispatched when their preceding worker hands off.",
+      "If a correction is needed, that requires a new admission from Rework Queued, so it waits. Ready B and C wait too. Genuine inability still goes to Blocked.",
+      "When the human starts the Epic again, the manager evaluates current state and starts at most one eligible cycle per stream."
+    ],
+    "coverage": [
+      "pause vs cancel",
+      "drain stages",
+      "repair waits",
+      "resume admission"
+    ]
+  },
+  {
+    "slug": "09-observation",
+    "title": "Observe execution; humans decide recovery",
+    "subtitle": "Run state answers \u201cis it active?\u201d Worker evidence answers \u201cdid the job succeed?\u201d",
+    "notes": [
+      "Status monitoring does not require AI-generated heartbeats or transcript parsing. The API documentation offers run states; reading our exact webhook-triggered runs still needs verification.",
+      "We must not confuse provider completion with successful CI, review approval, QA pass or a Jira transition. Workers remain responsible for those outcomes.",
+      "Dispatch uses stage-visit identity to distinguish duplicate delivery from legitimate rework. Persistent coordination is proposed, with no chosen storage. Exactly-once provider launches are not claimed.",
+      "A rare uncertain launch gets a human-attention outcome, not a complex automatic recovery system. Polling cadence, permissions and implementation location remain open."
+    ],
+    "coverage": [
+      "status vs success",
+      "no transcript collection",
+      "human failure response",
+      "duplicates vs rework",
+      "API verification gap"
+    ]
+  }
+]

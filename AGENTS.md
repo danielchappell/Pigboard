@@ -19,6 +19,19 @@ The development agreement below governs work on Pigboard itself. The customer
 workflow intentionally uses one independent plan reviewer and is defined in the
 entrypoint skills; do not impose Pigboard's two-reviewer development gate on it.
 
+## Codex GitHub merge gate
+
+Every Pigboard PR must receive a thumbs-up from the Codex GitHub review bot for the
+current revision before merge. Wait for review completion, resolve confirmed bugs,
+and request a fresh review after changes. A prior revision's reaction, review start,
+missing response or green CI alone does not satisfy this gate. Keep a review link
+and reviewed head SHA in the PR evidence. Do not merge when the bot is unavailable.
+This supplements the independent review and CI gates below; it does not replace them.
+
+Repository automatic code review is configured for all PRs on every push. This is
+not itself GitHub branch protection. Do not claim GitHub mechanically enforces the
+bot's reaction unless a separately verified required check/rule exists.
+
 ## Working agreement
 
 These are the owner's standing instructions for substantive software lifecycle

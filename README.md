@@ -173,6 +173,79 @@ Jira routing and the shared Atlassian read connection are configured. Next is an
 explicitly authorized bounded delivery test with complete Story/PR inputs. Review comments/approvals and Jira transitions have not
 been live-tested. Per-PR environments and MCP migration remain separate work.
 
+## Target architecture and first manager release
+
+The owner ratified these diagrams on 14 November 2026. **They describe the target
+product, not functionality shipped today.** The current skills-and-webhooks MVP
+remains separate from the planned manager.
+
+[First manager scope](docs/architecture/manager-release-one.md) ·
+[Ordered Jira work](docs/architecture/manager-release-one-plan.md) ·
+[Architecture guide](docs/architecture/target/review-guide.md) ·
+[Downloadable walkthrough](docs/architecture/target/index.html)
+
+The first manager advances eligible Jira work from a customer-owned AWS Lambda.
+Existing Jira rules continue to launch Cursor. Monitoring and duplicate prevention
+are follow-on releases. Scuba Pig receives no customer runtime data or credentials.
+
+![One delivery loop — target architecture](docs/architecture/target/01-system.svg)
+
+<details>
+<summary>Inside the manager</summary>
+
+![Inside the manager](docs/architecture/target/02-manager.svg)
+
+</details>
+
+<details>
+<summary>Admission rules</summary>
+
+![Admission rules](docs/architecture/target/03-admission.svg)
+
+</details>
+
+<details>
+<summary>Worker handoffs</summary>
+
+![Worker handoffs](docs/architecture/target/04-handoffs.svg)
+
+</details>
+
+<details>
+<summary>Separate skills</summary>
+
+![Separate skills](docs/architecture/target/05-skills.svg)
+
+</details>
+
+<details>
+<summary>Workstreams and capacity</summary>
+
+![Workstreams and capacity](docs/architecture/target/06-workstreams.svg)
+
+</details>
+
+<details>
+<summary>Stack repairs</summary>
+
+![Stack repairs](docs/architecture/target/07-rework.svg)
+
+</details>
+
+<details>
+<summary>Pausing an Epic</summary>
+
+![Pausing an Epic](docs/architecture/target/08-pause.svg)
+
+</details>
+
+<details>
+<summary>Future worker visibility</summary>
+
+![Future worker visibility](docs/architecture/target/09-observation.svg)
+
+</details>
+
 ## License
 
 Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
