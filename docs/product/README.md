@@ -1,6 +1,6 @@
 # Pigboard product requirements
 
-Review draft, 14 November 2026. These specifications consolidate the owner's
+Reviewed product baseline, 14 November 2026. These specifications consolidate the owner's
 decisions for the first manager release and its required skill changes. They do
 not announce shipped behavior, authorize implementation, or enable delivery.
 
@@ -25,9 +25,7 @@ not deliver the product.
 
 These documents own the readable product requirements for the proposed release.
 The linked architecture documents own technical contracts, not extra product scope.
-Jira PGB owns the delivery queue, dependencies and current work status. Until this
-consolidation is reviewed, discrepancies are findings to reconcile, not authority
-to silently override either source. Later owner decisions must update the affected
+Jira PGB owns the delivery queue, dependencies and current work status. Discrepancies are findings to reconcile, not authority to silently override either source. Later owner decisions must update the affected
 requirement and coverage row together.
 
 ## Current, required and later
@@ -90,5 +88,4 @@ provide their detailed expression: [release boundary](../architecture/manager-re
 The existing [workflow](../workflow.md) describes the earlier basic bundle, including
 direct rework to In Progress; that behavior must change for this release.
 
-This consolidation needs independent product and technical review. It is not a
-new discovery programme or permission to repeat already-completed provider probes.
+This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The [complete 20-Story delivery set](../delivery/manager-r1/README.md) also has two independent CLEAN plan reviews and awaits owner approval. This does not authorize implementation, further provider probes or activation.
