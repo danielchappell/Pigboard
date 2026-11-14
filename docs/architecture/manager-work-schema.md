@@ -153,14 +153,24 @@ numbers (NaN and positive/negative Infinity) before schema validation and canoni
 JSON hashing, including nested inputs and SQL parameters. Some JSON Schema libraries
 accept their host language's non-finite numbers even though JSON does not. The local
 check explicitly rejects non-JSON values before invoking its schema validator; it
-is not the production safe-YAML parser. Final budgets must be
+is not the production safe-YAML parser. Mapping keys must already be strings at
+all depths; never coerce them, because numeric `1` and string `"1"` would collide.
+Require valid Unicode without lone surrogates and acyclic JSON values. Integer
+literals in this contract are restricted to the exact JavaScript safe-integer
+range (absolute value at most 9007199254740991); represent larger exact integer
+identifiers/values as strings. This avoids silent rounding across the Python
+research and future JavaScript/JCS boundary. Finite decimal values follow the
+JSON binary64 representation; an exact decimal that must preserve more precision
+also belongs in a string with its prescribed interpretation. These are value-domain
+checks in addition to schema shape, not permission to rewrite inputs.
+Final budgets must be
 measured in the platform proof, not guessed from this small example.
 
 ## Verification and rollout
 
 The local design check `contracts/check_work_examples.py` uses jsonschema 4.25.1
 and PyYAML 6.0.3 in a disposable validation environment. It reads the published
-examples, validates both schemas, and exercises 55 JSON-compatibility/structural/limitation cases.
+examples, validates both schemas, and exercises 72 JSON-compatibility/structural/limitation cases.
 It makes no network calls or artifact writes. These are research tooling
 dependencies, not the choice of production parser or validator.
 

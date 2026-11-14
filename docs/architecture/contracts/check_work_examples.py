@@ -3,7 +3,7 @@ Requires jsonschema==4.25.1 and PyYAML==6.0.3 in a disposable validation environ
 Does not implement Pigboard semantic validation or authorize execution.
 """
 from pathlib import Path
-import json, copy
+import json, copy, math
 import yaml
 from jsonschema import Draft202012Validator
 root=Path(__file__).resolve().parents[1]
@@ -14,12 +14,41 @@ validators={}
 for name in ['epic','ticket']:
  schema=json.loads((root/'contracts'/f'pigboard-{name}-v1.schema.json').read_text());Draft202012Validator.check_schema(schema);validators[name]=Draft202012Validator(schema)
 cases=[]
-def check(name,kind,value,valid):
- # JSON Schema implementations may accept Python NaN/Infinity as numbers.
- # Reject non-JSON values before structural validation/canonical digest input.
+def require_canonical_json_input(value, active=None):
+ """No coercion: check the JSON-compatible value domain before schema checks.
+ This does not extract safe YAML, enforce parser budgets or compute a JCS digest.
+ """
+ if active is None: active=set()
+ if value is None or type(value) is bool: return
+ if type(value) is str:
+  value.encode('utf-8', errors='strict')
+  return
+ if type(value) is int:
+  if abs(value)>9007199254740991: raise ValueError('integer needs an exact string representation')
+  return
+ if type(value) is float:
+  if not math.isfinite(value): raise ValueError('non-finite number')
+  return
+ if type(value) not in (dict,list): raise ValueError('not a JSON value')
+ if id(value) in active: raise ValueError('cyclic value')
+ active.add(id(value))
  try:
+  if type(value) is dict:
+   for key,item in value.items():
+    if type(key) is not str: raise ValueError('mapping key is not a string')
+    key.encode('utf-8', errors='strict')
+    require_canonical_json_input(item,active)
+  else:
+   for item in value: require_canonical_json_input(item,active)
+ finally: active.remove(id(value))
+
+def check(name,kind,value,valid):
+ # JSON serializers can coerce mapping keys and schema libraries can accept
+ # non-finite numbers. Reject incompatible values before either conversion.
+ try:
+  require_canonical_json_input(value)
   json.dumps(value, allow_nan=False)
- except (TypeError, ValueError):
+ except (TypeError, ValueError, UnicodeError):
   errors=['not JSON-compatible'];actual=False
  else:
   errors=list(validators[kind].iter_errors(value));actual=not errors
@@ -70,5 +99,13 @@ for number_name, number in [('NaN',float('nan')),('positive Infinity',float('inf
   if location=='inputs':v['testing_strategy']['cases'][0]['steps'][0]['inputs']['invalid_number']=number
   else:v['testing_strategy']['cases'][0]['steps'][2]['database']['parameters'].append(number)
   check('nonfinite '+number_name+' in '+location,'ticket',v,False)
+for label,bad in [('numeric key',{1:'value'}),('boolean key',{True:'value'}),('null key',{None:'value'}),('colliding keys',{1:'numeric','1':'string'}),('surrogate key',{'\ud800':'value'}),('surrogate value','\ud800'),('unsafe integer',9007199254740993),('cyclic list',None)]:
+ if label=='cyclic list': bad=[];bad.append(bad)
+ for location in ['inputs','parameters']:
+  v=copy.deepcopy(ticket)
+  if location=='inputs':v['testing_strategy']['cases'][0]['steps'][0]['inputs']['nested']={'container':[bad]}
+  else:v['testing_strategy']['cases'][0]['steps'][2]['database']['parameters'].append({'container':[bad]})
+  check(label+' in '+location,'ticket',v,False)
+v=copy.deepcopy(ticket);v['testing_strategy']['cases'][0]['steps'][0]['inputs']['nested']={'café':[True,None,9007199254740991,1.25,'1']};check('nested string keys and valid JSON values','ticket',v,True)
 report={'result':'PASS','scope':'JSON compatibility and structural design only; no semantic, provider or runtime acceptance','cases':cases,'count':len(cases)}
 print(json.dumps(report,indent=2))
