@@ -1,7 +1,8 @@
 # Repair a stack one ticket at a time
 
 Owner-approved rule, 14 November 2026. This is the release-one design; it is not
-implemented. Technical record formats and live transition proof remain discovery.
+implemented. The handoff format is specified in the [worker contract](manager-handoff-contract.md);
+independent review and live transition proof still gate implementation readiness.
 
 ## The rule
 
@@ -85,8 +86,9 @@ Proposed record contract for PGB-67, to validate before implementation:
   and let B finish. Re-evaluate after its cycle; never overwrite an active worker's
   handoff or queue it out from under that worker.
 
-Transport, writer identity checks, record selection and publication atomicity still
-need to be frozen. Ordinary conversational comments must not become executable
+The [worker handoff contract](manager-handoff-contract.md) specifies transport,
+writer checks, record selection and ordered non-atomic publication. Its provider
+behavior still needs the bounded proof. Ordinary conversational comments must not become executable
 instructions. Stable repair IDs alone do not authenticate a record or prove that
 its referenced review actually occurred. The manager must reject conflicting or
 incomplete evidence rather than infer completion from prose or timestamps.

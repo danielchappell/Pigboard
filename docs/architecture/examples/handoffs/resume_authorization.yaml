@@ -1,0 +1,25 @@
+# DESIGN skeleton: published by an authorized human-request path, never a worker.
+# This defines the handoff input; it does not implement human-unblock automation.
+schema: pigboard-handoff/v1
+record_id: null
+operation_id: null
+ticket_id: null
+requirements_digest: null
+assignment:
+  ticket_id: null
+  comment_id: null
+  record_id: null
+  digest: null
+role: human_request
+kind: resume_authorization
+from_stage: Blocked
+to_stage: QA
+payload:
+  blocked_result:
+    ticket_id: null
+    comment_id: null
+    record_id: null
+    digest: null
+  pr: null
+  reason: null
+resume_authorization: null

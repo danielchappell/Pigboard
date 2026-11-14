@@ -15,10 +15,10 @@ Jira round-trip proof are required before implementation Stories become ready.
 Names above are proposed for this release. The installed prose contract is not
 silently accepted as these schemas. The version is independent of state-record and
 deployment-configuration versions. The [examples](examples/) contain the Epic and
-ticket skeletons. A handoff skeleton is not yet supplied: its exact encoding and
-admission binding remain unfinished discovery work, alongside the publication
-protocol described below. Workers and validators must not treat that proposal
-as an implemented contract.
+ticket skeletons. The [handoff contract](manager-handoff-contract.md) now defines the exact encoding,
+assignment binding and publication order, with separate role skeletons and design
+schemas. It still requires independent review and provider round-trip proof;
+workers and validators must not treat design publication as installed behavior.
 
 Native Jira owns issue identity, type, status, parent, assignee and labels. The
 Epic's list orders its members; it does not duplicate those native fields. The
@@ -107,39 +107,20 @@ Human Review count plus the returning selected ticket to be at most five. Queuei
 an existing Human Review child removes that child from the count but launches
 nothing. Do not discard queued repair priority to use that newly free slot for C.
 
-## Handoff proposal: typed, append-only records on Jira
+## Worker handoffs
 
-Use a schema-tagged YAML code block in a visible Jira comment. The comment is the
-durable evidence record; do not parse prose findings or maintain a second editable
-copy in the ticket description. The manager's operational state retains observed
-record references/digests and its own transition intents, not ticket bodies.
+The [worker handoff contract](manager-handoff-contract.md) owns the exact schema,
+role outcomes, semantic validation, assignment pointer, reference/digest rules and
+publication/failure sequence. Use its role skeletons; do not maintain a competing
+copy here. The handoff comments hold observed results, while one generated issue
+property points to the assigned admission. The pointer is not configuration,
+authentication or a worker lease.
 
-Each record names a stable record ID, ticket ID, kind, requirement version/digest,
-source revision and evidence. Implementation records name the actual PR and parent
-revision. Review records reference the implementation record they assessed. QA
-records reference that review and the exact source revision; they separately report
-AI results and pending human case IDs. A repair request has a stable root identity;
-implementation/QA record which requests and parent completion they incorporate.
-
-Retrieve comments with complete bounded pagination, retain server comment ID and
-author/edit metadata, and validate the configured actor against those server fields.
-Self-declared role/author values do not authenticate a record. The current shared
-identity setup does not technically distinguish each worker role; that limitation
-is explicit, and no new per-role accounts or signing service is introduced.
-
-Ignore ordinary unstructured comments as commands. Reject conflicting records for
-the same identity, edited previously consumed evidence, unsupported versions or
-incomplete reference chains. Byte-identical repeated publication of the same record
-does not create another repair. Do not select evidence just by the latest timestamp.
-The latest coherent chain must match the current manager-assigned work and revision;
-otherwise hold for human correction. The precise admission-to-handoff binding and
-safe comment/transition publication order remain part of the round-trip proof.
-
-Record publication precedes the stage transition and is awaited. If publication
-fails, do not advance as if the evidence existed. If the transition outcome is
-uncertain, stop with the evidence preserved; no agent replays it or claims success.
-This handoff contract does not establish worker-run ownership or prevent duplicate
-Cursor executions. Those remain follow-on work.
+The manager's conditional intent precedes publication. Confirmed comment/pointer
+publication precedes the single source-specific transition. Unknown outcomes retain
+a human hold; there is no automatic replay or exclusive-worker proof. A queue
+request preserves B's completed assignment until its later admission. Provider
+round-trip and installed-package acceptance remain separate unfinished gates.
 
 ## Editing, removal and rollout
 
@@ -179,6 +160,6 @@ or old-runtime compatibility layer is added. Those remain separately scoped work
 - Agents are equal: exact execution/handoff inputs coexist with readable human cases
   and visible evidence; neither interface can fabricate the other's completion.
 - Dependable: record references and revision coherence prevent stale passing claims;
-  unresolved binding/publication behavior remains an explicit readiness gate.
+  defined binding/publication behavior still requires provider proof before readiness.
 - Unified configuration: infrastructure authority has one owner; ticket work data
   and generated evidence are distinct from setup configuration.

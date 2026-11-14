@@ -134,8 +134,8 @@ remain contract/verification work; the cascade product decision is no longer ope
 
 | Gate | Remaining result | Owner |
 | --- | --- | --- |
-| Work contract | Review the concrete contract/skeletons, freeze machine schemas and prove handoff round trip | PGB-67 |
-| Repair handoff | Durable machine-readable repair/lineage evidence, repeat-repair handling and stale-provider preflight | PGB-67 |
+| Work contract | Review Epic/ticket contracts and the new exact handoff schema; prove the handoff round trip | PGB-67 |
+| Repair handoff | Review the specified assignment/repair reference chain and verify provider metadata/preflight | PGB-67 |
 | Capacity and edits | Rework returning to the five-ticket queue; removals/cancellation/renumbering without hiding live work | PGB-67 |
 | Admission safety | Successful/uncertain outcome protocol, fresh known-issue reads, source-specific transition validation, operator reconciliation | PGB-68 |
 | Deployment lifecycle | Final IAM/auth matrix, request/size/time bounds, retention, install/upgrade/restore/removal and bounded fixture proof | PGB-68 |
@@ -148,6 +148,11 @@ Official Jira search reconciliation covers specified known IDs only (up to 50 pe
 request); unknown issues and permission-hidden work need a deliberate domain/read
 contract. Jira's transition request has no documented expected-source-status field;
 workflow configuration and permitted source-specific transitions need evidence.
+
+The [worker contract](manager-handoff-contract.md) now defines assignment binding,
+role payloads, visible skeletons and ordered publication. The [isolated test packet](manager-test-packet.md)
+specifies four fake tickets, all three manager edges, metadata cases and request
+ceilings. Neither document means the provider checks have passed.
 
 Evidence required: inspect the supported workflow without writes; agree disposable
 AWS/Jira fixtures and narrowly authorize tests before provisioning or transitioning.

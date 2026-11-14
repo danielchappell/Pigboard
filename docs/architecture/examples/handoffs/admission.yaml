@@ -1,0 +1,24 @@
+# DESIGN skeleton: not a valid completed handoff and not currently installed.
+# Keep nulls visible; fill required fields. Use [] only for explicitly empty lists.
+# Publish exactly one completed mapping in one Jira ADF codeBlock.
+schema: pigboard-handoff/v1
+record_id: null
+operation_id: null
+ticket_id: null
+requirements_digest: null
+assignment: null
+role: manager
+kind: admission
+from_stage: Ready to Work
+to_stage: In Progress
+payload:
+  stream: null
+  mode: null
+  previous_assignment: null
+  requests:
+  - ticket_id: null
+    comment_id: null
+    record_id: null
+    digest: null
+  existing_pr: null
+resume_authorization: null
