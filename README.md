@@ -180,6 +180,8 @@ product, not functionality shipped today.** The current skills-and-webhooks MVP
 remains separate from the planned manager.
 
 [First manager scope](docs/architecture/manager-release-one.md) ·
+[State and upgrades](docs/architecture/manager-state.md) ·
+[Discovery progress](docs/architecture/manager-discovery.md) ·
 [Ordered Jira work](docs/architecture/manager-release-one-plan.md) ·
 [Architecture guide](docs/architecture/target/review-guide.md) ·
 [Downloadable walkthrough](docs/architecture/target/index.html)

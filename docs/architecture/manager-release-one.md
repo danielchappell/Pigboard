@@ -14,7 +14,7 @@ The first release includes the deployment and operating instructions needed to u
 this safely, plus the agreed admission, readiness, priority, capacity and queued
 repair rules. It does not route Cursor launches through Pigboard.
 
-Excluded: worker monitoring, duplicate-run prevention, run ledger/database, launch
+Excluded: worker monitoring, duplicate-run prevention, worker run ledger, launch
 proxy, cancellation, automatic recovery, transcript collection, SaaS, shared tenant
 hosting, other cloud deployment packages, a dashboard, automatic PR retargeting,
 automatic bug creation, Teams alerts and preview-environment provisioning.
@@ -37,6 +37,7 @@ flowchart LR
     O[Authorized operator: preview] --> L
     K[Customer secret store] --> L
     L --> G[Customer operational logs]
+    L <-->|Admission intent and outcome| D[DynamoDB: customer operational state]
   end
   J[Jira: Epic plan and live issue state] -->|Read current work| L
   L -->|Move eligible ticket to In Progress| J
@@ -50,8 +51,20 @@ log or telemetry goes to Scuba Pig. Scuba Pig receives no AWS role or support lo
 Public source downloads contain software, not customer runtime data. The runtime
 uses a pinned build; it does not fetch and execute moving source on each invocation.
 
-Keep scheduling policy separate from Jira API and Lambda packaging. This is a code
-boundary, not a promise to build multiple adapters or deployment systems now.
+Keep scheduling policy and application orchestration separate from Jira HTTP,
+DynamoDB and Lambda packaging. A thin wrapper supplies adapters and configuration;
+the same manager must run in a local harness without AWS imports or credentials.
+Only the AWS package is delivered now.
+
+The owner selected **DynamoDB** on 14 November 2026 for admission state in the
+customer account. See [state ownership and upgrade rules](manager-state.md).
+This supersedes the earlier exclusion of all persistent databases for admission;
+worker run tracking and duplicate Cursor launch prevention remain excluded.
+
+One canonical customer configuration drives installation. Credentials stay in the
+customer secret store; generated native IDs and receipts are outputs. Humans should
+not synchronize competing settings across dashboards. Automatic Jira and Cursor
+provisioning remains future work, not an expansion of this release.
 
 ## Configuration and authority
 
@@ -120,9 +133,11 @@ dependencies and stream immediately before writing.
 Jira search is not guaranteed to reflect recent writes immediately. The exact read
 strategy, legal transition IDs, provider retry settings and ambiguous-write response
 need the focused safety Task before apply-mode Stories are declared ready. Prove
-that a delayed scan does not blindly repeat its old selection. If a minimal safe
-design needs additional persistent state, return that scope choice to the owner;
-do not introduce a datastore under the name of scheduling.
+that a delayed scan does not blindly repeat its old selection. DynamoDB is now
+approved for durable admission intent and reconciliation. Its
+conditional-update contract must be proven alongside Jira behavior; it does not
+make the two services transactional. Additional state features still need scope
+approval.
 
 Workers still have direct Jira-to-Cursor triggers. Their duplicate deliveries and
 their actual run status remain outside this release. Admission uses Jira workflow
@@ -131,9 +146,11 @@ stage holds its stream for human investigation. No inferred completion or restar
 
 Do not automatically replay an uncertain transition. Preserve the affected key and
 sanitized outcome for the customer, stop further admissions in the affected scope,
-and require the defined operator reconciliation before resuming writes. The safety
-Task must specify how that hold survives the next invocation without pretending an
-in-memory flag survives Lambda. Rate limits and incomplete reads produce a no-write
+and require the defined operator reconciliation before resuming writes. The
+[state contract](manager-state.md) requires a durable intent before the Jira
+call and a version-checked outcome afterward. The safety Task must finish the
+reconciliation procedure and demonstrate it across invocation failure. Rate limits
+and incomplete reads produce a no-write
 result, with bounded request time and a later fresh evaluation rather than an AI loop.
 
 ## Security and operation requirements
@@ -141,7 +158,8 @@ result, with bounded request time and a later fresh evaluation rather than an AI
 - Customer installs the release in its own account and region with its own IAM.
   No cross-account trust, remote control, telemetry or vendor support access.
 - Scheduler can invoke only this function. Runtime can read only its configured
-  secret and write only its own log group; deployment privileges stay separate.
+  secret, use its own operational table and write its own log group; operator and
+  deployment privileges stay separate.
 - Jira identity has access only to the intended projects and required read/transition
   actions to the extent Jira permissions permit. Document any broader actual grant.
   Runtime configuration still rejects out-of-scope projects, issues and destinations.
@@ -155,7 +173,9 @@ result, with bounded request time and a later fresh evaluation rather than an AI
 - Installation starts in preview with the schedule disabled. Upgrade preserves
   customer configuration; rollback uses a pinned previous version with writes off
   until compatibility is checked. Removal stops admission and documents retained
-  logs/secrets. It does not cancel Cursor runs or delete Jira issues.
+  logs/secrets and the retained operational table. An incompatible rollback or
+  restored state cannot enable writes before reconciliation. It does not cancel
+  Cursor runs or delete Jira issues.
 
 ## Release acceptance and rollout
 
@@ -217,8 +237,9 @@ setup and enforceability are separate developer tooling work, not customer runti
 ## Sources and status
 
 Product: the seven scenarios reproduced in this document plus the owner's
-latest Lambda/customer-hosted and first-admission scope decisions. Current source:
-Pigboard main 2fb0498a6436bab5b260ceb6c08de436869b1879; no manager exists there.
+latest Lambda/customer-hosted and first-admission scope decisions. Source inspected
+for this update:
+Pigboard main 79548bda36794b78d99b49c388c162059298c2ff; no manager exists there.
 
 - https://docs.aws.amazon.com/lambda/latest/dg/with-eventbridge-scheduler.html
 - https://docs.aws.amazon.com/lambda/latest/dg/configuration-concurrency.html
