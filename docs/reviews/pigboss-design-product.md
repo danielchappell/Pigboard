@@ -122,3 +122,61 @@ e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/
 ```
 
 No repository edit or provider mutation was performed by this reviewer. These final design/plan CLEAN verdicts do not approve the Story set on the owner's behalf, prove implemented/runtime behavior, satisfy current-head CI/Codex review, or authorize merge, deployment, delivery activation or release. Installed AWS/worker acceptance remains separate and unrun.
+
+
+---
+
+## Startup alarm and publication correction — final product review
+
+15 November 2026. **Design: CLEAN. Complete delivery plan: CLEAN. Committed change: PASS (CLEAN)** for exact revision `791c83ebb43a4015ceb5c192b61f89389c8015a5`, reviewed against `527fd83984459316be4a529b30898eae319e4dcb`. Independent product/experience lens with correctness, authority, failure/recovery and verification assessment. No unresolved confirmed in-scope finding.
+
+These verdicts reuse the completed full product design/plan and committed-change reviews, including the independently reviewed coverage and health-precedence corrections. This bounded review assesses both new Codex findings and every affected artifact; it does not pretend the previous manifests covered changed bytes. Earlier manifests remain historical. No scope expansion or runtime implementation occurs.
+
+| Review criterion | Result | Evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Both corrections support PGB-93's reconciled basic-health design; R1-23/PGB-101 retains the same alarm-lifecycle outcome. |
+| Scope and design | PASS | Four files change: operating design, readable Stories, structured drafts and publication receipt. Existing health/alarm scope, 23 Stories and 104 cases remain. |
+| Security and review integrity | PASS | Startup masking is alarm input only, never fabricated completion; normal failures/retries cannot renew grace. Old design_commit is explicitly historical, with current content-addressed design bindings. |
+| Compatibility and regressions | PASS | Only R1-23-H02 changes in the structured plan. All 88 baseline cases and other 103 current cases are unchanged; dependencies and forecasts remain as reviewed. |
+| Reliability and operations | PASS | Missing-completion grace has a fixed revision-bound deadline and eventual external detection without a worker/timer. Real error/throttle alarms remain active; conservative extra notification delay is explicitly documented. |
+| Tests and verification | PASS | H02 covers enable/revision startup, freshness boundaries, never-started runtime and no fabricated completion. All 154 criteria remain mapped; 23 native YAML trees/hashes and current receipt bindings independently match. |
+| Repository fit and maintainability | PASS | Reuses metric math and existing R1-23 lifecycle acceptance; no extra worker, operational store or duplicated configuration. |
+| Documentation and usability | PASS | Human/agent health remains truthful during alarm grace; the delay tradeoff and installed-acceptance limitation are visible. Current design identity can be verified from the receipt. |
+
+**Startup finding resolved.** `docs/architecture/pig-boss-operations.md:137–157` now specifies cadence periods and `ceil(freshness / cadence)` consecutive breaches, with a fixed startup-deadline mask. The time-series expression produces a non-breaching alarm input through enablement+freshness, then evaluates actual current-revision presence with absence filled as zero. This prevents the new revision's missing history from immediately alarming, while an installation that never runs eventually alarms without another worker enabling detection. Explicit activation/upgrade binds the timestamp after resources are ready; scans, failures and retries cannot extend it. Real error/throttle alarms are not masked. No value is published as synthetic scan completion or used to satisfy the health command.
+
+The design deliberately permits roughly another freshness window after grace before first-absence notification, plus period alignment/evaluation/ingestion delay. This is an explicit operating tradeoff awaiting the existing final owner review, not an exact alert SLA. The CLI's existing freshness result remains independent. The metric-math composition is consistent with documented non-sparse TIME_SERIES/EPOCH, IF branching and FILL semantics; this verifies the design basis, not deployed behavior. [AWS CloudWatch metric math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html). Installed acceptance still measures actual alarm and notification timing.
+
+**Plan correction resolved.** `docs/delivery/manager-r1/stories.md:1688–1699` and structured R1-23-H02 add TAC2 mapping, controlled-clock startup/revision/boundary/never-start histories, evaluation without a scan/timer, and explicit expected no-false-alert/eventual-detection behavior. Markdown and structured inputs/actions/results agree. The original lifecycle/retained-resource expectations remain. The previously reviewed health precedence and R1-22-H02 are unchanged.
+
+**Publication-identity finding resolved.** publication.json removes the misleading current design_commit and retains its value as baseline_design_commit. Its three reviewed_design_artifacts hashes match the current operating design and unchanged manager/installation product requirements. The whole draft-file hash matches current bytes. The final seven-file manifest below identifies the complete affected review artifact.
+
+**Coverage and publication.** Examined **4/4 changed files**, **2/2 correction obligations**, **1/1 changed acceptance case**, **3/3 current design-artifact bindings**, and **7/7 final manifest files**. Earlier full coverage remains applicable to the unchanged surface: **53/53 product requirements, 23/23 Stories, 104/104 cases, 41/41 scenarios and 154/154 Story AC/TAC IDs**. A fresh comparison confirms **88/88 baseline case objects unchanged** and all 154 criteria still mapped.
+
+Independently recomposed native readback from `/private/tmp/pigboss-health-readback.json` for PGB-100, `/private/tmp/pigboss-alarm-readback.json` for PGB-101 and the earlier captured readback for the other 21 unchanged Stories. **23/23 complete YAML trees match** current drafts after native prerequisite substitution only, and **23/23 exact YAML-byte hashes match** publication.json. PGB-101's corrected body hash is `c23004365602128a66db5ce08e2bab0416bccc9cc2fcc798f8ea9b6f1c8eb5dc`. Every captured Story preserves parent PGB-66, To Do, owner-review-required and no AI worker label. No new dependency edge is introduced; earlier 54-edge evidence remains applicable. This is captured publication fidelity, not a claim of separately retrieved current live execution state.
+
+**Second sweep completed:** **4/4 changed files, 7/7 final artifact files, 2/2 findings and 23/23 recomposed publications**. Rechecked startup/revision grace before/at/after expiry, period-count rounding, never-run detection without a timer, no synthetic completion, failures unable to renew grace, unmasked real errors, current versus baseline design references, both revised native contracts, unchanged case/requirement coverage, and pending owner/installed/activation gates. No additional confirmed issue.
+
+Seven-principle assessment for the corrected design, plan and committed artifact:
+
+- **Intuitive:** startup no longer raises a missing-scan alert before its stated grace; healthy execution and alarm masking remain separate.
+- **Discoverable:** fixed deadline, missing-data rule, lifecycle case and current design hashes expose exactly what was reviewed and what the operator should expect.
+- **Delightful experience:** avoids normal-startup/revision false alerts without requiring another manual enable step or background worker.
+- **Token saver:** one deterministic alarm expression and existing case cover the lifecycle; complete failure/delay evidence remains explicit.
+- **Secure:** no invented completion, write retry, recovery authority or extra credential-bearing service is introduced; activation stays under existing authority.
+- **Agents are equal:** structured case/receipt and readable design expose the same grace, actual evidence and delay tradeoff; no agent can mistake alarm grace for successful execution.
+- **Dependable:** never-started runtime is externally detectable, normal failures cannot extend grace, prior artifact identity is labeled historical, and exact current hashes/native bodies are verified.
+
+Current SHA256 manifest at `791c83ebb43a4015ceb5c192b61f89389c8015a5`:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+df8b5234321d831af2acc825e4eb6490ab1252af3fbb8ea0baa614dcde51bec3  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+daec13a88c6463d94ebb1f6eb1d0c2e832948461481080ab723946a11030d038  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edits or provider mutations were performed by this reviewer. These exact-artifact CLEAN verdicts do not provide final owner approval, runtime implementation, installed AWS/worker acceptance, current-head hosted CI/Codex, merge, deployment, release or activation authority.

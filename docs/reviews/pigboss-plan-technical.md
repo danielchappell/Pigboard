@@ -119,3 +119,61 @@ e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/
 ```
 
 No unresolved confirmed in-scope finding remains for these exact design/plan artifacts. No runtime implementation, installed AWS/Jira health acceptance, current delivery configuration, CI/Codex merge gate, owner approval, merge/release or activation is established by these verdicts.
+
+
+---
+
+## Startup alarm and current-design binding correction — technical review
+
+15 November 2026. **Final technical design verdict: CLEAN. Final technical delivery-plan verdict: CLEAN. Committed-change verdict: PASS (CLEAN)** for `791c83ebb43a4015ceb5c192b61f89389c8015a5` against `527fd83984459316be4a529b30898eae319e4dcb`. No confirmed unresolved in-scope finding. These are bounded corrections within PGB-93's proposed manager health/review-evidence scope, with no runtime implementation or activation.
+
+**Coverage:** **4/4 changed files**, the entire affected alarm/lifecycle design section, **1/1 changed case** (R1-23-H02), **3/3 current design-content bindings** and **7/7 final manifest files** examined. Earlier complete coverage of 26/26 files, 53/53 requirements, 23/23 Stories, 104/104 cases, 41/41 original scenarios and 54/54 dependency links is carried from this reviewer's recorded exact-revision reviews for unchanged content. This review does not claim another full discovery/review restart or invent prior approval.
+
+**Design correction.** `docs/architecture/pig-boss-operations.md:137–157` prevents immediate missing-completion alarms on enablement or a new revision. The alarm uses scan cadence periods, `ceil(freshness / cadence)` consecutive breaches, and an expression that returns a non-breaching alarm input through the revision's fixed startup deadline before checking actual completion presence. The mask is not published as a real completion and cannot satisfy the health command. Explicit activation occurs after resources are ready; failures, normal scans and retries cannot extend the deadline. After startup, continued absence is detected externally even if the manager never ran, without a later worker/timer enabling detection. Real error/throttle alarms remain effective.
+
+The reference composition is consistent with AWS's documented time-series `TIME_SERIES`, `EPOCH`, `IF` and `FILL` behavior. The documented FILL caveat for delayed newest data does not establish a defect in the prescribed consecutive-period rule; actual timing and ingestion remain installed acceptance obligations. [AWS metric math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html)
+
+The conservative rule can require a further freshness window after initial grace if no first scan occurs; the design explicitly discloses that tradeoff, plus alignment/evaluation/ingestion delay, and claims no exact detection SLA. I checked a local deterministic no-emission example with cadence 300 seconds/freshness 900: no alarm through the deadline, three post-grace zero periods then alarm. This is arithmetic confirmation of the intended rule, not CloudWatch execution or provider acceptance.
+
+**Plan correction.** Existing R1-23-H02 at `docs/delivery/manager-r1/stories.md:1688–1699` now maps TAC2 and prescribes enable/config-only rotation, before/at/after expiry, never-started installation, no worker/timer assistance, no fake completion, non-resetting grace and effective real error alarms. Readable and structured cases agree. Only R1-23-H02 changes relative to the prior contract; the other 22 Story contracts are unchanged. All 104 cases remain, all 88 baseline case objects remain exact and all 154 AC/TAC identifiers retain coverage. Scope, dependencies and forecasts are unchanged.
+
+**Publication correction.** `publication.json` now labels `ba9cb49...` as `baseline_design_commit`, and separately binds the current operations/product-manager/product-installation artifacts by their actual SHA256 values. All **3/3 hashes match**. The reviewed draft-file hash also matches. Thus the receipt no longer represents the historical baseline commit as the current reviewed design.
+
+I independently checked all **23/23 current native YAML contracts and their raw YAML-byte hashes**: PGB-100 uses `/private/tmp/pigboss-health-readback.json`, PGB-101 uses `/private/tmp/pigboss-alarm-readback.json`, and the other 21 use their unchanged captured readbacks. Complete native objects equal current drafts after prerequisite-key substitution only. All retain PGB-66 parent, To Do status, owner-review-required and no AI worker labels. These are checked captured publication records, not fresh live execution or current installed configuration.
+
+**Verification and second sweep:** all **23/23 schema/format checks** pass; **104/104** unique cases, **88/88** original cases and **154/154** criterion mappings are preserved. Rechecked **4/4 fix files**, fixed-deadline/revision ownership, grace versus real completion, never-run detection, current error alarms, documented delay, native receipt and current design hashes. Final manifest/link checks and `git diff --check` pass. No new finding or omitted affected surface. The initial diagnostic normalized old YAML before hashing; I corrected it to check the actual stored YAML bytes, and all 23 receipt hashes match. This diagnostic adjustment was not a product defect.
+
+| Merge criterion | Result | Correction evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Startup/revision behavior and truthful review bindings complete the existing PGB-93 health/evidence scope; owner review stays pending. |
+| Scope and design | PASS | Uses customer CloudWatch alarm evaluation and the existing health contract, without a timer service, synthetic completion or runtime build. |
+| Security and review integrity | PASS | Grace grants no write/recovery authority; historical design identity is explicit and current content bindings are verified. |
+| Compatibility and regressions | PASS | Only one new-scope case changes; 88 baseline cases and all other 22 Story contracts remain exact. |
+| Reliability and operations | PASS | Startup grace cannot be extended by failure; a never-running manager is still detected externally; the conservative extra delay is explicit. |
+| Tests and verification | PASS | Controlled-clock expectations are complete; schema/native/hash/preservation/link checks pass, with installed AWS timing still unrun. |
+| Repository fit and maintainability | PASS | Extends the existing canonical package/health contract and case; no extra database, scheduler worker or competing configuration is added. |
+| Documentation and usability | PASS | Startup behavior, delay and evidence identity are readable and structured; humans and agents receive the same limits. |
+
+Seven principles, assessed for corrected design and plan:
+
+- **Intuitive:** intentional enablement/revision startup avoids a premature missing-scan alert while true errors remain visible.
+- **Discoverable:** fixed deadline, consecutive periods, eventual detection and acceptance instructions explain how and when evidence is evaluated.
+- **Delightful experience:** startup noise is reduced without a manual follow-up action or another service to operate.
+- **Token saver:** deterministic AWS evaluation and content-addressed review evidence avoid polling and rediscovery; the detection-delay tradeoff remains explicit.
+- **Secure:** the mask cannot fabricate a completion, reset on failures or gain consequential authority; customer-owned routing and read-only health boundaries remain.
+- **Agents are equal:** readable and structured cases preserve the same startup/revision rules and precise evidence hashes; human-owned acceptance is not invented as an automated pass.
+- **Dependable:** absence remains externally detectable when Pig Boss never executes, old revisions cannot satisfy current evidence, and historical/current review identities and pending installed/owner gates remain distinct.
+
+Final current-artifact SHA256 manifest, superseding prior hashes only for these artifacts at `791c83ebb43a4015ceb5c192b61f89389c8015a5`:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+df8b5234321d831af2acc825e4eb6490ab1252af3fbb8ea0baa614dcde51bec3  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+daec13a88c6463d94ebb1f6eb1d0c2e832948461481080ab723946a11030d038  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation was performed by this reviewer. These verdicts do not establish runtime implementation, installed alarm/worker acceptance, current-head CI/Codex approval, owner approval, merge/release or activation. Earlier evidence and manifests remain historical rather than being rewritten.
