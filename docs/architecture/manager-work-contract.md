@@ -1,7 +1,7 @@
 # Work and handoff contracts for the first manager
 
-14 November 2026. Concrete discovery draft for PGB-67. Examples are complete
-skeletons, not ready tickets or installed schemas. Contract review and the bounded
+14 November 2026. Concrete discovery draft for PGB-67. The Epic and ticket
+examples are complete editable skeletons, not ready tickets or installed schemas. Contract review and the bounded
 Jira round-trip proof are required before implementation Stories become ready.
 
 ## Three documents, three owners
@@ -14,7 +14,11 @@ Jira round-trip proof are required before implementation Stories become ready.
 
 Names above are proposed for this release. The installed prose contract is not
 silently accepted as these schemas. The version is independent of state-record and
-deployment-configuration versions. The complete skeletons are in [examples](examples/).
+deployment-configuration versions. The [examples](examples/) contain the Epic and
+ticket skeletons. A handoff skeleton is not yet supplied: its exact encoding and
+admission binding remain unfinished discovery work, alongside the publication
+protocol described below. Workers and validators must not treat that proposal
+as an implemented contract.
 
 Native Jira owns issue identity, type, status, parent, assignee and labels. The
 Epic's list orders its members; it does not duplicate those native fields. The

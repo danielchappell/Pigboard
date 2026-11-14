@@ -121,3 +121,18 @@ both YAML skeletons parse, but deliberately contain required nulls and are not r
 work items. Whitespace checks pass. No runtime/skill/configuration change or new
 runtime test is warranted. Fresh exact-commit review, CI and current-head Codex bot
 approval remain separate publication gates, recorded on the resulting PR.
+
+
+### Publication corrections after hosted review
+
+Codex reviewed commit 8af5bf8efbf819c1f8574cd35b0cf8cec9421d80 on PR66 and
+identified two documentation gaps: the linked diagram guide still described
+release one as admission-only, and the work-contract introduction implied that
+a handoff skeleton already existed. Both findings are valid and in scope. The
+guide now includes the approved queue transition and its permission/acceptance
+obligations; the introduction explicitly limits supplied skeletons to Epic and
+ticket and keeps handoff encoding open. No new handoff design is adopted here.
+
+This correction reuses the reviewed design and documentation publication plan.
+Fresh committed review and current-head hosted checks are required; the earlier
+CLEAN verdicts do not cover the correction. No runtime behavior changes.
