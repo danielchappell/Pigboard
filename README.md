@@ -1,183 +1,109 @@
 # Pigboard
 
-Pigboard is a shared set of skills and setup scripts for delivering Jira Stories
-with Cursor agents. Jira holds the requirements and progress. Cursor runs the work.
-The human owner remains accountable and approves what ships.
+Pigboard helps agents deliver scoped Jira work through implementation, independent
+PR review and prescribed QA. Jira holds requirements and progress; Cursor runs the
+prepared skills; humans review and approve what ships.
 
-Start with Safeguard INT, label `AI-Daniel-1`, and Plexus on `master`. Each ticket
-names its target repository; that target must match an allowed repository in the
-configured Cursor environment. More repositories can be added later.
+## Start here
 
-## How work moves
+| What you want to do | Guide |
+| --- | --- |
+| Use Pigboard as an agent | [Choose a skill and supply its inputs](docs/using-pigboard.md) |
+| Install or update the shared skills | [Installation, verification and recovery](docs/install.md) |
+| Contribute to Pigboard | [Agent entry point](AGENTS.md) and [contributor agreement](CONTRIBUTING.md) |
+| Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
+| Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
+
+The [product specification consolidation](https://github.com/danielchappell/Pigboard/pull/73)
+provides the readable requirements for the proposed release. In checkouts that
+contain it, start with `docs/product/README.md`, then follow its technical-contract
+and coverage links. Specification review does not establish shipped behavior or
+complete implementation Story coverage.
+
+## What is available
+
+| Capability | State |
+| --- | --- |
+| Eleven shared skills: Story authoring, implementation, review, writing and QA | In the repository and installation allowlist |
+| Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
+| Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
+| Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
+| Manager-driven repairs, separate AI/human test ownership and YAML work contracts | Target contracts under discovery; not the installed worker behavior |
+
+The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
+Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
+installation's settings, not values to copy into a new customer's setup. Each
+assigned Story names one repository allowed by its prepared environment.
+
+## How the installed workflow moves
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with Grok High, gets one independent High plan review, implements with Medium, opens the PR and verifies current CI before moving to In Review. |
-| In Review | Independent High reviewer checks the ticket and PR; approval moves it to QA. |
-| QA | High QA agent runs the ticket's named skills and cases and retains evidence. Success moves the open PR to Human Review. |
-| Human Review | The human developer and human QA reviewer assess the PR before human merge. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens the PR and verifies current CI before In Review. |
+| In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
+| QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
+| Human Review | Responsible developer and human QA reviewer assess the PR before human merge. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-Confirmed fixes return to In Progress on the same PR. Missing access, incomplete
-instructions or required scope expansion blocks the ticket for a human. Discussion
-stays in Review or QA. Agents do not select new work, merge, deploy or keep retrying
-blocked work. The separate Jira admission script selects new work for the stream.
+Confirmed fixes currently return to In Progress on the same PR. Missing access,
+incomplete instructions or required scope expansion blocks the ticket for a human.
+Discussion stays in Review or QA. Workers do not select new work, merge, deploy or
+retry blocked work. The planned manager changes admission and repair routing only
+when its coordinated release is implemented and accepted. See the
+[installed workflow](docs/workflow.md) for current contracts.
 
 ## What is in this repository
 
-- `skills/`: reusable instructions, references and prepared QA helpers.
-- `config/skill-bundle.json`: the ten execution skills and Story-writing skill included in this release.
-- `scripts/prepare-pigboard-skills.mjs`: deterministic fetch and refresh.
-- `scripts/install-cursor-skills.mjs`: verified installation at a stable skill path.
-- `config/cursor/environment-install.sh`: versioned Cursor Build install command.
-- `config/cursor/`: first automation instructions and setup record.
-- `docs/workflow.md`: ticket requirements, stage handoffs and remaining setup.
-- `test/`: installer, refresh, failure and bootstrap checks.
-
-The earlier platform, website, runtime and planning history are preserved in the
-[private legacy repository](https://github.com/danielchappell/pigboard-legacy). Access
-is limited to its authorized collaborators. This repository now contains only the
-MVP assets and their documentation, tests and CI. No hosted service is required.
-The cleanup does not remove old public Git history or shut down existing services.
+- `skills/`: complete skill folders, references and prepared QA helpers.
+- `config/skill-bundle.json`: the installation allowlist.
+- `scripts/`: deterministic skill preparation, installation and reviewer CLI setup.
+- `config/cursor/` and `config/jira/`: prompts, setup records and rule exports.
+- `test/`: installation, refresh, failure and bootstrap checks.
+- `docs/architecture/`: current target designs and discovery evidence.
 
 ## Fetch the skills outside the application repository
 
-The setup machine needs Node.js 20+, Git, npm, network access to the approved Git
-source and npm registry. The Pigboard source repository is public; its HTTPS fetch
-needs no deploy key or GitHub credential. Use a reviewed Pigboard
-checkout for the setup command. The selected remote ref must contain the skills;
-local commits are not automatically available in Cursor.
-
-Example (replace paths and the approved release ref with your setup values):
-
-```sh
-node /opt/pigboard-setup/scripts/prepare-pigboard-skills.mjs \
-  --source https://github.com/danielchappell/Pigboard.git \
-  --ref APPROVED_RELEASE_REF \
-  --cache /opt/pigboard-releases \
-  --app /workspace/plexus
-```
-
-The cache must be outside the application and every Git checkout. Public HTTPS needs no credential. For a private fork, use prepared Git authentication;
-never put passwords or tokens in the source URL or prompt.
-The command fetches the requested ref, copies the complete allowlisted skill folders,
-rejects symlinks and installs the locked Bruno/Postgres dependencies with `npm ci`.
-Dependency lifecycle scripts are disabled. No application files are modified.
-
-Success prints one JSON receipt with `commit`, `release`, `skills` and `manifest`
-absolute paths. Retain that receipt for the run. The automation reads its entry point
-from the returned `skills` path, for example `implementer-entrypoint/SKILL.md`.
-Sibling references continue to work. The manifest records source file hashes and the
-runtime platform. Dependency installation is part of successful preparation.
+Follow [the installation guide](docs/install.md). It covers obtaining a pinned
+checkout, prerequisites, bundle preparation, verified Cursor installation and
+success receipts. Shared skills stay outside the target application's checkout.
+The root package is private; distribution uses these Git-based scripts.
 
 ## Refresh and recovery
 
-Run the same command to refresh. A moving branch resolves to its fetched commit;
-use a commit or protected release ref when you need a specific reviewed version.
-Each invocation creates a separate release directory, even for an unchanged commit.
-This avoids sharing mutable dependency installations between active agents. It costs
-Git/npm setup time but no model-led setup decisions. Existing runs keep their paths.
-
-For Cursor, use the saved Plexus environment's **Install Script**, not agent
-instructions or a startup service. Copy the versioned
-[environment install command](config/cursor/environment-install.sh), preceded by
-`export PIGBOARD_REVISION=REVIEWED_40_CHARACTER_COMMIT`. The revision must already be
-published in the public Pigboard repository. The command fetches it over HTTPS,
-installs the locked dependencies and verifies the source hashes,
-all eleven entrypoints, `pg.Client` import and `bru --version` before exposing
-`/opt/pigboard/skills`. The agent prompt points directly to that existing path.
-
-For a single repository, the install working directory must be its checkout. Set
-`PIGBOARD_APP` explicitly if Cursor supplies another working directory. Node 20+,
-Git, npm and permission to create `/opt/pigboard` are prerequisites. Git/npm run as
-the build user; sudo is used only to create that directory if absent. The stable
-link and releases are outside Plexus and belong to each isolated Build/agent VM.
-The adapter refuses unmanaged destinations and preserves the prior link on failure.
-
-The current public Pigboard setup needs no deploy key or environment secret. The
-optional deploy-key support added during the earlier private-source trial is unused.
-
-Keep the automation inactive while preparing and testing its first Build. Inspect
-the Build's JSON receipt for the expected commit and completed verification. Cursor
-can use a default image before its first successful Build, and retains its previous
-successful Build if a later one fails: a failed script is **not** an admission lock.
-[Cursor documents this Build lifecycle](https://cursor.com/docs/cloud-agent/builds).
-
-Refresh by disabling the automation, updating the pinned revision in the install
-configuration, and testing the resulting Build before reactivation. Changes to the
-out-of-band Pigboard repository do not by themselves guarantee a Cursor rebuild.
-Ordinary runs use the prepared snapshot without fetching skills or spending model
-tokens on setup. The Start Script does not install or refresh Pigboard skills.
-
-On failure the command exits nonzero and returns no success receipt. It does not
-silently select an older release. A human resolves access, missing skills or failed
-dependencies, then reruns setup. For a deliberate rollback, prepare a previously
-reviewed commit. Keep releases used by active runs; remove unused releases manually
-when their runs have ended. The script performs no automatic cache pruning.
+Follow [refresh, rollback and removal](docs/install.md#refresh-rollback-and-removal).
+An agent consumes its prepared snapshot. Operators change the source pin and
+verify the Build before an authorized activation. A failed Build can leave an
+older snapshot selected.
 
 ## Write an executable Story
 
-Use [write-pr-sized-stories](skills/write-pr-sized-stories/SKILL.md) and its
-[structured ticket contract](skills/write-pr-sized-stories/references/pigboard-ticket.md).
-Keep the familiar four sections, stable requirement/case/step IDs, explicit repository
-and base branch, scope boundaries, and named QA skills in execution order. The
-[examples](skills/write-pr-sized-stories/references/pigboard-example.md) show UI and
-API/database Stories. The implementer supplies only declared mechanical preparation
-details; it does not invent missing expectations. Native Jira fields, pipeline PR
-environment comments and trusted run settings retain their own responsibilities.
+Use [write-pr-sized-stories](skills/write-pr-sized-stories/SKILL.md), its
+[installed ticket contract](skills/write-pr-sized-stories/references/pigboard-ticket.md)
+and [examples](skills/write-pr-sized-stories/references/pigboard-example.md).
+The future YAML contract remains in discovery; it does not replace these inputs yet.
 
 ## Cursor automations
 
-Use a webhook trigger, the Plexus/master environment, and the prepared implementer
-entry point. The saved Jira rules select INT Stories entering the matching stage with exactly
-one numbered `AI-Daniel-<digits>` label and pass the ticket reference and full label.
-The boards currently isolate AI-Daniel-1 only. The skill reads the current ticket
-and verifies its stage and allowed repository. Rework resumes the same PR.
-
-The exact Grok High/Medium controls, isolated reviewer, Jira/Bitbucket tools,
-evidence storage and finite CI wait must work before live ticket dispatch.
-Exclusive-run proof, locks and run/visit IDs are not skill prerequisites. The owner
-manages repeated launches during the basic MVP; automatic duplicate prevention and
-cancellation remain post-MVP work. Current-stage reads do not prevent concurrent runs.
-The ticket supplies acceptance cases and the exact QA skills to run. Per-PR test
-environments remain separate work; QA consumes their URLs and deployed revisions.
-See the [implementer setup](config/cursor/AI-Daniel-1.md) and
-[PR reviewer setup](config/cursor/AI-Daniel-1-pr-review.md) for actual configuration
-and blockers. The reviewer uses its own webhook and the versioned
-[review prompt](config/cursor/pr-review-prompt.txt).
-
-The [automation matrix](config/cursor/automations.md) is the current setup record
-for all three stages. Jira wiring and activation follow configuration acceptance.
-The [Jira setup specification](docs/jira-setup.md) records board filters, columns,
-blocked-stage resumption, rule requirements and the installation-specific IDs.
-It distinguishes saved settings from pending work so a future Pigboard installer
-can reproduce the setup. The installer itself is deferred.
+Use the versioned prompts and prepared capabilities described in
+[installation](docs/install.md#cursor-environment-setup) and
+[agent usage](docs/using-pigboard.md). The
+[automation matrix](config/cursor/automations.md) owns the pilot's selected pins,
+Build evidence, inactive states and remaining acceptance work.
 
 ## Validation and status
 
-Run `npm ci` then `npm test` for the local fetch/refresh, environment and
-bootstrap checks. Fixture dependency installs are simulated;
-they do not establish live npm access or Cursor behavior. Local preparation, remote
-publication, saved automation, activation and a successful real Story are separate
-milestones. [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) tracks rollout.
-
-Setup verified on 13 November 2026: all eleven skills and the permanent reviewer
-CLI are installed outside Plexus. The account/Plexus read checks passed, and a
-separate setup-only run verified explicit High and Medium Task selections.
-**Implementer, PR Reviewer and QA are all configured and inactive.** No Jira labels
-were added or Story dispatched. The [automation matrix](config/cursor/automations.md)
-records the selected Build, exact pins and remaining acceptance work.
-
-Jira routing and the shared Atlassian read connection are configured. Next is an
-explicitly authorized bounded delivery test with complete Story/PR inputs. Review comments/approvals and Jira transitions have not
-been live-tested. Per-PR environments and MCP migration remain separate work.
+Contributors run `npm ci --ignore-scripts --no-audit --no-fund` then `npm test`.
+Fixture checks do not prove live npm, Cursor, Jira or Bitbucket behavior.
+Prepared skills, a successful Build, published code, enabled automation and a
+completed real Story are separate outcomes. Jira owns current progress; setup
+records retain dated evidence.
 
 ## Target architecture and first manager release
 
-The owner ratified these diagrams on 14 November 2026. **They describe the target
-product, not functionality shipped today.** The current skills-and-webhooks MVP
-remains separate from the planned manager.
+The owner ratified the target diagrams on 14 November 2026. They show the eventual
+product; the [architecture map](ARCHITECTURE.md) separates installed behavior,
+first-manager scope and follow-on capabilities.
 
 [First manager scope](docs/architecture/manager-release-one.md) ·
 [State and upgrades](docs/architecture/manager-state.md) ·
@@ -187,9 +113,9 @@ remains separate from the planned manager.
 [Architecture guide](docs/architecture/target/review-guide.md) ·
 [Downloadable walkthrough](docs/architecture/target/index.html)
 
-The first manager advances eligible Jira work from a customer-owned AWS Lambda.
-Existing Jira rules continue to launch Cursor. Monitoring and duplicate prevention
-are follow-on releases. Scuba Pig receives no customer runtime data or credentials.
+The first manager is planned for customer-owned AWS Lambda and DynamoDB. Existing
+Jira rules continue to launch Cursor. Scuba Pig receives no customer runtime data
+or credentials. Monitoring and duplicate-launch prevention are later work.
 
 ![One delivery loop — target architecture](docs/architecture/target/01-system.svg)
 
@@ -252,5 +178,4 @@ are follow-on releases. Scuba Pig receives no customer runtime data or credentia
 ## License
 
 Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
-for the retained copyright and historical MIT notice. Third-party dependencies
-retain their own licenses.
+for retained copyright notices. Third-party dependencies retain their own licenses.
