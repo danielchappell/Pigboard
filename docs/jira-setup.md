@@ -323,8 +323,9 @@ evaluated. Automatic duplicate prevention and cancellation remain post-MVP. Skil
 still verify configured scope, current stage, repository/PR and requirements/revision
 freshness; retain action receipts; and stop on blockers or uncertain writes. These
 cooperative checks do not enforce cross-run exclusion. Publish and accept the
-corrected central bundle in a Cursor Build before testing delivery; the selected
-Build record in the automation matrix is the authority for installed bytes.
+corrected central bundle in a Cursor Build before testing delivery. The
+[14 November Build record](../config/cursor/automations.md#corrected-basic-mvp-build--14-november-2026)
+now verifies installation of that corrected revision; all workers remain inactive.
 
 ### Current and deferred work
 

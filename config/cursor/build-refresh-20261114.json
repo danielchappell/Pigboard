@@ -1,0 +1,102 @@
+{
+  "buildId": "bld-20261114-4610b7f1-1843-44ef-82b0-4ad66d3bd7bc",
+  "status": "Success",
+  "selection": "Active",
+  "trigger": "Config change",
+  "skillInstallation": {
+    "commit": "e2e7825d97e2633b5893cbcee333375fb5926e05",
+    "release": "/opt/pigboard/releases/e2e7825d97e2633b5893cbcee333375fb5926e05-c44dd44767ec826e-1460325a-043b-492d-88d9-a6020aaf3e15",
+    "skills": "/opt/pigboard/releases/e2e7825d97e2633b5893cbcee333375fb5926e05-c44dd44767ec826e-1460325a-043b-492d-88d9-a6020aaf3e15/skills",
+    "manifest": "/opt/pigboard/releases/e2e7825d97e2633b5893cbcee333375fb5926e05-c44dd44767ec826e-1460325a-043b-492d-88d9-a6020aaf3e15/manifest.json",
+    "stableSkills": "/opt/pigboard/skills",
+    "verification": {
+      "entrypoints": 11,
+      "sourceFiles": 27,
+      "dependencies": "verified",
+      "smokeChecks": [
+        "pg.Client",
+        "bru --version"
+      ]
+    }
+  },
+  "rovitoInstallation": {
+    "executable": "/opt/pigboard/tools/rovito-0.1.295-linux-amd64/rovito",
+    "version": "0.1.295",
+    "archiveSha256": "8f5b480259e662ef9ac8e267064758c8651cd6de32c222e8fe58a98236b536ed",
+    "binarySha256": "03e49d29640af64bd25b1517445391cd3bf6f68f26347461b90da9b9fc79bfb6",
+    "reused": false,
+    "verification": [
+      "binary-sha256",
+      "version",
+      "help"
+    ]
+  },
+  "reviewerProfile": {
+    "configured": true,
+    "reused": false,
+    "capability": "/opt/pigboard/reviewer/capability.json",
+    "configHome": "/opt/pigboard/reviewer/config",
+    "profile": "pigboard-pr-review",
+    "policy": "review-write",
+    "providerAccessVerified": false
+  },
+  "snapshotReadyAt": "2026-11-14T07:49:50.945Z",
+  "logSha256": "90d96fcf98fc54364decf07bce85306a1b1c7c84e470e82c82fcb4e9429214fb",
+  "buildUrl": "https://cursor.com/t/safeguardglobal-engineering/cloud-agents/builds/bld-20261114-4610b7f1-1843-44ef-82b0-4ad66d3bd7bc",
+  "environmentId": "9cb332e1-dee7-11f1-ba91-f63b1661ac50",
+  "observedOn": "2026-11-14",
+  "timezone": "Europe/Madrid",
+  "installationReadback": {
+    "method": "Operator-entered read-only Node command through Cursor terminal; output and screenshot inspected",
+    "sessionId": "bc-f0e875ba-eaf6-4aba-8bd4-04098f07940f",
+    "result": "PIGBOARD_INSTALLED_SKILLS_PASS",
+    "commit": "e2e7825d97e2633b5893cbcee333375fb5926e05",
+    "stableSkills": "/opt/pigboard/skills",
+    "entrypoints": 11,
+    "sourceFiles": 27,
+    "allManifestHashesMatched": true,
+    "expectedEntrypointHashes": {
+      "implementer-entrypoint/SKILL.md": "5fbe37b15a18f528e4c14a0513453a9e91ece8b696313f22e791d63f3a23a26d",
+      "pigboard-pr-review/SKILL.md": "a1ca4dea80fa0a56778bbdbcadeba4aaf4874c0b63c382f6f92fcab56945c35b",
+      "qa-entrypoint/SKILL.md": "4eb1bdcba6008279b6d514bb6d32af45fc76b209b482fa2bd60c6c98e5ff7725"
+    },
+    "providerAccess": "not tested"
+  },
+  "automations": [
+    {
+      "role": "implementer",
+      "id": "65bdee88-dee5-11f1-ba91-f63b1661ac50",
+      "state": "Inactive",
+      "runs7d": 0,
+      "environment": "Pigboard AI-Daniel-1 Plexus"
+    },
+    {
+      "role": "pr-reviewer",
+      "id": "d6870b65-df37-11f1-ba91-f63b1661ac50",
+      "state": "Inactive",
+      "runs7d": 0,
+      "environment": "Pigboard AI-Daniel-1 Plexus"
+    },
+    {
+      "role": "qa",
+      "id": "5e23ff45-df81-11f1-ba91-f63b1661ac50",
+      "state": "Inactive",
+      "runs7d": 0,
+      "environment": "Pigboard AI-Daniel-1 Plexus"
+    },
+    {
+      "role": "bounded-probe",
+      "id": "5b14a3ea-df99-11f1-ba91-f63b1661ac50",
+      "state": "Inactive",
+      "repository": "None",
+      "connectedTools": "None"
+    }
+  ],
+  "limits": [
+    "Installation acceptance only; no delivery worker was run and no webhook request sent",
+    "No Jira/Bitbucket comment, approval or transition was tested",
+    "No duplicate-prevention, cancellation or preview acceptance implied",
+    "Jira rules were not edited or triggered; earlier disabled-state record remains separate",
+    "Runtime secret names/types observed unchanged; secret values not read or changed"
+  ]
+}
