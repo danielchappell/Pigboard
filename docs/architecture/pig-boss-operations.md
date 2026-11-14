@@ -6,6 +6,9 @@ supersedes label-only identity and ambiguous monitoring exclusions in earlier
 manager documents. The manager component is **Pig Boss**; the product is Pigboard.
 Existing technical filenames and schema identifiers keep their names.
 
+Pig Boss coordinates the [Pigboard crew](../product/branding.md): Hardhat Ham
+(implementer), Inspector Pork (PR reviewer) and Snout Scout (QA).
+
 ## One installation, multiple projects
 
 A company deploys Pig Boss once into its AWS account for one Jira site. One
