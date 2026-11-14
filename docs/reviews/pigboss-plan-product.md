@@ -133,3 +133,46 @@ cd49cee0dda89951fc5cfa3f1aca5a3e617e81461cbe8dbe99e4bb79b57f5d11  docs/delivery/
 f757428a157cb4072bcdea5501a8ecbd98a21a704bb8d8a2816263cb3dc8897b  /private/tmp/pigboss-readback23.json
 7a2b4c78af3a77a62926b3029bf04b3a6bf5889339ca8271d292da8330cbc37d  /private/tmp/pigboss-final-links.json
 ```
+
+
+---
+
+## Final corrected-artifact design and plan review — product lens
+
+15 November 2026. Freshly verified artifact revision `5df7e2ff4202ccc409b9b2880163aa3b010d0561`, checkout `/private/tmp/pigboard-product-requirements-20261114`.
+
+**Final design verdict: CLEAN. Final complete delivery-plan verdict: CLEAN.** These explicit corrected-artifact verdicts carry forward the completed independent product design/plan reviews and the full committed-change review, and include the bounded health-precedence correction independently reviewed at `5df7e2f`. They do not invent a prior approval or claim that an earlier manifest covered changed bytes. Earlier manifests/verdicts remain historical; this manifest identifies the current reviewed content. No unresolved confirmed in-scope product/design/plan finding remains.
+
+**Correction and evidence.** The Codex health-precedence finding is fixed in `docs/architecture/pig-boss-operations.md:84–109`: first-match evaluation defines unknown → schedule-mismatch degraded → intentional disabled → stale → current degraded → starting → healthy. Lines 84–85 preserve secondary reasons; lines 95–107 prevent a recent failed attempt resetting stale age and define `age > freshness`, including equality. The unknown/read-failure distinction is explicit at lines 87–89. Existing exit codes and safe-stop/drain remain at lines 111–116. The former overlapping-state descriptions now have one governing evaluation order.
+
+The corresponding plan correction is complete at `docs/delivery/manager-r1/stories.md:1608–1619`: existing R1-22-H02 explicitly maps TAC2 and includes disabled+old success, expired success+recent failure, failed first attempt before/after expiry, mismatch+stale, unreadable telemetry+disabled intent and exact-boundary fixtures. Ordered actions and expected results match the design and structured draft. This is a correction within existing O14/R1-22 scope, not an added monitoring feature or implementation authorization.
+
+**Coverage.** Current verification examined **7/7 artifact files** in the manifest, **4/4 files in the health correction**, **7/7 ordered health predicates**, **6/6 overlap fixture groups** and **1/1 changed case**. The earlier complete review covered **53/53 product requirements, 23/23 Stories, 104/104 cases, 41/41 original scenarios and 154/154 Story AC/TAC IDs**. This addendum reuses that examined unchanged surface rather than claiming a fresh full design/discovery restart. A new comparison confirms 23 Stories/104 cases, **88/88 original case objects unchanged**, and all 154 criteria still mapped. Only R1-22-H02 changed in the health correction; all other case objects, dependencies, forecasts and scope remain as reviewed. The two coverage documents correctly distinguish the historical 50-requirement baseline from current 53-requirement/23-Story review, and the README preserves final owner review and unrun installed acceptance.
+
+**Native publication.** The fresh `/private/tmp/pigboss-health-readback.json` is the evidence for PGB-100; its prior snapshot is historical. I re-parsed the complete native YAML and compared it with current R1-22 after native prerequisite-key substitution only: exact match. Its raw YAML-byte hash is `fb0dd808087587f435fab43c39f0075c0227a92dd2339e6a329a79926265565f`, matching publication.json. The current whole draft-file hash also matches the receipt. The other 22 structured Story contracts are unchanged; earlier exact native-body and 54-edge audits remain applicable to them. This is captured publication fidelity, not live product acceptance.
+
+**Second sweep complete:** **7/7 files**, **7/7 predicates**, **6/6 fixture groups**, native R1-22 equality/hash and preserved full-set boundaries were rechecked. Traced unknown versus known absence; intentional stop versus old data; failure versus stale age; failed first attempts before/after expiry; scheduler mismatch versus staleness; exact freshness equality; secondary reasons; no mutations; and the pending owner/installed-acceptance gates. No further confirmed issue found.
+
+**Seven principles, assessed for both corrected design and plan:**
+
+- **Intuitive:** each familiar health word now has a predictable primary result; intentional stop does not look like expired scheduling.
+- **Discoverable:** the ordered table, explicit overlap fixtures, secondary reasons and direct review links expose the decision and its evidence.
+- **Delightful experience:** operators need not resolve competing state definitions or repeat completed review/setup; recovery remains scoped and safe.
+- **Token saver:** a single primary state is concise while secondary failures and complete acceptance instructions remain available.
+- **Secure:** unreadable required evidence wins as unknown; no healthy/safe-stop assurance is inferred, and no new credentials, write path or authority is introduced.
+- **Agents are equal:** readable and JSON consumers share exact precedence, boundary and exit semantics; structured cases retain explicit human ownership without invented automated passes.
+- **Dependable:** failed attempts cannot refresh stale successful evidence; old revisions and uncertain outcomes remain distinct, and current versus historical review/publication evidence is explicitly identified.
+
+Current SHA256 manifest, each verified against the file bytes at `5df7e2ff4202ccc409b9b2880163aa3b010d0561`:
+
+```text
+c0ba36250e3a82010e7510c66c62d66299812289ebb71e1b1bb3f62eea727958  docs/architecture/pig-boss-operations.md
+c649cf9d308412972b1de61e50f529af18c58009fea94f1b11db3985f049b1ab  docs/delivery/manager-r1/ticket-drafts.json
+9ba1c820d34fecc9ad448139a19f22bc89f745a39bd8c37f0bdc3db1dfbefc9d  docs/delivery/manager-r1/stories.md
+8a71d9280604d39f61896656d25ecb62acbf1d490c280b627434ccf8f142a7ed  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation was performed by this reviewer. These final design/plan CLEAN verdicts do not approve the Story set on the owner's behalf, prove implemented/runtime behavior, satisfy current-head CI/Codex review, or authorize merge, deployment, delivery activation or release. Installed AWS/worker acceptance remains separate and unrun.
