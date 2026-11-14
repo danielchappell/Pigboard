@@ -83,13 +83,22 @@ try {
   bad('wrong-pointer', 'pointer', d => { d.value = {}; });
   bad('missing-item', 'dynamodb', d => { delete d.Item; });
   bad('wrong-item', 'dynamodb', d => { d.Item.revision.N = '2'; });
+  for (const [id, bytes] of [['utf8-at-limit', 16384], ['utf8-over-limit', 16385]]) {
+    const empty = JSON.stringify({ text: '' });
+    const room = bytes - Buffer.byteLength(empty, 'utf8');
+    const record = { text: '界'.repeat(Math.floor(room / 3)) + 'a'.repeat(room % 3) };
+    assert.equal(Buffer.byteLength(JSON.stringify(record), 'utf8'), bytes);
+    cases.push({ id, selector: 'comment', expectedRecord: record, fail: bytes > 16384 });
+  }
   for (const c of cases) {
     response = structuredClone(good[c.selector]);
     c.mutate?.(response);
+    if (c.expectedRecord) response.body.content[0].content[0].text = JSON.stringify(c.expectedRecord);
+    const shouldFail = Boolean(c.mutate || c.fail);
     requests = [];
     if (c.selector === 'dynamodb') await validateProfile(credentials);
     const report = join(temp, c.id + '.json');
-    const env = { ...cleanEnv, PIGBOARD_PROBE_BINDING: JSON.stringify({ ...base, observation: c.selector }) };
+    const env = { ...cleanEnv, PIGBOARD_PROBE_BINDING: JSON.stringify({ ...base, observation: c.selector, expected: c.expectedRecord ? { ...fixtures, record: c.expectedRecord } : fixtures }) };
     // Intentionally hostile inherited proxy is neutralized by --noproxy.
     env.HTTP_PROXY = env.HTTPS_PROXY = `http://127.0.0.1:${proxy.address().port}`;
     const result = await run(['run', `${c.selector}.bru`, '--sandbox=safe', '--bail', '--noproxy', '--reporter-json', report], env);
@@ -112,11 +121,11 @@ try {
     assert.equal(checks.length, 1, c.id + ': check count');
     assert.equal(checks.some(c => c.isScriptError), false, c.id + ': engine error');
     assert.equal(checks[0].description || checks[0].name, names[c.selector], c.id + ': named check');
-    assert.equal(checks[0].status, c.mutate ? 'fail' : 'pass', c.id);
+    assert.equal(checks[0].status, shouldFail ? 'fail' : 'pass', c.id);
     assert.equal(Boolean(entry.error), false, c.id + ': request/runtime error');
     assert.equal(Boolean(entry.preRequestScriptError || entry.postResponseScriptError || entry.testScriptError), false, c.id + ': script error');
-    assert.equal(result.code, c.mutate ? 1 : 0, c.id + ': exit');
-    summary.push({ case: c.id, request_count: 1, check_count: 1, expected: c.mutate ? 'named assertion failure' : 'pass', result: 'PASS' });
+    assert.equal(result.code, shouldFail ? 1 : 0, c.id + ': exit');
+    summary.push({ case: c.id, request_count: 1, check_count: 1, expected: shouldFail ? 'named assertion failure' : 'pass', result: 'PASS' });
   }
   for (const [id, binding, error] of [
     ['missing-binding', undefined, 'PROBE_BINDING_REQUIRED'],

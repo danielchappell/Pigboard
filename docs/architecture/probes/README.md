@@ -39,7 +39,8 @@ No Jira, AWS or Cursor request is made by these checks.
 A valid response must execute its named test. Negative responses must fail that
 same test; missing reports, zero tests or script errors cannot count as success.
 Missing binding/profile is a separate prerequisite rejection with zero requests.
-The final JSON is a sanitized summary. Successful runs delete their temporary raw
+Non-ASCII boundary cases verify the 16 KiB limit in UTF-8 bytes, including exact
+limit acceptance and one-byte-over rejection. The final JSON is a sanitized summary. Successful runs delete their temporary raw
 reports; failed runs retain them privately and print the path for diagnosis. Even
 though local credentials are dummy values, do not publish raw reports by habit.
 
@@ -106,7 +107,7 @@ SHA-256 `29610b2dede62211f98f307e00525f6eb33b644627362b522ec0d57b2838228a`.
 Both completed second sweeps and assessed all seven principles and unified
 configuration. Initial findings added explicit safe-report checks, proxy isolation
 and fail-closed handling of the unverified live AWS credential path.
-Author verification: 26/26 local cases passed with zero provider/proxy requests;
+Author verification: 28/28 local cases passed with zero provider/proxy requests;
 `npm test` passed 24/24 retained installation tests; 15 relative documentation links
 resolve. Local checks do not establish Jira/AWS acceptance. Committed artifact
 review and live acceptance remain separate gates.

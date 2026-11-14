@@ -42,7 +42,9 @@ tests {
     expect(blocks).to.have.lengthOf(1);
     expect(blocks[0].content.every(n => n.type === "text" && typeof n.text === "string")).to.equal(true);
     const text = blocks[0].content.map(n => n.text).join("");
-    expect(text.length).to.be.at.most(16384);
+    // URI encoding exposes each UTF-8 byte as one ASCII character or %HH.
+    const utf8Bytes = encodeURIComponent(text).replace(/%[0-9A-F]{2}/g, "x").length;
+    expect(utf8Bytes).to.be.at.most(16384);
     expect(JSON.parse(text)).to.deep.equal(b.expected.record);
   });
 }
