@@ -26,7 +26,7 @@ writes for that scan.
 | ID | Situation | Required result |
 | --- | --- | --- |
 | S01 | Opted-in Epic is In Progress; A is Ready to Work; stream empty; zero Human Review | Select A for new admission |
-| S02 | Epic has no configured opt-in label, or is not In Progress | No admission or manager stack-queue mutation; active workers may finish their own permitted cycle |
+| S02 | Epic has no configured opt-in label, or is not In Progress | No admission; active workers may finish their own permitted cycle. Without opt-in, no manager authority. For an opted-in paused Epic, suppressing queue-only mutations is provisional, pending owner review |
 | S03 | Earlier A is in refinement; later independent B is Ready to Work | Ignore A as candidate; select B |
 | S04 | A is Ready to Work but has a required null; independent B is complete | Report A's field error; B can be selected; no agent launched to finish A's specification |
 | S05 | B requires A's AI-QA completion; A is unready, unfinished or lacks coherent current evidence | B is ineligible; do not invent completion or a different prerequisite condition |
@@ -86,7 +86,7 @@ The detailed reference/root rules remain owned by the handoff contract.
 | S37 | Human reorders eligible independent tickets before admission | New Epic order controls future ties; do not rewrite an existing assignment or actual parent lineage |
 | S38 | Requirements, relevant Epic membership or completion revision changes before durable intent | Return changed-input/no-write; use a later fresh evaluation rather than continuing an old selection |
 | S39 | Two tickets are already active in one stream | Report inconsistent occupancy and hold new manager mutations; do not stop either Cursor run automatically |
-| S40 | Epic is paused after one worker cycle started | No new admission or manager queue operation; that cycle may reach Human Review if it needs no correction |
+| S40 | Epic is paused after one worker cycle started | No new admission; that cycle may reach Human Review if it needs no correction. Provisional: also suppress manager queue-only operations, pending owner review |
 | S41 | Relevant inputs change after durable intent or comment/pointer publication but before transition | Send no transition; preserve the intent and already-published evidence as a human hold. A fresh scan cannot clear it or replay publication |
 
 These edit rules do not create a migration, cancellation or human-unblock feature.
