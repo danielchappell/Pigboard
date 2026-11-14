@@ -30,13 +30,21 @@ automation prompts only identify the assigned ticket and entry point.
 | Manager | Human Review | Rework Queued for a recorded required stack update only |
 | Human-request path | Human Review / Blocked | Requested repair queue / explicitly authorized original stage, respectively |
 
-The last row contains two different delivery obligations. Human-requested repair
-from Human Review must have a usable producer in this release: record the human's
-bounded findings as a typed repair request, then queue the same ticket/PR. The
-entry mechanism and its delivery slice are still unresolved; they must be settled
-before the complete Story set is frozen. The manager does not manufacture this
-request or infer it from ordinary discussion. A human-invoked assistant skill is
-being considered, not yet approved.
+The owner chose a separate human-invoked `request-rework` skill on 14 November
+2026. The human tells their existing assistant which ticket needs an in-scope fix
+and supplies the findings. The skill checks the current Human Review assignment,
+open PR and unchanged requirement/revision evidence; records a typed repair request;
+verifies publication; then moves that ticket to Rework Queued. The manager later
+admits it when the stream and capacity permit. There is no manual card drag, new
+automatic worker, Jira form or manager inference from ordinary discussion.
+
+Story writing owns creating/revising specifications. Requesting rework owns this
+bounded handoff, sharing the work contracts, validation and human-writing guidance.
+It does not rewrite acceptance criteria, change scope, start implementation, unblock
+work or repair multiple PRs. If the request needs different scope, the PR is closed,
+or required evidence/access is missing, it explains the problem and makes no queue
+transition. An uncertain publication/transition is reported without replay. See
+[the human repair contract](../architecture/manager-human-rework.md).
 
 The missing human-unblock producer remains the separate follow-up identified in
 the index. No role fills that gap by moving a ticket without authorization. If

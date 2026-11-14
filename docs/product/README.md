@@ -74,7 +74,11 @@ On 14 November 2026 the owner confirmed:
 - **D02:** pausing an Epic pauses every manager transition, including queue-only
   stack updates. Existing workers may complete their permitted handoffs.
 
-Older design text calling these proposals must be reconciled to these decisions.
+- **D03:** keep story writing and requesting rework as separate skills. A human
+  invokes `request-rework` through their assistant; it records findings and moves
+  the open-PR ticket to Rework Queued. Manager admission happens later.
+
+The detailed design and delivery plan must retain these decisions.
 
 ## Source and review record
 

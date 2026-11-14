@@ -61,10 +61,14 @@ requirements still must be supplied. Inapplicable `api`, `database` and `ui`
 sections are null on a ready ticket, while the blank skeleton shows their fields.
 
 `configured_target` chooses an approved existing target; `pipeline_pr_comment`
-chooses the target announced by the pipeline. Both still require the pipeline's
-PR-comment receipt to identify the exact target, current deployed PR revision and
-readiness before QA, as the handoff contract requires. Configuration selects a
-target; it does not replace deployment evidence.
+chooses the target announced by the pipeline. For either source, environment-dependent execution requires the pipeline's
+PR-comment receipt identifying the exact target, deployed revision and readiness.
+A human-only plan may instead name an approved non-runtime review target under
+`configured_target`, such as the current PR artifacts; it needs no invented
+deployment receipt. Zero-AI-case QA reports the human cases pending and does not
+execute their preflight or claim their evidence. Before any human environment-dependent
+case runs, its human owner verifies the prescribed target/deployment evidence.
+Configuration never substitutes for required deployment evidence.
 
 Database bindings have two explicit hops. A step's `bindings` copies a declared
 output from an earlier step into a named `inputs` entry. Its database
@@ -94,9 +98,9 @@ blocks immediately. These are prescribed observations, not error retries or a
 reason to repeat setup/mutations. Positive offsets cannot exceed the deadline;
 operations must fit the remaining deadline and helper limits.
 
-The schema admits the existing all-human proposal only with empty AI cases,
-dispatch and testing types, a reason and at least one complete human case. That
-proposal still needs final owner review. It does not remove CI or PR review.
+The owner approved explicitly all-human plans on 14 November 2026. The schema
+admits them only with empty AI cases,
+dispatch and testing types, a reason and at least one complete human case. This does not remove CI or PR review.
 `environment` continues to identify the human test target when there are no AI
 cases. `automated_regression` describes behavior and test level, or explicitly
 states why no automated regression is applicable; it is never an unexplained null.

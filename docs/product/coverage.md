@@ -47,7 +47,7 @@ linked instead of rebuilt simply to fill a row.
 | W07 | Existing QA helpers; schema skill sections | Prescribed API/PostgreSQL/UI execution | Pending |
 | W08 | Workflow environment contract | Trusted current-revision supplied environment | Pending; producer separate |
 | W09 | Repair/dependency-wait handoffs | Queue understood rework without launching it | Pending |
-| W10 | Role authority; resume contract | Human-requested repair producer and human-only authority | Pending: repair entry mechanism unresolved; unblock producer follow-up |
+| W10 | Role authority; resume contract | Human-requested repair producer and human-only authority | Pending: approved request-rework skill; unblock producer follow-up |
 | W11 | Human Review / UAT / production stages | Human reviews/cases recorded before acceptance | Pending: guide/config acceptance |
 | W12 | Publication/semantic rules | Structured trustworthy role result and single transition | Pending |
 | M01 | S01–S02 | Opt-in, active Epic and full stream identity | Pending |
@@ -96,10 +96,10 @@ linked instead of rebuilt simply to fill a row.
    cases. Review in both directions: no missing requirement and no unapproved Story.
 6. **Owner review:** present the whole fixed scope before implementation. Keep
    all delivery workers/rules inactive throughout discovery and grooming.
-7. **Human repair entry:** resolve how a human submits findings that become a typed
-   repair request and Human Review → Rework Queued transition. This is required for
-   the agreed repair journey; the deferred unblock producer does not cover it.
-   The entry mechanism is under owner discussion. No new UI/service is assumed.
+7. **D03 — approved human repair entry:** deliver a separate human-invoked
+   `request-rework` skill for findings → typed request → Rework Queued. Keep story
+   writing focused on specifications. Include this skill in the complete bundle
+   and Story set; the deferred unblock producer is a different feature.
 
 ## Author assessment of the consolidation
 
