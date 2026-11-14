@@ -1,0 +1,65 @@
+# Prepared design manifest. NOT RUNNABLE until verified IDs and access are bound.
+# No secret values belong here. Generated receipts fill IDs, not a second setup file.
+schema: pigboard-probe/v1
+purpose: isolated_manager_discovery
+approved_artifact_revision: null
+execution_authorized: false
+aws:
+  account_id: null              # Verify against the Scuba Pig development account.
+  region: eu-north-1
+  plan: Free
+  trusted_operator_principal: null
+  execution_role_arn: null
+  probe_operator_role_arn: null
+  function_arn: null
+  table_name: null
+  log_group: null
+  jira_secret_reference: null   # Only if combined Lambda/Jira probe requires it.
+  paid_upgrade_allowed: false
+jira:
+  site: https://scubapig.atlassian.net
+  proposed_project_key: PGBT
+  project_id: null
+  workflow_id: null
+  applicable_automation_review: null
+  identity_reference: null
+  statuses:
+    ready_to_work: null
+    in_progress: null
+    human_review: null
+    rework_queued: null
+  transitions:
+    setup: null
+    new: null
+    queue: null
+    repair: null
+  fixtures:
+    F1: null
+    F2: null
+    F3: null
+    F4: null
+request_artifacts:
+  source: null
+  digest: null
+  setup_control_plane_budget: null
+  permission_matrix: null
+  local_validation_report: null
+limits:
+  issue_creations: 4
+  jira_transition_requests: 12
+  jira_comment_creations: 13
+  jira_property_writes: 4
+  dynamodb_write_requests: 40
+  jira_reads: 120
+  aws_data_reads_and_invocations: 120
+  active_execution_minutes: 30
+  http_deadline_seconds: 10
+  lambda_deadline_seconds: 30
+  mutation_retries: 0
+  read_retries: 0
+  cursor_calls: 0
+results:
+  evidence_location: null
+  request_counter_receipt: null
+  unresolved_outcomes: null
+  cleanup_disposition: null

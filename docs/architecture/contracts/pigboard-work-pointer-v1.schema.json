@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pigboard assignment pointer design \u2014 not installed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "assignment"
+  ],
+  "properties": {
+    "schema": {
+      "const": "pigboard-work-pointer/v1"
+    },
+    "assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticket_id",
+        "comment_id",
+        "record_id",
+        "digest"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "comment_id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

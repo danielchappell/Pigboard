@@ -157,3 +157,60 @@ intent, retained uncertainty, no repeated repair and later oldest-first admissio
 The scoped deployment Mermaid diagram labels both permitted manager operations.
 Research proof remains distinct from installed-package acceptance. This correction
 requires fresh committed review and current-head hosted approval before merge.
+
+## Worker handoff and isolated proof definition — 14 November 2026
+
+The owner asked to finish the worker handoff contract and prepare isolated Jira/AWS
+tests while continuing discovery toward the complete implementation Story set.
+This revision defines visible typed comments, a generated assignment pointer,
+reference/digest rules, role outcomes and ordered publication. It adds JSON Schema
+design artifacts and nine visible-null skeletons. No installed skill, runtime,
+Jira configuration or Cursor automation changes.
+
+Initial independent product and technical reviews each examined 17/17 artifacts
+and found a real recovery contradiction: one final result per assignment/role
+would reject a valid success after human resolution of a blocked attempt. The
+correction defines a unique human-authorized resume chain, preserving the old
+blocker and requiring unchanged requirements/revision. It defines the receiving
+contract; implementing human-unblock automation remains separately scoped.
+
+Two fresh Sol design reviewers returned CLEAN for the corrected 18-artifact surface:
+
+- `handoff_design_r2_product`: 18/18 artifacts, 20/20 requirement groups and 12/12
+  contract surfaces; second sweep and independent seven-principle/unified-config
+  assessment. Product surface digest: `9be0600118d47eaea820c74c15c7ffdf163d14ba8fc7a7777a1c5628080fb7f3`.
+- `handoff_design_r2_technical`: 18/18 artifacts, 9/9 handoff kinds, 17/17 schema
+  definitions, 12/12 semantic clauses and 19/19 offline cases; second sweep and
+  independent seven-principle/unified-config assessment. Reviewer's ordered-surface
+  digest: `06b53b954b8fabb0f8704d6006d72bdf5633f9d094767c0c606eb7fa2b9e1860`.
+
+Both separately assessed current workflow compatibility, mutable-property/shared-
+identity limits, conditional state, non-atomic publication, all three manager
+edges, the four-ticket fixture and no automatic worker recovery. The different
+surface digests use different file orderings; neither is a Git commit identity.
+
+Author validation: Draft 2020-12 schemas valid; 69/69 structural accept/reject cases
+matched expectations using jsonschema 4.25.1 with format checks; all nine incomplete
+skeletons parse and fail completed-output validation. PyYAML 6.0.3 was used for
+syntax only; its default resolver does not prove the required YAML 1.2 behavior.
+The technical reviewer independently validated both schemas and the nine null
+skeleton rejections. No semantic implementation, server metadata, real transition,
+AWS permission or installed-package behavior is claimed by these checks.
+
+Publication reuses the reviewed documentation-only path. Nineteen files including
+this record; no production dependency or runtime change. Fresh exact-commit review,
+CI and current-head Codex thumbs-up are required before merge. These design reviews
+do not close PGB-67/PGB-68, authorize live tests or make implementation Stories ready.
+Actual fixture IDs, credentials, executable requests, remaining operational contracts
+and provider proof still gate that owner-reviewed Story set.
+
+
+### PR67 provider-proof sequence correction
+
+Codex found a P2 contradiction in the P4 expected evidence at cf9e22f: the
+same stream cannot retain three simultaneous pending intents while reconciliation
+is required between operations. The corrected packet observes each pending intent,
+reconciles it before the next same-stream operation, and retains the first two as
+history. The last repair remains pending for P5. No request ceiling or product
+behavior changed; no live execution occurred. Exact revised review follows in PR
+evidence; prior CLEAN reviews cover only their named revision.

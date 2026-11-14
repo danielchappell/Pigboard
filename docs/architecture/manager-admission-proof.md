@@ -55,7 +55,9 @@ renumbering cannot silently abandon active work or the human-review cap.
 
 ## One mutation protocol
 
-The following applies to queueing B as well as admission to In Progress:
+The following applies to queueing B as well as admission to In Progress. The
+[worker handoff contract](manager-handoff-contract.md) adds the exact publication
+steps between persisted intent and transition; that publication is not atomic:
 
 1. Evaluate complete current inputs. Validate the configured source-specific
    transition and its target. A global transition or an unverifiable source edge
@@ -64,7 +66,9 @@ The following applies to queueing B as well as admission to In Progress:
 2. Conditionally persist an intent for the observed stream revision, operation,
    ticket, source/target, cause and unique attempt ID. Proceed only on confirmed
    success. Any pending intent prevents another transition for that stream.
-3. Send one Jira transition request, with the bounded request deadline and retries
+3. Confirm and read back the typed intent comment; for admission also confirm its
+   assignment pointer. Queueing preserves the old pointer. Recheck the inputs, then
+   send one Jira transition request, with the bounded request deadline and retries
    for mutations disabled. Include the attempt ID in supported history metadata
    and visible evidence where the verified workflow permits it. Those fields help
    diagnosis; they are not provider idempotency keys.
@@ -124,6 +128,10 @@ or a transaction spanning Jira and DynamoDB.
 
 ## Concrete bounded proof proposal
 
+The [isolated test packet](manager-test-packet.md) and its manifest refine this
+proposal with exact fixture positioning, handoff publication cases, proposed
+resource/permission ceilings and execution prerequisites. They remain unexecuted.
+
 Purpose: resolve the provider guarantees that affect the implementation contract.
 This is a disposable research probe, not implementation of the manager or a test of
 the Cursor delivery loop. Prepare/review the exact probe artifact after the target
@@ -131,7 +139,9 @@ account and workflow are selected; authorization applies to that artifact and it
 listed resources/actions, not arbitrary cloud work.
 
 Proposed resource ceiling: one temporary DynamoDB table, one temporary Lambda with
-its narrowly scoped role and log group, no schedule or public endpoint, and four
+its narrowly scoped execution role and log group, at most one dedicated probe
+operator role and one fixture secret where required by the reviewed executable
+packet, no schedule or public endpoint, and four
 synthetic Jira tickets in an isolated fixture project. Use no real employee labels,
 application repositories, PRs, Cursor calls or production data. Verify fixture Jira
 rules cannot launch delivery before any transitions. Do not edit shared workflows;
@@ -143,7 +153,7 @@ approved isolated workflow setup. Credentials stay in customer-approved storage.
 | P1 — all three directed edges | For Ready to Work -> In Progress, Rework Queued -> In Progress, and Human Review -> Rework Queued, inspect the installed edge, perform one synthetic transition and repeat that same edge after leaving its source | Separate source/target, transition ID, effective permission, response and history evidence for each edge; every wrong-source repeat is rejected without a new transition |
 | P2 — fresh known issue | Reconcile the fixture ID after its transition | Exact ID and current status; no claim about unknown issues |
 | P3 — competing intents | Two conditionally written intents for the same stream revision | One succeeds; the other conflicts; one durable owner |
-| P4 — lost outcome for each operation | For each of the three edges in P1, persist a distinct intent, perform the authorized fixture transition and deliberately omit local confirmation | Each later probe reads its pending intent and sends zero further Jira writes; queueing and both admission sources must all be covered |
+| P4 — lost outcome for each operation | For each of the three edges in P1, persist a distinct intent, perform the authorized fixture transition and deliberately omit local confirmation | Each later probe reads that operation's pending intent and sends zero further Jira writes; reconcile it before the next same-stream operation. Retain reconciled attempts as history; the final repair remains pending for P5. Cover queueing and both admission sources |
 | P5 — stale completion | Reconcile a fixture attempt, then submit its old revision's completion | Conditional update rejects stale completion |
 | P6 — cloud boundary | Invoke read-only/no-write probe under allowed role; test a separately prepared denied identity | No public invocation, appropriate access denial, sanitized output and retained state |
 

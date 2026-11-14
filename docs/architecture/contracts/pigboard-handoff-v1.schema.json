@@ -1,0 +1,1298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pigboard.example.invalid/contracts/pigboard-handoff-v1.schema.json",
+  "title": "Pigboard first-manager handoff design \u2014 not installed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "record_id",
+    "operation_id",
+    "ticket_id",
+    "requirements_digest",
+    "assignment",
+    "role",
+    "kind",
+    "from_stage",
+    "to_stage",
+    "payload",
+    "resume_authorization"
+  ],
+  "properties": {
+    "schema": {
+      "const": "pigboard-handoff/v1"
+    },
+    "record_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "operation_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "ticket_id": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "requirements_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "assignment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/reference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "role": {
+      "enum": [
+        "manager",
+        "implementer",
+        "reviewer",
+        "qa",
+        "human_request"
+      ]
+    },
+    "kind": {
+      "enum": [
+        "admission",
+        "implementation",
+        "review",
+        "qa",
+        "repair_request",
+        "stack_update_request",
+        "dependency_wait",
+        "blocked",
+        "resume_authorization"
+      ]
+    },
+    "from_stage": {
+      "enum": [
+        "Ready to Work",
+        "In Progress",
+        "In Review",
+        "QA",
+        "Human Review",
+        "Rework Queued",
+        "Blocked"
+      ]
+    },
+    "to_stage": {
+      "enum": [
+        "Ready to Work",
+        "In Progress",
+        "In Review",
+        "QA",
+        "Human Review",
+        "Rework Queued",
+        "Blocked"
+      ]
+    },
+    "payload": {},
+    "resume_authorization": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/reference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticket_id",
+        "comment_id",
+        "record_id",
+        "digest"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "comment_id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "uri",
+        "digest"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "maxLength": 2048
+        },
+        "digest": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "pr": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "repository",
+        "number",
+        "source_revision",
+        "target_branch"
+      ],
+      "properties": {
+        "provider": {
+          "enum": [
+            "github",
+            "bitbucket"
+          ]
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://",
+          "maxLength": 2048
+        },
+        "number": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "source_revision": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "target_branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      }
+    },
+    "parent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ticket_id",
+        "pr",
+        "incorporated_revision",
+        "completion"
+      ],
+      "properties": {
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "incorporated_revision": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "completion": {
+          "$ref": "#/$defs/reference"
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "summary",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 100,
+          "uniqueItems": true,
+          "minItems": 1
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "skill",
+        "result",
+        "evidence",
+        "finding_ids",
+        "not_run_reason",
+        "reused_from"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "skill": {
+          "enum": [
+            "qa-api",
+            "qa-bruno",
+            "qa-database",
+            "qa-ui"
+          ]
+        },
+        "result": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_RUN"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "finding_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "not_run_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reused_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "const": "NOT_RUN"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "not_run_reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "not_run_reason": {
+                "type": "null"
+              },
+              "evidence": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "qa_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "steps",
+        "human_pending",
+        "no_ai_cases_reason"
+      ],
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "human_pending": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "no_ai_cases_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "preparation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "artifacts"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "artifacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 100,
+          "uniqueItems": true,
+          "minItems": 1
+        }
+      }
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stream",
+        "mode",
+        "previous_assignment",
+        "requests",
+        "existing_pr"
+      ],
+      "properties": {
+        "stream": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "mode": {
+          "enum": [
+            "new_work",
+            "repair"
+          ]
+        },
+        "previous_assignment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "existing_pr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pr",
+        "stack_parent",
+        "consumed_requests",
+        "plan",
+        "plan_review",
+        "ci",
+        "verification",
+        "prepared_inputs"
+      ],
+      "properties": {
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "stack_parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/parent"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "consumed_requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "plan": {
+          "$ref": "#/$defs/evidence"
+        },
+        "plan_review": {
+          "$ref": "#/$defs/evidence"
+        },
+        "ci": {
+          "$ref": "#/$defs/evidence"
+        },
+        "verification": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "prepared_inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/preparation"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        }
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implementation",
+        "pr",
+        "approval",
+        "report"
+      ],
+      "properties": {
+        "implementation": {
+          "$ref": "#/$defs/reference"
+        },
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "approval": {
+          "$ref": "#/$defs/evidence"
+        },
+        "report": {
+          "$ref": "#/$defs/evidence"
+        }
+      }
+    },
+    "qa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "review",
+        "pr",
+        "report"
+      ],
+      "properties": {
+        "review": {
+          "$ref": "#/$defs/reference"
+        },
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "report": {
+          "$ref": "#/$defs/qa_report"
+        }
+      }
+    },
+    "repair_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis",
+        "pr",
+        "findings",
+        "qa_report"
+      ],
+      "properties": {
+        "basis": {
+          "$ref": "#/$defs/reference"
+        },
+        "pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          },
+          "maxItems": 100,
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "qa_report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/qa_report"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "stack_update_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "child_completion",
+        "child_pr",
+        "roots",
+        "parent_completion",
+        "parent_pr",
+        "required_parent_revision",
+        "reason"
+      ],
+      "properties": {
+        "child_completion": {
+          "$ref": "#/$defs/reference"
+        },
+        "child_pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "parent_completion": {
+          "$ref": "#/$defs/reference"
+        },
+        "parent_pr": {
+          "$ref": "#/$defs/pr"
+        },
+        "required_parent_revision": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "dependency_wait": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pr",
+        "requests",
+        "reason",
+        "qa_report"
+      ],
+      "properties": {
+        "pr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "qa_report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/qa_report"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "blocked": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pr",
+        "basis",
+        "reason",
+        "detail",
+        "human_action",
+        "evidence",
+        "qa_report"
+      ],
+      "properties": {
+        "pr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "enum": [
+            "missing_input",
+            "access",
+            "capability",
+            "scope",
+            "evidence",
+            "changed_input",
+            "publication",
+            "transition",
+            "uncertain_outcome"
+          ]
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "human_action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence"
+          },
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "qa_report": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/qa_report"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "resume_authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blocked_result",
+        "pr",
+        "reason"
+      ],
+      "properties": {
+        "blocked_result": {
+          "$ref": "#/$defs/reference"
+        },
+        "pr": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/pr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "admission"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/admission"
+          },
+          "from_stage": {
+            "enum": [
+              "Ready to Work",
+              "Rework Queued"
+            ]
+          },
+          "to_stage": {
+            "const": "In Progress"
+          },
+          "role": {
+            "const": "manager"
+          },
+          "assignment": {
+            "type": "null"
+          },
+          "resume_authorization": {
+            "type": "null"
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "from_stage": {
+                  "const": "Ready to Work"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "properties": {
+                    "mode": {
+                      "const": "new_work"
+                    },
+                    "previous_assignment": {
+                      "type": "null"
+                    },
+                    "existing_pr": {
+                      "type": "null"
+                    },
+                    "requests": {
+                      "type": "array",
+                      "maxItems": 0
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "payload": {
+                  "properties": {
+                    "mode": {
+                      "const": "repair"
+                    },
+                    "previous_assignment": {
+                      "$ref": "#/$defs/reference"
+                    },
+                    "requests": {
+                      "type": "array",
+                      "minItems": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "implementation"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/implementation"
+          },
+          "from_stage": {
+            "enum": [
+              "In Progress"
+            ]
+          },
+          "to_stage": {
+            "const": "In Review"
+          },
+          "role": {
+            "const": "implementer"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "review"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/review"
+          },
+          "from_stage": {
+            "enum": [
+              "In Review"
+            ]
+          },
+          "to_stage": {
+            "const": "QA"
+          },
+          "role": {
+            "const": "reviewer"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "qa"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/qa"
+          },
+          "from_stage": {
+            "enum": [
+              "QA"
+            ]
+          },
+          "to_stage": {
+            "const": "Human Review"
+          },
+          "role": {
+            "const": "qa"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "properties": {
+                  "report": {
+                    "properties": {
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "properties": {
+                            "result": {
+                              "const": "PASS"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "stack_update_request"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/stack_update_request"
+          },
+          "from_stage": {
+            "enum": [
+              "Human Review"
+            ]
+          },
+          "to_stage": {
+            "const": "Rework Queued"
+          },
+          "role": {
+            "const": "manager"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          },
+          "resume_authorization": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "dependency_wait"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/dependency_wait"
+          },
+          "from_stage": {
+            "enum": [
+              "In Progress",
+              "In Review",
+              "QA"
+            ]
+          },
+          "to_stage": {
+            "const": "Rework Queued"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "role": {
+                "const": "reviewer"
+              },
+              "from_stage": {
+                "const": "In Review"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "qa"
+              },
+              "from_stage": {
+                "const": "QA"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "implementer"
+              },
+              "from_stage": {
+                "const": "In Progress"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "blocked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/blocked"
+          },
+          "from_stage": {
+            "enum": [
+              "In Progress",
+              "In Review",
+              "QA"
+            ]
+          },
+          "to_stage": {
+            "const": "Blocked"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "role": {
+                "const": "reviewer"
+              },
+              "from_stage": {
+                "const": "In Review"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "qa"
+              },
+              "from_stage": {
+                "const": "QA"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "implementer"
+              },
+              "from_stage": {
+                "const": "In Progress"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "repair_request"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/repair_request"
+          },
+          "from_stage": {
+            "enum": [
+              "In Review",
+              "QA",
+              "Human Review"
+            ]
+          },
+          "to_stage": {
+            "const": "Rework Queued"
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "role": {
+                "const": "reviewer"
+              },
+              "from_stage": {
+                "const": "In Review"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "qa"
+              },
+              "from_stage": {
+                "const": "QA"
+              }
+            }
+          },
+          {
+            "properties": {
+              "role": {
+                "const": "human_request"
+              },
+              "from_stage": {
+                "const": "Human Review"
+              }
+            }
+          }
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "role": {
+                  "const": "qa"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "payload": {
+                  "properties": {
+                    "qa_report": {
+                      "$ref": "#/$defs/qa_report"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "resume_authorization"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "role": {
+            "const": "human_request"
+          },
+          "from_stage": {
+            "const": "Blocked"
+          },
+          "to_stage": {
+            "enum": [
+              "In Progress",
+              "In Review",
+              "QA"
+            ]
+          },
+          "assignment": {
+            "$ref": "#/$defs/reference"
+          },
+          "resume_authorization": {
+            "type": "null"
+          },
+          "payload": {
+            "$ref": "#/$defs/resume_authorization"
+          }
+        }
+      }
+    }
+  ]
+}
