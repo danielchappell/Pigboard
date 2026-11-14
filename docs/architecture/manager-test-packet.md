@@ -188,6 +188,14 @@ a separately approved cleanup plan. Do not delete unresolved state, shared roles
 secrets, workflows or Jira history to make the test appear clean. Leaving fixtures
 in place pending review is an honest partial cleanup, not a failure to conceal.
 
+## Prepared observation artifacts
+
+[Five read-only Bruno observations](probes/README.md) now provide exact selectors
+and localhost positive/negative checks. They cover selected state/record reads,
+not the full packet. Operator mutations, workflow/history requests, Lambda/resource
+artifacts, credentials and live evidence remain unprepared or unverified. DynamoDB
+live reads are explicitly disabled pending fail-closed credential preparation.
+
 ## Remaining setup decisions and execution gate
 
 Preparation can continue without the user. Live execution waits for: isolated Jira

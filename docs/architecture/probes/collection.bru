@@ -1,0 +1,36 @@
+script:pre-request {
+  const raw = bru.getProcessEnv("PIGBOARD_PROBE_BINDING");
+  if (!raw) throw new Error("PROBE_BINDING_REQUIRED");
+  const b = JSON.parse(raw);
+  if (b.schema !== "pigboard-observation-binding/v1") throw new Error("PROBE_BINDING_VERSION");
+  const names = ["issue", "reconcile", "comment", "pointer", "dynamodb"];
+  if (!names.includes(b.observation)) throw new Error("PROBE_SELECTOR_REQUIRED");
+  if (!b.expected || !b.issue_id || !b.project_id || !Array.isArray(b.issue_allowlist) || !b.issue_allowlist.includes(b.issue_id)) throw new Error("PROBE_SCOPE_REQUIRED");
+  if (!/^[0-9]+$/.test(b.issue_id) || !/^[0-9]+$/.test(b.project_id)) throw new Error("PROBE_ID_INVALID");
+  if (!Number.isSafeInteger(Number(b.issue_id))) throw new Error("PROBE_ID_INVALID");
+  if (b.mode === "local_mock") {
+    if (!Number.isInteger(b.local_port) || b.local_port < 1 || b.local_port > 65535 || b.base !== "http://127.0.0.1:" + b.local_port) throw new Error("PROBE_LOCAL_TARGET_INVALID");
+    if (b.profile !== "pigboard-local-fixture") throw new Error("PROBE_LOCAL_PROFILE_INVALID");
+  } else {
+    if (b.mode !== "live" || b.execution_authorized !== true || !b.approved_revision || !b.identity_receipt || !b.counter_receipt) throw new Error("PROBE_NOT_AUTHORIZED");
+    if (b.base !== "https://scubapig.atlassian.net" || b.site !== b.base) throw new Error("PROBE_LIVE_TARGET_INVALID");
+    if (b.observation === "dynamodb") throw new Error("PROBE_LIVE_AWS_DISABLED");
+  }
+  if (b.region !== "eu-north-1") throw new Error("PROBE_REGION_INVALID");
+  if (b.observation === "dynamodb" && (!b.table || !b.key || !b.profile)) throw new Error("PROBE_AWS_BINDING_REQUIRED");
+  if (b.observation === "comment" && !/^[0-9]+$/.test(b.comment_id || "")) throw new Error("PROBE_COMMENT_REQUIRED");
+  if (b.observation !== "dynamodb" && !bru.getProcessEnv("PIGBOARD_JIRA_AUTHORIZATION")) throw new Error("PROBE_AUTH_REQUIRED");
+  if (["issue", "reconcile"].includes(b.observation) && !/^[0-9]+$/.test(b.expected.status_id || "")) throw new Error("PROBE_EXPECTATION_REQUIRED");
+  if (b.observation === "comment" && (!b.expected.record || !b.expected.actor_id || !b.expected.created || !b.expected.updated)) throw new Error("PROBE_EXPECTATION_REQUIRED");
+  if (b.observation === "pointer" && !b.expected.pointer) throw new Error("PROBE_EXPECTATION_REQUIRED");
+  if (b.observation === "dynamodb" && !b.expected.item) throw new Error("PROBE_EXPECTATION_REQUIRED");
+  bru.setVar("binding", b);
+  bru.setVar("base", b.base);
+  bru.setVar("issue_id", b.issue_id);
+  bru.setVar("comment_id", b.comment_id || "0");
+  bru.setVar("profile", b.profile);
+  bru.setVar("region", b.region);
+  bru.setVar("jira_auth", bru.getProcessEnv("PIGBOARD_JIRA_AUTHORIZATION") || "");
+  bru.setVar("search_body", JSON.stringify({jql: "id = " + b.issue_id, reconcileIssues: [Number(b.issue_id)], fields: ["status", "project"], maxResults: 1}));
+  bru.setVar("ddb_body", JSON.stringify({TableName: b.table, Key: b.key, ConsistentRead: true}));
+}

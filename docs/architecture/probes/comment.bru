@@ -1,0 +1,54 @@
+meta {
+  name: comment
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base}}/rest/api/3/issue/{{issue_id}}/comment/{{comment_id}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{jira_auth}}
+  Accept: application/json
+  Content-Type: application/json
+}
+
+script:pre-request {
+  if (bru.getVar("binding").observation !== "comment") throw new Error("PROBE_SELECTOR_MISMATCH");
+}
+
+tests {
+  const b = bru.getVar("binding");
+  test("exact comment transport", function () {
+    expect(res.getStatus()).to.equal(200);
+    const d = res.getBody();
+    expect(d.id).to.equal(b.comment_id);
+    expect(d.author.accountId).to.equal(b.expected.actor_id);
+    expect(d.updateAuthor.accountId).to.equal(b.expected.actor_id);
+    expect(d.created).to.equal(b.expected.created);
+    expect(d.updated).to.equal(b.expected.updated);
+    expect(d.body.type).to.equal("doc");
+    expect(d.body.version).to.equal(1);
+    const blocks = [];
+    function walk(n, depth) {
+      if (depth > 16) throw new Error("ADF_DEPTH");
+      if (n.type === "codeBlock") blocks.push(n);
+      if (n.content) for (const c of n.content) walk(c, depth + 1);
+    }
+    walk(d.body, 0);
+    expect(blocks).to.have.lengthOf(1);
+    expect(blocks[0].content.every(n => n.type === "text" && typeof n.text === "string")).to.equal(true);
+    const text = blocks[0].content.map(n => n.text).join("");
+    expect(text.length).to.be.at.most(16384);
+    expect(JSON.parse(text)).to.deep.equal(b.expected.record);
+  });
+}
+
+settings {
+  followRedirects: false
+  maxRedirects: 0
+  timeout: 10000
+}

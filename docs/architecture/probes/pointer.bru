@@ -1,0 +1,36 @@
+meta {
+  name: pointer
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{base}}/rest/api/3/issue/{{issue_id}}/properties/pigboard.work-context
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: {{jira_auth}}
+  Accept: application/json
+  Content-Type: application/json
+}
+
+script:pre-request {
+  if (bru.getVar("binding").observation !== "pointer") throw new Error("PROBE_SELECTOR_MISMATCH");
+}
+
+tests {
+  const b = bru.getVar("binding");
+  test("exact admission pointer", function () {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().key).to.equal("pigboard.work-context");
+    expect(res.getBody().value).to.deep.equal(b.expected.pointer);
+  });
+}
+
+settings {
+  followRedirects: false
+  maxRedirects: 0
+  timeout: 10000
+}

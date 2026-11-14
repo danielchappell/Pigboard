@@ -162,6 +162,14 @@ acceptance. Existing delivery automations remain inactive and untouched.
 See [admission discovery and bounded proof](manager-admission-proof.md) for the current
 read/write protocol, new platform evidence and the exact fixture work still needed.
 
+## Local observation preparation
+
+The [prepared observation kit](probes/README.md) checks five read request shapes and
+their assertions against synthetic loopback responses. It does not prove provider
+semantics, handoff business validity or manager behavior. Live DynamoDB execution
+remains disabled until credential failure can be proved to stop before sending.
+All live packet cases and delivery automations remain inactive.
+
 ## References and review boundary
 
 - [Jira structured code blocks](https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/codeBlock/)

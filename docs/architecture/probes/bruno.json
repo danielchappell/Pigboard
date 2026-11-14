@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Pigboard isolated observations",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
