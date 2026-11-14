@@ -110,3 +110,38 @@ f317a908ca009d3c6e240fe4d25d320ae1914258770dfe9b22069da46a1db4a0  docs/architect
 ```
 
 Final verdict: **CLEAN — complete delivery plan and publication fidelity, awaiting owner approval before implementation.**
+
+## PR #74 traceability correction re-review
+
+Verdict: **CLEAN** for the two corrected coverage artifacts below, relative to baseline `42bba31`. This is a bounded documentation correction; the reviewed Stories, structured ticket payload, 88 acceptance cases, 41 scenario bodies, scope and dependencies are unchanged.
+
+The Codex P2 finding is valid: M03 lacked its existing repair-bypass case R1-11-S09, and M06 lacked its existing Epic-order case R1-11-S37. My earlier cross-table equality check verified agreement between the two tables but did not catch these shared omissions. The expanded independent sweep also identified missing explicit anchor links M09→R1-11-S24 and M13→R1-11-S34. M09 already had related active-child apply coverage through R1-19-H03, and S34 was already mapped to M07; their existing scenario references are now explicit on the additional anchored requirements too. All four corrections are present in both tables. No new behavior or case was added.
+
+Coverage and verification:
+
+- **2/2** changed files and **4/4** corrected requirement rows examined against the exact diff; only the four existing case references were added in each file.
+- **50/50** requirement rows re-examined against readable requirements, design/evidence anchors and their mapped acceptance cases, rather than relying only on table-to-table equality.
+- **46/46** explicitly named or range-expanded requirement-to-scenario anchor edges now have their exact existing R1-11 case references. This includes every scenario anchor on M01–M14; rows without numeric scenario anchors were checked against their authoring/worker/operation cases and unchanged contracts.
+- **50/50** delivery/product mapping rows agree in case IDs; all cited cases exist, and product native Story keys match the cases' owning Stories.
+- **41/41** scenario-to-case identity mappings remain intact; **88/88** prescribed case IDs remain. The reviewed draft payload hash remains `b98b667a883e09967dd67fd3518fc082a89351d7cb19db3d0510e9766667faa0`; Story-body hash remains `7084dfc88e01e85a43b0e0957c2f30078f6924d620c5c3ffa7b2ca4ac1c42964`.
+
+Second pass completed after all four fixes: expanded ranges again, checked every explicit anchor against both tables, checked corrected scenario meaning (repair bypass, Epic order, active child and removed/cancelled prerequisite), rechecked case existence and reviewed payload/body invariance. No analogous omission or unresolved in-scope finding remains. This is review evidence, not evidence that any implementation or acceptance case ran.
+
+Seven-principle impact assessment:
+
+1. **Intuitive:** the readable requirement rows now point directly to each named behavior; no user journey or vocabulary changes.
+2. **Discoverable:** humans and agents can find all four already-prescribed cases from the requirements that anchor them, without searching another requirement row.
+3. **Delightful experience:** removes avoidable navigation and ambiguity during owner/developer review; adds no setup or approval step.
+4. **Token saver:** precise case references prevent extra lookups while keeping full case instructions unchanged; no evidence is omitted.
+5. **Secure:** unchanged runtime/authority boundaries; documenting repair-bypass and active-child guards more explicitly makes their existing safety coverage easier to audit.
+6. **Agents are equal:** stable machine-readable case IDs and native Story links remain consistent with readable human coverage; neither execution rights nor human test ownership changes.
+7. **Dependable:** the known traceability defect and additional sweep findings are recorded honestly and corrected without claiming a new test pass, implementation result or earlier flawless review.
+
+Exact SHA256 correction manifest:
+
+```text
+4f163e880019f4f93d59f49b5c3763578c2e56aeca05e8cee2a8e72c5123b942  docs/delivery/manager-r1/coverage.md
+a4a2c451c0833aa929f3b35fe44341493d599508c3071a80b3300dd138c65d12  docs/product/coverage.md
+```
+
+**CLEAN for the correction.** Earlier manifests remain historical; these hashes supersede only their two coverage-file entries. Owner implementation approval, current-revision PR checks/Codex approval, installed acceptance and activation remain separate gates.

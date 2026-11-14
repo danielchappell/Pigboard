@@ -107,3 +107,30 @@ Second sweep completed over **8/8 final files, 20/20 native Story bodies, 88/88 
 7. **Dependable:** The final pack reports publication/review as complete while implementation and installed acceptance remain unrun. PGB-91/PGB-58/PGB-92 keep those outcomes separate. This addendum records its evidence limit for the PGB-58 prepared comment instead of inventing a read-back pass.
 
 Owner approval of the complete fixed Story set is still required before implementation. No automation activation, execution of acceptance, deployment or release is authorized or claimed by publication.
+
+## Traceability correction addendum — PR #74
+
+**CLEAN** for the two-file working correction on reviewed commit `42bba31aa2463799e715b229de96b572102fb779`. This supersedes the earlier coverage-file hashes, not the unchanged Story/payload review.
+
+| File | Final SHA-256 |
+| --- | --- |
+| `docs/product/coverage.md` | `a4a2c451c0833aa929f3b35fe44341493d599508c3071a80b3300dd138c65d12` |
+| `docs/delivery/manager-r1/coverage.md` | `4f163e880019f4f93d59f49b5c3763578c2e56aeca05e8cee2a8e72c5123b942` |
+
+The bot's two omissions were real P2 traceability defects: M03 lacked its existing S09 case and M06 lacked its existing S37 case. My independent full-row sweep found the analogous M09→S24 and M13→S34 omissions. All four edges are now present in both tables. Re-read the complete diff: only these four rows in each coverage file change; no new case, Story, feature or expectation is introduced.
+
+Coverage: **2/2 changed files, 50/50 requirement rows, 14/14 scenario-anchored rows and 46/46 explicitly named/ranged requirement-to-scenario edges** checked. Expanded source anchors independently and compared each with its row's existing acceptance-case IDs. Compared both coverage tables row by row, checked every cited case exists and native Story links remain correct. All **41/41 scenario-table entries** and **88/88 prescribed cases** remain present. `stories.md`, `ticket-drafts.json` and `publication.json` are byte-identical to the reviewed commit; the archived draft digest remains `b98b667a883e09967dd67fd3518fc082a89351d7cb19db3d0510e9766667faa0`. No Jira payload change is needed or claimed.
+
+Second pass completed across **50/50 rows**, reversing from scenario anchors/case IDs to the requirement rows and then comparing the two tables again. No analogous omitted explicit anchor remains; no unresolved in-scope finding.
+
+Seven principles for this correction:
+
+1. **Intuitive:** Existing requirement rows now visibly include their stated scenario boundaries; behavior is unchanged.
+2. **Discoverable:** Restored links expose repair priority, reorder ties, active-child protection and removed-prerequisite handling where readers expect them.
+3. **Delightful experience:** Readers can reach the existing cases directly without reconciling gaps themselves; no extra user steps.
+4. **Token saver:** Four direct links remove avoidable reconstruction while preserving the complete case text.
+5. **Secure:** Authority, permissions, credentials and runtime behavior are unaffected by this documentation-only mapping change.
+6. **Agents are equal:** Human and machine consumers receive matching complete mappings; case ownership and dispatch remain unchanged.
+7. **Dependable:** The record names the actual omissions and exact corrected artifacts without claiming new test execution, implementation or release readiness.
+
+Implementation and activation remain unauthorized; existing installed-acceptance and owner gates are unchanged.
