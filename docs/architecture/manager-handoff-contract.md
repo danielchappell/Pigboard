@@ -34,8 +34,11 @@ explicit, confirmed publication before transition and does not assume atomicity.
 - [Role skeletons](examples/handoffs/): one document per comment, with nulls visible.
 
 Each comment contains a short human summary and exactly one ADF `codeBlock` whose
-text is a single YAML mapping with `schema: pigboard-handoff/v1`. Walk the ADF node,
-parse safe YAML 1.2 using JSON-compatible scalars, and validate the schema; do not parse rendered fences or prose.
+text is a single YAML mapping with `schema: pigboard-handoff/v1`. REST readers walk
+the ADF node. The existing MCP route supplies its documented HTML code-block
+representation: use an HTML parser to recover that text, then the same safe YAML
+1.2/JSON-compatible validation. Do not parse rendered fences or prose. See the
+[verified transport contract](manager-worker-transport.md).
 Unknown keys, duplicate keys, aliases, custom tags, multiple documents, unsupported
 versions and missing required values fail validation. Apply schema format checks,
 including UUID and URI checks. Skeleton nulls are preparation aids, not valid output.
@@ -99,7 +102,8 @@ shared PR criteria remain separate from the Jira handoff skill.
 A well-shaped object alone is insufficient. The validator and role skill require:
 
 1. Every reference resolves to its named issue/comment/record, matching digest and
-   allowed server actor. Fetch referenced comments by ID. Reject deleted, edited,
+   allowed server actor. Resolve the exact referenced comment ID: directly through
+   REST, or through bounded complete MCP pagination and exact-ID selection. Reject deleted, edited,
    conflicting or inaccessible evidence; verify the server's author and update
    metadata, not a body-supplied author. Previously consumed server metadata and
    digest remain in manager state so an edit cannot silently change a decision.
@@ -140,7 +144,7 @@ A well-shaped object alone is insufficient. The validator and role skill require
    all assigned steps PASS. Other records retain partial results and skipped steps.
    Reused evidence needs an explicit case-specific basis in its linked report.
 9. `human_pending` equals the ticket's human case IDs. Agents never report human
-   PASS. An explicitly all-human ticket is allowed only with no AI steps, complete
+   PASS. Owner-approved on 14 November 2026: an explicitly all-human ticket is allowed only with no AI steps, complete
    human cases and a nonempty matching `no_ai_cases_reason`; QA reports zero AI
    cases, not a test pass invented from an empty suite. CI and PR review still apply.
 10. A repair request identifies its finding IDs, exact affected revision and basis

@@ -26,7 +26,7 @@ writes for that scan.
 | ID | Situation | Required result |
 | --- | --- | --- |
 | S01 | Opted-in Epic is In Progress; A is Ready to Work; stream empty; zero Human Review | Select A for new admission |
-| S02 | Epic has no configured opt-in label, or is not In Progress | No admission; active workers may finish their own permitted cycle. Without opt-in, no manager authority. For an opted-in paused Epic, suppressing queue-only mutations is provisional, pending owner review |
+| S02 | Epic has no configured opt-in label, or is not In Progress | No admission; active workers may finish their own permitted cycle. Without opt-in, no manager authority. For an opted-in paused Epic, suppress all manager transitions, including queue-only mutations (owner confirmed 14 November 2026) |
 | S03 | Earlier A is in refinement; later independent B is Ready to Work | Ignore A as candidate; select B |
 | S04 | A is Ready to Work but has a required null; independent B is an otherwise eligible Ready to Work Story/Bug with a complete contract | Report A's field error; B can be selected; no agent launched to finish A's specification |
 | S05 | B requires A's AI-QA completion; A is unready, unfinished or lacks coherent current evidence | B is ineligible; do not invent completion or a different prerequisite condition |
@@ -86,28 +86,30 @@ The detailed reference/root rules remain owned by the handoff contract.
 | S37 | Human reorders eligible independent tickets before admission | New Epic order controls future ties; do not rewrite an existing assignment or actual parent lineage |
 | S38 | Requirements, relevant Epic membership or completion revision changes before durable intent | Return changed-input/no-write; use a later fresh evaluation rather than continuing an old selection |
 | S39 | Two tickets are already active in one stream | Report inconsistent occupancy and hold new manager mutations; do not stop either Cursor run automatically |
-| S40 | Epic is paused after one worker cycle started | No new admission; that cycle may reach Human Review if it needs no correction. Provisional: also suppress manager queue-only operations, pending owner review |
+| S40 | Epic is paused after one worker cycle started | No new admission; that cycle may reach Human Review if it needs no correction. Also suppress manager queue-only operations (owner confirmed 14 November 2026) |
 | S41 | Relevant inputs change after durable intent or comment/pointer publication but before transition | Send no transition; preserve the intent and already-published evidence as a human hold. A fresh scan cannot clear it or replay publication |
 
 These edit rules do not create a migration, cancellation or human-unblock feature.
 A cancellation is never successful completion. The first release must map native
 accepted and cancelled outcomes separately and document how an operator reconciles
-retained ownership. Until those operational steps and initial inventory are tested,
-they remain implementation-readiness gates; a truth table is not that proof.
+retained ownership. The production implementation must verify the operator procedure and initial
+inventory as acceptance; a truth table is not that proof.
 
 ## Remaining proof and owner choices
 
-No new product decision is needed for the scenarios above beyond the existing
-proposal that Epic pause also prevents manager queue-only mutations. Keep that
-proposal visible for the owner's complete Story-set review; workers' permitted
-handoffs are unaffected by the manager pause.
+The owner confirmed on 14 November 2026 that Epic pause prevents all manager
+transitions, including queue-only stack updates. Workers' permitted handoffs are
+unaffected. The separate human-invoked [rework skill](manager-human-rework.md) is now approved
+and must be covered in the complete Story set.
 
-The following remain technical discovery work: bounded initial inventory, retained
-ID/state layout and retirement, tested Jira source edges, actor/property transport,
-request ceilings, exact IAM and safe operator reconciliation. Do not manufacture
-ready Stories from this matrix while those facts are missing. The complete delivery
-plan must map each scenario to its implementation slice and executable acceptance
-case. Current local observation checks cover transport only.
+The [technical closure](manager-discovery-closure.md) now fixes inventory, retained
+state/history and evidence-only reconciliation. The isolated source-edge/state
+proof and [worker transport inspection](manager-worker-transport.md) provide the
+recorded provider evidence, with partial/unrun cases preserved. Production bounds,
+IAM, adapter failures, operator commands and installed Cursor writes are required
+implementation/acceptance work, not a request to repeat discovery. The complete
+delivery plan must map every scenario to a sized slice and executable acceptance
+case. Combined review and complete delivery-plan review still gate Story freeze.
 
 ## Author assessment
 

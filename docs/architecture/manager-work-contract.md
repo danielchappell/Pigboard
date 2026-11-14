@@ -1,8 +1,9 @@
 # Work and handoff contracts for the first manager
 
 14 November 2026. Concrete discovery draft for PGB-67. The Epic and ticket
-examples are complete editable skeletons, not ready tickets or installed schemas. Contract review and the bounded
-Jira round-trip proof are required before implementation Stories become ready.
+examples are complete editable skeletons, not ready tickets or installed schemas.
+The [closure](manager-discovery-closure.md) records provider evidence and remaining
+implementation acceptance; combined review and complete Story grooming still apply.
 
 ## Three documents, three owners
 
@@ -18,7 +19,7 @@ deployment-configuration versions. The [examples](examples/) contain the Epic an
 ticket skeletons. The [schema draft](manager-work-schema.md) specifies exact start
 structure, populated examples and the separate semantic validation gates. The [handoff contract](manager-handoff-contract.md) now defines the exact encoding,
 assignment binding and publication order, with separate role skeletons and design
-schemas. It still requires independent review and provider round-trip proof;
+schemas. Provider observations and their limits are recorded in the closure;
 workers and validators must not treat design publication as installed behavior.
 
 Native Jira owns issue identity, type, status, parent, assignee and labels. The
@@ -121,7 +122,7 @@ The manager's conditional intent precedes publication. Confirmed comment/pointer
 publication precedes the single source-specific transition. Unknown outcomes retain
 a human hold; there is no automatic replay or exclusive-worker proof. A queue
 request preserves B's completed assignment until its later admission. Provider
-round-trip and installed-package acceptance remain separate unfinished gates.
+round-trip observations remain separate from the required installed-package acceptance.
 
 ## Editing, removal and rollout
 
@@ -135,7 +136,7 @@ round-trip and installed-package acceptance remain separate unfinished gates.
 - A cancellation/declined outcome is not successful completion. The final native
   status mapping must distinguish accepted completion from cancellation; unknown
   statuses are not inferred from Jira's broad status category.
-- Epic pause prevents new manager admission and proposed queue-only mutations.
+- Epic pause prevents every manager transition, including queue-only mutations.
   Existing workers may finish their permitted handoffs. Resume re-evaluates facts.
 - Cut over with manager writes and delivery automations disabled. Publish authoring
   examples, role handoff skills, Story/Bug filters and environment bundle together;
@@ -161,6 +162,6 @@ or old-runtime compatibility layer is added. Those remain separately scoped work
 - Agents are equal: exact execution/handoff inputs coexist with readable human cases
   and visible evidence; neither interface can fabricate the other's completion.
 - Dependable: record references and revision coherence prevent stale passing claims;
-  defined binding/publication behavior still requires provider proof before readiness.
+  defined binding/publication behavior requires installed acceptance before activation.
 - Unified configuration: infrastructure authority has one owner; ticket work data
   and generated evidence are distinct from setup configuration.

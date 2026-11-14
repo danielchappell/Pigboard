@@ -2,7 +2,8 @@
 
 Owner-approved rule, 14 November 2026. This is the release-one design; it is not
 implemented. The handoff format is specified in the [worker contract](manager-handoff-contract.md);
-independent review and live transition proof still gate implementation readiness.
+combined review and complete Story grooming gate implementation; installed
+acceptance gates activation. Provider evidence is recorded in the technical closure.
 
 ## The rule
 
@@ -88,7 +89,8 @@ Proposed record contract for PGB-67, to validate before implementation:
 
 The [worker handoff contract](manager-handoff-contract.md) specifies transport,
 writer checks, record selection and ordered non-atomic publication. Its provider
-behavior still needs the bounded proof. Ordinary conversational comments must not become executable
+observations and remaining installed acceptance are recorded in the
+[technical closure](manager-discovery-closure.md). Ordinary conversational comments must not become executable
 instructions. Stable repair IDs alone do not authenticate a record or prove that
 its referenced review actually occurred. The manager must reject conflicting or
 incomplete evidence rather than infer completion from prose or timestamps.
@@ -107,9 +109,8 @@ do not invent a sixth-slot exception. An already-queued B must not be counted tw
 Existing active work is never interrupted to repair a capacity violation; report
 the inconsistent state and stop further admission for human correction.
 
-Epic pause stops admission, including rework. Proposed release-one application:
-apply the same active-Epic check to queue-only transitions, and re-evaluate pending
-stack updates on resume. An existing worker may still complete its permitted
+Epic pause stops admission, including rework. Owner-confirmed on 14 November 2026: apply the same active-Epic check to
+queue-only transitions, and re-evaluate pending stack updates on resume. An existing worker may still complete its permitted
 handoff. No manager action starts work while the Epic is paused.
 
 ## Boundary cases to verify
@@ -151,6 +152,6 @@ This boundary is subject to the combined design review, not a claim of live proo
 - Agents are equal: explicit repair inputs replace reliance on another agent's chat;
   humans retain visible findings, evidence and prescribed testing ownership.
 - Dependable: repeated repair identity, exact revision evidence, capacity and active
-  work rules are explicit; missing transport/live proof still blocks readiness.
+  work rules are explicit; actual installed acceptance still gates activation.
 - Unified configuration: routing/permissions remain configured centrally; lineage
   and repair evidence are per-ticket work data, not another setup surface.

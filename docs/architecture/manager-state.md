@@ -45,9 +45,10 @@ timestamps and an outcome code. A reconciliation records the operator, dispositi
 time and evidence references. No descriptions, code, transcripts, secrets or raw
 provider responses belong in these records.
 
-Exact key layout and attempt-history retention are still part of PGB-68. Do not
-implement speculative future record types. Separate record kinds rather than
-growing a single unbounded JSON object for the entire installation.
+The [technical closure](manager-discovery-closure.md) fixes four record kinds:
+installation, stream, attempt and member; retain attempts/members without automated
+retirement in release one. Exact key spelling is an implementation detail. Do not
+grow an unbounded JSON object for an entire installation.
 
 Required interface behavior:
 
@@ -84,9 +85,9 @@ hold that stream until its outcome is confirmed or a human reconciles it.
 | Unknown state schema or incompatible configuration | No admission; identify the upgrade/configuration problem |
 
 A database transaction cannot include Jira. This design remembers uncertainty;
-it does not promise exactly-once transitions or Cursor launches. The definitive
-Jira-rejection classifications, successful-admission retention and complete fresh
-read protocol must be resolved in PGB-68 before apply mode is ready.
+it does not promise exactly-once transitions or Cursor launches. The [technical closure](manager-discovery-closure.md) fixes retained history,
+complete/fresh inventory and evidence-only rejection handling. The finished apply
+implementation must verify those guarantees before it can be enabled.
 
 Human recovery is an operator action, distinct from a ticket's Blocked status.
 The operator disables admission, waits for the bounded invocation and outstanding
@@ -95,10 +96,11 @@ disposition with evidence. If the result cannot be established, the hold remains
 Only a subsequent fresh scan may admit work. No agent automatically clears a hold,
 and this action does not unblock a Jira issue or start a Cursor run.
 
-The final recovery contract must address the external-write race: changing a
-database revision cannot cancel an already-sent Jira request. Reconciliation must
-not create another writer while an old request may still act. Until that procedure
-is proven, recovery is an open discovery gate, not a supported command.
+Changing a database revision cannot cancel an already-sent Jira request. The
+[reconciliation contract](manager-discovery-closure.md#3-uncertain-outcomes-and-human-reconciliation)
+therefore retains unknown outcomes and admits only positive evidence after disabling
+and draining. Implementing and verifying that operator command is delivery work;
+it is not a currently supported command or a further open-ended discovery gate.
 
 ## Upgrade and removal rules
 
@@ -125,8 +127,8 @@ is proven, recovery is an open discovery gate, not a supported command.
    changes need an explicit migration, not an ordinary automatic stack update.
    Removal stops admission and reports retained data and continuing resource costs.
 7. Pending intents and unresolved holds never have TTL. Cleanup applies only to
-   records proven unnecessary for safety or recovery. Retention length is a pending
-   operational contract choice; first release must document it before delivery.
+   records proven unnecessary for safety or recovery. Release one retains all records without automatic retirement; the guide must
+   explain the resulting retained-data costs.
 8. Reinstallation and backup restore must identify retained state and reconcile it
    before writes are enabled. A missing table is an error for an existing install,
    not permission to recreate an empty authority. Permanent purge is a separate
@@ -137,7 +139,7 @@ and separate operator/deployer privileges from normal scheduling. Strong reads
 and conditional writes are explicit adapter requirements. The installer must check
 state identity and configuration compatibility before enabling apply mode.
 
-## Verification required before implementation readiness
+## Required implementation verification and acceptance
 
 - Shared contract cases: simultaneous intents, stale completion, unavailable store,
   unknown schema, and human reconciliation conflicting with an old revision.

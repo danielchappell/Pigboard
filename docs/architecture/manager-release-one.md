@@ -86,8 +86,9 @@ Read YAML from a Jira document code-block node, parse with a standard parser and
 validate against a versioned schema. Do not extract policy with regex or an LLM.
 Reject duplicate keys, custom tags, aliases, unknown fields, ambiguous blocks,
 unresolved references and excessive input size. Do not execute anything in YAML.
-The earlier complete-story YAML skeleton is still a draft; publishing a schema
-requires a compatibility plan for the currently installed story contract.
+The [schema guide](manager-work-schema.md) and [product specifications](../product/README.md)
+define the reviewed-source contract and required coordinated compatibility change.
+Publishing them alone does not update installed worker behavior.
 
 ## Admission rules retained from storyboarding
 
@@ -101,8 +102,8 @@ requires a compatibility plan for the currently installed story contract.
    frees that automated slot. A genuine unresolved Blocked item holds the stream.
    Missing or inconsistent state must never be interpreted as an available slot.
 5. Five tickets may wait in Human Review, counting Stories and Bugs together.
-   At five, admit no new Story or Bug. Required repair capacity accounting must be
-   resolved before implementation; no silent exception to the cap is approved.
+   At five, admit no new Story or Bug. Repairs obey the same return-capacity rule: Human Review count plus the selected
+   ticket must not exceed five; no sixth-slot exception.
 6. Within eligible work, prerequisites come first, then queued repairs/required
    stack updates, then Bugs, then Stories. Epic order breaks ties within a class.
    An unready unrelated Bug does not block a ready Story; an unmet prerequisite does.
@@ -134,14 +135,12 @@ The transition is from the observed eligible source status, never a broad global
 transition that could restart arbitrary active work. Recheck the Epic, candidate,
 dependencies and stream immediately before writing.
 
-Jira search is not guaranteed to reflect recent writes immediately. The exact read
-strategy, legal transition IDs, provider retry settings and ambiguous-write response
-need the focused safety Task before apply-mode Stories are declared ready. Prove
-that a delayed scan does not blindly repeat its old selection. DynamoDB is now
-approved for durable admission intent and reconciliation. Its
-conditional-update contract must be proven alongside Jira behavior; it does not
-make the two services transactional. Additional state features still need scope
-approval.
+Jira search may lag recent writes. The [technical closure](manager-discovery-closure.md)
+specifies complete bounded discovery plus fresh known-ID reads, directed transitions,
+durable conditional intent and no automatic mutation retries. The isolated proof
+provides partial provider evidence; production failure/race cases remain required
+implementation acceptance. DynamoDB and Jira are not one transaction. Additional
+state features still need scope approval.
 
 Workers still have direct Jira-to-Cursor triggers. Their duplicate deliveries and
 their actual run status remain outside this release. Admission uses Jira workflow
@@ -152,10 +151,10 @@ Do not automatically replay an uncertain transition. Preserve the affected key a
 sanitized outcome for the customer, stop further admissions in the affected scope,
 and require the defined operator reconciliation before resuming writes. The
 [state contract](manager-state.md) requires a durable intent before the Jira
-call and a version-checked outcome afterward. The safety Task must finish the
-reconciliation procedure and demonstrate it across invocation failure. Rate limits
-and incomplete reads produce a no-write
-result, with bounded request time and a later fresh evaluation rather than an AI loop.
+call and a version-checked outcome afterward. Implement the defined evidence-only
+operator reconciliation and verify invocation failures during delivery. Before an
+intent, rate limits/incomplete reads produce a no-write result and later fresh
+evaluation; after intent, uncertainty retains the human hold. No AI retry loop.
 
 ## Security and operation requirements
 
@@ -209,9 +208,14 @@ from outputs. Verify install, upgrade, stop, rollback and removal. Retain actual
 local tests, code review, CI and merge. Enable real delivery only by explicit owner
 authorization after those gates. No AWS resource is provisioned in this task.
 
-## Remaining design Tasks before delivery-ready Stories
+## Discovery-to-grooming gate
 
-D1. Freeze the admission data contract and scenario truth table: schema extraction,
+The [technical closure](manager-discovery-closure.md) and
+[worker transport result](manager-worker-transport.md) update the discovery status.
+The checklist below names the required coverage, not a request to repeat completed
+research. The owner selected the separate [human rework skill](manager-human-rework.md).
+
+D1. Reconcile the admission data contract and scenario truth table: schema extraction,
 dependencies, repair requests/affected descendants, cap accounting, cancelled or
 removed items, conflicting labels and human unblock entry. Specify what existing
 skills/rules must change together. Use prepared examples, not invented live IDs.

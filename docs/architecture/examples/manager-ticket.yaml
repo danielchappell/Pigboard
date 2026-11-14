@@ -38,7 +38,7 @@ testing_strategy:
   testing_types: null            # List: api, database, ui; match the named steps.
   environment:
     source: null                 # pipeline_pr_comment or configured_target.
-    target_reference: null       # Approved existing target; both sources need PR deployment receipt.
+    target_reference: null       # Approved target; environment-dependent cases need PR deployment receipt.
     required_capabilities: null  # List, e.g. API + restricted database reader.
 
   actors:
