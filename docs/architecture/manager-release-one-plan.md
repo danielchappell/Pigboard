@@ -1,4 +1,6 @@
-# First manager release — Jira delivery plan
+# First manager release — original discovery queue
+
+**Historical discovery plan, superseded for delivery by the [complete reviewed Story set](../delivery/manager-r1/README.md).** PGB-67/68 discovery is closed with explicit partial-provider-evidence limits; PGB-69 now presents PGB-71–PGB-90 for owner review. The original provisional text below is retained as dated rationale, not the active queue.
 
 Status: the original design was reviewed CLEAN for discovery/design Task grooming.
 The DynamoDB/state-lifecycle addition is a new design revision with its own review
