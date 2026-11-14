@@ -14,6 +14,12 @@ prepared skills; humans review and approve what ships.
 | Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
+The [product specification consolidation](https://github.com/danielchappell/Pigboard/pull/73)
+provides the readable requirements for the proposed release. In checkouts that
+contain it, start with `docs/product/README.md`, then follow its technical-contract
+and coverage links. Specification review does not establish shipped behavior or
+complete implementation Story coverage.
+
 ## What is available
 
 | Capability | State |

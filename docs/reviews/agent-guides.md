@@ -80,3 +80,8 @@ guide now requires those runs to finish before a shared-root refresh, or to bind
 explicitly to the receipt's versioned `skills` path. Keeping an old directory alone
 is not isolation. Cursor's separate snapshots remain a distinct case. The corrected
 commit requires renewed independent assessment and current-head Codex review.
+
+The entry guides also route readers to the product-specification consolidation
+(PR #73) and `docs/product/README.md` when present. Its proposed requirements and
+coverage remain distinct from installed behavior; cleanup does not define the
+open human repair-entry interface or modify the coordinating product worktree.

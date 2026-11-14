@@ -36,6 +36,14 @@ contracts are designs, not installed functionality. Preserve the owner review
 point before implementation. Customer-owned deployment and cloud-independent
 manager logic are the approved direction; do not revive superseded platform plans.
 
+The readable proposed-release requirements are consolidated in
+[product specification PR #73](https://github.com/danielchappell/Pigboard/pull/73).
+When `docs/product/README.md` is present in the checkout, read it before the linked
+technical contracts; until then the PR is the reviewable source. Product
+requirements, technical contracts and installed skills have distinct roles.
+Publication of the specification does not mean its behavior has shipped or that
+Story coverage and owner review are complete.
+
 ## Working boundaries
 
 Run `git status --short --branch` before edits. Preserve unrelated changes and

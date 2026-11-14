@@ -6,6 +6,15 @@ This map separates the installed skills product from the planned manager.
 Use [README.md](README.md) for onboarding and
 [CONTRIBUTING.md](CONTRIBUTING.md) before changing Pigboard.
 
+Read `docs/product/README.md` when present for the proposed release's readable
+requirements and coverage map. Its
+[consolidation PR](https://github.com/danielchappell/Pigboard/pull/73) is the reviewable
+source for checkouts predating that merge. Product requirements define scope;
+architecture documents express technical contracts. Neither replaces the installed
+skill contract or proves implementation. Use the current product decisions for
+human-only QA and Epic pause; the human repair-entry interface remains under
+separate discussion and is not defined by this cleanup.
+
 ## Installed today: prepared skills and Jira/Cursor wiring
 
 | Component | Responsibility and evidence |
