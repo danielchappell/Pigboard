@@ -28,7 +28,7 @@ writes for that scan.
 | S01 | Opted-in Epic is In Progress; A is Ready to Work; stream empty; zero Human Review | Select A for new admission |
 | S02 | Epic has no configured opt-in label, or is not In Progress | No admission; active workers may finish their own permitted cycle. Without opt-in, no manager authority. For an opted-in paused Epic, suppressing queue-only mutations is provisional, pending owner review |
 | S03 | Earlier A is in refinement; later independent B is Ready to Work | Ignore A as candidate; select B |
-| S04 | A is Ready to Work but has a required null; independent B is complete | Report A's field error; B can be selected; no agent launched to finish A's specification |
+| S04 | A is Ready to Work but has a required null; independent B is an otherwise eligible Ready to Work Story/Bug with a complete contract | Report A's field error; B can be selected; no agent launched to finish A's specification |
 | S05 | B requires A's AI-QA completion; A is unready, unfinished or lacks coherent current evidence | B is ineligible; do not invent completion or a different prerequisite condition |
 | S06 | Complete prerequisite A is Human Review, Product Acceptance or Done, with matching completion evidence and no unresolved repair affecting B | A's prerequisite is satisfied; human merge/testing is not an extra implicit admission gate |
 | S07 | Ready Bug B and independent ready Story A are both eligible | Select B; Epic order breaks ties between eligible Bugs |
@@ -65,7 +65,7 @@ interrupted to enforce a newly observed inconsistency.
 | S26 | B is next in Epic order but does not record a code dependency on A | No stack update merely from order or a shared stream |
 | S27 | A is normally merged/retargeted without a recorded repair | No stack update merely from the merge/retarget; humans own PR maintenance |
 | S28 | B must update its stack, but its PR is already merged, lineage is absent, or the fix needs more scope | Human handling; no replacement/multi-PR job inferred. Implementer PR preflight owns the actual open-PR check |
-| S29 | A second parent repair arrives before B starts | Preserve all applicable repair causes and select current coherent parent evidence; no dropped older finding |
+| S29 | A second parent repair arrives before B starts | B waits until the newer parent repair also completes implementation, review and AI QA; consume the latest verified parent revision covering every applicable repair request, preserve all causes and do not drop older findings |
 
 The manager has no PR polling API in this release. S28's merged-PR fact is supplied
 by worker preflight or trusted handoff evidence; scheduling cannot promise advance
