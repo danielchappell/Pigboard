@@ -172,3 +172,9 @@ records the selected Build, exact pins and remaining acceptance work.
 Jira routing and the shared Atlassian read connection are configured. Next is an
 explicitly authorized bounded delivery test with complete Story/PR inputs. Review comments/approvals and Jira transitions have not
 been live-tested. Per-PR environments and MCP migration remain separate work.
+
+## License
+
+Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
+for the retained copyright and historical MIT notice. Third-party dependencies
+retain their own licenses.
