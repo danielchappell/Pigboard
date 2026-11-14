@@ -1,8 +1,9 @@
 # First manager release — Jira delivery plan
 
-Status: design reviewed CLEAN by two independent Sol reviewers for discovery/design
-Task grooming only. No implementation Story is ready. No runtime or deployment is
-authorized by this plan. Jira PGB owns the active queue; local documents are evidence.
+Status: the original design was reviewed CLEAN for discovery/design Task grooming.
+The DynamoDB/state-lifecycle addition is a new design revision with its own review
+record. Earlier CLEAN results do not cover these additions. No implementation Story
+is ready. No runtime or deployment is authorized by this plan. Jira PGB owns the active queue; local documents are evidence.
 
 ## Ordered queue
 
@@ -58,7 +59,13 @@ work through the existing Jira dispatch path. Retain all ten design admission ru
 Out: monitoring, duplicate-agent prevention, dispatch proxy, transcript storage,
 recovery/cancellation, SaaS, multi-cloud deployment and legacy code reuse.
 
-Confirmed in-scope design defects are fixed and re-reviewed. A new datastore,
+The owner approved customer-owned DynamoDB for admission state on 14 November 2026.
+[State ownership and upgrades](manager-state.md) define the new boundary;
+[discovery progress](manager-discovery.md) separates settled contracts from open gates.
+The complete fixed Story set, scope coverage, dependencies, sizing and acceptance
+must be presented to the owner before implementation begins.
+
+Confirmed in-scope design defects are fixed and re-reviewed. A different datastore,
 additional hosted service, changed capacity/rework policy or missing owner decision
 is recorded for the owner before dependent Stories become ready. Do not expand
 PGB-58 or repurpose historic implementation items into this release.

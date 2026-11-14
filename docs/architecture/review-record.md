@@ -60,3 +60,34 @@ CI and reviewed head must be verified on the documentation PR before merging.
 
 No customer delivery automation, AWS resource, runtime, credential or Jira execution
 status was changed by this documentation/grooming work.
+
+
+## DynamoDB and human QA discovery addition — 14 November 2026
+
+Owner-approved changes: customer-owned DynamoDB for admission state; state ownership
+and safe upgrades; current QA skills only; explicit AI cases and separate human
+cases pending Human Review. Automatic stack cascading remains an open decision.
+
+Two fresh independent Sol design reviewers inspected the five-artifact addition
+against base 79548bda36794b78d99b49c388c162059298c2ff:
+
+- `state_design_product`: CLEAN for interim publication, 5/5 artifacts and 12/12
+  contract areas, with a second sweep and independent seven-principle assessment.
+- `state_design_technical`: CLEAN for interim publication, 5/5 artifacts and 11/11
+  contract areas, with a second sweep and independent seven-principle assessment.
+
+Both assessed unified configuration separately and checked the existing QA skills.
+They found Jira authority, conditional state ownership, honest uncertainty, safe
+lifecycle boundaries, human testing ownership and scope exclusions consistent.
+Neither verdict completes discovery or approves the open cascade proposal.
+
+Publication reuses the reviewed documentation-only path: update scope/plan and README
+links, preserve the ratified diagrams, add the two discovery documents and this
+record, check links/whitespace, obtain fresh exact-commit review, then require CI
+and current-head Codex bot approval. Six files; no runtime/tests/skills/configuration
+changes. No new tests are needed for this documentation change. The complete
+implementation Story set remains gated on PGB-67/PGB-68 and owner review.
+
+Committed publication review and hosted evidence belong on the resulting PR;
+these design verdicts do not substitute for them. No AWS resources or delivery
+runs were created, and no automation was enabled.
