@@ -67,8 +67,8 @@ minimal entrypoint prompts. The owner removed mandatory run/visit identity and
 exclusive ownership from the basic MVP skill contract. Duplicate prevention and
 cancellation remain deferred; the operator takes care around repeated launches.
 Actual run metadata is optional evidence. See the [scope correction](../../docs/jira-setup.md#basic-mvp-scope-correction).
-The corrected source must pass a new Build before its installed version is claimed;
-the earlier selected Build and its pin above remain historical installation evidence.
+The corrected source was installed and read back in the successful Build recorded
+below; the earlier Build pins above remain historical installation evidence.
 
 At 23:18 Europe/Madrid on 13 November, the approved existing team **Atlassian**
 connection was saved on all three workers. Their exact prompts, selected Build,
@@ -89,6 +89,49 @@ still isolate only AI-Daniel-1. The [Jira setup record and exports](../../docs/j
 capture exact guards and actions. Payload rendering and stage dispatch remain
 untested. No Story was labeled or transitioned. API dispatch, duplicate prevention
 and cancellation design are deferred to PGB-63–65; no database was added.
+
+## Corrected basic MVP Build — 14 November 2026
+
+The saved Install Script now pins reviewed source
+`e2e7825d97e2633b5893cbcee333375fb5926e05` from merged PR #61. Only its first
+`PIGBOARD_REVISION` line changed; the existing Rovito installation/profile commands,
+empty Start Script, runtime secrets and network settings were preserved.
+
+Saving the configuration automatically triggered
+[Build bld-20261114-4610b7f1-1843-44ef-82b0-4ad66d3bd7bc](https://cursor.com/t/safeguardglobal-engineering/cloud-agents/builds/bld-20261114-4610b7f1-1843-44ef-82b0-4ad66d3bd7bc).
+The environment and Build detail pages showed **Active** and **Success**. Snapshot
+readiness completed at 08:49:50 Europe/Madrid. No extra manual Build was needed.
+The downloaded receipt verifies eleven entrypoints, 27 source files, locked
+helper dependencies, `pg.Client` and `bru --version`, then Rovito 0.1.295's
+binary/version/help checks and the permanent `review-write` profile. Its
+`providerAccessVerified: false` remains a setup receipt, not a new access test.
+
+A direct read-only terminal check resolved `/opt/pigboard/skills`, checked the
+manifest revision and all 27 installed file hashes, and compared all three corrected
+entrypoint hashes with the reviewed source. It returned
+`PIGBOARD_INSTALLED_SKILLS_PASS`, eleven entrypoints and 27 files. No model was asked
+to verify its own instructions. [Nonsecret receipt and hashes](build-refresh-20261114.json)
+retain the exact revision, paths, results and observed automation states.
+
+The dashboard's **Update Environment** button opened a setup assistant; it was
+stopped after read/search activity. The deterministic Build had already succeeded.
+The stopped setup session supplied the terminal for the operator's file check;
+it was not a delivery run. For future refreshes, save the pin, inspect the resulting
+Build, and use **Trigger New Build** on the environment overview only if a new
+Build is actually needed. **Active Build** means the prepared snapshot is selected;
+it does not mean a delivery automation is enabled.
+
+Final UI inspection: implementer, reviewer and QA each showed **Inactive**, switch
+off, zero runs in seven days, Grok 4.7 High, Atlassian and the same prepared Plexus
+environment. The bounded webhook probe remained inactive, without a repository or
+connected tools. No webhook request, delivery skill, Jira/Bitbucket workflow write,
+new credential or secret edit was performed. Legacy automations were untouched.
+
+Screenshots and downloaded raw logs remain in the operator's local evidence under
+`outputs/cursor-build-20261114/` and Downloads. These are not public repository
+artifacts; the shared Build/run links and nonsecret receipt support this record.
+Actual Story delivery, Jira payload rendering, provider writes and per-PR QA
+acceptance remain separate rollout checks in PGB-58/PGB-60.
 
 ## Refresh and recovery
 
