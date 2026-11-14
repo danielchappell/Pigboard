@@ -83,9 +83,11 @@ linked instead of rebuilt simply to fill a row.
    zero-AI-case report; CI and PR review remain required.
 2. **D02 — approved:** pause every manager transition while the Epic is paused;
    workers may finish existing permitted handoffs. Reconcile older proposal text.
-3. **Technical compatibility:** resolve the existing Cursor Jira tool's structured
-   comment/pointer/metadata contract. Do not add a new integration or require a full
-   delivery run simply to answer this interface question.
+3. **Technical compatibility:** incorporate the identified MCP HTML code-block and
+   bounded comment lookup into the design. Provider reads preserved the fixture
+   records/metadata; actual configured Cursor publication and transitions remain
+   installed acceptance before activation. No new integration or pre-groom delivery
+   run is implied.
 4. **Combined review:** reconcile technical closure and provider evidence into the
    design; independently review design/requirements together. Record disagreements
    instead of letting one document silently override another.
