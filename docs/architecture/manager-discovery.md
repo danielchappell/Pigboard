@@ -130,6 +130,13 @@ growth require human handling. The manager neither fixes nor merges branches.
 The exact machine-readable handoff, stale-provider preflight and transition safety
 remain contract/verification work; the cascade product decision is no longer open.
 
+## Consolidated scenario outcomes
+
+The [41-case scenario matrix](manager-scenarios.md) records readiness, priorities,
+capacity, stack repair and edits against the agreed rules. It is a design walkthrough,
+not executable or live acceptance. Operational inventory, retirement/reconciliation
+and actual provider behavior remain open technical gates.
+
 ## What still prevents a fixed implementation backlog
 
 | Gate | Remaining result | Owner |

@@ -214,3 +214,15 @@ reconciles it before the next same-stream operation, and retains the first two a
 history. The last repair remains pending for P5. No request ceiling or product
 behavior changed; no live execution occurred. Exact revised review follows in PR
 evidence; prior CLEAN reviews cover only their named revision.
+
+### Scenario matrix design review — 14 November 2026
+
+Two fresh independent Sol reviewers examined both design artifacts and all 41
+scenarios against six governing contracts. Both completed second sweeps and assessed
+all seven principles plus unified configuration. Final design verdicts are CLEAN.
+Scenario file SHA-256: 3ee27aa60d62b81ab49fa4cf034a758cb74f86266e9f40002f11553b079edc26.
+Discovery file SHA-256: 3e696bb510e5922619fc7697b53c36fb1218212432fecb4afac3be4376bd5fab.
+An initial product P2 was fixed by separating changes before intent (zero writes)
+from changes after publication (no transition, retain human hold). Initial repair
+queue authority is explicit. These are design results, not runtime/provider tests;
+no implementation Story is ready. Exact committed review remains a separate gate.
