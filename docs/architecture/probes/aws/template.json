@@ -1,0 +1,350 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Pigboard isolated read-only research fixture. Deployment requires separate authorization.",
+  "Parameters": {
+    "TrustedOperatorArn": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "^$|^arn:aws:iam::[0-9]{12}:(role|user)/[A-Za-z0-9+=,.@_/-]+$",
+      "Description": "Verified customer IAM principal only; empty omits optional operator role."
+    }
+  },
+  "Conditions": {
+    "CreateOperatorRole": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "TrustedOperatorArn"
+            },
+            ""
+          ]
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "Table": {
+      "Type": "AWS::DynamoDB::Table",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "BillingMode": "PAY_PER_REQUEST",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "pk",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "pk",
+            "KeyType": "HASH"
+          }
+        ]
+      }
+    },
+    "Logs": {
+      "Type": "AWS::Logs::LogGroup",
+      "DeletionPolicy": "Retain",
+      "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-observer"
+        },
+        "RetentionInDays": 1
+      }
+    },
+    "ObserverRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "observe-own-fixture",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Table",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "ForAllValues:StringEquals": {
+                      "dynamodb:LeadingKeys": [
+                        "PROBE#CONTENTION",
+                        "PROBE#STREAM"
+                      ]
+                    }
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Logs",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "Observer": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-observer"
+        },
+        "Runtime": "python3.13",
+        "Architectures": [
+          "x86_64"
+        ],
+        "Handler": "index.handler",
+        "Role": {
+          "Fn::GetAtt": [
+            "ObserverRole",
+            "Arn"
+          ]
+        },
+        "MemorySize": 128,
+        "Timeout": 30,
+        "ReservedConcurrentExecutions": 1,
+        "Environment": {
+          "Variables": {
+            "PROBE_TABLE": {
+              "Ref": "Table"
+            }
+          }
+        },
+        "Code": {
+          "ZipFile": {
+            "Fn::Join": [
+              "\n",
+              [
+                "import os",
+                "import re",
+                "import signal",
+                "import threading",
+                "import boto3",
+                "from botocore.config import Config",
+                "",
+                "DEADLINE_SECONDS = 10",
+                "KEYS = {\"PROBE#CONTENTION\", \"PROBE#STREAM\"}",
+                "ATTEMPTS = {\"contention-a\", \"contention-b\", \"f3-new\", \"f4-queue\", \"f4-repair\"}",
+                "class ProbeDeadline(BaseException):",
+                "    pass",
+                "",
+                "def timed_out(signum, frame):",
+                "    raise ProbeDeadline()",
+                "",
+                "def request_id(response):",
+                "    metadata = response.get(\"ResponseMetadata\", {})",
+                "    value = metadata.get(\"RequestId\") if isinstance(metadata, dict) else None",
+                "    return value if isinstance(value, str) and re.fullmatch(r\"[A-Za-z0-9-]{1,128}\", value) else None",
+                "",
+                "HISTORY_ENTRIES = [",
+                "    {\"M\": {\"attempt\": {\"S\": \"f3-new\"}, \"revision\": {\"N\": \"2\"}, \"state\": {\"S\": \"confirmed\"}}},",
+                "    {\"M\": {\"attempt\": {\"S\": \"f4-queue\"}, \"revision\": {\"N\": \"4\"}, \"state\": {\"S\": \"confirmed\"}}},",
+                "    {\"M\": {\"attempt\": {\"S\": \"f4-repair\"}, \"revision\": {\"N\": \"6\"}, \"state\": {\"S\": \"confirmed\"}}}",
+                "]",
+                "FIXTURE_STATES = {",
+                "    (\"PROBE#CONTENTION\", \"1\", \"contention-a\", \"pending\"): 0,",
+                "    (\"PROBE#STREAM\", \"1\", \"f3-new\", \"pending\"): 0,",
+                "    (\"PROBE#STREAM\", \"2\", \"f3-new\", \"confirmed\"): 1,",
+                "    (\"PROBE#STREAM\", \"3\", \"f4-queue\", \"pending\"): 1,",
+                "    (\"PROBE#STREAM\", \"4\", \"f4-queue\", \"confirmed\"): 2,",
+                "    (\"PROBE#STREAM\", \"5\", \"f4-repair\", \"pending\"): 2,",
+                "    (\"PROBE#STREAM\", \"6\", \"f4-repair\", \"confirmed\"): 3,",
+                "}",
+                "",
+                "def handler(event, context):",
+                "    if not isinstance(event, dict) or set(event) != {\"operation\", \"key\"}:",
+                "        return {\"status\": \"INVALID_REQUEST\"}",
+                "    if event[\"operation\"] != \"observe\" or not isinstance(event[\"key\"], str) or event[\"key\"] not in KEYS:",
+                "        return {\"status\": \"INVALID_REQUEST\"}",
+                "    table = os.environ.get(\"PROBE_TABLE\")",
+                "    if not table or threading.current_thread() is not threading.main_thread() or not hasattr(signal, \"setitimer\"):",
+                "        return {\"status\": \"ENV_UNAVAILABLE\"}",
+                "    if signal.getitimer(signal.ITIMER_REAL)[0] != 0:",
+                "        return {\"status\": \"ENV_UNAVAILABLE\"}",
+                "    previous = signal.getsignal(signal.SIGALRM)",
+                "    try:",
+                "        signal.signal(signal.SIGALRM, timed_out)",
+                "        signal.setitimer(signal.ITIMER_REAL, DEADLINE_SECONDS)",
+                "        client = boto3.client(\"dynamodb\", config=Config(connect_timeout=3, read_timeout=5, retries={\"total_max_attempts\": 1, \"mode\": \"standard\"}))",
+                "        response = client.get_item(TableName=table, Key={\"pk\": {\"S\": event[\"key\"]}}, ConsistentRead=True)",
+                "        rid = request_id(response)",
+                "        if \"Item\" not in response:",
+                "            return {\"status\": \"MISSING\", \"request_id\": rid}",
+                "        item = response[\"Item\"]",
+                "        if not isinstance(item, dict):",
+                "            return {\"status\": \"MALFORMED_ITEM\", \"request_id\": rid}",
+                "        revision = item.get(\"revision\")",
+                "        attempt = item.get(\"attempt\")",
+                "        rev = revision.get(\"N\") if isinstance(revision, dict) and set(revision) == {\"N\"} else None",
+                "        name = attempt.get(\"S\") if isinstance(attempt, dict) and set(attempt) == {\"S\"} else None",
+                "        valid = item.get(\"pk\") == {\"S\": event[\"key\"]}",
+                "        valid = valid and isinstance(rev, str) and re.fullmatch(r\"[1-9][0-9]{0,5}\", rev)",
+                "        valid = valid and isinstance(name, str) and name in ATTEMPTS",
+                "        valid = valid and item.get(\"state\") in ({\"S\": \"pending\"}, {\"S\": \"confirmed\"})",
+                "        if not valid:",
+                "            return {\"status\": \"MALFORMED_ITEM\", \"request_id\": rid}",
+                "        count = FIXTURE_STATES.get((event[\"key\"], rev, name, item[\"state\"][\"S\"]))",
+                "        if count is None or item.get(\"history\") != {\"L\": HISTORY_ENTRIES[:count]}:",
+                "            return {\"status\": \"MALFORMED_ITEM\", \"request_id\": rid}",
+                "        history = [{k: value[\"S\"] if \"S\" in value else int(value[\"N\"]) for k, value in entry[\"M\"].items()} for entry in HISTORY_ENTRIES[:count]]",
+                "        return {\"status\": \"FOUND\", \"request_id\": rid, \"key\": event[\"key\"], \"revision\": int(rev), \"attempt\": name, \"state\": item[\"state\"][\"S\"], \"history\": history, \"sdk_version\": boto3.__version__}",
+                "    except ProbeDeadline:",
+                "        return {\"status\": \"TIMEOUT\"}",
+                "    except Exception as error:",
+                "        response = getattr(error, \"response\", {})",
+                "        if not isinstance(response, dict):",
+                "            response = {}",
+                "        detail = response.get(\"Error\", {})",
+                "        denied = isinstance(detail, dict) and detail.get(\"Code\") == \"AccessDeniedException\"",
+                "        return {\"status\": \"ACCESS_DENIED\" if denied else \"PROVIDER_ERROR\", \"request_id\": request_id(response)}",
+                "    finally:",
+                "        signal.setitimer(signal.ITIMER_REAL, 0)",
+                "        signal.signal(signal.SIGALRM, previous)"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "OperatorRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "CreateOperatorRole",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "ArnEquals": {
+                  "aws:PrincipalArn": {
+                    "Ref": "TrustedOperatorArn"
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "operate-own-fixture",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "lambda:InvokeFunction"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Observer",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "dynamodb:GetItem",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Table",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "ForAllValues:StringEquals": {
+                      "dynamodb:LeadingKeys": [
+                        "PROBE#CONTENTION",
+                        "PROBE#STREAM"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  },
+  "Outputs": {
+    "TableName": {
+      "Value": {
+        "Ref": "Table"
+      }
+    },
+    "FunctionArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Observer",
+          "Arn"
+        ]
+      }
+    },
+    "LogGroup": {
+      "Value": {
+        "Ref": "Logs"
+      }
+    },
+    "ExecutionRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "ObserverRole",
+          "Arn"
+        ]
+      }
+    },
+    "OperatorRoleArn": {
+      "Condition": "CreateOperatorRole",
+      "Value": {
+        "Fn::GetAtt": [
+          "OperatorRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}

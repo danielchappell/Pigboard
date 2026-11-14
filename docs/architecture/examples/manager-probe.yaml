@@ -39,10 +39,12 @@ jira:
     F3: null
     F4: null
 request_artifacts:
-  source: null
+  source: docs/architecture/probes/
+  aws_fixture: docs/architecture/probes/aws/template.json
+  aws_operator_payloads: docs/architecture/probes/aws/operator-requests.json
   digest: null
-  setup_control_plane_budget: null
-  permission_matrix: null
+  setup_control_plane_budget: 40 # Proposed operator calls; see AWS fixture guide.
+  permission_matrix: docs/architecture/probes/aws/README.md
   local_validation_report: null
 limits:
   issue_creations: 4

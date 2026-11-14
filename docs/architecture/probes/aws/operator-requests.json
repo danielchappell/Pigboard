@@ -1,0 +1,415 @@
+{
+  "schema": "pigboard-aws-proof-requests/v1",
+  "execution_authorized": false,
+  "requests": [
+    {
+      "id": "P3-A",
+      "operation": "PutItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Item": {
+          "pk": {
+            "S": "PROBE#CONTENTION"
+          },
+          "revision": {
+            "N": "1"
+          },
+          "attempt": {
+            "S": "contention-a"
+          },
+          "state": {
+            "S": "pending"
+          },
+          "history": {
+            "L": []
+          }
+        },
+        "ConditionExpression": "attribute_not_exists(#pk)",
+        "ExpressionAttributeNames": {
+          "#pk": "pk"
+        }
+      }
+    },
+    {
+      "id": "P3-B",
+      "operation": "PutItem",
+      "expected": "conditional_conflict",
+      "request": {
+        "TableName": null,
+        "Item": {
+          "pk": {
+            "S": "PROBE#CONTENTION"
+          },
+          "revision": {
+            "N": "1"
+          },
+          "attempt": {
+            "S": "contention-b"
+          },
+          "state": {
+            "S": "pending"
+          },
+          "history": {
+            "L": []
+          }
+        },
+        "ConditionExpression": "attribute_not_exists(#pk)",
+        "ExpressionAttributeNames": {
+          "#pk": "pk"
+        }
+      }
+    },
+    {
+      "id": "P4-F3-BEGIN",
+      "operation": "PutItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Item": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          },
+          "revision": {
+            "N": "1"
+          },
+          "attempt": {
+            "S": "f3-new"
+          },
+          "state": {
+            "S": "pending"
+          },
+          "history": {
+            "L": []
+          }
+        },
+        "ConditionExpression": "attribute_not_exists(#pk)",
+        "ExpressionAttributeNames": {
+          "#pk": "pk"
+        }
+      }
+    },
+    {
+      "id": "P4-F3-CONFIRM",
+      "operation": "UpdateItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state",
+          "#history": "history"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "1"
+          },
+          ":oldattempt": {
+            "S": "f3-new"
+          },
+          ":oldstate": {
+            "S": "pending"
+          },
+          ":newrev": {
+            "N": "2"
+          },
+          ":newattempt": {
+            "S": "f3-new"
+          },
+          ":newstate": {
+            "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f3-new"
+                  },
+                  "revision": {
+                    "N": "2"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "P4-QUEUE-BEGIN",
+      "operation": "UpdateItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "2"
+          },
+          ":oldattempt": {
+            "S": "f3-new"
+          },
+          ":oldstate": {
+            "S": "confirmed"
+          },
+          ":newrev": {
+            "N": "3"
+          },
+          ":newattempt": {
+            "S": "f4-queue"
+          },
+          ":newstate": {
+            "S": "pending"
+          }
+        }
+      }
+    },
+    {
+      "id": "P4-QUEUE-CONFIRM",
+      "operation": "UpdateItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state",
+          "#history": "history"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "3"
+          },
+          ":oldattempt": {
+            "S": "f4-queue"
+          },
+          ":oldstate": {
+            "S": "pending"
+          },
+          ":newrev": {
+            "N": "4"
+          },
+          ":newattempt": {
+            "S": "f4-queue"
+          },
+          ":newstate": {
+            "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-queue"
+                  },
+                  "revision": {
+                    "N": "4"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "P4-REPAIR-BEGIN",
+      "operation": "UpdateItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "4"
+          },
+          ":oldattempt": {
+            "S": "f4-queue"
+          },
+          ":oldstate": {
+            "S": "confirmed"
+          },
+          ":newrev": {
+            "N": "5"
+          },
+          ":newattempt": {
+            "S": "f4-repair"
+          },
+          ":newstate": {
+            "S": "pending"
+          }
+        }
+      }
+    },
+    {
+      "id": "P5-REPAIR-CONFIRM",
+      "operation": "UpdateItem",
+      "expected": "success",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state",
+          "#history": "history"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "5"
+          },
+          ":oldattempt": {
+            "S": "f4-repair"
+          },
+          ":oldstate": {
+            "S": "pending"
+          },
+          ":newrev": {
+            "N": "6"
+          },
+          ":newattempt": {
+            "S": "f4-repair"
+          },
+          ":newstate": {
+            "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-repair"
+                  },
+                  "revision": {
+                    "N": "6"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "P5-STALE",
+      "operation": "UpdateItem",
+      "expected": "conditional_conflict",
+      "request": {
+        "TableName": null,
+        "Key": {
+          "pk": {
+            "S": "PROBE#STREAM"
+          }
+        },
+        "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
+        "ExpressionAttributeNames": {
+          "#rev": "revision",
+          "#attempt": "attempt",
+          "#state": "state",
+          "#history": "history"
+        },
+        "ExpressionAttributeValues": {
+          ":oldrev": {
+            "N": "5"
+          },
+          ":oldattempt": {
+            "S": "f4-repair"
+          },
+          ":oldstate": {
+            "S": "pending"
+          },
+          ":newrev": {
+            "N": "6"
+          },
+          ":newattempt": {
+            "S": "f4-repair"
+          },
+          ":newstate": {
+            "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-repair"
+                  },
+                  "revision": {
+                    "N": "6"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "observer_payloads": [
+    {
+      "operation": "observe",
+      "key": "PROBE#CONTENTION"
+    },
+    {
+      "operation": "observe",
+      "key": "PROBE#STREAM"
+    }
+  ]
+}

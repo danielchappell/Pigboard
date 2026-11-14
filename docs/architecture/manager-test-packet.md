@@ -71,7 +71,9 @@ One disposable CloudFormation stack, a name beginning `pigboard-proof-`, with:
 - One execution role: access only to the test table and its log group, plus the one
   test secret only if the reviewed combined Jira/Lambda probe actually requires it.
 - One optional dedicated probe operator role, trusted only by the verified current
-  customer principal. It may invoke this function and read test evidence. A restricted
+  customer principal. It may invoke this function and read test evidence; the prepared fixture operator
+  additionally has PutItem/UpdateItem only on the two synthetic table keys needed
+  for the human-operated conditional-write cases. The Lambda runtime remains read-only. A restricted
   STS session of that role supplies the live denied-invoker check; no new IAM user or
   long-lived access key. Never invent the trusted principal ARN.
 - One log group with one-day retention. No event/payload/credential logging.
@@ -195,6 +197,13 @@ and localhost positive/negative checks. They cover selected state/record reads,
 not the full packet. Operator mutations, workflow/history requests, Lambda/resource
 artifacts, credentials and live evidence remain unprepared or unverified. DynamoDB
 live reads are explicitly disabled pending fail-closed credential preparation.
+
+The [AWS fixture artifacts](probes/aws/README.md) now include a read-only observer,
+its scoped template, nine conditional operator payloads and offline checks. No
+resources have been created. Operator control-plane calls have a separate proposed
+40-request ceiling; credentials, exact execution tooling/requests and live fixture
+binding still require preparation and approval. The observer is research code, not
+the manager or a replacement for installed-package acceptance.
 
 ## Remaining setup decisions and execution gate
 
