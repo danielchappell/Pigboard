@@ -1,5 +1,7 @@
 # Manager state: ownership, persistence and upgrades
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 14 November 2026. The owner approved customer-owned DynamoDB for release one.
 This document defines the proposed implementation contract for independent review.
 It does not authorize implementation or make the admission design delivery-ready.
@@ -34,7 +36,7 @@ table keys, environment lookups or cloud identifiers enter scheduling policy.
 
 The first implementation supports one regional table per installation and one
 writer for its configured scheduling domain. On-demand capacity is the proposed
-default. No indexes, streams, replication, monitoring records or generic database
+default. No indexes, streams, replication, worker-monitoring records or generic database
 framework are required for the current access pattern.
 
 Record types have a versioned envelope: record kind, schema version, installation

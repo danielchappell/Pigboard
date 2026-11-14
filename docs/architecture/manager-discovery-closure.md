@@ -1,5 +1,7 @@
 # Manager release one: closing the remaining technical choices
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 14 November 2026. Consolidated technical closure for PGB-67/PGB-68, based on
 published design fd725b7b1eac6ead32fe61fffe811bcc3dfecfaf. The original local
 closure received two independent CLEAN reviews. This updated combined artifact

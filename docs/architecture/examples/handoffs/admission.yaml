@@ -12,6 +12,7 @@ kind: admission
 from_stage: Ready to Work
 to_stage: In Progress
 payload:
+  project_id: null
   stream: null
   mode: null
   previous_assignment: null

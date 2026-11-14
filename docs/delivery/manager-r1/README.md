@@ -1,43 +1,48 @@
-# First manager release: complete delivery plan
+# Pig Boss release one: complete delivery plan
 
-**Independently reviewed Story set — awaiting owner approval before implementation.** PGB-66 owns the release; PGB-69 owns this grooming work. These 20 Stories replace the earlier provisional slicing worksheet. Jira remains the queue; this pack is its reviewable design/acceptance record.
+**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. These 23 Stories replace the earlier 20-Story set. Jira remains the queue; this pack is its reviewable design/acceptance record.
 
 ## What this release delivers
 
 A company installs Pigboard in its own AWS account, previews the next eligible ticket and enables deterministic admission through the existing Jira-to-Cursor path. It includes the structured writer, validators, separate worker/job/Jira skills, human-requested rework, safe scheduling state and customer operating instructions needed for that journey.
 
-The owner has approved the product decisions, not implementation of this delivery set. Both independent [product](../../reviews/manager-delivery-product.md) and [technical](../../reviews/manager-delivery-technical.md) delivery-plan reviews are CLEAN for the exact draft manifests recorded there. Native-key substitution/publication is recorded in [the publication receipt](publication.json). The unchanged reviewed structured drafts are retained in [ticket-drafts.json](ticket-drafts.json); Jira owns current tickets. The design is merged at `ba9cb49def75147b37fb822a4e0166c1429c3c3d`; [product](../../reviews/manager-design-product.md) and [technical](../../reviews/manager-design-technical.md) independent reviews are CLEAN for grooming. The earlier provider probe remains PARTIAL. Installed acceptance has not run.
+The owner approved the base scope and the Pig Boss company/health addition. The revised complete set still returns for final review before implementation. The original 20-Story design and plan reviews remain historical evidence in the manager-design and manager-delivery review records. The current design delta has [product](../../reviews/pigboss-design-product.md) and [technical](../../reviews/pigboss-design-technical.md) CLEAN reviews. The revised 23-Story plan has CLEAN [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews. Native publication is checked separately against the same contracts. [Structured contracts](ticket-drafts.json) are the current review input; [publication.json](publication.json) records the native keys and readback evidence. The earlier provider probe remains PARTIAL; installed acceptance has not run.
+
+In scope addition: [Pig Boss multi-project identity and basic health](../../architecture/pig-boss-operations.md). [Deferred work is tracked in Jira](../../product/follow-on-roadmap.md), including the 50-project capacity plan.
 
 Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatcher, transcript storage, cancellation/automatic recovery, SaaS, other-cloud packages, automatic Jira/Cursor provisioning, new QA engines, PR-environment provisioning, human-unblock producer and legacy runtime reuse. The product uses one customer configuration, customer-owned secrets/state and no Scuba Pig runtime access.
 
 ## Ordered Stories
 
-[Complete Story bodies and 88 prescribed cases](stories.md) · [50-requirement/41-scenario coverage](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. All 20 are To Do with `owner-review-required`, no worker labels and no Ready to Work state.
+[Complete Story bodies and 104 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. All 23 remain planned with `owner-review-required`, no worker labels and no Ready to Work state.
 
 | ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
 | --- | --- | --- | ---: | ---: |
 | R1-01 / [PGB-71](https://scubapig.atlassian.net/browse/PGB-71) | Validate an editable work document | Reviewed design | 1.5 | 19 |
-| R1-02 / [PGB-72](https://scubapig.atlassian.net/browse/PGB-72) | Check the complete prescribed test plan | R1-01 / [PGB-71](https://scubapig.atlassian.net/browse/PGB-71) | 1.5 | 7 |
+| R1-02 / [PGB-72](https://scubapig.atlassian.net/browse/PGB-72) | Check the complete prescribed test plan | R1-01 | 1.5 | 7 |
 | R1-03 / [PGB-73](https://scubapig.atlassian.net/browse/PGB-73) | Write complete Epic and ticket YAML | R1-01, R1-02 | 1.25 | 8 |
-| R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | Validate assignment and handoff evidence | R1-01, R1-02 | 1.75 | 17 |
+| R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | Validate assignment and handoff evidence | R1-01, R1-02 | 1.75 | 18 |
+| R1-21 / [PGB-99](https://scubapig.atlassian.net/browse/PGB-99) | Configure Pig Boss for multiple projects | R1-04 | 1.5 | 9 |
 | R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
 | R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Complete QA with an honest evidence ledger | R1-04, R1-06, R1-07 | 1.75 | 10 |
-| R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | 1.25 | 7 |
-| R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04 | 1.5 | 7 |
-| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | 1.5 | 7 |
-| R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | 1.75 | 12 |
-| R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | 1.75 | 13 |
-| R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | 1.75 | 10 |
+| R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
+| R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
+| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10 | 1.5 | 7 |
+| R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21 | 1.75 | 12 |
+| R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
+| R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 | 1.75 | 10 |
 | R1-15 / [PGB-85](https://scubapig.atlassian.net/browse/PGB-85) | Reconcile an uncertain attempt with evidence | R1-12, R1-14 | 1.5 | 7 |
 | R1-16 / [PGB-86](https://scubapig.atlassian.net/browse/PGB-86) | Upgrade and remove the AWS installation safely | R1-14, R1-15 | 1.25 | 8 |
+| R1-22 / [PGB-100](https://scubapig.atlassian.net/browse/PGB-100) | Inspect Pig Boss operating health | R1-13, R1-14, R1-21 | 1.75 | 11 |
+| R1-23 / [PGB-101](https://scubapig.atlassian.net/browse/PGB-101) | Install Pig Boss health alarms | R1-16, R1-22 | 1.5 | 10 |
 | R1-17 / [PGB-87](https://scubapig.atlassian.net/browse/PGB-87) | Admit a ready Story or Bug safely | R1-05, R1-06, R1-08, R1-12, R1-14, R1-15, R1-16 | 1.75 | 10 |
 | R1-18 / [PGB-88](https://scubapig.atlassian.net/browse/PGB-88) | Admit queued rework on its existing PR | R1-09, R1-17 | 1.25 | 5 |
-| R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 / [PGB-88](https://scubapig.atlassian.net/browse/PGB-88) | 1.5 | 5 |
-| R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19 | 1.5 | 15 |
+| R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
+| R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **30.25 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **35.25 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -45,7 +50,7 @@ R1-01/02 deliver usable author checks before the writer depends on them. R1-04 d
 
 Intermediate releases remain usable at their declared boundary: local validation, offline/live preview, disabled AWS preview and operator state inspection. New-work apply is explicitly a fixture/development increment while rework apply is absent; required repairs hold rather than being skipped. No partial chain is enabled for customer delivery. State API contract tests are real consumers of its guarantees; the same API is then used by apply. No archived module is revived.
 
-The dependency table is the required partial order. Independent branches may be developed in parallel only with owned files and no unreviewed cross-branch assumptions. Shared `config/skill-bundle.json`, package metadata and docs need normal integration/review. The chronological numeric list is a valid serial order; it is not an extra runtime queue policy.
+The dependency table is the required partial order. Independent branches may be developed in parallel only with owned files and no unreviewed cross-branch assumptions. Shared `config/skill-bundle.json`, package metadata and docs need normal integration/review. The table is a valid serial order; stable IDs are not numerical execution order. R1-21 supplies configuration before policy/live preview; R1-22/23 add operating health before release readiness.
 
 ## File and size audit
 
@@ -53,7 +58,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 ### R1-01 — 19 forecast files, 1.5 days
 
-`package.json`, `package-lock.json`, `contracts/epic-v1.schema.json`, `contracts/ticket-v1.schema.json`, `docs/architecture/contracts/pigboard-epic-v1.schema.json` (removed after move), `docs/architecture/contracts/pigboard-ticket-v1.schema.json` (removed after move), `scripts/validate-work.mjs`, `lib/contracts/parse.mjs`, `lib/contracts/schema.mjs`, `test/work-syntax.test.mjs`, `test/fixtures/work-syntax.json`, `docs/authoring.md`, `config/skill-bundle.json`, `scripts/prepare-pigboard-skills.mjs`, `test/skill-distribution.test.mjs`, `docs/architecture/manager-work-schema.md`, `docs/architecture/contracts/check_work_examples.py`, `docs/architecture/manager-work-contract.md`, `docs/architecture/examples/manager-ticket.yaml`.
+`package.json`, `package-lock.json`, `contracts/epic-v1.schema.json`, `contracts/ticket-v1.schema.json`, `docs/architecture/contracts/pigboard-epic-v1.schema.json`, `docs/architecture/contracts/pigboard-ticket-v1.schema.json`, `scripts/validate-work.mjs`, `lib/contracts/parse.mjs`, `lib/contracts/schema.mjs`, `test/work-syntax.test.mjs`, `test/fixtures/work-syntax.json`, `docs/authoring.md`, `config/skill-bundle.json`, `scripts/prepare-pigboard-skills.mjs`, `test/skill-distribution.test.mjs`, `docs/architecture/manager-work-schema.md`, `docs/architecture/contracts/check_work_examples.py`, `docs/architecture/manager-work-contract.md`, `docs/architecture/examples/manager-ticket.yaml`.
 
 ### R1-02 — 7 forecast files, 1.5 days
 
@@ -63,9 +68,13 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/write-pr-sized-stories/SKILL.md`, `skills/write-pr-sized-stories/references/pigboard-ticket.md`, `skills/write-pr-sized-stories/references/pigboard-example.md`, `skills/write-pr-sized-stories/references/pigboard-epic.md`, `skills/write-pr-sized-stories/references/epic.yaml`, `skills/write-pr-sized-stories/references/ticket.yaml`, `test/story-authoring.test.mjs`, `docs/authoring.md`.
 
-### R1-04 — 17 forecast files, 1.75 days
+### R1-04 — 18 forecast files, 1.75 days
 
-`contracts/handoff-v1.schema.json`, `contracts/work-pointer-v1.schema.json`, `docs/architecture/contracts/pigboard-handoff-v1.schema.json` (removed after move), `docs/architecture/contracts/pigboard-work-pointer-v1.schema.json` (removed after move), `lib/contracts/handoff.mjs`, `lib/contracts/canonical.mjs`, `lib/contracts/receipts.mjs`, `scripts/validate-handoff.mjs`, `test/handoff.test.mjs`, `test/receipt-chain.test.mjs`, `test/fixtures/handoff-chains.json`, `docs/handoffs.md`, `config/skill-bundle.json`, `scripts/prepare-pigboard-skills.mjs`, `test/skill-distribution.test.mjs`, `docs/architecture/manager-handoff-contract.md`, `docs/architecture/contracts/check_work_examples.py`.
+`contracts/handoff-v1.schema.json`, `contracts/work-pointer-v1.schema.json`, `docs/architecture/contracts/pigboard-handoff-v1.schema.json`, `docs/architecture/contracts/pigboard-work-pointer-v1.schema.json`, `lib/contracts/handoff.mjs`, `lib/contracts/canonical.mjs`, `lib/contracts/receipts.mjs`, `scripts/validate-handoff.mjs`, `test/handoff.test.mjs`, `test/receipt-chain.test.mjs`, `test/fixtures/handoff-chains.json`, `docs/handoffs.md`, `config/skill-bundle.json`, `scripts/prepare-pigboard-skills.mjs`, `test/skill-distribution.test.mjs`, `docs/architecture/manager-handoff-contract.md`, `docs/architecture/contracts/check_work_examples.py`, `docs/architecture/examples/handoffs/admission.yaml`.
+
+### R1-21 — 9 forecast files, 1.5 days
+
+`contracts/config-v1.schema.json`, `lib/config/parse.mjs`, `lib/config/projects.mjs`, `scripts/check-config.mjs`, `lib/config/diff.mjs`, `test/config-projects.test.mjs`, `test/fixtures/project-configs.json`, `docs/configuration.md`, `config/pigboss.example.yaml`.
 
 ### R1-05 — 10 forecast files, 1.5 days
 
@@ -87,7 +96,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/request-rework/SKILL.md`, `skills/request-rework/references/example.md`, `config/skill-bundle.json`, `test/request-rework.test.mjs`, `test/fixtures/human-rework.json`, `docs/using-pigboard.md`, `docs/workflow.md`.
 
-### R1-10 — 7 forecast files, 1.5 days
+### R1-10 — 7 forecast files, 1.75 days
 
 `lib/manager/snapshot.mjs`, `lib/manager/availability.mjs`, `lib/manager/decisions.mjs`, `scripts/manager-preview.mjs`, `test/manager-preview.test.mjs`, `test/fixtures/manager-candidates.json`, `docs/manager-preview.md`.
 
@@ -97,11 +106,11 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 ### R1-12 — 12 forecast files, 1.75 days
 
-`config/manager.schema.json`, `config/manager.example.yaml`, `lib/config/manager.mjs`, `lib/jira/client.mjs`, `lib/jira/inventory.mjs`, `lib/jira/receipts.mjs`, `scripts/manager-preview.mjs`, `test/jira-preview.test.mjs`, `test/jira-security.test.mjs`, `test/fixtures/jira-pages.json`, `docs/manager-preview.md`, `docs/manager-configuration.md`.
+`contracts/config-v1.schema.json`, `config/pigboss.example.yaml`, `lib/config/parse.mjs`, `lib/jira/client.mjs`, `lib/jira/inventory.mjs`, `lib/jira/receipts.mjs`, `scripts/manager-preview.mjs`, `test/jira-preview.test.mjs`, `test/jira-security.test.mjs`, `test/fixtures/jira-pages.json`, `docs/manager-preview.md`, `docs/configuration.md`.
 
 ### R1-13 — 13 forecast files, 1.75 days
 
-`lib/aws/lambda.mjs`, `lib/aws/secrets.mjs`, `infra/aws/template.yaml`, `scripts/package-manager.mjs`, `scripts/deploy-manager.mjs`, `config/manager.schema.json`, `test/aws-package.test.mjs`, `test/aws-iam.test.mjs`, `test/fixtures/aws-config.json`, `docs/install-manager.md`, `docs/manager-configuration.md`, `package.json`, `package-lock.json`.
+`lib/aws/lambda.mjs`, `lib/aws/secrets.mjs`, `infra/aws/template.yaml`, `scripts/package-manager.mjs`, `scripts/deploy-manager.mjs`, `contracts/config-v1.schema.json`, `test/aws-package.test.mjs`, `test/aws-iam.test.mjs`, `test/fixtures/aws-config.json`, `docs/install-manager.md`, `docs/configuration.md`, `package.json`, `package-lock.json`.
 
 ### R1-14 — 10 forecast files, 1.75 days
 
@@ -114,6 +123,14 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 ### R1-16 — 8 forecast files, 1.25 days
 
 `scripts/deploy-manager.mjs`, `scripts/manager-state.mjs`, `lib/config/compatibility.mjs`, `infra/aws/template.yaml`, `test/install-lifecycle.test.mjs`, `test/fixtures/upgrade-state.json`, `docs/install-manager.md`, `docs/manager-state.md`.
+
+### R1-22 — 11 forecast files, 1.75 days
+
+`lib/manager/scan-summary.mjs`, `lib/manager/health.mjs`, `lib/aws/scan-telemetry.mjs`, `lib/aws/health-reader.mjs`, `lib/aws/lambda.mjs`, `scripts/pigboss-health.mjs`, `test/manager-health.test.mjs`, `test/aws-health.test.mjs`, `test/fixtures/health-results.json`, `docs/operate-pigboss.md`, `contracts/config-v1.schema.json`.
+
+### R1-23 — 10 forecast files, 1.5 days
+
+`infra/aws/health.yaml`, `infra/aws/template.yaml`, `lib/aws/lifecycle.mjs`, `scripts/check-manager-readiness.mjs`, `test/aws-health-package.test.mjs`, `test/aws-lifecycle.test.mjs`, `test/fixtures/health-package.json`, `docs/operate-pigboss.md`, `docs/install-manager.md`, `contracts/config-v1.schema.json`.
 
 ### R1-17 — 10 forecast files, 1.75 days
 
@@ -165,7 +182,7 @@ Evidence: Build receipt, exact installed revision, model/tool capability check, 
 
 Present exact release SHA, both independent code reviews per Story, CI/Codex gates, AT-01 and PGB-58 outcomes, current inactive configuration, remaining limitations and cost/resource report. The owner decides whether/when to enable the pilot. A green local suite, merged PR or this Story-set approval never enables it.
 
-## Completed review and remaining approval
+## Historical baseline review and remaining approval
 
 1. Both independent plan reviewers completed 20/20 Stories, 88/88 cases, 50/50 requirements, 41/41 scenarios, dependencies and forecasts; second sweep and separate seven-principle assessments are recorded. Both verdicts are CLEAN.
 2. The confirmed Bug-eligibility omission was corrected in all three worker Stories and installed acceptance, then independently re-reviewed. Any later scope increase still requires the owner.
@@ -182,3 +199,25 @@ Present exact release SHA, both independent code reviews per Story, CI/Codex gat
 - Agents are equal: structured inputs/outputs remain primary; human-only acceptance accurately covers CLI/IaC gaps without inventing an installed QA engine.
 - Dependable: partial provider proof, local fixtures, installed acceptance, merge and activation remain distinct; unknown side effects stay held.
 - Unified configuration: one input generates bindings; skill bundle and version checks stop incompatible partial rollouts.
+
+## Company and health acceptance addition
+
+The original 20 Stories and review results are preserved as historical evidence.
+This delta adds R1-21 (company configuration), R1-22 (health inspection) and R1-23
+(health alarms), and five targeted cases in existing Stories. R1-10 grows by 0.25
+estimated day; the three additions total 4.75 days. No implementation starts here.
+The new assignment project binding adds one file to R1-04's inventory (18 total).
+
+PGB-91 additionally owns these installed-package cases; no new provider probe is authorized by grooming:
+
+| Case | Setup and steps | Expected result and evidence |
+| --- | --- | --- |
+| AT-01.7 Multi-project | Operator uses two authorized disposable projects with different status mappings, same AI-Maria-1 label and an explicit cross-project prerequisite. Preview both, hold one stream at five Human Review tickets, admit eligible independent work with delivery triggers disabled; rename a display key and simulate removed/inaccessible scope using the package test harness. | Distinct stream records and mappings, correct dependency wait, no false occupancy release, isolated versus shared failure holds. Save package/config revision, IDs, decisions and redacted mutation receipts. Restore disposable fixtures after evidence retention. Actual second-project access must be authorized before this installed case; simulated fixtures do not substitute. |
+| AT-01.8 Operating health | On the disposable AWS package, run an empty successful scan and a safe denied-read failure; observe health. Stop completion emissions while desired scheduling remains enabled; observe missing-completion alarm. Check capacity signals with prepared bounded fixtures, read denial, intentional stop and config-only upgrade. If a customer test SNS destination is supplied, verify receipt there. | Readable/JSON state, actual alarm transition timestamps/delays, correct current evidence revision and no secret content. Disabled differs from failed stop; telemetry denial is unknown; no SNS means explicitly no push alert. Save logs/alarms/command evidence; restore disabled scheduling and remove temporary fault injection/routing. No Cursor runs. |
+
+AT-01.8 distinguishes local alarm simulation from installed signal delivery. The
+release report publishes the workload actually tested and any operating limits;
+50-project support is not a release-one acceptance claim. Health startup and alarm
+delays must be observed rather than marketed as an exact detection SLA.
+
+Configuration ownership: R1-21 creates the sole `contracts/config-v1.schema.json`, parser and `config/pigboss.example.yaml`; R1-12/13 and health Stories extend/consume those same files. There is no second manager configuration. `plan-metadata.json` holds only delivery order, sizing and forecast files; `ticket-drafts.json` owns the structured Story contracts.

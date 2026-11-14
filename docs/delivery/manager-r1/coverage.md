@@ -1,6 +1,6 @@
 # Release coverage
 
-50/50 requirements and 41/41 scenarios have prescribed acceptance cases below. This is a mapping, not evidence that tests have run. Runtime/provider acceptance in the plan is additionally required.
+53/53 requirements and 41/41 scenarios have prescribed acceptance cases below. This is a mapping, not evidence that tests have run. Runtime/provider acceptance in the plan is additionally required.
 
 | Requirement | Story acceptance cases |
 | --- | --- |
@@ -98,3 +98,19 @@
 | S39 | R1-11-S39 | R1-17-H01/H02/H03 |
 | S40 | R1-11-S40 | R1-17-H01/H02/H03 |
 | S41 | R1-11-S41 | R1-17-H01/H02/H03 |
+
+## Approved company/health delta coverage
+
+Earlier review verdicts cover the original set; the current delta needs its own review.
+
+| Requirement | Additional Story cases | Installed acceptance |
+| --- | --- | --- |
+| M01, M02, M04, M05 | R1-04-H04, R1-10-H03, R1-21-H01, R1-21-H02 | AT-01.7 |
+| M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 | AT-01.7 |
+| O13 | R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-21-H01–H03 | AT-01.7 |
+| O14 | R1-22-H01–H04 | AT-01.8 |
+| O15, O09–O12 | R1-23-H01–H04, R1-20-H04 | AT-01.8 |
+
+The original 41 scheduling scenarios remain; these additional explicit cases cover
+project identity and health without renumbering them. Capacity/worker monitoring
+follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.

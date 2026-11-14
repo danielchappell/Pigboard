@@ -1,5 +1,7 @@
 # Pigboard architecture
 
+**Pig Boss** is Pigboard's planned customer-hosted manager: one AWS installation for multiple Jira projects, project-scoped workstreams and basic operating health. See the [current design](docs/architecture/pig-boss-operations.md) and [MVP delivery set](docs/delivery/manager-r1/README.md). This behavior is not shipped yet.
+
 Current direction is defined by the November 12–14, 2026 decisions in
 [Jira PGB](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70).
 This map separates the installed skills product from the planned manager.

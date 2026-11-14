@@ -1,7 +1,7 @@
 # Release coverage and gaps
 
 This is the requirements audit for the [independently reviewed delivery set](../delivery/manager-r1/README.md), awaiting owner approval. Jira remains the delivery queue.
-There are 50 requirements: A01–A12, W01–W12, M01–M14 and O01–O12. Every row below
+There are 53 requirements: A01–A12, W01–W12, M01–M14 and O01–O15. Every row below
 now map to implementation Stories and acceptance cases. PGB-91 is installed manager acceptance, PGB-58 is actual worker acceptance, and PGB-92 records the later activation decision. No test is claimed passed by this mapping.
 
 ## Required delivery surfaces
@@ -115,3 +115,19 @@ Unified configuration remains a cross-cutting principle, not an automatic instal
 feature silently added to this release. Product and technical reviewers must assess
 all 50 requirements, the six documents and source consistency, perform a second
 sweep and return CLEAN/NOT CLEAN for the exact reviewed artifact.
+
+## Approved company/health delta coverage
+
+Earlier review verdicts cover the original set; the current delta needs its own review.
+
+| Requirement | Additional Story cases | Installed acceptance |
+| --- | --- | --- |
+| M01, M02, M04, M05 | R1-04-H04, R1-10-H03, R1-21-H01, R1-21-H02 | AT-01.7 |
+| M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 | AT-01.7 |
+| O13 | R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-21-H01–H03 | AT-01.7 |
+| O14 | R1-22-H01–H04 | AT-01.8 |
+| O15, O09–O12 | R1-23-H01–H04, R1-20-H04 | AT-01.8 |
+
+The original 41 scheduling scenarios remain; these additional explicit cases cover
+project identity and health without renumbering them. Capacity/worker monitoring
+follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.

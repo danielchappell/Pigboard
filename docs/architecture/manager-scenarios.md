@@ -1,5 +1,7 @@
 # Admission scenarios and edit handling
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 PGB-67 discovery, 14 November 2026. This is a design truth table, not implemented
 behavior or a live test result. It consolidates the owner's decisions and the
 [work](manager-work-contract.md), [stack](manager-stack-repair.md),

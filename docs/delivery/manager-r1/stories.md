@@ -1,8 +1,8 @@
-# First manager release: implementation Stories
+# Pig Boss release one: implementation Stories
 
-**Independently reviewed — awaiting owner approval before implementation.** These are the complete 20 slices, published as PGB-71–PGB-90. Working IDs remain stable case references; the plan links native keys. No AI worker label or Ready to Work status is assigned.
+Independently reviewed 23-Story set for final owner review. The delivery plan defines dependency order; stable R1 IDs and all 88 baseline cases are preserved. There are now 104 cases. No implementation or activation is authorized by publication.
 
-The product requirements and design are merged at `ba9cb49def75147b37fb822a4e0166c1429c3c3d`. Each Story below is one Pigboard PR. Acceptance is explicitly human-owned because the existing automated QA skills do not execute CLI/IaC or assess instruction contracts. Developer CI regression remains required. Real worker/provider acceptance is a separate release Task, not claimed by scripted fixtures.
+The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
 ## R1-01: Validate an editable work document
 
@@ -59,6 +59,7 @@ Authors cannot yet distinguish a valid draft from a ticket that meets the new st
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
 - **Automated regression:** CLI contract tests for safe extraction, draft/start distinction and bounded canonical value handling.
+
 
 ## R1-02: Check the complete prescribed test plan
 
@@ -128,6 +129,7 @@ A well-shaped ticket can still have missing acceptance coverage or an impossible
 
 - **Automated regression:** Behavioral CLI tests for semantic readiness, dispatch, preparation and full-ledger publication limits.
 
+
 ## R1-03: Write complete Epic and ticket YAML
 
 ### Problem to solve
@@ -183,6 +185,7 @@ The existing writing skill produces prose tickets. Humans and workers need the s
 
 - **Automated regression:** Skill contract/examples tests for full skeleton, limits, shared references and draft/start failures.
 
+
 ## R1-04: Validate assignment and handoff evidence
 
 ### Problem to solve
@@ -195,6 +198,8 @@ Workers and the manager need to agree on which assignment and PR revision a resu
 - **AC2.** It rejects edited/deleted/conflicting/spoofed records and incomplete or stale implementation-review-QA chains.
 - **AC3.** It accepts a full human-only completion honestly and retains partial QA/NOT_RUN evidence on repair or blocker results.
 - **AC4.** It distinguishes an explicitly authorized blocked-result resumption from unauthorized replacement without producing an unblock action.
+
+- **AC5.** Admission binds the immutable project ID; role receipts inherit it through their assignment and reject a moved issue or foreign-site receipt.
 
 ### Technical Acceptance Criteria
 
@@ -248,7 +253,87 @@ Workers and the manager need to agree on which assignment and PR revision a resu
 - **Evidence:** command/output transcript and fixture before/after diff; include tested PR revision.
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
+#### R1-04-H04: Assignment project binding
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC5, TAC2.
+- **Prerequisites/data:** Two native projects with the same stream label; valid admission and moved-project/foreign-site variants. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Validate each complete receipt chain against trusted native metadata.
+  2. Move the assigned issue to the other project in the fixture and repeat.
+- **Expected:** Only the original site/project assignment validates; repeated labels alone confer no authority.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+
 - **Automated regression:** End-to-end local receipt validation with canonical encoding, authority, repair and resume counterexamples.
+
+
+## R1-21: Configure Pig Boss for multiple projects
+
+### Problem to solve
+
+A company needs one installation and one editable configuration for several Jira projects. Per-project workflow differences and repeated labels must not create collisions.
+
+### Acceptance Criteria
+
+- **AC1.** A local configuration command validates one Jira site and multiple project IDs with explicit or inherited project mappings, repositories and worker prefixes.
+- **AC2.** Readable and JSON output shows resolved project scope and rejects duplicate IDs, ambiguous mappings and untrusted destinations without provider writes.
+- **AC3.** Preview of a configuration change identifies added/removed project scope and retained-work checks required before enablement; fifty project entries parse without imposing a ten-project cap.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own the canonical company configuration schema, normalization and zero-write local validation command; provide local configuration-change preview without policy scheduling or live provider discovery.
+- **TAC1.** Own the canonical company configuration schema, normalization and zero-write local validation command; provide local configuration-change preview without policy scheduling or live provider discovery.
+- **TAC2.** Use immutable project IDs and collision-free tuple encoding of site/project/full-label. Project keys and board IDs are display/context only.
+- **TAC3.** No new editable cloud binding file, secret values, global label uniqueness, automatic provisioning or multi-writer ownership service. Native metadata remains authoritative.
+- **Scope:** Pig Boss company/health contract applies; customer repos are reference context only. No worker monitoring, activation or scaling implementation.
+
+### Testing Strategy
+
+- **QA skills:** `[]`. All cases are explicitly human-owned; developer CI and PR review remain required.
+- **Access:** Current PR checkout with disposable simulated provider/tool data. No live customer actions.
+- **Preparation:** Implementer supplies exact fixture paths and commands bound to the PR revision; preserve all cases and expected outcomes. Installed AWS/Jira acceptance is separate.
+
+#### R1-21-H01: One configuration, repeated labels
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC2, TAC2, TAC1.
+- **Prerequisites/data:** Valid two-project and fifty-project local configuration fixtures with equal labels and different workflow IDs. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run local validation in readable and JSON modes.
+  2. Inspect resolved project maps and independent stream keys.
+- **Expected:** Both valid configurations pass; project mappings remain separate; parsing fifty entries is not a runtime throughput claim.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-21-H02: Reject ambiguous scope
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, TAC3.
+- **Prerequisites/data:** Duplicate project ID, missing inherited mapping, untrusted origin and secret-value fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Validate each fixture.
+  2. Inspect errors and captured output.
+- **Expected:** Errors name safe field paths; no secret contents, provider calls or writes.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-21-H03: Configuration change preview
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC3, TAC2.
+- **Prerequisites/data:** Previous and next configs that add/remove a project and rename only a key. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Compare configurations with local preview.
+  2. Inspect required retained-state/readiness checks.
+- **Expected:** Output distinguishes key rename from identity removal; removal cannot authorize erasing prior state or enabling until retained work is checked.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+- **Automated regression:** Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance.
+
 
 ## R1-05: Hand an implemented PR to review
 
@@ -306,6 +391,7 @@ The implementer still uses the earlier prose handoff. It needs the structured as
 
 - **Automated regression:** Skill/handoff regression fixtures for success, dependency wait, repair identity and uncertain effects.
 
+
 ## R1-06: Review and hand off the current PR
 
 ### Problem to solve
@@ -359,6 +445,7 @@ The reviewer must preserve its existing review criteria while handing results to
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
 - **Automated regression:** Reviewer contract tests preserving shared criteria and all approved/repair/discussion/blocked boundaries.
+
 
 ## R1-07: Execute prescribed QA helper steps
 
@@ -414,6 +501,7 @@ Existing QA helpers need the structured case bindings and evidence shape. They m
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
 - **Automated regression:** Contract tests for exact helper dispatch, safe bindings, evidence checkpoints and failure stops; preserve existing PostgreSQL regression suite.
+
 
 ## R1-08: Complete QA with an honest evidence ledger
 
@@ -483,6 +571,7 @@ QA needs to run the named cases in order and hand the open PR to humans. It must
 
 - **Automated regression:** Entrypoint contract tests for ordered complete ledgers, observation bounds, all-human handoff and failure destinations.
 
+
 ## R1-09: Request rework through the human’s assistant
 
 ### Problem to solve
@@ -539,6 +628,7 @@ A human who rejects an open PR needs to record actionable findings without start
 
 - **Automated regression:** Human-request contract tests for authorization, current open PR, queue-only effects and uncertain outcomes.
 
+
 ## R1-10: Preview ready work from a complete snapshot
 
 ### Problem to solve
@@ -551,6 +641,8 @@ An operator needs to see why a stream can or cannot start work before granting w
 - **AC2.** It counts all occupied/Blocked/Human Review members, applies the five-ticket return cap and allows independent numbered streams to proceed.
 - **AC3.** Incomplete membership, unknown statuses, conflicting ownership or pending intent holds the appropriate scope; invalid independent ready work is reported and skipped.
 - **AC4.** Required repair work is reported as waiting for the repair-policy increment; it cannot be bypassed by admitting unrelated work. Preview performs zero writes.
+
+- **AC5.** Equal labels in different projects have independent ownership, occupancy, repair selection and five-ticket caps; conflicting Epics in one project hold that stream.
 
 ### Technical Acceptance Criteria
 
@@ -592,7 +684,22 @@ An operator needs to see why a stream can or cannot start work before granting w
 - **Evidence:** command/output transcript and fixture before/after diff; include tested PR revision.
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
+#### R1-10-H03: Independent project streams
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC5.
+- **Prerequisites/data:** Two projects each with AI-Maria-1; A has five Human Review tickets, B has room; second active owner variant within B. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Preview both projects.
+  2. Swap the full stream states between projects and repeat.
+  3. Introduce the same-project second active owner.
+- **Expected:** Capacity and selection follow project identity; B can progress while A is full, and same-project ownership conflict holds B without conflating A.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+
 - **Automated regression:** Executable policy scenarios for readiness, occupancy, capacity, priority, membership and pause.
+
 
 ## R1-11: Preview the complete repair order
 
@@ -1129,6 +1236,7 @@ The manager must finish active work and repair actual dependencies oldest first.
 
 - **Automated regression:** Full scenario matrix and repeated-root/descendant policy traces with no provider side effects.
 
+
 ## R1-12: Preview current Jira work with bounded reads
 
 ### Problem to solve
@@ -1141,6 +1249,8 @@ Offline decisions are useful only if the operator can compare them with complete
 - **AC2.** The live read-only preview gathers complete bounded pages, unions current membership/dependencies/lineage with supplied retained IDs and fresh-reads each known issue.
 - **AC3.** Missing pages, denied/deleted IDs, changed membership or exhausted budgets yield precise incomplete/hold results rather than empty availability.
 - **AC4.** It resolves typed receipts through the supported provider representation and shows selections without writing Jira or operational state.
+
+- **AC5.** Live preview resolves each project mapping and allowed cross-project prerequisites; project identity uses immutable IDs and incomplete shared inventory never yields free capacity.
 
 ### Technical Acceptance Criteria
 
@@ -1194,7 +1304,21 @@ Offline decisions are useful only if the operator can compare them with complete
 - **Evidence:** redacted transport audit and output inspection; include tested PR revision.
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
+#### R1-12-H04: Mixed projects and discovery failures
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC5.
+- **Prerequisites/data:** Two project IDs with different status/type mappings, equal labels, a cross-project prerequisite, renamed key, denied-project and isolated-stream-conflict variants. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Preview all variants through the simulated Jira adapter.
+  2. Compare mapped stages, dependency results, native IDs and mutation trace.
+- **Expected:** Correct mapping and prerequisite checks across projects; key rename preserves identity; known isolated conflict holds only affected scope; denied project with unknown shared impact holds all writes; no preview mutations.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+
 - **Automated regression:** HTTP-fixture integration tests for complete inventory, fresh reads, request budgets and credential boundaries.
+
 
 ## R1-13: Install a disabled AWS preview
 
@@ -1253,6 +1377,7 @@ A company needs to run the preview in its own AWS account without giving Scuba P
 
 - **Automated regression:** Package/wrapper tests, synthesized IAM allow/deny checks and disabled scheduling configuration checks.
 
+
 ## R1-14: Inspect durable scheduling state
 
 ### Problem to solve
@@ -1265,6 +1390,8 @@ Operators need to see retained stream ownership and attempts without storing tic
 - **AC2.** The state adapter passes an executable contract suite for atomic begin/finalize, revision conflicts, unknown writes and retained history.
 - **AC3.** A stale caller cannot clear another pending attempt; required member identities persist before a consumer may perform a Jira side effect.
 - **AC4.** Read-only preview can consume retained IDs without changing state; no TTL unlock, automatic history/member retirement or replacement empty table is offered.
+
+- **AC5.** Saved stream, member and attempt identities include site and immutable project ID; project moves/removal retain old occupancy and unresolved intent.
 
 ### Technical Acceptance Criteria
 
@@ -1308,7 +1435,22 @@ Operators need to see retained stream ownership and attempts without storing tic
 - **Evidence:** state before/after, structured adapter outcomes and transaction-call audit; include tested PR revision.
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
+#### R1-14-H03: Retained project identity
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC5.
+- **Prerequisites/data:** Same label in two projects, pending attempt in A, key rename, issue move and project-removal snapshots. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Inspect both streams.
+  2. Apply the metadata/configuration changes to fixture observations and inspect again.
+  3. Attempt a stale cross-project completion using the state contract harness.
+- **Expected:** Records never collide; rename preserves IDs; move/removal does not free old capacity or erase intent; stale completion is rejected and affected scope remains held.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+
 - **Automated regression:** Executable state-adapter conformance suite with atomicity, stale caller, uncertain persistence and retention cases.
+
 
 ## R1-15: Reconcile an uncertain attempt with evidence
 
@@ -1365,6 +1507,7 @@ An uncertain Jira effect must not be replayed automatically. Operators need a su
 
 - **Automated regression:** Operator command tests proving positive-only conditional reconciliation and persistence of unknown outcomes.
 
+
 ## R1-16: Upgrade and remove the AWS installation safely
 
 ### Problem to solve
@@ -1419,6 +1562,166 @@ A customer must be able to upgrade, stop or remove Pigboard without losing unres
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
 
 - **Automated regression:** Deployment lifecycle tests for disabled rollback/restore, state preservation, drain and retained-resource removal.
+
+
+## R1-22: Inspect Pig Boss operating health
+
+### Problem to solve
+
+Operators cannot tell whether Pig Boss has finished its scans or is nearing its limits. A workstream waiting for a human must not look like a broken manager.
+
+### Acceptance Criteria
+
+- **AC1.** The scan wrapper emits sanitized versioned summaries and embedded metrics for complete, incomplete and failed scans, including budget use and separate work holds.
+- **AC2.** A read-only command provides readable and JSON disabled/starting/healthy/degraded/stale/unknown results, evidence timestamps and AWS links with the documented exit codes.
+- **AC3.** Evidence belongs to the current code/configuration/enablement revision; missing telemetry and failed reads never become healthy, and desired/actual mismatch is degraded.
+- **AC4.** Output explains capacity warnings and safe next steps without starting a scan, modifying Jira/state or claiming worker health.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own portable scan-summary and health evaluation, AWS logging/metrics adapter and read-only inspection CLI using the existing customer log group.
+- **TAC1.** Own portable scan-summary and health evaluation, AWS logging/metrics adapter and read-only inspection CLI using the existing customer log group.
+- **TAC2.** Follow docs/architecture/pig-boss-operations.md for fields, state precedence, freshness, fixed metric dimensions and maximum-based signal interpretation; no second state store.
+- **TAC3.** Read-only operator permissions cover only needed configuration, logs, metrics and alarm observations; log no bodies/secrets/raw errors. Runtime uses its existing log-write scope.
+- **Scope:** Pig Boss company/health contract applies; customer repos are reference context only. No worker monitoring, activation or scaling implementation.
+
+### Testing Strategy
+
+- **QA skills:** `[]`. All cases are explicitly human-owned; developer CI and PR review remain required.
+- **Access:** Current PR checkout with disposable simulated provider/tool data. No live customer actions.
+- **Preparation:** Implementer supplies exact fixture paths and commands bound to the PR revision; preserve all cases and expected outcomes. Installed AWS/Jira acceptance is separate.
+
+#### R1-22-H01: Healthy waits and capacity
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC2, AC4, TAC1, TAC2.
+- **Prerequisites/data:** Complete empty scan, five-ticket wait, retained-uncertainty hold and 80-percent budget fixture. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run scans in the local wrapper harness.
+  2. Run health command on recorded observations.
+  3. Inspect every required scan-summary field, fixed metric dimensions and duplicate completion points; verify maximum-based signal interpretation.
+- **Expected:** Empty/business-held scans remain complete with holds shown; capacity warning is degraded; no worker health or second scan is inferred. All versioned summary fields and budget bounds are present; no ticket/stream metric dimension; duplicate points never inflate exact run counts.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-22-H02: Stale and unavailable evidence
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, AC3.
+- **Prerequisites/data:** Old success, recent failed scan, missing completion after crash, denied telemetry read and no first completion fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Evaluate before and after freshness deadline with a controlled clock.
+  2. Inspect JSON states and exit codes.
+- **Expected:** Stale/failed/unknown/starting are distinct; missing or unreadable evidence is never healthy; command makes zero mutation calls.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-22-H03: Disable, mismatch and revision
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, AC3, TAC2.
+- **Prerequisites/data:** Desired/actual enabled and disabled combinations; old-code/config completion; new enablement generation. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Evaluate all combinations and current/old revisions.
+  2. Inspect state precedence and evidence source.
+- **Expected:** Disabled requires observed stopped schedule; either mismatch degrades; unknown observation remains unknown; old revisions cannot satisfy current health.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-22-H04: Permissions and safe output
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC4, TAC3.
+- **Prerequisites/data:** Allowed/denied health-reader identities and provider errors containing dummy secrets. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run readable and JSON inspection with each identity.
+  2. Inspect captured outputs, log events and action trace.
+- **Expected:** Only scoped observations succeed; denial reports unknown; secrets/bodies are absent; no Jira/state mutation or scan launch occurs.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+- **Automated regression:** Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance.
+
+
+## R1-23: Install Pig Boss health alarms
+
+### Problem to solve
+
+A stopped or failing manager cannot report its own absence. Customers need basic AWS alarms and a clear guide for operating the installation.
+
+### Acceptance Criteria
+
+- **AC1.** The AWS package creates missing-completion, Lambda error/throttle and budget-utilization alarms with generated links and optional customer SNS notification routing.
+- **AC2.** Installation starts disabled; enable, intentional stop and upgrade keep alarm actions and evidence revision aligned with canonical intent; an unexpected scheduler stop stays detectable.
+- **AC3.** Readiness checks required health resources, operator permissions and configuration; the guide explains all health states, notification confirmation, capacity limits and safe recovery.
+- **AC4.** Removal reports retained resources and costs; no alarm retries work, clears uncertain state, changes concurrency or monitors Cursor.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own health IaC, lifecycle integration and operator/readiness documentation; reuse the existing AWS package and R1-22 metrics/command.
+- **TAC1.** Own health IaC, lifecycle integration and operator/readiness documentation; reuse the existing AWS package and R1-22 metrics/command.
+- **TAC2.** Use the current evidence revision, missing successful completion as breaching and absent sparse errors as non-breaching. Document provider ingestion/evaluation delays; use existing customer SNS routing when configured.
+- **TAC3.** Keep fixed low-cardinality dimensions, finite retention and bounded IAM; customer controls access and optional subscriptions. No dashboard, Teams integration or extra database.
+- **Scope:** Pig Boss company/health contract applies; customer repos are reference context only. No worker monitoring, activation or scaling implementation.
+
+### Testing Strategy
+
+- **QA skills:** `[]`. All cases are explicitly human-owned; developer CI and PR review remain required.
+- **Access:** Current PR checkout with disposable simulated provider/tool data. No live customer actions.
+- **Preparation:** Implementer supplies exact fixture paths and commands bound to the PR revision; preserve all cases and expected outcomes. Installed AWS/Jira acceptance is separate.
+
+#### R1-23-H01: Alarm signals
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, TAC2, TAC1.
+- **Prerequisites/data:** Synthesized stack and simulated normal/error/throttle/utilization/missing metric histories. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Inspect alarm dimensions, thresholds, missing-data handling and generated links.
+  2. Evaluate signal fixtures including duplicate completion points.
+- **Expected:** Missing completion is detectable externally; error and utilization alarms match configured intent; duplicate metrics cannot inflate exact run claims; no automated recovery action.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-23-H02: Lifecycle and scope
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, AC4.
+- **Prerequisites/data:** Disabled install, enable, intentional stop, unexpected scheduler stop, configuration-only upgrade and removal fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run lifecycle harness for each transition.
+  2. Inspect action state, evidence revision and retained-resource report.
+- **Expected:** Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-23-H03: Routing and permissions
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC3, TAC3.
+- **Prerequisites/data:** No SNS topic, permitted topic and denied/misconfigured topic fixtures; least-permission policy snapshots. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run package/readiness checks and inspect guide.
+  2. Inspect action destinations and denied-access output.
+- **Expected:** No topic clearly means console/command-only; configured routing requires operator confirmation; failures are actionable; no vendor access or broad runtime health privileges.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+#### R1-23-H04: New operator walkthrough
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC3, AC4.
+- **Prerequisites/data:** Fresh operator with generated outputs and unhealthy fixture observations. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Follow documented inspect, stop, diagnose and restore-readiness steps.
+  2. Attempt an undocumented concurrency increase or uncertain-write replay in the guidance check.
+- **Expected:** Guide identifies evidence and safe resolution; advises no overlapping manager or blind replay; capacity numbers are measured claims only. Installed notification delivery remains a separate acceptance gate.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
+- **Automated regression:** Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance.
+
 
 ## R1-17: Admit a ready Story or Bug safely
 
@@ -1490,6 +1793,7 @@ After preview and installation, the manager must advance the selected ticket thr
 
 - **Automated regression:** Full apply-sequence integration tests with fault injection at each boundary and later-invocation no-replay assertions.
 
+
 ## R1-18: Admit queued rework on its existing PR
 
 ### Problem to solve
@@ -1558,6 +1862,7 @@ Queued work needs another implementation cycle without racing active work or los
 
 - **Automated regression:** Repair apply tests for priority, exact existing PR/causes, capacity, parent completion and every failure boundary.
 
+
 ## R1-19: Queue a completed dependent PR for repair
 
 ### Problem to solve
@@ -1625,6 +1930,7 @@ When A’s repair completes, a stale dependent B in Human Review needs updating.
 
 - **Automated regression:** Stack integration traces for queue/admit/complete, repeated roots, exact lineage and failure holds.
 
+
 ## R1-20: Check a compatible release before enabling delivery
 
 ### Problem to solve
@@ -1638,6 +1944,8 @@ The new manager cannot safely mix old prose workers with structured handoffs. Op
 - **AC3.** The guide walks Build refresh, installed-content verification, exact worker model effort and the three independent automation entrypoints with minimal prompts.
 - **AC4.** Human Review presents both designated reviewers with automated evidence and pending human cases; UAT/production and human unblock remain outside automatic delivery.
 - **AC5.** Readiness distinguishes local configuration checks, installed-package acceptance, PGB-58 delivery acceptance and explicit activation; none silently enables anything.
+
+- **AC6.** Readiness verifies multi-project mappings and installed health resources/revision before enablement; displays Pig Boss consistently and links the operating guide.
 
 ### Technical Acceptance Criteria
 
@@ -1691,5 +1999,18 @@ The new manager cannot safely mix old prose workers with structured handoffs. Op
 - **Expected:** Human responsibilities are explicit; no worker claims human PASS or moves acceptance/deployment stages.
 - **Evidence:** walkthrough notes and saved readiness output; include tested PR revision.
 - **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
+
+#### R1-20-H04: Company and health readiness
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC6.
+- **Prerequisites/data:** Pinned compatible release with two-project config, missing health resource and old evidence-revision variants. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Steps:**
+  1. Run readiness in each variant.
+  2. Inspect output and compare Jira/operational-state traces.
+- **Expected:** Only complete compatible mapping/resources pass; mismatch is actionable; no scan, activation or delivery mutation occurs.
+- **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
+- **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
+
 
 - **Automated regression:** Bundle/config compatibility checks and installer regression tests proving inactive rollout and truthful readiness reporting.

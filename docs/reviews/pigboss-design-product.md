@@ -1,0 +1,81 @@
+# Pig Boss scoped design review — product, experience and documentation
+
+Date: 14 November 2026. Reviewer: fresh independent Sol agent, product/experience lens with security, failure, contract and test review. No repository edits or live provider actions performed.
+
+Verdict: **CLEAN** for the exact updated uncommitted artifact below. The three initial findings were fixed and independently re-reviewed; no unresolved in-scope findings remain. This is design review, not committed-code, plan, installed acceptance or release evidence.
+
+## Artifact and coverage
+
+Checkout `/private/tmp/pigboard-product-requirements-20261114`, base HEAD `2f747232db156babc329053d2f5448b21b2a5b6a`.
+
+Changed design/document/contract files examined: **14/14**: `docs/architecture/pig-boss-operations.md`, `docs/product/manager.md`, `docs/product/installation.md`, `docs/product/README.md`, `ARCHITECTURE.md`, `README.md`, and architecture contracts `manager-discovery-closure.md`, `manager-handoff-contract.md`, `manager-release-one.md`, `manager-scenarios.md`, `manager-state.md`, `manager-work-contract.md`, plus `docs/architecture/contracts/pigboard-handoff-v1.schema.json` and `docs/architecture/examples/handoffs/admission.yaml`.
+
+Linked support contracts examined: **3/3**: `docs/product/coverage.md`, `docs/architecture/manager-stack-repair.md`, `docs/architecture/manager-work-schema.md`. Governing instructions examined: **2/2**, AGENTS.md and CONTRIBUTING.md. Thus design/support file coverage is **17/17**, plus **2/2** governing files. This does not claim re-review of the prior complete delivery plan, unchanged JSON schemas, or live Jira; the parent supplied the accepted scope decisions, and this review is confined to this design delta.
+
+Approved-scope and design obligations walked: **16/16**:
+
+1. Pig Boss component name and Pigboard product name; retained technical identifiers.
+2. One customer AWS installation for multiple projects in one Jira site.
+3. Canonical per-project mappings, repositories, defaults and validation.
+4. Site + immutable project ID + full-label identity for ownership, occupancy, cap and repair/state behavior.
+5. Retained identity through label/key/project move/removal, with no automatic transfer.
+6. Native-metadata membership/reference checks and cross-project prerequisites.
+7. One admitting installation per project, serial scans and separate worker concurrency.
+8. Basic manager health separated from worker monitoring, deduplication and recovery.
+9. Portable sanitized scan summary, business holds versus incomplete reads and crash absence.
+10. Read-only readable/JSON health command, states, evidence and exit results.
+11. Fresh evidence tied to the active revision, not historical success.
+12. Canonical cadence, budgets, thresholds, retention and optional existing SNS routing.
+13. Missing-completion, error/throttle and utilization alarms, low-cardinality metrics and missing-data treatment.
+14. Disabled install, enable/stop/upgrade/removal, permission failures and no automatic remediation.
+15. Fifty-project follow-on target, measured envelope and no first-release concurrency or unmeasured guarantee.
+16. New acceptance surface and preservation of design/plan/owner/activation gates.
+
+Second sweep completed: read the changed product requirements back into each primary-design section, then rechecked identity/state/stack contracts and lifecycle/health failure branches. The initial sweep found the table defect below. After the author updated the design, I reread the health failure/stop/revision paths, corrected product table, complete 1,304-line handoff schema and admission skeleton, and checked the new project binding against assignment/worker/state contracts. No additional in-scope finding was found in this second sweep.
+
+## Findings and re-review dispositions
+
+No unresolved findings.
+
+1. **F1 — P2, fixed — Failed stop reported as disabled.** The original disabled definition used desired state alone. Updated `pig-boss-operations.md` requires observed stopped scheduling; any desired/actual mismatch takes precedence over disabled/starting, and a failed stop is degraded with exit 1. The existing stop/drain procedure remains required for a safe-stop claim. Independently re-read the command, lifecycle and exit contracts: resolved.
+2. **F2 — P2, fixed — Health evidence revision ambiguous after configuration-only changes.** The updated design explicitly binds summaries, metrics, command and alarms to the same evidence revision, incorporating code/package revision, effective configuration digest and enablement generation. Configuration-only changes rotate the evidence window. This prevents success for a former project scope from satisfying the new revision. Independently re-read summary/freshness/metric/upgrade behavior: resolved.
+3. **F3 — P3, fixed — O13–O15 outside the requirements table.** The separating blank line was removed; the additions now continue the header-backed requirements table. Independently checked the complete table: resolved.
+
+The additional `admission.project_id` schema field is required, bounded and present as a visible null in the draft skeleton. The primary design states that manager-authored admission binds the native immutable project ID and downstream records inherit it through their assignment; worker preflight rejects a moved project. This supplies the retained assignment context that a worker without DynamoDB access needs, while work-ticket YAML cannot choose the native project. Existing assignment/digest/actor checks continue to apply. This is a coherent contract extension, not a worker-monitoring or launch-deduplication feature.
+
+## Seven-principle assessment
+
+- **Intuitive:** One installation and native project identity match the company model; boards remain views. Familiar health states are helpful, but disabled now requires observed scheduler agreement and failed stop is explicit.
+- **Discoverable:** Primary design, product requirements, direct evidence links and reason codes provide both entry-level guidance and exact semantics. The new requirements render in the existing table. The future operator runbook and configuration examples are explicitly delivery obligations, not falsely present functionality.
+- **Delightful experience:** Adding a project changes one configuration; no per-board deployment, repeated provisioning or worker polling is introduced. Stop failure receives a degraded headline and nonzero result, avoiding hidden contradictory evidence.
+- **Token saver:** Deterministic summaries, bounded reasons, stable IDs and direct log/alarm links let agents inspect health with one read-only operation. Human detail remains available. No essential failure or held work is suppressed to save output.
+- **Secure:** Runtime/customer-data boundaries, sanitized logs, customer SNS ownership, no automatic remediation and no added worker credentials preserve authority. Cross-project prerequisites cannot extend configured access; uncertain scope holds. Read-only health does not gain write permission.
+- **Agents are equal:** Readable and JSON interfaces share states and evidence; explicit exit results enable noninteractive operation. Shared revision binding and mismatch precedence let structured consumers use the same semantics as humans.
+- **Dependable:** Retained identities, isolated versus shared holds, honest measured-capacity claims and explicit installed acceptance preserve existing safety. Freshness and failure evidence are well separated from work waiting. The corrected stop and revision definitions close the initially ambiguous operational claims.
+
+Unified configuration is maintained: resources and outputs derive from customer intent, secrets remain references, no second monitoring database is introduced, and operator desired state is distinct from observed deployment state.
+
+## Scope and remaining gates
+
+The company/multi-project and health additions fit the parent-supplied owner decisions. No worker monitoring, launch deduplication, activation or implementation is approved by this review. The measured capacity follow-on is appropriately deferred.
+
+The coverage file still describes the historical 50-requirement/20-Story plan and omits O13–O15; the product README explicitly says that earlier review is historical and the updated set requires review. Update coverage and cases during the next authorized grooming step, then obtain fresh plan review. I do not treat unfinished grooming as an additional design defect or claim the old plan covers the addition.
+
+## SHA256 manifest of changed files reviewed
+
+```
+c3561141fddb0865716779add8e440f63173bbb914e00341ac2719e9b0270e06  docs/architecture/pig-boss-operations.md
+c06a42067e351de808cf33d9ea07a3e0f521eac6de84d46f5f733bbb90db7c34  docs/product/manager.md
+f811278447abb57df71b08aa55235f2d05a3a743c209d322a0a0fd48cfe4af56  docs/product/installation.md
+aa3882b489b26830bd2f5bd1144f9999ce3a44bf162ef82edf9aec952b131cbc  docs/product/README.md
+9e769723ef0a26f4fc8d1d26642113a0a9747c7c5068fb0f152495f1decb5224  ARCHITECTURE.md
+4e3994af7a91c8e7995c5431ddd8284026974d1d7e052d220e06039f36a36a20  README.md
+7da86eb9edf0c24ebc2be377e46a915c97ba15ba5fb93431a808104b783b932f  docs/architecture/manager-discovery-closure.md
+24039aab0a3f2ac2f5c6b2dd7686eb4f62cb0279c31eedb79b78eecf43168225  docs/architecture/manager-handoff-contract.md
+291a2ba19e622eae72bc8f8ae4b47a3365db813a2f2c913bb2658285b0aac1ab  docs/architecture/manager-release-one.md
+4a9bf69275b5485585f140de866831e491270db468897c461b6caef91d87d669  docs/architecture/manager-scenarios.md
+dfbe6003e7a50a9452a449dd409cfc5425948dfa2a24b7127f8d041dc87084b3  docs/architecture/manager-state.md
+5e31481e94906c3eb46e024c23388d5355cd022dcbfebe9c584d0d762835fc5f  docs/architecture/manager-work-contract.md
+5d99b51a806a12d4ddeb8e56699b4bce2588121806afd37015e9e9813767df4c  docs/architecture/contracts/pigboard-handoff-v1.schema.json
+788dc07a489c2a4fce2d83a4eb7f342d41b264bef95cb26b4c116180f45c214c  docs/architecture/examples/handoffs/admission.yaml
+```

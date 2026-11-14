@@ -1,5 +1,7 @@
 # First manager release: customer-owned AWS admission
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 Decision baseline: 14 November 2026. This is a scoped design, not deployed software.
 The owner selected AWS Lambda and asked for Jira grooming, not implementation or
 activation. The existing delivery automations remain inactive.

@@ -1,5 +1,7 @@
 # Worker handoff contract
 
+Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.
+
 Design for PGB-67, 14 November 2026. This specifies the first manager release;
 installed skills still use the earlier prose contract. Independent review and the
 [isolated test packet](manager-test-packet.md) gate adoption. No worker is activated
