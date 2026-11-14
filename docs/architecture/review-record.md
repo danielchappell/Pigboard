@@ -203,3 +203,14 @@ CI and current-head Codex thumbs-up are required before merge. These design revi
 do not close PGB-67/PGB-68, authorize live tests or make implementation Stories ready.
 Actual fixture IDs, credentials, executable requests, remaining operational contracts
 and provider proof still gate that owner-reviewed Story set.
+
+
+### PR67 provider-proof sequence correction
+
+Codex found a P2 contradiction in the P4 expected evidence at cf9e22f: the
+same stream cannot retain three simultaneous pending intents while reconciliation
+is required between operations. The corrected packet observes each pending intent,
+reconciles it before the next same-stream operation, and retains the first two as
+history. The last repair remains pending for P5. No request ceiling or product
+behavior changed; no live execution occurred. Exact revised review follows in PR
+evidence; prior CLEAN reviews cover only their named revision.

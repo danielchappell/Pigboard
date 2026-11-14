@@ -104,10 +104,16 @@ missing auth/request artifacts mean NOT RUN, never an improvised live call.
 | P1 source edges | F1: new then same-edge repeat. F2: queue then repeat, repair then repeat. Every first call reaches target; every repeat is rejected with unchanged status/history | Installed edge IDs, permission identity, response/status/history for all three edges |
 | P2 fresh read | Reconcile F1/F2 by known stable IDs after their successful transitions | Each requested ID appears once with its actual current status; no claim about undiscovered work |
 | P3 competing intents | Two different attempts conditionally create the same stream/revision record | Exactly one succeeds, one condition fails, strong read returns winner; no Jira call |
-| P4 lost confirmation | F3: new. F4: queue, then repair only after operator reconciliation of the prior queue attempt. Persist intent first, perform one transition, deliberately omit confirmation write | Three distinct pending attempts survive; later observations issue zero Jira writes; no automatic retry |
+| P4 lost confirmation | F3: new, observe pending, then operator reconciliation. F4: queue, observe pending, reconcile, then repair and observe pending. Each operation persists intent, performs one transition and deliberately omits confirmation | Each pending attempt survives a later observation with zero Jira writes. Earlier attempts are retained as reconciled history before the next operation; the final repair remains pending for P5. No automatic retry |
 | P5 stale completion | Conditionally reconcile one synthetic pending record at its observed revision; then submit an update using the old revision | Stale update fails and cannot change the reconciled record |
 | P6 permissions | Invoke read-only probe with allowed session, then with a restrictive session explicitly denying this function | Allowed result and genuine access denial; no public permission; no secret/body exposure |
 | P7b worker records | Publish/read representative implementation, approval, QA, repair, dependency-wait, blocked and human resume-authorization records; compare parsed content/metadata | Required fields/nulls/references survive; AI/human outcomes stay distinct; transport does not imply real PR work happened |
+
+P4 uses the same synthetic stream sequentially. After each of its first two pending
+observations, the operator records the proven Jira outcome with the expected state
+revision before proceeding. Three attempts are tested, not three simultaneous
+pending owners. If reconciliation cannot establish an outcome, later operations
+are NOT RUN. P5 reconciles the final pending repair and tests its stale completion.
 
 `P7a` is interleaved before each relevant transition, not a late simulation of
 publication order. Worker records in P7b are visibly synthetic and do not transition
