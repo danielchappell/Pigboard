@@ -26,7 +26,7 @@ class ObserverTests(unittest.TestCase):
     def setUp(self):
         self.calls = []
         self.factory_calls = []
-        self.result = {'Item': {'pk': {'S': 'PROBE#STREAM'}, 'revision': {'N': '1'}, 'attempt': {'S': 'f3-new'}, 'state': {'S': 'pending'}, 'extra': {'S': 'DO_NOT_DISCLOSE'}}, 'ResponseMetadata': {'RequestId': 'request-1'}}
+        self.result = {'Item': {'pk': {'S': 'PROBE#STREAM'}, 'revision': {'N': '1'}, 'attempt': {'S': 'f3-new'}, 'state': {'S': 'pending'}, 'history': {'L': []}, 'extra': {'S': 'DO_NOT_DISCLOSE'}}, 'ResponseMetadata': {'RequestId': 'request-1'}}
         self.error = None
         self.delay = 0
         self.factory_delay = 0
@@ -68,7 +68,7 @@ class ObserverTests(unittest.TestCase):
         return result
 
     def test_exact_read_and_filtered_result(self):
-        self.assertEqual(self.observe(), {'status': 'FOUND', 'request_id': 'request-1', 'key': 'PROBE#STREAM', 'revision': 1, 'attempt': 'f3-new', 'state': 'pending', 'sdk_version': 'local-fixture'})
+        self.assertEqual(self.observe(), {'status': 'FOUND', 'request_id': 'request-1', 'key': 'PROBE#STREAM', 'revision': 1, 'attempt': 'f3-new', 'state': 'pending', 'history': [], 'sdk_version': 'local-fixture'})
         self.assertEqual(self.calls, [{'TableName': 'synthetic-table', 'Key': {'pk': {'S': 'PROBE#STREAM'}}, 'ConsistentRead': True}])
         self.assertEqual(self.factory_calls, [('dynamodb', {'config': {'connect_timeout': 3, 'read_timeout': 5, 'retries': {'total_max_attempts': 1, 'mode': 'standard'}}})])
         self.assertEqual(self.namespace['DEADLINE_SECONDS'], 10)
@@ -150,6 +150,64 @@ class ObserverTests(unittest.TestCase):
         self.assertEqual(self.observe(), {'status': 'TIMEOUT'})
         self.assertEqual(self.calls, [])
 
+    def test_history_integrity(self):
+        receipt = lambda a, r: {'M': {'attempt': {'S': a}, 'revision': {'N': str(r)}, 'state': {'S': 'confirmed'}}}
+        first = receipt('f3-new', 2); second = receipt('f4-queue', 4)
+        self.result['Item'].update(revision={'N': '5'}, attempt={'S': 'f4-repair'}, history={'L': [first, second]})
+        self.assertEqual(self.observe()['status'], 'FOUND')
+        for bad in [None, {'L': []}, {'L': [first]}, {'L': [first, first]}, {'L': [second, first]}, {'L': [first, second, receipt('f4-repair', 6)]}, {'S': 'history'}, {'L': [{'M': {'secret': {'S': 'DO_NOT_DISCLOSE'}}}]}]:
+            with self.subTest(history=bad):
+                self.result['Item']['history'] = bad
+                result = self.observe()
+                self.assertEqual(result['status'], 'MALFORMED_ITEM')
+                self.assertNotIn('DO_NOT_DISCLOSE', json.dumps(result))
+        del self.result['Item']['history']
+        self.assertEqual(self.observe()['status'], 'MALFORMED_ITEM')
+
+    def test_conditional_operator_sequence(self):
+        packet = json.loads((ROOT / 'operator-requests.json').read_text())
+        self.assertFalse(packet['execution_authorized'])
+        requests = packet['requests']
+        self.assertEqual(len(requests), 9)
+        records = {}
+        outcomes = []
+        for item in requests:
+            q = item['request']; self.assertIsNone(q['TableName'])
+            if item['operation'] == 'PutItem':
+                self.assertEqual(q['ConditionExpression'], 'attribute_not_exists(#pk)')
+                self.assertEqual(q['ExpressionAttributeNames'], {'#pk': 'pk'})
+                key = q['Item']['pk']['S']; ok = key not in records
+                if ok: records[key] = q['Item']
+            else:
+                self.assertEqual(item['operation'], 'UpdateItem')
+                self.assertEqual(q['ConditionExpression'], '#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate')
+                confirm = item['id'] in ['P4-F3-CONFIRM', 'P4-QUEUE-CONFIRM', 'P5-REPAIR-CONFIRM', 'P5-STALE']
+                suffix = ', #history = list_append(#history, :receipt)' if confirm else ''
+                self.assertEqual(q['UpdateExpression'], 'SET #rev = :newrev, #attempt = :newattempt, #state = :newstate' + suffix)
+                names = {'#rev': 'revision', '#attempt': 'attempt', '#state': 'state'}
+                if confirm: names['#history'] = 'history'
+                self.assertEqual(q['ExpressionAttributeNames'], names)
+                key = q['Key']['pk']['S']; v = q['ExpressionAttributeValues']; old = records[key]
+                ok = old['revision'] == v[':oldrev'] and old['attempt'] == v[':oldattempt'] and old['state'] == v[':oldstate']
+                if ok:
+                    history = old['history']['L'] + (v[':receipt']['L'] if confirm else [])
+                    records[key] = {'pk': {'S': key}, 'revision': v[':newrev'], 'attempt': v[':newattempt'], 'state': v[':newstate'], 'history': {'L': history}}
+            outcome = 'success' if ok else 'conditional_conflict'
+            self.assertEqual(outcome, item['expected'], item['id']); outcomes.append(outcome)
+            # Independent expected history by stage, also exercised through actual
+            # handler code. A dropped history cannot pass merely because the last
+            # revision/current attempt matches.
+            expected_count = {'P3-A': 0, 'P3-B': 0, 'P4-F3-BEGIN': 0, 'P4-F3-CONFIRM': 1, 'P4-QUEUE-BEGIN': 1, 'P4-QUEUE-CONFIRM': 2, 'P4-REPAIR-BEGIN': 2, 'P5-REPAIR-CONFIRM': 3, 'P5-STALE': 3}[item['id']]
+            expected_pairs = [('f3-new', 2), ('f4-queue', 4), ('f4-repair', 6)][:expected_count]
+            self.result = {'Item': records[key]}
+            result = self.observe({'operation': 'observe', 'key': key})
+            self.assertEqual(result['status'], 'FOUND', item['id'])
+            self.assertEqual(result['history'], [{'attempt': a, 'revision': r, 'state': 'confirmed'} for a, r in expected_pairs], item['id'])
+        self.assertEqual(outcomes.count('conditional_conflict'), 2)
+        self.assertEqual(records['PROBE#CONTENTION']['attempt'], {'S': 'contention-a'})
+        self.assertEqual(records['PROBE#STREAM'], {'pk': {'S': 'PROBE#STREAM'}, 'revision': {'N': '6'}, 'attempt': {'S': 'f4-repair'}, 'state': {'S': 'confirmed'}, 'history': {'L': [{'M': {'attempt': {'S': a}, 'revision': {'N': str(r)}, 'state': {'S': 'confirmed'}}} for a, r in [('f3-new', 2), ('f4-queue', 4), ('f4-repair', 6)]]}})
+
+
 class TemplateTests(unittest.TestCase):
     def test_exact_resources_and_runtime(self):
         r = TEMPLATE['Resources']
@@ -183,34 +241,6 @@ class TemplateTests(unittest.TestCase):
         self.assertEqual(grant[1]['Action'], ['dynamodb:GetItem', 'dynamodb:PutItem', 'dynamodb:UpdateItem'])
         self.assertEqual(grant[1]['Resource'], runtime[0]['Resource'])
         self.assertEqual(grant[1]['Condition'], runtime[0]['Condition'])
-
-    def test_conditional_operator_sequence(self):
-        packet = json.loads((ROOT / 'operator-requests.json').read_text())
-        self.assertFalse(packet['execution_authorized'])
-        requests = packet['requests']
-        self.assertEqual(len(requests), 9)
-        records = {}
-        outcomes = []
-        for item in requests:
-            q = item['request']; self.assertIsNone(q['TableName'])
-            if item['operation'] == 'PutItem':
-                self.assertEqual(q['ConditionExpression'], 'attribute_not_exists(#pk)')
-                self.assertEqual(q['ExpressionAttributeNames'], {'#pk': 'pk'})
-                key = q['Item']['pk']['S']; ok = key not in records
-                if ok: records[key] = q['Item']
-            else:
-                self.assertEqual(item['operation'], 'UpdateItem')
-                self.assertEqual(q['ConditionExpression'], '#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate')
-                self.assertEqual(q['UpdateExpression'], 'SET #rev = :newrev, #attempt = :newattempt, #state = :newstate')
-                self.assertEqual(q['ExpressionAttributeNames'], {'#rev': 'revision', '#attempt': 'attempt', '#state': 'state'})
-                key = q['Key']['pk']['S']; v = q['ExpressionAttributeValues']; old = records[key]
-                ok = old['revision'] == v[':oldrev'] and old['attempt'] == v[':oldattempt'] and old['state'] == v[':oldstate']
-                if ok: records[key] = {'pk': {'S': key}, 'revision': v[':newrev'], 'attempt': v[':newattempt'], 'state': v[':newstate']}
-            outcome = 'success' if ok else 'conditional_conflict'
-            self.assertEqual(outcome, item['expected'], item['id']); outcomes.append(outcome)
-        self.assertEqual(outcomes.count('conditional_conflict'), 2)
-        self.assertEqual(records['PROBE#CONTENTION']['attempt'], {'S': 'contention-a'})
-        self.assertEqual(records['PROBE#STREAM'], {'pk': {'S': 'PROBE#STREAM'}, 'revision': {'N': '6'}, 'attempt': {'S': 'f4-repair'}, 'state': {'S': 'confirmed'}})
 
 if __name__ == '__main__':
     unittest.main()

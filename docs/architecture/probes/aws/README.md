@@ -45,7 +45,7 @@ checks cover the resource set and important IAM/retention boundaries. The nine
 conditional payloads are walked against synthetic state; that is not DynamoDB
 acceptance or an alternative production state adapter.
 
-Author result: 15/15 tests pass, with no SDK installation, credential lookup,
+Author result: 16/16 tests pass, with no SDK installation, credential lookup,
 network request or AWS resource. Static assertions are not CloudFormation service
 validation, IAM simulation or proof that this runtime works in the new account.
 
@@ -111,7 +111,7 @@ Only these two payloads are accepted:
 Unknown fields, operations and keys are rejected before client creation. Table,
 endpoint and identity cannot come from the event. One GetItem uses `ConsistentRead`.
 The runtime role has no write API. Success returns `FOUND`, key, numeric revision,
-fixed attempt/state values, request ID and SDK version; extra stored fields are
+fixed attempt/state values, the exact retained history, request ID and SDK version; extra stored fields are
 not returned. `MISSING`, `MALFORMED_ITEM`, `ACCESS_DENIED`, `PROVIDER_ERROR`,
 `TIMEOUT`, `INVALID_REQUEST` and `ENV_UNAVAILABLE` are separate outcomes. None is
 a whole-packet PASS. No event, raw exception or response dump is logged.
@@ -146,7 +146,17 @@ This uses nine DynamoDB write attempts, including two expected conflicts, within
 the packet's 40-write ceiling. Counts do not replace the packet's Jira, read,
 invocation or time ceilings. Record every request's case, time, identity, expected
 and actual outcome. Retain sanitized receipts for all pending observations and
-reconciliations; do not claim three simultaneous pending owners. These two fixture
+reconciliations; do not claim three simultaneous pending owners. Each confirmation
+atomically appends its attempt/revision/confirmed-state receipt to the stream
+item's `history` list under the existing conditional update. Starting the next
+attempt preserves that list. The stale completion appends nothing.
+
+Strongly observe exact history after every step: no entries for F3 pending;
+`f3-new@2` retained while F4 queue is pending; `f3-new@2, f4-queue@4` retained
+while repair is pending; all three, including `f4-repair@6`, after repair
+confirmation and the rejected stale write. Missing, dropped, duplicate, reordered
+or prematurely appended entries fail the observer. External receipts supplement
+these persisted assertions; they do not substitute for them. These two fixture
 records are not the manager's future history layout.
 
 Only deliberately omitted local confirmation is fault injection. A genuinely

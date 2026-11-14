@@ -20,6 +20,9 @@
           },
           "state": {
             "S": "pending"
+          },
+          "history": {
+            "L": []
           }
         },
         "ConditionExpression": "attribute_not_exists(#pk)",
@@ -46,6 +49,9 @@
           },
           "state": {
             "S": "pending"
+          },
+          "history": {
+            "L": []
           }
         },
         "ConditionExpression": "attribute_not_exists(#pk)",
@@ -72,6 +78,9 @@
           },
           "state": {
             "S": "pending"
+          },
+          "history": {
+            "L": []
           }
         },
         "ConditionExpression": "attribute_not_exists(#pk)",
@@ -92,11 +101,12 @@
           }
         },
         "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
-        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
         "ExpressionAttributeNames": {
           "#rev": "revision",
           "#attempt": "attempt",
-          "#state": "state"
+          "#state": "state",
+          "#history": "history"
         },
         "ExpressionAttributeValues": {
           ":oldrev": {
@@ -116,6 +126,23 @@
           },
           ":newstate": {
             "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f3-new"
+                  },
+                  "revision": {
+                    "N": "2"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
           }
         }
       }
@@ -172,11 +199,12 @@
           }
         },
         "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
-        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
         "ExpressionAttributeNames": {
           "#rev": "revision",
           "#attempt": "attempt",
-          "#state": "state"
+          "#state": "state",
+          "#history": "history"
         },
         "ExpressionAttributeValues": {
           ":oldrev": {
@@ -196,6 +224,23 @@
           },
           ":newstate": {
             "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-queue"
+                  },
+                  "revision": {
+                    "N": "4"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
           }
         }
       }
@@ -252,11 +297,12 @@
           }
         },
         "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
-        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
         "ExpressionAttributeNames": {
           "#rev": "revision",
           "#attempt": "attempt",
-          "#state": "state"
+          "#state": "state",
+          "#history": "history"
         },
         "ExpressionAttributeValues": {
           ":oldrev": {
@@ -276,6 +322,23 @@
           },
           ":newstate": {
             "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-repair"
+                  },
+                  "revision": {
+                    "N": "6"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
           }
         }
       }
@@ -292,11 +355,12 @@
           }
         },
         "ConditionExpression": "#rev = :oldrev AND #attempt = :oldattempt AND #state = :oldstate",
-        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate",
+        "UpdateExpression": "SET #rev = :newrev, #attempt = :newattempt, #state = :newstate, #history = list_append(#history, :receipt)",
         "ExpressionAttributeNames": {
           "#rev": "revision",
           "#attempt": "attempt",
-          "#state": "state"
+          "#state": "state",
+          "#history": "history"
         },
         "ExpressionAttributeValues": {
           ":oldrev": {
@@ -316,6 +380,23 @@
           },
           ":newstate": {
             "S": "confirmed"
+          },
+          ":receipt": {
+            "L": [
+              {
+                "M": {
+                  "attempt": {
+                    "S": "f4-repair"
+                  },
+                  "revision": {
+                    "N": "6"
+                  },
+                  "state": {
+                    "S": "confirmed"
+                  }
+                }
+              }
+            ]
           }
         }
       }
