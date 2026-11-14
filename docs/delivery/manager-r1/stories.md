@@ -1608,12 +1608,13 @@ Operators cannot tell whether Pig Boss has finished its scans or is nearing its 
 #### R1-22-H02: Stale and unavailable evidence
 
 - **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
-- **Requirements:** AC2, AC3.
-- **Prerequisites/data:** Old success, recent failed scan, missing completion after crash, denied telemetry read and no first completion fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Requirements:** AC2, AC3, TAC2.
+- **Prerequisites/data:** Old success, recent failed scan, missing completion after crash, denied telemetry read and no first completion fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions. Overlap fixtures: desired/observed disabled plus old success; expired success plus recent failure; failed first scan before/after expiry; schedule mismatch plus stale data; unreadable telemetry plus disabled intent; exact freshness boundary.
 - **Steps:**
   1. Evaluate before and after freshness deadline with a controlled clock.
   2. Inspect JSON states and exit codes.
-- **Expected:** Stale/failed/unknown/starting are distinct; missing or unreadable evidence is never healthy; command makes zero mutation calls.
+  3. Evaluate every overlapping-condition fixture using the ordered health decision table, including exactly at and just beyond the freshness boundary.
+- **Expected:** Stale/failed/unknown/starting are distinct; missing or unreadable evidence is never healthy; command makes zero mutation calls. First matching state follows unknown, schedule mismatch, intentional disabled, stale, current degraded, starting, healthy. Disabled plus old data stays disabled; expired success plus new failure is stale with failure retained as a secondary reason; a failed first scan is degraded before expiry and stale afterward; missing reads win as unknown. Age equal to freshness is within the window.
 - **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
 - **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
 

@@ -81,6 +81,33 @@ it never scans or transitions Jira or changes scheduling state. Report:
 | stale | No current-revision complete scan within the freshness window. |
 | unknown | Health/configuration evidence cannot be read or validated; never report healthy. |
 
+Evaluate health in this order and return the first matching result. Keep secondary
+reasons in the output; a primary state never hides an observed failure:
+
+1. **unknown:** a required configuration/schedule/telemetry read failed, evidence is
+   invalid, or the current evidence revision cannot be established. A successful
+   read finding no completion is known absence, not a read failure.
+2. **degraded:** observed scheduler state differs from canonical intent in either
+   direction. This wins even if scan evidence is also stale.
+3. **disabled:** desired and observed schedule are both disabled. Old scan data or
+   prior failures do not turn an intentional stop into stale/unhealthy scheduling.
+   Safe-stop confirmation still uses the existing drain procedure.
+4. **stale:** scheduling is enabled and the last current-revision complete scan is
+   older than freshness, or there is no such completion and the current revision's
+   enablement age exceeds freshness. A recent failed attempt cannot reset this age.
+5. **degraded:** the latest attempt failed/incomplete, a current capacity warning
+   exists, or a current error/throttle alarm is active, while freshness has not expired.
+6. **starting:** enabled within the freshness window, with no current-revision
+   complete scan and none of the failure conditions above.
+7. **healthy:** a fresh complete scan exists and none of the above applies.
+
+The boundary uses `age > freshness`; equality is still within the window. Thus an
+intentional stop with old success is disabled; expired success plus recent failure
+is stale with the failure also reported; a failed first scan is degraded before
+expiry and stale afterward. The CLI, JSON output and acceptance fixtures share this
+ordered decision table. Provider alarm states are observations, not substitutes
+for this health evaluation.
+
 Report evidence timestamps, desired/actual schedule state, last complete and latest
 attempt, scan duration, maximum budget utilization, held-work counts, alarm states
 and direct AWS log/alarm links. Exit 0 for healthy or intentionally disabled, 1

@@ -257,7 +257,7 @@
     }
   ],
   "published_body_check": "23/23 exact YAML comparison after native prerequisite substitution; original parent/status and absence of AI labels verified.",
-  "reviewed_draft_sha256": "64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa",
+  "reviewed_draft_sha256": "c649cf9d308412972b1de61e50f529af18c58009fea94f1b11db3985f049b1ab",
   "fresh_readback_verification": {
     "stories": [
       {
@@ -383,7 +383,7 @@
         "id": "R1-22",
         "key": "PGB-100",
         "status": "To Do",
-        "contract_sha256": "6be7f35788d5059739b53aa6f29d7f6847655edd6451c1792600104861cd5508",
+        "contract_sha256": "fb0dd808087587f435fab43c39f0075c0227a92dd2339e6a329a79926265565f",
         "human_cases": 4
       },
       {
@@ -594,5 +594,6 @@
     ],
     "human_unblock": "PGB-62",
     "pr_environments": "PGB-60"
-  }
+  },
+  "health_precedence_correction": "Codex review correction: ordered six-state evaluation and overlapping-condition assertions in existing R1-22-H02; PGB-100 exact YAML freshly verified. No additional cases or scope."
 }
