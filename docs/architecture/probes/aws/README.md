@@ -45,7 +45,7 @@ checks cover the resource set and important IAM/retention boundaries. The nine
 conditional payloads are walked against synthetic state; that is not DynamoDB
 acceptance or an alternative production state adapter.
 
-Author result: 14/14 tests pass, with no SDK installation, credential lookup,
+Author result: 15/15 tests pass, with no SDK installation, credential lookup,
 network request or AWS resource. Static assertions are not CloudFormation service
 validation, IAM simulation or proof that this runtime works in the new account.
 
@@ -119,8 +119,9 @@ a whole-packet PASS. No event, raw exception or response dump is logged.
 SDK connection/read limits are three/five seconds with one total attempt. A separate
 ten-second POSIX timer bounds client creation and the read together. Unavailable
 main-thread/timer support or an already active timer prevents a request. Timer state
-is restored after success or failure. Local tests interrupt a deliberately slow
-fake operation; actual Lambda behavior remains a live proof requirement.
+is restored after success or failure. The deadline sentinel bypasses ordinary SDK exception wrappers and is caught
+explicitly by the handler. Local tests interrupt a deliberately slow fake operation,
+including a transport that wraps ordinary exceptions; actual Lambda behavior remains a live proof requirement.
 
 ## Operator sequence and evidence
 

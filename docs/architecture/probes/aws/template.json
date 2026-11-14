@@ -157,7 +157,7 @@
                 "DEADLINE_SECONDS = 10",
                 "KEYS = {\"PROBE#CONTENTION\", \"PROBE#STREAM\"}",
                 "ATTEMPTS = {\"contention-a\", \"contention-b\", \"f3-new\", \"f4-queue\", \"f4-repair\"}",
-                "class ProbeDeadline(Exception):",
+                "class ProbeDeadline(BaseException):",
                 "    pass",
                 "",
                 "def timed_out(signum, frame):",

@@ -132,6 +132,18 @@ class ObserverTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, .25)
         self.assertEqual(len(self.calls), 1)
 
+    def test_deadline_survives_sdk_exception_wrapper(self):
+        self.namespace['DEADLINE_SECONDS'] = .03
+        def wrapping_transport(**kwargs):
+            self.calls.append(kwargs)
+            try:
+                time.sleep(.3)
+            except Exception as error:
+                raise ProviderError('HTTPClientError') from error
+        with patch.object(self, 'get_item', wrapping_transport):
+            self.assertEqual(self.observe(), {'status': 'TIMEOUT'})
+        self.assertEqual(len(self.calls), 1)
+
     def test_wall_clock_deadline_during_client_creation(self):
         self.namespace['DEADLINE_SECONDS'] = .03
         self.factory_delay = .3
