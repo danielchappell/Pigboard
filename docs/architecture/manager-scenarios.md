@@ -55,7 +55,7 @@ interrupted to enforce a newly observed inconsistency.
 
 | ID | Situation | Required result |
 | --- | --- | --- |
-| S19 | A needs confirmed repair while B is already active | The responsible reviewer/QA worker or authorized human-request path records A in Rework Queued; B's existing cycle continues; no concurrent A implementer |
+| S19 | A is in Human Review and needs confirmed repair while B is already active | The authorized human-request automation records A in Rework Queued; B's existing cycle continues; no concurrent A implementer. B's workers have no authority to transition A |
 | S20 | B can finish its assigned cases without depending on the unresolved A repair | B can reach Human Review; then A repair is considered before new C |
 | S21 | A's known defect makes B's required checks impossible | Responsible B worker records dependency wait and unfinished checks, moves B to Rework Queued; manager does not repair it or start A concurrently |
 | S22 | A's repair is implemented but review/AI QA is incomplete | Do not queue completed B on implementation evidence alone |

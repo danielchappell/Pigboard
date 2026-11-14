@@ -234,10 +234,26 @@ no implementation Story is ready. Exact committed review remains a separate gate
 
 Codex requested that S02 and S40 label the queue-only pause behavior provisional
 at the point of use. Commit 09cd6a53f23eb422d7a5e0ba0e000ac49a6a6f59 makes that
-clarification. Two fresh independent Sol reviewers assessed the exact one-file,
-two-row delta plus affected contracts; both returned CLEAN after second sweeps and
-all seven principles/unified-configuration checks. Product also re-read all 41 cases.
-Current scenario SHA-256: 51cf7e5203db4bfab1575993f5b5d5a99e6734c7b0f7b4a9a5c03b7867dd4ef9.
-The earlier hash remains historical evidence, not a verdict on this corrected
-artifact. The owner has not approved the queue-only pause proposal; neither these
-reviews nor publication approve it or establish implementation readiness.
+clarification. The retained product report covered 1/1 changed file, 2/2 changed
+rows, 41/41 matrix cases and 4/4 affected contracts: work opt-in/configuration/pause,
+release-one admission rules, stack queue/admission/pause, and handoff worker draining.
+The retained technical report covered 1/1 changed file and 2/2 rows, but did not
+supply an examined/total denominator for its affected-contract surface. Both
+reported CLEAN with second sweeps and principle assessments; that incomplete
+technical coverage record does not satisfy the repository's full review gate.
+These are historical reports, not a final verdict on the corrected PR.
+Historical scenario SHA-256 at 09cd6a5:
+51cf7e5203db4bfab1575993f5b5d5a99e6734c7b0f7b4a9a5c03b7867dd4ef9.
+
+### Final scenario corrections
+
+Codex also found that S19 wrongly offered a reviewer/QA path to rework A while B
+already occupies the same stream. S19 now explicitly starts with A in Human Review
+and assigns that transition only to authorized human-request automation. B's workers
+cannot transition A. The final complete review must cover all three changed files,
+all 41 scenarios and the six named governing documents: manager-work-contract,
+manager-stack-repair, manager-handoff-contract, manager-state,
+manager-admission-proof and manager-release-one. Its exact commit and separate
+product/technical reports are recorded on PR 69 after review, not assumed here.
+The owner has not approved the queue-only pause proposal. Publication does not
+approve it or establish implementation readiness.
