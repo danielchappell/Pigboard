@@ -136,3 +136,14 @@ ticket and keeps handoff encoding open. No new handoff design is adopted here.
 This correction reuses the reviewed design and documentation publication plan.
 Fresh committed review and current-head hosted checks are required; the earlier
 CLEAN verdicts do not cover the correction. No runtime behavior changes.
+
+
+A second hosted round at 78bbbf4 found two further in-scope coverage gaps: the
+walkthrough's scope banner/footer lagged its corrected guide, and P1/P4 did not
+explicitly require all three manager-owned source edges. The presentation text
+now includes stack queueing without altering the nine ratified diagrams. P1
+requires success and wrong-source rejection for every edge; P4 requires retained
+uncertainty/no replay for each. The 12-transition ceiling includes setup and must
+be revised before authorization if the eventual fixture cannot fit. Account signup
+is now reported as complete, with deployment acceptance still unproven. Fresh
+committed review and hosted gates apply again; no live probe is authorized.

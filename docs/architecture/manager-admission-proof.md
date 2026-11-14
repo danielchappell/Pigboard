@@ -114,11 +114,13 @@ or a transaction spanning Jira and DynamoDB.
   request token has a finite idempotency window; it is not a permanent scheduling
   record and never makes Jira requests idempotent. Durable attempt identity is
   required independently of any SDK retry/token behavior.
-- The current environment has no AWS CLI on PATH. The owner requested a Scuba Pig
-  AWS development account, with free-plan signup delegated in parallel. No usable
-  account identity, region, scoped credential or disposable Jira fixture project is
-  available for this proof yet. No cloud identity was inspected by the discovery
-  task and no probe resource was created.
+- The local environment has no AWS CLI on PATH. The parallel signup agent has now
+  verified an actual Scuba Pig AWS development account on the Free plan with $100
+  credits and $0 due, ending 14 May 2027 or earlier on credit exhaustion. The service
+  catalog lists Lambda, DynamoDB, CloudFormation and IAM; IAM access was inspected.
+  This is account/catalog evidence, not deployment acceptance. No scoped probe
+  credential, selected deployment region or disposable Jira fixture is ready, and
+  no probe resources, roles, credentials or paid upgrade were created.
 
 ## Concrete bounded proof proposal
 
@@ -138,12 +140,21 @@ approved isolated workflow setup. Credentials stay in customer-approved storage.
 
 | Case | Bounded action | Required evidence |
 | --- | --- | --- |
-| P1 — directed transition | Inspect workflow/available edge, transition one synthetic ticket, attempt the same source edge after it leaves the source | Actual source/target definition, response and history; second attempt cannot restart work |
+| P1 — all three directed edges | For Ready to Work -> In Progress, Rework Queued -> In Progress, and Human Review -> Rework Queued, inspect the installed edge, perform one synthetic transition and repeat that same edge after leaving its source | Separate source/target, transition ID, effective permission, response and history evidence for each edge; every wrong-source repeat is rejected without a new transition |
 | P2 — fresh known issue | Reconcile the fixture ID after its transition | Exact ID and current status; no claim about unknown issues |
 | P3 — competing intents | Two conditionally written intents for the same stream revision | One succeeds; the other conflicts; one durable owner |
-| P4 — lost outcome | Persist intent, perform the authorized fixture transition, deliberately omit local confirmation | Later probe reads pending intent and sends zero further Jira writes |
+| P4 — lost outcome for each operation | For each of the three edges in P1, persist a distinct intent, perform the authorized fixture transition and deliberately omit local confirmation | Each later probe reads its pending intent and sends zero further Jira writes; queueing and both admission sources must all be covered |
 | P5 — stale completion | Reconcile a fixture attempt, then submit its old revision's completion | Conditional update rejects stale completion |
 | P6 — cloud boundary | Invoke read-only/no-write probe under allowed role; test a separately prepared denied identity | No public invocation, appropriate access denial, sanitized output and retained state |
+
+P1 reserves six requests: one success and one wrong-source repeat for each edge.
+P4 reserves three more, one uncertain-confirmation case per edge. The remaining
+three requests within the ceiling cover any fixture positioning. Count every setup
+transition, including initial placement; four tickets may be reused only after an
+explicit evidence-backed reconciliation of their prior probe attempt. If the chosen
+workflow needs more positioning, stop and revise the reviewed/authorized packet
+before running it. Do not omit an edge or silently increase the ceiling. Discovery
+cannot close on the strength of just the new-work admission edge.
 
 Cap the complete proof at 12 Jira transition requests and 40 DynamoDB write requests;
 set bounded read counts/time in the reviewed probe. Stop on unexpected access,
