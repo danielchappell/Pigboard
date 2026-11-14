@@ -101,7 +101,7 @@
 
 ## Approved company/health delta coverage
 
-Earlier review verdicts cover the original set; the current delta needs its own review.
+The original 50-requirement reviews remain historical evidence. The current 53-requirement, 23-Story set has CLEAN independent [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. Final owner review and installed acceptance remain pending.
 
 | Requirement | Additional Story cases | Installed acceptance |
 | --- | --- | --- |

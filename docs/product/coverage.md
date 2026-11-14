@@ -17,7 +17,7 @@ now map to implementation Stories and acceptance cases. PGB-91 is installed mana
 The final Stories must make each slice usable and meet the file/time limits; these
 surfaces are not permission to create six oversized Stories or disconnected plumbing.
 
-## Requirement coverage
+## Baseline requirement coverage (50 retained requirements)
 
 The complete case instructions are in the Jira Story and [review pack](../delivery/manager-r1/stories.md). Existing capabilities are retained and verified, not rebuilt merely to fill a row.
 
@@ -112,13 +112,11 @@ The complete case instructions are in the Jira Story and [review pack](../delive
   release acceptance remain separate; this draft claims no completed implementation.
 
 Unified configuration remains a cross-cutting principle, not an automatic installer
-feature silently added to this release. Product and technical reviewers must assess
-all 50 requirements, the six documents and source consistency, perform a second
-sweep and return CLEAN/NOT CLEAN for the exact reviewed artifact.
+feature silently added to this release. The original consolidation reviewed 50 requirements; that count is historical. Current product and technical reviews cover all 53 requirements, the revised design and complete delivery set, source consistency and a second sweep. The exact reviewed artifacts and CLEAN verdicts are recorded in the delta review reports linked below.
 
 ## Approved company/health delta coverage
 
-Earlier review verdicts cover the original set; the current delta needs its own review.
+The original 50-requirement reviews remain historical evidence. The current 53-requirement, 23-Story set has CLEAN independent [product](../reviews/pigboss-plan-product.md) and [technical](../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. Final owner review and installed acceptance remain pending.
 
 | Requirement | Additional Story cases | Installed acceptance |
 | --- | --- | --- |
