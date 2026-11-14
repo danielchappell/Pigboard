@@ -93,8 +93,10 @@ The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all eleven entrypoints,
 `dependencies: "verified"`, and the `pg.Client` / `bru --version` smoke checks.
-Use `stableSkills` for explicit invocation; the versioned `skills` path identifies
-the exact release. A manifest proves source matching, not provider access.
+Use the versioned `skills` path for a run that may overlap a refresh; it binds
+subsequent sibling-reference reads to that release. `stableSkills` is a mutable
+entry path for new runs. Do not replace its link while any run still reads through
+it. A manifest proves source matching, not provider access.
 
 This script installs files; it does not configure a Cursor account. It rejects an
 unmanaged destination and preserves the previous stable link on failed preparation
@@ -154,11 +156,16 @@ and manager deployment remain separate work.
 
 ## Refresh, rollback and removal
 
-1. Keep the affected automation inactive while changing its environment. Account
-   for active runs; disabling a trigger does not stop a run already underway.
+1. Keep the affected automation inactive while changing its environment. Before
+   rerunning the installer on a shared root, wait for every run using its stable
+   `skills` link (including sibling references through that link) to finish. Merely
+   retaining its old release directory is insufficient: replacement changes where
+   later reads resolve. Disabling a trigger does not stop an active run.
 2. Prepare a reviewed published revision with the same command, using setup scripts
    from that revision. Each invocation creates a distinct release, even for the
-   same source commit. Existing runs retain their versioned paths.
+   same source commit. Runs explicitly bound to the receipt's versioned `skills`
+   path can keep that release. Cursor's isolated run snapshots are separate from
+   refreshing a shared local installation root.
 3. Inspect the manifest and verification receipt. For Cursor, save the new pin and
    inspect the resulting Build; trigger another Build only if needed. Changes in
    the Pigboard repository alone do not prove a new snapshot was selected.

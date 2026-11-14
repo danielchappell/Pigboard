@@ -71,3 +71,12 @@ gate; its exact head and reports belong in the PR evidence.
 Unified configuration: the approved single customer intent/configuration and
 separate secret references/generated outputs are documented as target design.
 No installer, generic adapter framework or runtime feature is invented by prose.
+
+## Codex review correction
+
+The first published revision's Codex review found that an active run using the
+mutable stable skill link could read a newer release after refresh. The install
+guide now requires those runs to finish before a shared-root refresh, or to bind
+explicitly to the receipt's versioned `skills` path. Keeping an old directory alone
+is not isolation. Cursor's separate snapshots remain a distinct case. The corrected
+commit requires renewed independent assessment and current-head Codex review.
