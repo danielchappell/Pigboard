@@ -219,10 +219,25 @@ evidence; prior CLEAN reviews cover only their named revision.
 
 Two fresh independent Sol reviewers examined both design artifacts and all 41
 scenarios against six governing contracts. Both completed second sweeps and assessed
-all seven principles plus unified configuration. Final design verdicts are CLEAN.
+all seven principles plus unified configuration. The design verdicts for the
+following pre-correction artifact hashes were CLEAN; later corrections are recorded
+separately below.
 Scenario file SHA-256: 3ee27aa60d62b81ab49fa4cf034a758cb74f86266e9f40002f11553b079edc26.
 Discovery file SHA-256: 3e696bb510e5922619fc7697b53c36fb1218212432fecb4afac3be4376bd5fab.
 An initial product P2 was fixed by separating changes before intent (zero writes)
 from changes after publication (no transition, retain human hold). Initial repair
 queue authority is explicit. These are design results, not runtime/provider tests;
 no implementation Story is ready. Exact committed review remains a separate gate.
+
+
+### Scenario pause clarification review
+
+Codex requested that S02 and S40 label the queue-only pause behavior provisional
+at the point of use. Commit 09cd6a53f23eb422d7a5e0ba0e000ac49a6a6f59 makes that
+clarification. Two fresh independent Sol reviewers assessed the exact one-file,
+two-row delta plus affected contracts; both returned CLEAN after second sweeps and
+all seven principles/unified-configuration checks. Product also re-read all 41 cases.
+Current scenario SHA-256: 51cf7e5203db4bfab1575993f5b5d5a99e6734c7b0f7b4a9a5c03b7867dd4ef9.
+The earlier hash remains historical evidence, not a verdict on this corrected
+artifact. The owner has not approved the queue-only pause proposal; neither these
+reviews nor publication approve it or establish implementation readiness.
