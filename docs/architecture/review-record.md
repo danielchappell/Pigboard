@@ -91,3 +91,69 @@ implementation Story set remains gated on PGB-67/PGB-68 and owner review.
 Committed publication review and hosted evidence belong on the resulting PR;
 these design verdicts do not substitute for them. No AWS resources or delivery
 runs were created, and no automation was enabled.
+
+
+## Approved stack cascade and work-contract discovery — 14 November 2026
+
+Owner approved manager-owned Human Review -> Rework Queued for a required recorded
+stack update after the parent's repair passes automated review/AI QA. Actual parent
+PR/revision determines conservative revalidation; one ticket/repository/PR remains
+mandatory. Active work is not interrupted. Ordinary merge/retarget is not a trigger.
+
+Two fresh Sol reviewers inspected the ten changed/new design artifacts against
+89356976870bec7bcfb7f14aa812c60d5c32af0a:
+
+- `stack_contract_product_review`: CLEAN for interim discovery publication; 10/10
+  files and 26/26 contract areas, second sweep and all seven principles separately.
+- `stack_contract_technical_review`: CLEAN for interim discovery publication; 10/10
+  files and 12/12 contract surfaces, second sweep and all seven principles separately.
+
+Both also assessed unified configuration, visible null skeletons, AI/human testing,
+current-skill limits and actual evidence boundaries. Neither verdict freezes the
+remaining handoff/transition protocol, completes PGB-67/PGB-68, authorizes the probe
+or makes the complete Story set ready. The only subsequent design-artifact change
+before publication was a factual note that the owner requested parallel AWS signup;
+no account creation or probe result is claimed.
+
+Publication follows the existing reviewed documentation-only path. It changes eleven
+files including this record and two YAML examples. Relative Markdown links resolve;
+both YAML skeletons parse, but deliberately contain required nulls and are not ready
+work items. Whitespace checks pass. No runtime/skill/configuration change or new
+runtime test is warranted. Fresh exact-commit review, CI and current-head Codex bot
+approval remain separate publication gates, recorded on the resulting PR.
+
+
+### Publication corrections after hosted review
+
+Codex reviewed commit 8af5bf8efbf819c1f8574cd35b0cf8cec9421d80 on PR66 and
+identified two documentation gaps: the linked diagram guide still described
+release one as admission-only, and the work-contract introduction implied that
+a handoff skeleton already existed. Both findings are valid and in scope. The
+guide now includes the approved queue transition and its permission/acceptance
+obligations; the introduction explicitly limits supplied skeletons to Epic and
+ticket and keeps handoff encoding open. No new handoff design is adopted here.
+
+This correction reuses the reviewed design and documentation publication plan.
+Fresh committed review and current-head hosted checks are required; the earlier
+CLEAN verdicts do not cover the correction. No runtime behavior changes.
+
+
+A second hosted round at 78bbbf4 found two further in-scope coverage gaps: the
+walkthrough's scope banner/footer lagged its corrected guide, and P1/P4 did not
+explicitly require all three manager-owned source edges. The presentation text
+now includes stack queueing without altering the nine ratified diagrams. P1
+requires success and wrong-source rejection for every edge; P4 requires retained
+uncertainty/no replay for each. The 12-transition ceiling includes setup and must
+be revised before authorization if the eventual fixture cannot fit. Account signup
+is now reported as complete, with deployment acceptance still unproven. Fresh
+committed review and hosted gates apply again; no live probe is authorized.
+
+
+The hosted review at 395146c also found the release-level acceptance paragraph
+still focused on admission, despite the research probe covering all three edges.
+This is a valid in-scope gap. Release acceptance and the delivery-plan acceptance
+increment now explicitly cover the installed stack queue path, permissions, durable
+intent, retained uncertainty, no repeated repair and later oldest-first admission.
+The scoped deployment Mermaid diagram labels both permitted manager operations.
+Research proof remains distinct from installed-package acceptance. This correction
+requires fresh committed review and current-head hosted approval before merge.

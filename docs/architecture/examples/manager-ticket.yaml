@@ -1,0 +1,158 @@
+# DRAFT: proposed contract; not consumed by the current automations.
+# Native Jira owns title, key, project, parent Epic, assignee, label and status.
+# null = unresolved. [] = explicitly none, only where the guide permits it.
+# Repeat list objects as needed; replace unused optional lists with [].
+schema: pigboard-ticket/v1
+
+problem_to_solve: null
+
+# [] explicitly means no ticket prerequisites. Order alone is not a dependency.
+prerequisites:
+  - ticket: null                 # Actual prerequisite ticket key.
+    required_outcome: ai_qa_complete
+
+acceptance_criteria:
+  - id: AC-01
+    requirement: null
+
+technical_acceptance_criteria:
+  repository:
+    url: null                    # One exact repository URL.
+    base_branch: null            # Verified branch, not an inferred default.
+    change_boundary: null        # Components/behaviors this Story may change.
+    out_of_scope: null           # List; [] allowed if no extra exclusions.
+    related_repositories:
+      - url: null
+        responsibility: null
+        contract_reference: null # Optional supporting reference.
+        change_story: null       # Required if that repo also needs a change.
+  accepted_decisions:
+    - id: null
+      decision: null
+      reference: null            # Optional supporting reference.
+  constraints:
+    - id: TAC-01
+      requirement: null
+
+testing_strategy:
+  testing_types: null            # List: api, database, ui; match the named steps.
+  environment:
+    source: null                 # pipeline_pr_comment or configured_target.
+    target_reference: null       # Only for an approved configured_target.
+    required_capabilities: null  # List, e.g. API + restricted database reader.
+
+  actors:
+    - id: ACTOR-01
+      role: null
+      tenant: null               # null allowed only when tenant does not apply.
+      identity_reference: null   # Nonsecret identity/access reference.
+      access_owner: null
+
+  fixtures:
+    - id: DATA-01
+      description: null
+      initial_state: null
+      reference: null            # Existing fixture reference or preparation below.
+      preparation_id: null
+      owner: null
+
+  # These may stay incomplete at implementation start; see the strict limits.
+  preparation:
+    - id: P-01
+      owner: implementer
+      supplies: null             # Exact mechanical artifact/detail to prepare.
+      used_by: null              # List of case/step/fixture IDs.
+      preserves: null            # Requirements/expectations it must preserve.
+
+  # Only qa-entrypoint-owned step IDs appear here, in exact execution order.
+  dispatch_order:
+    - TC-01.S1
+
+  cases:                         # AI-owned cases only; [] if explicitly none.
+    - id: TC-01
+      execution: ai
+      purpose: null
+      requirements: null         # Nonempty list of AC/TAC IDs.
+      actors: null               # Actor IDs, or [] for a case needing no identity.
+      fixtures: null             # Fixture IDs, or [] when none are needed.
+      preconditions: null        # List; [] explicitly means no extra prerequisites.
+      depends_on:
+        - step: null
+          required_outcome: null # Explicit success/state/output prerequisite.
+      observation:
+        mode: null               # synchronous or asynchronous.
+        schedule: null           # Required finite observation schedule for async.
+        deadline_seconds: null  # Required finite deadline for async.
+      cleanup:
+        mode: null               # none or prescribed.
+        reason: null             # Required when mode is none.
+        owner: null              # Required for prescribed cleanup.
+        steps: null              # Ordered authorized bounded steps for prescribed.
+      manual_qa: null            # How a human runs/inspects these same cases.
+
+      steps:
+        - id: TC-01.S1
+          caller: qa-entrypoint  # qa-bruno must instead name its qa-api parent ID.
+          skill: null            # qa-ui, qa-api, qa-bruno or qa-database.
+          action: null
+          children: null         # qa-api: one qa-bruno child ID; others: [].
+          inputs: null           # Nonsecret named values; {} for no inputs.
+          bindings:
+            - from_step: null
+              output: null
+              to_input: null
+          outputs: null          # Named returned values; [] for no outputs.
+          expected: null         # Nonempty list of observable expected results.
+          evidence: null         # Nonempty list; screenshot checkpoints for UI.
+          prepared_artifact:
+            reference: null      # Existing artifact or a named preparation slot.
+            preparation_id: null
+          # Only the selected skill's section is populated; others become null.
+          api:
+            method: null
+            operation: null      # Agreed operation; route may be a preparation detail.
+            route: null
+            route_preparation_id: null
+            actor: null          # Actor ID; null for explicitly unauthenticated case.
+            request_selector: null
+            selector_preparation_id: null
+            expected_status: null
+            expected_response: null
+          database:
+            engine: null
+            reader: null        # Exact approved read-only tool.
+            access_reference: null
+            scope: null         # Explicit tenant/record/columns and result bounds.
+            parameters: null    # Values/bindings, or named preparation slot below.
+            parameters_preparation_id: null
+            observations: null  # Exact state/comparison to inspect.
+          ui:
+            surface: null       # Selected prepared computer-use surface.
+            browser: null
+            device: null
+            viewport: null      # Required dimensions or explicit supplied default.
+            entry_route: null
+            route_preparation_id: null
+            required_capabilities: null # List; e.g. keyboard input.
+            screenshot_checkpoints: null
+
+  human_review:
+    no_ai_cases_reason: null      # Required if AI cases and dispatch_order are [].
+    cases:                       # [] explicitly means no extra human test cases.
+      - id: HQA-01
+        execution: human
+        owner_role: null
+        requirements: null       # AC/TAC IDs; human cases never enter AI dispatch.
+        prerequisites: null
+        steps: null              # Ordered human actions.
+        expected: null
+        evidence: null
+        cleanup: null            # Prescribed steps or explicit none + reason.
+        # Execution results are handoff evidence, not prefilled passes here.
+
+  automated_regression: null     # Behavior + test level to add/update.
+
+# Draft-only questions; must be [] before this Story can start.
+open_questions:
+  - question: null
+    owner: null

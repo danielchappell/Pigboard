@@ -12,7 +12,9 @@ Jira rules start Cursor, and workers retain their evidence and stage handoffs.
 
 The first release includes the deployment and operating instructions needed to use
 this safely, plus the agreed admission, readiness, priority, capacity and queued
-repair rules. It does not route Cursor launches through Pigboard.
+repair rules. It does not route Cursor launches through Pigboard. The manager also queues a
+recorded required stack update from Human Review into Rework Queued; queueing
+starts no worker. See [the approved stack rule](manager-stack-repair.md).
 
 Excluded: worker monitoring, duplicate-run prevention, worker run ledger, launch
 proxy, cancellation, automatic recovery, transcript collection, SaaS, shared tenant
@@ -33,14 +35,14 @@ against the pilot's Jira request budget before freezing the deployment contract.
 ```mermaid
 flowchart LR
   subgraph AWS[Customer AWS account]
-    S[Disabled-by-default schedule] --> L[Lambda: evaluate admission]
+    S[Disabled-by-default schedule] --> L[Lambda: admission and stack queueing]
     O[Authorized operator: preview] --> L
     K[Customer secret store] --> L
     L --> G[Customer operational logs]
-    L <-->|Admission intent and outcome| D[DynamoDB: customer operational state]
+    L <-->|Transition intent and outcome| D[DynamoDB: customer operational state]
   end
   J[Jira: Epic plan and live issue state] -->|Read current work| L
-  L -->|Move eligible ticket to In Progress| J
+  L -->|Admit eligible ticket or queue required stack update| J
   J -->|Existing stage automation| C[Customer Cursor workers]
   C -->|Evidence and allowed handoff| J
 ```
@@ -110,8 +112,10 @@ requires a compatibility plan for the currently installed story contract.
    preventing B's completion sends B to Rework Queued with unfinished checks NOT RUN.
 8. Pausing the Epic stops admission, including rework. An already-active cycle can
    finish through review and QA to Human Review if no correction is required.
-9. Only the manager admits In Progress. Workers own In Review, QA, Human Review,
-   Rework Queued and Blocked according to role; discussion alone stays in stage.
+9. Only the manager admits In Progress. Workers own their role handoffs. The manager
+   additionally owns Human Review to Rework Queued for a recorded required stack
+   update. It never interrupts an active worker or clears Blocked. Discussion alone
+   stays in stage.
 10. Humans own PR merge/retarget and acceptance. Broader Epic context informs an
     implementer but never expands its ticket scope. Scope growth waits for a human.
 
@@ -184,11 +188,24 @@ authorized by grooming. The manager can be designed and built against fixtures
 while that acceptance proceeds, but production activation depends on it.
 
 Acceptance needs a disposable customer AWS deployment and authorized Jira fixture
-domain with delivery triggers disabled: preview makes zero writes; apply admits the
-expected next item; a subsequent scan respects occupied stages; all seven storyboard
-scenarios pass; another domain and unauthorized invoker are denied; malformed or
-incomplete inputs make no writes; secrets stay absent from outputs. Verify install,
-upgrade, stop, rollback and removal. Retain actual AWS/Jira evidence separately from
+domain with delivery triggers disabled. Verify the installed production package,
+not just the raw API research probe, against all three manager-owned edges:
+
+- Ready to Work -> In Progress admits the expected new Story/Bug.
+- Rework Queued -> In Progress admits the eligible repair on its existing PR.
+- Human Review -> Rework Queued queues B only after the recorded parent repair has
+  passed automated review/AI QA and B's incorporated parent revision is stale. The
+  queue operation starts no worker; later admission preserves oldest-first priority.
+
+For each edge, verify the installed identity's permissions, source restriction,
+durable intent before the write, confirmed outcome, and a lost-response case that
+retains a hold and causes zero replay writes on subsequent invocation. Prove an
+already consumed repair does not queue B again and unrelated/new C cannot bypass
+an outstanding required repair. A subsequent admission scan respects occupied
+stages and the five-ticket cap. Preview makes zero writes for both admission and
+queueing; all storyboard scenarios pass; another domain and unauthorized invoker
+are denied; malformed or incomplete inputs make no writes; secrets stay absent
+from outputs. Verify install, upgrade, stop, rollback and removal. Retain actual AWS/Jira evidence separately from
 local tests, code review, CI and merge. Enable real delivery only by explicit owner
 authorization after those gates. No AWS resource is provisioned in this task.
 

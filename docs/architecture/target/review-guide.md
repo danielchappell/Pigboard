@@ -8,8 +8,13 @@ walkthrough to produce the nine-page PDF. Presenter notes remain available.
 ## First usable manager release
 
 [Release scope](../manager-release-one.md) and [Jira plan](../manager-release-one-plan.md)
-limit release one to admission in customer-owned AWS Lambda. Existing Jira rules
-still launch Cursor directly. The combined manager shown in diagrams 1, 2 and 9
+limit release one to ticket admission and the approved manager-owned
+Human Review -> Rework Queued transition for a required recorded stack update,
+in customer-owned AWS Lambda. The [stack-repair rule](../manager-stack-repair.md)
+defines when that queue transition is required; it starts no worker. Its Jira
+permissions, durable intent and uncertain-outcome handling must be covered by
+the implementation plan and acceptance checks alongside admission. Existing Jira
+rules still launch Cursor directly. The combined manager shown in diagrams 1, 2 and 9
 is the later destination; dispatch ownership, persistent run records, duplicate
 prevention and worker monitoring are not in release one.
 

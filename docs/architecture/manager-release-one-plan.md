@@ -42,8 +42,12 @@ https://github.com/danielchappell/Pigboard, main, without archived runtime reuse
 4. Coordinate queued repairs and affected stack updates. Consumer: workers and human
    reviewers. Role handoff skills, Jira configuration contract and admission logic
    must be mutually compatible; split by usable behavior, never enable half a chain.
-5. Accept the installed release on authorized fixtures, then separately authorize
-   pilot activation. Operational validation is a Task unless it changes code.
+5. Accept the installed release on authorized fixtures against all three manager
+   edges and their installed permissions, durable intents and uncertainty behavior
+   in [release acceptance](manager-release-one.md#release-acceptance-and-rollout),
+   including the actual parent-repair -> queue B -> admit B path. Raw API probe
+   results do not replace this package acceptance. Then separately authorize pilot
+   activation. Operational validation is a Task unless it changes code.
 
 Before any implementation Story is ready: one repository/PR, no more than 20 changed
 files total, less than two human working days including tests/docs/PR preparation;
@@ -55,13 +59,16 @@ inside every Story.
 ## Scope freeze and changes
 
 Frozen outcome: securely install in customer-owned AWS Lambda and advance eligible
-work through the existing Jira dispatch path. Retain all ten design admission rules.
+work through the existing Jira dispatch path. Retain all ten design admission rules and the approved manager-owned stack queue
+transition described in [the stack contract](manager-stack-repair.md).
 Out: monitoring, duplicate-agent prevention, dispatch proxy, transcript storage,
 recovery/cancellation, SaaS, multi-cloud deployment and legacy code reuse.
 
 The owner approved customer-owned DynamoDB for admission state on 14 November 2026.
 [State ownership and upgrades](manager-state.md) define the new boundary;
 [discovery progress](manager-discovery.md) separates settled contracts from open gates.
+The approved [stack rule](manager-stack-repair.md), draft [work contract](manager-work-contract.md)
+and [bounded platform proof](manager-admission-proof.md) are the current discovery artifacts.
 The complete fixed Story set, scope coverage, dependencies, sizing and acceptance
 must be presented to the owner before implementation begins.
 

@@ -1,0 +1,26 @@
+# DRAFT: proposed contract; not consumed by the current automations.
+# Native Jira owns the Epic key, title, status and opt-in label.
+schema: pigboard-epic/v1
+
+problem_to_solve: null
+outcome: null
+scope:
+  included: null                 # List of agreed outcomes.
+  excluded: null                 # List; [] explicitly means no extra exclusions.
+
+workstreams:
+  - label: null                  # Full label, e.g. AI-Daniel-1.
+    story_order:
+      - null                     # Story or Bug key; order breaks ties among eligible items.
+    # Repeat this workstream object for each independent stream.
+
+# Decisions/contracts shared by these Stories; not additional executable work.
+accepted_decisions:
+  - id: null
+    decision: null
+    reference: null              # Optional supporting document or Jira reference.
+
+# Draft-only questions; must be [] before this Epic is admitted.
+open_questions:
+  - question: null
+    owner: null
