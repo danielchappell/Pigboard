@@ -30,7 +30,7 @@ technical_acceptance_criteria:
     - id: null
       decision: null
       reference: null            # Optional supporting reference.
-  constraints:
+  constraints:                  # [] when no technical constraint applies.
     - id: TAC-01
       requirement: null
 

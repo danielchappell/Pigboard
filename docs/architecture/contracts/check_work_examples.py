@@ -15,8 +15,15 @@ for name in ['epic','ticket']:
  schema=json.loads((root/'contracts'/f'pigboard-{name}-v1.schema.json').read_text());Draft202012Validator.check_schema(schema);validators[name]=Draft202012Validator(schema)
 cases=[]
 def check(name,kind,value,valid):
- errors=list(validators[kind].iter_errors(value));actual=not errors
- if actual!=valid:raise AssertionError((name,actual,[e.message for e in errors][:4]))
+ # JSON Schema implementations may accept Python NaN/Infinity as numbers.
+ # Reject non-JSON values before structural validation/canonical digest input.
+ try:
+  json.dumps(value, allow_nan=False)
+ except (TypeError, ValueError):
+  errors=['not JSON-compatible'];actual=False
+ else:
+  errors=list(validators[kind].iter_errors(value));actual=not errors
+ if actual!=valid:raise AssertionError((name,actual,[getattr(e,'message',str(e)) for e in errors][:4]))
  cases.append({'case':name,'expected':'valid' if valid else 'invalid','actual':'valid' if actual else 'invalid'})
 check('populated epic','epic',epic,True);check('populated all-skill ticket','ticket',ticket,True)
 for kind in ['epic','ticket']:
@@ -56,5 +63,12 @@ v2=copy.deepcopy(v);v2['testing_strategy']['human_review']['cases']=[];check('al
 # not claimed rejected by JSON Schema.
 for label,mutate in [('duplicate AC identity',lambda v:v['acceptance_criteria'].append(copy.deepcopy(v['acceptance_criteria'][0]))),('unknown dispatch ID',lambda v:v['testing_strategy'].update(dispatch_order=['MISSING'])),('blank prose',lambda v:v.update(problem_to_solve='   '))]:
  v=copy.deepcopy(ticket);mutate(v);check('semantic-only: '+label,'ticket',v,True)
-report={'result':'PASS','scope':'Structural design only; no semantic, provider or runtime acceptance','cases':cases,'count':len(cases)}
+v=copy.deepcopy(ticket);v['technical_acceptance_criteria']['constraints']=[];v['testing_strategy']['cases'][0]['requirements']=['AC-01'];check('no applicable technical constraints','ticket',v,True)
+for number_name, number in [('NaN',float('nan')),('positive Infinity',float('inf')),('negative Infinity',float('-inf'))]:
+ for location in ['inputs','parameters']:
+  v=copy.deepcopy(ticket)
+  if location=='inputs':v['testing_strategy']['cases'][0]['steps'][0]['inputs']['invalid_number']=number
+  else:v['testing_strategy']['cases'][0]['steps'][2]['database']['parameters'].append(number)
+  check('nonfinite '+number_name+' in '+location,'ticket',v,False)
+report={'result':'PASS','scope':'JSON compatibility and structural design only; no semantic, provider or runtime acceptance','cases':cases,'count':len(cases)}
 print(json.dumps(report,indent=2))

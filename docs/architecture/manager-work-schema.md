@@ -10,7 +10,9 @@ Use `pigboard-epic-v1.schema.json` for `pigboard-epic/v1` and
 `pigboard-ticket-v1.schema.json` for `pigboard-ticket/v1`. Both use JSON Schema
 2020-12. Every declared field is present, including nullable fields. Unknown fields
 are rejected except inside named input values. Empty strings are never a substitute
-for null. The editable YAML skeletons deliberately fail start validation until
+for null. `technical_acceptance_criteria.constraints` may be `[]` when no technical
+constraint applies; do not invent a TAC or empty entry to satisfy a schema.
+The editable YAML skeletons deliberately fail start validation until
 completed. This publication does not add a separate draft validator.
 
 ## Human editing
@@ -146,14 +148,19 @@ schemas. A schema-valid document is not sufficient to admit work.
 
 No validation step fetches secrets from ticket text or executes its values. JSON
 Schema checks only data shape; safe YAML parsing, document byte/depth/list budgets,
-semantic validation and live authorization remain required. Final budgets must be
+semantic validation and live authorization remain required. Reject non-finite
+numbers (NaN and positive/negative Infinity) before schema validation and canonical
+JSON hashing, including nested inputs and SQL parameters. Some JSON Schema libraries
+accept their host language's non-finite numbers even though JSON does not. The local
+check explicitly rejects non-JSON values before invoking its schema validator; it
+is not the production safe-YAML parser. Final budgets must be
 measured in the platform proof, not guessed from this small example.
 
 ## Verification and rollout
 
 The local design check `contracts/check_work_examples.py` uses jsonschema 4.25.1
 and PyYAML 6.0.3 in a disposable validation environment. It reads the published
-examples, validates both schemas, and exercises 48 structural/limitation cases.
+examples, validates both schemas, and exercises 55 JSON-compatibility/structural/limitation cases.
 It makes no network calls or artifact writes. These are research tooling
 dependencies, not the choice of production parser or validator.
 
