@@ -134,6 +134,28 @@ uses customer-owned routing; without it the guide explicitly says console/comman
 only, no push alert. Subscription confirmation and notification delivery are
 operator checks. No Teams integration, dashboard or incident-management service.
 
+The missing-completion alarm uses the configured freshness window, not an
+immediate missing-point threshold. Set its period to the scan cadence and require
+`ceil(freshness / cadence)` consecutive breaching periods. Its metric-math
+expression treats periods through the current revision's startup deadline
+(enablement time plus freshness) as non-breaching; after that deadline it evaluates current-revision completion
+presence, filling absence with zero. For example, with `m1` the maximum completion
+metric, use `IF(EPOCH(TIME_SERIES(1)) <= startup_deadline_epoch, 1, FILL(m1, 0))` and alarm
+on values below one. The expression's grace value is an alarm input only: never
+publish a fabricated scan completion or let it satisfy the health command.
+
+The generated enablement timestamp belongs to the same evidence revision and is
+set during explicit activation after resources are ready. A real enable/upgrade
+rotates that binding; normal scans, failures and retries cannot extend it. This
+startup mask plus the full consecutive-period window prevents a normal startup
+or revision change from alarming before freshness expires. Once it expires,
+continued absence must alarm even if Pig Boss never ran; no later agent or timer
+must enable detection. Real error/throttle alarms remain effective during startup.
+This conservative startup rule can take another freshness window after grace to
+notify when the first scan never runs. Steady-state detection uses the configured
+consecutive-period window. CloudWatch alignment/evaluation/ingestion can add delay;
+measure and report it in installed acceptance rather than promise an SLA.
+
 Install disabled with alarm actions disabled. Enable/stop/upgrade tooling derives
 alarm action state from the same desired schedule setting; unexpected scheduler
 disablement must not silence alarms. Intentional stop remains visible as disabled.
@@ -191,3 +213,5 @@ Provider references checked 14 November 2026:
 - [CloudWatch missing data](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarms-and-missing-data.html): missing-data evaluation can extend beyond nominal alarm periods.
 - [Lambda metrics](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html): errors, throttles and duration are distinct signals.
 - [Jira rate limits](https://developer.atlassian.com/cloud/jira/platform/rate-limiting/): respect provider budgets; capacity testing must not overload a tenant.
+
+- [CloudWatch metric math](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/using-metric-math.html): time-series IF/EPOCH/FILL expressions provide startup masking without another worker.

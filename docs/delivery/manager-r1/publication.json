@@ -3,7 +3,6 @@
   "epic": "PGB-66",
   "grooming": "PGB-93",
   "status": "independent design and plan CLEAN; final owner review required; no implementation or activation",
-  "design_commit": "ba9cb49def75147b37fb822a4e0166c1429c3c3d",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -257,7 +256,7 @@
     }
   ],
   "published_body_check": "23/23 exact YAML comparison after native prerequisite substitution; original parent/status and absence of AI labels verified.",
-  "reviewed_draft_sha256": "c649cf9d308412972b1de61e50f529af18c58009fea94f1b11db3985f049b1ab",
+  "reviewed_draft_sha256": "df8b5234321d831af2acc825e4eb6490ab1252af3fbb8ea0baa614dcde51bec3",
   "fresh_readback_verification": {
     "stories": [
       {
@@ -390,7 +389,7 @@
         "id": "R1-23",
         "key": "PGB-101",
         "status": "To Do",
-        "contract_sha256": "d3b9b658a42abcdc0708a75ddc9038d0259c52dbe7ab4d28b9b97317e6344e1e",
+        "contract_sha256": "c23004365602128a66db5ce08e2bab0416bccc9cc2fcc798f8ea9b6f1c8eb5dc",
         "human_cases": 4
       },
       {
@@ -595,5 +594,12 @@
     "human_unblock": "PGB-62",
     "pr_environments": "PGB-60"
   },
-  "health_precedence_correction": "Codex review correction: ordered six-state evaluation and overlapping-condition assertions in existing R1-22-H02; PGB-100 exact YAML freshly verified. No additional cases or scope."
+  "health_precedence_correction": "Codex review correction: ordered six-state evaluation and overlapping-condition assertions in existing R1-22-H02; PGB-100 exact YAML freshly verified. No additional cases or scope.",
+  "baseline_design_commit": "ba9cb49def75147b37fb822a4e0166c1429c3c3d",
+  "reviewed_design_artifacts": {
+    "docs/architecture/pig-boss-operations.md": "a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03",
+    "docs/product/manager.md": "c06a42067e351de808cf33d9ea07a3e0f521eac6de84d46f5f733bbb90db7c34",
+    "docs/product/installation.md": "f811278447abb57df71b08aa55235f2d05a3a743c209d322a0a0fd48cfe4af56"
+  },
+  "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical."
 }

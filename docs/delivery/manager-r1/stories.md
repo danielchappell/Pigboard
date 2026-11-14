@@ -1688,12 +1688,13 @@ A stopped or failing manager cannot report its own absence. Customers need basic
 #### R1-23-H02: Lifecycle and scope
 
 - **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
-- **Requirements:** AC2, AC4.
-- **Prerequisites/data:** Disabled install, enable, intentional stop, unexpected scheduler stop, configuration-only upgrade and removal fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions.
+- **Requirements:** AC2, AC4, TAC2.
+- **Prerequisites/data:** Disabled install, enable, intentional stop, unexpected scheduler stop, configuration-only upgrade and removal fixtures. Current PR checkout; prepared local simulated provider data; no live customer actions. Controlled-clock histories with no completion at enable, config-only revision rotation, just before/at/after freshness expiry, and an installation that never starts.
 - **Steps:**
   1. Run lifecycle harness for each transition.
   2. Inspect action state, evidence revision and retained-resource report.
-- **Expected:** Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised.
+  3. Evaluate startup and rotated-revision alarm histories through the full freshness window and beyond, without running a scan or a follow-up timer.
+- **Expected:** Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised. No missing-completion alarm before the current enablement freshness window expires; continued absence eventually alarms without worker help. Pre-enable metric-math grace never counts as a real scan. Failures/retries cannot reset grace, old revisions cannot satisfy it, and real error alarms remain effective during startup.
 - **Evidence:** Tested PR revision, exact prepared commands/fixtures and sanitized outputs.
 - **Cleanup:** Retain evidence then remove disposable fixture/build output; no live changes.
 

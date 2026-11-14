@@ -4815,18 +4815,22 @@
               "owner_role": "developer and human QA reviewer",
               "requirements": [
                 "AC2",
-                "AC4"
+                "AC4",
+                "TAC2"
               ],
               "prerequisites": [
                 "Disabled install, enable, intentional stop, unexpected scheduler stop, configuration-only upgrade and removal fixtures.",
-                "Current PR checkout; prepared local simulated provider data; no live customer actions."
+                "Current PR checkout; prepared local simulated provider data; no live customer actions.",
+                "Controlled-clock histories with no completion at enable, config-only revision rotation, just before/at/after freshness expiry, and an installation that never starts."
               ],
               "steps": [
                 "Run lifecycle harness for each transition.",
-                "Inspect action state, evidence revision and retained-resource report."
+                "Inspect action state, evidence revision and retained-resource report.",
+                "Evaluate startup and rotated-revision alarm histories through the full freshness window and beyond, without running a scan or a follow-up timer."
               ],
               "expected": [
-                "Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised."
+                "Intentional stop disables actions and reports stopped; unexpected stop does not silence alarms; config changes rotate revision; removal retains scheduling state as promised.",
+                "No missing-completion alarm before the current enablement freshness window expires; continued absence eventually alarms without worker help. Pre-enable metric-math grace never counts as a real scan. Failures/retries cannot reset grace, old revisions cannot satisfy it, and real error alarms remain effective during startup."
               ],
               "evidence": [
                 "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
