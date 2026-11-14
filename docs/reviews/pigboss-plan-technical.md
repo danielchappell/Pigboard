@@ -53,3 +53,30 @@ The dependency table is a valid partial/serial order; R1-21 precedes policy/live
 - **Dependable:** incomplete/failed scans, held work, starting/stale/unknown health and current evidence revisions remain distinct. Unknown effects survive restart/upgrade without replay. Local tests, installed package/worker acceptance, owner review and activation remain separate claims.
 
 Final CLEAN applies only to this manifest and this review lens. The other independent review and final owner review remain their own gates. Implementation plans, committed-code reviews, CI/Codex bot gates and installed acceptance have not been satisfied by reviewing this plan.
+
+
+## Native publication audit — CLEAN
+
+Publication-only audit of the supplied fresh Jira readback artifacts, 14 November 2026. No further Jira query or mutation was performed by this reviewer. The reviewed contract file remains exactly `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`, matching the original CLEAN manifest and publication receipt. README/Story introduction changes accurately report completed independent review and pending final owner review; they do not alter contracts or authorize implementation/activation. The current manifest below supersedes the earlier README/stories hashes for publication status text only.
+
+Coverage: **9/9 publication artifacts**, **23/23 native Stories**, **104/104 acceptance cases**, **54/54 directed dependency links**. Parsed every published YAML contract and compared the complete data tree with ticket-drafts.json after substituting only prerequisite Story IDs with their native keys. Each publication's YAML block bytes also exactly match publication-expected.json. Complete descriptions match after removal of Jira's harmless final newline; no other normalization was needed. All titles match. All 23 have parent PGB-66, To Do status, owner-review-required and no AI worker labels. R1-21/22/23 map to PGB-99/100/101.
+
+Dependency checks independently derived 51 Story prerequisite links from plan-metadata.json and verified the additional three operational links: PGB-90→PGB-91, PGB-91→PGB-92, PGB-58→PGB-92. The 25-issue final-link snapshot contains exactly the same 54 directed Blocks links as publication.json, with no missing or extra pair. The 104 case IDs are unique; all case contents are retained by full contract equality. The 88 original baseline cases were independently compared with HEAD again and remain exact.
+
+Second sweep: repeated **23/23** parent/status/label checks against the final-link snapshot, checked the **54/54** directions and operational gates, **104/104** case identities and **88/88** original case objects. No publication mismatch or new in-scope finding.
+
+Seven principles at publication: **Intuitive**—native titles and hierarchy preserve the approved human journey. **Discoverable**—native keys and dependency links connect the complete reviewable contracts. **Delightful**—publication introduces no repeated setup or premature worker assignment. **Token saver**—the exact YAML and cases survive; essential evidence is not shortened. **Secure**—no worker labels, readiness transition or expanded authority was introduced. **Agents are equal**—structured prerequisite keys and full human-case ownership remain machine-readable and honest. **Dependable**—the publication receipt matches readback, preserves operational gates and leaves implementation/activation pending. Technical design behavior is unchanged, so the earlier detailed principle assessment still applies.
+
+Current publication manifest:
+
+- `docs/delivery/manager-r1/README.md`: `e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b`
+- `docs/delivery/manager-r1/stories.md`: `181ef08caf6ab4d3c5558e54801b7c2f1bd10d26860eb336c72762c8483096a0`
+- `docs/delivery/manager-r1/ticket-drafts.json`: `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`
+- `docs/delivery/manager-r1/plan-metadata.json`: `24e75028cd375b72a651e3fe59e64083e009cab0ebaee7a4a3e114f643a81144`
+- `docs/delivery/manager-r1/coverage.md`: `cd49cee0dda89951fc5cfa3f1aca5a3e617e81461cbe8dbe99e4bb79b57f5d11`
+- `docs/delivery/manager-r1/publication.json`: `4291096890e1a61c799198ff1a3d18f104a3cc9518073f113f5c2c2e016cc63d`
+- `/private/tmp/pigboss-publication-expected.json`: `3ca3934b07ad436c1811361b6207dd001c5bfe4e803517f5f6c556938913adec`
+- `/private/tmp/pigboss-readback23.json`: `f757428a157cb4072bcdea5501a8ecbd98a21a704bb8d8a2816263cb3dc8897b`
+- `/private/tmp/pigboss-final-links.json`: `7a2b4c78af3a77a62926b3029bf04b3a6bf5889339ca8271d292da8330cbc37d`
+
+Final publication-audit verdict: **CLEAN** for these captured artifacts. This verifies publication fidelity, not current live execution, installed acceptance, CI, merge or release authorization.

@@ -92,3 +92,44 @@ c3561141fddb0865716779add8e440f63173bbb914e00341ac2719e9b0270e06  docs/architect
 ```
 
 Native Jira publication and a fresh readback audit remain pending after both plan reviewers are CLEAN. Owner review of the complete fixed set remains required before implementation. Runtime implementation plans/code reviews, CI/Codex, installed manager and worker acceptance, merge/release authority and explicit activation are subsequent separate gates.
+
+
+## Publication readback audit — 14 November 2026
+
+**Publication audit verdict: CLEAN.** The earlier statement that publication/readback was pending describes the pre-publication gate and is now historical. Final owner review before implementation remains pending. This audit independently checks the supplied native Jira readback snapshots; it does not claim I made a separate live provider call or executed product acceptance.
+
+Coverage: **23/23 expected publications**, **23/23 native Story bodies/status/parent/labels**, **104/104 cases**, **51/51 Story dependency edges plus 3/3 operational gate edges**, and **25/25 issue-link snapshot records**. Reviewed `publication.json` and all three supplied expected/readback/link artifacts against the reviewed structured drafts and delivery metadata. New native keys are R1-21 → PGB-99, R1-22 → PGB-100 and R1-23 → PGB-101.
+
+For every Story I independently parsed its single YAML block from both expected publication text and native readback, replaced only each draft prerequisite's stable R1 ID with its native key, and compared the complete resulting data structures. All **23/23 match exactly**. Expected and observed descriptions differ only in trailing whitespace; no YAML value or substantive surrounding owner-review notice differs. Titles match. Every Story is under PGB-66, remains To Do, has `owner-review-required` and `pgb-manager-r1`, and has no `AI-` worker label. All 104 case IDs are unique and present; native substitution loses no case, requirement, step, expectation, evidence, cleanup or owner information. The reviewed draft SHA256 remains `64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa`.
+
+I independently derived 51 directed Story blockers from `plan-metadata.json`, then added the three declared operational gates: PGB-90 → PGB-91, PGB-91 → PGB-92 and PGB-58 → PGB-92. The final native snapshots contain exactly **54 distinct directed Blocks edges and 54 distinct native link IDs**, with no missing, unexpected or reversed edge. The publication receipt lists the same edge set.
+
+Second sweep completed: repeated complete native-YAML comparison for **23/23**, recounted **104/104** cases and reconstructed **54/54** directed edges from the snapshots in both inbound/outbound representations. No additional finding. No repository changes were made during this audit.
+
+The README's review-complete status, new native Story links and separation of historical reviews/current plan/installed acceptance were reread. The Story-pack introduction now names the independently reviewed 23-Story set while preserving the no-implementation/no-activation boundary. The structured contracts and sizing/dependency metadata retain their previously reviewed hashes. The following manifest records the updated presentation/publication artifacts; earlier manifests remain historical evidence.
+
+Seven-principle publication assessment:
+
+- **Intuitive:** native titles and keys preserve each reviewed outcome; the owner can follow the complete Jira set.
+- **Discoverable:** actual directed blockers and new Story links expose the approved order; full cases remain in the native bodies.
+- **Delightful:** publication preserves existing keys and full content, avoiding reconstructing the plan from a conversation.
+- **Token saver:** one receipt and stable ID/native-key map summarize publication while retaining complete contracts and readback evidence.
+- **Secure:** all Stories remain To Do without worker labels; publication conveys no implementation or activation authority. Runtime security behavior is unchanged and remains untested here.
+- **Agents are equal:** native YAML retains every structured input and human acceptance case; stable keys resolve prerequisites without inference.
+- **Dependable:** exact readback and link evidence distinguish published work from implemented or released work. Owner approval and later code/CI/installed acceptance remain separate gates.
+
+Current publication/presentation and supplied-evidence SHA256 manifest:
+
+```text
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+181ef08caf6ab4d3c5558e54801b7c2f1bd10d26860eb336c72762c8483096a0  docs/delivery/manager-r1/stories.md
+64367ba218fc93ba4e257fee5008bf785188c93718547422c443e27a8f87fdaa  docs/delivery/manager-r1/ticket-drafts.json
+24e75028cd375b72a651e3fe59e64083e009cab0ebaee7a4a3e114f643a81144  docs/delivery/manager-r1/plan-metadata.json
+4291096890e1a61c799198ff1a3d18f104a3cc9518073f113f5c2c2e016cc63d  docs/delivery/manager-r1/publication.json
+cd49cee0dda89951fc5cfa3f1aca5a3e617e81461cbe8dbe99e4bb79b57f5d11  docs/delivery/manager-r1/coverage.md
+8477708ba76204874beea7701855d9fedc9aa966e2e0a4437aaa66311382397f  docs/product/coverage.md
+433b7735473ea4c7117c440105a813cf98d0e679a118d3987b65b4d46432faa7  docs/product/follow-on-roadmap.md
+3ca3934b07ad436c1811361b6207dd001c5bfe4e803517f5f6c556938913adec  /private/tmp/pigboss-publication-expected.json
+f757428a157cb4072bcdea5501a8ecbd98a21a704bb8d8a2816263cb3dc8897b  /private/tmp/pigboss-readback23.json
+7a2b4c78af3a77a62926b3029bf04b3a6bf5889339ca8271d292da8330cbc37d  /private/tmp/pigboss-final-links.json
+```
