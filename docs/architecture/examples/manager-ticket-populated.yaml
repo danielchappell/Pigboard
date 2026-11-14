@@ -1,0 +1,240 @@
+# SYNTHETIC DESIGN EXAMPLE. Not a real ticket or permission to execute.
+schema: pigboard-ticket/v1
+problem_to_solve: A reader cannot find a saved filter without scanning the whole list.
+prerequisites: []
+acceptance_criteria:
+- id: AC-01
+  requirement: A reader can find a saved filter by its name.
+technical_acceptance_criteria:
+  repository:
+    url: https://example.invalid/example/application
+    base_branch: main
+    change_boundary: Existing saved-filter search and its tests.
+    out_of_scope:
+    - Changing ownership or cross-tenant access.
+    related_repositories: []
+  accepted_decisions: []
+  constraints:
+  - id: TAC-01
+    requirement: Search and observations remain within the reader tenant.
+testing_strategy:
+  testing_types:
+  - api
+  - database
+  - ui
+  environment:
+    source: pipeline_pr_comment
+    target_reference: null
+    required_capabilities:
+    - Prepared API requests
+    - Restricted PostgreSQL reader
+    - Computer-use browser
+  actors:
+  - id: ACTOR-01
+    role: reader
+    tenant: example
+    identity_reference: fixture://example/reader
+    access_owner: Fixture operator
+  fixtures:
+  - id: DATA-01
+    description: Synthetic Monthly filter.
+    initial_state: fixture-1 exists in tenant example with name Monthly.
+    reference: fixture://example/filter
+    preparation_id: null
+    owner: Fixture operator
+  preparation: []
+  dispatch_order:
+  - TC-01.S1
+  - TC-01.S3
+  - TC-01.S4
+  cases:
+  - id: TC-01
+    execution: ai
+    purpose: Find the prepared filter through the API, stored state and UI.
+    requirements:
+    - AC-01
+    - TAC-01
+    actors:
+    - ACTOR-01
+    fixtures:
+    - DATA-01
+    preconditions:
+    - Prepared target contains the approved synthetic fixture.
+    depends_on: []
+    observation:
+      mode: synchronous
+      schedule: null
+      deadline_seconds: null
+      step: null
+      completion: null
+    cleanup:
+      mode: none
+      reason: All observations are read-only against a prepared fixture.
+      owner: null
+      steps: null
+    manual_qa: Using the supplied reader identity, search Monthly and inspect the named prepared
+      API request and database observation.
+    steps:
+    - id: TC-01.S1
+      caller: qa-entrypoint
+      skill: qa-api
+      action: Observe the prepared filter search.
+      children:
+      - TC-01.S2
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs:
+      - record_id
+      expected:
+      - The Monthly filter is shown for tenant example.
+      evidence:
+      - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-search-collection
+        preparation_id: null
+      api:
+        method: GET
+        operation: Search saved filters by name
+        route: /api/filters?name=Monthly
+        route_preparation_id: null
+        actor: ACTOR-01
+        request_selector: filters/search.bru
+        selector_preparation_id: null
+        expected_status: 200
+        expected_response:
+        - Contains fixture-1 named Monthly in tenant example.
+        - Does not contain records belonging to another tenant.
+      database: null
+      ui: null
+    - id: TC-01.S2
+      caller: TC-01.S1
+      skill: qa-bruno
+      action: Observe the prepared filter search.
+      children: []
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs:
+      - record_id
+      expected:
+      - The Monthly filter is shown for tenant example.
+      evidence:
+      - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-search-collection
+        preparation_id: null
+      api:
+        method: GET
+        operation: Search saved filters by name
+        route: /api/filters?name=Monthly
+        route_preparation_id: null
+        actor: ACTOR-01
+        request_selector: filters/search.bru
+        selector_preparation_id: null
+        expected_status: 200
+        expected_response:
+        - Contains fixture-1 named Monthly in tenant example.
+        - Does not contain records belonging to another tenant.
+      database: null
+      ui: null
+    - id: TC-01.S3
+      caller: qa-entrypoint
+      skill: qa-database
+      action: Observe the prepared filter search.
+      children: []
+      inputs:
+        record_id: null
+      bindings:
+      - from_step: TC-01.S1
+        output: record_id
+        to_input: record_id
+      outputs: []
+      expected:
+      - The Monthly filter is shown for tenant example.
+      evidence:
+      - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-filter-query.sql
+        preparation_id: null
+      api: null
+      database:
+        engine: postgresql
+        reader: qa-database/read-postgres.mjs
+        access_reference: fixture://example/restricted-reader-receipt
+        scope:
+          tenant: example
+          records: Only fixture-1 in tenant example
+          columns:
+          - id
+          - name
+          - tenant_id
+          max_rows: 1
+        parameters:
+        - example
+        - null
+        parameters_preparation_id: null
+        observations:
+        - Exactly one row has id fixture-1, name Monthly and tenant_id example.
+        parameter_bindings:
+        - input: record_id
+          index: 1
+      ui: null
+    - id: TC-01.S4
+      caller: qa-entrypoint
+      skill: qa-ui
+      action: Enter Monthly in the filter search and inspect the results.
+      children: []
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs: []
+      expected:
+      - The Monthly filter is shown for tenant example.
+      evidence:
+      - Screenshot of Monthly filter result and its visible tenant context.
+      prepared_artifact:
+        reference: null
+        preparation_id: null
+      api: null
+      database: null
+      ui:
+        surface: prepared-browser-tab
+        browser: Chromium
+        device: desktop
+        viewport:
+          mode: dimensions
+          width: 1280
+          height: 800
+          reference: null
+        entry_route: /filters
+        route_preparation_id: null
+        required_capabilities:
+        - Browser navigation
+        - Keyboard input
+        - Screenshot capture
+        screenshot_checkpoints:
+        - Search results showing Monthly for the prepared tenant.
+  human_review:
+    no_ai_cases_reason: null
+    cases:
+    - id: HQA-01
+      execution: human
+      owner_role: Product reviewer
+      requirements:
+      - AC-01
+      prerequisites:
+      - AI evidence is available for the same PR revision.
+      steps:
+      - Review the search label and empty-state wording with product expectations.
+      expected:
+      - The wording is understandable to a new report user.
+      evidence:
+      - Human review comment with the PR revision and outcome.
+      cleanup:
+        mode: none
+        reason: All observations are read-only against a prepared fixture.
+        owner: null
+        steps: null
+  automated_regression: Add API authorization and search behavior regression tests.
+open_questions: []

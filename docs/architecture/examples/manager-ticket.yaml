@@ -38,7 +38,7 @@ testing_strategy:
   testing_types: null            # List: api, database, ui; match the named steps.
   environment:
     source: null                 # pipeline_pr_comment or configured_target.
-    target_reference: null       # Only for an approved configured_target.
+    target_reference: null       # Approved existing target; both sources need PR deployment receipt.
     required_capabilities: null  # List, e.g. API + restricted database reader.
 
   actors:
@@ -81,7 +81,9 @@ testing_strategy:
           required_outcome: null # Explicit success/state/output prerequisite.
       observation:
         mode: null               # synchronous or asynchronous.
-        schedule: null           # Required finite observation schedule for async.
+        step: null               # Async: the sole top-level read observation step.
+        completion: null         # Async: until_expected or all_observations.
+        schedule: null           # Async: ordered elapsed seconds from observation start.
         deadline_seconds: null  # Required finite deadline for async.
       cleanup:
         mode: null               # none or prescribed.
@@ -117,20 +119,31 @@ testing_strategy:
             request_selector: null
             selector_preparation_id: null
             expected_status: null
-            expected_response: null
+            expected_response: null  # Nonempty list of expected response assertions.
           database:
             engine: null
             reader: null        # Exact approved read-only tool.
             access_reference: null
-            scope: null         # Explicit tenant/record/columns and result bounds.
-            parameters: null    # Values/bindings, or named preparation slot below.
+            scope:
+              tenant: null      # null only when tenancy does not apply.
+              records: null     # Exact permitted record selection.
+              columns: null     # Nonempty list of allowed columns.
+              max_rows: null    # Integer from 1 through 200.
+            parameters: null    # Ordered SQL parameter values, or preparation below.
             parameters_preparation_id: null
+            parameter_bindings:
+              - input: null      # Declared step input; source is bindings above.
+                index: null      # Zero-based SQL parameter position; no expressions.
             observations: null  # Exact state/comparison to inspect.
           ui:
             surface: null       # Selected prepared computer-use surface.
             browser: null
             device: null
-            viewport: null      # Required dimensions or explicit supplied default.
+            viewport:
+              mode: null        # dimensions or supplied_default.
+              width: null
+              height: null
+              reference: null   # Required receipt for supplied_default.
             entry_route: null
             route_preparation_id: null
             required_capabilities: null # List; e.g. keyboard input.
@@ -147,7 +160,11 @@ testing_strategy:
         steps: null              # Ordered human actions.
         expected: null
         evidence: null
-        cleanup: null            # Prescribed steps or explicit none + reason.
+        cleanup:
+          mode: null             # none or prescribed.
+          reason: null           # Required for none; otherwise null.
+          owner: null            # Required for prescribed; otherwise null.
+          steps: null            # Ordered bounded actions, or null for none.
         # Execution results are handoff evidence, not prefilled passes here.
 
   automated_regression: null     # Behavior + test level to add/update.

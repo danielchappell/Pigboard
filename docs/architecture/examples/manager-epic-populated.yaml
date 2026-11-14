@@ -1,0 +1,15 @@
+# SYNTHETIC DESIGN EXAMPLE. Not a real ticket or permission to execute.
+schema: pigboard-epic/v1
+problem_to_solve: Readers need to find their saved report filters.
+outcome: Readers find saved filters by name.
+scope:
+  included:
+  - Search saved filters in one existing application.
+  excluded:
+  - Changing ownership or sharing filters.
+workstreams:
+- label: AI-Example-1
+  story_order:
+  - DEMO-1
+accepted_decisions: []
+open_questions: []

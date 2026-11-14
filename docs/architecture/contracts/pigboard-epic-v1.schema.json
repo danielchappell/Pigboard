@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pigboard:epic-v1",
+  "title": "epic-v1 start structure (discovery draft)",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "pigboard-epic/v1"
+    },
+    "problem_to_solve": {
+      "type": "string",
+      "minLength": 1
+    },
+    "outcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "included": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "included",
+        "excluded"
+      ],
+      "additionalProperties": false
+    },
+    "workstreams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "story_order": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "label",
+          "story_order"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "accepted_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "decision",
+          "reference"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 0
+    },
+    "open_questions": {
+      "type": "array",
+      "maxItems": 0
+    }
+  },
+  "required": [
+    "schema",
+    "problem_to_solve",
+    "outcome",
+    "scope",
+    "workstreams",
+    "accepted_decisions",
+    "open_questions"
+  ],
+  "additionalProperties": false
+}
