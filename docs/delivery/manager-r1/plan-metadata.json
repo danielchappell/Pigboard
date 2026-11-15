@@ -476,7 +476,7 @@
       "R1-26",
       "R1-28"
     ],
-    "days": 1.47,
+    "days": 1.53,
     "files": [
       "lib/manager/repair-policy.mjs",
       "lib/manager/availability.mjs",
