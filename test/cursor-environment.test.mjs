@@ -159,7 +159,24 @@ test('installed writer ships full hashed folders and validates its own templates
       }
     }
   }
-  const writer = path.join(installed.skills, 'write-pr-sized-stories');
+  // Follow the actual help guide copied into work-validator, not an independently
+  // constructed writer path. Each column explicitly applies to one layout only.
+  const guidePath = path.join(installed.skills, 'work-validator/docs/authoring.md');
+  const guide = await readFile(guidePath, 'utf8');
+  assert.equal(guide, await readFile(new URL('../docs/authoring.md', import.meta.url), 'utf8'));
+  const routes = [...guide.matchAll(/^\| ([^|]+) \| \[Source [^\]]+\]\(([^)]+)\) \| \[Installed [^\]]+\]\(([^)]+)\) \|$/gm)];
+  assert.equal(routes.length, 4, 'all four source/installed help routes must be explicit');
+  const installedRoutes = {};
+  for (const [, label, sourceLink, installedLink] of routes) {
+    const sourcePath = new URL('../docs/' + sourceLink, import.meta.url);
+    const installedPath = path.resolve(path.dirname(guidePath), installedLink);
+    assert(installedPath.startsWith(installed.skills + path.sep), label);
+    assert(!installedPath.startsWith(path.join(installed.skills, 'work-validator') + path.sep), label);
+    assert.equal(await readFile(installedPath, 'utf8'), await readFile(sourcePath, 'utf8'), label);
+    installedRoutes[label.trim()] = installedPath;
+  }
+  const writer = path.dirname(installedRoutes['Writer entrypoint']);
+  assert.equal(writer, path.join(installed.skills, 'write-pr-sized-stories'));
   const expectedReferences = ['basic-workflow-ticket.md', 'epic.yaml', 'ticket.yaml', 'pigboard-epic.md', 'pigboard-ticket.md', 'pigboard-example.md'];
   const references = await readdir(path.join(writer, 'references'));
   for (const name of expectedReferences) assert(references.includes(name), name);
@@ -176,13 +193,13 @@ test('installed writer ships full hashed folders and validates its own templates
     }
   }
   for (const kind of ['epic', 'ticket']) {
-    const input = path.join(writer, 'references', `${kind}.yaml`), before = await readFile(input, 'utf8');
+    const input = installedRoutes[kind === 'epic' ? 'Epic template' : 'Ticket template'], before = await readFile(input, 'utf8');
     run('draft', input);
     const incomplete = run('structure', input, null, 1);
     assert(incomplete.diagnostics.some(d => d.path === '/problem_to_solve'));
     assert.equal(await readFile(input, 'utf8'), before);
   }
-  const example = await readFile(path.join(writer, 'references/pigboard-example.md'), 'utf8');
+  const example = await readFile(installedRoutes['Complete briefs, work and contexts'], 'utf8');
   const blocks = [...example.matchAll(/<!-- example:(epic|mixed|human):(work|context) -->\n```yaml\n([\s\S]*?)```/g)];
   assert.equal(blocks.length, 6);
   const files = {};

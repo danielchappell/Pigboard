@@ -3,7 +3,7 @@
 This local command checks editable structure and, with separately supplied trusted
 facts, local start semantics. It never reads Jira, changes a file, starts a worker,
 computes a digest, executes tests or establishes live readiness. The
-[writing skill](../skills/write-pr-sized-stories/SKILL.md) now authors versioned
+writing skill now authors versioned
 Epic and Story/Bug YAML with full templates and readable requirements. The basic
 workers still consume their retained prose contract; compatible delivery and the
 manager require later coordinated release.
@@ -12,11 +12,28 @@ manager require later coordinated release.
 
 Read the writing skill and its human-writing sibling first. Supply agreed scope,
 native Jira context, exact repository/base and separately prepared trusted facts.
-Ask for an Epic, Story/Bug, or a plain-language discovery/design Task. The writer
-starts from its full [Epic](../skills/write-pr-sized-stories/references/epic.yaml)
-or [ticket](../skills/write-pr-sized-stories/references/ticket.yaml) template;
-complete [brief/result/context examples](../skills/write-pr-sized-stories/references/pigboard-example.md)
-show two streams, mixed AI/human cases and a non-runtime human-only Bug.
+Ask for an Epic, Story/Bug, or a plain-language discovery/design Task. Start from
+the full Epic or ticket template; the complete examples show two streams, mixed AI/human cases
+and a non-runtime human-only Bug.
+
+Choose the navigation column matching this guide's location. **Source checkout**
+means `<repository>/docs/authoring.md`; those links use that checkout's `skills/`.
+**Prepared installation** means `<skills>/work-validator/docs/authoring.md`; those
+links reach the writer beside `work-validator` in the **same receipt's** `skills`
+directory. Both routes work offline; use only the column matching your layout.
+
+| Open | Source checkout only | Prepared installation only |
+| --- | --- | --- |
+| Writer entrypoint | [Source writer](../skills/write-pr-sized-stories/SKILL.md) | [Installed writer](../../write-pr-sized-stories/SKILL.md) |
+| Epic template | [Source Epic](../skills/write-pr-sized-stories/references/epic.yaml) | [Installed Epic](../../write-pr-sized-stories/references/epic.yaml) |
+| Ticket template | [Source ticket](../skills/write-pr-sized-stories/references/ticket.yaml) | [Installed ticket](../../write-pr-sized-stories/references/ticket.yaml) |
+| Complete briefs, work and contexts | [Source examples](../skills/write-pr-sized-stories/references/pigboard-example.md) | [Installed examples](../../write-pr-sized-stories/references/pigboard-example.md) |
+
+For example, if the preparation receipt gives `/absolute/receipt/skills`, open
+`/absolute/receipt/skills/write-pr-sized-stories/SKILL.md`; its references and
+`/absolute/receipt/skills/human-writing/SKILL.md` stay together in that release.
+Use the versioned receipt path when refresh can overlap the run.
+
 Keep the short title/native fields outside the YAML. Drafting does not publish,
 change readiness/status/labels/parent, launch workers or request rework.
 
@@ -59,8 +76,8 @@ binding.
 
 ## Modes and editable structure
 
-Start from the writer templates linked above. Their complete examples include
-separate synthetic contexts; they are not authorized targets. Save raw YAML and
+Start from the writer templates in the matching navigation column above. Their
+complete examples include separate synthetic contexts; they are not authorized targets. Save raw YAML and
 validate that text, preserving numeric parser provenance rather than passing a
 reserialized object. Without trusted context, run draft/structure and report start
 not run. Report actual mode/result and exact missing paths/owners. If the checker
