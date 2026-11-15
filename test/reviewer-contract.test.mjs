@@ -67,7 +67,7 @@ test('reviewer repair/block preserve every finding, null and implementation basi
  const oversized=structuredClone(x.r);oversized.kind='repair_request';oversized.to_stage='Rework Queued';oversized.payload={basis:x.r.payload.implementation,pr:x.r.payload.pr,findings:[...findings,...Array.from({length:101},(_,i)=>({...findings[0],id:`Extra${i}`}))],qa_report:null};
  assert.equal(validateHandoff(stringify(JSON.parse(JSON.stringify(oversized)))).valid,false);
 });
-test('shared review core and comment contracts remain byte-identical to implementation base',async()=>{
+test('review architecture and untouched companion contracts retain their original bytes',async()=>{
  // Fixed SHA256 of raw baseline bytes at 9f03c1561b0e32de05cd296b24e50885f4abbe91.
  const baseline = {
   'skills/pr-review/SKILL.md': 'd15c0c072b4e43c1893f7456fe007045590dc2178ab1fe6a55480a496902effe',
@@ -76,7 +76,18 @@ test('shared review core and comment contracts remain byte-identical to implemen
   'config/cursor/pr-review-prompt.txt': '6ac09b149eeac87b09559dc7998561b8f1cb33d690f53ea3ceaf3f207eb1e58a'
  };
  for(const [file,expected] of Object.entries(baseline)){
-  const bytes=await readFile(new URL('../'+file,import.meta.url));
+  let bytes=await readFile(new URL('../'+file,import.meta.url));
+  if(file === 'skills/pr-review/SKILL.md') {
+   // PGB-106 permits only this context paragraph and four criterion additions.
+   // Removing them must reconstruct every original byte, including verdicts/mapping.
+   const additions = ["Read [engineering-principles](../engineering-principles/SKILL.md) for investigation guidance on reuse, design and verification. It does not add a reporting category, replace project authority or make a preference a finding; the scope and evidence rules below still govern.\n\n", " Check whether a changed assumption needed a revised plan and whether the required review covers the implemented approach; ordinary details within that approach do not require replanning.", " Check that author verification covers the final code state, that later edits or conflict resolution did not invalidate it, and that the intended tests actually ran; do not require a new test or an intermediate check when existing evidence suffices.", " Inspect actual callers and compare permissions, ownership, data and failure behavior; a matching helper name or nearby legacy example does not establish suitability.", " Check that the handoff gives another engineer usable prerequisites, actions and expected outcomes to verify the change, with retained evidence and any required cleanup."];
+   let text = bytes.toString('utf8');
+   for(const addition of additions) {
+    assert.equal(text.split(addition).length, 2, 'Each reviewed addition occurs once');
+    text = text.replace(addition, '');
+   }
+   bytes = Buffer.from(text);
+  }
   assert.equal(createHash('sha256').update(bytes).digest('hex'),expected,file);
  }
 });

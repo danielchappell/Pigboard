@@ -13,26 +13,40 @@ Use the same [Cursor phase controls](../implementer-entrypoint/references/cursor
 text claiming a model is not model selection. No Jira mutations, manager state,
 admission, worker coordination, new QA engines or setup/dependency repair.
 
-**Plan (High).** Inspect actual source/base, applicable AGENTS/CONTRIBUTING,
-contribution/check rules, complete requirements and every prescribed case. Produce
-ordered edits, interfaces, tests, docs, failure paths, preparation mapping, file/time
-count and your own seven-principle assessment. One repository/PR, <=20 changed files
-and <2 human working days includes docs/tests/preparation. The composer uses exactly
-one fresh High reviewer per round with the shared
+**Plan (High).** Use [planner](../planner/SKILL.md) to produce one source-grounded
+plan from this verified assignment. It calls the investigation and design methods
+within the same agent. Return its exact artifact hash and current input bindings;
+DRAFT_COMPLETE is an author result, not permission to execute. One repository/PR,
+<=20 changed files and <2 human working days includes docs/tests/preparation.
+The composer uses exactly one fresh High reviewer per round with the shared
 [plan-review prompt](../implementer-entrypoint/references/plan-review.md). Require
 CLEAN on the applicable plan; do not turn reviewer suggestions into new scope.
 Rework can reuse a still-applicable plan only with an explicit recorded basis.
 
 **Execute (Medium).** Verify the trusted continuation and retained plan/assignment/
 checkout/PR/action receipts before editing. Follow target-repository gates and
-preserve unrelated work. Incorporate every assigned repair cause and required actual
+preserve unrelated work. Apply [engineering-principles](../engineering-principles/SKILL.md)
+without repeating its rules as a report. Resolve ordinary details locally within
+the accepted approach; an omission alone does not require another owner question.
+Incorporate every assigned repair cause and required actual
 parent revision in the same still-open PR. Stop before approach changes with
 NEEDS_HIGH_PLAN; scope growth/missing prerequisites is BLOCKED. A known upstream
 repair preventing completion is DEPENDENCY_WAIT with exact requests. Never replace
 a closed/missing repair PR or infer pre-first-PR history.
 
-Run meaningful regression and required local checks, update affected documentation,
-and prepare only declared mechanical QA artifacts with retrievable hashes, IDs,
+Use [diagnose-problem](../diagnose-problem/SKILL.md) when observed behavior or checks
+contradict expectations, before another speculative fix. Supply a finite allowance
+within the run. Apply supported local corrections yourself; REPLAN maps to
+NEEDS_HIGH_PLAN, validated UPSTREAM_WAIT to DEPENDENCY_WAIT, and unresolved cause
+or missing authority to BLOCKED under the shared contract.
+
+Update affected tests and documentation. Use [verify-change](../verify-change/SKILL.md)
+for final author verification and useful intermediate checkpoints. Fill reported
+gaps and rerun affected checks after fixes or conflict resolution. Return its
+revision-bound results and a repeatable recipe in the existing evidence references;
+PASS alone is not READY. Preserve unfinished checks on FAIL or INCOMPLETE.
+
+Prepare only declared mechanical QA artifacts with retrievable hashes, IDs,
 owners/consumers and unchanged expectations/order. Read only named helpers'
 preparation contracts. Consume supplied environment evidence where required; do
 not provision or discover access. Do not claim independent QA or human PASS.

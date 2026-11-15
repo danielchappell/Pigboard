@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 14);
+  assert.equal(first.verification.entrypoints, 20);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }

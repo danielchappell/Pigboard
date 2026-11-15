@@ -14,7 +14,7 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the fourteen folders in
+The installer prepares the twenty folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
@@ -72,7 +72,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing fourteen complete skill folders and `work-validator` |
+| `skills` | Absolute root containing twenty complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -96,7 +96,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all fourteen entrypoints,
+`verification`. Inspect the expected commit, all twenty entrypoints,
 `dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
 `work-validator epic draft`, `work-validator ticket draft`, and
 `handoff-validator admission record`, and `config-validator project scope`. The
