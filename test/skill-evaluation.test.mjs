@@ -168,6 +168,8 @@ test('known regression remains visible alongside missing evidence and quality tr
   candidate.assertions[1].result = 'INCOMPLETE';
   let report = compare(campaign, packets);
   assert.equal(report.direction, 'REGRESSION'); assert.equal(report.gate, 'FAIL');
+  assert.equal(report.qualification, 'FAIL');
+  assert(report.blocking.some(b => b.reason === 'SUCCESS_FLOOR'));
   assert(report.gaps.length);
   campaign.cases[0].dimensions = ['reuse'];
   baseline.quality = [{ id: 'reuse', applicable: true, score: 1, reason: 'Synthetic grade', evidence: ['grade'] }];
@@ -175,6 +177,64 @@ test('known regression remains visible alongside missing evidence and quality tr
   report = compare(campaign, packets);
   assert.equal(report.direction, 'MIXED');
   assert.equal(report.pairs[0].quality[0].delta, 1);
+});
+
+test('definitive failure and infrastructure failure cannot count toward a possible success floor', () => {
+  for (const failure of ['assertion', 'outcome', 'budget', 'infrastructure']) {
+    const { campaign, packets } = pair(); packets.forEach(green);
+    const candidate = packetBy(packets, 'candidate');
+    candidate.metrics.tokens = null;
+    if (failure === 'assertion') candidate.assertions[0].result = 'FAIL';
+    if (failure === 'outcome') candidate.outcome = 'BLOCKED';
+    if (failure === 'budget') candidate.status = 'BUDGET_EXHAUSTED';
+    if (failure === 'infrastructure') candidate.status = 'INFRASTRUCTURE_FAILURE';
+    const report = compare(campaign, packets);
+    assert.equal(report.qualification, 'FAIL', failure);
+    assert(report.blocking.some(b => b.reason === 'SUCCESS_FLOOR'), failure);
+    assert(report.gaps.some(g => g.reason === 'COST_UNKNOWN'), failure);
+  }
+});
+
+test('bounded campaign serialization remains readable after preparation', async t => {
+  const { root } = await emptyStore(t), campaign = copy(loaded.campaign);
+  campaign.cases = Array.from({ length: 30 }, (_, i) => ({ ...copy(campaign.cases[0]), id: `case${i}`,
+    assertions: Array.from({ length: 64 }, (_, j) => ({ id: `a${String(j).padStart(2, '0')}${'x'.repeat(61)}`, kind: 'behavior', must_pass: false })) }));
+  const raw = JSON.stringify(campaign);
+  assert(Buffer.byteLength(raw) < 262144);
+  assert(Buffer.byteLength(JSON.stringify(campaign, null, 2)) > 262144);
+  const file = path.join(root, 'large.json'), store = path.join(root, 'large');
+  await writeFile(file, raw); await prepare(file, store);
+  const result = await load(store);
+  assert.equal(result.campaign.cases.length, 30);
+  assert.equal(run('compare', store).status, 1); // Missing runs, not damaged storage.
+});
+
+test('retained packet size is checked before publication, including rewritten paths', async t => {
+  for (const padding of [53, 54]) {
+    const { root } = await emptyStore(t), campaign = copy(loaded.campaign);
+    const p = JSON.parse(await readFile(seed.packets.candidate));
+    const ids = Array.from({ length: 64 }, (_, i) => `e${String(i).padStart(2, '0')}${'x'.repeat(padding)}`);
+    campaign.cases[0].assertions = ids.map((_, i) => ({ id: `assert${i}`, kind: 'behavior', must_pass: false }));
+    p.campaign = digestValue(campaign);
+    p.assertions = campaign.cases[0].assertions.map(a => ({ id: a.id, result: 'PASS', evidence: ids }));
+    p.evidence = ids.map((id, i) => ({ id, path: `e${i}`, digest: digest('evidence') }));
+    p.author_verification.evidence = [ids[0]]; p.host.receipt = ids[0]; p.graders[0].report = ids[0];
+    for (let i = 0; i < ids.length; i++) await writeFile(path.join(root, `e${i}`), 'evidence');
+    const campaignFile = path.join(root, 'large-campaign.json'), packetFile = path.join(root, 'large-packet.json');
+    await writeFile(campaignFile, JSON.stringify(campaign)); await writeFile(packetFile, JSON.stringify(p));
+    assert(Buffer.byteLength(JSON.stringify(p)) < 262144);
+    assert(Buffer.byteLength(JSON.stringify(p, null, 2)) > 262144);
+    const store = path.join(root, 'large-store'); await prepare(campaignFile, store);
+    if (padding === 53) {
+      await record(store, packetFile);
+      assert.equal((await load(store)).packets.length, 1);
+      assert.equal(run('compare', store).status, 1);
+    } else {
+      await assert.rejects(record(store, packetFile), { code: 'LIMIT' });
+      assert.deepEqual(await readdir(path.join(store, 'runs')), []);
+      assert(!(await readdir(store)).some(name => name.startsWith('.record-')));
+    }
+  }
 });
 
 test('quality applicability, independent grading and required final checks cannot be waived', () => {

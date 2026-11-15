@@ -161,6 +161,9 @@ per attempt to 64 MiB, 64 files and 1,000 campaign slots. Partition large saniti
 logs into bounded files before freezing their hashes. Do not omit relevant evidence
 to obtain a pass. Paths cannot be absolute, traverse parents or use symbolic links.
 Case IDs and evidence filenames must remain distinct on case-insensitive filesystems.
+The metadata limit also applies after evidence paths are rewritten for storage.
+A LIMIT error publishes no attempt; reduce unnecessary inline duplication while
+keeping required observations in referenced evidence files.
 
 ## Read the result
 

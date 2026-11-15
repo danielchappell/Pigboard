@@ -35,7 +35,7 @@ try {
     console.log(JSON.stringify(result, null, 2));
   }
 } catch (error) {
-  const known = ['USAGE', 'INPUT', 'SHAPE', 'IDENTITY', 'EVIDENCE', 'DUPLICATE', 'INTEGRITY', 'BUSY'].includes(error.code);
+  const known = ['USAGE', 'INPUT', 'SHAPE', 'IDENTITY', 'EVIDENCE', 'DUPLICATE', 'INTEGRITY', 'BUSY', 'LIMIT'].includes(error.code);
   console.log(JSON.stringify({ schema: 'pigboard-evaluation-error/v1', code: known ? error.code : 'IO',
     message: known ? error.message : 'Evaluation could not complete. Check prepared dependencies and directory access; no result is a pass.' }));
   process.exitCode = 2;
