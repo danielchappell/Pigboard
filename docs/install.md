@@ -97,8 +97,10 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all eleven entrypoints,
-`dependencies: "verified"`, and four smoke checks: `pg.Client`, `bru --version`,
-`work-validator epic draft` and `work-validator ticket draft`. The validator checks
+`dependencies: "verified"`, and five smoke checks: `pg.Client`, `bru --version`,
+`work-validator epic draft`, `work-validator ticket draft`, and
+`handoff-validator admission record`. The admission check validates a complete
+setup-only disposable record and its independently computed canonical digest. The validator checks
 load the real parser, semantic modules and schemas, require draft-valid skeletons
 and require structural-start false. These unchanged draft smoke checks do not run
 local start semantics, contact providers or establish live readiness.
@@ -229,3 +231,26 @@ run uses them. Cache pruning/removal is operator work; no uninstall command or
 automatic pruning is implemented. Retain evidence required by the team. Removing
 skills (including the validator payload in the same release/root) does not remove Jira rules, revoke provider credentials or cancel agents;
 handle those explicitly within the authorized setup scope.
+
+
+## Local handoff validation
+
+The same `work-validator` payload now includes the canonical handoff/pointer
+schemas, receipt-chain runtime and [handoff guide](handoffs.md). Prepared releases
+pin canonicalize 4.0.0 and parse5 8.0.0 alongside Ajv 8.20.0, ajv-formats 3.0.1 and
+YAML 2.9.1. Node 20+ support is unchanged. No packages are fetched during validation.
+
+```sh
+node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode record --input /absolute/record.yaml --format yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode chain --input /absolute/receipts.json --json
+```
+
+The installed guide lives at `<receipt.skills>/work-validator/docs/handoffs.md`.
+Source use runs the same commands with `scripts/validate-handoff.mjs` after root
+setup. Record mode checks shape/digest; chain mode checks bounded supplied provider
+observations. Both report live freshness as not evaluated. A valid partial/blocked
+record is not completion. Missing/corrupt parser, canonicalizer, schema or script
+fails preparation/verification and keeps the previous stable skills binding.
+Validation writes nothing and installation activates no automation, handoff
+producer, manager or human-unblock path. See the guide for the complete closed
+envelope, synthetic examples, exit meanings, budgets and recovery.

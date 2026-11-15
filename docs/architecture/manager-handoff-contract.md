@@ -7,6 +7,15 @@ installed skills still use the earlier prose contract. Independent review and th
 [isolated test packet](manager-test-packet.md) gate adoption. No worker is activated
 by this document.
 
+## Available local validation
+
+The source and prepared bundle include a read-only record/receipt-chain validator;
+see [operator and agent usage](../handoffs.md). It checks bounded supplied evidence,
+not live freshness. This does not install the future provider adapters, role
+producers, manager or human-unblock automation described below, and activates no
+worker. The schema is canonical under root `contracts/`; historical skeletons
+remain preparation aids.
+
 ## What is passed on
 
 A handoff says **which assigned work was done, on which PR revision, with what
@@ -31,8 +40,8 @@ explicit, confirmed publication before transition and does not assume atomicity.
 
 ## Files and encoding
 
-- [Handoff schema](contracts/pigboard-handoff-v1.schema.json): JSON Schema 2020-12.
-- [Pointer schema](contracts/pigboard-work-pointer-v1.schema.json).
+- [Handoff schema](../../contracts/handoff-v1.schema.json): JSON Schema 2020-12.
+- [Pointer schema](../../contracts/work-pointer-v1.schema.json).
 - [Role skeletons](examples/handoffs/): one document per comment, with nulls visible.
 
 Each comment contains a short human summary and exactly one ADF `codeBlock` whose
