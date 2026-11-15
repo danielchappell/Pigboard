@@ -1,6 +1,6 @@
 # Pig Boss release one: complete delivery plan
 
-**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. These 23 Stories replace the earlier 20-Story set. Jira remains the queue; this pack is its reviewable design/acceptance record.
+**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. The historical 23-Story baseline is preserved. Current source mirrors 24 Stories / 107 cases; native Jira has 25 / 110. PGB-110/R1-24 source publication is pending with its Skills owner. Jira remains the queue; this pack is its reviewable design/acceptance record.
 
 ## What this release delivers
 
@@ -14,7 +14,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 
 ## Ordered Stories
 
-[Complete Story bodies and 104 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. All 23 remain planned with `owner-review-required`, no worker labels and no Ready to Work state.
+[Complete source Story bodies and 107 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current execution status is in Jira; publication and historical review status do not prove implementation or acceptance. All human acceptance remains NOT_RUN.
 
 | ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
 | --- | --- | --- | ---: | ---: |
@@ -29,7 +29,8 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Complete QA with an honest evidence ledger | R1-04, R1-06, R1-07 | 1.75 | 10 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
-| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10 | 1.5 | 7 |
+| R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
+| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25 | 1.70 | 19 |
 | R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21 | 1.75 | 12 |
 | R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
 | R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 | 1.75 | 10 |
@@ -42,11 +43,11 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **35.25 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.43 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
-R1-01/02 deliver usable author checks before the writer depends on them. R1-04 delivers a usable receipt validator shared by workers and manager. R1-05–09 update the existing delivery roles without deploying them. R1-10/11 give operators a complete zero-write policy preview; R1-12 connects that preview to current Jira facts. R1-13 runs preview in the customer’s AWS account. R1-14/15 give a tested state API plus inspect/reconciliation commands; R1-16 protects upgrade/removal. Only then does R1-17 enable safe fixture admission, followed by queued repairs and dependent-stack queueing. R1-20 checks the whole pinned release before real acceptance.
+R1-01/02 deliver usable author checks before the writer depends on them. R1-04 delivers a usable receipt validator shared by workers and manager. R1-05–09 update the existing delivery roles without deploying them. R1-25 first corrects the existing canonical chain validator on completed R1-10; R1-11 then uses that proof for the complete repair preview. R1-10/11 give operators a complete zero-write policy preview; R1-12 connects that preview to current Jira facts. R1-13 runs preview in the customer’s AWS account. R1-14/15 give a tested state API plus inspect/reconciliation commands; R1-16 protects upgrade/removal. Only then does R1-17 enable safe fixture admission, followed by queued repairs and dependent-stack queueing. R1-20 checks the whole pinned release before real acceptance.
 
 Intermediate releases remain usable at their declared boundary: local validation, offline/live preview, disabled AWS preview and operator state inspection. New-work apply is explicitly a fixture/development increment while rework apply is absent; required repairs hold rather than being skipped. No partial chain is enabled for customer delivery. State API contract tests are real consumers of its guarantees; the same API is then used by apply. No archived module is revived.
 
@@ -100,9 +101,13 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `lib/manager/snapshot.mjs`, `lib/manager/availability.mjs`, `lib/manager/decisions.mjs`, `scripts/manager-preview.mjs`, `test/manager-preview.test.mjs`, `test/fixtures/manager-candidates.json`, `docs/manager-preview.md`.
 
-### R1-11 — 7 forecast files, 1.5 days
+### R1-25 — 15 forecast files, 1.98 days
 
-`lib/manager/repair-policy.mjs`, `lib/manager/availability.mjs`, `lib/manager/decisions.mjs`, `scripts/manager-preview.mjs`, `test/repair-policy.test.mjs`, `test/fixtures/manager-repairs.json`, `docs/manager-preview.md`.
+`lib/contracts/receipts.mjs`, `test/receipt-chain.test.mjs`, `test/fixtures/handoff-chains.json`, `test/cursor-environment.test.mjs`, `docs/handoffs.md`, `docs/architecture/manager-handoff-contract.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/delivery/manager-r1/publication.json`, `docs/product/README.md`, `docs/product/coverage.md`, `test/qa-helper-contract.test.mjs`.
+
+### R1-11 — 19 forecast files, 1.70 days
+
+`lib/manager/repair-policy.mjs`, `lib/manager/availability.mjs`, `lib/manager/decisions.mjs`, `lib/manager/snapshot.mjs`, `lib/contracts/receipts.mjs`, `scripts/manager-preview.mjs`, `test/repair-policy.test.mjs`, `test/fixtures/manager-repairs.json`, `test/receipt-chain.test.mjs`, `test/manager-preview.test.mjs`, `docs/manager-preview.md`, `docs/handoffs.md`, `docs/architecture/manager-handoff-contract.md`, `config/skill-bundle.json`, `scripts/install-cursor-skills.mjs`, `test/cursor-environment.test.mjs`, `docs/install.md`, `README.md`, `ARCHITECTURE.md`.
 
 ### R1-12 — 12 forecast files, 1.75 days
 
@@ -221,3 +226,15 @@ release report publishes the workload actually tested and any operating limits;
 delays must be observed rather than marketed as an exact detection SLA.
 
 Configuration ownership: R1-21 creates the sole `contracts/config-v1.schema.json`, parser and `config/pigboss.example.yaml`; R1-12/13 and health Stories extend/consume those same files. There is no second manager configuration. `plan-metadata.json` holds only delivery order, sizing and forecast files; `ticket-drafts.json` owns the structured Story contracts.
+
+## Repeated-parent amendment, 15 November 2026
+
+PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source is 24 Stories/107 cases; native Jira is 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+
+The independently reviewed F1 preservation repair carries the selected worker's
+existing proof through final authorized-resume checks and reuses only the exact
+selected current QA for a truthful consumed resolution. Current PGB-113 forecast
+is 15 files/1.98 familiar-human days, with 0.23 days remaining from the frozen
+066f24c candidate. Prior 468-test and 100-case results remain evidence for their
+original inputs and revision; repaired-candidate checks and independent reviews
+are required separately. Human acceptance remains NOT_RUN.
