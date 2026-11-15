@@ -4,6 +4,7 @@ import { mkdtemp, readdir, readFile, writeFile, lstat, rm } from 'node:fs/promis
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { exportPublic, publicFiles } from '../evals/tenant-export/export-public.mjs';
 import { verifyControls, inspectPublicChecks, publicChecksMatch } from '../evals/tenant-export/verify-controls.mjs';
 const names=['existing tenant list and administrator access','prepared pagination handles empty continued pages and repeated cursors','existing HTTP trusted tenant and admin checks','export examples: pages, tenant scope, empty, validation and source error'];
@@ -144,4 +145,49 @@ test('qualification rejects missing execution through its production match',()=>
   const evidence=inspectPublicChecks(complete);
   for(const badReceipt of [{...receipt,error:'timeout'},{...receipt,signal:'SIGTERM'},{...receipt,status:null},{...receipt,status:0}])
     assert.equal(publicChecksMatch(evidence,badReceipt,1),false);
+});
+
+test('trusted HTTP setup denial is incomplete while subject errors remain failures',async()=>{
+  const root=await mkdtemp(path.join(os.tmpdir(),'pigboard-tenant-bind-'));
+  const subject=path.join(root,'subject');await exportPublic(subject);
+  const grader=fileURLToPath(new URL('../evals/tenant-export/private/grade.mjs',import.meta.url));
+  const reference=fileURLToPath(new URL('../evals/tenant-export/private/reference.patch',import.meta.url));
+  const childEnv={...process.env};delete childEnv.NODE_TEST_CONTEXT;
+  async function run(id,executable,args) {
+    const result=spawnSync(executable,args,{cwd:subject,env:childEnv,encoding:'utf8',timeout:10000});
+    await writeFile(path.join(root,id+'.stdout.txt'),result.stdout??'');
+    await writeFile(path.join(root,id+'.stderr.txt'),result.stderr??'');
+    await writeFile(path.join(root,id+'.receipt.json'),JSON.stringify({executable,args,cwd:subject,status:result.status,signal:result.signal,error:result.error?.message??null},null,2));
+    assert.equal(result.error,undefined,`Setup error; evidence: ${root}`);assert.equal(result.signal,null);
+    return result;
+  }
+  assert.equal((await run('apply-reference','git',['apply',reference])).status,0);
+  const pass={'M1.1':'PASS','M1.2':'PASS','M1.3':'PASS','M1.4':'PASS'};
+  for(const code of ['EPERM','EACCES']) {
+    const preload=path.join(root,code+'.mjs');
+    await writeFile(preload,`import {Server} from 'node:net';\nServer.prototype.listen=function(){queueMicrotask(()=>this.emit('error',Object.assign(new Error('synthetic bind denial'),{code:'${code}'})));return this;};\n`);
+    const result=await run(code,process.execPath,['--import',preload,grader,subject]);
+    assert.equal(result.status,2);
+    const grade=JSON.parse(result.stdout);assert.equal(grade.adapter,'PASS');
+    assert.deepEqual(grade.requirements,{...pass,'M1.2':'INCOMPLETE','M1.4':'INCOMPLETE'});
+    const httpIds=['http-identity','http-source-error','old-library-and-http'];
+    for(const id of httpIds) {
+      const observation=grade.observations.find(o=>o.id===id);assert.equal(observation.result,'INCOMPLETE');
+      assert.deepEqual(observation.evidence.httpSetup,{phase:'trusted-http-listen',address:'127.0.0.1',port:0,status:'INCOMPLETE',code});
+    }
+    for(const observation of grade.observations.filter(o=>!httpIds.includes(o.id)))assert.equal(observation.result,'PASS');
+  }
+  const recovered=await run('recovered',process.execPath,[grader,subject]);assert.equal(recovered.status,0);
+  assert.deepEqual(JSON.parse(recovered.stdout).requirements,pass);
+  const server=path.join(subject,'server.mjs'), source=await readFile(server,'utf8');
+  const declaration='export function createServer({ service, authenticate }) {';
+  assert.equal(source.split(declaration).length,2);
+  await writeFile(server,source.replace(declaration,declaration+"\n  throw Object.assign(new Error('subject server defect'),{code:'EPERM'});"));
+  const spoof=await run('subject-error',process.execPath,[grader,subject]);assert.equal(spoof.status,1);
+  const failed=JSON.parse(spoof.stdout);assert.deepEqual(failed.requirements,{...pass,'M1.2':'FAIL','M1.4':'FAIL'});
+  for(const id of ['http-identity','http-source-error','old-library-and-http']) {
+    const observation=failed.observations.find(o=>o.id===id);assert.equal(observation.result,'FAIL');
+    assert.equal(observation.evidence.httpSetup.status,'PASS');assert.match(observation.detail,/subject server defect/);
+  }
+  await rm(root,{recursive:true});
 });

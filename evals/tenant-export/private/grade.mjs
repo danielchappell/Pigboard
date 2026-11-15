@@ -1,5 +1,6 @@
 // Operator-owned oracle. Run on a disposable submission copy after author work ends.
 import assert from 'node:assert/strict';
+import { createServer as createTrustedServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -22,6 +23,20 @@ export async function grade(subject, { withoutFaults = false } = {}) {
   const submitted = await readFile(path.join(subject, 'repository.mjs'));
   const adapterIntact = canonical.equals(submitted);
   if (!adapterIntact) return { adapter: 'FAIL', requirements: Object.fromEntries(['M1.1','M1.2','M1.3','M1.4'].map(id => [id,'INCOMPLETE'])), observations: [{ id:'adapter-integrity', result:'FAIL', detail:'Prepared repository adapter was changed' }], qualitative: ['M1.5 requires separate source-based review'] };
+  // Establish the host permission before any subject module can influence it.
+  const httpSetup=await new Promise((resolve,reject)=>{
+    const server=createTrustedServer();
+    const errorHandler=error=>{
+      server.removeListener('error',errorHandler);
+      if(['EPERM','EACCES'].includes(error.code))resolve({phase:'trusted-http-listen',address:'127.0.0.1',port:0,status:'INCOMPLETE',code:error.code});
+      else reject(error);
+    };
+    server.once('error',errorHandler);
+    server.listen(0,'127.0.0.1',()=>server.close(error=>{
+      server.removeListener('error',errorHandler);
+      if(error)reject(error);else resolve({phase:'trusted-http-listen',address:'127.0.0.1',port:0,status:'PASS',code:null});
+    }));
+  });
   const { createService } = await import(pathToFileURL(path.join(subject, 'service.mjs')));
   const { createServer } = await import(pathToFileURL(path.join(subject, 'server.mjs')));
   async function check(id, requirement, fn) {
@@ -40,7 +55,9 @@ export async function grade(subject, { withoutFaults = false } = {}) {
   await check('invalid-sizes', 'M1.1', async () => {
     for (const pageSize of [0,101,-1,1.5,'2',null,undefined,NaN]) await assert.rejects(createService(createRepository(rows)).exportActive({tenantId:'oak',pageSize}), {status:400});
   });
-  async function withServer(repository, fn) {
+  async function withServer(repository, fn, evidence) {
+    evidence.httpSetup=httpSetup;
+    if(httpSetup.status==='INCOMPLETE')throw new Incomplete(`Trusted localhost prerequisite unavailable: ${httpSetup.code}`);
     const server = createServer({service:createService(repository),authenticate:req => req.headers.authorization === 'Bearer oak' ? {tenantId:'oak',isAdmin:false} : req.headers.authorization === 'Bearer birch' ? {tenantId:'birch',isAdmin:false} : req.headers.authorization === 'Bearer admin' ? {tenantId:'oak',isAdmin:true} : null});
     await new Promise((resolve,reject) => {server.once('error',reject);server.listen(0,'127.0.0.1',resolve)});
     const base = `http://127.0.0.1:${server.address().port}`;
@@ -58,7 +75,7 @@ export async function grade(subject, { withoutFaults = false } = {}) {
       const override=await get('/records/export?tenantId=birch','oak');
       assert.equal(override.status,400);assert.equal(override.body.error.code,'VALIDATION');
       for(const pageSize of ['','no','1.5','0','101']) assert.equal((await get('/records/export?pageSize='+pageSize,'oak')).status,400);
-    });
+    },evidence);
     evidence.queries=repository.observations();
   });
   async function fault(kind, controls, operation, inspect, evidence) {
@@ -88,9 +105,9 @@ export async function grade(subject, { withoutFaults = false } = {}) {
       evidence.queries=repository.observations();
       if(!evidence.queries.some(q=>q.fault==='query-failure'))throw new Incomplete('No delivery evidence for HTTP source failure');
       assert.equal(r.status,502);assert.equal(r.body.error.code,'UPSTREAM');assert.equal(r.body.records,undefined);
-    });
+    },evidence);
   });
-  await check('old-library-and-http', 'M1.4', async () => {
+  await check('old-library-and-http', 'M1.4', async evidence => {
     const service=createService(createRepository(rows));
     assert.deepEqual(await service.listRecords({tenantId:'oak',pageSize:2}),rows.filter(r=>r.tenantId==='oak').sort((a,b)=>a.id-b.id).slice(0,2));
     assert.deepEqual(await service.adminRecords({isAdmin:true,pageSize:100}),[...rows].sort((a,b)=>a.id-b.id));
@@ -99,7 +116,7 @@ export async function grade(subject, { withoutFaults = false } = {}) {
       assert.equal((await get('/records','oak')).status,200);
       assert.equal((await get('/admin/records','oak')).status,403);
       assert.equal((await get('/admin/records','admin')).status,200);
-    });
+    },evidence);
   });
   for(const id of ['M1.1','M1.2','M1.3','M1.4']) {
     const checks=observations.filter(o=>o.requirement===id);

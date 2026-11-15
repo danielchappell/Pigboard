@@ -70,7 +70,11 @@ six behavioral defects, adapter tampering, missing fault delivery and a valid
 alternative. The reference and alternative must pass all behavioral requirements;
 each negative must match its complete declared verdict map. Individual observations,
 commands, output, exit status, duration and source hashes remain in each case folder.
-A missing fault is INCOMPLETE, not a guessed pass or product failure. M1.5 reuse
+A missing fault is INCOMPLETE, not a guessed pass or product failure. A trusted
+localhost preflight runs before subject code: denied listen permission makes HTTP
+grading INCOMPLETE while preserving library evidence. Retry in an approved local
+environment using a new evidence directory. An error raised by subject code after
+a successful preflight remains a subject failure; it cannot claim setup denial. M1.5 reuse
 quality requires separate source-based review; helper names do not earn scores.
 
 Each case's `publicChecks` records COMPLETE or INCOMPLETE, named outcomes, counts
