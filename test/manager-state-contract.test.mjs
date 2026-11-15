@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
-import { recordId, projectRetainedInventory } from '../lib/state/contract.mjs';
+import { recordId, projectRetainedInventory, transitionPublication, transitionRequestDigest, transitionProof, CAPTURE_KEYS } from '../lib/state/contract.mjs';
+import { transitionFixture, runTransitionProofCase, proofFixture } from '../scripts/test-transition-proof.mjs';
 import { fixture, prepared, beginInput, finalizeInput, allLimits, row } from './helpers/state-provider.mjs';
 
 // Future adapters run these same observable invariants through their own disposable
@@ -172,4 +173,85 @@ test('inspect continuation is explicit, installation-bound, and read-only', asyn
   const calls = provider.audit.length;
   assert.equal((await state.inspect({ kind: 'member', cursor: first.data.next_cursor })).status, 'invalid');
   assert.equal(provider.audit.length, calls); assert.equal(provider.snapshot(), before);
+});
+
+test('transition proof preserves original204/409 through restart and real inspect output', async () => {
+  const evidence = await runTransitionProofCase('R1-29-H01');
+  assert.equal(evidence.traces.length, 2); assert.equal(evidence.human_acceptance, 'pending');
+  assert.deepEqual(evidence.external_calls, { jira: 0, worker: 0, aws_live: 0 });
+  for (const trace of evidence.traces) {
+    assert.equal(trace.records.attempt.outcome, 'pending'); assert.equal(trace.records.stream.revision, 0);
+    assert.equal(trace.records.attempt.extensions.pb_capture_package_revision, fixture.binding.package_revision);
+    assert.equal(trace.records.attempt.configuration_digest, fixture.attemptA.configuration_digest);
+    assert.equal(trace.records.attempt.extensions.pb_capture_publication_digest, proofFixture.expected.publication_digest);
+    assert.equal(trace.records.attempt.extensions.pb_capture_request_digest, proofFixture.expected.request_digest);
+    assert.equal(Object.keys(trace.records.attempt.extensions).filter(k => CAPTURE_KEYS.includes(k)).length, 10);
+    assert.equal(trace.outputs[1].data.stream.revision, 0); assert.equal(trace.outputs[2].data.attempt.revision, 3);
+    assert.match(trace.inspected.readable, /response-captured/);
+  }
+});
+test('transition proof rejects exactly nine bounded stale/order/control/capacity/fault variants', async () => {
+  const evidence = await runTransitionProofCase('R1-29-H02');
+  assert.deepEqual(evidence.traces.map(t => t.variant), proofFixture.h02_variants);
+  for (const trace of evidence.traces) { assert.equal(trace.output.data, null); assert.equal(trace.records.attempt.outcome, 'pending'); }
+});
+test('capture ordering requires retained publication and freezes it after preparation', async () => {
+  const c = await transitionFixture(); const before = c.provider.snapshot();
+  assert.equal((await c.prepare()).code, 'PUBLICATION_MISMATCH'); assert.equal(c.provider.snapshot(), before);
+  assert.equal((await c.retain()).status, 'confirmed');
+  assert.equal((await c.prepare()).status, 'confirmed');
+  const captured = c.provider.snapshot();
+  assert.equal((await c.retain({ reference: { ...proofFixture.reference, comment_id: '701' } })).code, 'PROOF_CONFLICT');
+  assert.equal((await c.response(204, { request_digest: 'sha256:' + 'b'.repeat(64) })).code, 'PROOF_CONFLICT');
+  assert.equal(c.provider.snapshot(), captured);
+  assert.equal((await c.response(400, { provider_request_id: 'unsupported/provider/id' })).status, 'confirmed');
+  assert.equal(c.records().attempt.extensions.pb_capture_provider_request_id, null);
+  assert.equal(transitionProof(c.records().attempt).http_status, 400); assert.equal(c.records().attempt.outcome, 'pending');
+});
+test('uncertain pre-pointer retention returns no continuation data and never retries', async () => {
+  for (const fault of ['before', 'after']) {
+    const c = await transitionFixture(); const before = c.provider.snapshot(), writes = c.provider.audit.filter(a => a.name === 'TransactWriteCommand').length;
+    c.provider.fault = fault; const retained = await c.retain();
+    assert.equal(retained.status, 'uncertain'); assert.equal(retained.data, null);
+    assert.equal(c.provider.audit.filter(a => a.name === 'TransactWriteCommand').length, writes + 1);
+    assert.equal(c.records().attempt.publication.length, fault === 'before' ? 0 : 1);
+    if (fault === 'before') assert.equal(c.provider.snapshot(), before);
+    await c.inspect(); assert.equal(transitionProof(c.records().attempt).state, 'none');
+  }
+});
+test('queue repair captures preserved assignment, admission captures its own published assignment', async () => {
+  const c = await transitionFixture({ operation: 'queue_repair' }); await c.retain();
+  const before = c.provider.snapshot();
+  const changed = structuredClone(c.observations); changed.pointer.assignment = proofFixture.reference;
+  assert.equal((await c.prepare({ publication_observations: changed })).code, 'PUBLICATION_MISMATCH'); assert.equal(c.provider.snapshot(), before);
+  const prepared = await c.prepare(); assert.equal(prepared.status, 'confirmed');
+  assert.equal(c.records().attempt.outcome, 'pending');
+  assert.deepEqual(row(c.provider, 'member', fixture.memberA).assignment, proofFixture.preserved_assignment);
+  const admission = await transitionFixture(); await admission.retain();
+  assert.equal((await admission.prepare({ publication_observations: c.observations })).code, 'PUBLICATION_MISMATCH');
+});
+test('publication commitment has canonical ordering and binds metadata, pointer and immutable request facts', async () => {
+  const c = await transitionFixture(); await c.retain(); const attempt = c.records().attempt;
+  const extra = fixture.evidence.references[0], observations = structuredClone(c.observations);
+  attempt.publication.push(extra); observations.comments.push({ ...observations.comments[0], reference: extra });
+  const commitment = transitionPublication(attempt, observations);
+  const reordered = structuredClone(observations); reordered.comments.reverse(); reordered.pointer.assignment = Object.fromEntries(Object.entries(reordered.pointer.assignment).reverse());
+  assert.equal(transitionPublication(attempt, reordered).digest, commitment.digest);
+  const changed = structuredClone(observations); changed.comments[0].author_id = changed.comments[0].update_author_id = 'another-manager';
+  assert.notEqual(transitionPublication(attempt, changed).digest, commitment.digest);
+  assert.notEqual(transitionRequestDigest(attempt, '32', commitment.digest), transitionRequestDigest(attempt, '31', commitment.digest));
+  assert.notEqual(transitionRequestDigest({ ...attempt, project_id: '200' }, '31', commitment.digest), transitionRequestDigest(attempt, '31', commitment.digest));
+  const duplicate = structuredClone(observations); duplicate.comments.push(duplicate.comments[0]);
+  assert.throws(() => transitionPublication(attempt, duplicate), e => e.stateResult?.code === 'PUBLICATION_MISMATCH');
+});
+test('partial/unsupported capture remains visible, blocks proof mutation, and invalid API input performs no I/O', async () => {
+  const c = await transitionFixture(); await c.retain();
+  c.provider.seed({ ...c.records().attempt, extensions: { ...c.records().attempt.extensions, pb_capture_version: 1 } });
+  const before = c.provider.snapshot(); assert.equal(transitionProof(c.records().attempt).state, 'unsupported');
+  assert.equal((await c.prepare()).code, 'UNSUPPORTED_PROOF'); assert.equal(c.provider.snapshot(), before);
+  const inspected = await c.inspect(); assert.match(inspected.readable, /unsupported/);
+  const calls = c.provider.audit.length;
+  assert.equal((await c.state.recordTransitionResponse(c.input({ request_digest: proofFixture.expected.request_digest, http_status: 600, observed_at: proofFixture.received_at, provider_request_id: null }))).status, 'invalid');
+  assert.equal((await c.state.retainPublication(c.input({ reference: proofFixture.reference, now: fixture.now, force: true }))).status, 'invalid');
+  assert.equal(c.provider.audit.length, calls);
 });

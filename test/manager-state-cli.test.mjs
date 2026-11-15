@@ -5,6 +5,7 @@ import { runStateCommand, stateExitCode } from '../scripts/manager-state.mjs';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { result } from '../lib/state/contract.mjs';
 import { fixture, StateProvider, prepared, beginInput } from './helpers/state-provider.mjs';
+import { transitionFixture, proofFixture } from '../scripts/test-transition-proof.mjs';
 const flags = ['--config', '/fixture/company.yaml', '--installation', '/fixture/generated.json'];
 test('help is available without constructing SDK or resolving installation', async () => {
   const answer = await runStateCommand(['--help'], { resolveInstallation() { throw Error('must not run'); } });
@@ -50,4 +51,18 @@ test('provider bodies and raw thrown errors never appear in command output', asy
   assert.equal(answer.exitCode, 2); assert(!answer.stdout.includes(secret));
   for (const status of ['unsupported_version', 'unavailable', 'invalid', 'uncertain']) assert.equal(stateExitCode(result(status, 'UNAVAILABLE')), 2);
   assert.equal(stateExitCode(result('unavailable', 'INCOMPLETE_INVENTORY')), 1);
+});
+test('inspect summaries expose the same retained proof facts as JSON, without HTTP outcome inference', async () => {
+  const c = await transitionFixture();
+  assert.match((await c.inspect()).readable, /Retained transition evidence: none/);
+  await c.retain(); await c.prepare();
+  const prepared = await c.inspect();
+  assert.match(prepared.readable, /Retained transition evidence: prepared/);
+  assert(prepared.readable.includes(prepared.json.data.records[0].extensions.pb_capture_request_digest));
+  await c.response(409); const captured = await c.inspect();
+  assert.match(captured.readable, /Retained transition evidence: response-captured/);
+  assert.match(captured.readable, /original HTTP status 409/); assert.match(captured.readable, /outcome pending/);
+  assert.equal(captured.json.data.records[0].extensions.pb_capture_invocation_id, proofFixture.producer_invocation_id);
+  for (const command of ['capture', 'retain-publication', 'send', 'retry']) assert.equal((await runStateCommand([command, ...flags])).outcome.status, 'invalid');
+  assert.equal((await runStateCommand(['inspect', ...flags, '--kind', 'attempt'])).outcome.code, 'CORE_PREREQUISITE');
 });

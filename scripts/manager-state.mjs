@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { pathToFileURL } from 'node:url';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
-import { result } from '../lib/state/contract.mjs';
+import { result, transitionProof } from '../lib/state/contract.mjs';
 
 const help = `Usage:
   node scripts/manager-state.mjs init --config FILE --installation FILE [--json]
@@ -13,6 +13,9 @@ override, enable, unlock, purge, reconciliation or retry command exists.
 Prepare pinned root and runtime/aws dependencies before use; commands never install.
 This early checkpoint requires the core installation resolver before normal use.
 An unknown write must be inspected using the same installation and attempt ID.
+Attempt inspection summarizes retained proof as none, prepared, response-captured
+or unsupported. HTTP status is evidence only; it does not finalize pending work.
+Capture operations are internal trusted-writer APIs, not command inputs.
 `;
 function parse(argv) {
   if (argv.length === 1 && ['--help', '-h'].includes(argv[0])) return { help: true };
@@ -47,6 +50,10 @@ function readable(outcome) {
       rows.push(JSON.stringify(record));
       if (record.kind === 'stream' && record.pending_attempt_id) rows.push('Pending hold: ' + record.pending_attempt_id);
       if (record.kind === 'attempt' && record.outcome === 'pending') rows.push('Pending hold: ' + record.attempt_id);
+      if (record.kind === 'attempt') {
+        const proof = transitionProof(record);
+        rows.push('Retained transition evidence: ' + proof.state + '; attempt ' + record.attempt_id + '; outcome ' + record.outcome + '; request digest ' + (proof.request_digest ?? 'none') + '; original HTTP status ' + (proof.http_status ?? 'none') + '. No send/retry or terminal outcome is authorized by this summary.');
+      }
     }
     if (outcome.data.complete === false) rows.push('More records: use --cursor ' + outcome.data.next_cursor + ' with the same kind and installation.');
   }

@@ -1,7 +1,8 @@
 # Inspect durable manager state
 
-This is an **unreleased PGB-84 implementation checkpoint**. The DynamoDB adapter,
-local conformance fixtures and command boundary exist in this branch. Normal
+This is an **unreleased PGB-137 implementation checkpoint on PGB-84**. The DynamoDB
+adapter, original-transition-proof persistence, local fixtures and command boundary
+exist in this branch. Normal
 operator `init`/`inspect` commands still return `CORE_PREREQUISITE` until the actual
 PGB-82/83 installation resolver and preview are integrated. Nothing here enables
 delivery, creates AWS resources or establishes installed acceptance.
@@ -104,8 +105,9 @@ Preview must make no state or Jira writes.
 
 ## Conditional transitions and recovery
 
-The cloud-neutral state interface has seven methods: `initialize`, `readInventory`,
-`inspect`, `readAttempt`, `retainMembers`, `begin`, `finalize`. The AWS module's
+The base state interface has seven methods: `initialize`, `readInventory`,
+`inspect`, `readAttempt`, `retainMembers`, `begin`, `finalize`. PGB-137 adds the three
+internal proof methods described below. The AWS module's
 factory constructs the production SDK transport; clients are injectable solely
 for the prepared local fixture boundary. SDK attempts are fixed at one, requests
 have abort deadlines and operations have a bounded 30-second window.
@@ -181,3 +183,147 @@ installed AWS/Jira acceptance, merge and activation are separate gates.
 See [the state design](architecture/manager-state.md) and
 [contributor requirements](../CONTRIBUTING.md). No deployment or activation is
 authorized by this guide.
+
+## Retain and inspect original transition proof
+
+PGB-137 adds a complete proof-persistence capability to the existing attempt v1
+record. A later trusted producer can save its verified publication, prepare an
+exact request commitment, and retain its original completed HTTP response.
+The real sender is PGB-87 work; reconciliation is PGB-85 work. Neither has shipped
+through these methods. This checkpoint sends no Jira request and does not finalize
+the pending attempt.
+
+The same `inspect --kind attempt` command now adds a readable summary:
+
+| Summary | Retained fact |
+| --- | --- |
+| `none` | No named capture group exists. |
+| `prepared` | The request/publication binding was persisted; no completed response is retained. Sending or its outcome cannot be inferred. |
+| `response-captured` | An original completed HTTP status and observation time are retained for that prepared request. |
+| `unsupported` | Named capture fields are partial, conflicting, unknown or fail their request binding. Keep the hold. |
+
+The summary names the attempt, its unchanged outcome, request digest and original
+HTTP status when available. JSON returns the same full record and exact revisions.
+A retained 204, 409, 400 or other status is an HTTP fact here, with no “applied” or
+“rejected” inference. Reading existing proof never grants send/resume/retry
+permission. Inspection works while disabled, subject to the existing read contract.
+
+### Trusted writer order
+
+All three methods require the same pending attempt and exact installation, stream
+and attempt revisions. They use the normal enabled writer controls. They are
+internal package APIs; there is no capture/import/send CLI or editable proof file.
+Trusted producer provenance comes from the reviewed bound package and state/IAM
+boundary, not from a digest or an asserted caller flag.
+
+1. `begin` persists the pending intent before publication. Its publication list
+   may be empty.
+2. After actual append/readback validation of the typed manager comment, call
+   `retainPublication({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, reference, now})`.
+   The reference ticket and manager record UUID must equal this attempt's ticket
+   and attempt UUID. This restriction does not apply to worker receipt references.
+   Duplicate/competing/replacement manager references conflict. Only a confirmed
+   retention permits continuing toward pointer publication; an unknown result
+   stops that producer invocation.
+3. Verify the published admission pointer, or preserve the existing assignment
+   pointer for queue repair, using real provider facts. Then call
+   `prepareTransitionCapture({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, transition_id,
+   producer_invocation_id, publication_observations, now})`.
+   Observations contain every retained reference's server author/update-author and
+   created/updated values, plus `{mode, assignment}` for the exact pointer. The
+   persistence boundary checks unchanged metadata, exact reference coverage and
+   operation-specific pointer binding; the producer still verifies actual bodies,
+   readback and role authorization. Admission uses mode `published` and this
+   operation's manager reference. Queue repair uses mode `preserved` and its
+   retained member's existing assignment, without replacing it with the queue
+   comment. A successful fresh preparation is the state prerequisite for one send
+   in that current invocation, alongside all normal producer checks. Existing
+   capture, uncertainty or any failed result cannot be used to resume or resend.
+4. After the original request has one completed response, call
+   `recordTransitionResponse({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, request_digest,
+   http_status, observed_at, provider_request_id})` once. A lost/partial transport
+   response must not call it. The status must be 100–599; absent or unsupported
+   provider request IDs are stored as null. Duplicate/conflicting responses fail
+   without replacing original proof. This method never changes the pending outcome.
+
+Each operation uses one transaction: update installation and attempt, condition-check
+the matching pending stream without advancing its revision. Success returns
+`data:{installation,stream,attempt}` with resulting records; use those exact
+revisions in the next call. Other statuses return `data:null`. Existing extension
+fields are merged and protected by the observed attempt revision. No auto-retry
+or publication append is performed by these state methods.
+
+### Capture and digest contract
+
+The ten scalar extension keys are `pb_capture_version` (1),
+`pb_capture_transition_id`, `pb_capture_request_digest`,
+`pb_capture_publication_digest`, `pb_capture_package_revision`,
+`pb_capture_invocation_id`, `pb_capture_prepared_at`, `pb_capture_status`,
+`pb_capture_received_at`, `pb_capture_provider_request_id`. Package revision comes
+from the validated binding; configuration digest stays in the immutable attempt.
+Status/time are both null or both populated. Prepared-only provider request ID is
+null. Times use bounded UTC-Z syntax. Up to six unrelated extension keys survive;
+insufficient space fails before preparation. Existing 16-key, 32 KiB marshalled
+record and 1 MiB transaction limits remain unchanged. No raw bodies, nested JSON,
+new store, schema version or field retirement is introduced.
+
+`transitionPublication` in `lib/state/contract.mjs` exports the reusable exact
+tuple and JCS/SHA256 digest. Each reference tuple is
+`[ticket_id,comment_id,record_id,digest]`. The commitment object is
+`{comments:[[referenceTuple,author_id,update_author_id,created,updated],...],
+pointer:[mode,referenceTuple]}`. Comments sort lexically by the JCS reference tuple;
+duplicates or incomplete retained coverage fail. Reference object key ordering
+and observation array ordering do not change the commitment.
+
+`transitionRequestDigest` commits to version 1, method `POST`, route
+`issue_transitions`, transition ID, exactly `{transition:{id}}`, publication digest,
+and immutable identity: schema_version, installation_id, domain_id, record_id,
+site, project_id, label, attempt_id, ticket_id, epic_id, issue_key, operation,
+source_status_id, target_status_id, configuration_digest, created_at and cause.
+Mutable revisions/outcome/response metadata are excluded. The UUID correlates
+one request; it is not provider idempotency. Later consumers must reuse these
+helpers and validate fresh real observations, rather than treating a digest as
+proof of remote origin.
+
+### Finite local proof packet
+
+With the already prepared dependencies, the affected regression command is:
+
+```sh
+node --test test/manager-state-contract.test.mjs test/manager-state-cli.test.mjs
+```
+
+Export exactly the prescribed local groups to a new disposable directory:
+
+```sh
+node scripts/test-transition-proof.mjs --case R1-29-H01 --output /tmp/pgb137-h01-evidence
+node scripts/test-transition-proof.mjs --case R1-29-H02 --output /tmp/pgb137-h02-evidence
+node scripts/test-transition-proof.mjs --all --output /tmp/pgb137-all-evidence
+```
+
+H01 uses two fresh pending fixtures with original 204 and 409 responses; it
+inspects prepared-only and restarted response state through the real command
+boundary. H02 uses exactly nine fresh variants: stale revision, changed retained
+reference, duplicate preparation, duplicate response, disabled controls, extension
+capacity, record size, and persistence failure before/after write. The input set
+is [the bounded synthetic fixture](../test/fixtures/transition-proof.json).
+All providers and readback observations are simulated; no customer target,
+credentials, provider URL or imported proof can be supplied to the driver.
+
+The packet records exact Git revision/dirty flag, inputs, before/after records,
+command output and provider-call audit with zero live AWS/Jira/worker calls. A
+`confirmed_local_fixture` developer observation is separate from human acceptance.
+Current packets explicitly retain `actual_core_integration:blocked` and
+`human_acceptance:pending`, and exit 1: actual PGB-83/84 generated binding/resolver
+composition is unavailable. Normal standalone inspect still reports
+`CORE_PREREQUISITE`. There is no replacement resolver or human PASS.
+
+Final completion requires the actual package composition and the Story's nine
+release-source publication paths at their serialized handoff. Re-run the two
+prescribed groups on that exact integrated tree, obtain human assessment and
+retain evidence before deleting only disposable output. Do not repeat missing-core
+proof or create live probes. Local checks, independent review, hosted CI,
+installed acceptance, merge and activation remain separate gates.
