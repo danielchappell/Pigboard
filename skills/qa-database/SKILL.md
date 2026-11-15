@@ -13,6 +13,14 @@ queries, inspect migrations/catalogs to discover a data path, choose new checks 
 copy implementation logic as the expected answer. Only the selected reader's fixed
 identity/safety checks may make its existing prerequisite catalog reads.
 
+## Structured invocation
+
+Read the [common structured-step contract](../qa-api/references/structured-steps.md) before acting. It owns original
+raw work/start context, exact AI assignment, trusted environment receipt, declared
+observations, revision-bound results and stop rules. Require the full original
+inputs; a basic prose handoff or a helper fragment is insufficient.
+
+
 ## Required handoff
 
 Require the reviewed PR/source revision, matching current deployed revision and
@@ -32,11 +40,35 @@ substitute for verified restricted read-only access. Reject a mismatched query o
 scope without editing it. Never relax TLS, grant permissions, open a tunnel, renew
 credentials or switch databases/tools to obtain a result.
 
-Use the exact approved tool named by the handoff. The bundled standalone reader
-supports PostgreSQL only. A different engine requires its explicitly selected,
-prepared approved read-only tool; no automatic fallback or connector discovery.
+This release supports only prescribed `postgresql` with the stable reader ID
+`qa-database/read-postgres.mjs`. Resolve that identifier through this selected
+skill to `scripts/read-postgres.mjs`; the stable ID is not an executable path.
+Unsupported engine/reader means BLOCKED before connecting, with no alternate
+connector, SQL rewriting or query discovery.
 This copy intentionally omits the source's optional AWS access/tunnel composer:
 access arrives ready and is not established by QA.
+
+## Exact two-hop parameters
+
+Resolve completed earlier named outputs into this step's `inputs` through its
+`bindings`, checking actual revision/actor/tenant/evidence provenance first.
+Then copy the prepared `database.parameters` array and apply only declared
+`parameter_bindings`: each `input` must be resolved, each zero-based `index` must
+be unique/in range and within the trusted parameter count, and each bound slot
+must originally be null. Preserve all literal values and unbound intentional SQL
+nulls. For example, the prepared `["tenant-a", null]` with `record_id` bound to
+index 1 becomes `["tenant-a", <actual record_id>]`; never insert the expected ID.
+Missing, late, stale or wrong-tenant values block before opening a connection.
+No string substitution, expression evaluation, coercion or SQL interpolation.
+
+Do not mutate the original work, SQL file or parameters. Write only the mechanical
+bound-params JSON array to the approved private run directory for the supplied CLI
+invocation. Compare query filters, selected columns, scope and max_rows against
+the prescribed contract. Keep original SQL/parameters, actual input provenance
+and bound parameters in evidence. The existing reader trims SQL/trailing semicolon
+and wraps it in `SELECT * FROM (...) AS qa_observation LIMIT 201`; preserve the
+original bytes and executed-query audit. Its extended-protocol `values` carry
+parameters separately. This existing wrapper is not permission to rewrite SQL.
 
 ## Prepared PostgreSQL reader
 
@@ -101,10 +133,12 @@ calls. An outbox row proves intent, not event delivery. Distinguish live observa
 supplied receipts and mocks; do not infer API authorization or UI behavior from rows.
 Missing stronger evidence required by the case blocks; do not invent new queries.
 
-The reader returns at most 200 rows and marks truncation. If the required claim
-needs full results, truncation means BLOCKED unless the handoff already supplies
-ordered bounded queries/pages and a completeness check that resolves it. Execute
-only those prescribed steps; never narrow, paginate or rewrite SQL on the fly.
+The reader returns at most 200 rows, probing a 201st row for truncation. Enforce
+any smaller prescribed max_rows and exact column/tenant/record scope when assessing
+actual rows. Excess, truncation or missing required completeness evidence cannot
+prove PASS. No extra query, invented pagination or narrowed SQL. One invocation
+executes only its assigned observation; separately prescribed later units belong
+to the caller. Reader OBSERVED/exit 0 is not a helper/product PASS.
 Keep timestamps/freshness of separate observations visible. Use only predeclared
 finite observations for async requirements, without ad hoc retries or recovery.
 
@@ -116,8 +150,9 @@ sensitive rows; keep raw evidence private and sanitize before sharing. An
 inaccessible query is never an empty successful result.
 
 PASS requires all required observations and evidence meeting the case. A demonstrated
-state mismatch under verified prerequisites is FAIL; remaining independent prescribed
-cases may continue, while dependent cases lacking defect-prevented state are NOT RUN.
+state mismatch under verified prerequisites is FAIL; return the assigned unit and
+dependent NOT RUN reasons. Only the caller may continue already prescribed
+independent work; this helper never selects another case.
 A prerequisite/artifact/evidence blocker stops the job immediately: retain prior
 defects, mark all remaining cases NOT RUN, return aggregate BLOCKED with the needed
 human action and intended resume point. BLOCKED takes precedence over FAIL; a

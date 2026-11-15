@@ -1,10 +1,17 @@
 # Basic-worker contract — retained prose workflow
 
-This is the existing Story contract consumed only by retained QA. The
-[structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; reviewer outputs follow its typed contract. This remains a prose contract for QA. New
+This is the existing Story contract consumed only by the retained QA entrypoint. The
+[structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; reviewer outputs follow its typed contract. This remains a prose contract for the retained QA entrypoint. New
 versioned YAML authoring uses [the ticket guide](pigboard-ticket.md); its local
 validation does not make YAML executable by these basic workers. No automatic
 conversion or activation is provided.
+
+The helper tables below are retained basic/historical orchestration examples.
+Current [structured helpers](../../qa-api/references/structured-steps.md) require
+the complete raw structured ticket, trusted start context and exact preparation/
+receipt bindings; these prose examples alone cannot invoke them. Retained QA
+entrypoint migration and canonical QA publication remain PGB-78. Do not adapt
+these examples automatically or activate a mixed bundle.
 
 # Pigboard structured ticket contract v1
 
