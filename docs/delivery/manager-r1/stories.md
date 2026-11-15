@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Owner-approved combined 26-Story set with 116 prescribed cases. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA split adds R1-24 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
+Owner-approved combined 27-Story set with 119 prescribed cases. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA amendments place R1-24 then R1-27 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
 
 The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
@@ -573,13 +573,325 @@ Prerequisites: R1-04, R1-06, R1-07, PGB-108; required outcome ai_qa_complete.
 
 - **Automated regression:** Canonical accepted/rejected publication records, full partial ledgers, human-only handoff, uncertain-write handling and source/installed skill-validator-formatter parity; no prose-only claim of runtime behavior.
 
+## R1-27: Prepare the prescribed QA inputs
+
+### Problem to solve
+
+The prescribed PGB-78 QA cases need complete inputs that the existing helpers and publisher can consume without reconstructing missing facts. Current helper preparation needs manual completion, while publisher preparation starts with finished assessments.
+
+Prerequisites: R1-04, R1-06, R1-07, PGB-108, R1-24; required outcome ai_qa_complete.
+
+### Acceptance Criteria
+
+- **AC1.** A developer or human QA reviewer can prepare the declared mixed Story and Bug inputs, inspect every artifact and invoke the existing helpers with their exact declared inputs before PGB-78 is implemented.
+- **AC2.** Preparation preserves requirements, case order, child ownership, declared bindings, human cases and negative controls; it supplies no observed result, completed ledger or chosen destination.
+- **AC3.** Incomplete identity, artifact, extraction, operation or timing facts remain visible before execution; existing static, partial and retained-evidence inputs keep their correct proof boundaries.
+- **AC4.** The existing producer and reviewer guidance explains how to prepare and inspect these inputs, retain actual helper evidence and pass an independently formed assessment to qa-jira, while full dispatch remains pending PGB-78.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Complete PGB-78 PREP-01 mechanical input preparation in the existing source-only QA fixture module, its tests and producer/consumer guidance; keep existing helper, raw-work, prepared_inputs and qa-jira contracts.
+- **TAC1.** Reuse the existing same-release parsers, receipt validators, fixture exporters and installed helper/publisher interfaces without adding a schema, runtime dispatcher, QA engine or provider adapter.
+- **TAC2.** Keep supplied/mock input facts separate from actual observed outputs and private expectations; preserve existing publication fixtures and leave the new output directory empty.
+- **TAC3.** Bind raw work, trusted context, artifact hashes, actor, tenant, allowed actions and current PR/environment proof independently; no missing proof may be replaced by an expected value or ticket assertion.
+
+### Testing Strategy
+
+- **QA skills:** `[]`; human developer and QA reviewer own every case. No human case is completed by CI or a simulated instruction exercise.
+- **Preparation:** {"id":"PREP-01","owner":"implementer","supplies":"Executable source-only preparation and exact commands for R1-27-H01 through R1-27-H03, bound to the reviewed PR revision and existing helper/publisher interfaces.","used_by":["DATA-01","R1-27-H01","R1-27-H02","R1-27-H03"],"preserves":["All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."]}
+
+#### R1-27-H01: Prepare a fresh private input folder with the exact command supplied by PREP-01 and record source, installed and input hashes.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC2, AC4, TAC1, TAC2, TAC3.
+- **Prerequisites/data:** Prepared same-release checkout and installed helper/publisher roots; fixed native Story and Bug mixed API-child, PostgreSQL and UI inputs; dummy access and explicitly supplied/mock provider facts.
+- **Steps:**
+  1. Prepare a fresh private input folder with the exact command supplied by PREP-01 and record source, installed and input hashes.
+  2. Inspect raw work/context, declared preparation consumers, selected request/assertions, query/parameter layout, UI route/checkpoints, extraction mapping and separate access/deployment facts.
+  3. Invoke each existing helper through its declared caller with actual earlier outputs; preserve returned parent/child results, query facts and screenshots.
+  4. Form an assessment from those actual results and invoke qa-jira with the fixed supplied/mock read/write cards; inspect readback and transition evidence.
+- **Expected:** Every required input is present and retains its declared type and consumer; an output is bound only after its real helper observation. The preparer produces no assessment or verdict; existing helpers and publisher can consume the handoff without a new dispatcher or reconstructed fact. Mock evidence stays labelled mock; human cases remain pending and no live mutation occurs.
+- **Evidence:** Exact commands, source/installed/input hashes, preparation artifacts, original helper results, screenshots, independently formed assessment and ordered simulated tool audit.
+- **Cleanup:** Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources.
+
+#### R1-27-H02: Inspect each positive input with the same delivered contract and validator.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, AC3, TAC1, TAC2, TAC3.
+- **Prerequisites/data:** Fresh positive controls and independent missing extraction, query, UI checkpoint, identity/tenant, operation-bound and explicit dependency-cause variants; finite observation inputs for both completion policies.
+- **Steps:**
+  1. Inspect each positive input with the same delivered contract and validator.
+  2. Inspect each named negative in a fresh folder and attempt only its existing read-only preflight or input validation.
+  3. Compare unchanged expected outcomes and case/step IDs with the original controls; inspect that no expected result or completed output was substituted.
+- **Expected:** Positive preparation identifies every fact needed by the existing consumer. Each negative stays incomplete or is rejected at the matching existing boundary; none becomes ready through a guessed value, inferred permission or rewritten requirement. Finite observation offsets and whole-unit bounds are supplied as inputs; the preparer executes no schedule or mutation.
+- **Evidence:** Raw original and negative inputs, parser diagnostics, completeness observations, exact missing-field/cause references and empty generated output directories.
+- **Cleanup:** Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources.
+
+#### R1-27-H03: Prepare each independent control and inspect raw requirements and predecessor versus current-result separation.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC2, AC3, AC4, TAC2, TAC3.
+- **Prerequisites/data:** Static human-only Bug, all-NOT_RUN missing-environment partial, earlier FAIL then inability, pure upstream wait, retained FAIL plus wait, and valid/invalid retained-evidence input controls from the existing publisher families.
+- **Steps:**
+  1. Prepare each independent control and inspect raw requirements and predecessor versus current-result separation.
+  2. Inspect the static pending-human list and the exact proof required by each partial or reused claim.
+  3. Follow the documented existing helper/publisher input handoff and recovery guidance; compare the original publication suite before and after preparation.
+- **Expected:** Static human-only work requires no invented environment; any supplied PASS/FAIL or reused claim retains its actual nonnull tested PR and trusted current-revision environment proof. Pure wait and retained-FAIL wait remain distinct and carry a current-case cause; later inability preserves earlier findings. Original publication inputs remain unchanged, new execution outputs remain empty, and neither preparation nor documentation claims human acceptance or activation.
+- **Evidence:** Commands and hashes, original versus emitted input comparison, proof/cause observations, exact pending humans, recovery notes and original publication-fixture preservation check.
+- **Cleanup:** Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources.
+
+- **Automated regression:** Use the existing raw work and receipt validators plus independent artifact checks to verify complete helper/publisher input preparation, consumer bindings, preserved negative inputs and empty execution outputs.
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The prescribed PGB-78 QA cases need complete inputs that the existing helpers and publisher can consume without reconstructing missing facts. Current helper preparation needs manual completion, while publisher preparation starts with finished assessments.",
+  "prerequisites": [
+    {
+      "ticket": "R1-04",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "R1-06",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "R1-07",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-108",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "R1-24",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "A developer or human QA reviewer can prepare the declared mixed Story and Bug inputs, inspect every artifact and invoke the existing helpers with their exact declared inputs before PGB-78 is implemented."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Preparation preserves requirements, case order, child ownership, declared bindings, human cases and negative controls; it supplies no observed result, completed ledger or chosen destination."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Incomplete identity, artifact, extraction, operation or timing facts remain visible before execution; existing static, partial and retained-evidence inputs keep their correct proof boundaries."
+    },
+    {
+      "id": "AC4",
+      "requirement": "The existing producer and reviewer guidance explains how to prepare and inspect these inputs, retain actual helper evidence and pass an independently formed assessment to qa-jira, while full dispatch remains pending PGB-78."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Complete PGB-78 PREP-01 mechanical input preparation in the existing source-only QA fixture module, its tests and producer/consumer guidance; keep existing helper, raw-work, prepared_inputs and qa-jira contracts.",
+      "out_of_scope": [
+        "Plexus/customer code changes",
+        "Archived runtime reuse",
+        "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D03",
+        "decision": "Story writing and human-invoked request-rework are separate skills.",
+        "reference": "docs/architecture/manager-human-rework.md"
+      },
+      {
+        "id": "D04",
+        "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+        "reference": "docs/architecture/pig-boss-operations.md"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Reuse the existing same-release parsers, receipt validators, fixture exporters and installed helper/publisher interfaces without adding a schema, runtime dispatcher, QA engine or provider adapter."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Keep supplied/mock input facts separate from actual observed outputs and private expectations; preserve existing publication fixtures and leave the new output directory empty."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Bind raw work, trusted context, artifact hashes, actor, tenant, allowed actions and current PR/environment proof independently; no missing proof may be replaced by an expected value or ticket assertion."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Fixed supplied/mock inputs for the three preparation acceptance cases; independent variants use fresh private folders.",
+        "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable source-only preparation and exact commands for R1-27-H01 through R1-27-H03, bound to the reviewed PR revision and existing helper/publisher interfaces.",
+        "used_by": [
+          "DATA-01",
+          "R1-27-H01",
+          "R1-27-H02",
+          "R1-27-H03"
+        ],
+        "preserves": [
+          "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+      "cases": [
+        {
+          "id": "R1-27-H01",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC4",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Prepared same-release checkout and installed helper/publisher roots; fixed native Story and Bug mixed API-child, PostgreSQL and UI inputs; dummy access and explicitly supplied/mock provider facts."
+          ],
+          "steps": [
+            "Prepare a fresh private input folder with the exact command supplied by PREP-01 and record source, installed and input hashes.",
+            "Inspect raw work/context, declared preparation consumers, selected request/assertions, query/parameter layout, UI route/checkpoints, extraction mapping and separate access/deployment facts.",
+            "Invoke each existing helper through its declared caller with actual earlier outputs; preserve returned parent/child results, query facts and screenshots.",
+            "Form an assessment from those actual results and invoke qa-jira with the fixed supplied/mock read/write cards; inspect readback and transition evidence."
+          ],
+          "expected": [
+            "Every required input is present and retains its declared type and consumer; an output is bound only after its real helper observation.",
+            "The preparer produces no assessment or verdict; existing helpers and publisher can consume the handoff without a new dispatcher or reconstructed fact.",
+            "Mock evidence stays labelled mock; human cases remain pending and no live mutation occurs."
+          ],
+          "evidence": [
+            "Exact commands, source/installed/input hashes, preparation artifacts, original helper results, screenshots, independently formed assessment and ordered simulated tool audit."
+          ],
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources."
+            ]
+          }
+        },
+        {
+          "id": "R1-27-H02",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Fresh positive controls and independent missing extraction, query, UI checkpoint, identity/tenant, operation-bound and explicit dependency-cause variants; finite observation inputs for both completion policies."
+          ],
+          "steps": [
+            "Inspect each positive input with the same delivered contract and validator.",
+            "Inspect each named negative in a fresh folder and attempt only its existing read-only preflight or input validation.",
+            "Compare unchanged expected outcomes and case/step IDs with the original controls; inspect that no expected result or completed output was substituted."
+          ],
+          "expected": [
+            "Positive preparation identifies every fact needed by the existing consumer.",
+            "Each negative stays incomplete or is rejected at the matching existing boundary; none becomes ready through a guessed value, inferred permission or rewritten requirement.",
+            "Finite observation offsets and whole-unit bounds are supplied as inputs; the preparer executes no schedule or mutation."
+          ],
+          "evidence": [
+            "Raw original and negative inputs, parser diagnostics, completeness observations, exact missing-field/cause references and empty generated output directories."
+          ],
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources."
+            ]
+          }
+        },
+        {
+          "id": "R1-27-H03",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "AC4",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Static human-only Bug, all-NOT_RUN missing-environment partial, earlier FAIL then inability, pure upstream wait, retained FAIL plus wait, and valid/invalid retained-evidence input controls from the existing publisher families."
+          ],
+          "steps": [
+            "Prepare each independent control and inspect raw requirements and predecessor versus current-result separation.",
+            "Inspect the static pending-human list and the exact proof required by each partial or reused claim.",
+            "Follow the documented existing helper/publisher input handoff and recovery guidance; compare the original publication suite before and after preparation."
+          ],
+          "expected": [
+            "Static human-only work requires no invented environment; any supplied PASS/FAIL or reused claim retains its actual nonnull tested PR and trusted current-revision environment proof.",
+            "Pure wait and retained-FAIL wait remain distinct and carry a current-case cause; later inability preserves earlier findings.",
+            "Original publication inputs remain unchanged, new execution outputs remain empty, and neither preparation nor documentation claims human acceptance or activation."
+          ],
+          "evidence": [
+            "Commands and hashes, original versus emitted input comparison, proof/cause observations, exact pending humans, recovery notes and original publication-fixture preservation check."
+          ],
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain inputs, actual output and evidence first; remove only the owned disposable preparation folder without changing live records or resources."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Use the existing raw work and receipt validators plus independent artifact checks to verify complete helper/publisher input preparation, consumer bindings, preserved negative inputs and empty execution outputs."
+  },
+  "open_questions": []
+}
+```
+
 ## R1-08: Execute prescribed QA and hand off complete evidence
 
 ### Problem to solve
 
 QA needs to run the named cases in order and hand the open PR to humans. It must retain incomplete results and keep human tests visibly pending.
 
-Prerequisites: R1-04, R1-06, R1-07, PGB-108, R1-24; required outcome ai_qa_complete.
+Prerequisites: R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27; required outcome ai_qa_complete.
 
 ### Acceptance Criteria
 

@@ -217,8 +217,8 @@
     }
   },
   {
-    "id": "R1-08",
-    "title": "Execute prescribed QA and hand off complete evidence",
+    "id": "R1-27",
+    "title": "Prepare the prescribed QA inputs",
     "dependencies": [
       "R1-04",
       "R1-06",
@@ -228,11 +228,48 @@
     ],
     "days": 1.875,
     "files": [
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "docs/authoring.md",
+      "test/story-authoring.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "skills/qa-api/references/structured-steps.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ],
+    "hours": {
+      "min": 10.75,
+      "max": 15
+    }
+  },
+  {
+    "id": "R1-08",
+    "title": "Execute prescribed QA and hand off complete evidence",
+    "dependencies": [
+      "R1-04",
+      "R1-06",
+      "R1-07",
+      "PGB-108",
+      "R1-24",
+      "R1-27"
+    ],
+    "days": 1.8125,
+    "files": [
       "skills/qa-entrypoint/SKILL.md",
       "skills/qa-entrypoint/references/execution-record.md",
       "skills/qa-entrypoint/references/cursor.md",
-      "test/qa-helper-contract.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
       "test/cursor-environment.test.mjs",
       "test/story-authoring.test.mjs",
       "README.md",
@@ -240,18 +277,15 @@
       "docs/workflow.md",
       "docs/install.md",
       "docs/using-pigboard.md",
-      "docs/authoring.md",
       "docs/handoffs.md",
       "config/cursor/automations.md",
-      "skills/write-pr-sized-stories/SKILL.md",
-      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
-      "skills/implementer-entrypoint/references/handoff.md",
-      "skills/pigboard-pr-review/references/jira-handoff.md",
-      "skills/qa-api/references/structured-steps.md"
+      "skills/qa-jira/SKILL.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json"
     ],
     "hours": {
-      "min": 13,
-      "max": 15
+      "min": 10.5,
+      "max": 14.5
     }
   },
   {
