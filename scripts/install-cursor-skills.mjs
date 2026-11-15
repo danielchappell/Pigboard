@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { lstat, mkdir, readFile, readlink, realpath, rename, rm, symlink } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, writeFile, readFile, readlink, realpath, rename, rm, symlink } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { prepare } from './prepare-pigboard-skills.mjs';
 
@@ -57,7 +58,7 @@ export async function verifyRelease(receipt) {
   }
   const validatorRoot = path.join(receipt.skills, bundle.validatorPayload.directory);
   const validatorDependencies = JSON.parse(await readFile(path.join(validatorRoot, 'package.json'))).dependencies;
-  if (JSON.stringify(validatorDependencies) !== JSON.stringify({ ajv: '8.20.0', 'ajv-formats': '3.0.1', yaml: '2.9.1' })) throw new Error('Validator direct dependencies mismatch.');
+  if (JSON.stringify(validatorDependencies) !== JSON.stringify({ ajv: '8.20.0', 'ajv-formats': '3.0.1', canonicalize: '4.0.0', parse5: '8.0.0', yaml: '2.9.1' })) throw new Error('Validator direct dependencies mismatch.');
   for (const [relative, hash] of Object.entries(manifest.sourceFiles)) {
     const file = path.resolve(receipt.skills, relative);
     if (!inside(receipt.skills, file) || !(await lstat(file)).isFile() || await realpath(file) !== file) throw new Error('Invalid release source path.');
@@ -85,7 +86,20 @@ export async function verifyRelease(receipt) {
       if (result.schema !== 'pigboard-work-validation/v1' || result.document_schema !== `pigboard-${kind}/v1` || result.valid !== true || result.draft_valid !== true || result.start_structure_valid !== false || result.readiness !== 'not_evaluated') throw new Error();
     } catch { throw new Error(`Validator ${kind} draft smoke check failed.`); }
   }
-  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft'] };
+  // Setup-only disposable input exercises actual parsing, schema and canonical
+  // digest code. Validation itself has no output/mutation option.
+  const temporary = await mkdtemp(path.join(os.tmpdir(), 'pigboard-handoff-smoke-'));
+  try {
+    const operation = '00000000-0000-4000-8000-000000000000';
+    // Insertion order is canonical for this independent fixed vector.
+    const record = { assignment:null, from_stage:'Ready to Work', kind:'admission', operation_id:operation, payload:{ existing_pr:null, mode:'new_work', previous_assignment:null, project_id:'0', requests:[], stream:'stream-1' }, record_id:operation, requirements_digest:'sha256:'+'0'.repeat(64), resume_authorization:null, role:'manager', schema:'pigboard-handoff/v1', ticket_id:'0', to_stage:'In Progress' };
+    const input = path.join(temporary, 'record.json'), expected = 'sha256:'+createHash('sha256').update(JSON.stringify(record)).digest('hex');
+    await writeFile(input, JSON.stringify(record));
+    const result = JSON.parse(execFileSync(process.execPath, [path.join(validatorRoot, 'scripts/validate-handoff.mjs'), '--mode', 'record', '--input', input, '--format', 'yaml', '--json'], { cwd:temporary, encoding:'utf8', stdio:['ignore','pipe','pipe'], timeout:30000 }));
+    if (result.schema !== 'pigboard-handoff-validation/v1' || result.valid !== true || result.mode !== 'record' || result.record_digest !== expected || result.completion_established !== false || result.live_freshness !== 'not_evaluated') throw new Error();
+  } catch { throw new Error('Handoff validator record smoke check failed.'); }
+  finally { await rm(temporary, { recursive:true, force:true }); }
+  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record'] };
 }
 
 export async function installCursorSkills({ source, ref, app, root = '/opt/pigboard' }, install) {

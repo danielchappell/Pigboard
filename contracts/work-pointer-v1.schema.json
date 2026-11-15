@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Pigboard assignment pointer design \u2014 not installed",
+  "title": "Pigboard assignment pointer v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

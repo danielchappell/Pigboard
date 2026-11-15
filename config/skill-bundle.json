@@ -35,7 +35,13 @@
       "lib/contracts/work-semantics.mjs",
       "lib/contracts/case-graph.mjs",
       "contracts/work-validation-context-v1.schema.json",
-      "config/skill-bundle.json"
+      "config/skill-bundle.json",
+      "contracts/handoff-v1.schema.json",
+      "contracts/work-pointer-v1.schema.json",
+      "lib/contracts/handoff.mjs",
+      "lib/contracts/receipts.mjs",
+      "scripts/validate-handoff.mjs",
+      "docs/handoffs.md"
     ]
   }
 }

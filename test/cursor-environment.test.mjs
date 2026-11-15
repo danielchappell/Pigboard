@@ -83,7 +83,7 @@ test('unsafe roots and unmanaged destinations are rejected before preparation', 
 });
 test('real installed validator runs outside checkout and failed runtime variants preserve stable link',async t=>{
  const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
- assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft']);
+ assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record']);
  const validator=path.join(first.stableSkills,'work-validator');
  const pair=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8')).mixed;
  const workFile=path.join(o.app,'work.json'),contextFile=path.join(o.app,'facts.json');
@@ -219,4 +219,27 @@ test('installed writer ships full hashed folders and validates its own templates
   }
   for (const { file, text } of Object.values(files)) assert.equal(await readFile(file, 'utf8'), text);
   for (const name of ['write-pr-sized-stories', 'human-writing']) assert.deepEqual(await inventory(path.join(installed.skills, name)), await inventory(path.join(o.source, 'skills', name)));
+});
+
+
+test('installed receipt validator runs a complete repaired stack with real copied dependencies',async t=>{
+ const o=await fixture(t), first=await installCursorSkills(o,fakeInstall),validator=path.join(first.stableSkills,'work-validator'),input=path.join(o.app,'receipts.json');
+ const envelope=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url),'utf8')).chains.stack,raw=JSON.stringify(envelope);await writeFile(input,raw);
+ const result=JSON.parse(execFileSync(process.execPath,[path.join(validator,'scripts/validate-handoff.mjs'),'--mode','chain','--input',input,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000}));
+ assert.equal(result.valid,true);assert.equal(result.completion_established,true);assert.deepEqual(result.validated_leaf,envelope.target);assert.equal(result.ai_steps,0);assert.equal(result.human_pending.length,1);assert.equal(await readFile(input,'utf8'),raw);await rm(input);
+ assert.equal(await readFile(path.join(validator,'docs/handoffs.md'),'utf8'),await readFile(new URL('../docs/handoffs.md',import.meta.url),'utf8'));
+ for(const mutate of [
+  async dir=>rm(path.join(dir,'node_modules/canonicalize'),{recursive:true}),
+  async dir=>writeFile(path.join(dir,'node_modules/canonicalize/lib/canonicalize.js'),'export default () => "wrong";'),
+  async dir=>rm(path.join(dir,'node_modules/parse5'),{recursive:true}),
+  async dir=>writeFile(path.join(dir,'node_modules/parse5/dist/index.js'),'throw Error("corrupt parser");'),
+  async dir=>rm(path.join(dir,'contracts/handoff-v1.schema.json')),
+  async dir=>rm(path.join(dir,'contracts/work-pointer-v1.schema.json')),
+  async dir=>writeFile(path.join(dir,'lib/contracts/receipts.mjs'),'throw Error("corrupt chain");'),
+  async dir=>writeFile(path.join(dir,'scripts/validate-handoff.mjs'),'process.exit(0);'),
+ ]){
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  assert.equal(await realpath(first.stableSkills),first.skills);
+ }
+ assert.deepEqual(await readdir(o.app),[]);
 });
