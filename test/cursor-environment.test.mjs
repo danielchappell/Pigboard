@@ -16,10 +16,15 @@ async function fixture(t) {
   git(source, 'init', '-b', 'main');
   git(source, 'config', 'user.name', 'Fixture'); git(source, 'config', 'user.email', 'fixture@example.invalid');
   for (const name of bundle.skills) await cp(new URL(`../skills/${name}`, import.meta.url), path.join(source, 'skills', name), { recursive: true, filter: file => !file.includes('node_modules') });
+  for (const relative of bundle.validatorPayload.sources) {
+    const target = path.join(source, relative); await mkdir(path.dirname(target), { recursive:true });
+    await cp(new URL('../' + relative, import.meta.url), target);
+  }
   git(source, 'add', '.'); git(source, 'commit', '-m', 'fixture');
   return { source, app, root, ref: 'main' };
 }
 async function fakeInstall(dir) {
+  if (path.basename(dir) === 'work-validator') { await cp(new URL('../node_modules', import.meta.url), path.join(dir,'node_modules'), { recursive:true }); return; }
   const declared = JSON.parse(await readFile(path.join(dir, 'package.json'))).dependencies;
   for (const [name, version] of Object.entries(declared)) {
     const module = path.join(dir, 'node_modules', name);
@@ -75,4 +80,25 @@ test('unsafe roots and unmanaged destinations are rejected before preparation', 
   await symlink(o.app, path.join(o.root, 'skills'));
   await assert.rejects(installCursorSkills(o, fakeInstall), /unmanaged/);
   assert.deepEqual(await readdir(o.root), ['skills']);
+});
+test('real installed validator runs outside checkout and failed runtime variants preserve stable link',async t=>{
+ const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
+ assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft']);
+ const validator=path.join(first.stableSkills,'work-validator');
+ for(const mode of ['draft','start']) {
+  const output=execFileSync(process.execPath,[path.join(validator,'scripts/validate-work.mjs'),'--mode',mode,'--input',path.join(validator,'docs/architecture/examples/manager-ticket-populated.yaml'),'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});assert.equal(JSON.parse(output).valid,true);
+ }
+ for(const mutate of [
+  async dir=>rm(path.join(dir,'node_modules/yaml'),{recursive:true}),
+  async dir=>writeFile(path.join(dir,'node_modules/yaml/package.json'),'{"version":"0.0.0"}'),
+  async dir=>writeFile(path.join(dir,'node_modules/yaml/dist/index.js'),'throw Error("corrupt runtime");'),
+  async dir=>writeFile(path.join(dir,'scripts/validate-work.mjs'),'process.exit(0);'),
+  async dir=>{const p=JSON.parse(await readFile(path.join(dir,'package.json')));p.dependencies.yaml='^2.9.1';await writeFile(path.join(dir,'package.json'),JSON.stringify(p));},
+ ]) {
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  assert.equal(await realpath(first.stableSkills),first.skills);
+ }
+ assert.deepEqual(await readdir(o.app),[]);
+ const refreshed=await installCursorSkills(o,fakeInstall);assert.equal(await realpath(refreshed.stableSkills),refreshed.skills);
+ assert.equal(JSON.parse(execFileSync(process.execPath,[path.join(first.skills,'work-validator/scripts/validate-work.mjs'),'--mode','draft','--input',path.join(first.skills,'work-validator/docs/architecture/examples/manager-epic.yaml'),'--json'],{encoding:'utf8',timeout:30000})).valid,true);
 });

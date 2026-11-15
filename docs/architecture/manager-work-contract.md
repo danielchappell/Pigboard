@@ -1,3 +1,11 @@
+> Local implementation boundary: [the authoring validator](../authoring.md) now
+> provides safe YAML/ADF extraction and draft/structural-start checks from the
+> canonical Epic/ticket schemas. Semantic checks and manager admission below are
+> target behavior, not shipped by this local checker. It performs no provider
+> actions. Work limits: 65,536 UTF-8 bytes, 32 containers, 100 sequence items;
+> ADF envelopes: 262,144 bytes, 32 containers, 1,000 items per array, 100 code blocks.
+> Selected YAML retains work limits. These are local parser budgets only.
+
 # Work and handoff contracts for the first manager
 
 Current scope: [Pig Boss company installation and health](pig-boss-operations.md). All stream identities below mean Jira site + immutable project ID + full label. Basic manager health is in release one; worker monitoring remains deferred.

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir, cp } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { prepare } from '../scripts/prepare-pigboard-skills.mjs';
@@ -15,6 +15,10 @@ async function fixture(t) {
  git(source,'config','user.name','Fixture'); git(source,'config','user.email','fixture@example.invalid');
  for(const name of bundle.skills){await mkdir(path.join(source,'skills',name),{recursive:true});await writeFile(path.join(source,'skills',name,'SKILL.md'),name);}
  for(const d of bundle.dependencyDirectories) await mkdir(path.join(source,'skills',d),{recursive:true});
+  for (const relative of bundle.validatorPayload.sources) {
+    const target = path.join(source, relative); await mkdir(path.dirname(target), { recursive:true });
+    await cp(new URL('../' + relative, import.meta.url), target);
+  }
  git(source,'add','.');git(source,'commit','-m','initial');
  return {source,app,cache,ref:'main'};
 }
@@ -64,4 +68,19 @@ test('reject a symlink at the skills root before reading external data',async t=
  git(o.source,'add','-A');git(o.source,'commit','-m','root symlink');
  await assert.rejects(prepare(o,install),/symlink/);
  assert.deepEqual(await readdir(o.cache),[]);
+});
+test('validator payload completeness, regular files and ancestor symlinks are required',async t=>{
+ const o=await fixture(t);
+ for(const relative of ['contracts/epic-v1.schema.json','scripts/validate-work.mjs','package-lock.json']) {
+  const file=path.join(o.source,relative), content=await readFile(file);await rm(file);git(o.source,'add','-A');git(o.source,'commit','-m','missing payload');
+  await assert.rejects(prepare(o,install));assert.deepEqual(await readdir(o.cache),[]);
+  await writeFile(file,content);git(o.source,'add','-A');git(o.source,'commit','-m','restore payload');
+ }
+ const {rename}=await import('node:fs/promises');const external=path.join(path.dirname(o.source),'contracts');await rename(path.join(o.source,'contracts'),external);await symlink(external,path.join(o.source,'contracts'));git(o.source,'add','-A');git(o.source,'commit','-m','linked payload ancestor');await assert.rejects(prepare(o,install),/symlink/);
+});
+test('payload sources are hashed and prepared as one fixed dependency directory',async t=>{
+ const o=await fixture(t), a=await prepare(o,install), manifest=JSON.parse(await readFile(a.manifest));
+ for(const relative of bundle.validatorPayload.sources) {assert(manifest.sourceFiles['work-validator/'+relative]);assert.deepEqual(await readFile(path.join(a.skills,'work-validator',relative)),await readFile(path.join(o.source,relative)));}
+ assert.equal(await readFile(path.join(a.skills,'work-validator/installed'),'utf8'),'yes');
+ assert(!manifest.sourceFiles['work-validator/node_modules/yaml/package.json']);
 });

@@ -52,6 +52,12 @@ export async function verifyRelease(receipt) {
   for (const name of bundle.skills) {
     if (!manifest.sourceFiles[`${name}/SKILL.md`]) throw new Error(`Missing entrypoint: ${name}`);
   }
+  for (const relative of bundle.validatorPayload.sources) {
+    if (!manifest.sourceFiles[`${bundle.validatorPayload.directory}/${relative}`]) throw new Error('Missing validator source.');
+  }
+  const validatorRoot = path.join(receipt.skills, bundle.validatorPayload.directory);
+  const validatorDependencies = JSON.parse(await readFile(path.join(validatorRoot, 'package.json'))).dependencies;
+  if (JSON.stringify(validatorDependencies) !== JSON.stringify({ yaml: '2.9.1', ajv: '8.20.0' })) throw new Error('Validator direct dependencies mismatch.');
   for (const [relative, hash] of Object.entries(manifest.sourceFiles)) {
     const file = path.resolve(receipt.skills, relative);
     if (!inside(receipt.skills, file) || !(await lstat(file)).isFile() || await realpath(file) !== file) throw new Error('Invalid release source path.');
@@ -73,7 +79,13 @@ export async function verifyRelease(receipt) {
     const version = execFileSync(process.execPath, [path.join(cliRoot, cli.bin.bru), '--version'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000 }).trim();
     if (version !== cli.version) throw new Error('Unexpected Bruno version.');
   } catch { throw new Error('Bruno executable smoke check failed.'); }
-  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version'] };
+  for (const kind of ['epic', 'ticket']) {
+    try {
+      const result = JSON.parse(execFileSync(process.execPath, [path.join(validatorRoot, 'scripts/validate-work.mjs'), '--mode', 'draft', '--input', path.join(validatorRoot, `docs/architecture/examples/manager-${kind}.yaml`), '--json'], { cwd: receipt.release, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 30000 }));
+      if (result.schema !== 'pigboard-work-validation/v1' || result.document_schema !== `pigboard-${kind}/v1` || result.valid !== true || result.draft_valid !== true || result.start_structure_valid !== false || result.readiness !== 'not_evaluated') throw new Error();
+    } catch { throw new Error(`Validator ${kind} draft smoke check failed.`); }
+  }
+  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft'] };
 }
 
 export async function installCursorSkills({ source, ref, app, root = '/opt/pigboard' }, install) {

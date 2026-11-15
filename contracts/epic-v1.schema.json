@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:pigboard:epic-v1",
-  "title": "epic-v1 start structure (discovery draft)",
+  "title": "Pigboard epic v1 start structure",
   "type": "object",
   "properties": {
     "schema": {
@@ -103,7 +103,39 @@
     },
     "open_questions": {
       "type": "array",
-      "maxItems": 0
+      "maxItems": 0,
+      "items": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "question",
+          "owner"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [

@@ -77,6 +77,19 @@ export async function prepare({ source, ref, cache, app }, install = dir => comm
       if (!(await lstat(path.join(origin, 'SKILL.md'))).isFile()) throw new Error(`Missing SKILL.md: ${name}`);
       await cp(origin, path.join(skillRoot, name), { recursive: true, dereference: false });
     }
+    const payload = bundle.validatorPayload;
+    if (payload.directory !== 'work-validator') throw new Error('Invalid validator payload directory.');
+    for (const relative of payload.sources) {
+      const origin = path.resolve(checkout, relative);
+      if (!inside(checkout, origin) || origin === checkout) throw new Error('Invalid validator source path.');
+      for (let current = origin; current !== checkout; current = path.dirname(current)) {
+        if ((await lstat(current)).isSymbolicLink()) throw new Error('Validator source contains a symlink.');
+      }
+      if (!(await lstat(origin)).isFile()) throw new Error('Validator source must be a regular file.');
+      const target = path.join(skillRoot, payload.directory, relative);
+      await mkdir(path.dirname(target), { recursive: true });
+      await cp(origin, target, { dereference: false });
+    }
     const sourceFiles = await files(skillRoot);
     for (const dependency of bundle.dependencyDirectories) await install(path.join(skillRoot, dependency));
     const manifest = { schemaVersion: 1, commit, bundle, sourceFiles, platform: process.platform, arch: process.arch, node: process.versions.node };
