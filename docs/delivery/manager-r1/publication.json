@@ -2,44 +2,45 @@
   "date": "2026-11-15",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Owner-approved same-scope 28-Story/122-case source composition at main275, including pending PGB-132 and actual PGB-138; Jira owns progress. Human/live acceptance and activation remain separate.",
+  "status": "Dated partial 29-Story/128-case source mapping after PGB-138 and PGB-136; PGB-137/R1-29 source composition pending. Jira owns progress; acceptance and activation remain separate.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
     "R1-03": "PGB-73",
     "R1-04": "PGB-74",
+    "R1-21": "PGB-99",
     "R1-05": "PGB-75",
     "R1-06": "PGB-76",
     "R1-07": "PGB-77",
     "R1-24": "PGB-110",
+    "R1-30": "PGB-138",
     "R1-27": "PGB-132",
     "R1-08": "PGB-78",
     "R1-09": "PGB-79",
     "R1-10": "PGB-80",
+    "R1-25": "PGB-113",
+    "R1-26": "PGB-129",
+    "R1-28": "PGB-136",
     "R1-11": "PGB-81",
     "R1-12": "PGB-82",
     "R1-13": "PGB-83",
     "R1-14": "PGB-84",
     "R1-15": "PGB-85",
     "R1-16": "PGB-86",
+    "R1-22": "PGB-100",
+    "R1-23": "PGB-101",
     "R1-17": "PGB-87",
     "R1-18": "PGB-88",
     "R1-19": "PGB-89",
-    "R1-20": "PGB-90",
-    "R1-21": "PGB-99",
-    "R1-22": "PGB-100",
-    "R1-23": "PGB-101",
-    "R1-25": "PGB-113",
-    "R1-26": "PGB-129",
-    "R1-30": "PGB-138"
+    "R1-20": "PGB-90"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 28,
-  "case_count": 122,
+  "story_count": 29,
+  "case_count": 128,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -338,6 +339,18 @@
     {
       "from": "PGB-138",
       "to": "PGB-132"
+    },
+    {
+      "id": "10715",
+      "type_id": "10000",
+      "from": "PGB-129",
+      "to": "PGB-136"
+    },
+    {
+      "id": "10716",
+      "type_id": "10000",
+      "from": "PGB-136",
+      "to": "PGB-81"
     }
   ],
   "baseline_publication": {
@@ -728,6 +741,30 @@
         "source_order": "R1-24 then R1-27 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
         "status": "15 November PGB-132 amendment composes Core's independently reviewed stacked source checkpoint at 261a3856c9710a62be3c2c8ac4424778cb1ca0a0: source/native 27 Stories/119 cases. Director verified the full native enumeration and Epic introduction. This is a dated publication count, not an all-ticket status claim or delivery completion. The PGB-129 source stack is not a product dependency of PGB-132."
       }
+    },
+    {
+      "date": "2026-11-15",
+      "scope": "PGB-138 source-mapping checkpoint before own-ticket selection; historical source counts, not current delivery status",
+      "story_count": 28,
+      "case_count": 122,
+      "current_source_scope": {
+        "story_count": 28,
+        "case_count": 122,
+        "source_base": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+        "source_order": "R1-24 then R1-30 then R1-27 before R1-08; all other relative order preserved.",
+        "native_snapshot": {
+          "date": "2026-11-15",
+          "story_count": 30,
+          "case_count": 130,
+          "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
+        },
+        "pending_source_amendments": [
+          "PGB-136",
+          "PGB-137"
+        ],
+        "status": "Actual serialized source is28/122. PGB-136/137 are native-only and not present on this source base. PGB-132 remains pending; no live or human completion follows from publication."
+      },
+      "source_base": "b6b863476d9f07eee2702991f336def7ff38cd36"
     }
   ],
   "qa_split": {
@@ -804,10 +841,10 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 28,
-    "case_count": 122,
-    "source_base": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
-    "source_order": "R1-24 then R1-30 then R1-27 before R1-08; all other relative order preserved.",
+    "story_count": 29,
+    "case_count": 128,
+    "source_base": "b6b863476d9f07eee2702991f336def7ff38cd36",
+    "source_order": "R1-24 then R1-30 then R1-27 immediately before R1-08; R1-25 then R1-26 then R1-28 immediately before R1-11; all other relative order preserved.",
     "native_snapshot": {
       "date": "2026-11-15",
       "story_count": 30,
@@ -815,10 +852,9 @@
       "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
     },
     "pending_source_amendments": [
-      "PGB-136",
       "PGB-137"
     ],
-    "status": "Actual serialized source is28/122. PGB-136/137 are native-only and not present on this source base. PGB-132 remains pending; no live or human completion follows from publication."
+    "status": "PGB-136 own-ticket source changes composed onto verified merged PGB-138 main. Source29/128 remains partial against the separately dated native30/130 inventory; PGB-137 source composition is pending. No fresh all-ticket status audit or delivery/acceptance claim."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1644,7 +1680,7 @@
       "preserved_branch_head": "29ba86017ec8ce5c27392f699a9a387cc8902260",
       "temporary_prerequisite_commit": "3b3a26f5810ca12f5b7bf8b295a49c15397aad25",
       "temporary_prerequisite_tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
-      "composition": "Normal merge retains original PR100 ancestry; explicitly authorized temporary unmerged prerequisite stack. Final publication waits actual PGB-138 merge and coordinated PGB-136 source preservation.",
+      "composition": "Normal merges retain original PR100 ancestry and the historical temporary prerequisite binding. Actual merged PGB-138 main has the identical prerequisite tree. Authorized local Core136 integration preserves its reviewed source; PR100 publication waits for PR107 actual merge.",
       "input_count": 51,
       "family_count": 14,
       "shared_control_ids": [
@@ -1659,7 +1695,11 @@
         "original_qa_report": "INCOMPLETE",
         "scope": "Specific actual-helper/dependent-publisher evidence gap; no rerun or transfer."
       },
-      "verification_limits": "Source preparation only. No helper/Bruno/model/provider acceptance, new native publication, installed runtime capability, hosted CI, merge/release or activation is established by this record."
+      "verification_limits": "Source preparation only. No helper/Bruno/model/provider acceptance, new native publication, installed runtime capability, hosted CI, merge/release or activation is established by this record.",
+      "actual_prerequisite_commit": "b6b863476d9f07eee2702991f336def7ff38cd36",
+      "actual_prerequisite_tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
+      "coordinated_core_commit": "af5e4ccdcb3232bdfb6229d3fc50c0e664da7fe6",
+      "coordinated_core_tree": "76c3c14455165ed0848ff52926f99f79bf564f5c"
     }
   },
   "qa_input_controls_amendment": {
@@ -1746,5 +1786,84 @@
       }
     },
     "verification_limits": "Source preparation and read-only validation/inspection only. PGB-132 owner10765 exception remains specific to that historical helper/publisher gap; no reruns or transfer to PGB-138/PGB-78. R1-27 and R1-30 human cases remain NOT_RUN. Local tests, installed evidence, hosted CI, merge/release and activation are separate."
+  },
+  "own_ticket_selection_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-28": "PGB-136"
+    },
+    "native_id": "10596",
+    "parent": "PGB-66",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7",
+      "preview_after": "7506971ef565beb236c1006ade1104ad83762e748526dedc45c28420ffdadfb4"
+    },
+    "native_contract_sha256": "1138b04d17c451dbeac01a1d8c3e9463fed4070ae844a5d10d71483d65cd001f",
+    "residual_native_contract_sha256": "b5d07161501b813ef54e978fe6f8ca7095eadd7c01b83c2876384ec6df1720d2",
+    "dependency_links": [
+      {
+        "id": "10715",
+        "type_id": "10000",
+        "from": "PGB-129",
+        "to": "PGB-136"
+      },
+      {
+        "id": "10716",
+        "type_id": "10000",
+        "from": "PGB-136",
+        "to": "PGB-81"
+      }
+    ],
+    "preserved_link_ids": [
+      "10637",
+      "10638",
+      "10686",
+      "10705"
+    ],
+    "rank": "PGB-136 immediately before PGB-81",
+    "readback_scope": "Exact new and residual contracts, parent/type/labels and both directed Blocks links; original PGB-81 body outside its two-line prerequisite insertion and all 4 AC/2 TAC/42 human cases preserved. Audit read To Do/In Progress before the separate stage reconciliation.",
+    "stage_receipt": {
+      "PGB-136": {
+        "status": "In Progress",
+        "comment_id": "10772"
+      },
+      "PGB-81": {
+        "status": "Blocked",
+        "comment_id": "10773"
+      }
+    },
+    "initial_edit_failure": "CONTENT_LIMIT_EXCEEDED; reformatted write failed. Exact original formatting plus two prerequisite lines subsequently read back with the reviewed parsed contract unchanged.",
+    "plan_sha256": "9ee1a33ad6862b62fb3f5639b2013041916a6292c4fc29456c07f9b0b4bb5694",
+    "review_manifest_sha256": "4b61a0a13355f58c35314d57afb96e59421499bdaa005f7320c268fa8eab97d1",
+    "source_composition_base": {
+      "commit": "29ba86017ec8ce5c27392f699a9a387cc8902260",
+      "tree": "8c978346b0e6b8eaae126af25bbb56193b7d58dc",
+      "status": "Development checkpoint containing unmerged PGB-132. Final own changes must be composed onto actual merged source before PR readiness; this does not publish or authorize upstream PGB-132."
+    },
+    "forecasts": {
+      "own_selection": {
+        "files": 20,
+        "days": 1.42
+      },
+      "remaining_preview": {
+        "files": 20,
+        "days": 1.45
+      },
+      "total_plan_days": 46.38,
+      "status": "Historical reviewed split/readback at29ba; current residual estimate and actual composed sum are in plan-metadata.json and delivery README."
+    },
+    "original_preview_criteria_and_cases_preserved": true,
+    "original_preview_cases": 42,
+    "additive_cases": 6,
+    "human_acceptance": "NOT_RUN",
+    "original_preview_human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "verification_limits": "Native/source publication only; own-selection runtime, developer checks, independent committed-code review, hosted CI, Codex approval, merge and release acceptance are separate. No delivered or merged behavior is claimed by this receipt.",
+    "final_source_composition_base": {
+      "commit": "b6b863476d9f07eee2702991f336def7ff38cd36",
+      "tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
+      "status": "Verified merged PGB-138 main; only the owned20-path PGB-136 change is composed. The earlier29ba development receipt remains historical."
+    }
   }
 }

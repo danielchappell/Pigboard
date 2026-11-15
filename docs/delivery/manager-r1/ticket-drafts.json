@@ -3424,6 +3424,309 @@
     }
   },
   {
+    "id": "R1-28",
+    "title": "Preview own-ticket repairs",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "The local preview waits whenever a ticket has an outstanding repair. Humans and agents need to see when a queued repair on its existing open PR can safely take the next free work slot, before full stack repair ordering is available.",
+      "prerequisites": [
+        {
+          "ticket": "R1-26",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The existing source and installed preview selects a ready own-ticket repair on its existing open PR before unrelated new work, using authenticated requests and completed history from that ticket."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Only unresolved direct requests make a repair eligible; a necessary ready prerequisite takes priority, and occupancy, pause, Blocked work, ownership, intent and the five-item Human Review limit still prevent unsafe selection."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Missing or conflicting evidence and repairs needing stack coordination or a first PR remain a visible safe wait or hold; ordinary current-proof behavior and the existing preview output shape remain compatible."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own usable own-ticket repair selection in the existing offline preview, its private authenticated history consumer, source and installed checks, guides and the additive delivery publication; one PR in this repository.",
+          "out_of_scope": [
+            "Customer repository changes, provider writes, deployment, activation and live execution",
+            "New public inspection commands or output fields",
+            "Stack repair propagation, queue-only proposals, first-PR repairs and complete typed proposals, which remain in PGB-81"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Reuse canonical receipt validation and bounded authenticated history; keep strict current completion as the only prerequisite proof and preserve PGB-113 and PGB-129 authority, conflict and resource protections."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Preserve all original PGB-81 acceptance criteria and 42 full cases; this prerequisite does not complete or weaken that Story."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Keep existing preview JSON fields, readable invocation, installed capability and zero effects; expose no execution authority, new provider client or public inspection interface."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and actual same-release installed preview/validator bundle with prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Six bounded own-repair selection groups OC01–OC06, derived from the existing PGB-81 case families and immutable authentic receipt chronology, with exact source/installed inputs and full existing-shape expected reports.",
+            "initial_state": "Dummy local data only; no live records, provider credentials or network access; original fixtures and all failed/preparation evidence remain preserved.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Freeze the six OC groups in test/fixtures/manager-repairs.json before calls. Derive exact inputs and full expected reports from the preserved chronology and required outcomes, not product output. Independently audit references, operations, current outer binding, target reachability, own request ownership, completed same-ticket assignment lineage, open existing PR, no stack parent, counts and intended gates. Use node scripts/manager-preview.mjs --config CONFIG --input SNAPSHOT --json and the same command without --json; use the actual prepared copied script from unrelated cwd. Prepare dependencies outside the run. OC02 is a finite six-input group: V01 remaining-R2, V02 no remaining cause, V03 implementation-only, V04 review-only, V05 foreign-ticket and V06 unrelated-lineage. Freeze exact provenance and full reports for all six; audit and execute each named variant, with no product-output-derived oracle.",
+            "used_by": [
+              "DATA-01",
+              "R1-28-OC01",
+              "R1-28-OC02",
+              "R1-28-OC03",
+              "R1-28-OC04",
+              "R1-28-OC05",
+              "R1-28-OC06"
+            ],
+            "preserves": [
+              "All immutable original PGB-81 raw inputs, 42 complete case objects, full H02 expectations and existing partial results.",
+              "All 66 inherited candidate inputs and expectations, all PGB-129 preview/public-chain/binding fixtures and strict-current compatibility.",
+              "Historical evidence remains tied to its tested bytes; no source-installed equality substitutes for an independent full expected report."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns local CLI and installed contract behavior, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI, independent input auditing and PR review remain required and do not replace human acceptance.",
+          "cases": [
+            {
+              "id": "R1-28-OC01",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC1",
+                "TAC1"
+              ],
+              "prerequisites": [
+                "An authentic Rework Queued ticket with an authorized own repair_request, its completed current-assignment history and one current open existing PR, beside an unrelated eligible Bug; derive the own-only projection from the immutable A chronology and the S09 positive requirement."
+              ],
+              "steps": [
+                "Run the source JSON and readable preview with the fixed input.",
+                "Compare the full report and selected ID/key with the independent expected result; identify that queued ticket and its existing PR in the supplied snapshot."
+              ],
+              "expected": [
+                "The own repair is selected ahead of unrelated new work, without changing its observed assignment, stage, PR or request inventory.",
+                "The report retains the existing field set, zero writes and false execution authority; selection is an offline recommendation, not an admission or payload."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            },
+            {
+              "id": "R1-28-OC02",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "TAC1"
+              ],
+              "prerequisites": [
+                "DATA-01 contains six separately named frozen OC02 variants, each with coherent native current facts, authorized own requests, a completed current-assignment baseline, current open existing PR, no actual stack parent, complete target closure and all other selection guards valid.",
+                "OC02-V01: completed same-ticket A2 consumes exact R1 and the queued lineage retains R1 plus new authorized R2; OC02-V02: the same accounting with only already-consumed R1 required.",
+                "OC02-V03: still-unresolved own R1 plus an authentic implementation-only consumption witness, with no completed QA for that witness on the actual current lineage; OC02-V04 uses the corresponding review-only witness.",
+                "OC02-V05: still-unresolved own R1 plus authentic foreign-ticket completed evidence sharing the cause through its own request/root lineage; OC02-V06 uses same-ticket completed consumption on a future/divergent assignment outside the current pointer lineage.",
+                "PREP-01 independently freezes all six full expected reports and exact raw reference/assignment/PR provenance before calls; a canonical-invalid or unreachable extra witness is not a substitute for these accounting controls."
+              ],
+              "steps": [
+                "Run source JSON and readable preview for OC02-V01, then OC02-V02, using their exact frozen inputs and compare each entire report and input hashes.",
+                "Run OC02-V03, OC02-V04, OC02-V05 and OC02-V06 once each in that order; compare every complete report to its independently frozen expectation.",
+                "For each variant retain the exact command, output and witness/current-lineage provenance; confirm observed request inventory, pointer, PR and counts remain unchanged."
+              ],
+              "expected": [
+                "V01 selects A for its remaining own repair while retaining R1/R2 evidence; V02 keeps the pending wait with no selection and never invents an empty repair.",
+                "V03 and V04 keep R1 actionable and select A because an implementation/review witness without completed current-lineage QA cannot discharge it.",
+                "V05 and V06 keep R1 actionable and select A because foreign-ticket cause/root overlap and same-ticket completion outside the current lineage cannot discharge the exact own request.",
+                "All six reports preserve the existing output shape, observed data, zero writes and false execution authority; a setup failure or earlier canonical rejection is recorded as such, not as a passed accounting control."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            },
+            {
+              "id": "R1-28-OC03",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "TAC1"
+              ],
+              "prerequisites": [
+                "The existing S10 required-ready-prerequisite family adapted to an authenticated own-ticket repair; include its unready and recursive prerequisite controls with complete native facts."
+              ],
+              "steps": [
+                "Run each frozen source preview and compare the full report and candidate reasons."
+              ],
+              "expected": [
+                "The actual necessary ready prerequisite precedes the own repair and unrelated Bug; an unready or unresolved prerequisite cannot be bypassed.",
+                "Only strict current completion satisfies ai_qa_complete; historical completed rows alone never satisfy it."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            },
+            {
+              "id": "R1-28-OC04",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC2",
+                "TAC1",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Prescribed own-repair controls for S02, S11, S14, S15, S17, S30, S39 and S40: active occupancy, pause, Blocked member, unresolved intent/ownership, four versus five Human Review observations, and two active members."
+              ],
+              "steps": [
+                "Run each fixed control through the source preview.",
+                "Compare full outcomes, observed counts and original input hashes."
+              ],
+              "expected": [
+                "A free opted-in stream with four Human Review items may select the valid repair; five prevents selection.",
+                "Every existing occupancy, pause, Blocked, intent and ownership guard retains its hold or wait; no queue or mutation is emitted."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            },
+            {
+              "id": "R1-28-OC05",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC3",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Prescribed missing/invalid/conflicting history controls plus stack_update_request, non-null actual stack parent and null/closed/merged/unknown existing PR boundaries from S09 and S23–S28; complete other facts independently."
+              ],
+              "steps": [
+                "Run the bounded frozen controls and ordinary current-proof compatibility control.",
+                "Inspect exact wait/hold reasons and confirm no alternative ordinary ticket bypasses unresolved repair."
+              ],
+              "expected": [
+                "Unproven or out-of-increment repair remains held or waiting with existing REPAIR_POLICY_PENDING or applicable proof/scope diagnostic.",
+                "No stack coordination, new PR, changed pointer, historical completion promotion or invented request is produced; ordinary compatible current proof still works."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            },
+            {
+              "id": "R1-28-OC06",
+              "execution": "human",
+              "owner_role": "human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Prepared actual same-release installed preview and OC01 selection, OC04 cap and OC05 stack-wait inputs; disposable unrelated cwd, no provider credentials."
+              ],
+              "steps": [
+                "Run the actual copied installed script in JSON and readable forms using the frozen external config/input files.",
+                "Compare entire JSON results to fixed expectations and check readable selected ticket, scope, counts, reasons and no-effect statement.",
+                "Follow the guide to identify a selected queued repair and its existing PR from the supplied facts; retain evidence before cleanup."
+              ],
+              "expected": [
+                "Installed behavior matches the independent source expectations without requiring a new CLI flag, module path or unbuilt typed proposal.",
+                "No provider access, credentials, writes or execution authority occur; unsupported stack repair remains explicitly deferred."
+              ],
+              "evidence": [
+                "Exact PR and installed bundle revisions/hashes, commands, complete stdout/stderr/exits, full fixed expectations and input hashes; retain original failures and safe-hold evidence."
+              ],
+              "cleanup": {
+                "mode": "none",
+                "reason": "Read-only local snapshots; retain frozen data and reports. Remove only separately identified disposable installation output after preserving evidence.",
+                "owner": null,
+                "steps": null
+              }
+            }
+          ]
+        },
+        "automated_regression": "Existing-shape own repair selection and priority, exact same-ticket completed consumption, current/history authority separation, existing safety gates and actual copied installed CLI compatibility."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-11",
     "title": "Preview the complete repair order",
     "contract": {
@@ -3440,6 +3743,10 @@
         },
         {
           "ticket": "R1-26",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-28",
           "required_outcome": "ai_qa_complete"
         }
       ],

@@ -284,7 +284,7 @@
       "min": 6.75,
       "max": 9.75
     },
-    "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; independent committed-code review, current checks, actual prerequisite merge and publication remain separate. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
+    "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
       "days": 1.875,
       "hours": {
@@ -438,14 +438,45 @@
     ]
   },
   {
+    "id": "R1-28",
+    "title": "Preview own-ticket repairs",
+    "dependencies": [
+      "R1-26"
+    ],
+    "days": 1.54,
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "lib/manager/snapshot.mjs",
+      "README.md",
+      "lib/manager/decisions.mjs",
+      "test/story-authoring.test.mjs",
+      "test/manager-preview.test.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/fixtures/manager-repairs.json",
+      "docs/manager-preview.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
     "id": "R1-11",
     "title": "Preview the complete repair order",
     "dependencies": [
       "R1-10",
       "R1-25",
-      "R1-26"
+      "R1-26",
+      "R1-28"
     ],
-    "days": 1.89,
+    "days": 1.47,
     "files": [
       "lib/manager/repair-policy.mjs",
       "lib/manager/availability.mjs",
