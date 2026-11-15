@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Independently reviewed 23-Story set for final owner review. The delivery plan defines dependency order; stable R1 IDs and all 88 baseline cases are preserved. There are now 104 cases. No implementation or activation is authorized by publication.
+The independently reviewed 23-Story baseline remains historical evidence. The delivery plan defines dependency order; stable R1 IDs and all 88 baseline cases are preserved. Current source has 24 Stories/107 cases; native Jira has 25/110, with PGB-110/R1-24 source publication pending. No implementation or activation is authorized by publication.
 
 The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
@@ -701,7 +701,244 @@ An operator needs to see why a stream can or cannot start work before granting w
 - **Automated regression:** Executable policy scenarios for readiness, occupancy, capacity, priority, membership and pause.
 
 
+## R1-25: Validate repeated-parent repairs
+
+### Problem to solve
+
+The existing local chain validator rejects a legitimate repaired child that consumes older and newer updates from its actual parent. Workers and operators cannot validate the complete repair even when every required cause is present.
+
+### Acceptance Criteria
+
+- **AC1.** The existing source and installed chain command validates current B2 implementation/review/QA consuming exact U1+U2 at verified A3, retaining R1 and R2 without duplicate leaf consumption.
+- **AC2.** Historical U1/A2 remains valid nested evidence; selecting stale U1/A2 as current still fails its current-pointer/stage/PR checks.
+- **AC3.** Divergent parent history, missing causes, invalid immutable metadata, duplicate direct requests and cycles reject without changing supplied data or authorizing execution.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own existing canonical receipt repeated-parent validation, source/installed tests and guides, plus the approved same-scope delivery-record amendment for this validator and PGB-81; no related repository changes.
+- **Out of scope:** Plexus/customer code changes; Archived runtime reuse; Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines.
+- **Related repositories:** none.
+- **D03:** Story writing and human-invoked request-rework are separate skills. (docs/architecture/manager-human-rework.md)
+- **D04:** Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons. (docs/architecture/pig-boss-operations.md)
+- **TAC1.** Preserve public chain inputs/results and strict current completion, role/metadata/PR/no-publication/resume rules with zero provider effects; add no public permissive option, manager history export or preview policy.
+- **TAC2.** Prove same-parent successors through actual repair-admission previous_assignment ancestry with preserved parent/PR/project/full-stream/repository identity; retain each direct request once and exact effective repair roots without weakening inherited QA execution proof.
+- **TAC3.** Reuse the exact immutable 28-record chronology and complete current-phase synthetic envelopes; change only selected target and B outer stage, retain source/variant hashes and never derive expected outcomes from production validation.
+
+### Testing Strategy
+
+- **Prerequisite:** R1-10/PGB-80, ai_qa_complete.
+- **QA skills:** `[]`; developer regressions support the three human-owned cases below. Human acceptance remains NOT_RUN.
+
+**testing_types:**
+
+```json
+[]
+```
+
+**environment:**
+
+```json
+{
+  "source": "configured_target",
+  "target_reference": "Current Pigboard PR checkout, actual same-release installed chain command and prepared disposable local synthetic fixtures; no deployed customer target.",
+  "required_capabilities": []
+}
+```
+
+**actors:**
+
+```json
+[]
+```
+
+**fixtures:**
+
+```json
+[
+  {
+    "id": "DATA-01",
+    "description": "Frozen 28-record repeated-parent H02 chronology, nine checkpoints and separate phase-bound C01 controls with fixed independent expectations; C02/C03 use fresh copies.",
+    "initial_state": "No live provider data or credentials; frozen originals and all 119 prepared files remain unchanged; only disposable variants are edited.",
+    "reference": null,
+    "preparation_id": "PREP-01",
+    "owner": "implementer"
+  }
+]
+```
+
+**preparation:**
+
+```json
+[
+  {
+    "id": "PREP-01",
+    "owner": "implementer",
+    "supplies": "Executable local fixtures and exact source/installed commands bound to the PR revision; separately hash and diff all C01 phase variants, retain completed-stage negatives and isolate the repeated-parent RED failure on the final corrected PGB-80 base.",
+    "used_by": [
+      "DATA-01",
+      "R1-25-C01",
+      "R1-25-C02",
+      "R1-25-C03"
+    ],
+    "preserves": [
+      "All original receipt bytes, references/digests, authors/times, complete pages, retained metadata, requirements, pointers, PR facts and request resolutions.",
+      "Fixed C01 validity/completion and C02/C03 rejection outcomes; no invented receipt, edited oracle, credentials or provider effects."
+    ]
+  }
+]
+```
+
+**dispatch_order:**
+
+```json
+[]
+```
+
+**cases:**
+
+```json
+[]
+```
+
+#### R1-25-C01
+
+- **Execution/owner:** human; developer and human QA reviewer.
+- **Requirements:** AC1, TAC1, TAC2, TAC3.
+
+**Prerequisites:**
+
+- Prepared DATA-01, source checkout and actual same-release installed validate-handoff command; dummy data only, no credentials, network or deployed target.
+- Frozen checkpoints/08-b2-full-qa/receipts/b2_qa.json with all 28 immutable records, complete 14/10/4-comment pages and all 28 retained metadata entries.
+- Three separately named and hashed synthetic current-observation envelopes: c01-b2-implementation-in-review.json selects original 81026 with B/1001 stage 3; c01-b2-review-in-qa.json selects original 81027 with B stage 4; c01-b2-qa-in-human-review.json selects original 81028 with B stage 5.
+- Apart from exact target selection and issues[id=1001].stage_id, each variant preserves the whole source envelope: B pointer/assignment 81025, U1+U2, PR11 open at revision 5555555555555555555555555555555555555555 targeting parent; A Human Review, assignment81020/completion81023, PR10 at revision3333333333333333333333333333333333333333; unchanged requirements/context, bodies/digests, metadata, pages, PR inventory and other issues.
+
+**Steps:**
+
+1. Check each variant against the frozen source and assert only the two allowed outer-field differences; record separate SHA256 values for source and each serialized variant.
+2. Run each variant through node scripts/validate-handoff.mjs --mode chain --input FILE in readable mode and again with --json; repeat with the actual installed validate-handoff script from an unrelated working directory.
+3. Check chain validity, complete U1+U2 consumption, R1+R2 root accounting, completion_established and zero writes; compare fixed expected outcomes below, never generated expectations.
+4. On separate unchanged completed-envelope copies select original implementation81026 and review81027 without rewinding B stage5; repeat source/installed commands and inspect /target/stage_id rejection.
+5. Recheck all source/variant hashes after execution and retain evidence before cleanup.
+
+**Expected:**
+
+- All three phase-bound chains are valid with exact U1+U2 at proven A3; common R1 is covered once, R2 remains covered and no cause is dropped.
+- Only QA81028 establishes completion; phase-valid implementation81026 and review81027 do not.
+- The unchanged completed checkpoint rejects implementation/review selected as current at /target/stage_id; its QA target remains valid.
+- Inputs and frozen history remain byte-identical; no provider/state writes or execution authorization occur; synthetic observations do not claim earlier real chronology.
+
+**Evidence:**
+
+- Exact source and installed commands, selected target, tested commit, exit/result/diagnostics, zero-write audit and source/variant SHA256 before and after execution.
+
+**Cleanup:**
+
+```json
+{
+  "mode": "prescribed",
+  "reason": null,
+  "owner": "human QA reviewer",
+  "steps": [
+    "Retain commands, output, tested revision and before/after input hashes; remove only disposable variants and installed test output, never the frozen chronology or live records."
+  ]
+}
+```
+
+#### R1-25-C02
+
+- **Execution/owner:** human; developer and human QA reviewer.
+- **Requirements:** AC2, TAC1, TAC2, TAC3.
+
+**Prerequisites:**
+
+- C01 phase-bound controls, immutable A2/U1 references and later current outer observations from DATA-01; each control starts from a fresh copy.
+- No receipt is resealed and no source body, digest, metadata, pointer, current PR or native observation is changed to make a stale target pass.
+
+**Steps:**
+
+1. Select authentic old A2 completion and U1 stack publication separately as current targets under their unchanged later observations.
+2. Run each through source and actual installed chain commands in readable and JSON modes; retain exact current-pointer/stage/PR diagnostics and hashes.
+3. Repeat all valid C01 phase-bound controls with those same immutable A2/U1 records nested in history; retain C01 completed-stage negative controls.
+4. Compare fixed expectations, check no writes and verify input hashes after each run.
+
+**Expected:**
+
+- Stale A2/U1 selected as current rejects under the existing applicable pointer/stage/PR checks.
+- The same authentic records are accepted only within proven ancestry of the valid current B2 controls; strict selected-target checks are never bypassed.
+- Only valid current QA establishes completion; no input change or provider/state effect occurs.
+
+**Evidence:**
+
+- Exact source and installed commands, selected target, tested commit, exit/result/diagnostics, zero-write audit and source/variant SHA256 before and after execution.
+
+**Cleanup:**
+
+```json
+{
+  "mode": "prescribed",
+  "reason": null,
+  "owner": "human QA reviewer",
+  "steps": [
+    "Retain commands, output, tested revision and before/after input hashes; remove only disposable variants and installed test output, never the frozen chronology or live records."
+  ]
+}
+```
+
+#### R1-25-C03
+
+- **Execution/owner:** human; developer and human QA reviewer.
+- **Requirements:** AC3, TAC1, TAC2, TAC3.
+
+**Prerequisites:**
+
+- Fresh independent copies of C01 valid phase-bound controls and their fixed root/request expectations; keep one unchanged shared-leaf positive control.
+- Separate invalid variants omit or alter retained metadata, change a parent or PR, remove predecessor proof, diverge ancestry, omit root/cause coverage, duplicate a direct request, or introduce a recursion cycle; record each exact mutation and input hash.
+
+**Steps:**
+
+1. Run each independent negative and the unchanged shared-leaf positive through source and actual installed chain commands, readable then JSON.
+2. Inspect validity, completion, diagnostics, full cause/root coverage and zero-write audit for each result.
+3. Verify source and input hashes after every run and retain mutation/output evidence before cleanup.
+
+**Expected:**
+
+- Every missing/forged metadata, switched parent/PR, missing/divergent ancestry, omitted cause/root, duplicate direct request or cycle variant rejects without completion or writes.
+- Two distinct valid paths to common R1 alone remain valid; all assigned direct U1+U2 requests are consumed once and R1+R2 coverage remains exact.
+- Later timestamps or hashes alone never prove ancestry, and no failure edits supplied data or authorizes execution.
+
+**Evidence:**
+
+- Exact source and installed commands, selected target, tested commit, exit/result/diagnostics, zero-write audit and source/variant SHA256 before and after execution.
+
+**Cleanup:**
+
+```json
+{
+  "mode": "prescribed",
+  "reason": null,
+  "owner": "human QA reviewer",
+  "steps": [
+    "Retain commands, output, tested revision and before/after input hashes; remove only disposable variants and installed test output, never the frozen chronology or live records."
+  ]
+}
+```
+
+**Human review:**
+
+```json
+{
+  "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required."
+}
+```
+
+- **Automated regression:** Canonical repeated-parent ancestry and exact cause/root coverage with current-target isolation, inherited receipt authority and actual installed-runtime parity; preserve full receipt/installed suites and verify approved delivery metadata preservation.
+
+- **Open questions:** `[]`.
+
 ## R1-11: Preview the complete repair order
+
+Prerequisites: R1-10/PGB-80 and R1-25/PGB-113, both ai_qa_complete. All original criteria and 42 complete cases below are preserved.
 
 ### Problem to solve
 

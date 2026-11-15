@@ -602,5 +602,69 @@
     "docs/product/installation.md": "f811278447abb57df71b08aa55235f2d05a3a743c209d322a0a0fd48cfe4af56"
   },
   "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical.",
-  "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged."
+  "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged.",
+  "repeated_parent_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-25": "PGB-113"
+    },
+    "amended_story": "PGB-81",
+    "native_publication_verified": true,
+    "readback_scope": "PGB-113 and PGB-81 full bodies; all original PGB-80/PGB-81/PGB-82 links and PGB-82 body preserved; complete native Story/case count readback. Dated publication status is historical.",
+    "native_publication_status": "PGB-113 To Do when published; later work status is owned by Jira.",
+    "description_sha256": {
+      "original": "edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497",
+      "validator": "c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8",
+      "final_preview": "8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe"
+    },
+    "dependency_links": [
+      {
+        "id": "10685",
+        "from": "PGB-80",
+        "to": "PGB-113"
+      },
+      {
+        "id": "10686",
+        "from": "PGB-113",
+        "to": "PGB-81"
+      }
+    ],
+    "preserved_links": [
+      {
+        "id": "10637",
+        "from": "PGB-80",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10638",
+        "from": "PGB-81",
+        "to": "PGB-82"
+      }
+    ],
+    "publication_comment": {
+      "id": "10679",
+      "url": "https://scubapig.atlassian.net/browse/PGB-66?focusedCommentId=10679"
+    },
+    "original_preview_cases": 42,
+    "additive_cases": 3,
+    "criteria_preserved": true,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false
+  },
+  "current_source_scope": {
+    "story_count": 24,
+    "case_count": 107,
+    "native_story_count": 25,
+    "native_case_count": 110,
+    "pending_source_amendments": [
+      {
+        "local_id": "R1-24",
+        "ticket": "PGB-110",
+        "owner": "Skills",
+        "status": "source publication pending"
+      }
+    ],
+    "source_order": "R1-25 immediately before R1-11; other relative order unchanged.",
+    "status": "PGB-113 amendment mirrored; PGB-110 source amendment pending. This is publication, not delivery completion."
+  }
 }
