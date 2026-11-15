@@ -127,3 +127,79 @@ test('real installed validator runs outside checkout and failed runtime variants
  const refreshed=await installCursorSkills(o,fakeInstall);assert.equal(await realpath(refreshed.stableSkills),refreshed.skills);
  assert.equal(JSON.parse(execFileSync(process.execPath,[path.join(first.skills,'work-validator/scripts/validate-work.mjs'),'--mode','draft','--input',path.join(first.skills,'work-validator/docs/architecture/examples/manager-epic.yaml'),'--json'],{encoding:'utf8',timeout:30000})).valid,true);
 });
+
+test('installed writer ships full hashed folders and validates its own templates/examples outside the checkout', async t => {
+  const o = await fixture(t), installed = await installCursorSkills(o, fakeInstall);
+  const { createHash } = await import('node:crypto');
+  async function inventory(dir, prefix = '') {
+    const result = {};
+    for (const entry of await readdir(path.join(dir, prefix), { withFileTypes: true })) {
+      const relative = path.join(prefix, entry.name);
+      if (entry.isDirectory()) Object.assign(result, await inventory(dir, relative));
+      else {
+        assert(entry.isFile(), relative);
+        result[relative] = createHash('sha256').update(await readFile(path.join(dir, relative))).digest('hex');
+      }
+    }
+    return result;
+  }
+  for (const name of ['write-pr-sized-stories', 'human-writing']) {
+    const target = path.join(installed.skills, name);
+    const sourceFiles = await inventory(path.join(o.source, 'skills', name));
+    assert.deepEqual(await inventory(target), sourceFiles);
+    // Validate all local Markdown links in these complete installed folders.
+    for (const relative of Object.keys(sourceFiles).filter(p => p.endsWith('.md'))) {
+      const markdown = await readFile(path.join(target, relative), 'utf8');
+      for (const match of markdown.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
+        const link = match[1].split('#')[0];
+        if (!link || /^[a-z][a-z0-9+.-]*:/i.test(link)) continue;
+        const resolved = path.resolve(target, path.dirname(relative), decodeURIComponent(link));
+        assert(resolved.startsWith(installed.skills + path.sep), `${relative}: ${link} escapes bundle`);
+        await readFile(resolved);
+      }
+    }
+  }
+  const writer = path.join(installed.skills, 'write-pr-sized-stories');
+  const expectedReferences = ['basic-workflow-ticket.md', 'epic.yaml', 'ticket.yaml', 'pigboard-epic.md', 'pigboard-ticket.md', 'pigboard-example.md'];
+  const references = await readdir(path.join(writer, 'references'));
+  for (const name of expectedReferences) assert(references.includes(name), name);
+  const cli = path.join(installed.skills, 'work-validator/scripts/validate-work.mjs');
+  function run(mode, input, context, expected = 0) {
+    try {
+      const result = JSON.parse(execFileSync(process.execPath, [cli, '--mode', mode, '--input', input, ...(context ? ['--context', context] : []), '--json'], { cwd: o.app, encoding: 'utf8', timeout: 30000 }));
+      assert.equal(expected, 0); assert.equal(result.valid, true); assert.equal(result.readiness, 'not_evaluated');
+      return result;
+    } catch (error) {
+      if (error.status !== expected) throw error;
+      const result = JSON.parse(error.stdout); assert.equal(result.valid, false);
+      return result;
+    }
+  }
+  for (const kind of ['epic', 'ticket']) {
+    const input = path.join(writer, 'references', `${kind}.yaml`), before = await readFile(input, 'utf8');
+    run('draft', input);
+    const incomplete = run('structure', input, null, 1);
+    assert(incomplete.diagnostics.some(d => d.path === '/problem_to_solve'));
+    assert.equal(await readFile(input, 'utf8'), before);
+  }
+  const example = await readFile(path.join(writer, 'references/pigboard-example.md'), 'utf8');
+  const blocks = [...example.matchAll(/<!-- example:(epic|mixed|human):(work|context) -->\n```yaml\n([\s\S]*?)```/g)];
+  assert.equal(blocks.length, 6);
+  const files = {};
+  for (const [, name, kind, text] of blocks) {
+    const file = path.join(o.app, `${name}-${kind}.yaml`);
+    await writeFile(file, text); files[`${name}-${kind}`] = { file, text };
+  }
+  for (const name of ['epic', 'mixed', 'human']) {
+    const { file } = files[`${name}-work`], context = files[`${name}-context`].file;
+    run('draft', file); run('structure', file);
+    const result = run('start', file, context);
+    if (name !== 'epic') {
+      assert.equal(result.ledger_budget.ai_steps, name === 'mixed' ? 4 : 0);
+      assert.equal(result.ledger_budget.human_cases, 1);
+      assert.equal(result.ledger_budget.omitted_entries, 0);
+    }
+  }
+  for (const { file, text } of Object.values(files)) assert.equal(await readFile(file, 'utf8'), text);
+  for (const name of ['write-pr-sized-stories', 'human-writing']) assert.deepEqual(await inventory(path.join(installed.skills, name)), await inventory(path.join(o.source, 'skills', name)));
+});

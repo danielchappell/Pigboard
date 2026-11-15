@@ -5,7 +5,7 @@ or hidden persistent runtime is required. The configured assignment supplies sco
 and permitted actions. Jira supplies requirements and case definitions;
 reviewed artifacts supply execution details. Neither is permission to widen scope.
 
-Read the [structured Story contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
+Read the [structured Story contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
 for canonical ticket labels, AC/TAC/case/step IDs and preparation-slot ownership.
 Preserve requirements and expectations in the ticket body; stage comments supply
 actual execution details and receipts. The contract does not replace trusted run

@@ -5,7 +5,7 @@ required. Configured tools and the authorized assignment supply the action scope
 retain plan and results across phases. Comments, labels and model claims do not
 grant permissions. No lock or externally supplied run/visit identity is required.
 
-Read the [structured Story contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
+Read the [structured Story contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
 for canonical ticket labels, AC/TAC/case/step IDs and preparation-slot ownership.
 Preserve requirements and expectations in the ticket body; stage comments supply
 actual execution details and receipts. The contract does not replace trusted run

@@ -45,15 +45,22 @@ path returned by the installer:
 
 > Read `<skills>/write-pr-sized-stories/SKILL.md`. Turn the supplied agreed scope
 > into a draft work item for the verified repository and base branch. Use its
-> structured Story contract for Pigboard delivery. Identify unresolved inputs;
+> versioned Epic or Story/Bug YAML template for Pigboard authoring. Validate saved
+> raw YAML with the shared checker. Identify unresolved inputs;
 > keep research/design as Tasks. Return the draft for review.
 
-The installed Story contract uses four named body sections, fixed labels and
-stable requirement/case/step IDs. All required acceptance cases, expectations and
-exact QA skill order belong on the ticket. See its
-[canonical reference](../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-and [filled examples](../skills/write-pr-sized-stories/references/pigboard-example.md).
-Do not replace that contract with the manager's draft YAML skeletons yet.
+The writer keeps four readable sections inside complete YAML, with stable IDs,
+explicit nulls/lists and every prescribed AI/human case. See its
+[ticket guide](../skills/write-pr-sized-stories/references/pigboard-ticket.md),
+[Epic guide](../skills/write-pr-sized-stories/references/pigboard-epic.md) and
+[complete examples](../skills/write-pr-sized-stories/references/pigboard-example.md).
+Use [local validation](authoring.md) with the same receipt's prepared checker.
+Draft/structure need no trusted context; start does and never proves live readiness.
+Missing setup/context preserves the draft and checks-not-run report. The writer
+does not install dependencies, mark readiness, publish without separate authority
+or request rework. Existing workers still require their
+[retained prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md);
+do not feed newly authored YAML to those unmigrated entrypoints.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -115,10 +122,10 @@ one. Workers neither admit new tickets nor investigate competing runs.
 The [first-manager design](architecture/manager-release-one.md) introduces
 manager-owned admission and queued repair. Its
 [discovery record](architecture/manager-discovery.md) also separates AI-assigned
-and human-assigned tests; human tests remain pending at the AI handoff. YAML work
-contracts (with proposed schemas and examples), migration of the existing
-`write-pr-sized-stories` authoring skill with its `human-writing` dependency,
-role-specific Jira handoff skills and prepared Bug execution require a
-coordinated release and acceptance. The current installed entrypoints accept
+and human-assigned tests; human tests remain pending at the AI handoff. Versioned
+YAML authoring, full templates/examples, the `human-writing` dependency
+and local validation are available for preparation. Role-specific Jira handoff
+skills, compatible worker Story/Bug execution and manager admission still require
+a coordinated release and acceptance. The current installed entrypoints accept
 Stories and their existing contract. Do not enable target behavior by changing
 prompts or silently weakening the current skill's requirements.

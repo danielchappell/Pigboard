@@ -1,145 +1,622 @@
-# Filled synthetic Story examples
+# Complete synthetic authoring examples
 
-These are fictional authoring fixtures, not real tickets or permission to run tests.
-Repository names, identities and routes illustrate supplied project context. Each
-example is a separate Story/PR. Native Jira metadata is recorded by the writer in
-Jira fields; it is not another authority block in the description. Estimates belong
-in the delivery plan: each example assumes existing components and fewer than 20
-changed files/less than two working days, to be verified against actual code.
+These are editable examples, not real Jira records, verified repositories, access
+receipts or permission to execute. Native metadata stays outside each work body.
+The separate contexts are demonstration facts only; real trusted facts must come
+from their owner. Do not manufacture matching facts from a real work document.
+All declared fields and inactive null alternatives remain visible; no aliases or
+merge keys shorten them. Save each explicitly named block verbatim into its named
+file, then use the [shared checker commands](pigboard-ticket.md#save-check-and-return).
+Draft, structure and local start pass with these supplied contexts; live readiness
+and human cases remain not evaluated/pending. Changing a step requires newly
+reviewed full matching operation facts, not an automatic context rewrite.
 
-## Example 1: show a clear empty search result
+## Find saved filters and understand empty results
 
-Native metadata supplied for this fixture: project DEMO; Story; epic DEMO-10;
-assignee the supplied directory identity for Alex; label AI-Alex-1. These are not
-real Jira IDs. Existing client-side list filtering is already implemented.
+Brief: Author an Epic for saved-filter search and its empty-result wording. Include those two outcomes and exclude ownership/sharing changes. Native context supplies full streams AI-Example-1 with created Story EX-1 and AI-Example-2 with created Bug EX-2, each with no prerequisites. There are no additional decisions or open questions.
 
-### Description
+Synthetic native context: project EX; type Epic; key EX-EPIC; title “Find saved filters and understand empty results”; no parent; assignee Example owner; label AI-Example-1; status Draft. These describe supplied context, not a competing authority object or a publication request.
 
-Problem to solve
+Save as `epic-work.yaml`:
 
-The account list goes blank when a search has no matches. A support user needs to
-see that the search completed and know how to show the list again.
+<!-- example:epic:work -->
+```yaml
+schema: pigboard-epic/v1
+# Problem to solve
+problem_to_solve: Readers need to find saved report filters and recognize an empty result.
+outcome: Readers find saved filters by name and understand an empty result.
+scope:
+  included:
+    - Search saved filters in the existing application.
+    - Correct the search empty-state wording.
+  excluded:
+    - Changing filter ownership or sharing.
+workstreams:
+  - label: AI-Example-1
+    story_order:
+      - EX-1
+  - label: AI-Example-2
+    story_order:
+      - EX-2
+accepted_decisions: []
+open_questions: []
+```
 
-Acceptance Criteria
+Save separately as `epic-context.yaml`:
 
-- AC-01: A completed search with no matches displays “No accounts match your search”.
-- AC-02: Clearing the search restores the available accounts and removes that message.
+<!-- example:epic:context -->
+```yaml
+schema: pigboard-work-validation-context/v1
+subject_key: EX-EPIC
+repositories:
+  - url: https://example.invalid/example/application
+    base_branches:
+      - main
+allowed_skills: []
+configured_targets:
+  - local-review
+references: []
+prerequisite_graph:
+  - ticket: EX-EPIC
+    prerequisites: []
+  - ticket: EX-1
+    prerequisites: []
+  - ticket: EX-2
+    prerequisites: []
+related_changes: []
+operations: []
+```
 
-Technical Acceptance Criteria
+## Find a saved filter by name
 
-- Ticket contract: pigboard-story/v1
-- Repository: example/accounts-web
-- Base branch: main
-- Change boundary: Existing account-list empty state and its clear-search control.
-- Out of scope: Search matching logic, API behavior, authorization and other list pages.
-- Related repositories: None — existing API behavior is unchanged.
-- Accepted decisions: None — the supplied requirements fully define this change.
-- TAC-01: The existing keyboard-accessible clear-search control remains usable.
+Brief: Author a Story for finding a saved filter by name within its reader tenant. The supplied repository is https://example.invalid/example/application on verified main, limited to existing saved-filter search and tests; exclude ownership and cross-tenant access. No prerequisites, related changes or decisions apply. The fixture operator supplies reader ACTOR-01 in tenant example and fixture-1 named Monthly. Prescribe GET search through qa-api and its single qa-bruno child, a read-only PostgreSQL observation bound to the returned record_id, and a desktop Chromium UI search at 1280 × 800. Retain the exact operation prescriptions, query bounds and references supplied in the separate context below. All steps are synchronous, with no cleanup mutations. Product review checks wording after same-revision AI evidence; add API authorization/search regression coverage. Estimate: 1.5 human days and 8 changed files in one PR, recorded in the delivery plan.
 
-Testing Strategy
+Synthetic native context: project EX; type Story; key EX-1; title “Find a saved filter by name”; parent EX-EPIC; assignee Example owner; label AI-Example-1; status Draft. These describe supplied context, not a competing authority object or a publication request.
 
-- Testing types: UI.
-- QA dispatch: TC-01.S1, TC-01.S2, TC-01.S3.
-- Test data and access: Existing synthetic support fixture SUP-A, with visible account “Demo Oak”; prepared login reference accounts-support-fixture; owner is the fixture operator.
-- Environment source: Ready pipeline-owned PR environment comment matching the reviewed commit.
-- Execution preparation: P-01 — owner: implementer; supplies: verified account-list route and control labels; used by: TC-01.S1–S3; acceptance: the existing search/clear controls and AC-01/02 are unchanged in meaning.
+Save as `mixed-work.yaml`:
 
-### TC-01 — Search has no matches and can be cleared
+<!-- example:mixed:work -->
+```yaml
+schema: pigboard-ticket/v1
+# Problem to solve
+problem_to_solve: A reader cannot find a saved filter without scanning the whole list.
+prerequisites: []
+# Acceptance Criteria
+acceptance_criteria:
+  - id: AC-01
+    requirement: A reader can find a saved filter by its name.
+# Technical Acceptance Criteria
+technical_acceptance_criteria:
+  repository:
+    url: https://example.invalid/example/application
+    base_branch: main
+    change_boundary: Existing saved-filter search and its tests.
+    out_of_scope:
+      - Changing ownership or cross-tenant access.
+    related_repositories: []
+  accepted_decisions: []
+  constraints:
+    - id: TAC-01
+      requirement: Search and observations remain within the reader tenant.
+# Testing Strategy
+testing_strategy:
+  testing_types:
+    - api
+    - database
+    - ui
+  environment:
+    source: pipeline_pr_comment
+    target_reference: null
+    required_capabilities:
+      - Prepared API requests
+      - Restricted PostgreSQL reader
+      - Computer-use browser
+  actors:
+    - id: ACTOR-01
+      role: reader
+      tenant: example
+      identity_reference: fixture://example/reader
+      access_owner: Fixture operator
+  fixtures:
+    - id: DATA-01
+      description: Synthetic Monthly filter.
+      initial_state: fixture-1 exists in tenant example with name Monthly.
+      reference: fixture://example/filter
+      preparation_id: null
+      owner: Fixture operator
+  preparation: []
+  dispatch_order:
+    - TC-01.S1
+    - TC-01.S3
+    - TC-01.S4
+  cases:
+    - id: TC-01
+      execution: ai
+      purpose: Find the prepared filter through the API, stored state and UI.
+      requirements:
+        - AC-01
+        - TAC-01
+      actors:
+        - ACTOR-01
+      fixtures:
+        - DATA-01
+      preconditions:
+        - Prepared target contains the approved synthetic fixture.
+      depends_on: []
+      observation:
+        mode: synchronous
+        schedule: null
+        deadline_seconds: null
+        step: null
+        completion: null
+      cleanup:
+        mode: none
+        reason: All observations are read-only against a prepared fixture.
+        owner: null
+        steps: null
+      manual_qa: Using the supplied reader identity, search Monthly and inspect the named
+        prepared API request and database observation.
+      steps:
+        - id: TC-01.S1
+          caller: qa-entrypoint
+          skill: qa-api
+          action: Observe the prepared filter search.
+          children:
+            - TC-01.S2
+          inputs:
+            record_id: fixture-1
+          bindings: []
+          outputs:
+            - record_id
+          expected:
+            - The Monthly filter is shown for tenant example.
+          evidence:
+            - Sanitized observation with fixture identity and timestamp.
+          prepared_artifact:
+            reference: fixture://example/reviewed-search-collection
+            preparation_id: null
+          api:
+            method: GET
+            operation: Search saved filters by name
+            route: /api/filters?name=Monthly
+            route_preparation_id: null
+            actor: ACTOR-01
+            request_selector: filters/search.bru
+            selector_preparation_id: null
+            expected_status: 200
+            expected_response:
+              - Contains fixture-1 named Monthly in tenant example.
+              - Does not contain records belonging to another tenant.
+          database: null
+          ui: null
+        - id: TC-01.S2
+          caller: TC-01.S1
+          skill: qa-bruno
+          action: Observe the prepared filter search.
+          children: []
+          inputs:
+            record_id: fixture-1
+          bindings: []
+          outputs:
+            - record_id
+          expected:
+            - The Monthly filter is shown for tenant example.
+          evidence:
+            - Sanitized observation with fixture identity and timestamp.
+          prepared_artifact:
+            reference: fixture://example/reviewed-search-collection
+            preparation_id: null
+          api:
+            method: GET
+            operation: Search saved filters by name
+            route: /api/filters?name=Monthly
+            route_preparation_id: null
+            actor: ACTOR-01
+            request_selector: filters/search.bru
+            selector_preparation_id: null
+            expected_status: 200
+            expected_response:
+              - Contains fixture-1 named Monthly in tenant example.
+              - Does not contain records belonging to another tenant.
+          database: null
+          ui: null
+        - id: TC-01.S3
+          caller: qa-entrypoint
+          skill: qa-database
+          action: Observe the prepared filter search.
+          children: []
+          inputs:
+            record_id: null
+          bindings:
+            - from_step: TC-01.S1
+              output: record_id
+              to_input: record_id
+          outputs: []
+          expected:
+            - The Monthly filter is shown for tenant example.
+          evidence:
+            - Sanitized observation with fixture identity and timestamp.
+          prepared_artifact:
+            reference: fixture://example/reviewed-filter-query.sql
+            preparation_id: null
+          api: null
+          database:
+            engine: postgresql
+            reader: qa-database/read-postgres.mjs
+            access_reference: fixture://example/restricted-reader-receipt
+            scope:
+              tenant: example
+              records: Only fixture-1 in tenant example
+              columns:
+                - id
+                - name
+                - tenant_id
+              max_rows: 1
+            parameters:
+              - example
+              - null
+            parameters_preparation_id: null
+            observations:
+              - Exactly one row has id fixture-1, name Monthly and tenant_id example.
+            parameter_bindings:
+              - input: record_id
+                index: 1
+          ui: null
+        - id: TC-01.S4
+          caller: qa-entrypoint
+          skill: qa-ui
+          action: Enter Monthly in the filter search and inspect the results.
+          children: []
+          inputs:
+            record_id: fixture-1
+          bindings: []
+          outputs: []
+          expected:
+            - The Monthly filter is shown for tenant example.
+          evidence:
+            - Screenshot of Monthly filter result and its visible tenant context.
+          prepared_artifact:
+            reference: null
+            preparation_id: null
+          api: null
+          database: null
+          ui:
+            surface: prepared-browser-tab
+            browser: Chromium
+            device: desktop
+            viewport:
+              mode: dimensions
+              width: 1280
+              height: 800
+              reference: null
+            entry_route: /filters
+            route_preparation_id: null
+            required_capabilities:
+              - Browser navigation
+              - Keyboard input
+              - Screenshot capture
+            screenshot_checkpoints:
+              - Search results showing Monthly for the prepared tenant.
+  human_review:
+    no_ai_cases_reason: null
+    cases:
+      - id: HQA-01
+        execution: human
+        owner_role: Product reviewer
+        requirements:
+          - AC-01
+        prerequisites:
+          - AI evidence is available for the same PR revision.
+        steps:
+          - Review the search label and empty-state wording with product expectations.
+        expected:
+          - The wording is understandable to a new report user.
+        evidence:
+          - Human review comment with the PR revision and outcome.
+        cleanup:
+          mode: none
+          reason: All observations are read-only against a prepared fixture.
+          owner: null
+          steps: null
+  automated_regression: Add API authorization and search behavior regression tests.
+open_questions: []
+```
 
-- Requirements: AC-01, AC-02, TAC-01.
-- Actor: Synthetic support user SUP-A in tenant DEMO-A.
-- Preconditions: The supplied fixture contains “Demo Oak”; the login and approved Chromium desktop computer-use surface are prepared.
-- Case dependencies: None — independent.
+Save separately as `mixed-context.yaml`:
 
-| Step | Caller | Skill | Action / prepared artifact | Input and output bindings | Expected outcome | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TC-01.S1 | qa-entrypoint | qa-ui | Open the supplied account-list route from P-01. | Input: SUP-A login reference. | “Demo Oak” is visible and the no-matches message is absent. | Start screenshot showing list and search control. |
-| TC-01.S2 | qa-entrypoint | qa-ui | Enter `zz-no-fixture-match` in the P-01 search control. | Input: exact synthetic search text. | No account rows remain; AC-01 message is visible. | Screenshot of search value and empty message. |
-| TC-01.S3 | qa-entrypoint | qa-ui | Focus the clear-search control with the keyboard and activate it. | Same page state from S2. | Search is empty, “Demo Oak” returns, and the message disappears. | Completion screenshot plus observed keyboard action/focus. |
+<!-- example:mixed:context -->
+```yaml
+schema: pigboard-work-validation-context/v1
+subject_key: EX-1
+repositories:
+  - url: https://example.invalid/example/application
+    base_branches:
+      - main
+allowed_skills:
+  - qa-api
+  - qa-bruno
+  - qa-database
+  - qa-ui
+configured_targets:
+  - local-review
+references:
+  - fixture://example/reader
+  - fixture://example/filter
+  - fixture://example/reviewed-search-collection
+  - fixture://example/reviewed-filter-query.sql
+  - fixture://example/restricted-reader-receipt
+prerequisite_graph:
+  - ticket: EX-1
+    prerequisites: []
+related_changes: []
+operations:
+  - step: TC-01.S1
+    contract:
+      id: TC-01.S1
+      caller: qa-entrypoint
+      skill: qa-api
+      action: Observe the prepared filter search.
+      children:
+        - TC-01.S2
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs:
+        - record_id
+      expected:
+        - The Monthly filter is shown for tenant example.
+      evidence:
+        - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-search-collection
+        preparation_id: null
+      api:
+        method: GET
+        operation: Search saved filters by name
+        route: /api/filters?name=Monthly
+        route_preparation_id: null
+        actor: ACTOR-01
+        request_selector: filters/search.bru
+        selector_preparation_id: null
+        expected_status: 200
+        expected_response:
+          - Contains fixture-1 named Monthly in tenant example.
+          - Does not contain records belonging to another tenant.
+      database: null
+      ui: null
+    read_only: true
+    max_duration_seconds: 5
+    parameter_count: null
+  - step: TC-01.S2
+    contract:
+      id: TC-01.S2
+      caller: TC-01.S1
+      skill: qa-bruno
+      action: Observe the prepared filter search.
+      children: []
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs:
+        - record_id
+      expected:
+        - The Monthly filter is shown for tenant example.
+      evidence:
+        - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-search-collection
+        preparation_id: null
+      api:
+        method: GET
+        operation: Search saved filters by name
+        route: /api/filters?name=Monthly
+        route_preparation_id: null
+        actor: ACTOR-01
+        request_selector: filters/search.bru
+        selector_preparation_id: null
+        expected_status: 200
+        expected_response:
+          - Contains fixture-1 named Monthly in tenant example.
+          - Does not contain records belonging to another tenant.
+      database: null
+      ui: null
+    read_only: true
+    max_duration_seconds: 5
+    parameter_count: null
+  - step: TC-01.S3
+    contract:
+      id: TC-01.S3
+      caller: qa-entrypoint
+      skill: qa-database
+      action: Observe the prepared filter search.
+      children: []
+      inputs:
+        record_id: null
+      bindings:
+        - from_step: TC-01.S1
+          output: record_id
+          to_input: record_id
+      outputs: []
+      expected:
+        - The Monthly filter is shown for tenant example.
+      evidence:
+        - Sanitized observation with fixture identity and timestamp.
+      prepared_artifact:
+        reference: fixture://example/reviewed-filter-query.sql
+        preparation_id: null
+      api: null
+      database:
+        engine: postgresql
+        reader: qa-database/read-postgres.mjs
+        access_reference: fixture://example/restricted-reader-receipt
+        scope:
+          tenant: example
+          records: Only fixture-1 in tenant example
+          columns:
+            - id
+            - name
+            - tenant_id
+          max_rows: 1
+        parameters:
+          - example
+          - null
+        parameters_preparation_id: null
+        observations:
+          - Exactly one row has id fixture-1, name Monthly and tenant_id example.
+        parameter_bindings:
+          - input: record_id
+            index: 1
+      ui: null
+    read_only: true
+    max_duration_seconds: 20
+    parameter_count: 2
+  - step: TC-01.S4
+    contract:
+      id: TC-01.S4
+      caller: qa-entrypoint
+      skill: qa-ui
+      action: Enter Monthly in the filter search and inspect the results.
+      children: []
+      inputs:
+        record_id: fixture-1
+      bindings: []
+      outputs: []
+      expected:
+        - The Monthly filter is shown for tenant example.
+      evidence:
+        - Screenshot of Monthly filter result and its visible tenant context.
+      prepared_artifact:
+        reference: null
+        preparation_id: null
+      api: null
+      database: null
+      ui:
+        surface: prepared-browser-tab
+        browser: Chromium
+        device: desktop
+        viewport:
+          mode: dimensions
+          width: 1280
+          height: 800
+          reference: null
+        entry_route: /filters
+        route_preparation_id: null
+        required_capabilities:
+          - Browser navigation
+          - Keyboard input
+          - Screenshot capture
+        screenshot_checkpoints:
+          - Search results showing Monthly for the prepared tenant.
+    read_only: true
+    max_duration_seconds: 5
+    parameter_count: null
+```
 
-- Observation limits: None — fixture specifies synchronous client-side filtering; use the computer-use tool's normal bounded observation.
-- Cleanup: None — only local search state changes and S3 clears it.
-- Manual QA: Perform these same three actions in the supplied preview as SUP-A and compare the visible states.
+## Correct misleading empty-search wording
 
-- Automated regression: Add component coverage for the empty-result message and clearing the search.
+Brief: Author a Bug that corrects misleading empty-search wording in the existing application component and its snapshot test. The accepted text is “No matching filters” with a suggestion to try another name. It must make no deletion claim and reveal no tenant/record details. Use the supplied application repository on verified main; exclude ownership/cross-tenant access changes. There are no dependencies, related repositories or decisions. Product reviewer inspects current-PR same-revision static before/after renders at configured non-runtime local-review, with no live identity, fixture or deployment needed. This agreed human-only wording assessment has no AI cases; CI/snapshot regression and PR review still apply. Retain a human comment naming inspected renders/revision, requirements and observations; no cleanup is needed. Estimate: half a human day and 3 changed files in one PR, recorded in the delivery plan.
 
-P-01 is completed in the implementation handoff before Review. The example does
-not invent a preview URL, future commit, screenshot filename or successful result.
+Synthetic native context: project EX; type Bug; key EX-2; title “Correct misleading empty-search wording”; parent EX-EPIC; assignee Example owner; label AI-Example-2; status Draft. These describe supplied context, not a competing authority object or a publication request.
 
-## Example 2: include the saved display name in the settings response
+Save as `human-work.yaml`:
 
-Native metadata supplied for this fixture: project DEMO; Story; epic DEMO-20;
-assignee the supplied directory identity for Casey; label AI-Casey-1. The existing
-GET operation and tenant permission rule are established in this fixture.
+<!-- example:human:work -->
+```yaml
+schema: pigboard-ticket/v1
+# Problem to solve
+problem_to_solve: The empty search result says the filter was deleted, although it may
+  simply have another name.
+prerequisites: []
+# Acceptance Criteria
+acceptance_criteria:
+  - id: AC-01
+    requirement: The empty search result says “No matching filters” and suggests trying another name.
+# Technical Acceptance Criteria
+technical_acceptance_criteria:
+  repository:
+    url: https://example.invalid/example/application
+    base_branch: main
+    change_boundary: Correct the existing empty-result component text and its snapshot test.
+    out_of_scope:
+      - Changing ownership or cross-tenant access.
+    related_repositories: []
+  accepted_decisions: []
+  constraints:
+    - id: TAC-01
+      requirement: The wording makes no claim that a filter was deleted and shows no tenant or
+        record details.
+# Testing Strategy
+testing_strategy:
+  testing_types: []
+  environment:
+    source: configured_target
+    target_reference: local-review
+    required_capabilities: []
+  actors: []
+  fixtures: []
+  preparation: []
+  dispatch_order: []
+  cases: []
+  human_review:
+    no_ai_cases_reason: A human must assess the wording in the supplied static before/after
+      component render; this case needs no live application.
+    cases:
+      - id: HQA-01
+        execution: human
+        owner_role: Product reviewer
+        requirements:
+          - AC-01
+          - TAC-01
+        prerequisites:
+          - The current PR provides before/after static empty-result renders for the same
+            source revision.
+        steps:
+          - Open the current PR diff and its same-revision static empty-result renders.
+          - Read the empty-result text and compare it with AC-01 and TAC-01.
+        expected:
+          - The result reads “No matching filters” and suggests trying another name.
+          - It makes no deletion claim and reveals no tenant or record details.
+        evidence:
+          - Human review comment with source revision, inspected render references and
+            observations for AC-01 and TAC-01.
+        cleanup:
+          mode: none
+          reason: All observations are read-only against a prepared fixture.
+          owner: null
+          steps: null
+  automated_regression: Update the component text snapshot to catch accidental wording
+    changes; human readability remains separately assessed.
+open_questions: []
+```
 
-### Description
+Save separately as `human-context.yaml`:
 
-Problem to solve
+<!-- example:human:context -->
+```yaml
+schema: pigboard-work-validation-context/v1
+subject_key: EX-2
+repositories:
+  - url: https://example.invalid/example/application
+    base_branches:
+      - main
+allowed_skills: []
+configured_targets:
+  - local-review
+references: []
+prerequisite_graph:
+  - ticket: EX-2
+    prerequisites: []
+related_changes: []
+operations: []
+```
 
-The settings response omits the saved display name. API consumers need to show that
-name without querying the database themselves.
+For example, from a contributor checkout run:
 
-Acceptance Criteria
+```sh
+node scripts/validate-work.mjs --mode draft --input /absolute/mixed-work.yaml --json
+node scripts/validate-work.mjs --mode start --input /absolute/mixed-work.yaml --context /absolute/mixed-context.yaml --json
+```
 
-- AC-01: GET `/settings/CFG-A` returns HTTP 200 with ID `CFG-A` and displayName `Demo A` for its tenant's reader.
-- AC-02: The same request returns HTTP 403 for a reader from the other tenant and exposes no settings fields.
-
-Technical Acceptance Criteria
-
-- Ticket contract: pigboard-story/v1
-- Repository: example/settings-api
-- Base branch: main
-- Change boundary: Existing settings response mapping and regression tests.
-- Out of scope: New endpoints, writes, schema changes and changes to tenant authorization.
-- Related repositories: None — consumers are reference context only.
-- Accepted decisions: Fixture's existing settings API contract and tenant access rule, supplied with the Story.
-- TAC-01: The response display name matches the saved value for exactly CFG-A in tenant A.
-
-Testing Strategy
-
-- Testing types: API and database.
-- QA dispatch: TC-01.S1, TC-01.S2 (owns S2.1), TC-01.S3, TC-02.S1 (owns S1.1).
-- Test data and access: Pre-seeded CFG-A in tenant A, display name “Demo A”; API reader A and reader B access references; restricted PostgreSQL reader QA-READ. Fixture operator supplies data/access before QA.
-- Environment source: Ready pipeline-owned PR environment comment and prepared database target evidence for the same deployment.
-- Execution preparation: P-01 — owner: implementer; supplies: Bruno requests/assertions and exact request selectors for both actors; used by: TC-01.S2.1, TC-02.S1.1; acceptance: preserve AC-01/02 status, field and permission expectations.
-- Execution preparation: P-02 — owner: implementer; supplies: PostgreSQL SELECT, parameters and reader context using the bundled read-postgres.mjs; used by: TC-01.S1/S3; acceptance: bounded observation of only CFG-A in tenant A, ID/display name values, verified read-only identity and TAC-01 comparison.
-
-### TC-01 — Response matches the scoped stored display name
-
-- Requirements: AC-01, TAC-01.
-- Actor: API reader A; database QA-READ restricted to the prepared test scope.
-- Preconditions: CFG-A exists in tenant A with display name “Demo A”; roles, TLS context and fixture state are prepared.
-- Case dependencies: S2 follows S1; S3 requires S1 baseline and S2.1 returned ID.
-
-| Step | Caller | Skill | Action / prepared artifact | Input and output bindings | Expected outcome | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TC-01.S1 | qa-entrypoint | qa-database | Execute P-02 baseline SELECT once. | params: tenant=A, record_id=CFG-A; output: baseline ID/name. | Exactly CFG-A with display name “Demo A”. | Sanitized SQL/parameters, row count and values, target/revision. |
-| TC-01.S2 | qa-entrypoint | qa-api | Assess AC-01 using its named child and supplied requirements. | Child S2.1 response. | Status and fields meet AC-01; record actual returned ID. | Assertion results and child receipt. |
-| TC-01.S2.1 | TC-01.S2 | qa-bruno | Execute P-01's reader-A GET and assertions once. | input: reader-A reference, CFG-A; output: response.id. | HTTP 200, id=CFG-A, displayName=Demo A. | Sanitized request/response and executed assertions. |
-| TC-01.S3 | qa-entrypoint | qa-database | Execute P-02 after-observation once. | S2.1.response.id -> params.record_id; tenant=A; compare S1 baseline. | Same ID/display name as S1; no changed values in this observed scope. | Sanitized query/results and baseline comparison. |
-
-- Observation limits: None — GET and SELECT are synchronous; use the prepared readers' fixed execution bounds.
-- Cleanup: None — only reads are prescribed; fixture remains operator-owned.
-- Manual QA: Run the same prepared Bruno request and read-only observations, then inspect status, fields and baseline comparison.
-
-### TC-02 — Other tenant cannot read the settings
-
-- Requirements: AC-02.
-- Actor: API reader B, tenant B.
-- Preconditions: Same CFG-A fixture and prepared reader-B identity.
-- Case dependencies: None — independent of TC-01; run afterward in the stated dispatch order.
-
-| Step | Caller | Skill | Action / prepared artifact | Input and output bindings | Expected outcome | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| TC-02.S1 | qa-entrypoint | qa-api | Assess AC-02 using its named child. | Child S1.1 response. | Required rejection, with no settings fields. | Assertion results and child receipt. |
-| TC-02.S1.1 | TC-02.S1 | qa-bruno | Execute P-01's reader-B GET and assertions once. | input: reader-B reference, CFG-A. | HTTP 403; no id or displayName fields exposed. | Sanitized request/response and executed negative assertions. |
-
-- Observation limits: None — synchronous request.
-- Cleanup: None — only a denied read is prescribed.
-- Manual QA: Run the same prepared reader-B request and inspect the rejection and absence assertions.
-
-- Automated regression: Add API integration coverage for display-name mapping and the existing tenant rejection; preserve tenant-scoped response coverage.
-
-This case establishes only the specified observed values, not an unobserved claim
-about every database field or transient writes. Do not count child requests twice.
-No example grants access, creates fixtures during QA or proves a live system passed.
+In a prepared installation substitute the same receipt’s exact
+`/absolute/receipt/skills/work-validator/scripts/validate-work.mjs` path. Repeat
+with `epic` and `human`. No source/test-fixture fallback is needed.
