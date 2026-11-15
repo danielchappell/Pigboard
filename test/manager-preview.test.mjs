@@ -8,6 +8,7 @@ import canonicalize from 'canonicalize';
 import { createHash } from 'node:crypto';
 import { previewSnapshot } from '../lib/manager/decisions.mjs';
 import { SNAPSHOT_LIMITS } from '../lib/manager/snapshot.mjs';
+import { inspectManagerHistory } from '../lib/contracts/receipts.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).cases;
 const fresh=id=>structuredClone(fixtures.find(c=>c.id===id));
 const run=c=>previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),c.options);
@@ -313,4 +314,58 @@ for(const c of proofConflicts.cases)test(`fixed current completion observations 
 test('the original 66 candidate fixtures remain byte-identical',()=>{
  assert.equal(createHash('sha256').update(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).digest('hex'),proofConflicts.provenance.manager_candidates_sha256);
  assert.equal(fixtures.length,66);
+});
+
+const ownPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url)));
+test('own history rejects competing completion leaves across envelopes',()=>{
+ const ids=['OC05-competing-completions-no-parent-first','OC05-competing-completions-stack-parent-first','OC05-identical-logical-publication'],cases=ids.map(id=>ownPacket.cases.find(c=>c.id===id)),before=JSON.stringify(cases);
+ assert.equal(ownPacket.cases.length,36);assert(cases.every(Boolean));
+ const exact=r=>JSON.stringify([r.ticket_id,r.comment_id,r.record_id,r.digest]),logical=r=>JSON.stringify([r.ticket_id,r.record_id,r.digest]);
+ const inspect=c=>{
+  const histories=c.snapshot.repair_receipts.map(raw=>inspectManagerHistory(raw)),groups=new Map();
+  for(const h of histories){assert.equal(h.valid,true,c.id+JSON.stringify(h.diagnostics));assert.equal(h.completion_established,false);assert.equal(h.execution_authorized,false);for(const b of h.bindings){const key=JSON.stringify([b.kind,b.key]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(b.digest);}}
+  assert([...groups.values()].some(values=>values.length>1),c.id+' overlapping fingerprint keys');for(const values of groups.values())assert.equal(new Set(values).size,1,c.id+' coherent overlapping fingerprints');
+  return histories.flatMap(h=>h.records);
+ };
+ for(const c of cases){assert.equal(c.provenance.plan_sha256,'4c73b70a497d6a4f6b674618965f24f594a63be8a056c44fdb9abf68c211e739');assert.equal(c.provenance.source_fixture_sha256,'3416dad5ff9239037b3e737a1a021fafbe2ed24bb4e893b36c299019651b7030');}
+ const [first,reverse,duplicate]=cases;
+ assert.deepEqual(first.config,reverse.config);assert.deepEqual(first.options,reverse.options);
+ assert.deepEqual({...first.snapshot,repair_receipts:[]},{...reverse.snapshot,repair_receipts:[]});
+ assert.equal(first.snapshot.repair_receipts.length,3);assert.deepEqual(reverse.snapshot.repair_receipts,[first.snapshot.repair_receipts[0],first.snapshot.repair_receipts[2],first.snapshot.repair_receipts[1]]);
+ assert.notEqual(first.expected.snapshot_digest,reverse.expected.snapshot_digest);
+ for(const c of [first,reverse]){
+  const assignment=c.snapshot.issues.find(i=>i.id==='1001').pointer.assignment,rows=inspect(c).filter(r=>r.completed&&r.ticket_id==='1001'&&exact(r.assignment)===exact(assignment));
+  assert.equal(assignment.comment_id,'81005');assert.equal(new Set(rows.map(r=>logical(r.reference))).size,2);assert(rows.some(r=>r.stack_parent===null));assert(rows.some(r=>r.stack_parent!==null));
+  assert.deepEqual(JSON.parse(JSON.stringify(run(c))),c.expected,c.id);
+ }
+ const original=ownPacket.cases.find(c=>c.id==='OC01-selection'),assignment=duplicate.snapshot.issues.find(i=>i.id==='1000').pointer.assignment,rows=inspect(duplicate).filter(r=>r.completed&&r.ticket_id==='1000'&&exact(r.assignment)===exact(assignment));
+ assert.equal(new Set(rows.map(r=>exact(r.reference))).size,2);assert.equal(new Set(rows.map(r=>logical(r.reference))).size,1);
+ assert.deepEqual(duplicate.snapshot.issues,original.snapshot.issues);assert.deepEqual(duplicate.snapshot.required_repairs,original.snapshot.required_repairs);assert.deepEqual(duplicate.snapshot.repair_receipts.slice(0,2),original.snapshot.repair_receipts);
+ const source=JSON.parse(original.snapshot.repair_receipts[0]),alternate=JSON.parse(duplicate.snapshot.repair_receipts[2]),qa=envelope=>envelope.comment_pages.flatMap(p=>p.comments).find(c=>c.id===envelope.target.comment_id),sourceQA=qa(source),alternateQA=qa(alternate);
+ assert.notEqual(sourceQA.id,alternateQA.id);assert.deepEqual({...sourceQA,id:null},{...alternateQA,id:null});assert.equal(logical(source.target),logical(alternate.target));
+ assert.deepEqual(JSON.parse(JSON.stringify(run(duplicate))),duplicate.expected,duplicate.id);assert.equal(duplicate.expected.streams[0].selected_key,'EX-1');
+ assert.equal(JSON.stringify(cases),before);
+});
+test('private own history preserves exact target closure, inherited consumption and no current authority',()=>{
+ assert.equal(ownPacket.history_projections.length,7);
+ for(const c of ownPacket.history_projections){const before=c.input,result=JSON.parse(JSON.stringify(inspectManagerHistory(before)));assert.deepEqual(result,c.expected,c.id);assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);assert(!Object.hasOwn(result,'coverage_segments'));assert.deepEqual(JSON.parse(JSON.stringify(inspectManagerHistory(before))),result,c.id+' repeat');assert.equal(c.input,before);}
+});
+test('own-repair fixture preserves six complete human groups and the exact six consumption controls',()=>{
+ assert.deepEqual(ownPacket.native_cases.map(c=>c.id),Array.from({length:6},(_,i)=>'R1-28-OC0'+(i+1)));
+ assert.deepEqual(ownPacket.obligations.OC02,['OC02-V01-remaining-R2','OC02-V02-no-remaining-cause','OC02-V03-implementation-only','OC02-V04-review-only','OC02-V05-foreign-ticket','OC02-V06-unrelated-lineage']);
+ assert.equal(ownPacket.pending_preparation.length,0);assert.equal(new Set(ownPacket.cases.map(c=>c.id)).size,ownPacket.cases.length);
+ for(const c of ownPacket.native_cases){assert.equal(c.execution,'human');for(const k of ['prerequisites','steps','expected','evidence'])assert(c[k].length>0);assert(c.cleanup);}
+});
+test('bounded own-repair cases match independent complete old-shape reports without input mutations',()=>{
+ for(const c of ownPacket.cases){const before=JSON.stringify(c),r=JSON.parse(JSON.stringify(run(c)));assert.deepEqual(r,c.expected,c.id);assert.deepEqual(JSON.parse(JSON.stringify(run(c))),r,c.id+' repeat');assert.equal(JSON.stringify(c),before);assert.equal(r.writes,0);assert.equal(r.execution_authorized,false);for(const s of r.streams){assert(!Object.hasOwn(s,'proposal'));assert(!Object.hasOwn(s,'repair_order'));}}
+});
+test('own repair CLI preserves literal JSON, readable selection/reasons, exits and disposable inputs',()=>{
+ const dir=mkdtempSync(path.join(tmpdir(),'own-repair-cli-'));try{for(const c of ownPacket.cases){const config=path.join(dir,'config.json'),input=path.join(dir,'snapshot.json'),a=JSON.stringify(c.config),b=JSON.stringify(c.snapshot);writeFileSync(config,a);writeFileSync(input,b);const args=[new URL('../scripts/manager-preview.mjs',import.meta.url).pathname,'--config',config,'--input',input],exit=c.expected.status==='complete'?0:1;
+  const json=spawnSync(process.execPath,[...args,'--json'],{cwd:dir,encoding:'utf8',timeout:5000});assert.equal(json.status,exit,c.id+json.stderr);assert.equal(json.stderr,'');assert.deepEqual(JSON.parse(json.stdout),c.expected,c.id);
+  const human=spawnSync(process.execPath,args,{cwd:dir,encoding:'utf8',timeout:5000});assert.equal(human.status,exit,c.id+human.stderr);assert.equal(human.stderr,'');assert.match(human.stdout,/No execution authority; writes: 0/);for(const s of c.expected.streams){if(s.selected_key)assert(human.stdout.includes('selected '+s.selected_key+'.'));for(const r of s.reasons)assert(human.stdout.includes(r.code+' '+r.path+':'));}
+  assert.equal(readFileSync(config,'utf8'),a);assert.equal(readFileSync(input,'utf8'),b);assert.deepEqual(readdirSync(dir).sort(),['config.json','snapshot.json']);}}finally{rmSync(dir,{recursive:true,force:true});}
+});
+test('own selection and unsupported stack previews cannot access providers, processes or mutation APIs',()=>{
+ const script=`import fs from 'node:fs';import fsp from 'node:fs/promises';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';const F=JSON.parse(fs.readFileSync(process.argv[1]));let attempts=0;const stop=()=>{attempts++;throw Error('SIDE_EFFECT_ATTEMPT')};for(const k of ['writeFileSync','appendFileSync','renameSync','unlinkSync','mkdirSync','rmSync','createWriteStream'])fs[k]=stop;for(const k of ['writeFile','appendFile','rename','unlink','mkdir','rm'])fsp[k]=stop;for(const k of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[k]=stop;http.request=stop;http.get=stop;https.request=stop;https.get=stop;net.connect=stop;net.createConnection=stop;globalThis.fetch=stop;syncBuiltinESMExports();const {previewSnapshot}=await import(${JSON.stringify(new URL('../lib/manager/decisions.mjs',import.meta.url).href)});const results=F.installed_case_ids.map(id=>{const c=F.cases.find(c=>c.id===id);return previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),c.options)});if(attempts)throw Error('SIDE_EFFECT_ATTEMPT');console.log(JSON.stringify(results));`;
+ const p=spawnSync(process.execPath,['--input-type=module','-e',script,new URL('./fixtures/manager-repairs.json',import.meta.url).pathname],{encoding:'utf8',timeout:5000});assert.equal(p.status,0,p.stderr);assert.equal(p.stderr,'');assert.deepEqual(JSON.parse(p.stdout),ownPacket.installed_case_ids.map(id=>ownPacket.cases.find(c=>c.id===id).expected));
 });
