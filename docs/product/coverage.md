@@ -1,6 +1,6 @@
 # Release coverage and gaps
 
-This is the requirements audit for the [independently reviewed delivery set](../delivery/manager-r1/README.md), with the owner-approved 24-Story QA split. Jira remains the delivery queue.
+This is the requirements audit for the [independently reviewed delivery set](../delivery/manager-r1/README.md), with both approved amendments mirrored in 25 Stories/110 cases. Jira remains the delivery queue.
 There are 53 requirements: A01–A12, W01–W12, M01–M14 and O01–O15. Every row below
 now map to implementation Stories and acceptance cases. PGB-91 is installed manager acceptance, PGB-58 is actual worker acceptance, and PGB-92 records the later activation decision. No test is claimed passed by this mapping.
 
@@ -74,7 +74,9 @@ The complete case instructions are in the Jira Story and [review pack](../delive
 | O11 | State lifecycle | Safe upgrade/rollback/restore/removal | [PGB-84](https://scubapig.atlassian.net/browse/PGB-84), [PGB-85](https://scubapig.atlassian.net/browse/PGB-85), [PGB-86](https://scubapig.atlassian.net/browse/PGB-86); R1-14-H01, R1-15-H02, R1-16-H01, R1-16-H02 |
 | O12 | Coordinated rollout audit; PGB-58 | Complete compatible release accepted before activation | [PGB-90](https://scubapig.atlassian.net/browse/PGB-90); R1-20-H01, R1-20-H02, R1-20-H03 |
 
-## Decisions, evidence and remaining work
+## Historical consolidation decisions and review record
+
+The review, grooming and owner-review sequence below records the original 20-Story consolidation; the approved amendments and current source mapping are recorded below.
 
 1. **D01 — approved:** human-only plans may reach Human Review with a truthful
    zero-AI-case report; CI and PR review remain required.
@@ -131,4 +133,4 @@ project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
 
 The owner-approved QA split adds publisher coverage only. All 53 requirements and 41 scenarios, including R1-08 execution coverage, remain. Earlier 20/23-Story review records retain their historical scope; mapping is not passing acceptance.
-PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Source mirrors 24 Stories/107 cases; native Jira has 25/110. PGB-110/R1-24 source publication is pending. These mappings do not record acceptance execution.
+PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Source and native Jira mappings contain 25 Stories/110 cases, including both R1-24/PGB-110 and R1-25/PGB-113. Both approved source amendments are mirrored. These mappings do not record acceptance execution.

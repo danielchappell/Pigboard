@@ -116,4 +116,4 @@ project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
 
 The owner-approved QA split adds publisher coverage only. All 53 requirements and 41 scenarios, including R1-08 execution coverage, remain. Earlier 20/23-Story review records retain their historical scope; mapping is not passing acceptance.
-PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Source mirrors 24 Stories/107 cases; native Jira has 25/110. PGB-110/R1-24 source publication is pending. These mappings do not record acceptance execution.
+PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Source and native Jira mappings contain 25 Stories/110 cases, including both R1-24/PGB-110 and R1-25/PGB-113. Both approved source amendments are mirrored. These mappings do not record acceptance execution.
