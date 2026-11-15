@@ -40,7 +40,7 @@ Documentation-only changes need link/contract checks, not new behavior tests.
 
 The owner requires one coherent customer configuration, with secrets referenced
 from the customer's store and generated resource IDs/receipts kept as outputs.
-Assess this alongside the seven principles below. The planned manager keeps
+Assess this alongside the product promises and engineering principles below. The planned manager keeps
 cloud-independent rules separate from Jira/state integrations, the Lambda wrapper
 and AWS installation package. Only approved release scope is implemented.
 
@@ -67,7 +67,7 @@ bot's reaction unless a separately verified required check/rule exists.
 
 These are the owner's standing instructions for substantive software lifecycle
 work across projects: discovery, design, architecture, grooming, planning,
-implementation, review and release. Use the Rovito/Pigboard process below.
+implementation, review and release. Use the development process below.
 They govern how we develop products, not requirements imposed on their users.
 Do not apply the full ceremony to an ordinary question or a trivial edit.
 Explicit task instructions and repository-specific constraints still apply.
@@ -145,7 +145,7 @@ Use fresh independent **Sol** agents with complementary lenses for substantive
 architecture, delivery/implementation plans and committed-code reviews. Use at
 least two distinct reviewers per round: one for product experience, goal/design
 fidelity and documentation; one for correctness, boundaries, security, failure
-recovery and tests. Each must still assess all seven principles below. This is
+recovery and tests. Each must still assess both lists of principles below. This is
 explicit authorization to delegate those bounded review tasks. If Sol or an
 independent reviewer is unavailable, report the incomplete gate; do not silently
 replace independence with the author's own pass.
@@ -158,7 +158,7 @@ artifact independently before accepting author conclusions. Require:
   in it, and report examined/total counts plus a second sweep for missed findings.
   Reject a report without this denominator; partial coverage cannot be CLEAN.
 - Concrete, evidenced findings with severity and references; separate speculation.
-- Their own seven-principle assessment, including human/agent differences.
+- Their own assessment of both lists of principles, considering human and agent workflows where relevant.
 - A CLEAN or NOT CLEAN verdict for that exact artifact/revision.
 
 Classify findings as real in-scope issues, out-of-scope follow-ups, or invalid with
@@ -169,30 +169,35 @@ in-scope findings remain. It does not authorize new product decisions or release
 Do not turn review into an unbounded architecture exercise or add hypothetical
 hardening. Genuine scope changes require the user; record adjacent findings.
 
-## Seven defining principles
+## Product promises
 
-1. **Intuitive.** Familiar language, consistent behavior and sensible defaults;
-   everyday work should not require knowledge of internal APIs or machinery.
-2. **Discoverable.** Humans get useful help, examples and guided choices; agents
-   get clear capabilities, structured inputs and actionable errors.
-3. **Delightful experience.** Respect time and attention. Avoid repeated setup,
-   unnecessary questions and confusing output. Smooth use matters, not decoration.
-4. **Token saver.** Return relevant information first, make detail available and
-   identify omissions. Fewer words that require many extra calls are not a gain.
-5. **Secure.** Protect credentials and permissions and prevent accidental
-   consequential actions. Friction must be proportionate; prompts alone are not
-   safety, and security does not justify obstructing normal authorized work.
-6. **Agents are equal.** Agent workflows are a primary experience with explicit
-   inputs, structured results and noninteractive execution. Humans get readable
-   guidance. Equal capability does not require identical interfaces.
-7. **Dependable.** Describe queued, completed, partial and failed outcomes honestly.
-   Explain recovery without causing completed work to be repeated accidentally.
+Read the seven [product promises](README.md#our-product-promises). They guide the
+experience we build. Apply them alongside the separate engineering principles below.
 
-The author and every independent reviewer assess all seven separately in each
-substantive design, plan and implementation review: explain how each is met,
-identify a concrete gap/tradeoff, or justify why it is unaffected. Names alone
-are not an assessment. Never hide essential information or failure to save tokens
-or create delight. These principles do not expand the agreed scope.
+## Engineering principles
+
+These principles guide how we develop and review our products. They do not add
+requirements to a customer's repository or expand an agreed delivery scope.
+
+1. **Be dependable and honest.** Distinguish proposed, running, completed, failed
+   and unverified outcomes. Preserve partial results and explain recovery so
+   people can continue without repeating successful work.
+2. **Respect the architecture and existing codebase.** Investigate and reuse
+   suitable patterns and modules. Explain departures from the existing approach.
+   Keep core logic independent of hosting and integrations.
+3. **Deliver complete, usable increments.** Finish useful outcomes within agreed
+   scope and size limits. Fix concrete defects, prevent review from expanding
+   scope, and track additional work separately.
+4. **Verify before handoff.** Use meaningful, repeatable checks, including useful
+   checks as work progresses. Keep attempts bounded and report evidence gaps
+   honestly.
+
+The author and every independent reviewer assess each product promise and each
+engineering principle separately in substantive design, plan and implementation
+reviews. Explain how it is met, identify a concrete gap or tradeoff, or explain why
+it is unaffected. Consider human and agent workflows where relevant. Names alone
+are not an assessment. Never hide essential information or failed work. These
+principles do not expand the agreed scope or change the review and release gates.
 
 ## Documentation, evidence and continuity
 

@@ -10,10 +10,12 @@ Start with [README.md](README.md). Choose the route that matches the task:
 | Install or refresh Pigboard for another repository | [docs/install.md](docs/install.md) | The operator's approved source revision, target repository and setup scope |
 | Use a skill or execute an assigned delivery stage | [docs/using-pigboard.md](docs/using-pigboard.md), then the selected `SKILL.md` | The target repository's instructions, trusted invocation and that skill's contract |
 
-Read CONTRIBUTING.md before any Pigboard edit. Its review gates and seven-principle
-assessment are mandatory for contributors. They do not become the development
-policy of repositories consuming Pigboard. Load only the skill and references
-needed for the assigned job; an installed folder is not permission to run every skill.
+Before any Pigboard edit, read [the product promises](README.md#our-product-promises)
+and [CONTRIBUTING.md](CONTRIBUTING.md), including its separate engineering principles.
+Both lists and the contributor review gates apply to work on Pigboard. They do not
+become the development policy of repositories consuming Pigboard. Load only the
+skill and references needed for the assigned job; an installed folder is not
+permission to run every skill.
 
 ## Current product authority
 
