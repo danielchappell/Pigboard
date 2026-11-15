@@ -148,6 +148,17 @@ operations: []
 
 For mixed plans, supply exact approved repository/branch pairs, targets, references,
 the complete reachable prerequisite graph and related-change Story obligations.
+`context.related_changes` lists caller-supplied obligations: every supplied
+`(repository, change_story)` pair must appear unchanged in the work's related
+repositories. `[]` supplies no required obligation. This is not a complete approval
+list of separate work: a ticket may name additional separate Stories in already
+allowed repositories, subject to normal scope review. Those links grant no extra
+writes, second PR, launch or completion authority, and this local check does not
+prove that the linked tickets exist or are approved. Prerequisites are independent:
+when linked work is a dependency, declare it in `prerequisites` and the matching
+reachable graph; a `change_story` link alone is neither a dependency edge nor proof
+of its completion.
+
 `context.references` checks exact prepared values for actor `identity_reference`,
 fixture `reference`, step `prepared_artifact.reference`, database `access_reference`
 and a supplied-default UI viewport `reference`. Repository/branch and configured

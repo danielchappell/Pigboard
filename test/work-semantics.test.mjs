@@ -42,6 +42,23 @@ test('H02 optional documentary citations remain prose while runtime references a
  const fixture=structuredClone(ticket);fixture.work.testing_strategy.fixtures=[{id:'DATA-citation',description:'A supplied fixture.',initial_state:'Prepared initial state.',reference:citation,preparation_id:null,owner:'Fixture owner'}];assert(run(fixture).diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path==='/testing_strategy/fixtures/0/reference'));
  const artifact=clone();artifact.work.testing_strategy.cases[0].steps[0].prepared_artifact.reference=citation;refresh(artifact);assert(!artifact.context.references.includes(citation));assert(run(artifact).diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path==='/testing_strategy/cases/0/steps/0/prepared_artifact/reference'));
 });
+test('H02 related changes retain every supplied obligation without turning separate links into execution authority',()=>{
+ const url='https://example.invalid/related',extraUrl='https://example.invalid/another';
+ const base=clone('human');base.context.repositories.push({url,base_branches:['main']},{url:extraUrl,base_branches:['main']});
+ const related=(repository,story)=>({url:repository,responsibility:'Separately owned related work; no second PR in this ticket.',contract_reference:null,change_story:story});
+ base.work.technical_acceptance_criteria.repository.related_repositories=[related(url,'EX-2')];assert.deepEqual(base.context.related_changes,[]);
+ const controls=[
+  ['additional separate link with no required obligation',p=>{},true,null],
+  ['matching required repository and Story',p=>p.context.related_changes=[{repository:url,change_story:'EX-2'}],true,null],
+  ['required pair plus additional separate link',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories.push(related(extraUrl,'EX-3'));},true,null],
+  ['omitted required pair',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories=[];},false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['substituted required Story',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories[0].change_story='EX-3';},false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['substituted required repository',p=>p.context.related_changes=[{repository:extraUrl,change_story:'EX-2'}],false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['unapproved related repository',p=>p.context.repositories=p.context.repositories.filter(r=>r.url!==url),false,'/technical_acceptance_criteria/repository/related_repositories/0/url'],
+  ['unapproved primary branch remains forbidden',p=>{p.work.technical_acceptance_criteria.repository.url=url;p.work.technical_acceptance_criteria.repository.base_branch='unapproved';},false,'/technical_acceptance_criteria/repository'],
+ ];
+ for(const [name,mutate,expected,path]of controls){const pair=structuredClone(base);mutate(pair);const before=JSON.stringify(pair),r=run(pair);assert.equal(r.valid,expected,name+JSON.stringify(r.diagnostics));if(!expected)assert(r.diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path===path),name);assert.equal(r.readiness,'not_evaluated');assert.equal(r.ledger_budget.ai_steps,0);assert.deepEqual(pair.context.operations,[]);assert.deepEqual(pair.work.prerequisites,[]);assert.equal(JSON.stringify(pair),before);}
+});
 test('H02 strict JS context and raw YAML/ADF floating provenance remain separate',()=>{for(const format of ['yaml','adf']){const p=clone();p.work.testing_strategy.cases[0].steps[0].inputs.amount='MARK';refresh(p);const raw=stringify(p.work).replace('MARK','1e20'),context=stringify(p.context).replace('MARK','1e20');const input=format==='adf'?JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:raw}]}]}):raw;assert(validateWork(input,{mode:'start',format,contextInput:context}).valid);assert.equal(validateValue(parseWork(raw),{mode:'structure'}).diagnostics[0].code,'NUMBER');const v=clone();v.context.operations[0].contract.inputs.amount=1e20;const r=run(v);assert.equal(r.diagnostics[0].code,'NUMBER');assert.equal(r.diagnostics[0].path,'/context/operations/0/contract/inputs/amount');}});
 const rules=[
  ['blank prose',p=>p.work.problem_to_solve=' \n','BLANK_CONTENT'],
