@@ -99,7 +99,11 @@ function ownershipCases(fixtures){
  const frozen=[{c:fresh('S30'),project:'100',owners:[['900',0],['901',2]],readable:true},{c:fresh('H03-B-conflict'),project:'200',owners:[['10900',7],['11901',9]],readable:true}];
  const cases=[...frozen];
  for(const id of ['S01','S02','S40','S18','H03-A-full'])cases.push({c:fresh(id),control:id});
- for(const mode of ['paused','not-opted']){const c=fresh('S30');c.id+='-'+mode;if(mode==='paused')c.snapshot.issues[2].status_id='1';else c.snapshot.issues[2].labels=[];cases.push({c,control:'unique'});}
+ // Preserve the old contradictory facts as negatives; give each positive its own native child.
+ for(const mode of ['paused','not-opted']){
+  const wrong=fresh('S30');wrong.id=`second-${mode}-wrong-declaration`;if(mode==='paused')wrong.snapshot.issues[2].status_id='1';else wrong.snapshot.issues[2].labels=[];cases.push({c:wrong,control:'wrong-declaration',readable:true});
+  const c=structuredClone(wrong);c.id=`second-${mode}-correct-parent`;const child=structuredClone(c.snapshot.issues[1]);child.id='1002';child.key='EX-3';child.parent_id='901';child.context_body=child.context_body.replaceAll('EX-2','EX-3');c.snapshot.issues.push(child);const ep=c.snapshot.issues[2],w=JSON.parse(ep.body),ctx=JSON.parse(ep.context_body);w.workstreams[0].story_order=['EX-3'];ctx.prerequisite_graph=ctx.prerequisite_graph.map(n=>n.ticket==='EX-2'?{...n,ticket:'EX-3'}:n);ep.body=JSON.stringify(w);ep.context_body=JSON.stringify(ctx);cases.push({c,control:'unique',readable:true});
+ }
  const reordered=fresh('S30');reordered.id+='-reordered';reordered.snapshot.issues.reverse();cases.push({c:reordered,project:'100',owners:[['900',2],['901',0]],readable:true});
  const independent=fresh('S30'),other=fresh('S18');independent.id+='-independent';
  for(const i of other.snapshot.issues.filter(i=>['901','1002'].includes(i.id))){if(i.id==='901'){i.id='902';i.key='EX-92';i.context_body=i.context_body.replaceAll('EX-91','EX-92');}else{i.parent_id='902';i.status_id='1';}independent.snapshot.issues.push(i);}
@@ -130,25 +134,60 @@ function assertOwnershipResult(result,{c,project,owners,control,independent,inva
   const conflicts=result.streams.flatMap(s=>s.reasons).filter(r=>r.code==='OWNERSHIP_CONFLICT');
   if(control==='retained'){assert.ok(conflicts.length);assert.ok(conflicts.every(r=>r.path==='/retained_members'&&r.message==='Reconcile competing Epic or retained ownership before choosing work.'));assert.ok(result.streams.every(s=>s.decision==='hold'));return;}
   assert.deepEqual(conflicts,[]);
-  if(control==='unique'||control==='S01'){const s=result.streams[0];assert.equal(s.epic_id,'900');assert.equal(s.decision,'select');assert.equal(s.selected_ticket_id,'1001');assert.ok(s.candidates.some(x=>x.ticket_id==='1001'&&x.eligible));}
+  if(control==='wrong-declaration'){assertParentResult(result,{c});assert.ok(!result.streams[0].reasons.some(r=>['NO_OPT_IN','EPIC_PAUSED'].includes(r.code)));return;}
+  if(control==='unique'||control==='S01'){const s=result.streams[0];assert.ok(!s.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'));assert.deepEqual(s.scope,{site:c.snapshot.site,project_id:'100',label:'stream-1'});assert.equal(s.counts_complete,true);assert.equal(s.return_count,1);for(const field of ['occupied_ids','blocked_ids','human_review_ids'])assert.deepEqual(s[field],[]);assert.equal(s.epic_id,'900');assert.equal(s.decision,'select');assert.equal(s.selected_ticket_id,'1001');assert.ok(s.candidates.some(x=>x.ticket_id==='1001'&&x.eligible));}
   if(control==='S02'){assert.equal(result.streams[0].decision,'wait');assert.ok(result.streams[0].reasons.some(r=>r.code==='NO_OPT_IN'));}
   if(control==='S40'){assert.equal(result.streams[0].decision,'wait');assert.ok(result.streams[0].reasons.some(r=>r.code==='EPIC_PAUSED'));assert.ok(!result.streams[0].reasons.some(r=>r.code==='NO_OPT_IN'));}
   if(control==='S18')assert.deepEqual(result.streams.filter(s=>s.decision==='select').map(s=>s.selected_ticket_id),['1001']);
   if(control==='H03-A-full'){assert.equal(result.streams.find(s=>s.scope.project_id==='200').selected_ticket_id,'11001');assert.equal(result.streams.find(s=>s.scope.project_id==='100').return_count,6);}
  }
 }
-function assertOwnershipText(text,{c,owners}){
- for(const [id,index]of owners)assert.ok(text.includes(`OWNERSHIP_CONFLICT /issues/${index}/id: ${conflictMessage(id)}`),c.id);
+function assertOwnershipText(text,{c,owners,control}){
+ if(control==='wrong-declaration')assertParentText(text);if(control==='unique')assert.ok(!text.includes('MEMBERSHIP_MISMATCH'));
+ for(const [id,index]of owners??[])assert.ok(text.includes(`OWNERSHIP_CONFLICT /issues/${index}/id: ${conflictMessage(id)}`),c.id);
  assert.ok(!text.includes('PRIVATE_EPIC_'));assert.ok(!text.includes('OWNERSHIP_CONFLICT /issues:'));
  for(const i of c.snapshot.issues){if(i.body)assert.ok(!text.includes(i.body));if(i.context_body)assert.ok(!text.includes(i.context_body));}
 }
 
 for(const spec of ownershipCases(fixtures))test(`S30 ownership explanation ${spec.c.id}`,async()=>{
  const before=JSON.stringify(spec.c),result=run(spec.c);assertOwnershipResult(result,spec);assert.deepEqual(run(spec.c),result);assert.equal(JSON.stringify(spec.c),before);
- if(!spec.invalid){const {validateWork}=await import('../lib/contracts/work.mjs');if(!spec.control)for(const i of spec.c.snapshot.issues)assert.equal(validateWork(i.body,{mode:'start',format:i.format,contextInput:i.context_body}).valid,true,spec.c.id+' '+i.key);}
+ if(!spec.invalid){const {validateWork}=await import('../lib/contracts/work.mjs');if(!spec.control||['unique','wrong-declaration'].includes(spec.control))for(const i of spec.c.snapshot.issues)assert.equal(validateWork(i.body,{mode:'start',format:i.format,contextInput:i.context_body}).valid,true,spec.c.id+' '+i.key);}
  if(spec.readable){const temp=mkdtempSync(path.join(tmpdir(),'pgb-owner-preview-'));try{
   const config=path.join(temp,'config.json'),input=path.join(temp,'snapshot.json');writeFileSync(config,JSON.stringify(spec.c.config));writeFileSync(input,JSON.stringify(spec.c.snapshot));const inputs=[readFileSync(config,'utf8'),readFileSync(input,'utf8')],args=[new URL('../scripts/manager-preview.mjs',import.meta.url).pathname,'--config',config,'--input',input];
-  for(const json of [false,true]){const invoke=()=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:temp,encoding:'utf8',timeout:5000}),p=invoke();assert.equal(p.status,1);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout);if(json){assertOwnershipResult(JSON.parse(p.stdout),spec);assert.deepEqual(JSON.parse(p.stdout),result);}else assertOwnershipText(p.stdout,spec);}
+  for(const json of [false,true]){const invoke=()=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:temp,encoding:'utf8',timeout:5000}),p=invoke();assert.equal(p.status,spec.owners||spec.control==='wrong-declaration'?1:0);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout);if(json){assertOwnershipResult(JSON.parse(p.stdout),spec);assert.deepEqual(JSON.parse(p.stdout),result);}else assertOwnershipText(p.stdout,spec);}
   assert.deepEqual([readFileSync(config,'utf8'),readFileSync(input,'utf8')],inputs);assert.deepEqual(readdirSync(temp).sort(),['config.json','snapshot.json']);
  }finally{rmSync(temp,{recursive:true,force:true});}}
+});
+
+function parentCases(fixtures){
+ const fresh=id=>structuredClone(fixtures.find(c=>c.id===id)),cases=[];
+ for(const id of ['declared-null-native-parent','declared-other-native-parent']){
+  const c=fresh(id);cases.push({c,readable:true});
+  for(const stage of ['9','10']){const c=fresh(id);c.id+='-'+stage;c.snapshot.issues[1].status_id=stage;cases.push({c});}
+ }
+ const alternative=fresh('declared-null-native-parent'),child=structuredClone(alternative.snapshot.issues[1]);alternative.id+='-valid-alternative';child.id='1002';child.key='EX-3';child.parent_id='900';child.context_body=child.context_body.replaceAll('EX-2','EX-3');alternative.snapshot.issues.push(child);const ep=alternative.snapshot.issues[0],w=JSON.parse(ep.body),ctx=JSON.parse(ep.context_body);w.workstreams[0].story_order.push('EX-3');ctx.prerequisite_graph.push({ticket:'EX-3',prerequisites:[]});ep.body=JSON.stringify(w);ep.context_body=JSON.stringify(ctx);cases.push({c:alternative,alternative:true});
+ const independent=fresh('S18');independent.id='parent-mismatch-independent-stream';independent.snapshot.issues[3].status_id='1';independent.snapshot.issues[1].parent_id=null;cases.push({c:independent,otherStream:true});
+ const project=fresh('H03-A-full');project.id='parent-mismatch-independent-project';project.snapshot.issues[1].parent_id=null;cases.push({c:project,otherProject:true});
+ for(const id of ['S01','S04','S33','membership-safe-removal-9','membership-safe-removal-1','membership-safe-removal-10'])cases.push({c:fresh(id),valid:true,invalidWork:id==='S04'});
+ return cases;
+}
+const parentMessage='Reconcile original and current project, parent, full label and Epic membership without dropping retained work.';
+function assertParentResult(result,{c,valid,invalidWork,alternative,otherStream,otherProject}){
+ assert.equal(result.valid,true,c.id);assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);
+ const s=result.streams.find(s=>s.scope.project_id==='100'&&s.scope.label==='stream-1');assert.deepEqual(s.scope,{site:c.snapshot.site,project_id:'100',label:'stream-1'});
+ if(valid){assert.equal(s.selected_ticket_id,'1001');assert.equal(s.decision,'select');assert.ok(!result.scope_diagnostics.some(d=>d.code==='MEMBERSHIP_MISMATCH'&&d.path.endsWith('/parent_id')));if(invalidWork)assert.ok(s.candidates.some(c=>c.reasons.some(r=>r.code==='INVALID_WORK')));return;}
+ const mismatch={code:'MEMBERSHIP_MISMATCH',path:'/issues/1/parent_id',message:parentMessage};
+ assert.equal(s.decision,'hold');assert.equal(s.epic_id,'900');assert.equal(s.selected_ticket_id,null);assert.equal(s.selected_key,null);assert.ok(s.reasons.some(r=>JSON.stringify(r)===JSON.stringify(mismatch)),c.id);assert.ok(result.scope_diagnostics.some(d=>d.code===mismatch.code&&d.path===mismatch.path&&d.message===mismatch.message&&JSON.stringify(d.scope)===JSON.stringify(s.scope)),c.id);
+ assert.deepEqual(s.occupied_ids,[]);assert.deepEqual(s.blocked_ids,[]);assert.equal(s.counts_complete,true);assert.deepEqual(s.human_review_ids,otherProject?['2000','2001','2002','2003','2004']:[]);assert.equal(s.return_count,otherProject?6:1);assert.ok(!s.reasons.some(r=>r.code==='INVALID_WORK'));
+ if(alternative)assert.ok(s.candidates.some(c=>c.ticket_id==='1002'&&c.eligible));
+ if(c.id.startsWith('declared-other-native-parent')){const other=result.streams.find(s=>s.scope.label==='stream-2');assert.equal(other.decision,'wait');assert.deepEqual(other.occupied_ids,['1002']);assert.equal(other.return_count,1);assert.ok(other.reasons.some(r=>r.code==='OCCUPIED'));assert.ok(!other.reasons.some(r=>r.path.endsWith('/parent_id')));}
+ if(otherStream||otherProject){const other=result.streams.find(s=>otherProject?s.scope.project_id==='200':s.scope.label==='stream-2');assert.equal(result.status,'partial');assert.equal(other.decision,'select');assert.equal(other.selected_ticket_id,otherProject?'11001':'1002');assert.ok(!other.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'));}
+ const serialized=JSON.stringify(result);for(const i of c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!serialized.includes(JSON.stringify(raw)),c.id+' raw document');
+}
+function assertParentText(text){assert.ok(text.includes(`MEMBERSHIP_MISMATCH /issues/1/parent_id: ${parentMessage}`));}
+
+for(const spec of parentCases(fixtures))test(`declared native parent ${spec.c.id}`,async()=>{
+ const before=JSON.stringify(spec.c);if(!spec.invalidWork){const {validateWork}=await import('../lib/contracts/work.mjs');for(const i of spec.c.snapshot.issues)assert.equal(validateWork(i.body,{mode:'start',format:i.format,contextInput:i.context_body}).valid,true,spec.c.id+' '+i.key);}
+ const result=run(spec.c);assertParentResult(result,spec);assert.deepEqual(run(spec.c),result);assert.equal(JSON.stringify(spec.c),before);
+ if(spec.readable){const temp=mkdtempSync(path.join(tmpdir(),'pgb-parent-preview-'));try{const config=path.join(temp,'config.json'),input=path.join(temp,'snapshot.json');writeFileSync(config,JSON.stringify(spec.c.config));writeFileSync(input,JSON.stringify(spec.c.snapshot));const original=[readFileSync(config,'utf8'),readFileSync(input,'utf8')],args=[new URL('../scripts/manager-preview.mjs',import.meta.url).pathname,'--config',config,'--input',input];for(const json of [false,true]){const invoke=()=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:temp,encoding:'utf8',timeout:5000}),p=invoke();assert.equal(p.status,1);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout);if(json)assertParentResult(JSON.parse(p.stdout),spec);else assertParentText(p.stdout);}assert.deepEqual([readFileSync(config,'utf8'),readFileSync(input,'utf8')],original);assert.deepEqual(readdirSync(temp).sort(),['config.json','snapshot.json']);}finally{rmSync(temp,{recursive:true,force:true});}}
 });

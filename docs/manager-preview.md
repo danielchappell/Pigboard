@@ -89,6 +89,16 @@ Relabel/parent/project mismatches retain old and proposed scopes. An independent
 unstarted preparation/Ready member may be removed when no retained assignment or
 incoming prerequisite requires it. Removal/cancellation is never completion.
 
+A ticket still declared in an Epic's stream order must have that Epic as its
+native parent. For example, declared ticket `1001` with a null or different parent
+holds the declaring stream at `/issues/<index>/parent_id`, even when it is Ready,
+in preparation or cancelled. This also applies to paused or non-opted declarations;
+another correct declaration cannot waive a contradictory one. Reconcile the actual
+parent and order with the human owner. Genuinely removed independent unstarted
+work may remain removed under the rule above. Malformed unrelated Ready work with
+coherent native membership is instead reported and skipped while valid candidates
+can proceed. Do not edit supplied facts or drop active work to obtain a selection.
+
 A current label alone cannot prove that an unlisted native child's former stream
 is free. For example, an active child removed from its parent's only stream order
 and relabeled from `stream-1` to `stream-2` still counts in the known parent stream;
