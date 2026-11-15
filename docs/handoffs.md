@@ -277,10 +277,17 @@ resume. A wait still references a real typed upstream request.
 
 A non-completing report whose steps are all NOT_RUN can report missing deployment
 without an environment receipt. Supplied finding and step evidence is still
-validated. Any PASS or FAIL, including a reused observation, requires the trusted
+validated. Any PASS or FAIL, including a reused observation, requires nonnull
+`payload.pr` naming the tested revision, matching result evidence and the trusted
 pipeline PR-comment environment for that exact PR revision. Successful runtime QA
 keeps the same requirement; the human-only static exception remains. Validation
 of a blocker gives no permission to run tests or publish/transition anything.
+
+A `PR` error at `payload.pr` means the executed observation lacks its tested
+revision. Preserve the observations, obtain the actual tested revision and matching
+proof, then prepare a new corrected receipt through canonical publication. If that
+proof is unavailable, report the inability honestly; never invent a revision, erase
+a PASS/FAIL or edit an already published signed receipt.
 
 Existing `pigboard-handoff/v1` records without findings keep their original bytes
 and digests. The optional extension requires the matching reviewed validator

@@ -97,7 +97,52 @@ export function partialFixtures() {
     ['altered-human-list', r => r.payload.qa_report.human_pending = []],
     ['missing-findings', r => delete r.payload.findings],
   ]) cases[name] = changeTarget(blocked(), mutate);
-  return { ...cases, ...transitiveFixtures() };
+  return { ...cases, ...transitiveFixtures(), ...executionProofFixtures() };
+}
+
+// Fixed local proof variants. Upstream requests, records and evidence stay intact.
+export function executionProofFixtures() {
+  const inputs = {};
+  for (const kind of ['blocked', 'wait']) {
+    const original = kind === 'blocked' ? blocked() : waiting();
+    function variant(result = 'FAIL', pr = 'real', environment = 'real', artifacts = 'real') {
+      const e = structuredClone(original), target = targetRecord(e), tested = structuredClone(target.payload.pr);
+      const artifactURIs = new Set([...target.payload.qa_report.steps.flatMap(s => s.evidence), ...target.payload.findings.flatMap(f => f.evidence)].map(x => x.uri));
+      for (const observation of e.evidence_receipts) {
+        if (observation.kind === 'environment' && JSON.stringify(observation.pr) === JSON.stringify(tested) && environment === 'null') observation.pr = null;
+        if (artifactURIs.has(observation.uri)) {
+          if (artifacts === 'null') observation.pr = null;
+          if (artifacts === 'foreign') observation.pr.source_revision = 'f'.repeat(40);
+        }
+      }
+      changeTarget(e, r => {
+        if (pr === 'null') { r.payload.pr = null; if (kind === 'blocked') r.payload.basis = null; }
+        if (result === 'PASS') { r.payload.qa_report.steps[0].result = 'PASS'; r.payload.qa_report.steps[0].finding_ids = []; }
+        if (result === 'NOT_RUN') {
+          delete r.payload.findings;
+          for (const step of r.payload.qa_report.steps) { step.result = 'NOT_RUN'; step.evidence = []; step.finding_ids = []; step.not_run_reason = 'Deployment unavailable; no runtime dispatch.'; }
+        }
+      });
+      return e;
+    }
+    for (const result of ['PASS', 'FAIL']) {
+      inputs['proof-' + kind + '-null-' + result.toLowerCase()] = variant(result, 'null', 'null', 'null');
+      inputs['proof-' + kind + '-exact-' + result.toLowerCase()] = variant(result);
+    }
+    inputs['proof-' + kind + '-null-foreign-artifacts'] = variant('FAIL', 'null', 'null', 'foreign');
+    inputs['proof-' + kind + '-null-real-environment'] = variant('FAIL', 'null');
+    inputs['proof-' + kind + '-real-null-environment'] = variant('FAIL', 'real', 'null');
+    const empty = variant('NOT_RUN', 'null');
+    empty.evidence_receipts = empty.evidence_receipts.filter(x => x.kind !== 'environment' || x.pr.number !== targetRecord(original).payload.pr.number);
+    inputs['proof-' + kind + '-not-run'] = empty;
+  }
+  for (const [kind, field] of [['blocked', 'result'], ['wait', 'finding']]) {
+    const e = structuredClone(inputs['proof-' + kind + '-exact-fail']), target = targetRecord(e);
+    const uri = field === 'result' ? target.payload.qa_report.steps[0].evidence[0].uri : target.payload.findings[0].evidence[0].uri;
+    e.evidence_receipts.find(x => x.uri === uri).pr.source_revision = 'f'.repeat(40);
+    inputs['proof-' + kind + '-foreign-' + field] = e;
+  }
+  return inputs;
 }
 
 // Rebind only the target issue. A wait's distinct upstream lineage stays intact.

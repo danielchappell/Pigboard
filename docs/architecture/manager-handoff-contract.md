@@ -167,9 +167,13 @@ A well-shaped object alone is insufficient. The validator and role skill require
    Omitted findings remain omitted in historical bytes and digests. Retained
    observations do not themselves queue repairs, authorize resume or prove repair.
    An all-NOT_RUN non-completing report can describe missing deployment without
-   environment evidence. Any PASS/FAIL, including reused results, still requires
-   the unchanged trusted exact-revision pipeline environment. Successful runtime
-   QA retains that requirement and human-only static completion its exception.
+   environment evidence. Any PASS/FAIL, including reused results, requires nonnull
+   `payload.pr` naming the tested revision, matching result evidence and the unchanged
+   trusted exact-revision pipeline environment. A `PR` error at `payload.pr` requires
+   preserving the observations and obtaining the actual tested revision/proof for a
+   new canonical receipt. If unavailable, report that inability; never invent a
+   revision, erase PASS/FAIL or mutate an already published signed receipt. Successful
+   runtime QA retains that requirement and human-only static completion its exception.
    This reporting exception grants no runtime or provider authority. New optional
    findings require the matching reviewed validator release; never strip them or
    downgrade validation. A missing-ID LEDGER error names the consumer field:

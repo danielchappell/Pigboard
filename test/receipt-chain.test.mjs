@@ -219,3 +219,42 @@ test('declared prerequisite matrix preserves complete partial evidence without i
   }
   assert.equal(examined, 43); assert.equal(valid, 23); assert.equal(Object.keys(inputs).length, examined);
 });
+
+// Explicit expectations for the missing execution identity, independent of parity.
+test('executed QA requires a tested PR while exact proof and unexecuted exceptions remain usable', async () => {
+  const { executionProofFixtures, partialFixtures, targetRecord, records } = await import('./fixtures/qa-partial-results.mjs');
+  const { validateHandoff } = await import('../lib/contracts/handoff.mjs');
+  const { stringify } = await import('yaml');
+  const inputs = { ...executionProofFixtures(), 'human-static': partialFixtures()['human-static'] };
+  let valid = 0, invalid = 0;
+  for (const [name, e] of Object.entries(inputs)) {
+    const before = JSON.stringify(e), hash = createHash('sha256').update(before).digest('hex'), target = targetRecord(e), r = run(e);
+    const expectedValid = /-exact-(pass|fail)$|-not-run$/.test(name) || name === 'human-static';
+    assert.equal(validateHandoff(stringify(target)).valid, true, name + ': partial null PR remains structurally valid');
+    assert.equal(r.valid, expectedValid, name + JSON.stringify(r.diagnostics));
+    assert.equal(r.completion_established, name === 'human-static', name);
+    assert.equal(JSON.stringify(e), before, name);
+    assert.equal(createHash('sha256').update(JSON.stringify(e)).digest('hex'), hash, name);
+    if (expectedValid) {
+      valid++;
+      assert.deepEqual(JSON.parse(JSON.stringify(r.qa_report)), target.payload.qa_report ?? target.payload.report, name);
+      assert.deepEqual(r.human_pending, ['HQA-01'], name);
+      if (name === 'human-static') { assert.equal(r.ai_steps, 0); assert.deepEqual(r.qa_report.steps, []); assert(e.evidence_receipts.every(x => x.kind !== 'environment')); }
+      if (name.endsWith('-not-run')) { assert.equal(target.payload.pr, null); assert(r.qa_report.steps.every(s => s.result === 'NOT_RUN')); assert(!e.evidence_receipts.some(x => x.kind === 'environment' && x.pr.number === '10')); }
+    } else {
+      invalid++;
+      const base = '/comment_pages/0/comments/3/body/payload/';
+      const [code, field] = name.endsWith('-real-null-environment') ? ['EVIDENCE', 'qa_report/environment'] : name.endsWith('-foreign-result') ? ['EVIDENCE', 'qa_report/steps/0/evidence/0'] : name.endsWith('-foreign-finding') ? ['EVIDENCE', 'findings/0/evidence/0'] : ['PR', 'pr'];
+      assert(r.diagnostics.some(x => x.code === code && x.path === base + field), name + JSON.stringify(r.diagnostics));
+    }
+    if (name.startsWith('proof-wait-')) {
+      const original = partialFixtures()['wait-retained-fail'], request = target.payload.requests[0], upstream = records(e).find(x => x.r.record_id === request.record_id).r;
+      assert.equal(upstream.kind, 'repair_request'); assert.notEqual(upstream.ticket_id, target.ticket_id); assert.equal(request.digest, digestValue(upstream));
+      assert.deepEqual(e.requirements.filter(x => x.ticket_id === upstream.ticket_id), original.requirements.filter(x => x.ticket_id === upstream.ticket_id));
+      assert.deepEqual(e.comment_pages.filter(x => x.ticket_id === upstream.ticket_id), original.comment_pages.filter(x => x.ticket_id === upstream.ticket_id));
+      assert.deepEqual(e.evidence_receipts.filter(x => x.pr?.number === '12'), original.evidence_receipts.filter(x => x.pr?.number === '12'));
+      assert.equal(records(e).find(x => x.r.record_id === upstream.payload.basis.record_id).r.kind, 'qa');
+    }
+  }
+  assert.equal(Object.keys(inputs).length, 19); assert.equal(valid, 7); assert.equal(invalid, 12);
+});
