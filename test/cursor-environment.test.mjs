@@ -320,6 +320,14 @@ test('installed manager preview runs all frozen complete snapshots with real cop
  for(const fixture of cases.filter(c=>c.id.startsWith('native-'))){const c=structuredClone(fixture),i=c.snapshot.issues[c.id.startsWith('native-epic-')?0:1];c.id+='-adf';i.format='adf';i.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:i.body}]}]});cases.push(c);}
  const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
  for(const c of cases){const rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[cli,'--config',config,'--input',input,'--json',...(c.options?.expectedSnapshotDigest?['--expected-snapshot-digest',c.options.expectedSnapshotDigest]:[])];let output;try{output=execFileSync(process.execPath,args,{cwd:o.app,encoding:'utf8',timeout:30000});}catch(e){assert.equal(e.status,1);output=e.stdout.toString();}const result=JSON.parse(output);assert.deepEqual(result,previewSnapshot(rawConfig,rawSnapshot,c.options),c.id);assert.equal(result.streams.length,c.expected.streams.length);for(const expected of c.expected.streams){const actual=result.streams.find(s=>s.scope.project_id===expected.project_id&&s.scope.label===expected.label);assert.equal(actual.decision,expected.decision,c.id);assert.equal(actual.selected_ticket_id,expected.selected_ticket_id,c.id);assert.equal(actual.return_count,expected.return_count,c.id);if(expected.reason)assert.ok(actual.reasons.some(r=>r.code===expected.reason),c.id);if(c.id.startsWith('membership-')){assert.deepEqual(actual.scope,{site:c.snapshot.site,project_id:expected.project_id,label:expected.label});for(const field of ['occupied_ids','blocked_ids','human_review_ids','counts_complete'])if(Object.hasOwn(expected,field))assert.deepEqual(actual[field],expected[field],c.id+' '+field);for(const code of expected.reasons??[])assert.ok(actual.reasons.some(r=>r.code===code),c.id+' '+code);for(const code of expected.absent_reasons??[])assert.ok(!actual.reasons.some(r=>r.code===code),c.id+' '+code);if(expected.mismatch_path)assert.ok(actual.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'&&r.path===expected.mismatch_path),c.id);assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);}}assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);}
+ // Literal owner/diagnostic oracles supplement source parity on actual copied runtime.
+ for(const spec of ownershipCases(cases)){
+  const rawConfig=JSON.stringify(spec.c.config),rawSnapshot=JSON.stringify(spec.c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);
+  const args=[cli,'--config',config,'--input',input],invoke=json=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000});
+  const output=invoke(true);assert.equal(output.status,spec.owners||spec.control==='retained'?1:0);assert.equal(output.stderr,'');assertOwnershipResult(JSON.parse(output.stdout),spec);assert.equal(invoke(true).stdout,output.stdout);
+  if(spec.readable){const human=invoke(false);assert.equal(human.status,1);assert.equal(human.stderr,'');assertOwnershipText(human.stdout,spec);assert.equal(invoke(false).stdout,human.stdout);}
+  assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);
+ }
  const formatDir=await mkdtemp(path.join(os.tmpdir(),'installed-json-format-'));t.after(()=>rm(formatDir,{recursive:true,force:true}));
  const control=cases.find(c=>c.id==='S01'),literal=path.join(formatDir,'--json'),snapshot=path.join(formatDir,'snapshot.json'),hook=path.join(formatDir,'audit-open.mjs');
  await writeFile(literal,JSON.stringify(control.config));await writeFile(snapshot,JSON.stringify(control.snapshot));await writeFile(hook,"import fsp from 'node:fs/promises';import{syncBuiltinESMExports}from'node:module';let calls=0;fsp.open=async()=>{calls++;throw Error('AUDITED_INPUT_OPEN');};syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('OPEN_ATTEMPTS='+calls+'\\n'));\n");
@@ -485,3 +493,53 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
 });
+
+// Literal ownership oracles use unchanged frozen snapshots; derived controls are local copies.
+function ownershipCases(fixtures){
+ const fresh=id=>structuredClone(fixtures.find(c=>c.id===id));
+ const frozen=[{c:fresh('S30'),project:'100',owners:[['900',0],['901',2]],readable:true},{c:fresh('H03-B-conflict'),project:'200',owners:[['10900',7],['11901',9]],readable:true}];
+ const cases=[...frozen];
+ for(const id of ['S01','S02','S40','S18','H03-A-full'])cases.push({c:fresh(id),control:id});
+ for(const mode of ['paused','not-opted']){const c=fresh('S30');c.id+='-'+mode;if(mode==='paused')c.snapshot.issues[2].status_id='1';else c.snapshot.issues[2].labels=[];cases.push({c,control:'unique'});}
+ const reordered=fresh('S30');reordered.id+='-reordered';reordered.snapshot.issues.reverse();cases.push({c:reordered,project:'100',owners:[['900',2],['901',0]],readable:true});
+ const independent=fresh('S30'),other=fresh('S18');independent.id+='-independent';
+ for(const i of other.snapshot.issues.filter(i=>['901','1002'].includes(i.id))){if(i.id==='901'){i.id='902';i.key='EX-92';i.context_body=i.context_body.replaceAll('EX-91','EX-92');}else{i.parent_id='902';i.status_id='1';}independent.snapshot.issues.push(i);}
+ independent.snapshot.stream_checks.push(other.snapshot.stream_checks[1]);cases.push({c:independent,project:'100',owners:[['900',0],['901',2]],independent:true});
+ const sentinel=fresh('S30');sentinel.id+='-sentinel';for(const i of sentinel.snapshot.issues.filter(i=>i.type_id==='21')){const w=JSON.parse(i.body),ctx=JSON.parse(i.context_body);w.problem_to_solve+=' PRIVATE_EPIC_NARRATIVE_SENTINEL';ctx.references.push('PRIVATE_EPIC_CONTEXT_SENTINEL');i.body=JSON.stringify(w);i.context_body=JSON.stringify(ctx);}cases.push({c:sentinel,project:'100',owners:[['900',0],['901',2]],readable:true});
+ const invalid=fresh('S30');invalid.id+='-invalid-claimant';const invalidWork=JSON.parse(invalid.snapshot.issues[2].body);invalidWork.problem_to_solve=null;invalid.snapshot.issues[2].body=JSON.stringify(invalidWork);cases.push({c:invalid,project:'100',owners:[['900',0],['901',2]],invalid:true});
+ cases.push({c:fresh('membership-retained-conflict'),control:'retained'});
+ return cases;
+}
+const conflictMessage=id=>`Active opted-in Epic ID ${id} conflicts with another active opted-in Epic for this stream. Reconcile competing Epic ownership before choosing work.`;
+function assertOwnershipResult(result,{c,project,owners,control,independent,invalid}){
+ assert.equal(result.valid,true,c.id);assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);
+ const serialized=JSON.stringify(result);assert.ok(!serialized.includes('PRIVATE_EPIC_'),c.id);for(const i of c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!serialized.includes(JSON.stringify(raw)),c.id+' raw document');
+ if(owners){
+  const scope={site:c.snapshot.site,project_id:project,label:'stream-1'},s=result.streams.find(s=>s.scope.project_id===project&&s.scope.label==='stream-1');
+  assert.deepEqual(s.scope,scope);assert.equal(s.decision,'hold');assert.equal(s.epic_id,null);assert.deepEqual(s.candidates,[]);assert.equal(s.selected_ticket_id,null);assert.equal(s.selected_key,null);
+  const expected=owners.map(([id,index])=>({code:'OWNERSHIP_CONFLICT',path:`/issues/${index}/id`,message:conflictMessage(id)})).sort((a,b)=>a.path.localeCompare(b.path));
+  assert.deepEqual(s.reasons.filter(r=>r.code==='OWNERSHIP_CONFLICT'),expected,c.id);
+  assert.deepEqual(result.scope_diagnostics.filter(d=>d.code==='OWNERSHIP_CONFLICT'),expected.map(r=>({...r,scope})),c.id);
+  for(const [id,index]of owners)assert.equal(c.snapshot.issues[index].id,id);
+  assert.ok(!s.reasons.some(r=>['NO_OPT_IN','EPIC_PAUSED'].includes(r.code)));
+  for(const field of ['occupied_ids','blocked_ids','human_review_ids'])assert.deepEqual(s[field],[]);
+  assert.equal(s.counts_complete,true);assert.equal(s.return_count,1);
+  if(project==='200'){const a=result.streams.find(s=>s.scope.project_id==='100');assert.equal(a.decision,'wait');assert.equal(a.epic_id,'900');assert.equal(a.return_count,6);assert.deepEqual(a.human_review_ids,['2000','2001','2002','2003','2004']);assert.ok(a.reasons.some(r=>r.code==='HUMAN_REVIEW_CAP'));assert.ok(!a.reasons.some(r=>r.code==='OWNERSHIP_CONFLICT'));}
+  if(independent){const other=result.streams.find(s=>s.scope.label==='stream-2');assert.equal(result.status,'partial');assert.equal(other.decision,'select');assert.equal(other.epic_id,'902');assert.equal(other.selected_ticket_id,'1002');assert.ok(!other.reasons.some(r=>r.code==='OWNERSHIP_CONFLICT'));}
+  if(invalid)assert.ok(s.reasons.some(r=>r.code==='INVALID_WORK'));
+ }else{
+  const conflicts=result.streams.flatMap(s=>s.reasons).filter(r=>r.code==='OWNERSHIP_CONFLICT');
+  if(control==='retained'){assert.ok(conflicts.length);assert.ok(conflicts.every(r=>r.path==='/retained_members'&&r.message==='Reconcile competing Epic or retained ownership before choosing work.'));assert.ok(result.streams.every(s=>s.decision==='hold'));return;}
+  assert.deepEqual(conflicts,[]);
+  if(control==='unique'||control==='S01'){const s=result.streams[0];assert.equal(s.epic_id,'900');assert.equal(s.decision,'select');assert.equal(s.selected_ticket_id,'1001');assert.ok(s.candidates.some(x=>x.ticket_id==='1001'&&x.eligible));}
+  if(control==='S02'){assert.equal(result.streams[0].decision,'wait');assert.ok(result.streams[0].reasons.some(r=>r.code==='NO_OPT_IN'));}
+  if(control==='S40'){assert.equal(result.streams[0].decision,'wait');assert.ok(result.streams[0].reasons.some(r=>r.code==='EPIC_PAUSED'));assert.ok(!result.streams[0].reasons.some(r=>r.code==='NO_OPT_IN'));}
+  if(control==='S18')assert.deepEqual(result.streams.filter(s=>s.decision==='select').map(s=>s.selected_ticket_id),['1001']);
+  if(control==='H03-A-full'){assert.equal(result.streams.find(s=>s.scope.project_id==='200').selected_ticket_id,'11001');assert.equal(result.streams.find(s=>s.scope.project_id==='100').return_count,6);}
+ }
+}
+function assertOwnershipText(text,{c,owners}){
+ for(const [id,index]of owners)assert.ok(text.includes(`OWNERSHIP_CONFLICT /issues/${index}/id: ${conflictMessage(id)}`),c.id);
+ assert.ok(!text.includes('PRIVATE_EPIC_'));assert.ok(!text.includes('OWNERSHIP_CONFLICT /issues:'));
+ for(const i of c.snapshot.issues){if(i.body)assert.ok(!text.includes(i.body));if(i.context_body)assert.ok(!text.includes(i.context_body));}
+}

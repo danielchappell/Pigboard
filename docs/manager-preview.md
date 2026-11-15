@@ -140,6 +140,15 @@ bodies, unknown keys, secrets and file paths are never echoed.
 Each stream contains exact `scope`, `epic_id`, `decision: select|wait|hold`,
 `selected_ticket_id`, `selected_key`, `occupied_ids`, `blocked_ids`,
 `human_review_ids`, `counts_complete`, `return_count`, `reasons` and `candidates`.
+When several active opted-in Epics claim one stream, it holds with `epic_id: null`
+and an empty `candidates` list. There is no chosen owner. Each claimant has its own
+`OWNERSHIP_CONFLICT` reason and scoped diagnostic identifying its native Epic ID
+and `/issues/<index>/id` in the supplied snapshot. Readable output shows the same
+IDs and paths. Only validated native IDs enter these generated messages. Reconcile
+the competing Epic ownership with the human owner; do not remove active work or
+assume the first Epic in the input has authority. Other streams retain their own
+ownership, counts and decisions.
+
 Selection fields are null except on `select`; return count is known Human Review
 count+1 or null when unknown. Candidates contain native ticket ID/key, `kind`,
 `eligible` and reasons. Streams and diagnostics have deterministic ordering; no
