@@ -18,7 +18,7 @@ The installer prepares the eleven folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
-manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0
+manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 3.0.1
 dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.

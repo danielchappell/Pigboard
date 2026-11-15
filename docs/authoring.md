@@ -168,6 +168,13 @@ Their human cases remain pending, never automated passes.
 
 ## Complete-ledger budget
 
+The repository URL copied into the sizing envelope must be a valid URI beginning
+with `https://` and at most 2,048 characters. Percent-encode spaces and non-ASCII
+path characters (for example, `/saved%20filters` or `/caf%C3%A9`); use an ASCII
+punycode hostname where needed. Invalid text is rejected at the repository field
+without normalization. This syntax check does not contact or establish access to
+the repository.
+
 Local start expands every AI step (including nested helpers), every human case ID
 and every prescribed step evidence entry without truncation. It checks the handoff
 bounds: 16,384 UTF-8 bytes, container depth 16, 100 entries per list, IDs up to 255

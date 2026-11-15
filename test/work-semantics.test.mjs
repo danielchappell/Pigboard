@@ -1,8 +1,26 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,readdir,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';import { stringify } from 'yaml';import Ajv2020 from 'ajv/dist/2020.js';
+import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,readdir,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';import { stringify } from 'yaml';import Ajv2020 from 'ajv/dist/2020.js';import addFormats from 'ajv-formats';
 import { validateValue,validateWork,parseWork } from '../lib/contracts/work.mjs';import { sizeLedger } from '../lib/contracts/work-semantics.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/work-semantics.json',import.meta.url))),cli=new URL('../scripts/validate-work.mjs',import.meta.url).pathname;
 const clone=(name='mixed')=>structuredClone(fixtures[name]),run=p=>validateValue(p.work,{mode:'start',context:p.context});
+const uriControls=[
+ ['https://example.invalid/repo',true],
+ ['https://example.invalid/saved%20filters',true],
+ ['https://example.invalid/caf%C3%A9',true],
+ ['https://xn--caf-dma.invalid/repo',true],
+ ['https://[2001:db8::1]/repo',true],
+ ['https://example.invalid/a%2Fb?name=one%20two&sort=a#section',true],
+ ['https://example.invalid/raw space',false],
+ ['https://example.invalid/raw\tpath',false],
+ ['https://example.invalid/raw\npath',false],
+ ['https://[2001:db8::1/repo',false],
+ ['https://exa[mple.invalid/repo',false],
+ ['https://example.invalid/%',false],
+ ['https://example.invalid/%2',false],
+ ['https://example.invalid/%GG',false],
+ ['https://example.invalid/café',false],
+ ['https://café.invalid/repo',false],
+];
 const refresh=p=>{for(const o of p.context.operations){const s=p.work.testing_strategy.cases.flatMap(c=>c.steps).find(s=>s.id===o.step);if(s)o.contract=structuredClone(s);}};
 function reject(mutate,code,name='mixed'){const p=clone(name);mutate(p);refresh(p);const r=run(p);assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code===code),JSON.stringify(r.diagnostics));}
 test('H01 mixed and human-only local starts are truthful and immutable',()=>{for(const name of ['mixed','human']){const p=clone(name),before=JSON.stringify(p),r=run(p);assert.equal(r.valid,true);assert.equal(r.validation_scope,'local_start');assert.equal(r.readiness,'not_evaluated');assert.equal(r.start_semantics_valid,true);assert.equal(r.ledger_budget.omitted_entries,0);assert.equal(r.ledger_budget.human_cases,1);assert(!JSON.stringify(r).includes('"PASS"'));assert.equal(JSON.stringify(p),before);}});
@@ -66,12 +84,18 @@ test('H03 copied repository handoff bounds retain the complete ledger with match
   if(!valid){assert.equal(r.diagnostics.length,1);assert.equal(r.diagnostics[0].code,'LEDGER_FIELD');assert.equal(r.diagnostics[0].path,'/technical_acceptance_criteria/repository/url');assert.match(r.diagnostics[0].message,reason);}
  }
 });
+test('H03 URI lexical syntax rejects malformed original strings without normalization',()=>{
+ for(const name of ['mixed','human'])for(const [url,expected]of uriControls){const p=clone(name);p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;const before=JSON.stringify(p),r=run(p);assert.equal(r.valid,expected,JSON.stringify({url,diagnostics:r.diagnostics}));assert.equal(JSON.stringify(p),before);assert.equal(r.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(r.ledger_budget.human_cases,1);assert.equal(r.ledger_budget.omitted_entries,0);if(!expected)assert(r.diagnostics.some(d=>d.code==='LEDGER_FIELD'&&d.path==='/technical_acceptance_criteria/repository/url'&&d.message.includes('valid URI')));}
+});
 test('H03 independent full-envelope oracle matches design schema and byte projection',()=>{
  const w=clone().work,uuid='00000000-0000-4000-8000-000000000000',digest='sha256:'+'0'.repeat(64),ref={ticket_id:'0',comment_id:'0',record_id:uuid,digest};
  const records=w.testing_strategy.cases.flatMap(c=>c.steps).map(s=>({id:s.id,skill:s.skill,result:'PASS',evidence:s.evidence.map((_,j)=>({label:`e${j+1}`,uri:`https://e.invalid/${j+1}`,digest:null})),finding_ids:[],not_run_reason:null,reused_from:null}));
  const oracle={schema:'pigboard-handoff/v1',record_id:uuid,operation_id:uuid,ticket_id:'0',requirements_digest:digest,assignment:ref,role:'qa',kind:'qa',from_stage:'QA',to_stage:'Human Review',payload:{review:ref,pr:{provider:'github',repository:w.technical_acceptance_criteria.repository.url,number:'0',source_revision:'0'.repeat(40),target_branch:'a'},report:{steps:records,human_pending:w.testing_strategy.human_review.cases.map(c=>c.id),no_ai_cases_reason:null}},resume_authorization:null};
- const schema=JSON.parse(readFileSync(new URL('../docs/architecture/contracts/pigboard-handoff-v1.schema.json',import.meta.url)));const ajv=new Ajv2020({strict:false,validateFormats:false}),validate=ajv.compile(schema);assert(validate(oracle),JSON.stringify(validate.errors));
+ const schema=JSON.parse(readFileSync(new URL('../docs/architecture/contracts/pigboard-handoff-v1.schema.json',import.meta.url)));const ajv=new Ajv2020({strict:false});addFormats(ajv,{mode:'full',formats:['uri','uuid']});const validate=ajv.compile(schema);assert(validate(oracle),JSON.stringify(validate.errors));
  assert.equal(sizeLedger(w).ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(oracle)+'\n'));assert.equal(records.length,4);assert.equal(records[1].skill,'qa-bruno');
+ for(const [repository,expected]of uriControls){const envelope=structuredClone(oracle);envelope.payload.pr.repository=repository;assert.equal(validate(envelope),expected,repository);if(!expected)assert(validate.errors.some(e=>e.keyword==='format'&&e.instancePath==='/payload/pr/repository'));const work=structuredClone(w);work.technical_acceptance_criteria.repository.url=repository;assert.equal(sizeLedger(work).ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(envelope)+'\n'));}
+ const invalidUuid=structuredClone(oracle);invalidUuid.record_id='invalid';assert.equal(validate(invalidUuid),false);assert(validate.errors.some(e=>e.keyword==='format'&&e.instancePath==='/record_id'));
+
  // Independently verify every carried repository boundary against the complete
  // current handoff schema, rather than reproducing the product guard.
  const prefix='https://example.invalid/';
@@ -89,3 +113,5 @@ test('H01/H02 actual CLI preserves local files and reports modes/context exits',
 test('H01 actual local-start CLI has no filesystem writes, network or subprocess effects',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-audit-'));t.after(()=>rm(dir,{recursive:true,force:true}));const p=clone(),work=path.join(dir,'work.json'),context=path.join(dir,'facts.json'),guard=path.join(dir,'guard.mjs');const inputs=[JSON.stringify(p.work),JSON.stringify(p.context)];await writeFile(work,inputs[0]);await writeFile(context,inputs[1]);
  await writeFile(guard,`import fs from 'node:fs';import fsp from 'node:fs/promises';import http from 'node:http';import https from 'node:https';import net from 'node:net';import tls from 'node:tls';import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';let attempts=0;const deny=()=>{attempts++;throw Error('unexpected effect');};for(const api of [fs,fsp])for(const key of ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'])for(const name of [key,key+'Sync'])if(typeof api[name]==='function')api[name]=deny;const original=fsp.open;fsp.open=async(...args)=>{if(args[1]!==undefined&&args[1]!==0&&args[1]!==fs.constants.O_NONBLOCK&&args[1]!=='r')deny();const h=await original(...args);for(const key of ['write','writeFile','appendFile','writev','truncate','chmod','chown'])h[key]=deny;return h;};for(const api of [http,https])for(const key of ['request','get'])api[key]=deny;for(const api of [net,tls])for(const key of ['connect','createConnection','createServer'])if(api[key])api[key]=deny;for(const key of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[key]=deny;globalThis.fetch=deny;syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('AUDIT attempts='+attempts+'\\n'));`);
  const before=await readdir(dir),command=spawnSync(process.execPath,['--import',guard,cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(JSON.parse(command.stdout).valid,true);assert.equal(command.stderr,'AUDIT attempts=0\n');assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(work,'utf8'),inputs[0]);assert.equal(await readFile(context,'utf8'),inputs[1]);});
+
+test('H03 actual source CLI checks original repository URI syntax and leaves both inputs unchanged',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-uri-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));const work=path.join(dir,'work.json'),context=path.join(dir,'facts.json');for(const url of ['https://example.invalid/a%20b','https://example.invalid/raw space']){const p=clone();p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;const before=[JSON.stringify(p.work),JSON.stringify(p.context)];await writeFile(work,before[0]);await writeFile(context,before[1]);const command=spawnSync(process.execPath,[cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000}),result=JSON.parse(command.stdout);assert.equal(command.status,url.includes('%20')?0:1);assert.equal(result.valid,url.includes('%20'));assert.equal(result.ledger_budget.ai_steps,4);assert.equal(result.ledger_budget.human_cases,1);assert.equal(result.ledger_budget.omitted_entries,0);if(!result.valid)assert(result.diagnostics.some(d=>d.code==='LEDGER_FIELD'&&d.path==='/technical_acceptance_criteria/repository/url'));assert.equal(await readFile(work,'utf8'),before[0]);assert.equal(await readFile(context,'utf8'),before[1]);}});
