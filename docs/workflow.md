@@ -73,7 +73,19 @@ future installer. Humans should not drag tickets to resume them.
 
 Human Review is for both the responsible developer and human QA reviewer. Agents
 do not merge. Product Acceptance follows human merge and UAT deployment; Done
-means production deployment. Those human and release stages are not agent triggers.
+means production deployment. Those human and release stages are not automatic
+agent triggers. A human can
+explicitly invoke [request-rework](../skills/request-rework/SKILL.md) for in-scope
+findings on the same still-open PR. With current compatible completed QA lineage,
+it verifies and appends one canonical human-request record, reads it back, rechecks
+facts and verifies one direct Human Review -> Rework Queued transition. It changes
+no pointer, requirements or active B and starts no worker. The manager later admits
+A under its normal gates; no manual card drag is needed. Missing access/evidence,
+discussion, new scope, closed PR or stale facts yields no queue transition. Already
+queued work is inspection-only; unknown writes stop without replay and preserve
+findings/receipts. See the [complete usage and fixed cases](../skills/request-rework/references/example.md).
+Retained QA still cannot supply the compatible typed chain; this separate prepared
+producer does not migrate QA, deploy the manager or activate the mixed loop.
 
 ## Deterministic wiring and setup
 
