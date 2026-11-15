@@ -10,6 +10,7 @@ test('public starter executes documented commands independently of its export pa
   const root=await mkdtemp(path.join(os.tmpdir(),'pigboard-tenant-starter-'));
   const target=path.join(root,'task-test-subject');await exportPublic(target);
   const before=process.env.NODE_TEST_CONTEXT;
+  const parentNodeOptions=process.env.NODE_OPTIONS;
   const cases=[
     {id:'supported',executable:'npm',args:['test'],flag:'0',exit:0},
     {id:'task',executable:'npm',args:['run','task-test'],flag:'0',exit:1},
@@ -20,10 +21,11 @@ test('public starter executes documented commands independently of its export pa
     delete env.NODE_TEST_CONTEXT;
     delete env.npm_lifecycle_event;
     if(command.id==='all-examples')env.npm_lifecycle_event='test';
+    else env.NODE_OPTIONS=[env.NODE_OPTIONS,'--test-reporter=tap'].filter(Boolean).join(' ');
     const result=spawnSync(command.executable,command.args,{cwd:target,env,encoding:'utf8',timeout:10000});
     await writeFile(path.join(root,command.id+'.stdout.txt'),result.stdout??'');
     await writeFile(path.join(root,command.id+'.stderr.txt'),result.stderr??'');
-    await writeFile(path.join(root,command.id+'.receipt.json'),JSON.stringify({executable:command.executable,args:command.args,cwd:target,status:result.status,signal:result.signal,error:result.error?.message??null},null,2));
+    await writeFile(path.join(root,command.id+'.receipt.json'),JSON.stringify({executable:command.executable,args:command.args,cwd:target,reporter:'tap',status:result.status,signal:result.signal,error:result.error?.message??null},null,2));
     assert.equal(result.error,undefined,`Command setup failed; evidence: ${root}`);
     assert.equal(result.signal,null);
     assert.equal(result.status,command.exit,`Unexpected exit; evidence: ${root}`);
@@ -46,6 +48,7 @@ test('public starter executes documented commands independently of its export pa
     for(const line of [`1..${total}`,`# tests ${total}`,`# pass ${passed}`,`# fail ${failed}`,'# cancelled 0',`# skipped ${skipped}`,'# todo 0'])
       assert.equal(lines.filter(value=>value===line).length,1,`Missing/duplicate ${line}; evidence: ${root}`);
     assert.equal(process.env.NODE_TEST_CONTEXT,before);
+    assert.equal(process.env.NODE_OPTIONS,parentNodeOptions);
   }
   await rm(root,{recursive:true});
 });
