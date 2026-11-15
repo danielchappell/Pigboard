@@ -1,7 +1,7 @@
 # Inspect durable manager state
 
-This is an **unreleased PGB-137 implementation checkpoint on PGB-84**. The DynamoDB
-adapter, original-transition-proof persistence, local fixtures and command boundary
+This is an **unreleased early PGB-85 checkpoint on PGB-137/PGB-84**. The DynamoDB
+adapter, transition-proof persistence, evidence-only reconciliation, local fixtures and command boundary
 exist in this branch. Normal
 operator `init`/`inspect` commands still return `CORE_PREREQUISITE` until the actual
 PGB-82/83 installation resolver and preview are integrated. Nothing here enables
@@ -327,3 +327,159 @@ prescribed groups on that exact integrated tree, obtain human assessment and
 retain evidence before deleting only disposable output. Do not repeat missing-core
 proof or create live probes. Local checks, independent review, hosted CI,
 installed acceptance, merge and activation remain separate gates.
+
+## Reconcile a positively proved outcome
+
+PGB-85 adds the evidence-only consumer and conditional state operation. Actual
+PGB-82 history/receipt transport and PGB-83 installed binding/runtime projection
+are still unavailable in this checkpoint. Normal use returns `CORE_PREREQUISITE`;
+the private local fixture ports are not production substitutes. The original two
+human groups and complete PGB-137 prerequisite remain pending actual composition.
+
+After that integration, the operator journey is inspect, then submit one named
+reconciliation request:
+
+```sh
+node scripts/manager-state.mjs inspect --config company.yaml --installation installation.json --kind attempt --record-id attempt:UUID --json
+node scripts/manager-state.mjs reconcile --config company.yaml --installation installation.json --request request.json --json
+```
+
+The request is a closed JSON object, maximum 16 KiB:
+
+```json
+{
+  "schema": "pigboard-reconciliation-request/v1",
+  "attempt_id": "00000000-0000-4000-8000-000000000001",
+  "disposition": "confirmed_applied",
+  "expected_installation_revision": 5,
+  "expected_stream_revision": 0,
+  "expected_attempt_revision": 3
+}
+```
+
+Use exact observed revisions for that installation/stream/attempt. The second
+supported disposition is `confirmed_not_applied`. Duplicate, unknown, unsafe or
+non-JSON fields are invalid before provider work. There is no receipt body,
+operator identity, `drained`, force, endpoint, credential or provider-module field.
+The configuration and generated receipt remain the only installation binding.
+`--help` performs no provider calls.
+
+### Positive proof and required observations
+
+An original completed 204 for the exact retained transition-only request supports
+`confirmed_applied`. An original completed 409 supports `confirmed_not_applied`
+under the documented conflicting-update response contract. The 409 support is
+documented, not historical live-observed acceptance. Both also require:
+
+- matching original request/capture and exact immutable identity from PGB-137;
+- fresh complete retained publication, actual server metadata and exact current
+  assignment pointer, validated with the existing handoff/receipt-chain validators
+  and canonical configured roles, stages and repositories;
+- a complete requested native-history component within the bounded reader budget;
+- a current designated installed operator and matching disabled/drained context.
+
+History must explicitly say complete. Missing/unavailable history returns
+`HISTORY_UNAVAILABLE`; incomplete pages/read returns `HISTORY_INCOMPLETE`.
+Both hold even with a valid original 204/409 and otherwise valid observations.
+A successful complete empty history list is different from an unread component.
+History entries, ordering, timestamps, current status and elapsed time never
+independently prove rejection or correlate an attempt. A 400, other status, lost
+response, changed pointer or conflicting publication remains held.
+
+Admission compares its published manager assignment. Queue repair reads the actual
+retained member assignment through state, validates original ownership and fences
+that read against installation/attempt/stream changes. It preserves the existing
+assignment rather than treating the queue comment as a new admission pointer.
+The original capture configuration and later stopped configuration have different
+roles; stopping need not retain the original enabled configuration digest.
+
+### Operator and stop boundary
+
+The actual PGB-83 composition must obtain authenticated identity, designated role,
+resource generation, deployed controls/code and complete Scheduler→Lambda delivery
+bounds. STS identity alone is not permission: the principal must match the installed
+operator role, and AWS must permit the conditional state transaction. Runtime
+credentials are not an operator fallback.
+
+Actor identity is reversible `aws:` plus unpadded base64url of UTF-8 JCS
+`[account_id,user_id]`, with the exact native tuple at most 186 bytes. Unsupported
+identity returns `OPERATOR_ID_UNSUPPORTED`; it is never hashed or truncated.
+
+The installation retains twelve scalar stop fields: `pb_stop_version`,
+`pb_stop_id`, `pb_stop_actor`, `pb_stop_config_digest`,
+`pb_stop_package_revision`, `pb_stop_resource_digest`, `pb_stop_bounds_digest`,
+`pb_stop_fence_revision`, `pb_stop_started_at`, `pb_stop_window_ms`,
+`pb_stop_completed_at`, `pb_stop_elapsed_ms`. Existing 16-key/32 KiB bounds remain;
+up to four unrelated fields survive. PGB-86 owns real disable, monotonic wait and
+fresh completion; this Story adds no stop producer or command.
+
+Both admission gates must be disabled, maintenance true and the actual schedule
+disabled. Matching completed stop elapsed must cover the safe sum of actual
+complete delivery bound, invocation timeout and enforced request timeout. Unknown
+routes or unjustified bounds yield `BOUNDS_UNSUPPORTED`, not an assumed zero.
+Package/config/resource/bounds generation changes invalidate the matching stop.
+Ordinary reconciliation revision increments alone do not invalidate its stop ID.
+This client-send drain cannot cancel an already-sent Jira request or replace
+the original completed response proof.
+
+The early `projectBoundRuntime` port is a private fixture composition capability,
+with no production default, passthrough, local derivation or public input. It maps
+only the prepared synthetic resource/bounds generation to its fixed commitments.
+The actual PGB-83 shared projection and complete route derivation remain final
+integration gates. Missing real capabilities remain `CORE_PREREQUISITE`.
+
+### Result and recovery
+
+The application reads once, obtains required fresh observations, assesses once and
+conditionally persists once. It never calls a Jira mutation, pointer rollback or
+worker launch. Only confirmed persistence returns the final installation/stream/
+attempt records. The purpose-specific `reconcileAttempt` checks current disabled
+controls, complete stop ID, original capture/disposition and all expected revisions
+in one transaction. It clears only the same pending reference, retains all capture
+and publication history, records disposition/operator/time, and leaves delivery
+disabled and maintenance-held. Ordinary enabled `finalize` stays unchanged.
+
+Readable and JSON commands expose the same result. Confirmed finalization exits 0;
+held/conflict exits 1; invalid/unavailable/unsupported/uncertain/setup exits 2.
+Unknown persistence returns `uncertain` with no success data. Inspect the same
+attempt: it may still be pending or already finalized. Do not replay the Jira
+request, create a new attempt, or infer failure merely from the lost response.
+`REVISION_CONFLICT` requires fresh inspection before any later deliberate action.
+Never erase state or relax a predicate to close an evidence gap.
+
+### Finite developer packet and remaining human cases
+
+The existing original PGB-84 driver commands and `--all` keep their three R1-14
+groups. Run the two PGB-85 groups explicitly into new disposable directories:
+
+```sh
+node scripts/test-manager-state.mjs --case R1-15-H01 --output /tmp/pgb85-h01-evidence
+node scripts/test-manager-state.mjs --case R1-15-H02 --output /tmp/pgb85-h02-evidence
+```
+
+H01 has exactly two fresh fixtures: matching original 204/applied and
+409/not-applied. H02 has exactly seven: enabled runtime, in-flight invocation,
+unknown/lost response, absent history, stale revision, wrong actor, changed pointer.
+For absent history, valid capture and every other valid fact remain intact while
+the required history observation becomes unavailable. Final acceptance must run
+that variant through the actual PGB-82 fixture transport; the early callback is
+explicitly a simulated normalization port.
+
+Current packets record exact revision/dirty marker, synthetic inputs, before/after
+state, command results, provider audit and zero live Jira/worker/AWS effects. They
+report developer observations, actual integration Blocked and human acceptance
+pending; exit 1 is intentional for this incomplete composition. No human PASS is
+inferred from developer checks. Retain evidence before removing only disposable
+output. Do not repeat missing-core probes or rebuild fixtures indefinitely.
+
+Affected checks:
+
+```sh
+node --test test/reconciliation.test.mjs test/manager-state-cli.test.mjs test/manager-state-contract.test.mjs
+```
+
+Full delivery still needs actual PGB-82/83/84/PGB-137 composition, the two reserved
+core install/template paths and installed operator IAM validation, the original
+human groups/disposition, exact committed-code reviews, current required checks,
+hosted CI/current-head bot and authorized merge/release. Delivery automations stay
+inactive. No new comparative evaluation or skill work is part of this slice.

@@ -6,6 +6,7 @@ import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { result } from '../lib/state/contract.mjs';
 import { fixture, StateProvider, prepared, beginInput } from './helpers/state-provider.mjs';
 import { transitionFixture, proofFixture } from '../scripts/test-transition-proof.mjs';
+import { reconciliationContext } from '../scripts/test-manager-state.mjs';
 const flags = ['--config', '/fixture/company.yaml', '--installation', '/fixture/generated.json'];
 test('help is available without constructing SDK or resolving installation', async () => {
   const answer = await runStateCommand(['--help'], { resolveInstallation() { throw Error('must not run'); } });
@@ -65,4 +66,14 @@ test('inspect summaries expose the same retained proof facts as JSON, without HT
   assert.equal(captured.json.data.records[0].extensions.pb_capture_invocation_id, proofFixture.producer_invocation_id);
   for (const command of ['capture', 'retain-publication', 'send', 'retry']) assert.equal((await runStateCommand([command, ...flags])).outcome.status, 'invalid');
   assert.equal((await runStateCommand(['inspect', ...flags, '--kind', 'attempt'])).outcome.code, 'CORE_PREREQUISITE');
+});
+test('reconcile command preserves readable/JSON outcomes and rejects caller authority', async () => {
+  const human = await reconciliationContext(), agent = await reconciliationContext();
+  const readable = await human.command({}, false), json = await agent.command();
+  assert.equal(readable.exitCode, 0); assert.equal(json.exitCode, 0); assert.match(readable.stdout, /"outcome":"applied"/);
+  assert.deepEqual(readable.outcome.data, json.outcome.data);
+  const c = await reconciliationContext(), before = c.provider.snapshot();
+  assert.equal((await c.command({ drained: true })).outcome.status, 'invalid'); assert.equal(c.provider.snapshot(), before); assert.equal(c.audit.runtime_reads, 0);
+  assert.equal((await runStateCommand(['reconcile', ...flags, '--request', 'file', '--actor', 'caller'])).outcome.status, 'invalid');
+  assert.equal((await runStateCommand(['reconcile', ...flags, '--request', 'file'], { readRequest: async () => JSON.stringify(c.request()) })).outcome.code, 'CORE_PREREQUISITE');
 });
