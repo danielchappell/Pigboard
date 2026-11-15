@@ -691,10 +691,12 @@ function obligationCases(fixtures){
   if(kind!=='none')c.snapshot.stream_checks.push({...c.snapshot.stream_checks[0],label:'stream-2'});
   add(id,c,kind==='none'?'select':'hold',kind==='none'?'1003':null,kind==='pending'?'PENDING_INTENT':kind==='repair'?'MEMBERSHIP_MISMATCH':null,kind==='pending'?'/pending_intents':kind==='repair'?'/required_repairs/0':'',{claimed:kind==='none'?null:['100','stream-2'],removal:true});
  }
+ // Isolate the native-request guard: no intent, side row or orphan claimed check.
+ const nativeOnly=structuredClone(cases.find(s=>s.id==='B3').c);nativeOnly.snapshot.issues[1].required_requests=[structuredClone(reference)];add('B4',nativeOnly,'hold',null,'MEMBERSHIP_MISMATCH','/issues/1',{claimed:null,removal:true,nativeOnly:true,readable:true});
  return cases;
 }
 function assertObligationResult(result,spec){
- const {c,decision,selected,reason,path,claimed,accounted,removal}=spec;
+ const {c,decision,selected,reason,path,claimed,accounted,removal,nativeOnly}=spec;
  assert.equal(result.valid,true,'HARNESS_INVALID_SNAPSHOT '+c.id+' '+JSON.stringify(result.scope_diagnostics));assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);
  const find=([project_id,label])=>result.streams.find(s=>s.scope.project_id===project_id&&s.scope.label===label),native=find(['100','stream-1']),independent=find(['100','stream-3']);
  assert.deepEqual(native.scope,{site:c.snapshot.site,project_id:'100',label:'stream-1'});assert.equal(native.decision,decision,c.id);assert.equal(native.selected_ticket_id,selected,c.id);assert.equal(native.selected_key,selected==='1001'?'EX-2':selected==='1003'?'EX-4':selected==='1100'?'EX-20':null,c.id);
@@ -705,10 +707,19 @@ function assertObligationResult(result,spec){
  assert.deepEqual(independent.scope,{site:c.snapshot.site,project_id:'100',label:'stream-3'});assert.equal(independent.decision,'select');assert.equal(independent.selected_ticket_id,'1002');assert.deepEqual(independent.reasons,[]);
  for(const s of result.streams){assert.equal(s.counts_complete,true,c.id);assert.deepEqual(s.occupied_ids,[]);assert.deepEqual(s.blocked_ids,[]);assert.deepEqual(s.human_review_ids,accounted&&s===native?['1000']:[]);assert.equal(s.return_count,accounted&&s===native?2:1,c.id);}
  if(removal)assert.ok(native.candidates.some(c=>c.ticket_id==='1003'&&c.eligible));
- if(removal&&!claimed){assert.ok(!native.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'));assert.ok(!native.candidates.some(c=>c.ticket_id==='1001'));}
+ if(removal&&decision==='select'){assert.ok(!native.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'));assert.ok(!native.candidates.some(c=>c.ticket_id==='1001'));}
+ if(nativeOnly){assert.deepEqual(c.snapshot.pending_intents,[]);assert.deepEqual(c.snapshot.required_repairs,[]);assert.equal(c.snapshot.issues[1].required_requests.length,1);assert.ok(has(native,'REPAIR_POLICY_PENDING',''));assert.deepEqual(result.streams.map(s=>s.scope),[native.scope,independent.scope]);assert.ok(result.scope_diagnostics.some(d=>d.code==='MEMBERSHIP_MISMATCH'&&d.path==='/issues/1'&&JSON.stringify(d.scope)===JSON.stringify(native.scope)));assert.ok(!result.scope_diagnostics.some(d=>d.path.startsWith('/required_repairs/')||d.path==='/pending_intents'));}
  assert.equal(result.status,decision==='hold'?'partial':'complete');
  const serialized=JSON.stringify(result);for(const i of c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!serialized.includes(JSON.stringify(raw)),c.id+' raw document');
 }
 function assertObligationText(text,spec){
  assert.ok(text.includes(`${spec.reason} ${spec.path}:`),spec.c.id);assert.ok(text.includes('selected EX-3.'),spec.c.id);assert.ok(!text.includes('selected EX-2.'),spec.c.id);for(const i of spec.c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!text.includes(raw));
 }
+
+// Target the native-only removal guard without rerunning the complete installed matrix.
+test('installed B4 native-request removal stays held without a side row',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),cases=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-candidates.json'))).cases,spec=obligationCases(cases).find(s=>s.id==='B4');
+ const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),rawConfig=JSON.stringify(spec.c.config),rawSnapshot=JSON.stringify(spec.c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[path.join(validator,'scripts/manager-preview.mjs'),'--config',config,'--input',input];
+ for(const json of [false,true]){const invoke=()=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000}),p=invoke();assert.equal(p.status,1);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout);if(json)assertObligationResult(JSON.parse(p.stdout),spec);else assertObligationText(p.stdout,spec);}
+ assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);
+});
