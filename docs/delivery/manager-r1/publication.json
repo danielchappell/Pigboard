@@ -1698,8 +1698,14 @@
       "verification_limits": "Source preparation only. No helper/Bruno/model/provider acceptance, new native publication, installed runtime capability, hosted CI, merge/release or activation is established by this record.",
       "actual_prerequisite_commit": "b6b863476d9f07eee2702991f336def7ff38cd36",
       "actual_prerequisite_tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
-      "coordinated_core_commit": "af5e4ccdcb3232bdfb6229d3fc50c0e664da7fe6",
-      "coordinated_core_tree": "76c3c14455165ed0848ff52926f99f79bf564f5c"
+      "coordinated_core_commit": "f7730e8e954d443a54f85ba084810525bcb85508",
+      "coordinated_core_tree": "14778d1873b9a7368d91730056984ec1cd4940b8",
+      "historical_core_checkpoint": {
+        "commit": "af5e4ccdcb3232bdfb6229d3fc50c0e664da7fe6",
+        "tree": "76c3c14455165ed0848ff52926f99f79bf564f5c",
+        "status": "Historical local composition; final npm was held for the later Core136 correction."
+      },
+      "incoming_main_commit": "3ca2dc009acfae0a422fa97c5c7b2adef259ce8c"
     }
   },
   "qa_input_controls_amendment": {

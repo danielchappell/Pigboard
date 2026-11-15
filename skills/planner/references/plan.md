@@ -53,7 +53,11 @@ DRAFT_COMPLETE; ordinary implementation freedom belongs under Design.
 
 ## Author assessment
 
-Assess the existing seven principles separately: intuitive, discoverable, delightful
-experience, token saver, secure, agents are equal and dependable. Explain how each
-is met, its concrete gap/tradeoff or why it is unaffected, including differences
-between human and agent use. This is the author's assessment, not independent review.
+Find the target repository's accepted principles in its rules and referenced
+standards. Cite their sources and assess each principle using the project's names,
+groups and required format. Do not impose a fixed count or another project's list.
+Explain how each is met, its concrete gap/tradeoff or why it is unaffected. Consider
+differences between human and agent use where relevant.
+
+If the project defines no principles, say so; still assess the assignment and
+applicable standards. This is the author's assessment, not independent review.

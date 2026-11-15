@@ -317,6 +317,35 @@ test('the original 66 candidate fixtures remain byte-identical',()=>{
 });
 
 const ownPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url)));
+test('own history rejects competing completion leaves across envelopes',()=>{
+ const ids=['OC05-competing-completions-no-parent-first','OC05-competing-completions-stack-parent-first','OC05-identical-logical-publication'],cases=ids.map(id=>ownPacket.cases.find(c=>c.id===id)),before=JSON.stringify(cases);
+ assert.equal(ownPacket.cases.length,36);assert(cases.every(Boolean));
+ const exact=r=>JSON.stringify([r.ticket_id,r.comment_id,r.record_id,r.digest]),logical=r=>JSON.stringify([r.ticket_id,r.record_id,r.digest]);
+ const inspect=c=>{
+  const histories=c.snapshot.repair_receipts.map(raw=>inspectManagerHistory(raw)),groups=new Map();
+  for(const h of histories){assert.equal(h.valid,true,c.id+JSON.stringify(h.diagnostics));assert.equal(h.completion_established,false);assert.equal(h.execution_authorized,false);for(const b of h.bindings){const key=JSON.stringify([b.kind,b.key]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(b.digest);}}
+  assert([...groups.values()].some(values=>values.length>1),c.id+' overlapping fingerprint keys');for(const values of groups.values())assert.equal(new Set(values).size,1,c.id+' coherent overlapping fingerprints');
+  return histories.flatMap(h=>h.records);
+ };
+ for(const c of cases){assert.equal(c.provenance.plan_sha256,'4c73b70a497d6a4f6b674618965f24f594a63be8a056c44fdb9abf68c211e739');assert.equal(c.provenance.source_fixture_sha256,'3416dad5ff9239037b3e737a1a021fafbe2ed24bb4e893b36c299019651b7030');}
+ const [first,reverse,duplicate]=cases;
+ assert.deepEqual(first.config,reverse.config);assert.deepEqual(first.options,reverse.options);
+ assert.deepEqual({...first.snapshot,repair_receipts:[]},{...reverse.snapshot,repair_receipts:[]});
+ assert.equal(first.snapshot.repair_receipts.length,3);assert.deepEqual(reverse.snapshot.repair_receipts,[first.snapshot.repair_receipts[0],first.snapshot.repair_receipts[2],first.snapshot.repair_receipts[1]]);
+ assert.notEqual(first.expected.snapshot_digest,reverse.expected.snapshot_digest);
+ for(const c of [first,reverse]){
+  const assignment=c.snapshot.issues.find(i=>i.id==='1001').pointer.assignment,rows=inspect(c).filter(r=>r.completed&&r.ticket_id==='1001'&&exact(r.assignment)===exact(assignment));
+  assert.equal(assignment.comment_id,'81005');assert.equal(new Set(rows.map(r=>logical(r.reference))).size,2);assert(rows.some(r=>r.stack_parent===null));assert(rows.some(r=>r.stack_parent!==null));
+  assert.deepEqual(JSON.parse(JSON.stringify(run(c))),c.expected,c.id);
+ }
+ const original=ownPacket.cases.find(c=>c.id==='OC01-selection'),assignment=duplicate.snapshot.issues.find(i=>i.id==='1000').pointer.assignment,rows=inspect(duplicate).filter(r=>r.completed&&r.ticket_id==='1000'&&exact(r.assignment)===exact(assignment));
+ assert.equal(new Set(rows.map(r=>exact(r.reference))).size,2);assert.equal(new Set(rows.map(r=>logical(r.reference))).size,1);
+ assert.deepEqual(duplicate.snapshot.issues,original.snapshot.issues);assert.deepEqual(duplicate.snapshot.required_repairs,original.snapshot.required_repairs);assert.deepEqual(duplicate.snapshot.repair_receipts.slice(0,2),original.snapshot.repair_receipts);
+ const source=JSON.parse(original.snapshot.repair_receipts[0]),alternate=JSON.parse(duplicate.snapshot.repair_receipts[2]),qa=envelope=>envelope.comment_pages.flatMap(p=>p.comments).find(c=>c.id===envelope.target.comment_id),sourceQA=qa(source),alternateQA=qa(alternate);
+ assert.notEqual(sourceQA.id,alternateQA.id);assert.deepEqual({...sourceQA,id:null},{...alternateQA,id:null});assert.equal(logical(source.target),logical(alternate.target));
+ assert.deepEqual(JSON.parse(JSON.stringify(run(duplicate))),duplicate.expected,duplicate.id);assert.equal(duplicate.expected.streams[0].selected_key,'EX-1');
+ assert.equal(JSON.stringify(cases),before);
+});
 test('private own history preserves exact target closure, inherited consumption and no current authority',()=>{
  assert.equal(ownPacket.history_projections.length,7);
  for(const c of ownPacket.history_projections){const before=c.input,result=JSON.parse(JSON.stringify(inspectManagerHistory(before)));assert.deepEqual(result,c.expected,c.id);assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);assert(!Object.hasOwn(result,'coverage_segments'));assert.deepEqual(JSON.parse(JSON.stringify(inspectManagerHistory(before))),result,c.id+' repeat');assert.equal(c.input,before);}

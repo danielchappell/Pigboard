@@ -54,10 +54,17 @@ The diagram omits wait/block exits, which remain in the shared
 [handoff contract](../skills/implementer-entrypoint/references/handoff.md).
 
 The plan keeps context, design, steps, verification, documentation/preparation,
-sizing, open decisions and the author's seven-principle assessment in one
-[record](../skills/planner/references/plan.md). Independent review binds its exact
-hash and inputs. The new methods use existing handoff evidence references; they
-do not add canonical status values or schema fields.
+sizing, open decisions and the author's assessment of the target project's
+accepted principles in one [record](../skills/planner/references/plan.md). The
+independent reviewer checks the repository's sources to establish the accepted
+list and makes a separate assessment. Both preserve the project's names, groups
+and required format. Review binds the exact plan hash and inputs. The new methods
+use existing handoff evidence references; they do not add canonical status values
+or schema fields.
+
+For contributions to Pigboard, assess both its [product promises](../README.md#our-product-promises)
+and [engineering principles](../CONTRIBUTING.md#engineering-principles). These are
+Pigboard's own lists; plans for other repositories follow those projects' guidance.
 
 ## Three ordinary decisions
 

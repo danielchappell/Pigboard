@@ -398,6 +398,17 @@ only exact consumed direct refs are excluded from the next own repair. Another
 ticket, future assignment, implementation/review-only witness or shared root does
 not discharge a request. Non-null actual stack parents remain deferred to PGB-81.
 
+Before using either a current baseline or historical consumption, own selection
+requires one coherent logical QA completion for each represented exact assignment
+in that current same-ticket lineage. Logical identity is ticket ID, record UUID
+and digest; identical publications with different comment IDs are one result.
+Distinct assignments remain separate. Competing completions preserve the existing
+pending wait independently of envelope order. Per-envelope private history
+validity grants neither aggregated coherence nor current completion. Humans
+reconcile the supplied history through its owner and supply one coherent
+observation, preserving retained causes; agents receive the existing structured
+wait and unchanged authority fields.
+
 Current and history routes use one same-evaluation seven-family fingerprint
 collector. It preserves stringified tuple keys, one canonical UUID observation,
 all requirement-context observations, and exact current values containing
