@@ -731,3 +731,11 @@ the existing publication authority. Preserve published history. If an old target
 is selected, choose the actual current result with matching observations. Rewriting
 an old comment or changing its stage/PR facts to force success cannot repair proof.
 No validation run fetches, installs dependencies or writes to a provider.
+
+A configured human can explicitly authorize continuation of a blocked repair on
+the same assignment and exact PR revision. Validation follows the unique authorized
+current leaf and preserves its complete QA report and pending human cases. An
+explicit resolution may cite that same validated current QA only when it actually
+consumes the request. An older or unrelated completion cannot waive a cause. If
+authorization or consumption proof is missing, supply the authentic matching
+evidence; preserve published history rather than rewriting a blocker or result.

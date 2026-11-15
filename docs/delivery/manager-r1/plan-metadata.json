@@ -232,7 +232,7 @@
     "dependencies": [
       "R1-10"
     ],
-    "days": 1.95,
+    "days": 1.98,
     "files": [
       "lib/contracts/receipts.mjs",
       "test/receipt-chain.test.mjs",

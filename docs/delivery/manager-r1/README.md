@@ -29,7 +29,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Complete QA with an honest evidence ledger | R1-04, R1-06, R1-07 | 1.75 | 10 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
-| R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.95 | 15 |
+| R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
 | R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25 | 1.70 | 19 |
 | R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21 | 1.75 | 12 |
 | R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
@@ -43,7 +43,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.40 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.43 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -101,7 +101,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `lib/manager/snapshot.mjs`, `lib/manager/availability.mjs`, `lib/manager/decisions.mjs`, `scripts/manager-preview.mjs`, `test/manager-preview.test.mjs`, `test/fixtures/manager-candidates.json`, `docs/manager-preview.md`.
 
-### R1-25 — 15 forecast files, 1.95 days
+### R1-25 — 15 forecast files, 1.98 days
 
 `lib/contracts/receipts.mjs`, `test/receipt-chain.test.mjs`, `test/fixtures/handoff-chains.json`, `test/cursor-environment.test.mjs`, `docs/handoffs.md`, `docs/architecture/manager-handoff-contract.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/delivery/manager-r1/publication.json`, `docs/product/README.md`, `docs/product/coverage.md`, `test/qa-helper-contract.test.mjs`.
 
@@ -229,4 +229,12 @@ Configuration ownership: R1-21 creates the sole `contracts/config-v1.schema.json
 
 ## Repeated-parent amendment, 15 November 2026
 
-PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The reviewed split forecasts 15 files/1.95 days plus 19 files/1.70 days. Current source is 24 Stories/107 cases; native Jira is 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source is 24 Stories/107 cases; native Jira is 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+
+The independently reviewed F1 preservation repair carries the selected worker's
+existing proof through final authorized-resume checks and reuses only the exact
+selected current QA for a truthful consumed resolution. Current PGB-113 forecast
+is 15 files/1.98 familiar-human days, with 0.23 days remaining from the frozen
+066f24c candidate. Prior 468-test and 100-case results remain evidence for their
+original inputs and revision; repaired-candidate checks and independent reviews
+are required separately. Human acceptance remains NOT_RUN.

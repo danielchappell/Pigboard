@@ -266,7 +266,7 @@ function checkRepeatedResult(result,expected,input,label){
  assert.equal(result.valid,expected.valid,label+JSON.stringify(result.diagnostics));assert.equal(result.completion_established,expected.completion_established,label);
  assert.equal(result.validation_scope,'supplied_receipts');assert.equal(result.live_freshness,'not_evaluated');
  if(expected.diagnostic)assert(result.diagnostics.some(d=>d.code===expected.diagnostic.code&&(!expected.diagnostic.path||d.path===expected.diagnostic.path)),label+JSON.stringify(result.diagnostics));
- if(expected.valid){assert.deepEqual(result.validated_leaf,input.target);if(result.outcome==='qa')assert.deepEqual(result.human_pending,target(input).r.payload.report.human_pending);}
+ if(expected.valid){assert.deepEqual(result.validated_leaf,input.target);if(expected.validated_leaf)assert.deepEqual(result.validated_leaf,expected.validated_leaf);if(expected.qa_report)assert.deepEqual(JSON.parse(JSON.stringify(result.qa_report)),expected.qa_report,label);if(result.outcome==='qa')assert.deepEqual(result.human_pending,target(input).r.payload.report.human_pending);}
 }
 function auditRepeated(input){
  const all=entries(input),locations=new Map(all.map(x=>[JSON.stringify([x.r.ticket_id,x.c.id]),x]));assert.equal(locations.size,all.length);
@@ -277,6 +277,8 @@ function auditRepeated(input){
  return{records:all.length,reference_occurrences:edges,repair_leaves:all.filter(x=>x.r.kind==='repair_request').length,bytes:Buffer.byteLength(JSON.stringify(input)),pages:input.comment_pages.map(p=>p.comments.length)};
 }
 test('repeated-parent fixtures retain independently sealed DAGs, exact phases and bounded layered topology',()=>{
+ assert.equal(Object.keys(repeated.inputs).length,35);assert.deepEqual(Object.keys(repeated.inputs).filter(name=>name.startsWith('F1-')),Array.from({length:10},(_,i)=>'F1-'+String(i+1).padStart(2,'0')));
+ for(const [name,input]of Object.entries(repeated.inputs))if(name.startsWith('F1-')){auditRepeated(input);for(const x of entries(input)){if(x.r.assignment){const a=entries(input).find(a=>a.r.record_id===x.r.assignment.record_id);assert(a&&a.r.kind==='admission');assert.equal(x.r.operation_id,x.r.kind==='stack_update_request'?x.r.record_id:a.r.operation_id);}}}
  for(const [name,input]of Object.entries(repeated.inputs))if(repeated.audits[name])assert.deepEqual(auditRepeated(input),repeated.audits[name],name);
  for(const [name,edges,budget]of [['layered-positive',256,545536],['layered-extra-r2',257,546304]]){const a=auditRepeated(repeated.inputs[name]);assert.deepEqual([a.records,a.reference_occurrences,a.repair_leaves,a.pages],[68,edges,2,[14,50,4]]);assert.equal(256*(68+edges+1)*3+64*68**2,budget);assert.equal(repeated.layered_budgets[name],budget);assert(budget<2**20);assert(a.bytes<RECEIPT_LIMITS.bytes);}
  const base=repeated.inputs['c01-b2-qa-in-human-review'];for(const name of ['c01-b2-implementation-in-review','c01-b2-review-in-qa']){const e=structuredClone(repeated.inputs[name]);e.target=base.target;e.issues.find(i=>i.id==='1001').stage_id='5';assert.deepEqual(e,base);}
@@ -284,12 +286,12 @@ test('repeated-parent fixtures retain independently sealed DAGs, exact phases an
 test('current implementation/review/QA accept authentic repeated-parent history while malformed semantic proof rejects',()=>{
  for(const [name,input]of Object.entries(repeated.inputs)){const raw=JSON.stringify(input),r=validateReceiptChain(raw);checkRepeatedResult(r,repeated.expected[name],input,name);assert.equal(JSON.stringify(input),raw);}
  // Cache state belongs to one call, even for unchanged UUIDs in altered envelopes.
- for(const name of ['c03-missing-u1-retained-metadata','c01-b2-qa-in-human-review','layered-extra-r2','layered-positive','c02-stale-u1-selected','c01-b2-qa-in-human-review'])checkRepeatedResult(run(repeated.inputs[name]),repeated.expected[name],repeated.inputs[name],name);
+ for(const name of ['c03-missing-u1-retained-metadata','c01-b2-qa-in-human-review','layered-extra-r2','layered-positive','c02-stale-u1-selected','c01-b2-qa-in-human-review','F1-05','F1-04','F1-09','F1-03'])checkRepeatedResult(run(repeated.inputs[name]),repeated.expected[name],repeated.inputs[name],name);
  const duplicated=structuredClone(repeated.inputs['c01-b2-qa-in-human-review']);duplicated.retained.push(structuredClone(duplicated.retained[0]));assert.equal(run(duplicated).valid,false,'Duplicate retained observations cannot choose authority by array order.');
 });
 test('source readable and JSON repeated-parent matrix uses absolute inputs from an unrelated cwd without writes',async t=>{
  const dir=await mkdtemp(path.join(os.tmpdir(),'repeated-source-'));t.after(()=>rm(dir,{recursive:true,force:true}));
- for(const[name,input]of Object.entries(repeated.inputs)){const raw=JSON.stringify(input),file=path.join(dir,name+'.json');await writeFile(file,raw);for(const json of [false,true]){const p=spawnSync(process.execPath,[cli,'--mode','chain','--input',file,...(json?['--json']:[])],{cwd:os.tmpdir(),encoding:'utf8',timeout:30000});assert.equal(p.status,repeated.expected[name].valid?0:1,name+p.stderr);assert.equal(p.stderr,'');if(json)checkRepeatedResult(JSON.parse(p.stdout),repeated.expected[name],input,name);else assert(p.stdout.trim().length);}assert.equal(await readFile(file,'utf8'),raw);}
+ for(const[name,input]of Object.entries(repeated.inputs)){const raw=JSON.stringify(input),file=path.join(dir,name+'.json');await writeFile(file,raw);for(const json of [false,true]){const p=spawnSync(process.execPath,[cli,'--mode','chain','--input',file,...(json?['--json']:[])],{cwd:os.tmpdir(),encoding:'utf8',timeout:30000});assert.equal(p.status,repeated.expected[name].valid?0:1,name+p.stderr);assert.equal(p.stderr,'');if(json)checkRepeatedResult(JSON.parse(p.stdout),repeated.expected[name],input,name);else{assert(p.stdout.startsWith((repeated.expected[name].valid?'Valid':'Invalid')+' chain validation;'));if(repeated.expected[name].valid)assert(p.stdout.includes('completion established: '+repeated.expected[name].completion_established));if(repeated.expected[name].diagnostic){assert(p.stdout.includes(repeated.expected[name].diagnostic.code+' '));if(repeated.expected[name].diagnostic.path)assert(p.stdout.includes(JSON.stringify(repeated.expected[name].diagnostic.path)));}}}assert.equal(await readFile(file,'utf8'),raw);}
 });
 async function measuredReceiptCall(raw,validate,moduleURL){
  const {Session}=await import('node:inspector/promises'),session=new Session();session.connect();
