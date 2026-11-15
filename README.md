@@ -6,6 +6,32 @@ Pigboard helps agents deliver scoped Jira work through implementation, independe
 PR review and prescribed QA. Jira holds requirements and progress; Cursor runs the
 prepared skills; humans review and approve what ships.
 
+## Our product promises
+
+These seven promises guide how we build Pigboard and other Scuba Pig products.
+They describe the standard we work toward. See [What is available](#what-is-available)
+for what Pigboard supports today.
+
+1. **Write plainly.** Use clear language in tickets, skills, reports, documentation
+   and instructions. Preserve exact requirements and explain uncertainty.
+2. **Configure once.** Use one authoritative customer configuration to drive
+   downstream setup, without asking people to copy settings between systems.
+3. **Make the whole experience exceptional.** Aim for Apple-level ease in
+   installation, everyday use, updates, troubleshooting and removal. Make the
+   product intuitive and discoverable, handle complexity, and guide unavoidable
+   manual steps.
+4. **Respect time, attention and money.** Avoid wasted tokens, repeated setup and
+   endless attempts to prove a result. Preserve completed work and useful evidence.
+5. **Protect customers and their control.** Secure credentials, permissions and
+   actions. Keep runtime data and secrets under customer control, with no Scuba Pig
+   access by default.
+6. **Make human review useful.** AI should check every applicable criterion and
+   provide a clear summary, a map from changed behavior to files, and evidence.
+   Humans choose informed spot-checks and retain acceptance and merge authority.
+7. **Build focused skills and measure their value.** Learn from community
+   approaches and give each skill a coherent purpose. Compare concrete measured
+   results against agents without those skills and relevant alternatives.
+
 ## Start here
 
 | What you want to do | Guide |
