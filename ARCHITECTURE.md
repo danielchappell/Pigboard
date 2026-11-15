@@ -14,21 +14,23 @@ requirements and coverage map. Its
 source for checkouts predating that merge. Product requirements define scope;
 architecture documents express technical contracts. Neither replaces the installed
 skill contract or proves implementation. Use the current product decisions for
-human-only QA and Epic pause; the human repair-entry interface remains under
-separate discussion and is not defined by this cleanup.
+human-only QA and Epic pause; the human repair-entry design is implemented by the
+separate prepared request-rework skill below. Live acceptance and activation
+remain separate.
 
 ## Installed today: prepared skills and Jira/Cursor wiring
 
 | Component | Responsibility and evidence |
 | --- | --- |
 | Jira | Requirements, native issue metadata, workflow status and configured stage triggers; [setup record](docs/jira-setup.md) |
-| Pigboard bundle | Fourteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
+| Pigboard bundle | Fifteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
 | Setup scripts | Fetch a pinned source, prepare full folders, verify a stable installation and return a receipt; [install guide](docs/install.md) |
 | Cursor environment | Prepared tools, source checkout and role-specific model controls; [automation matrix](config/cursor/automations.md) |
 | Implementer composer | Dispatch preflight, High plan/one review and Medium job/final handoff; [entrypoint](skills/implementer-entrypoint/SKILL.md) |
 | Implementer job | Assigned code, same PR, current CI and preparation evidence; no Jira writes; [job](skills/implementer-job/SKILL.md) |
 | Implementer Jira skill | Native/configured eligibility, exact receipts, typed append/read-back and direct transition; no code/PR or admission writes; [Jira](skills/implementer-jira/SKILL.md) |
 | Reviewer wrapper / reviewer-jira | Shared read-only pr-review job and existing comments/approval; separate exact receipt preflight/publication/direct transition, no admission state; [contract](skills/pigboard-pr-review/references/jira-handoff.md) |
+| Human request-rework | Human-invoked current-QA/open-PR preflight, one verified repair comment and direct Human Review -> Rework Queued; no worker, pointer or admission writes; [skill](skills/request-rework/SKILL.md) |
 | Retained QA entrypoint | Existing basic prose prescribed QA, pending migration; [workflow](docs/workflow.md) |
 | Humans and pipelines | Resolve blockers, approve scope/merge, supply PR environments and verify UAT/production outcomes |
 

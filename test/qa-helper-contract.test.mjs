@@ -115,7 +115,7 @@ test('shared instruction/reference closure keeps exact ownership, observations a
   const db=await read('skills/qa-database/SKILL.md');assert(db.includes('parameter_bindings'));assert(db.includes('zero-based'));assert(!db.includes('different engine requires'));
   const ui=await read('skills/qa-ui/SKILL.md');assert(ui.includes('supplied_default'));assert(ui.includes('ui.screenshot_checkpoints'));assert(ui.includes('transient image display'));
   for(const p of ['skills/qa-entrypoint/SKILL.md','skills/qa-entrypoint/references/execution-record.md'])assert((await read(p)).includes('PGB-78'));
-  const manifest=JSON.parse(await read('config/skill-bundle.json'));assert.equal(manifest.skills.length,14);assert(!JSON.stringify(manifest).includes('qa-helper-case'));
+  const manifest=JSON.parse(await read('config/skill-bundle.json'));assert.equal(manifest.skills.length,15);assert(!JSON.stringify(manifest).includes('qa-helper-case'));
   for(const [file,expected] of [['skills/qa-bruno/scripts/package.json','4.2.1'],['skills/qa-database/scripts/package.json','8.23.1']])assert(Object.values(JSON.parse(await read(file)).dependencies).includes(expected));
   const hash=createHash('sha256').update(await read('skills/qa-database/scripts/read-postgres.mjs')).digest('hex');assert.equal(hash,'7dad94032016c48210ea115d0a62a7632d50f8193fb2fa621376e60b9f64f0d7');
 });

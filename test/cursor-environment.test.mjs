@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 14);
+  assert.equal(first.verification.entrypoints, 15);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -387,6 +387,71 @@ test('installed structured QA helpers retain full sibling closure and validate f
   const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
-  assert.equal(installed.verification.entrypoints,14);assert.equal(installed.verification.dependencies,'verified');
+  assert.equal(installed.verification.entrypoints,15);assert.equal(installed.verification.dependencies,'verified');
   await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
+});
+
+// This existing installation fixture simulates QA-helper packages, while copying
+// real locked validator dependencies. Genuine default installer acceptance is a
+// separate candidate receipt; neither test establishes agent/provider behavior.
+test('human rework folder/siblings survive installation and real canonical CLIs match source from an unrelated cwd',async t=>{
+ const o=await fixture(t),first=await installCursorSkills(o,fakeInstall);
+ const {packet}=await import('./fixtures/human-rework.mjs');
+ const {extractHandoff}=await import('../lib/contracts/handoff.mjs');
+ const {stringify}=await import('yaml');
+ const {createHash}=await import('node:crypto');
+ assert.equal(first.verification.entrypoints,15);
+ const manifest=JSON.parse(await readFile(first.manifest,'utf8'));
+ const actualManifest=Object.keys(manifest.sourceFiles);
+ for(const name of ['request-rework','human-writing']) {
+  async function compare(relative='') {
+   for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})) {
+    const sub=path.join(relative,entry.name);
+    if(entry.isDirectory())await compare(sub);
+    else {
+     const expected=await readFile(path.join(o.source,'skills',name,sub));
+     assert.deepEqual(await readFile(path.join(first.skills,name,sub)),expected);
+     const key=actualManifest.find(k=>k.endsWith(`${name}/${sub}`));assert(key,`${name}/${sub} manifest`);
+     assert.equal(manifest.sourceFiles[key],createHash('sha256').update(expected).digest('hex'));
+    }
+   }
+  }
+  await compare();
+ }
+ const skill=await readFile(path.join(first.skills,'request-rework/SKILL.md'),'utf8');
+ assert.equal(await readFile(path.resolve(first.skills,'request-rework/../human-writing/SKILL.md'),'utf8'),await readFile(path.join(o.source,'skills/human-writing/SKILL.md'),'utf8'));
+ assert(skill.includes('../human-writing/SKILL.md'));
+ const referencePath=path.join(first.skills,'request-rework/references/example.md'),example=await readFile(referencePath,'utf8');
+ assert.equal(await readFile(path.resolve(path.dirname(referencePath),'../../human-writing/SKILL.md'),'utf8'),await readFile(path.join(o.source,'skills/human-writing/SKILL.md'),'utf8'));
+ const route=[...example.matchAll(/^\| Canonical handoff \| \[Source handoff\]\(([^)]+)\) \| \[Installed handoff\]\(([^)]+)\) \|$/gm)];
+ assert.equal(route.length,1);
+ const sourceHelp=new URL('../skills/request-rework/references/'+route[0][1],import.meta.url);
+ assert.equal(await readFile(path.resolve(path.dirname(referencePath),route[0][2]),'utf8'),await readFile(sourceHelp,'utf8'));
+ const p=packet(),files={
+  'record.yaml':stringify(p.record),'summary.txt':p.summary,
+  'work.yaml':p.preflight.requirements[0].body,'facts.yaml':p.preflight.requirements[0].context_body,
+  'preflight.json':JSON.stringify(p.preflight),'published.json':JSON.stringify(p.published)
+ };
+ for(const [name,text]of Object.entries(files))await writeFile(path.join(o.app,name),text);
+ const cases=[
+  ['validate-work.mjs',['--mode','start','--input',path.join(o.app,'work.yaml'),'--context',path.join(o.app,'facts.yaml'),'--json']],
+  ['validate-handoff.mjs',['--mode','record','--input',path.join(o.app,'record.yaml'),'--format','yaml','--json']],
+  ...['preflight','published'].map(name=>['validate-handoff.mjs',['--mode','chain','--input',path.join(o.app,name+'.json'),'--json']]),
+  ...['html','adf'].map(format=>['prepare-handoff.mjs',['--input',path.join(o.app,'record.yaml'),'--summary',path.join(o.app,'summary.txt'),'--format',format]])
+ ];
+ for(const [script,args]of cases) {
+  const run=cli=>execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  const installed=run(path.join(first.skills,'work-validator/scripts',script));
+  assert.equal(installed,run(new URL('../scripts/'+script,import.meta.url).pathname));
+  const result=JSON.parse(installed);
+  if(script==='prepare-handoff.mjs')assert.deepEqual(JSON.parse(JSON.stringify(extractHandoff(result.format==='html'?result.body:JSON.stringify(result.body),{format:result.format}).value)),p.record);
+  else assert.equal(result.valid,true);
+ }
+ for(const [name,text]of Object.entries(files))assert.equal(await readFile(path.join(o.app,name),'utf8'),text);
+ for(const relative of ['request-rework/SKILL.md','request-rework/references/example.md']) {
+  await assert.rejects(installCursorSkills(o,async dir=>{
+   await fakeInstall(dir);if(path.basename(dir)==='work-validator')await writeFile(path.join(dir,'..',relative),'changed new skill');
+  }),/hash mismatch/);
+  assert.equal(await realpath(first.stableSkills),first.skills);
+ }
 });

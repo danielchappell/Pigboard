@@ -14,8 +14,8 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists fourteen skills. These are
-entrypoints and helpers, not fourteen autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists fifteen skills. These are
+entrypoints and helpers, not fifteen autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
@@ -28,6 +28,7 @@ entrypoints and helpers, not fourteen autonomous workers:
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
+| [request-rework](../skills/request-rework/SKILL.md) | Explicit human record-and-queue request, in-scope findings/evidence, current Human Review assignment and compatible completed QA chain on the same open PR, configured actor/tools and durable output. Human invoked; no automatic worker. |
 | [human-writing](../skills/human-writing/SKILL.md) | Clear writing for work items, reports and comments, using the supplied facts and intended audience. |
 | [qa-api](../skills/qa-api/SKILL.md) | Assess prescribed API cases with exact expectations and named prepared execution helpers. |
 | [qa-bruno](../skills/qa-bruno/SKILL.md) | Execute the assigned prepared Bruno requests/assertions with supplied environment, access and evidence requirements. Locked CLI dependencies are installed beforehand. |
@@ -114,7 +115,8 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Complete prescribed QA pass | Retain required evidence and verify Human Review transition; keep the PR open. |
 | Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
 | Complete confirmed reviewer findings | Publish all finding IDs in a same-PR repair_request and verify Rework Queued. |
-| Confirmed defect in retained QA entrypoint | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
+| Explicit authorized human findings in Human Review | request-rework verifies current QA/open PR, appends/read-backs one repair request, rechecks and verifies direct Rework Queued; active B continues. |
+| Confirmed defect in retained QA | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
@@ -221,7 +223,7 @@ port/database/qa_reader, with no URL options. Never weaken TLS or repair during 
 
 Install the exact local committed candidate into an isolated root with the real
 installer before local instruction exercises (customer installs use published
-reviewed revisions). Inspect its receipt, fourteen entrypoints, six smoke checks,
+reviewed revisions). Inspect its receipt, fifteen entrypoints, six smoke checks,
 locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
 
 ```sh
@@ -258,3 +260,27 @@ output. Preserve uncertain cleanup instead of claiming it succeeded. The reader'
 advertised missing standalone test suite is pre-existing PGB-103; do not install/
 restore it here or claim it passed. Direct reader regressions/local fallback and
 actual installed-helper acceptance are distinct evidence categories.
+
+## Ask your assistant to queue human findings
+
+After installation, load `<receipt.skills>/request-rework/SKILL.md` and its complete
+example. For example: “For EX-1, F01: searching the exact saved-filter name gives
+no result; F02: the no-match message is unclear. Expected: exact-name results and
+understandable wording under AC-01. Evidence: the supplied current-PR observations.
+I authorize recording these in-scope findings and queueing EX-1 for rework.”
+
+Prepare trusted config, native identity/full stream, current compatible completed QA
+chain, open-PR/evidence reads, configured human actor and direct append/read/transition
+capabilities beforehand. Retained QA does not produce that chain yet; missing
+compatible evidence means inability, not an invented QA completion. No manual card
+drag or extra routine approval is required when the explicit authorization exists.
+Story writing stays separate. Discussion/new scope/stale facts make no queue move.
+Already queued work is inspected without another append or transition; additional
+findings are retained as unrecorded. Unknown publication or transition stops without
+retry. The result distinguishes the recorded request from confirmed queueing; the
+manager later admits A when its separate normal gates pass, while B continues.
+
+[The complete example](../skills/request-rework/references/example.md) supplies exact
+source/installed validation commands and all twelve fixed PREP-01 variants. These
+are synthetic local instruction exercises, not live Jira or completed human
+acceptance. It explains dependency preparation, evidence retention and cleanup.
