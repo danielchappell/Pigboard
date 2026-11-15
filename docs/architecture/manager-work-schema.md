@@ -1,19 +1,22 @@
-# Epic and Story schema draft
+# Epic and Story schemas
 
-These two [design schemas](contracts/) describe the structure required before
-admission. They do not install a validator, change the story-writing skill or
-make a ticket ready by themselves. The [work contract](manager-work-contract.md)
+The canonical [Epic](../../contracts/epic-v1.schema.json) and
+[ticket](../../contracts/ticket-v1.schema.json) schemas describe structure. The
+[local validator](../authoring.md) checks draft and structural-start modes and ships
+with the prepared bundle. It does not change the story-writing skill or make a
+ticket ready by itself. The [work contract](manager-work-contract.md)
 owns readiness and authority; this document resolves field types and lists the
 checks that JSON Schema cannot perform.
 
-Use `pigboard-epic-v1.schema.json` for `pigboard-epic/v1` and
-`pigboard-ticket-v1.schema.json` for `pigboard-ticket/v1`. Both use JSON Schema
+Use `contracts/epic-v1.schema.json` for `pigboard-epic/v1` and
+`contracts/ticket-v1.schema.json` for `pigboard-ticket/v1`. Both use JSON Schema
 2020-12. Every declared field is present, including nullable fields. Unknown fields
 are rejected except inside named input values. Empty strings are never a substitute
 for null. `technical_acceptance_criteria.constraints` may be `[]` when no technical
 constraint applies; do not invent a TAC or empty entry to satisfy a schema.
 The editable YAML skeletons deliberately fail start validation until
-completed. This publication does not add a separate draft validator.
+completed. Draft validation derives its rules from the canonical schemas; it
+permits explicit null placeholders and incomplete alternatives while retaining required keys.
 
 ## Human editing
 
@@ -156,8 +159,9 @@ semantic validation and live authorization remain required. Reject non-finite
 numbers (NaN and positive/negative Infinity) before schema validation and canonical
 JSON hashing, including nested inputs and SQL parameters. Some JSON Schema libraries
 accept their host language's non-finite numbers even though JSON does not. The local
-check explicitly rejects non-JSON values before invoking its schema validator; it
-is not the production safe-YAML parser. Mapping keys must already be strings at
+check explicitly rejects non-JSON values before invoking its schema validator.
+The installed Node validator adds safe YAML parsing and bounded extraction.
+Mapping keys must already be strings at
 all depths; never coerce them, because numeric `1` and string `"1"` would collide.
 Require valid Unicode without lone surrogates and acyclic JSON values. Integer
 literals in this contract are restricted to the exact JavaScript safe-integer
@@ -167,8 +171,10 @@ research and future JavaScript/JCS boundary. Finite decimal values follow the
 JSON binary64 representation; an exact decimal that must preserve more precision
 also belongs in a string with its prescribed interpretation. These are value-domain
 checks in addition to schema shape, not permission to rewrite inputs.
-Final budgets must be
-measured in the platform proof, not guessed from this small example.
+Local work budgets are 65,536 UTF-8 bytes, depth 32 and 100 sequence items. ADF
+envelopes use 262,144 bytes, depth 32, 1,000 array items and 100 code blocks; selected
+YAML retains work limits. These measured local boundaries do not prove platform
+or handoff capacity.
 
 ## Verification and rollout
 
@@ -182,7 +188,7 @@ Validate the schema documents themselves and exercise positive and negative
 structural examples locally. The blank skeletons must parse but fail start
 validation. Mutation cases should reject missing required fields, unknown fields,
 wrong skill sections, invalid alternatives and mixed human/AI dispatch shapes.
-Semantic cases require the future validator and provider evidence; local schema
+Semantic cases require later semantic validation and provider evidence; local schema
 tests cannot claim them passed.
 
 The authoring skill, validators, separate role handoffs, Story/Bug filters and

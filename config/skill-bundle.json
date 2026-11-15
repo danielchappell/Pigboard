@@ -15,6 +15,23 @@
   ],
   "dependencyDirectories": [
     "qa-bruno/scripts",
-    "qa-database/scripts"
-  ]
+    "qa-database/scripts",
+    "work-validator"
+  ],
+  "validatorPayload": {
+    "directory": "work-validator",
+    "sources": [
+      "package.json",
+      "package-lock.json",
+      "scripts/validate-work.mjs",
+      "lib/contracts/work.mjs",
+      "contracts/epic-v1.schema.json",
+      "contracts/ticket-v1.schema.json",
+      "docs/authoring.md",
+      "docs/architecture/examples/manager-epic.yaml",
+      "docs/architecture/examples/manager-epic-populated.yaml",
+      "docs/architecture/examples/manager-ticket.yaml",
+      "docs/architecture/examples/manager-ticket-populated.yaml"
+    ]
+  }
 }

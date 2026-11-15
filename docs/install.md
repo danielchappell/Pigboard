@@ -16,7 +16,9 @@ outside commands and prompts; never embed credentials in a URL.
 
 The installer prepares the eleven folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
-scripts and lockfiles. Bruno and PostgreSQL helper dependencies use
+scripts and lockfiles, plus the separate `work-validator` payload with canonical
+Epic/ticket schemas, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0
+dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.
 
@@ -45,8 +47,10 @@ Verify that the printed revision matches the approved commit. For an existing
 setup checkout, inspect its status and preserve changes before fetching and
 selecting a new revision. Use scripts and the manifest from the same approved
 revision you request for the bundle. A local unpushed commit is not a remote release.
-The root package has no production dependencies; running root `npm ci` is not
-skill installation. There is no published `npm install pigboard` distribution here.
+Root `npm ci --ignore-scripts --no-audit --no-fund` prepares source-checkout
+validation dependencies; it is not skill installation. Prepare/install commands
+use standard Node APIs and separately prepare their bundle, so installation-only
+operators need no additional root install step. There is no published `npm install pigboard` distribution here.
 
 ## Prepare a release for explicit file loading
 
@@ -67,7 +71,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing the complete skill folders |
+| `skills` | Absolute root containing eleven complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -79,7 +83,7 @@ skills with a host or prove that host's supported execution capabilities.
 ## Install a verified stable path
 
 The installer adds source-hash and dependency verification, loads `pg.Client`,
-runs the locked `bru --version`, then exposes a stable `skills` symlink:
+runs the locked `bru --version` and both validator skeleton draft checks, then exposes a stable `skills` symlink:
 
 ```sh
 node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
@@ -92,7 +96,10 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all eleven entrypoints,
-`dependencies: "verified"`, and the `pg.Client` / `bru --version` smoke checks.
+`dependencies: "verified"`, and four smoke checks: `pg.Client`, `bru --version`,
+`work-validator epic draft` and `work-validator ticket draft`. The validator checks
+load the real parser and both schemas, require draft-valid skeletons and require
+structural-start false. They do not establish semantic/live readiness.
 Use the versioned `skills` path for a run that may overlap a refresh; it binds
 subsequent sibling-reference reads to that release. `stableSkills` is a mutable
 entry path for new runs. Do not replace its link while any run still reads through
@@ -102,6 +109,22 @@ This script installs files; it does not configure a Cursor account. It rejects a
 unmanaged destination and preserves the previous stable link on failed preparation
 or verification. Keep full sibling folders intact rather than copying a SKILL.md
 alone. Resolve referenced paths within the prepared bundle.
+
+## Check work locally
+
+The preparation receipt's `skills` path also contains the validator. Substitute
+that actual path and your absolute input file; the stable example uses the default
+root (use `stableSkills` for another root):
+
+```sh
+node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode draft --input /absolute/work.yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --json
+```
+
+See [authoring](authoring.md) for modes, limits, diagnostics and recovery. Keep the
+whole payload with its release; refresh/removal applies to it with the skills.
+Preparation installs dependencies but does not perform installation-only smoke
+checks. Neither result authorizes delivery or proves semantic/live readiness.
 
 ## Cursor environment setup
 
@@ -178,6 +201,8 @@ code, PRs or Jira actions. The scripts never silently fall back to an older rele
 
 On failure, the command exits nonzero with a blocked message and no success receipt.
 Resolve the named source, dependency, path or access issue during setup, then rerun.
+Missing/corrupt validator sources, lockfiles, wrong dependency versions or runtime
+smoke failures also block installation and preserve the previous stable binding.
 Agents executing a ticket report missing preparation instead of installing packages
 or finding replacement tools. Reconcile uncertain external actions before retrying.
 
@@ -186,5 +211,5 @@ evidence. Remove the Pigboard Build step and prompt references from the affected
 configuration, then remove only the confirmed installation root/releases after no
 run uses them. Cache pruning/removal is operator work; no uninstall command or
 automatic pruning is implemented. Retain evidence required by the team. Removing
-skills does not remove Jira rules, revoke provider credentials or cancel agents;
+skills (including the validator payload in the same release/root) does not remove Jira rules, revoke provider credentials or cancel agents;
 handle those explicitly within the authorized setup scope.

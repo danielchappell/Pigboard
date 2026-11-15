@@ -12,7 +12,7 @@ ticket=yaml.safe_load((root/'examples/manager-ticket-populated.yaml').read_text(
 c=ticket['testing_strategy']['cases'][0]['steps'][2]
 validators={}
 for name in ['epic','ticket']:
- schema=json.loads((root/'contracts'/f'pigboard-{name}-v1.schema.json').read_text());Draft202012Validator.check_schema(schema);validators[name]=Draft202012Validator(schema)
+ schema=json.loads((root.parents[1]/'contracts'/f'{name}-v1.schema.json').read_text());Draft202012Validator.check_schema(schema);validators[name]=Draft202012Validator(schema)
 cases=[]
 def require_canonical_json_input(value, active=None):
  """No coercion: check the JSON-compatible value domain before schema checks.
