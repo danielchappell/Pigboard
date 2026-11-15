@@ -419,3 +419,34 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
 });
+
+// Real copied validator and manifest, simulated unrelated QA-helper packages.
+// This checks release closure/parity, not default installer or provider acceptance.
+test('installed receipt validator preserves incomplete QA outcomes and old input bytes from unrelated cwd', async t => {
+ const o = await fixture(t), installed = await installCursorSkills(o, fakeInstall);
+ const { preparePartialFixtures } = await import('./fixtures/qa-partial-results.mjs');
+ const { createHash } = await import('node:crypto');
+ const inputRoot = path.join(o.app, 'partial-inputs'), hashes = await preparePartialFixtures(inputRoot);
+ const validator = path.join(installed.skills, 'work-validator'), manifest = JSON.parse(await readFile(installed.manifest));
+ assert.equal(manifest.commit, installed.commit);
+ for (const relative of ['contracts/handoff-v1.schema.json', 'lib/contracts/receipts.mjs', 'docs/handoffs.md']) {
+  const key = 'work-validator/' + relative;
+  assert.equal(manifest.sourceFiles[key], createHash('sha256').update(await readFile(new URL('../' + relative, import.meta.url))).digest('hex'));
+  assert.deepEqual(await readFile(path.join(validator, relative)), await readFile(new URL('../' + relative, import.meta.url)));
+ }
+ assert(!Object.keys(manifest.sourceFiles).some(k => k.includes('qa-partial-results')));
+ const { spawnSync } = await import('node:child_process');
+ for (const [file, hash] of Object.entries(hashes)) {
+  const mode = file.endsWith('.json') ? 'chain' : 'record', input = path.join(inputRoot, file);
+  const args = ['--mode', mode, '--input', input, ...(mode === 'record' ? ['--format', 'yaml'] : []), '--json'];
+  const run = cli => spawnSync(process.execPath, [cli, ...args], { cwd: o.app, encoding: 'utf8', timeout: 30000 });
+  const source = run(new URL('../scripts/validate-handoff.mjs', import.meta.url).pathname), actual = run(path.join(validator, 'scripts/validate-handoff.mjs'));
+  assert.equal(actual.status, source.status, file + actual.stderr); assert.equal(actual.stdout, source.stdout, file); assert.equal(actual.stderr, '', file);
+  const result = JSON.parse(actual.stdout);
+  if (['blocked-no-environment.json', 'blocked-retained-fail.json', 'wait-retained-fail.json', 'old-blocked.json', 'old-wait.json', 'human-static.json'].includes(file)) {
+   assert.equal(result.valid, true, file); assert.equal(result.completion_established, file === 'human-static.json');
+  } else if (mode === 'chain') { assert.equal(result.valid, false, file); assert.equal(result.completion_established, false); }
+  assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'), hash, file);
+ }
+ assert.equal(await realpath(installed.stableSkills), installed.skills);
+});

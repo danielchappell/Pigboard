@@ -154,6 +154,19 @@ A well-shaped object alone is insufficient. The validator and role skill require
    NOT_RUN has its reason and, when defect-dependent, the finding ID. `qa` requires
    all assigned steps PASS. Other records retain partial results and skipped steps.
    Reused evidence needs an explicit case-specific basis in its linked report.
+   QA `blocked` and `dependency_wait` may retain optional `findings` using the
+   existing bounded finding shape (1–100 when present); other roles cannot add
+   that property. Each FAIL/defect-dependent skip resolves its finding IDs, and
+   each finding retains distinct nonblank identity/summary and approved evidence.
+   Omitted findings remain omitted in historical bytes and digests. Retained
+   observations do not themselves queue repairs, authorize resume or prove repair.
+   An all-NOT_RUN non-completing report can describe missing deployment without
+   environment evidence. Any PASS/FAIL, including reused results, still requires
+   the unchanged trusted exact-revision pipeline environment. Successful runtime
+   QA retains that requirement and human-only static completion its exception.
+   This reporting exception grants no runtime or provider authority. New optional
+   findings require the matching reviewed validator release; never strip them or
+   downgrade validation. Existing immutable installation binding is unchanged.
 9. `human_pending` equals the ticket's human case IDs. Agents never report human
    PASS. Owner-approved on 14 November 2026: an explicitly all-human ticket is allowed only with no AI steps, complete
    human cases and a nonempty matching `no_ai_cases_reason`; QA reports zero AI
