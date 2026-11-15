@@ -1,6 +1,6 @@
 ---
 name: write-pr-sized-stories
-description: Write, split, or revise developer work items as concise, plain-language PR-sized Stories or non-code Tasks. Use when turning requirements, epics, product notes, technical proposals, or existing tracker items into work a developer can understand, implement, test, and review; when deciding whether work is implementation or research; or when auditing scope, acceptance criteria, technical constraints, manual QA steps, and automated regression coverage.
+description: Write, split, or revise developer work items as concise, plain-language Epics, PR-sized Stories and Bugs, or non-code Tasks. Use when turning requirements, epics, product notes, technical proposals, or existing tracker items into work a developer can understand, implement, test, and review; when deciding whether work is implementation or research; or when auditing scope, acceptance criteria, technical constraints, manual QA steps, and automated regression coverage.
 ---
 
 # Write PR-Sized Stories
