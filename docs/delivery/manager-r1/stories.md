@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Owner-approved combined25-Story set with 110 prescribed cases. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA split adds R1-24 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
+Owner-approved combined 26-Story set with 116 prescribed cases. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA split adds R1-24 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
 
 The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
@@ -1004,9 +1004,316 @@ The existing local chain validator rejects a legitimate repaired child that cons
 
 - **Open questions:** `[]`.
 
+## R1-26: Reject conflicting completion receipts
+
+Prerequisite: R1-25/PGB-113, ai_qa_complete. All six human cases remain NOT_RUN.
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The offline preview can combine individually valid completion receipts that disagree about the same supplied facts. This can make a prerequisite appear satisfied despite conflicting evidence. Humans and agents need a clear hold before using that preview.",
+  "prerequisites": [
+    {
+      "ticket": "R1-25",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "Consistent complete snapshots keep their existing preview result, including valid current completion receipts with no retained historical records."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Conflicting authenticated observations in current completion receipts hold every affected scope before any conflicting proof can satisfy a prerequisite, regardless of receipt order or a third receipt repeating either value."
+    },
+    {
+      "id": "AC3",
+      "requirement": "The source and installed preview explain the conflict with a bounded safe diagnostic, preserve independent coherent scopes, and perform zero writes or authorized execution."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Own canonical current receipt observation fingerprints and whole-snapshot completion-proof conflict rejection in the existing offline preview, with source/installed tests, guides and the approved delivery-record amendment.",
+      "out_of_scope": [
+        "Customer repository changes",
+        "Provider writes, deployment, activation and evaluation execution",
+        "Historical receipt projection and complete repair scheduling, which remain in PGB-81"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D03",
+        "decision": "Story writing and human-invoked request-rework are separate skills.",
+        "reference": "docs/architecture/manager-human-rework.md"
+      },
+      {
+        "id": "D04",
+        "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+        "reference": "docs/architecture/pig-boss-operations.md"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Deliver one usable current-preview conflict rejection increment in this repository; introduce no provider effects, deployment or evaluation execution."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Reuse canonical parsing and validation; preserve public chain inputs/results, strict current authority, existing retention compatibility, receipt/snapshot bounds and PGB-113 resume/resolution/root protections."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Compare every common-parser observation identity family before accepting proofs; invalid or unbound receipts grant no authority, and no member of a contradictory group may be accepted by receipt order."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and actual same-release installed preview/validator bundle with prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Six frozen current-proof case groups PC01-PC06 with authentic complete envelopes, exact config/snapshot/options and literal expected full outputs; includes unchanged retained-empty compatibility seeds and independently audited two/three-envelope conflict permutations.",
+        "initial_state": "Dummy local data only; no live records, provider credentials or network access; original fixtures and all failed/preparation evidence remain preserved.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Freeze test/fixtures/manager-proof-conflicts.json and exact source/installed invocation paths before product execution; independently audit complete identities, operations, metadata, bounds, current binding, intended rejection gates and literal output/digest expectations. Source invocation is node scripts/manager-preview.mjs --config CONFIG --input SNAPSHOT --json, repeated without --json; installed invocation uses the actual prepared copied script path from unrelated cwd. Prepare dependencies before the run.",
+        "used_by": [
+          "DATA-01",
+          "R1-26-PC01",
+          "R1-26-PC02",
+          "R1-26-PC03",
+          "R1-26-PC04",
+          "R1-26-PC05",
+          "R1-26-PC06"
+        ],
+        "preserves": [
+          "All original 66 manager-candidate inputs/oracles and exact public strict-current compatibility, including retained-empty envelopes.",
+          "All required identity/role/requirements/PR/evidence and current/retention boundaries; no output-derived expectation or invented reference.",
+          "All original PGB-81 four acceptance criteria, two technical constraints and 42 full human case objects; no case is transferred or marked complete."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns local CLI and installed contract behavior, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI, independent input auditing and PR review remain required and do not replace human acceptance.",
+      "cases": [
+        {
+          "id": "R1-26-PC01",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Frozen DATA-01 consistent current completion snapshots, including the five unchanged retained-empty fixtures and two distinct QA targets with matching shared observations."
+          ],
+          "steps": [
+            "Run each source JSON/readable preview with the prepared literal config and snapshot, then reverse the two-receipt order.",
+            "Compare complete results with frozen expectations and inspect input hashes and zero-effect evidence."
+          ],
+          "expected": [
+            "Existing normal eligibility and full preview result are preserved; no conflict diagnostic occurs.",
+            "Receipt order does not change authority or selected work; zero writes and execution_authorized false remain."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "none",
+            "reason": "Read-only local snapshots; retain the frozen inputs and output.",
+            "owner": null,
+            "steps": null
+          }
+        },
+        {
+          "id": "R1-26-PC02",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "DATA-01 has two distinct canonical-valid, snapshot-bound current QA targets whose envelopes differ only in one shared accepted PR observation; use complete authentic chains, no duplicate target."
+          ],
+          "steps": [
+            "Verify individual-input provenance and fixed expected pair reports before execution.",
+            "Run the pair in both orders through source preview and compare complete output and raw input hashes."
+          ],
+          "expected": [
+            "Both established participant scopes are held with REPAIR_PROOF_INVALID at the actual /completion_receipts/<index> locations; neither can select a target or contribute a conflicting proof.",
+            "Observed counts and all zero-effect fields remain unchanged."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "none",
+            "reason": "Read-only local snapshots; retain the frozen inputs and output.",
+            "owner": null,
+            "steps": null
+          }
+        },
+        {
+          "id": "R1-26-PC03",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "DATA-01 has three distinct valid current QA targets in three established scopes sharing one observation key with values X,Y,X; a second fixed variant uses X,Y,Y; a fourth coherent scope has an independently expected selection."
+          ],
+          "steps": [
+            "Run all six envelope permutations of each fixed variant using its literal full expected report.",
+            "Check every participant scope, the independent scope, diagnostic indexes, counts and input hashes."
+          ],
+          "expected": [
+            "All three conflict participant scopes are held, including the last entry repeating either earlier value; no conflicting proof can satisfy a prerequisite.",
+            "The fourth scope keeps its predeclared selection and the result is partial; only independently frozen input-index/digest differences are permitted across permutations."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "none",
+            "reason": "Read-only local snapshots; retain the frozen inputs and output.",
+            "owner": null,
+            "steps": null
+          }
+        },
+        {
+          "id": "R1-26-PC04",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "DATA-01 contains independently audited comment/UUID, requirements-context, current-fact and evidence-observation variants, plus exact-overlap controls; preparation identifies each intended reachable or earlier rejection gate."
+          ],
+          "steps": [
+            "Run each full frozen variant and matching control through source preview.",
+            "Inspect fixed diagnostics and scope outcomes; compare with its intended-gate preparation record and unchanged input hashes."
+          ],
+          "expected": [
+            "Authenticated contradictory same-key observations hold every affected scope; exact matching overlap remains usable.",
+            "Already-invalid or unbound envelopes are rejected by their existing gate and grant no proof; do not weaken a gate or label those controls as evidence of a cross-envelope semantic conflict."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "none",
+            "reason": "Read-only local snapshots; retain the frozen inputs and output.",
+            "owner": null,
+            "steps": null
+          }
+        },
+        {
+          "id": "R1-26-PC05",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC3",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "DATA-01 has a coherent independent stream beside a conflicting pair, plus separate malformed and unbound completion receipt controls and exact existing-behavior expectations."
+          ],
+          "steps": [
+            "Run each frozen source preview and compare full results, bounded diagnostic locations and observed counts.",
+            "Check that no raw body/evidence or credential-like fixture marker appears in diagnostics and no inputs changed."
+          ],
+          "expected": [
+            "Established conflict scopes hold while the independent stream keeps its expected selection; status is partial.",
+            "If an authenticated conflict cannot be assigned to trustworthy scopes, use a shared hold. Malformed or unbound receipt controls retain their existing handling and never grant completion; they do not become trusted conflict observations.",
+            "Writes remain zero and execution_authorized remains false."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "none",
+            "reason": "Read-only local snapshots; retain the frozen inputs and output.",
+            "owner": null,
+            "steps": null
+          }
+        },
+        {
+          "id": "R1-26-PC06",
+          "execution": "human",
+          "owner_role": "human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Prepared actual same-release installed preview/validator bundle and DATA-01 consistent, conflicting-pair and X,Y,X snapshots; disposable unrelated working directory; no provider credentials."
+          ],
+          "steps": [
+            "Run the actual copied installed preview command with the frozen config/input in JSON and readable forms from the unrelated directory.",
+            "Compare complete structured results with the fixed source-equivalent expectations; inspect readable conflict/recovery text.",
+            "Record source/bundle hashes, stdout/stderr/exits and before/after input/directory state; preserve evidence before cleanup."
+          ],
+          "expected": [
+            "Installed behavior matches source expectations, with exact frozen conflict diagnostics, current validation compatibility and unchanged inputs.",
+            "No provider access, state write or execution authorization occurs."
+          ],
+          "evidence": [
+            "Exact source and installed commands where applicable, tested PR/bundle revisions and hashes, complete stdout/stderr/exit results, input hashes and zero-effect audit; keep all permutation and intended-gate records."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Preserve evidence, then remove only disposable installed harness output and temporary files; never remove frozen originals or change live resources."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Current-chain output compatibility, all seven observation identity families, complete-group order independence, scope isolation, bounded inputs and actual copied-module CLI behavior through existing receipt, manager and installer harnesses."
+  },
+  "open_questions": []
+}
+```
+
 ## R1-11: Preview the complete repair order
 
-Prerequisites: R1-10/PGB-80 and R1-25/PGB-113, both ai_qa_complete. All original criteria and 42 complete cases below are preserved.
+Prerequisites: R1-10/PGB-80, R1-25/PGB-113 and R1-26/PGB-129, each ai_qa_complete. All original criteria and 42 complete cases below are preserved.
 
 ### Problem to solve
 
@@ -2321,3 +2628,5 @@ The new manager cannot safely mix old prose workers with structured handoffs. Op
 
 
 - **Automated regression:** Bundle/config compatibility checks and installer regression tests proving inactive rollout and truthful readiness reporting.
+
+PGB-129/R1-26 is composed after PGB-113 and before PGB-81, with its unchanged six human cases. Current source is 26 Stories/116 cases; all original PGB-81 criteria and 42 full cases remain. Publication does not execute human acceptance or activate delivery.

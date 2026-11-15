@@ -345,3 +345,33 @@ most O(E×L) leaf entries and stores O(V×L), for supplied distinct nodes V, edg
 and leaves L. This bound covers successful structural closures; the whole validator
 and retries of unfinished failing prefixes have additional bounded semantic work.
 Active frames unwind on failure; partial closures and exceptions are never cached.
+
+## Internal current observations for offline preview
+
+The canonical receipt evaluator owns parsing and strict validation. Its internal
+`inspectManagerCompletion(raw)` returns exactly `{validation,bindings}` from the
+same validated parse. `validation` is the unchanged public strict-current chain
+result; invalid input returns empty bindings. Public `validateReceiptChain(raw)`
+keeps its existing full result, check order and retained-empty compatibility.
+There is no caller-authored trusted summary or historical projection mode.
+
+Bindings contain only kind, identity key and canonical digest. The seven identity
+families are exact server comment (site/ticket/comment with reference, metadata
+and body), record UUID (site/UUID with ticket/digest), requirements
+(site/ticket/requirements digest with canonical work/context), current native and
+manager assignment facts (site/ticket), PR revision
+(provider/repository/number/source revision), current PR identity
+(provider/repository/number), and evidence URI. Each validated requirements entry
+is preserved before lookup-map replacement. Raw comment bytes remain immutable
+observations; JSON envelope whitespace and key order do not change them.
+
+The existing snapshot normalizer immediately consumes this private result after
+its configured/native binding. It groups every successful bound observation
+before accepting any proof. A group with more than one digest invalidates every
+contributing envelope, including X/Y/X and X/Y/Y in any order. Existing membership
+establishes affected scopes; a trustworthy conflict with no known scope holds
+shared evaluation. Safe `REPAIR_PROOF_INVALID` diagnostics name only the supplied
+completion index. Independent coherent scopes continue. Invalid or unbound input
+never supplies trusted observations; the exact current-QA and repair-accounting
+gates still own completion authority. Existing receipt and snapshot limits bound
+the call-local index. No history, provider action or execution authority is added.

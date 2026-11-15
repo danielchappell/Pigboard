@@ -28,15 +28,16 @@
     "R1-21": "PGB-99",
     "R1-22": "PGB-100",
     "R1-23": "PGB-101",
-    "R1-25": "PGB-113"
+    "R1-25": "PGB-113",
+    "R1-26": "PGB-129"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 25,
-  "case_count": 110,
+  "story_count": 26,
+  "case_count": 116,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -279,6 +280,14 @@
     {
       "from": "PGB-110",
       "to": "PGB-78"
+    },
+    {
+      "from": "PGB-113",
+      "to": "PGB-129"
+    },
+    {
+      "from": "PGB-129",
+      "to": "PGB-81"
     }
   ],
   "baseline_publication": {
@@ -712,13 +721,13 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 25,
-    "case_count": 110,
-    "native_story_count": 25,
-    "native_case_count": 110,
+    "story_count": 26,
+    "case_count": 116,
+    "native_story_count": 26,
+    "native_case_count": 116,
     "pending_source_amendments": [],
-    "source_order": "R1-24 immediately before R1-08 and R1-25 immediately before R1-11; all other relative order preserved.",
-    "status": "Both approved source amendments mirrored; native 25/110 fields record the 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot. Jira owns subsequent queue changes; publication does not establish delivery completion."
+    "source_order": "R1-24 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
+    "status": "Actual PGB-110-first source composition includes PGB-113 and PGB-129:26 Stories/116 cases. Native counts retain the separately recorded amendment snapshots, not a fresh all-ticket readback or status claim. Jira owns subsequent queue changes; publication is not delivery completion."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1325,5 +1334,68 @@
     },
     "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical.",
     "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged."
+  },
+  "current_proof_conflict_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-26": "PGB-129"
+    },
+    "native_id": "10589",
+    "amended_story": "PGB-81",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "b6bacbb594b7008dfeba4722fd686b5379bd7336834cbcfa811d07187ce255b5",
+      "preview_before": "8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe",
+      "preview_after": "a7eadcb589c911b1466b17d1b3dc9b8fabfaafa8c5945b772e2ce47c4fcf546e"
+    },
+    "dependency_links": [
+      {
+        "id": "10704",
+        "type_id": "10000",
+        "from": "PGB-113",
+        "to": "PGB-129"
+      },
+      {
+        "id": "10705",
+        "type_id": "10000",
+        "from": "PGB-129",
+        "to": "PGB-81"
+      }
+    ],
+    "preserved_links": [
+      {
+        "id": "10637",
+        "from": "PGB-80",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10686",
+        "from": "PGB-113",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10638",
+        "from": "PGB-81",
+        "to": "PGB-82"
+      }
+    ],
+    "readback_scope": "Full PGB-113/PGB-129/PGB-81 bodies and native links; PGB-81 unchanged except appended PGB-129/ai_qa_complete prerequisite. Director PGB-66 introduction preserved. Exact new native description matches reviewed body after trailing-newline trim.",
+    "original_preview_cases": 42,
+    "additive_cases": 6,
+    "criteria_preserved": true,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "plan_sha256": "d99c3c85c1a70bd39b29afd2483cec476dcc1368b663b12c7f402f256129fadf",
+    "forecasts": {
+      "prerequisite": {
+        "files": 17,
+        "days": 1.2
+      },
+      "remaining_preview": {
+        "files": 20,
+        "days": 1.89
+      }
+    },
+    "publication_variant": "Actual PGB-110-first composition: source/native26 Stories/116 cases. Original PGB-129-first25/113 source snapshot and1.20 publication forecast remain historical evidence; current forecast1.28 is in metadata/README."
   }
 }

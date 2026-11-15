@@ -88,7 +88,7 @@ provide their detailed expression: [release boundary](../architecture/manager-re
 The existing [workflow](../workflow.md) describes the earlier basic bundle, including
 direct rework to In Progress; that behavior must change for this release.
 
-This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes both owner-approved amendments: 25 Stories/110 cases. This does not authorize implementation, further provider probes or activation.
+This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes the owner-approved amendments: 26 Stories/116 cases. This does not authorize implementation, further provider probes or activation.
 
 ## Approved company-scope addition
 
@@ -99,6 +99,8 @@ The manager is named Pig Boss. One customer AWS installation manages several pro
 
 ## Current delivery amendment
 
-The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Current source publication contains 25 Stories/110 cases and mirrors both approved publisher and repeated-parent amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
+The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Current source publication contains 26 Stories/116 cases and composes the publisher, repeated-parent and current-proof consistency amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
 
-Current source publication composes both approved amendments: 25 Stories/110 cases, including R1-24/PGB-110 before R1-08 and R1-25/PGB-113 before R1-11. The original 23/104 publication and each earlier amendment remain dated history. Current publication is not human acceptance, compatible live delivery or activation.
+Current source publication composes the approved amendments: 26 Stories/116 cases, including R1-24/PGB-110 before R1-08 and R1-25/PGB-113 then R1-26/PGB-129 before R1-11. The original 23/104 publication and each earlier amendment remain dated history. Current publication is not human acceptance, compatible live delivery or activation.
+
+PGB-129/R1-26 precedes PGB-81 to reject contradictory current completion observations in the offline preview. It preserves current retained-empty compatibility; complete repair scheduling/history remain PGB-81. Actual PGB-110-first source composition is 26 Stories/116 cases, retaining separately dated native publication evidence. All original PGB-81 criteria and 42 human cases remain. The six new human cases are NOT_RUN; this amendment does not claim a shipped manager or activation.

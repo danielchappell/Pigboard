@@ -290,3 +290,24 @@ Do not count fixture export/setup writes as preview writes. Source and installed
 regressions execute these same literal fixtures with actual copied dependencies;
 they establish local supplied-snapshot behavior, not live Jira observations or
 human acceptance. Cleanup only your disposable fixture directory after inspection.
+
+## Conflicting completion observations
+
+Individually valid completion envelopes can disagree about one supplied comment,
+requirements context, current assignment, PR revision or evidence observation.
+Preview compares their canonical observations before accepting completion proofs.
+A contradiction holds every established affected scope with `REPAIR_PROOF_INVALID`
+at `/completion_receipts/<index>`. If another scope has coherent evidence, it can
+still receive a selection and the overall result is `partial`.
+
+For example, two current QA envelopes can observe the same PR revision as open
+and merged. Run the source command above, or the actual installed script with the
+same inputs. Both report the conflict without exposing its raw body or URI.
+Neither observation wins by list order, including when a third receipt repeats
+either value. The scope's owner must refresh and reconcile the supplied facts,
+then preview the new snapshot. Preview cannot authorize a replay or repair.
+
+A valid current completion still works with an empty retained-history list.
+Malformed or unbound receipts grant no completion authority and keep their
+existing handling. This current-proof check does not implement PGB-81's later
+historical projection or complete repair ordering.
