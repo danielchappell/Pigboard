@@ -377,6 +377,7 @@ test('H01 prepared original mock deployment and typed bound API/database/UI arti
 test('only the actual fixed-scope PGB-110 owner decision exempts the ordinary time limit without a replacement hourly cap',async()=>{
  const plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json'));
  assertDeliverySizing(plan);
+ assert.deepEqual(plan.find(x=>x.id==='R1-24').hours,{min:26.75,max:36.5});
  for(const change of [
   entries=>{entries.find(x=>x.id==='R1-08').time_limit_exception=structuredClone(entries.find(x=>x.id==='R1-24').time_limit_exception);},
   entries=>{delete entries.find(x=>x.id==='R1-24').time_limit_exception;},
@@ -676,4 +677,48 @@ test('R3 finite clock mirrors, child-bound consumption, request existence and re
   if(id==='H03-resume')bad.reads.artifacts.find(x=>x.body.kind==='bruno_response').body.observed_at='2026-11-15T09:40:03Z';
   assert.throws(()=>assertR3Clock(bad,assessment),id);
  }
+});
+
+test('scoped UI cause controls preserve independent DB inability, completed observations and separate null proof',async t=>{
+ const p=await publisher(t);let corrected=0;
+ for(const id of ['Q11-independent-inability','Q13-partial-pass-inability','Q13-null-pass-instruction']){
+  const work=JSON.parse(await readFile(path.join(p.cases[id],'inputs/work.yaml'),'utf8')),assessment=await p.input(id,'inputs/assessment.json'),cards=await p.input(id,'operator/cards.json');
+  const controls=await p.input(id,'operator/cause-controls.json'),failed=id==='Q11-independent-inability',nullProof=id==='Q13-null-pass-instruction';
+  const dbCase=work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id==='TC-01.S3')),dbStep=dbCase.steps.find(s=>s.id==='TC-01.S3');
+  assert.equal(dbStep.skill,'qa-database');assert.deepEqual(dbCase.depends_on,[]);assert.equal(assessment.qa_report.steps.find(s=>s.id===dbStep.id).result,'NOT_RUN');
+  assert.deepEqual(assessment.qa_report.steps.slice(0,2).map(s=>s.result),failed?['FAIL','FAIL']:['PASS','PASS']);
+  assert(assessment.qa_report.steps.slice(0,2).every(s=>s.evidence.length>0));
+  assert.deepEqual(assessment.findings.map(f=>f.id),failed?['F1']:[]);
+  const expectedDb={observed_at:'2026-11-15T10:01:20Z',ticket_id:'1000',case_id:failed?'TC-02':'TC-01',step_id:'TC-01.S3',actor_id:'ACTOR-01',tenant:'example',identity_reference:'fixture://example/reader',pr:{provider:'github',repository:'https://example.invalid/example/application',number:'10',source_revision:'1'.repeat(40),target_branch:'main'},capability:'prepared PostgreSQL session',original_response:{status:503,body:{code:'SESSION_UNAVAILABLE',session_available:false,observation_started:false}},publisher_authority_affected:false,source:'Fixed original mock database capability failure; no query executed.'};
+  assert.equal(dbCase.id,expectedDb.case_id);assert.deepEqual(cards.reads.outcome_facts.domain_inabilities[1],expectedDb);
+  assert.deepEqual(controls.map(c=>c.id),['missing-event','before-observation','wrong-actor','wrong-tenant','wrong-step','success-response']);
+  for(const control of controls){
+   const facts=control.outcome_facts,wording=control.expected_boundary;
+   assert.deepEqual(control.cards.reads.outcome_facts,facts);
+   if(control.id==='missing-event'){
+    assert.deepEqual(facts.domain_inabilities,[]);
+    if(!failed){corrected++;assert.match(wording,/No supplied domain-inability observations remain/);assert.match(wording,/completed PASS rows and empty findings/);assert.match(wording,/do not invent a local defect or infer a terminal route/);}
+   }else{
+    corrected++;assert.equal(facts.domain_inabilities.length,2);assert.deepEqual(facts.domain_inabilities[1],expectedDb);
+    const ui=facts.domain_inabilities[0];
+    if(control.id==='before-observation')assert.equal(ui.observed_at,'2026-11-15T09:00:00Z');
+    if(control.id==='wrong-actor')assert.equal(ui.actor_id,'OTHER');
+    if(control.id==='wrong-tenant')assert.equal(ui.tenant,'tenant-a');
+    if(control.id==='wrong-step')assert.equal(ui.step_id,'UNRELATED');
+    if(control.id==='success-response')assert.deepEqual(ui.original_response,{status:200,body:{session_available:true,observation_started:false}});
+    assert.match(wording,/mutated UI observation cannot establish the UI inability/);assert.match(wording,/unchanged TC-01.S3 DB inability remains valid/);assert.match(wording,/does not establish absence of all later inability/);
+    assert(!wording.includes('No verified later domain inability'));
+    if(failed)assert.match(wording,/existing F1 local defect repair evidence/);
+    else assert.match(wording,/completed PASS rows and empty findings; do not invent a local defect/);
+   }
+   if(!failed)assert(!/retained local defect|existing F1/.test(wording));
+   if(nullProof){
+    assert.match(wording,/separate null-proof fault remains/);assert.match(wording,/do not isolate a global routing decision/);assert.match(wording,/no valid remaining cause can waive missing runtime proof/);
+    assert.equal(control.cards.reads.evidence.find(r=>r.kind==='environment').pr,null);
+    for(const row of assessment.qa_report.steps.slice(0,2))for(const ref of row.evidence)assert.equal(control.cards.reads.evidence.find(r=>r.uri===ref.uri).pr,null);
+   }
+  }
+  if(nullProof){const r=chain(await p.input(id,'operator/validator-inputs/published.json'));assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code==='EVIDENCE'&&d.path.endsWith('/qa_report/steps/0/evidence/0')));}
+ }
+ assert.equal(corrected,17);
 });

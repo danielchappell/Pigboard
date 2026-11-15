@@ -971,7 +971,15 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
         if(fault==='wrong-tenant')fact.tenant='tenant-a';
         if(fault==='wrong-step')fact.step_id='UNRELATED';
         if(fault==='success-response')fact.original_response={status:200,body:{session_available:true,observation_started:false}};
-        causeControls.push({id:fault,outcome_facts:copy,expected_boundary:'No verified later domain inability; retained local defect remains repair evidence, not fabricated Blocked cause.'});
+        let boundary='No verified later domain inability; retained local defect remains repair evidence, not fabricated Blocked cause.';
+        if(['Q11-independent-inability','Q13-partial-pass-inability','Q13-null-pass-instruction'].includes(id)){
+          if(fault!=='missing-event'){
+            boundary='The mutated UI observation cannot establish the UI inability. The unchanged TC-01.S3 DB inability remains valid; this control does not establish absence of all later inability. '+
+              (id==='Q11-independent-inability'?'Retain the existing F1 local defect repair evidence.':'Preserve the completed PASS rows and empty findings; do not invent a local defect.');
+          }else if(id!=='Q11-independent-inability')boundary='No supplied domain-inability observations remain. Preserve the completed PASS rows and empty findings; do not invent a local defect or infer a terminal route from this control.';
+          if(id==='Q13-null-pass-instruction')boundary+=' The separate null-proof fault remains; these variants do not isolate a global routing decision, and no valid remaining cause can waive missing runtime proof.';
+        }
+        causeControls.push({id:fault,outcome_facts:copy,expected_boundary:boundary});
       }
     }
     for(const control of causeControls){

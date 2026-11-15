@@ -26,7 +26,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
 | R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
-| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.3125–4.5 | 20 |
+| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.625–1.875 | 20 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
@@ -44,7 +44,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **40.6175–42.055 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **40.64875–42.1175 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -90,7 +90,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/qa-api/SKILL.md`, `skills/qa-bruno/SKILL.md`, `skills/qa-database/SKILL.md`, `skills/qa-ui/SKILL.md`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-cases.json`, `docs/qa-cases.md`.
 
-### R1-24 — 20 forecast files, 26.5–36 hours
+### R1-24 — 20 forecast files, 26.75–36.5 hours
 
 `skills/qa-jira/SKILL.md`, `config/skill-bundle.json`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/cursor-environment.test.mjs`, `README.md`, `ARCHITECTURE.md`, `docs/workflow.md`, `docs/install.md`, `docs/using-pigboard.md`, `docs/handoffs.md`, `config/cursor/automations.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
@@ -239,7 +239,7 @@ PGB-110 estimate refreshed after independent review and the first simulated inst
 The owner approved “Allow the fixed-scope time exception” on 15 November 2026,
 recorded in [PGB-110 comment 10684](https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684).
 This exception applies only to PGB-110's ordinary less-than-two-day rule. The current
-forecast is 26.5–36 familiar-human hours, including integration with merged main
+forecast is 26.75–36.5 familiar-human hours, including integration with merged main
 `6595e645bd91cec263a5ee0eaf1a3db95e7b9109` and the coherent mock actor/access correction.
 The earlier 12.5–15h and 14–15.5h forecasts remain dated history; the proposed 18h
 ceiling was superseded and was never approval. No replacement hourly cap applies.
@@ -260,7 +260,7 @@ These preparation/validation changes do not claim successful instruction/human a
 
 ## Repeated-parent amendment, 15 November 2026
 
-PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Combined source and native scope are 25 Stories/110 cases, including the standalone publisher amendment. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source publication contains 25 Stories/110 cases and mirrors both approved publisher and repeated-parent amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
 
 The independently reviewed F1 preservation repair carries the selected worker's
 existing proof through final authorized-resume checks and reuses only the exact
@@ -270,4 +270,6 @@ is 15 files/1.98 familiar-human days, with 0.23 days remaining from the frozen
 original inputs and revision; repaired-candidate checks and independent reviews
 are required separately. Human acceptance remains NOT_RUN.
 
-Current PGB-110 forecast is 26.5–36 hours (upper forecast 4.5 days) under the actual comment 10684 fixed-scope exception, without an hourly cap. R3 completes causal histories and clocks with 63 preserved canonical specimens, 13 new counterparts and 76/19/57 packet usage accounting, integrated with merged main. Previous forecasts remain historical; all 20 paths, one PR and original gates remain. Combined source/native scope is 25 Stories/110 cases and 53 requirements/41 scenarios; both amendments and PGB-81's 42 human cases remain distinct.
+Current PGB-110 forecast is 26.75–36.5 hours (upper forecast 4.5625 days) under the actual comment 10684 fixed-scope exception, without an hourly cap. R3 completes causal histories and clocks with 63 preserved canonical specimens, 13 new counterparts and 76/19/57 packet usage accounting, integrated with merged main. Previous forecasts remain historical; all 20 paths, one PR and original gates remain. Current source scope is 25 Stories/110 cases and 53 requirements/41 scenarios; both amendments and PGB-81's 42 human cases remain distinct. Native 25/110 figures record the 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes.
+
+The prior 26.5–36 familiar-human-hour forecast remains historical. The current forecast adds only 0.25–0.5h for F2 operator wording, regression and review evidence. The 0.25–0.5h private alignment completes already-planned preparation and is not added again; no new hourly cap or approval applies.

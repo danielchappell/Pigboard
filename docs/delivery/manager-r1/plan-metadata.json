@@ -177,11 +177,12 @@
       "R1-07",
       "PGB-108"
     ],
-    "days": 4.5,
+    "days": 4.5625,
     "hours": {
-      "min": 26.5,
-      "max": 36
+      "min": 26.75,
+      "max": 36.5
     },
+    "forecast_note": "Previous forecast 26.5–36 familiar-human hours is historical. Add only 0.25–0.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
     "files": [
       "skills/qa-jira/SKILL.md",
       "config/skill-bundle.json",
