@@ -200,7 +200,10 @@ retain closed/unknown PR state without advancing.
 
 Diagnostics have stable `code`, JSON-pointer `path`, recovery `message`, and when
 available an exact `reference` (ticket/comment/record IDs), block, line and column.
-They are deterministically sorted. PARSE/STRUCTURE/FORMAT/LIMIT and parser-specific
+They are deterministically sorted. Undeclared mapping keys are input data; their
+diagnostics identify the nearest safe declared enclosing field rather than echoing
+the key. Known contract fields and bounded list indexes retain their exact paths.
+PARSE/STRUCTURE/FORMAT/LIMIT and parser-specific
 codes identify input shape; REFERENCE/METADATA/ACTOR/ASSIGNMENT/REQUIREMENTS/PROJECT,
 SLOT_CONFLICT/PR/EVIDENCE/LEDGER/REPAIR/RESUME/INCOMPLETE_READ identify missing or
 conflicting facts. USAGE/INPUT/SETUP/INTERNAL are command/setup failures. Messages
@@ -218,7 +221,11 @@ explicit authorization. The old blocker stays historical and the pointer stays
 unchanged. Scope or code changes need normal reviewed rework, not a resume bypass.
 
 Repair preserves the ticket's existing PR identity and every unresolved root
-request. No-PR repair is limited to complete documented dependency-wait history
+request. Its immutable admission captures the observed PR head at admission; later
+implementation, review and QA may advance that same PR. Each own-ticket PR must
+match its assignment's exact requirements repository, even when the project
+allows other repositories. A recorded stacked target or owner retarget may differ
+from the intended base branch. No-PR repair is limited to complete documented dependency-wait history
 before publication. Implementation/review/QA must agree on one revision. Stack
 updates use the child's recorded immediate parent, its stale incorporated revision,
 the parent's new current accepted coherent QA and all incorporated repair roots.

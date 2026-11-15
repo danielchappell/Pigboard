@@ -82,7 +82,7 @@ test('YAML, split ADF text and entity-encoded HTML preserve identical records an
 });
 test('structural, format and YAML domain errors reject before a digest exists', () => {
   for (const [mutate, path] of [
-    [r => delete r.resume_authorization, '/resume_authorization'], [r => r.extra = true, '/extra'],
+    [r => delete r.resume_authorization, '/resume_authorization'], [r => r.extra = true, ''],
     [r => r.schema = 'pigboard-handoff/v2', '/schema'], [r => r.record_id = 'not-a-uuid', '/record_id'],
     [r => r.payload.project_id = null, '/payload/project_id'], [r => r.assignment = ref(2), '/assignment'],
   ]) { const value = record(); mutate(value); const result = validateHandoff(raw(value)); assert.equal(result.valid, false); assert(result.diagnostics.some(d => d.path === path), JSON.stringify(result)); }
@@ -172,4 +172,17 @@ test('CLI exposes read-only record behavior and sanitized usage/input failures',
     const invalid = path.join(directory, 'invalid.yaml'); await writeFile(invalid, raw({ ...record(), schema: 'unknown' })); assert.equal(run(['--mode', 'record', '--input', invalid, '--format', 'yaml', '--json']).status, 1);
     assert.equal(readFileSync(file, 'utf8'), raw(record()));
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('undeclared property diagnostics retain safe containers without reproducing schema/parser/wrapper/URL-scan keys',async t=>{
+ const cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
+ const dir=await mkdtemp(path.join(os.tmpdir(),'record-safe-path-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const secret='https://user:FICTITIOUS-SECRET@example.invalid/private-report',key=JSON.stringify(secret),r=record('admission'),raw=JSON.stringify(r),cases=[];
+ cases.push([JSON.stringify({...r,[secret]:true}),'yaml','']);
+ cases.push([JSON.stringify({...r,payload:{...r.payload,[secret]:{uri:'https://user:FICTITIOUS-SECRET@example.invalid'}}}),'yaml','/payload']);
+ cases.push([raw.replace('"schema":"pigboard-handoff/v1"',`"schema":"pigboard-handoff/v1",${key}:0,${key}:1`),'yaml','']);
+ cases.push([raw.replace('"schema":"pigboard-handoff/v1"',`"schema":"pigboard-handoff/v1",${key}:9007199254740993`),'yaml','']);
+ const doc={type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml',[secret]:'MARK'},content:[{type:'text',text:raw}]}]};cases.push([JSON.stringify(doc).replace('"MARK"','9007199254740993'),'adf','/content/0/attrs']);
+ for(const [i,[input,format,safePath]]of cases.entries()){const result=validateHandoff(input,{format});assert.equal(result.valid,false);assert(result.diagnostics.some(d=>d.path===safePath),JSON.stringify(result.diagnostics));assert(!JSON.stringify(result).includes('FICTITIOUS-SECRET'));assert(!JSON.stringify(result).includes('private-report'));const file=path.join(dir,'record-'+i);await writeFile(file,input);for(const json of [false,true]){const p=spawnSync(process.execPath,[cli,'--mode','record','--input',file,'--format',format,...(json?['--json']:[])],{encoding:'utf8'});assert.equal(p.status,1,p.stdout+p.stderr);assert(!p.stdout.includes('FICTITIOUS-SECRET'));assert(!p.stdout.includes('private-report'));assert(!p.stderr);}}
+ const urls=checkURLs({payload:{[secret]:{uri:'https://user:FICTITIOUS-SECRET@example.invalid'}}});assert.equal(urls[0].path,'/payload');assert(!JSON.stringify(urls).includes('FICTITIOUS-SECRET'));
 });
