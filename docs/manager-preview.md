@@ -19,7 +19,7 @@ synthetic fixtures and local regression results.
 
 Use Node 20+ and a normally prepared approved revision. For a source checkout,
 prepare dependencies once with `npm ci --ignore-scripts --no-audit --no-fund`.
-For installed use, follow the [installation guide](https://github.com/danielchappell/Pigboard/blob/9f03c1561b0e32de05cd296b24e50885f4abbe91/docs/install.md); the release receipt
+For installed use, follow the [installation guide](install.md); the release receipt
 identifies the stable skills location. Preview never fetches or repairs modules.
 Use the single [canonical configuration](configuration.md), its explicit native
 mappings and separate complete snapshot observations described below.

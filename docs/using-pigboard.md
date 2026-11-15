@@ -14,8 +14,8 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists thirteen skills. These are
-entrypoints and helpers, not thirteen autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists fourteen skills. These are
+entrypoints and helpers, not fourteen autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
@@ -23,7 +23,8 @@ entrypoints and helpers, not thirteen autonomous workers:
 | [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | Compose one authorized native Story/Bug in In Progress using its current versioned assignment, verified scope, High/Medium controls and prepared tools. |
 | [implementer-job](../skills/implementer-job/SKILL.md) | Plan/execute the assigned code, same PR, current CI and prepared artifacts. Returns evidence; never changes Jira. |
 | [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
-| [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized Story in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence, approval and Jira handoff. |
+| [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
+| [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
@@ -61,8 +62,8 @@ Draft/structure need no trusted context; start does and never proves live readin
 Missing setup/context preserves the draft and checks-not-run report. The writer
 does not install dependencies, mark readiness, publish without separate authority
 or request rework. The implementer consumes structured Story/Bug assignments;
-reviewer/QA still require their [retained prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
-Do not feed YAML to those unmigrated entrypoints or activate this mixed bundle.
+the reviewer consumes structured assignments and canonical implementation receipts. Only retained QA requires its [basic prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+Do not feed YAML to retained QA or activate this mixed bundle.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -111,7 +112,8 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Complete passing PR review | Publish reports, verify current-revision approval, then verify QA transition. |
 | Complete prescribed QA pass | Retain required evidence and verify Human Review transition; keep the PR open. |
 | Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
-| Confirmed defect in retained reviewer/QA | Their basic contract still returns the same Story/PR to In Progress; migration is later. |
+| Complete confirmed reviewer findings | Publish all finding IDs in a same-PR repair_request and verify Rework Queued. |
+| Confirmed defect in retained QA | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
@@ -134,7 +136,10 @@ manager-owned admission and queued repair. Its
 and human-assigned tests; human tests remain pending at the AI handoff. Versioned
 YAML authoring, full templates/examples, the `human-writing` dependency
 and local validation are available. The implementer composer/job/Jira split now
-accepts current structured Story/Bug assignments. Reviewer/QA migration, manager
+accepts current structured Story/Bug assignments. Reviewer receipt handoff is available; QA migration, manager
 admission and full-loop acceptance remain later work. Existing prose tickets are
 not automatically converted. Keep automations inactive until the compatible
 release is accepted; prompt changes do not establish compatibility.
+
+For reviewer runs, invoke `pigboard-pr-review`; it calls `reviewer-jira` in read-only
+preflight, then final mode only for a terminal handoff. Its [durable result](../skills/pigboard-pr-review/references/jira-handoff.md#durable-result) separates review verdict, workflow decision and delivery outcome. Discussion stays without a typed terminal record. Prepare the configured independent actor and actual current-approval/own-revocation controls. Failed/unknown writes stop; after final append is attempted there is no replacement record or fallback transition. Preserve receipts for human recovery instead of replaying actions.
