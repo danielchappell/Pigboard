@@ -83,7 +83,7 @@ test('unsafe roots and unmanaged destinations are rejected before preparation', 
 });
 test('real installed validator runs outside checkout and failed runtime variants preserve stable link',async t=>{
  const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
- assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record']);
+ assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope']);
  const validator=path.join(first.stableSkills,'work-validator');
  const pair=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8')).mixed;
  const workFile=path.join(o.app,'work.json'),contextFile=path.join(o.app,'facts.json');
@@ -242,4 +242,20 @@ test('installed receipt validator runs a complete repaired stack with real copie
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
+});
+
+
+test('installed config checker validates and previews outside checkout; corrupt config runtime preserves binding',async t=>{
+ const o=await fixture(t),first=await installCursorSkills(o,fakeInstall),validator=path.join(first.skills,'work-validator');
+ const config=JSON.parse(await readFile(new URL('./fixtures/project-configs.json',import.meta.url),'utf8')).two_project;
+ const input=path.join(o.app,'scope.json'),previous=path.join(o.app,'previous.json');
+ await writeFile(previous,JSON.stringify(config));config.projects[0].key='RENAMED';await writeFile(input,JSON.stringify(config));
+ const run=args=>execFileSync(process.execPath,[path.join(validator,'scripts/check-config.mjs'),'--input',input,...args,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});
+ const checked=JSON.parse(run(['--label','AI-Daniel-1']));assert.equal(checked.valid,true);assert.equal(checked.resolved_scope.projects.length,2);assert.notEqual(checked.streams[0].key,checked.streams[1].key);
+ const preview=JSON.parse(run(['--previous',previous]));assert.equal(preview.preview.status,'review_required');assert.equal(preview.preview.display_changed.length,1);assert.deepEqual(preview.preview.state_actions,[]);
+ await writeFile(input,'token: SECRET-INSTALLED');assert.throws(()=>run([]),error=>error.status===1&&!error.stdout.toString().includes('SECRET-INSTALLED'));
+ for(const mutate of [async dir=>rm(path.join(dir,'lib/config/projects.mjs')),async dir=>writeFile(path.join(dir,'lib/config/parse.mjs'),'throw Error("corrupt config")'),async dir=>rm(path.join(dir,'contracts/config-v1.schema.json')),async dir=>writeFile(path.join(dir,'scripts/check-config.mjs'),'process.exit(0);')]){
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));assert.equal(await realpath(first.stableSkills),first.skills);
+ }
+ assert.equal(await readFile(input,'utf8'),'token: SECRET-INSTALLED');assert.equal(await readFile(previous,'utf8'),JSON.stringify(JSON.parse(await readFile(new URL('./fixtures/project-configs.json',import.meta.url),'utf8')).two_project));
 });

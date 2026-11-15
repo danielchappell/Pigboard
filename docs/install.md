@@ -97,9 +97,11 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all eleven entrypoints,
-`dependencies: "verified"`, and five smoke checks: `pg.Client`, `bru --version`,
+`dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
 `work-validator epic draft`, `work-validator ticket draft`, and
-`handoff-validator admission record`. The admission check validates a complete
+`handoff-validator admission record`, and `config-validator project scope`. The
+configuration check runs the shipped synthetic two-project example through the real
+installed CLI and checks resolved mappings and independent stream keys. The admission check validates a complete
 setup-only disposable record and its independently computed canonical digest. The validator checks
 load the real parser, semantic modules and schemas, require draft-valid skeletons
 and require structural-start false. These unchanged draft smoke checks do not run
@@ -117,6 +119,22 @@ Epic/ticket YAML templates, both authoring guides, complete worked examples and
 the retained basic-worker prose guide. Its human-writing sibling and same-release
 work-validator are required; copying just the writer entrypoint loses the contract.
 These authoring additions do not migrate workers or activate delivery.
+
+## Check project configuration locally
+
+The same prepared `work-validator` includes the canonical scope schema, pure config
+modules, synthetic example and [configuration guide](configuration.md). It adds no
+new dependency directory or editable cloud bindings. Use the actual receipt path:
+
+```sh
+node /absolute/receipt/skills/work-validator/scripts/check-config.mjs --input /absolute/company.yaml --json
+node /absolute/receipt/skills/work-validator/scripts/check-config.mjs --input /absolute/next.yaml --previous /absolute/previous.yaml --json
+```
+
+Validation/preview never changes either input or provider state. Installed smoke
+checks prove local parsing/mappings only; native Jira access, retained work,
+readiness, manager deployment and activation remain separate gates. Failed config
+module/schema verification preserves the previous stable link.
 
 ## Check work locally
 
