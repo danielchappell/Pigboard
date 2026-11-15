@@ -6798,9 +6798,777 @@
           }
         ]
       }
+    },
+    {
+      "id": "native-story-epic-schema",
+      "config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid"
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "1",
+            "In Progress": "2",
+            "In Review": "3",
+            "QA": "4",
+            "Human Review": "5",
+            "Rework Queued": "6",
+            "Blocked": "7"
+          },
+          "accepted_later_stage_ids": [
+            "8"
+          ],
+          "preparation_stage_ids": [
+            "9"
+          ],
+          "cancelled_stage_ids": [
+            "10"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "manager"
+            ],
+            "implementer": [
+              "implementer"
+            ],
+            "reviewer": [
+              "reviewer"
+            ],
+            "qa": [
+              "qa"
+            ],
+            "human_request": [
+              "human"
+            ]
+          },
+          "repositories": [
+            "https://example.invalid/example/application"
+          ],
+          "worker_prefixes": [
+            "stream-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "100",
+            "key": "EX",
+            "board_ids": [],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "preparation_stage_ids",
+              "cancelled_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          }
+        ]
+      },
+      "snapshot": {
+        "schema": "pigboard-manager-snapshot/v1",
+        "site": "https://jira.example.invalid",
+        "discovery_complete": true,
+        "retained_complete": true,
+        "projects": [
+          {
+            "project_id": "100",
+            "complete": true
+          }
+        ],
+        "issues": [
+          {
+            "id": "900",
+            "key": "EX-90",
+            "project_id": "100",
+            "type_id": "21",
+            "status_id": "2",
+            "parent_id": null,
+            "labels": [
+              "pigboard"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1001",
+            "key": "EX-2",
+            "project_id": "100",
+            "type_id": "22",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          }
+        ],
+        "retained_members": [],
+        "stream_checks": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "known_ids_complete": true,
+            "repair_inventory_complete": true
+          }
+        ],
+        "pending_intents": [],
+        "required_repairs": [],
+        "completion_receipts": []
+      },
+      "expected": {
+        "streams": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "decision": "wait",
+            "selected_ticket_id": null,
+            "reason": "INVALID_WORK",
+            "return_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-story-epic-schema-independent",
+      "config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid"
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "1",
+            "In Progress": "2",
+            "In Review": "3",
+            "QA": "4",
+            "Human Review": "5",
+            "Rework Queued": "6",
+            "Blocked": "7"
+          },
+          "accepted_later_stage_ids": [
+            "8"
+          ],
+          "preparation_stage_ids": [
+            "9"
+          ],
+          "cancelled_stage_ids": [
+            "10"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "manager"
+            ],
+            "implementer": [
+              "implementer"
+            ],
+            "reviewer": [
+              "reviewer"
+            ],
+            "qa": [
+              "qa"
+            ],
+            "human_request": [
+              "human"
+            ]
+          },
+          "repositories": [
+            "https://example.invalid/example/application"
+          ],
+          "worker_prefixes": [
+            "stream-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "100",
+            "key": "EX",
+            "board_ids": [],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "preparation_stage_ids",
+              "cancelled_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          }
+        ]
+      },
+      "snapshot": {
+        "schema": "pigboard-manager-snapshot/v1",
+        "site": "https://jira.example.invalid",
+        "discovery_complete": true,
+        "retained_complete": true,
+        "projects": [
+          {
+            "project_id": "100",
+            "complete": true
+          }
+        ],
+        "issues": [
+          {
+            "id": "900",
+            "key": "EX-90",
+            "project_id": "100",
+            "type_id": "21",
+            "status_id": "2",
+            "parent_id": null,
+            "labels": [
+              "pigboard"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\",\"EX-3\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1001",
+            "key": "EX-2",
+            "project_id": "100",
+            "type_id": "22",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1002",
+            "key": "EX-3",
+            "project_id": "100",
+            "type_id": "22",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-3\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-3\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          }
+        ],
+        "retained_members": [],
+        "stream_checks": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "known_ids_complete": true,
+            "repair_inventory_complete": true
+          }
+        ],
+        "pending_intents": [],
+        "required_repairs": [],
+        "completion_receipts": []
+      },
+      "expected": {
+        "streams": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "decision": "select",
+            "selected_ticket_id": "1002",
+            "reason": null,
+            "return_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-bug-epic-schema",
+      "config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid"
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "1",
+            "In Progress": "2",
+            "In Review": "3",
+            "QA": "4",
+            "Human Review": "5",
+            "Rework Queued": "6",
+            "Blocked": "7"
+          },
+          "accepted_later_stage_ids": [
+            "8"
+          ],
+          "preparation_stage_ids": [
+            "9"
+          ],
+          "cancelled_stage_ids": [
+            "10"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "manager"
+            ],
+            "implementer": [
+              "implementer"
+            ],
+            "reviewer": [
+              "reviewer"
+            ],
+            "qa": [
+              "qa"
+            ],
+            "human_request": [
+              "human"
+            ]
+          },
+          "repositories": [
+            "https://example.invalid/example/application"
+          ],
+          "worker_prefixes": [
+            "stream-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "100",
+            "key": "EX",
+            "board_ids": [],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "preparation_stage_ids",
+              "cancelled_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          }
+        ]
+      },
+      "snapshot": {
+        "schema": "pigboard-manager-snapshot/v1",
+        "site": "https://jira.example.invalid",
+        "discovery_complete": true,
+        "retained_complete": true,
+        "projects": [
+          {
+            "project_id": "100",
+            "complete": true
+          }
+        ],
+        "issues": [
+          {
+            "id": "900",
+            "key": "EX-90",
+            "project_id": "100",
+            "type_id": "21",
+            "status_id": "2",
+            "parent_id": null,
+            "labels": [
+              "pigboard"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1001",
+            "key": "EX-2",
+            "project_id": "100",
+            "type_id": "23",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          }
+        ],
+        "retained_members": [],
+        "stream_checks": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "known_ids_complete": true,
+            "repair_inventory_complete": true
+          }
+        ],
+        "pending_intents": [],
+        "required_repairs": [],
+        "completion_receipts": []
+      },
+      "expected": {
+        "streams": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "decision": "wait",
+            "selected_ticket_id": null,
+            "reason": "INVALID_WORK",
+            "return_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-bug-epic-schema-independent",
+      "config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid"
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "1",
+            "In Progress": "2",
+            "In Review": "3",
+            "QA": "4",
+            "Human Review": "5",
+            "Rework Queued": "6",
+            "Blocked": "7"
+          },
+          "accepted_later_stage_ids": [
+            "8"
+          ],
+          "preparation_stage_ids": [
+            "9"
+          ],
+          "cancelled_stage_ids": [
+            "10"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "manager"
+            ],
+            "implementer": [
+              "implementer"
+            ],
+            "reviewer": [
+              "reviewer"
+            ],
+            "qa": [
+              "qa"
+            ],
+            "human_request": [
+              "human"
+            ]
+          },
+          "repositories": [
+            "https://example.invalid/example/application"
+          ],
+          "worker_prefixes": [
+            "stream-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "100",
+            "key": "EX",
+            "board_ids": [],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "preparation_stage_ids",
+              "cancelled_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          }
+        ]
+      },
+      "snapshot": {
+        "schema": "pigboard-manager-snapshot/v1",
+        "site": "https://jira.example.invalid",
+        "discovery_complete": true,
+        "retained_complete": true,
+        "projects": [
+          {
+            "project_id": "100",
+            "complete": true
+          }
+        ],
+        "issues": [
+          {
+            "id": "900",
+            "key": "EX-90",
+            "project_id": "100",
+            "type_id": "21",
+            "status_id": "2",
+            "parent_id": null,
+            "labels": [
+              "pigboard"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\",\"EX-3\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1001",
+            "key": "EX-2",
+            "project_id": "100",
+            "type_id": "23",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1002",
+            "key": "EX-3",
+            "project_id": "100",
+            "type_id": "22",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-3\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-3\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          }
+        ],
+        "retained_members": [],
+        "stream_checks": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "known_ids_complete": true,
+            "repair_inventory_complete": true
+          }
+        ],
+        "pending_intents": [],
+        "required_repairs": [],
+        "completion_receipts": []
+      },
+      "expected": {
+        "streams": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "decision": "select",
+            "selected_ticket_id": "1002",
+            "reason": null,
+            "return_count": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "native-epic-ticket-schema",
+      "config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid"
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "1",
+            "In Progress": "2",
+            "In Review": "3",
+            "QA": "4",
+            "Human Review": "5",
+            "Rework Queued": "6",
+            "Blocked": "7"
+          },
+          "accepted_later_stage_ids": [
+            "8"
+          ],
+          "preparation_stage_ids": [
+            "9"
+          ],
+          "cancelled_stage_ids": [
+            "10"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "manager"
+            ],
+            "implementer": [
+              "implementer"
+            ],
+            "reviewer": [
+              "reviewer"
+            ],
+            "qa": [
+              "qa"
+            ],
+            "human_request": [
+              "human"
+            ]
+          },
+          "repositories": [
+            "https://example.invalid/example/application"
+          ],
+          "worker_prefixes": [
+            "stream-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "100",
+            "key": "EX",
+            "board_ids": [],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "preparation_stage_ids",
+              "cancelled_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          }
+        ]
+      },
+      "snapshot": {
+        "schema": "pigboard-manager-snapshot/v1",
+        "site": "https://jira.example.invalid",
+        "discovery_complete": true,
+        "retained_complete": true,
+        "projects": [
+          {
+            "project_id": "100",
+            "complete": true
+          }
+        ],
+        "issues": [
+          {
+            "id": "900",
+            "key": "EX-90",
+            "project_id": "100",
+            "type_id": "21",
+            "status_id": "2",
+            "parent_id": null,
+            "labels": [
+              "pigboard"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          },
+          {
+            "id": "1001",
+            "key": "EX-2",
+            "project_id": "100",
+            "type_id": "22",
+            "status_id": "1",
+            "parent_id": "900",
+            "labels": [
+              "stream-1"
+            ],
+            "format": "yaml",
+            "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "pointer": null,
+            "required_requests": []
+          }
+        ],
+        "retained_members": [],
+        "stream_checks": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "known_ids_complete": true,
+            "repair_inventory_complete": true
+          }
+        ],
+        "pending_intents": [],
+        "required_repairs": [],
+        "completion_receipts": []
+      },
+      "expected": {
+        "streams": [
+          {
+            "project_id": "100",
+            "label": "stream-1",
+            "decision": "hold",
+            "selected_ticket_id": null,
+            "reason": "INVALID_WORK",
+            "return_count": 1
+          }
+        ]
+      }
     }
   ],
   "oracle_corrections": "Only S35 return_count amended from accidental default1 to null: the only member has unmapped native status999, so whether it is Human Review is unknown. Original frozen oracles and first failing output preserved outside repository. Ownership-only holds S30/S31/S32 retain known Human Review0 / return1. S18/S32 assert both scopes; H03 variants assert entire scope set.",
   "fixture_input_corrections": "Author-found graph-binding correction: Epic graph child edges now match actual prerequisite documents in S05,S06,S34,repair-prerequisite-complete. Expected decisions/selections/reasons/counts unchanged. The initial positive input helper had flattened child edges. Original frozen inputs remain preserved outside repository.",
-  "qa_fixture_input_corrections": "Confirmed QA fidelity corrections: S09 ready member now native Bug23; S10 contains queued repair EX-3 -> Ready prerequisite EX-2 with coherent raw contexts/Epic graph; H03-B-full Human Review contexts now bind each actual B-EX-30..34 subject. Original oracles remain unchanged. Added independently canonical-prechecked two-root completion fixture with literal expected select1100."
+  "qa_fixture_input_corrections": "Confirmed QA fidelity corrections: S09 ready member now native Bug23; S10 contains queued repair EX-3 -> Ready prerequisite EX-2 with coherent raw contexts/Epic graph; H03-B-full Human Review contexts now bind each actual B-EX-30..34 subject. Original oracles remain unchanged. Added independently canonical-prechecked two-root completion fixture with literal expected select1100.",
+  "native_schema_regressions": "Added generic-canonical-valid Epic bodies on native Story/Bug, alone and with an independent valid later Story, plus inverse native Epic carrying a valid ticket body. Native type/schema binding is required by existing contracts; prior literal oracles unchanged."
 }
