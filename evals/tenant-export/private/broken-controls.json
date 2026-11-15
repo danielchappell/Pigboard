@@ -1,0 +1,148 @@
+{
+  "controls": [
+    {
+      "id": "first-page-only",
+      "file": "service.mjs",
+      "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+      "after": "      const rows = (await repository.queryTenant({ tenantId, pageSize, cursor: null })).records;",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "FAIL",
+          "M1.2": "PASS",
+          "M1.3": "FAIL",
+          "M1.4": "INCOMPLETE"
+        }
+      },
+      "expectedPublicExit": 1
+    },
+    {
+      "id": "admin-leak",
+      "file": "service.mjs",
+      "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+      "after": "      const rows = await collectPages(cursor => repository.queryAdmin({ pageSize, cursor }));",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "FAIL",
+          "M1.2": "FAIL",
+          "M1.3": "FAIL",
+          "M1.4": "FAIL"
+        }
+      },
+      "expectedPublicExit": 1
+    },
+    {
+      "id": "stop-on-empty",
+      "file": "service.mjs",
+      "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+      "after": "      const rows = []; let cursor = null; const seen = new Set();\n      do {\n        const page = await repository.queryTenant({ tenantId, pageSize, cursor });\n        if (page.records.length === 0) break;\n        rows.push(...page.records);\n        cursor = page.nextCursor;\n        if (cursor !== null) {\n          if (seen.has(cursor)) throw new ServiceError('UPSTREAM', 502, 'Repeated continuation cursor');\n          seen.add(cursor);\n        }\n      } while (cursor !== null);",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "PASS",
+          "M1.2": "PASS",
+          "M1.3": "FAIL",
+          "M1.4": "PASS"
+        }
+      },
+      "expectedPublicExit": 0
+    },
+    {
+      "id": "accept-repeated-cursor",
+      "file": "service.mjs",
+      "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+      "after": "      const rows = []; let cursor = null; const seen = new Set();\n      do {\n        const page = await repository.queryTenant({ tenantId, pageSize, cursor });\n        rows.push(...page.records);\n        cursor = page.nextCursor;\n        if (cursor !== null) {\n          if (seen.has(cursor)) break;\n          seen.add(cursor);\n        }\n      } while (cursor !== null);",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "PASS",
+          "M1.2": "PASS",
+          "M1.3": "FAIL",
+          "M1.4": "PASS"
+        }
+      },
+      "expectedPublicExit": 0
+    },
+    {
+      "id": "partial-success",
+      "file": "service.mjs",
+      "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+      "after": "      const rows = []; let cursor = null; const seen = new Set();\n      try { do {\n        const page = await repository.queryTenant({ tenantId, pageSize, cursor });\n        rows.push(...page.records);\n        cursor = page.nextCursor;\n        if (cursor !== null) {\n          if (seen.has(cursor)) throw new ServiceError('UPSTREAM', 502, 'Repeated continuation cursor');\n          seen.add(cursor);\n        }\n      } while (cursor !== null); } catch {}",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "PASS",
+          "M1.2": "PASS",
+          "M1.3": "FAIL",
+          "M1.4": "FAIL"
+        }
+      },
+      "expectedPublicExit": 1
+    },
+    {
+      "id": "inconsistent-size-boundary",
+      "file": "service.mjs",
+      "before": "    async exportActive({ tenantId, pageSize }) {\n      validatePageSize(pageSize);",
+      "after": "    async exportActive({ tenantId, pageSize }) {\n      validatePageSize(pageSize);\n      if (pageSize === 100) throw new ValidationError();",
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "FAIL",
+          "M1.2": "FAIL",
+          "M1.3": "PASS",
+          "M1.4": "PASS"
+        }
+      },
+      "expectedPublicExit": 1
+    },
+    {
+      "id": "adapter-tamper",
+      "file": "repository.mjs",
+      "before": "// Prepared I/O boundary. Do not modify or bypass this file in a trial.",
+      "after": "// Changed adapter.",
+      "expected": {
+        "adapter": "FAIL",
+        "requirements": {
+          "M1.1": "INCOMPLETE",
+          "M1.2": "INCOMPLETE",
+          "M1.3": "INCOMPLETE",
+          "M1.4": "INCOMPLETE"
+        }
+      },
+      "expectedPublicExit": 0
+    },
+    {
+      "id": "missing-fault-delivery",
+      "graderArgs": [
+        "--without-faults"
+      ],
+      "expected": {
+        "adapter": "PASS",
+        "requirements": {
+          "M1.1": "PASS",
+          "M1.2": "PASS",
+          "M1.3": "INCOMPLETE",
+          "M1.4": "INCOMPLETE"
+        }
+      },
+      "expectedPublicExit": 0
+    }
+  ],
+  "alternative": {
+    "id": "valid-tenant-loop",
+    "file": "service.mjs",
+    "before": "      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));",
+    "after": "      const rows = []; let cursor = null; const seen = new Set();\n      do {\n        const page = await repository.queryTenant({ tenantId, pageSize, cursor });\n        rows.push(...page.records);\n        cursor = page.nextCursor;\n        if (cursor !== null) {\n          if (seen.has(cursor)) throw new ServiceError('UPSTREAM', 502, 'Repeated continuation cursor');\n          seen.add(cursor);\n        }\n      } while (cursor !== null);",
+    "expected": {
+      "adapter": "PASS",
+      "requirements": {
+        "M1.1": "PASS",
+        "M1.2": "PASS",
+        "M1.3": "PASS",
+        "M1.4": "PASS"
+      }
+    },
+    "expectedPublicExit": 0
+  }
+}

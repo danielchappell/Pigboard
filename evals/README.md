@@ -1,8 +1,8 @@
 # Engineering trial exercises
 
 These source-only exercises provide public tasks and prepared local tools. They
-do not run models or measure skill effectiveness. Independent private qualification
-for tenant export is pending; a runnable starter does not make a scored trial ready.
+do not run models or measure skill effectiveness. Private controls qualify the tenant-export checks; a runnable starter or passing
+controls alone do not make a scored trial ready.
 
 ## Tenant export (M1)
 
@@ -53,5 +53,52 @@ removed; failed command evidence is retained for diagnosis.
 
 For a manual replay, use another new export directory. Keep failed output for
 review; remove only the exact owned directory once finished, never its shared
-parent. Reference/negative qualification, host isolation, final campaign settings
-and independent grading remain prerequisites to model-effectiveness claims.
+parent. Host isolation, final campaign settings and independent grading remain
+prerequisites to model-effectiveness claims.
+
+## Qualify the tenant-export checks
+
+With prepared Git and the same localhost permission, run from the repository root:
+
+```sh
+node evals/tenant-export/verify-controls.mjs /absolute/new-evidence-directory
+node --test test/tenant-export-fixture.test.mjs
+```
+
+The first command refuses an existing directory and retains ten cases: reference,
+six behavioral defects, adapter tampering, missing fault delivery and a valid
+alternative. The reference and alternative must pass all behavioral requirements;
+each negative must match its complete declared verdict map. Individual observations,
+commands, output, exit status, duration and source hashes remain in each case folder.
+A missing fault is INCOMPLETE, not a guessed pass or product failure. M1.5 reuse
+quality requires separate source-based review; helper names do not earn scores.
+
+Each case's `publicChecks` records COMPLETE or INCOMPLETE, named outcomes, counts
+and any incomplete reason. Qualification requires all four named cases to finish,
+with all three supported checks passing and export matching its declared result.
+An empty, skipped, truncated or failed-to-start run cannot qualify just because
+its exit code matches. Private results remain available when public evidence is
+incomplete. Child commands remove only Node's inherited test-runner marker from
+a copied environment; the parent environment is unchanged.
+
+Requirement maps describe overlapping scenarios, not independent defect counts.
+The admin-query leak fails M1.1–M1.4 because empty-page traversal and a fresh retry
+must still return the complete tenant export. Its repeated-cursor and HTTP error
+handling checks pass. The later-error observation retains first-call `queries`
+and fresh-call `retryQueries`, including when the retry's result is wrong. Missing
+fault delivery stays INCOMPLETE and does not enter that retry phase.
+
+Successful qualification exits zero and prints `complete:true`, `controls:10`,
+`matched:10`. A mismatch exits one; invalid invocation/setup exits two. A case-level
+setup failure is retained as INCOMPLETE and makes qualification incomplete.
+Inspect `report.json` and the failing case's receipts. Preserve failed evidence.
+Replay with a different new directory; do not rerun over earlier evidence.
+The root regression removes only its own passing temporary data. For manual runs,
+remove only the exact evidence directory after review, never a shared parent.
+
+The runner executes only these reviewed reference/mutation fixtures on local
+copies. Before grading actual model submissions, the qualified host must isolate
+submitted code and protect operator files and evidence. A copied directory is not
+isolation. Freeze exact files, checks, treatment and host settings before scoring.
+Retain final author verification separately from the private grade. This command
+runs no models and proves neither skill effectiveness nor live Cursor/Jira behavior.
