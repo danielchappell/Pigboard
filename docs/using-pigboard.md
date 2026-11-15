@@ -34,9 +34,10 @@ entrypoints and helpers, not fourteen autonomous workers:
 | [qa-database](../skills/qa-database/SKILL.md) | Prepared read-only observations with exact queries, parameters, permitted data and restricted access. The bundled reader is PostgreSQL; do not infer DynamoDB support. |
 | [qa-ui](../skills/qa-ui/SKILL.md) | Prescribed UI cases using prepared computer use, test identity/data, a supplied target and inspected screenshot evidence. |
 
-Read the selected skill for its complete contract. QA helpers get bounded cases,
-step IDs and original expectations from the QA entrypoint; they do not select new
-work or change the whole ticket's stage. Preserve required sibling references.
+Read the selected skill for its complete contract. Structured QA helpers receive
+complete bounded AI step inputs and original expectations from an authorized
+caller; the retained QA entrypoint does not yet construct these inputs. Helpers
+do not select new work or change the whole ticket's stage. Preserve required sibling references.
 Load only assigned helpers, preserving case order and avoiding duplicate execution
 when one helper delegates a step to another.
 
@@ -62,8 +63,8 @@ Draft/structure need no trusted context; start does and never proves live readin
 Missing setup/context preserves the draft and checks-not-run report. The writer
 does not install dependencies, mark readiness, publish without separate authority
 or request rework. The implementer consumes structured Story/Bug assignments;
-the reviewer consumes structured assignments and canonical implementation receipts. Only retained QA requires its [basic prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
-Do not feed YAML to retained QA or activate this mixed bundle.
+the reviewer consumes structured assignments and canonical implementation receipts. Only the retained QA entrypoint requires its [basic prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+Do not feed YAML to the retained QA entrypoint or activate this mixed bundle.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -113,7 +114,7 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Complete prescribed QA pass | Retain required evidence and verify Human Review transition; keep the PR open. |
 | Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
 | Complete confirmed reviewer findings | Publish all finding IDs in a same-PR repair_request and verify Rework Queued. |
-| Confirmed defect in retained QA | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
+| Confirmed defect in retained QA entrypoint | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
@@ -143,3 +144,117 @@ release is accepted; prompt changes do not establish compatibility.
 
 For reviewer runs, invoke `pigboard-pr-review`; it calls `reviewer-jira` in read-only
 preflight, then final mode only for a terminal handoff. Its [durable result](../skills/pigboard-pr-review/references/jira-handoff.md#durable-result) separates review verdict, workflow decision and delivery outcome. Discussion stays without a typed terminal record. Prepare the configured independent actor and actual current-approval/own-revocation controls. Failed/unknown writes stop; after final append is attempted there is no replacement record or fallback transition. Preserve receipts for human recovery instead of replaying actions.
+
+## Prescribed structured QA helpers
+
+Read the [shared contract](../skills/qa-api/references/structured-steps.md) and the
+selected domain skill from the same pinned release. Supply original raw
+`pigboard-ticket/v1` work, separately trusted start facts, exact AI case/step/caller,
+requirements digest and assignment, reviewed PR/current full source/target/deployed
+revisions, original ready pipeline comment plus server author metadata, approved
+identity/tenant/destinations, prepared artifacts, actual earlier observations,
+tool capabilities and private evidence/reviewer access. Compare raw receipt to
+normalized facts; neither a URL nor `configured_target` proves deployment.
+Validate the complete original work/context with the source or installed CLI.
+Do not turn prose into inputs or run human cases on their owners' behalf.
+
+API invokes only its one named Bruno child once and exposes its actual declared
+outputs with unchanged provenance. Bruno uses the exact selected prepared request,
+locked CLI/safe sandbox and private JSON report; inspect request, assertion and
+test-script counts/errors, plus explicit actual-response extraction mapping.
+Database binds earlier output → named input → zero-based prepared parameter slot;
+keep SQL/literals/intentional unbound nulls unchanged. Only PostgreSQL with the
+existing reader is supported. Resolve `qa-database/read-postgres.mjs` through the
+selected skill to its `scripts/read-postgres.mjs`; OBSERVED is not PASS. UI requires
+the actual selected surface/viewport, visible prescribed actions and inspected,
+retrievable screenshots at every checkpoint. No hidden API/DOM substitute.
+
+Return every assigned step (including API child), expected/actual, timestamps,
+revision-bound named observations/evidence, omitted/NOT RUN reasons, partial effects,
+findings/blockers and cleanup. Missing receipt/access/artifact/output/capability,
+unsupported engine or uncertain cleanup returns BLOCKED before further action.
+A proven mismatch under valid prerequisites returns FAIL. Never repeat an uncertain
+child, repair setup/tests or install a fallback. Obtain the specific missing
+prerequisite, preserve completed evidence and use a fresh authorized assignment;
+do not replay completed/uncertain effects. Helpers do not move Jira or publish the
+whole-ticket ledger. PGB-78 owns retained QA entrypoint migration; the mixed loop
+remains inactive. Human H01/H02, hosted CI and release acceptance remain separate.
+
+### Fixed source-only preparation example
+
+For the designated developer/human QA reviewer, the fixed fixture exports one
+synthetic `record-001`/`tenant-a`/`ready` journey and a distinct inaccessible tenant-b
+row. It is test-only, not installed or a helper executor. Node 20+, the committed
+source and locked dependencies must already be prepared. Choose an owned private
+run directory and unused loopback HTTP/PostgreSQL ports. Run before any helper:
+
+```sh
+PGB77_SOURCE=/absolute/committed/pigboard
+PGB77_RUN=/absolute/private/disposable-run
+node "$PGB77_SOURCE/test/fixtures/qa-helper-case.mjs" prepare "$PGB77_RUN"
+node "$PGB77_SOURCE/test/fixtures/qa-helper-case.mjs" serve "$PGB77_RUN" HTTP_PORT
+```
+
+`prepare` writes the collection/selected request and unselected sentinel, immutable
+query/seed, work/context templates, explicit response-output mapping, DB context
+and UI assets. `serve` binds 127.0.0.1 only; retain its actual endpoint/PID receipt
+and private method/path/time audit. It does not seed a database or assert results.
+Inspect `preparation.json`: fill actual endpoint, installed/source full revision,
+mock raw PR receipt/metadata, separately trusted scope, DB/TLS/role evidence and
+supported UI surface/viewport/retention receipt. Freeze matching complete operation
+facts and input/artifact hashes. Templates are **not ready** until these facts are
+established; do not invent deployment, role or viewport proof. Validate `work.yaml`
+and `facts.yaml` after preparation; JSON text is valid YAML for these templates.
+
+Prepare a disposable existing PostgreSQL installation separately as fixture owner:
+private cluster/socket/unused port, loopback only, TLS with short-lived CA and
+localhost/127.0.0.1 SAN, key mode 0600, hostssl SCRAM for only the fixture DB/reader,
+non-TLS rejection. Apply `seed.sql`; create `qa_reader` with no super/create-db/
+create-role/replication/bypass-RLS/membership/ownership privileges, only database
+CONNECT, schema USAGE and SELECT on the three columns. Enable/force RLS with the
+tenant-a policy in the seed. Owner administration uses only the owned private
+socket, never QA credentials. Retain actual grants/policy/TLS proof separately;
+provide QA only restricted access. Keep ephemeral password out of commands/source/
+shared reports; supply runtime `PGB77_DATABASE_URL`, `QA_DB_CA_FILE` and
+`QA_DB_TLS_SERVERNAME=localhost`. URL/context must agree on numeric 127.0.0.1,
+port/database/qa_reader, with no URL options. Never weaken TLS or repair during QA.
+
+Install the exact local committed candidate into an isolated root with the real
+installer before local instruction exercises (customer installs use published
+reviewed revisions). Inspect its receipt, fourteen entrypoints, six smoke checks,
+locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
+
+```sh
+node "$PGB77_SOURCE/scripts/install-cursor-skills.mjs" --source "$PGB77_SOURCE" --ref FULL_COMMIT --app "$PGB77_RUN/app" --root "$PGB77_RUN/installed"
+# From any unrelated working directory, using receipt-derived PIGBOARD_SKILLS:
+node "$PIGBOARD_SKILLS/work-validator/scripts/validate-work.mjs" --mode start --input "$PGB77_RUN/work.yaml" --context "$PGB77_RUN/facts.yaml" --json
+# From the prepared collection directory, using supplied absolute roots:
+"$QA_BRUNO_ROOT/scripts/node_modules/.bin/bru" run selected.bru --sandbox=safe --bail --noproxy --reporter-json "$PGB77_RUN/bruno-report.json" --reporter-skip-all-headers
+node "$QA_DATABASE_ROOT/scripts/read-postgres.mjs" "$PGB77_RUN/db-context.json" PGB77_DATABASE_URL "$PGB77_RUN/query.sql" "$PGB77_RUN/bound-params.json"
+```
+
+The caller must read/execute the installed helper instructions; running engines
+alone proves only engine behavior. Use the actual Bruno report's explicit mapped
+record ID for both parent observation and generated bound-params array; the frozen
+expectation is not an observation. Audit one selected request/zero sentinel and
+one database **observation** query (existing reader prerequisite catalog queries
+are separate), original/bound parameters, rows, rollback/close and unchanged SQL.
+Through supported computer use navigate `/ui`, capture/inspect/retain start,
+enter that actual ID, capture input, activate Lookup once, then capture result.
+Record actual dimensions and retrievable image references; inability to retain
+means BLOCKED. No guessed artifact paths or viewport/mobile claims.
+
+For isolated H02 preparations, preserve coherent inputs except the single missing/
+stale/untrusted receipt, absent selected request, wrong-tenant output/access,
+unsupported engine, unavailable UI evidence capability or unresolved child receipt.
+Retain supplied mock history as mock and observe zero new operation calls; do not
+manufacture an uncertain write. An isolated `response.json` state `pending` variant
+keeps the prepared `ready` assertion unchanged to demonstrate FAIL. No retry/test
+repair. These exercises do not mark designated human H01/H02 complete.
+
+After retaining sanitized evidence, stop only the owned HTTP process and private
+PostgreSQL cluster (`pg_ctl -D OWNED_PGDATA stop`), then remove only owned disposable
+output. Preserve uncertain cleanup instead of claiming it succeeded. The reader's
+advertised missing standalone test suite is pre-existing PGB-103; do not install/
+restore it here or claim it passed. Direct reader regressions/local fallback and
+actual installed-helper acceptance are distinct evidence categories.

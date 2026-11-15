@@ -10,6 +10,14 @@ and evidence against its requirements; do not design cases, add a device matrix,
 invent expectations or explore alternative journeys. The implementer prepares
 execution details and the reviewer checks them against the requirements before QA.
 
+## Structured invocation
+
+Read the [common structured-step contract](../qa-api/references/structured-steps.md) before acting. It owns original
+raw work/start context, exact AI assignment, trusted environment receipt, declared
+observations, revision-bound results and stop rules. Require the full original
+inputs; a basic prose handoff or a helper fragment is insufficient.
+
+
 ## Required handoff
 
 Before interacting, require:
@@ -65,6 +73,18 @@ an uncertain outcome blocks: record the attempt and do not replay it or invent
 reconciliation steps. Only already prescribed bounded observations and authorized
 bounded cleanup may follow; uncertainty remains visible for human recovery.
 
+## Bind the prescribed surface and inputs
+
+Use the exact `ui.surface`, browser/device and viewport from the selected step.
+For `dimensions`, verify the actual supported width/height; for
+`supplied_default`, inspect the actual prepared viewport receipt and record its
+dimensions. An unsupported set/verify operation is BLOCKED before interaction,
+not a reason to invent a desktop/mobile size. Resolve only declared earlier-output
+bindings into named inputs, retaining actual revision/tenant/value provenance.
+Perform the supplied entry route/actions in order, including each named
+`ui.screenshot_checkpoints`; do not infer another journey or use expected data
+as an observed input. Return only declared UI outputs with their real evidence.
+
 ## Screenshot evidence
 
 Capture screenshots through the selected tool at case start, prescribed checkpoints,
@@ -101,9 +121,9 @@ time/surface, status and cleanup. Separate verified observations from uncertaint
   changed revisions invalidate affected evidence and block for a fresh handoff.
 - **FAIL:** valid execution demonstrates a requirement mismatch. A required control
   visibly absent/disabled under established prerequisites is a product defect;
-  inability of the tool to observe or disambiguate it is a blocker. Continue only
-  remaining independent prescribed cases; defect-prevented dependent cases are
-  NOT RUN. Such dependency skips alone do not turn FAIL into a setup blocker.
+  inability of the tool to observe or disambiguate it is a blocker. Return this
+  assigned unit with defect-prevented dependent steps NOT RUN. Only the caller
+  may continue already prescribed independent work. Such dependency skips alone do not turn FAIL into a setup blocker.
 - **BLOCKED:** missing prerequisites, required evidence/capabilities or a scope
   decision prevents valid execution or assessment. Stop the whole job immediately,
   retain prior defects/evidence and mark every remaining case NOT RUN. BLOCKED
