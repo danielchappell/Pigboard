@@ -28,7 +28,7 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Twenty-one shared skills: engineering methods, authoring, composed delivery, review, human rework, writing and QA | In the repository and installation allowlist |
+| Twenty-two shared skills: engineering methods, authoring, composed delivery, review, human rework, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Offline manager policy preview of supplied complete snapshots | Implemented in source and prepared validator; nonexecuting proposals, no live discovery or repair ordering |
@@ -208,3 +208,14 @@ PostgreSQL uses parameterized two-hop bindings; UI retains prescribed screenshot
 Missing prerequisites return inability, demonstrated mismatches return defects.
 Helpers do not move Jira or run human cases. These capabilities do not complete
 PGB-78's retained QA entrypoint migration or activate the mixed delivery loop.
+
+## Publish an already prepared QA assessment
+
+The standalone [qa-jira skill](skills/qa-jira/SKILL.md) checks current native QA
+Story/Bug authority, validates the complete supplied ledger and publishes one
+verified handoff. Prepare current assignment/review/open-PR/CI evidence, accessible
+artifacts, same-release validators and configured Jira actor/append/read/direct
+transition access first. [Direct use and recovery](docs/using-pigboard.md#publish-prepared-qa-evidence)
+cover preflight and final modes. It runs no QA helpers. The retained qa-entrypoint
+remains incompatible; PGB-78 delivers dispatcher integration. Installed/live release
+acceptance and automation activation remain separate gates.

@@ -23,7 +23,7 @@ remain separate.
 | Component | Responsibility and evidence |
 | --- | --- |
 | Jira | Requirements, native issue metadata, workflow status and configured stage triggers; [setup record](docs/jira-setup.md) |
-| Pigboard bundle | Twenty-one allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
+| Pigboard bundle | Twenty-two allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
 | Setup scripts | Fetch a pinned source, prepare full folders, verify a stable installation and return a receipt; [install guide](docs/install.md) |
 | Cursor environment | Prepared tools, source checkout and role-specific model controls; [automation matrix](config/cursor/automations.md) |
 | Implementer composer | Dispatch preflight, High plan/one review and Medium job/final handoff; [entrypoint](skills/implementer-entrypoint/SKILL.md) |
@@ -168,3 +168,13 @@ The caller owns global scheduling/ledger/continuation; PGB-78 owns structured QA
 job/entrypoint and Jira publication. The retained entrypoint still uses basic
 prose/direct In Progress rework. This mixed bundle stays inactive pending compatible
 release and PGB-58 acceptance; local helper evidence is not deployment acceptance.
+
+## Prepared QA publication boundary
+
+The current bundle contains 22 skills. [qa-jira](skills/qa-jira/SKILL.md) is the sole
+permanent QA Jira publication/failure owner. A trusted caller supplies the complete
+prepared assessment; qa-jira independently checks current authority, canonical
+records/receipts, evidence, publication and one direct native transition. It never
+executes domain helpers. PGB-78 will compose it with the dispatcher; retained
+qa-entrypoint cannot produce this compatible flow. The manager remains a design;
+this worker boundary adds no manager state access or activation authority.

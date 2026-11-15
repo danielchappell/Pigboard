@@ -14,8 +14,8 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists twenty-one skills. These are
-entrypoints and helpers, not twenty-one autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists twenty-two skills. These are
+entrypoints and helpers, not twenty-two autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
@@ -32,6 +32,7 @@ entrypoints and helpers, not twenty-one autonomous workers:
 | [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
 | [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
+| [qa-jira](../skills/qa-jira/SKILL.md) | Read-only eligibility preflight or standalone publication of a complete prepared QA assessment for the current native Story/Bug, assignment/review/open PR and configured tools. Executes no helpers; retained dispatcher integration remains PGB-78. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
 | [request-rework](../skills/request-rework/SKILL.md) | Explicit human record-and-queue request, in-scope findings/evidence, current Human Review assignment and compatible completed QA chain on the same open PR, configured actor/tools and durable output. Human invoked; no automatic worker. |
@@ -231,7 +232,7 @@ port/database/qa_reader, with no URL options. Never weaken TLS or repair during 
 
 Install the exact local committed candidate into an isolated root with the real
 installer before local instruction exercises (customer installs use published
-reviewed revisions). Inspect its receipt, twenty-one entrypoints, six smoke checks,
+reviewed revisions). Inspect its receipt, twenty-two entrypoints, seven smoke checks,
 locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
 
 ```sh
@@ -292,3 +293,76 @@ manager later admits A when its separate normal gates pass, while B continues.
 source/installed validation commands and all twelve fixed PREP-01 variants. These
 are synthetic local instruction exercises, not live Jira or completed human
 acceptance. It explains dependency preparation, evidence retention and cleanup.
+
+## Publish prepared QA evidence
+
+Load `<receipt.skills>/qa-jira/SKILL.md` directly. The source entrypoint is
+[qa-jira](../skills/qa-jira/SKILL.md). It is the permanent publication/failure
+contract; the retained qa-entrypoint remains incompatible until PGB-78 integrates
+it. The caller retains evidence and supplies an assessment; this skill executes
+no QA helpers and makes no human test pass.
+
+Supply these named instruction inputs (references contain no secret values):
+
+```yaml
+mode: preflight # later invoke final separately; final repeats current checks
+scope: /private/run/scope.yaml # trusted config, site/project/full stream, native ID/type/stage, allowed repository/PR/actors
+capabilities: /private/run/prepared-capabilities.json # same-release immutable validator root, Jira/PR/evidence reads, append/exact read/direct transitions/status, private destination/audience
+work:
+  raw: /private/run/work.yaml
+  format: yaml
+  start_context: /private/run/facts.yaml # separately trusted original bytes
+assignment: /private/run/current-pointer.json # lookup hint; actual verified pointer wins
+prepared_assessment: null # final: /private/run/assessment.json
+known_requests: [] # final wait: exact typed request references + unresolved evidence
+retained_delivery: null # if present, original bytes/UUID/known receipts/uncertainty and explicit existing resume
+```
+
+Preflight requires no invented finished assessment or deployment for static work.
+For final, supply the complete actual `qa_report`, declared findings, detailed
+observations/artifacts, coverage counts, cleanup and case-specific reuse basis.
+For example, static human-only work has `steps: []`, the exact two prescribed human
+IDs and the original `no_ai_cases_reason`; its result reports zero AI work and
+pending humans. It still needs the current PR/review/CI. A partial assessment
+retains an earlier FAIL/finding and all later NOT_RUN rows/reasons. If a later
+access inability remains unresolved, propose Blocked while retaining the defect;
+if a real unresolved typed upstream request prevents completion without inability,
+propose dependency_wait. The skill verifies the actual evidence and route itself.
+PASS/FAIL claims always require their actual tested PR and environment proof.
+
+The returned structured object separates `test_verdict` from `delivery_outcome`,
+includes complete rows/findings/humans, counts/cleanup/evidence/limitations and
+known publication/transition/status receipts. `COMPLETED` means the intended native
+status was independently observed, including delivery to Blocked. Preflight and
+discussion have `NOT_ATTEMPTED`. Preserve UNAVAILABLE/UNCERTAIN results and full
+original evidence locally. Never replay an attempted append or transition. One
+bounded resolving read may establish conclusive success; otherwise stop with the
+known actions, uncertainty and exact human recovery required. Only an existing
+valid explicit canonical resume chain permits a later result slot.
+
+### Prepare source-only simulated publisher inputs
+
+From the source checkout, supply a fresh absolute private root whose parent exists:
+
+```sh
+node --input-type=module -e 'import {prepareQaFixture} from "./test/fixtures/qa-helper-case.mjs"; await prepareQaFixture(process.argv[1], {suite: "publication"});' /absolute/private/pgb110-case
+```
+
+The command refuses an existing root/unsupported suite and returns NOT_READY
+preparation, not a test result. It creates fixed inputs, labelled supplied/mock
+PNG evidence, operator-only cards/expectations/validator candidates, invocation
+instructions and empty output folders. It starts no server, database or browser.
+Bind the reviewed source/installed commit, manifest and input hashes before use.
+Keep `operator/expectations.json` and `operator/validator-inputs` withheld from the
+executing skill. Read generated `manual-echo.md`: the operator captures the actual
+submitted transport and echoes only those unchanged bytes with preselected fixed
+server metadata; never inject a fixed terminal candidate, UUID or expected outcome.
+Retain the request/response derivation audit and independently validate actual
+produced output. Inspect the mock PNG contents; it is never a live screenshot.
+
+These source-only packets support simulated instruction exercises, separate from
+real provider/Grok execution, default installed acceptance and the three native
+human cases. Retain sanitized commands/results, hashes, ordered calls, mutations,
+actual model/profile, native status or unknown, cleanup and human action before
+removing only the owned disposable root. R1-24-H01/H02/H03 remain human-owned until
+the designated developer and QA reviewer execute them.

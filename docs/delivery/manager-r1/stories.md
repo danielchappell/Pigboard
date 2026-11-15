@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-The independently reviewed 23-Story baseline remains historical evidence. The delivery plan defines dependency order; stable R1 IDs and all 88 baseline cases are preserved. Current source has 25 Stories/113 cases; native Jira has 26/116, with PGB-110/R1-24 source publication pending. No implementation or activation is authorized by publication.
+Owner-approved combined 26-Story set with 116 prescribed cases. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA split adds R1-24 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
 
 The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
@@ -503,11 +503,83 @@ Existing QA helpers need the structured case bindings and evidence shape. They m
 - **Automated regression:** Contract tests for exact helper dispatch, safe bindings, evidence checkpoints and failure stops; preserve existing PostgreSQL regression suite.
 
 
-## R1-08: Complete QA with an honest evidence ledger
+## R1-24: Publish prepared QA evidence safely
+
+### Problem to solve
+
+An authorized QA caller has no separate skill for delivering a complete prepared assessment to Jira. Evidence and pending human tests need a verified handoff even when execution cannot finish.
+
+Prerequisites: R1-04, R1-06, R1-07, PGB-108; required outcome ai_qa_complete.
+
+### Acceptance Criteria
+
+- **AC1.** An authorized caller can use qa-jira directly to check a configured native Story/Bug in QA and publish its complete prepared assessment for the current assignment, review and open PR; other native types are rejected before writes.
+- **AC2.** Complete passing AI evidence or explicit human-only work moves to Human Review only after verified publication; human cases remain pending.
+- **AC3.** A confirmed in-scope defect or known upstream request queues rework; inability blocks; discussion stays QA without a terminal record.
+- **AC4.** Full partial results, findings and pending human IDs survive failure; unknown writes stop without replay, replacement records or competing transitions.
+- **AC5.** Installed guidance explains direct invocation, prerequisites, evidence ownership, success and recovery, and makes clear that prescribed dispatch remains a separate pending Story.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own the qa-jira read-only eligibility and canonical publication/transition skill, its installation, tests and guides, and the approved same-scope 24-Story delivery mapping; execute no tests or manager actions.
+- **TAC1.** qa-jira is the sole permanent publication/failure contract; use existing canonical records, validators, formatter and direct configured edges, with no new engine, schema, provider adapter or helper transition authority.
+- **TAC2.** Verify current configured scope, actors, assignment/review/PR/requirements receipts and complete evidence before publication; append once, verify exact readback and freshness, transition once and verify status; retain full partial results and never replay completed mutations.
+- **TAC3.** Human-only static work needs no invented deployment; successful runtime completion or any PASS/FAIL claim requires current trusted environment proof, while a complete all-NOT_RUN non-completing report may describe missing deployment under the corrected shared contract.
+
+### Testing Strategy
+
+- **QA skills:** `[]`; human developer and QA reviewer own every case. No human case is completed by CI or a simulated instruction exercise.
+- **Preparation:** {"id":"PREP-01","owner":"implementer","supplies":"Executable local fixtures and exact commands for all human cases below, bound to the PR revision.","used_by":["DATA-01","R1-24-H01","R1-24-H02","R1-24-H03"],"preserves":["All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."]}
+
+#### R1-24-H01: Follow the installed direct-invocation guide and call preflight, then final, for each native type.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC2, AC5, TAC1, TAC2.
+- **Prerequisites/data:** Prepared native Story and Bug assessments with a complete mixed API-child/database/UI ledger, declared observed-value binding, inspectable supplied/mock screenshots, exact human IDs and current valid receipt chains. Same-release installed qa-jira and private disposable fixtures with simulated provider cards and dummy credentials.
+- **Steps:**
+  1. Follow the installed direct-invocation guide and call preflight, then final, for each native type.
+  2. Inspect the full ledger, evidence retrieval, human_pending and ordered tool audit.
+  3. Check predecessor validation, append, exact comment readback/chain, freshness, direct transition and independent native-status verification.
+  4. Inspect the approved 24-Story mapping, new R1-24 before unchanged R1-08, preserved downstream dependencies and current-versus-historical review statements.
+- **Expected:** Every prescribed nested row and pending human ID is retained; only verified current-revision completion reaches Human Review. The caller can use the publisher without a dispatcher; the guide states dispatch remains pending and installation grants no authority or activation. The delivery records retain all existing R1 IDs, 53 product requirements and 41 scenarios; the original three R1-08 human cases remain, and R1-24 adds three publication cases without claiming acceptance.
+- **Evidence:** Input/output hashes, exact installed path/revision/command, ordered tool audit, inspected screenshots, typed ledger, receipt chain and delivery-mapping diff.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
+
+#### R1-24-H02: Call final on each fresh assessment without running helpers.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC3, AC4, TAC1, TAC2.
+- **Prerequisites/data:** Separate coherent prepared defect, known-upstream-wait, inability, earlier-FAIL-plus-later-inability, earlier-FAIL-plus-wait and discussion assessments; upstream requests include their exact typed lineage.
+- **Steps:**
+  1. Call final on each fresh assessment without running helpers.
+  2. Inspect final/partial ledger, findings, unfinished NOT_RUN reasons, exact upstream references and publication/transition audit.
+- **Expected:** Confirmed defect and known outstanding wait select Rework Queued; inability selects Blocked while retaining earlier findings and evidence; discussion has no terminal write and stays QA. A rumor cannot become a dependency request, omissions or unresolved finding IDs reject, and human cases never become PASS.
+- **Evidence:** Exact prepared and produced records, full receipt chain, selected destination, verified/unknown status, tested revision and exact command.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
+
+#### R1-24-H03: Call preflight/final for the zero-AI Bug, then each separate invalid or failure variant.
+
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
+- **Requirements:** AC1, AC2, AC3, AC4, TAC2, TAC3.
+- **Prerequisites/data:** Static human-only native Bug with empty AI graph/types, two pending human IDs and a nonempty no-AI reason. Separate Task/Epic, changed source/requirements/stage, missing/stale deployment, untrusted approval, missing receipt page, oversized ledger, definite append failure, unknown append/readback, unknown transition and explicitly authorized resume variants with a known completed mutation.
+- **Steps:**
+  1. Call preflight/final for the zero-AI Bug, then each separate invalid or failure variant.
+  2. For missing deployment, compare a complete all-NOT_RUN blocker with a report claiming PASS/FAIL.
+  3. Inspect call audit, retained evidence, receipt resolution, current/unknown status and any resume action.
+- **Expected:** Valid static work invokes no helper or environment request, keeps the exact pending human list and reaches Human Review only after verified publication. Invalid native types stop before writes; complete all-NOT_RUN inability may publish a valid blocker, while execution claims without required proof reject. Stale/unknown effects stop without mutation replay, fallback terminal writes or overwriting a changed stage; at most one resolving read follows each uncertain action, and only conclusive success permits the next distinct step. Resume consumes existing explicit valid human authorization and retained case-specific evidence; it never creates authorization, repeats a completed mutation or auto-passes humans.
+- **Evidence:** Input/output hashes, ordered tool audit, human handoff, retained evidence/receipt reads, tested revision and exact command.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
+
+- **Automated regression:** Canonical accepted/rejected publication records, full partial ledgers, human-only handoff, uncertain-write handling and source/installed skill-validator-formatter parity; no prose-only claim of runtime behavior.
+
+## R1-08: Execute prescribed QA and hand off complete evidence
 
 ### Problem to solve
 
 QA needs to run the named cases in order and hand the open PR to humans. It must retain incomplete results and keep human tests visibly pending.
+
+Prerequisites: R1-04, R1-06, R1-07, PGB-108, R1-24; required outcome ai_qa_complete.
 
 ### Acceptance Criteria
 
@@ -519,22 +591,19 @@ QA needs to run the named cases in order and hand the open PR to humans. It must
 ### Technical Acceptance Criteria
 
 - **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
-- **Change boundary:** Own QA orchestration and separate qa-jira publication; helpers retain no transition authority.
+- **Change boundary:** Own QA orchestration and compose the separately delivered qa-jira publisher; helpers retain no transition authority.
 - **TAC1.** Own QA orchestration and separate qa-jira publication; helpers retain no transition authority.
 - **TAC2.** Use current review/PR/requirements receipts; no observation overlap, catch-up or replay of completed mutations. Preserve full partial ledger on failure.
 - **TAC3.** Human-only non-runtime PR targets need no invented deployment; environment-dependent work still requires the trusted current deployment receipt.
-- **Related repositories:** Customer applications are reference/test context only; no Plexus or archived-platform changes.
 
 ### Testing Strategy
 
-- **QA skills:** `[]`. Every case below is explicitly human-owned. QA reports zero AI cases and pending human cases; CI and PR review still run.
-- **Actor/access:** Human developer and QA reviewer use the PR checkout and prepared disposable fixtures, with dummy credentials and simulated provider/tool receipts. No customer account or delivery automation is used for these local checks.
-- **Preparation:** Implementer supplies exact commands and fixture paths as mechanical preparation, bound to the PR revision. It must preserve all inputs/expected outcomes below. The command names and paths in the plan are new interfaces to deliver, not commands claimed to exist today.
-- **Execution:** Use fresh isolated data per case; preserve ordered actions within a case. Local tool transcripts test contract handling, not real Cursor publication or an actual PR approval. Installed provider/worker checks remain separate release acceptance.
+- **QA skills:** `[]`; human developer and QA reviewer own every case. No human case is completed by CI or a simulated instruction exercise.
+- **Preparation:** {"id":"PREP-01","owner":"implementer","supplies":"Executable local fixtures and exact commands for all human cases below, bound to the PR revision.","used_by":["DATA-01","R1-08-H01","R1-08-H02","R1-08-H03"],"preserves":["All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."]}
 
-#### R1-08-H01: Mixed ordered execution
+#### R1-08-H01: Execute the prepared dispatch sequence.
 
-- **Owner/skills:** Human developer and QA reviewer; AI skills `[]`.
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
 - **Requirements:** AC1, AC2, AC3, TAC1, TAC2.
 - **Prerequisites/data:** Scripted native Story and Bug mixed API-child/database/UI plans with declared binding and screenshots.
 - **Steps:**
@@ -542,35 +611,34 @@ QA needs to run the named cases in order and hand the open PR to humans. It must
   2. Inspect full nested ledger and human_pending.
   3. Inspect verified publication and transition order.
 - **Expected:** Each step once, correct earlier-output binding, full evidence; Human Review only after verified current-revision completion.
-- **Evidence:** ordered tool audit, screenshots and typed ledger; include tested PR revision.
-- **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
+- **Evidence:** ordered tool audit, screenshots and typed ledger; tested PR revision and exact command.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
 
-#### R1-08-H02: Prescribed observation and failure
+#### R1-08-H02: Run each observation schedule against scripted outcomes.
 
-- **Owner/skills:** Human developer and QA reviewer; AI skills `[]`.
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
 - **Requirements:** AC1, AC2, AC4, TAC2.
 - **Prerequisites/data:** Observation schedules for until_expected/all_observations plus overrun, defect, missing access and known upstream defect transcripts.
 - **Steps:**
   1. Run each observation schedule against scripted outcomes.
   2. Inspect dispatch times, final ledger and destination.
 - **Expected:** No overlap/catch-up; expected success/failure policy; overrun/inability blocks, known defect queues; unfinished work explicitly NOT_RUN.
-- **Evidence:** timestamped dispatch audit and result records; include tested PR revision.
-- **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
+- **Evidence:** timestamped dispatch audit and result records; tested PR revision and exact command.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
 
-#### R1-08-H03: Human-only and stale inputs
+#### R1-08-H03: Execute zero-AI QA.
 
-- **Owner/skills:** Human developer and QA reviewer; AI skills `[]`.
+- **Owner/skills:** developer and human QA reviewer; AI skills `[]`.
 - **Requirements:** AC2, AC3, AC4, TAC3.
 - **Prerequisites/data:** Complete human-only native Bug static PR plan, rejected Task/Epic types, plus changed source/requirements and unknown publication variants.
 - **Steps:**
   1. Execute zero-AI QA.
   2. Repeat with each invalid variant.
 - **Expected:** Zero AI cases and exact pending human list; no human PASS, no invented environment; stale/unknown effects stop without replay.
-- **Evidence:** tool audit and human handoff; include tested PR revision.
-- **Cleanup:** Remove disposable local fixture/build output after retaining evidence. No live records/resources are changed.
+- **Evidence:** tool audit and human handoff; tested PR revision and exact command.
+- **Cleanup:** Human QA reviewer retains evidence then removes disposable local fixtures/build output; do not change live records/resources.
 
 - **Automated regression:** Entrypoint contract tests for ordered complete ledgers, observation bounds, all-human handoff and failure destinations.
-
 
 ## R1-09: Request rework through the human’s assistant
 
@@ -2560,3 +2628,5 @@ The new manager cannot safely mix old prose workers with structured handoffs. Op
 
 
 - **Automated regression:** Bundle/config compatibility checks and installer regression tests proving inactive rollout and truthful readiness reporting.
+
+PGB-129/R1-26 is composed after PGB-113 and before PGB-81, with its unchanged six human cases. Current source is 26 Stories/116 cases; all original PGB-81 criteria and 42 full cases remain. Publication does not execute human acceptance or activate delivery.

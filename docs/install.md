@@ -14,7 +14,7 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the twenty-one folders in
+The installer prepares the twenty-two folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
@@ -76,7 +76,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing twenty-one complete skill folders and `work-validator` |
+| `skills` | Absolute root containing twenty-two complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -100,7 +100,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all twenty-one entrypoints,
+`verification`. Inspect the expected commit, all twenty-two entrypoints,
 `dependencies: "verified"`, and these seven ordered `smokeChecks` values:
 
 1. `pg.Client`
@@ -338,8 +338,8 @@ no activation, live freshness, permission or human acceptance evidence.
 Install/refresh the entire pinned, reviewed published bundle, not four loose
 `SKILL.md` files. All four helpers depend on
 `qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
-and the prepared validator. The current twenty-one-skill allowlist ships
-these folders; there is no added skill or engine. Use the receipt's immutable
+and the prepared validator. The current twenty-two-skill allowlist ships
+these helper folders. The separate qa-jira addition supplies publication only, with no new engine. Use the receipt's immutable
 versioned `skills` path for a run, rather than following a later stable-link refresh.
 Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
 Missing runtime/reference/hash or a failed check blocks the run; preserve the last
@@ -356,3 +356,21 @@ canonical QA publication are PGB-78. PGB-90 owns saved automation compatibility;
 PGB-58 owns full-loop acceptance and activation remains a separate owner decision.
 This mixed bundle must stay inactive. Do not treat local fixture or installation
 success as hosted/customer delivery acceptance.
+
+## Prepared QA publisher setup
+
+The 22-skill bundle includes the full qa-jira folder and its same-release
+work-validator dependency. Source entrypoint: [qa-jira](../skills/qa-jira/SKILL.md);
+installed entrypoint: `<receipt.skills>/qa-jira/SKILL.md`. Prepare the configured
+QA actor, native/PR/evidence reads, canonical append transport, exact comment read,
+direct QA transitions and status read, plus a private evidence destination and
+intended audience. No credentials or setup repair belong inside a delivery run.
+
+Verify the receipt commit, manifest hashes and copied publisher/validator/formatter
+bytes. From outside the source checkout, use the returned immutable validator root
+to run raw start, record, chain and HTML/ADF formatter checks on the prepared inputs.
+Local tests copy real locked validator dependencies and simulate unrelated helper
+installation; they establish parity/recovery, not default installation, provider
+execution or live acceptance. The source fixture is never shipped. Keep dated
+installation receipts at their original scope. PGB-78 integration and PGB-90/PGB-58
+compatible installed/live acceptance remain required before activation.

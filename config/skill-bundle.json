@@ -11,6 +11,7 @@
     "human-writing",
     "request-rework",
     "qa-entrypoint",
+    "qa-jira",
     "qa-api",
     "qa-bruno",
     "qa-database",
