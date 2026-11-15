@@ -4,9 +4,10 @@ This local command checks editable structure and, with separately supplied trust
 facts, local start semantics. It never reads Jira, changes a file, starts a worker,
 computes a digest, executes tests or establishes live readiness. The
 writing skill now authors versioned
-Epic and Story/Bug YAML with full templates and readable requirements. The basic
-workers still consume their retained prose contract; compatible delivery and the
-manager require later coordinated release.
+Epic and Story/Bug YAML with full templates and readable requirements. The
+structured implementer consumes current versioned assignments; reviewer/QA still
+consume their retained prose contract. Compatible full-loop delivery and the
+manager require later coordinated release; authoring does not activate workers.
 
 ## Author a draft
 

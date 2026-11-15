@@ -1,7 +1,7 @@
 # Basic-worker contract — retained prose workflow
 
-This is the existing Story contract consumed by the unmigrated implementation,
-review and QA entrypoints. It remains a prose contract for those workers. New
+This is the existing Story contract consumed by the unmigrated reviewer
+and QA entrypoints. It remains a prose contract for those workers. New
 versioned YAML authoring uses [the ticket guide](pigboard-ticket.md); its local
 validation does not make YAML executable by these basic workers. No automatic
 conversion or activation is provided.
@@ -158,7 +158,10 @@ RUN. This contract does not change the entrypoint's verdict/handoff precedence.
 Keep the case definitions and expected outcomes in the description. Stage comments
 link their actual records without replacing the requirements body:
 
-- Implementer: [input and handoff contract](../../implementer-entrypoint/references/handoff.md).
+The separate [structured implementer route](../../implementer-entrypoint/references/handoff.md#input-contract)
+requires versioned Story/Bug work and an exact assignment; this prose guide is not
+an implementer input or an automatic conversion path.
+
 - Reviewer: [Jira handoff](../../pigboard-pr-review/references/jira-handoff.md).
 - QA: [ordered evidence ledger](../../qa-entrypoint/references/execution-record.md).
 

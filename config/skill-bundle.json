@@ -2,6 +2,8 @@
   "schemaVersion": 1,
   "skills": [
     "implementer-entrypoint",
+    "implementer-job",
+    "implementer-jira",
     "pigboard-pr-review",
     "pr-review",
     "pr-commenting",
@@ -48,7 +50,8 @@
       "lib/config/diff.mjs",
       "contracts/config-v1.schema.json",
       "config/pigboss.example.yaml",
-      "docs/configuration.md"
+      "docs/configuration.md",
+      "scripts/prepare-handoff.mjs"
     ]
   }
 }

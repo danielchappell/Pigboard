@@ -6,19 +6,20 @@ and pull request. The human employee remains accountable.
 
 ## Ticket contract
 
+The [writing skill](../skills/write-pr-sized-stories/SKILL.md) prepares versioned YAML
+with [local validation](authoring.md). The structured implementer accepts native
+Story/Bug current assignments through [its input contract](../skills/implementer-entrypoint/references/handoff.md#input-contract).
 The [retained basic-worker Story reference](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
-is canonical for the current workers' prose field labels, case ordering and
-preparation ownership. The [writing skill](../skills/write-pr-sized-stories/SKILL.md)
-now prepares versioned YAML with [local validation](authoring.md); those drafts
-await later compatible worker migration and are not executable by these roles.
-No automatic prose conversion, activation or worker behavior changed. Native
+remains canonical only for unmigrated reviewer/QA prose field labels, ordering
+and preparation ownership. They do not consume the new typed implementer result.
+This mixed bundle remains inactive; no automatic prose conversion is provided. Native
 Jira metadata stays in Jira fields; accepted requirements stay in the description;
 implementation/review/QA outputs use versioned handoff comments. All acceptance
 cases and expectations remain on the ticket, with reviewed executable artifacts
 linked from the implementation handoff.
 
 
-A ready Story names one codebase and base branch, its ownership boundaries, scope
+A ready Story or Bug names one codebase and base branch, its ownership boundaries, scope
 and exclusions, acceptance criteria, and the exact test strategy and cases. One
 Story produces one PR, at most 20 changed files and less than two human working
 days. Split cross-repository work into linked Stories before execution.
@@ -35,7 +36,7 @@ prepared testing information for review and QA.
 
 | Trigger | Entry point | Required outcome |
 | --- | --- | --- |
-| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, same or new PR, passing current CI, verification handoff; move to In Review. |
+| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, same or new PR, passing current CI/artifacts, typed append/read-back and recheck before direct In Review; known dependency wait to Rework Queued, human blocker to Blocked. |
 | In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or confirm rework and move to In Progress. |
 | QA | `qa-entrypoint` | Grok High; execute named QA skills and prescribed cases in order, collect outcomes and evidence; move to Human Review on pass, In Progress for confirmed implementation defects, or Blocked if unable to complete. |
 
@@ -44,8 +45,20 @@ named execution helper (such as `qa-bruno`). `qa-database` executes prepared
 read-only database observations. `qa-ui` uses computer use and captures screenshots.
 Exact inputs, stopping conditions and evidence formats live in each skill.
 
-Confirmed fixes return to In Progress on the same PR and must pass the review/QA
-chain again. Discussion alone stays in In Review or QA. Missing access, incomplete
+Retained reviewer/QA fixes return to In Progress on the same PR. Their migration
+to structured queued repair is later work; this is not an accepted compatible loop.
+The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
+[Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates
+Jira, while preflight/publication never edits code/PRs. Exact current assignment,
+server actor metadata, requirements, actual parent/source/base and current CI
+bind the result. The same still-open repair PR is mandatory; only documented
+pre-first-PR dependency wait with complete no-PR history permits null. No admission,
+pointer writes, worker exclusivity, deduplication or new provider engine is added.
+
+Failed/unknown writes stop without replacement records or competing transitions.
+At most one resolving read may confirm a lost response; confirmed earlier actions
+are retained. Local record/chain checks do not establish live freshness. See the
+[publication protocol](../skills/implementer-entrypoint/references/handoff.md#publication-protocol). Discussion alone stays in In Review or QA. Missing access, incomplete
 instructions, unavailable tools or necessary scope expansion moves work to Blocked
 with the reason, evidence, human action needed and stage to resume. All blocked
 work waits for a human; no autonomous retry or scope expansion. The agent can
@@ -64,8 +77,9 @@ means production deployment. Those human and release stages are not agent trigge
 
 ## Deterministic wiring and setup
 
-Jira admission selects only new work for a stream such as `AI-Daniel-1`. It does
-not choose rework. Column owners make the next stage handoff. Project/label/status
+The dated basic Jira wiring selected new work for a stream such as `AI-Daniel-1`.
+The planned manager will own new/repair admission. This implementer never admits
+work; retained column owners still follow their current basic contract. Project/label/status
 filtering, authorized repository selection and webhook authentication belong in
 deterministic Jira/Cursor wiring. The ticket repository
 must be available to the selected environment; initially Plexus/master.
@@ -109,9 +123,9 @@ nor create, repair or poll environments. The pipeline owns refresh on new commit
 QA always needs its supplied target. Static PR review can proceed without a
 preview; runtime diagnostics require a ready matching environment. This change
 records the agreed interface only: comment format/producer identity and verified
-consumer handling still need implementation and acceptance. The installed skill
-bundle is unchanged; its generic supplied-environment checks do not prove this
-new comment contract is implemented.
+consumer handling still need implementation and acceptance. The implementer consumes configured deployment evidence where its assigned work
+needs an environment; static work does not require one. No pipeline producer or
+preview infrastructure is delivered here; retained QA migration remains separate.
 
  Teams blocker alerts are later Jira wiring; alert routing
 does not belong in skills. No hosted Pigboard runtime is required for this MVP.

@@ -14,13 +14,15 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists eleven skills. These are
-entrypoints and helpers, not eleven autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists thirteen skills. These are
+entrypoints and helpers, not thirteen autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
 | [write-pr-sized-stories](../skills/write-pr-sized-stories/SKILL.md) | Author or split scoped work from supplied requirements and verified repository ownership. Reads human-writing and its ticket references. Drafting does not authorize Jira publication. |
-| [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | An authorized Jira Story in In Progress, allowed checkout/base, complete requirements and testing contract, prepared High/Medium controls, CI and PR/Jira tools. Owns plan, independent review, implementation and handoff. |
+| [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | Compose one authorized native Story/Bug in In Progress using its current versioned assignment, verified scope, High/Medium controls and prepared tools. |
+| [implementer-job](../skills/implementer-job/SKILL.md) | Plan/execute the assigned code, same PR, current CI and prepared artifacts. Returns evidence; never changes Jira. |
+| [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
 | [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized Story in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence, approval and Jira handoff. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
@@ -58,9 +60,9 @@ Use [local validation](authoring.md) with the same receipt's prepared checker.
 Draft/structure need no trusted context; start does and never proves live readiness.
 Missing setup/context preserves the draft and checks-not-run report. The writer
 does not install dependencies, mark readiness, publish without separate authority
-or request rework. Existing workers still require their
-[retained prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md);
-do not feed newly authored YAML to those unmigrated entrypoints.
+or request rework. The implementer consumes structured Story/Bug assignments;
+reviewer/QA still require their [retained prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+Do not feed YAML to those unmigrated entrypoints or activate this mixed bundle.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -108,9 +110,16 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Complete implementation with current required CI | Publish the implementation handoff and verify In Review transition. |
 | Complete passing PR review | Publish reports, verify current-revision approval, then verify QA transition. |
 | Complete prescribed QA pass | Retain required evidence and verify Human Review transition; keep the PR open. |
-| Confirmed in-scope defect | Current worker contract returns the same Story/PR to In Progress. |
+| Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
+| Confirmed defect in retained reviewer/QA | Their basic contract still returns the same Story/PR to In Progress; migration is later. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
+
+The implementer retains `implementationOutcome` READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN
+and separate `deliveryOutcome` NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE.
+COMPLETED describes a verified intended handoff, including wait/blocked, not code
+success. Delivery failure preserves revision-bound READY but never claims Jira moved.
+See the [durable result](../skills/implementer-entrypoint/references/handoff.md#durable-result).
 
 A PASS label without current complete evidence is insufficient. Human review,
 merge, UAT acceptance and production deployment remain separate. The basic MVP
@@ -124,8 +133,8 @@ manager-owned admission and queued repair. Its
 [discovery record](architecture/manager-discovery.md) also separates AI-assigned
 and human-assigned tests; human tests remain pending at the AI handoff. Versioned
 YAML authoring, full templates/examples, the `human-writing` dependency
-and local validation are available for preparation. Role-specific Jira handoff
-skills, compatible worker Story/Bug execution and manager admission still require
-a coordinated release and acceptance. The current installed entrypoints accept
-Stories and their existing contract. Do not enable target behavior by changing
-prompts or silently weakening the current skill's requirements.
+and local validation are available. The implementer composer/job/Jira split now
+accepts current structured Story/Bug assignments. Reviewer/QA migration, manager
+admission and full-loop acceptance remain later work. Existing prose tickets are
+not automatically converted. Keep automations inactive until the compatible
+release is accepted; prompt changes do not establish compatibility.

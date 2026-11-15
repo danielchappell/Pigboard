@@ -27,30 +27,32 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Eleven shared skills: Story authoring, implementation, review, writing and QA | In the repository and installation allowlist |
+| Thirteen shared skills: authoring, composed implementation, review, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
-| Manager-driven repairs, separate AI/human test ownership and YAML work contracts | Target contracts under discovery; not the installed worker behavior |
+| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; reviewer/QA migration and full-loop acceptance remain pending |
+| Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
 installation's settings, not values to copy into a new customer's setup. Each
-assigned Story names one repository allowed by its prepared environment.
+assigned Story or Bug names one repository allowed by its prepared environment.
 
 ## How the installed workflow moves
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens the PR and verifies current CI before In Review. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Known dependency wait goes to Rework Queued; human blockers to Blocked. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
 | Human Review | Responsible developer and human QA reviewer assess the PR before human merge. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-Confirmed fixes currently return to In Progress on the same PR. Missing access,
+Retained reviewer/QA workers still return confirmed fixes to In Progress on the same PR.
+They do not consume the new implementer record; this mixed bundle must stay inactive. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
 Discussion stays in Review or QA. Workers do not select new work, merge, deploy or
 retry blocked work. The planned manager changes admission and repair routing only
@@ -88,8 +90,10 @@ and [examples](skills/write-pr-sized-stories/references/pigboard-example.md).
 The writer emits full editable YAML with plain prose, separate AI/human cases
 and explicit unresolved inputs. See [authoring and local validation](docs/authoring.md)
 for the Epic route, templates, trusted facts and actual checks. Generic research
-and design remain Tasks. Existing workers still use the retained prose contract;
-compatible execution, manager admission and activation remain later release work.
+and design remain Tasks. The [implementer composer](skills/implementer-entrypoint/SKILL.md)
+accepts current structured Story/Bug assignments and separates job evidence from
+verified Jira publication. Reviewer/QA still use the retained prose contract;
+compatible full-loop execution, manager admission and activation remain later work.
 
 ## Cursor automations
 
