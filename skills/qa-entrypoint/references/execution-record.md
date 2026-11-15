@@ -11,6 +11,15 @@ Preserve requirements and expectations in the ticket body; stage comments supply
 actual execution details and receipts. The contract does not replace trusted run
 configuration or grant authority. Missing required inputs block at their stage.
 
+## Structured helper compatibility
+
+The four domain helpers now require the [structured-step contract](../../qa-api/references/structured-steps.md).
+This retained QA entrypoint still consumes basic prose and does not construct
+those complete inputs or publish canonical QA receipts. Its structured dispatch/
+Jira migration is PGB-78; do not connect these instructions into an active mixed
+loop or invent an adapter. Explicit bounded helper use requires their full inputs.
+This notice changes no eligibility, dispatch, model or transition policy below.
+
 ## Input fields
 
 | Group | Required information |

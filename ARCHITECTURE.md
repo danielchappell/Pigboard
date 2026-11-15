@@ -39,7 +39,7 @@ preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
 assignments and emits canonical implementation/dependency-wait/blocked records.
-Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. QA retains basic Story/prose behavior and direct In Progress rework; it
+Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. The retained QA entrypoint retains basic Story/prose behavior and direct In Progress rework; it
 does not consume the new record. This mixed bundle stays inactive until coordinated
 worker/manager release and acceptance. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
@@ -115,7 +115,7 @@ evidence. The `write-pr-sized-stories` skill now authors structured YAML while
 retaining `human-writing` and the generic Task route. It uses the shared validator
 from the same prepared release; no private schema or runtime is added. See
 [authoring](docs/authoring.md). The implementer now consumes versioned assignments;
-reviewer consumes canonical implementation receipts through reviewer-jira; only QA retains its basic prose contract until later migration.
+reviewer consumes canonical implementation receipts through reviewer-jira; only the retained QA entrypoint retains its basic prose contract until later migration.
 Installation does not activate them or convert old tickets. The pure local
 `prepare-handoff.mjs` helper validates and encodes records in the existing validator
 payload; it has no provider/model calls, mutation/retry or launch logic.
@@ -133,3 +133,20 @@ The preview reports pending retained-work/readiness checks and no state actions.
 It does not discover native mappings or access providers. Optional expected-site
 binding proves only an exact site match. Deployment, scheduling, health, secrets
 and enablement remain with their later owners in the same canonical configuration.
+
+## Prescribed helper boundary
+
+The existing [four QA helpers](skills/qa-api/SKILL.md) use a
+[shared structured-step contract](skills/qa-api/references/structured-steps.md):
+raw validated AI case/step and trusted start facts in; revision-bound observations,
+evidence, defect or inability out. API owns one named Bruno child, PostgreSQL
+resolves declared output/input/parameter bindings, and UI uses the prescribed
+surface/viewport/checkpoints. Engines remain locked Bruno 4.2.1, pg 8.23.1 with
+the unchanged bounded reader, and prepared computer use. No controller, schema,
+connector or dependency is added. Same-release complete sibling folders carry
+shared references. A source-only fixed fixture supports preparation, not runtime.
+
+The caller owns global scheduling/ledger/continuation; PGB-78 owns structured QA
+job/entrypoint and Jira publication. The retained entrypoint still uses basic
+prose/direct In Progress rework. This mixed bundle stays inactive pending compatible
+release and PGB-58 acceptance; local helper evidence is not deployment acceptance.

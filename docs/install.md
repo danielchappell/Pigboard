@@ -124,7 +124,7 @@ the retained basic-worker prose guide. Its human-writing sibling and same-releas
 work-validator are required; copying just the writer entrypoint loses the contract.
 The implementer composer loads complete `implementer-job` and `implementer-jira`
 siblings and its shared handoff/Cursor/review references. The reviewer wrapper loads
-complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only QA
+complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only the retained QA entrypoint
 remains a basic prose consumer. These prepared capabilities do not make the mixed
 bundle an accepted delivery loop or activate automations.
 
@@ -300,3 +300,27 @@ installed regression checks execute the helper and chain validation from an
 unrelated working directory. Missing/changed helper or sibling files fail existing
 manifest verification, preserving the previous binding. See [handoffs](handoffs.md)
 for bounds, diagnostics, local examples and safe publication responsibilities.
+
+## Verify the structured QA helper closure
+
+Install/refresh the entire pinned, reviewed published bundle, not four loose
+`SKILL.md` files. All four helpers depend on
+`qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
+and the prepared validator. The existing fifteen-skill allowlist already ships
+these folders; there is no added skill or engine. Use the receipt's immutable
+versioned `skills` path for a run, rather than following a later stable-link refresh.
+Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
+Missing runtime/reference/hash or a failed check blocks the run; preserve the last
+verified installation and refresh from the approved published revision during
+operator setup. Never repair/fetch dependencies within delivery.
+
+Check all four installed entrypoints and the common reference against the pinned
+manifest; run existing install verification/smoke checks. Those checks establish
+installation only. [Bounded helper use](using-pigboard.md#prescribed-structured-qa-helpers)
+also needs complete work/trusted context, ready original PR deployment proof,
+restricted access, prepared artifacts, actual outputs and retrievable evidence.
+The retained QA entrypoint still accepts basic prose; structured dispatch and
+canonical QA publication are PGB-78. PGB-90 owns saved automation compatibility;
+PGB-58 owns full-loop acceptance and activation remains a separate owner decision.
+This mixed bundle must stay inactive. Do not treat local fixture or installation
+success as hosted/customer delivery acceptance.

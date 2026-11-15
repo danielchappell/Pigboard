@@ -5,7 +5,7 @@ facts, local start semantics. It never reads Jira, changes a file, starts a work
 computes a digest, executes tests or establishes live readiness. The
 writing skill now authors versioned
 Epic and Story/Bug YAML with full templates and readable requirements. The
-structured implementer and reviewer consume current versioned assignments and canonical receipts; only retained QA
+structured implementer and reviewer consume current versioned assignments and canonical receipts; only the retained QA entrypoint
 consumes its basic prose contract. Compatible full-loop delivery and the
 manager require later coordinated release; authoring does not activate workers.
 
@@ -341,3 +341,15 @@ determines scope. Start is not applicable to a non-executable Task; record why.
 Never fabricate authority, credentials, routes, skill replacements, state changes
 or rework actions. Preserve evidence before removing disposable assets; do not
 change live Jira, PRs, deployment or other resources for these exercises.
+
+## Structured helpers and the retained QA entrypoint
+
+Current `qa-api`, `qa-bruno`, `qa-database` and `qa-ui` consume the exact structured
+AI steps in a complete start-valid ticket plus separately trusted context. Supply
+full operation facts, actual earlier observations and resolved preparation; prose
+or a selected YAML fragment is insufficient. API child ownership, two-hop SQL
+bindings and UI checkpoints follow the existing schema, with no new fields.
+The helpers return observations only and never execute human cases or publish a
+canonical QA ledger. Only the retained QA entrypoint remains a basic prose worker;
+its structured orchestration/Jira handoff is PGB-78. Do not infer compatible
+full-loop delivery from valid authoring or an isolated helper result.

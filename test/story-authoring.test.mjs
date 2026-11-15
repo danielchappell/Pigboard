@@ -127,7 +127,7 @@ test('writer retains owned provenance, shared dependencies and generic Task rout
   const basic = await read('references/basic-workflow-ticket.md');
   assert(basic.includes('Ticket contract: pigboard-story/v1'));
   assert(skill.includes('[structured implementer](../implementer-entrypoint/SKILL.md)'));
-  assert(basic.includes('consumed only by retained QA'));
+  assert(basic.includes('consumed only by the retained QA entrypoint'));
   assert(basic.includes('structured reviewer'));
   assert(!basic.includes('unmigrated implementation'));
   assert(basic.includes('separate [structured implementer route]'));
@@ -140,4 +140,18 @@ test('writer retains owned provenance, shared dependencies and generic Task rout
     assert(text.includes('write-pr-sized-stories/references/basic-workflow-ticket.md'), relative);
     if (!relative.startsWith('config/')) assert(!text.includes('write-pr-sized-stories/references/pigboard-ticket.md'));
   }
+});
+
+
+test('writer distinguishes current structured helpers from retained prose orchestration', async () => {
+  const skill=await read('SKILL.md'),basic=await read('references/basic-workflow-ticket.md');
+  assert(skill.includes('../qa-api/references/structured-steps.md'));
+  assert(basic.includes('../../qa-api/references/structured-steps.md'));
+  assert(basic.includes('basic/historical orchestration examples'));
+  assert(basic.includes('prose examples alone cannot invoke them'));
+  assert(basic.includes('PGB-78'));
+  const guide=await readFile(path.join(root,'docs/authoring.md'),'utf8');
+  assert(guide.includes('Only the retained QA entrypoint remains a basic prose worker'));
+  // All existing examples and raw trusted start checks above remain authoritative;
+  // this change adds no schema, acceptance fields or prose-to-structured adapter.
 });
