@@ -131,7 +131,9 @@ attempts. The generated control packets show the complete structure:
   needs a reason and evidence, not a zero score. Unknown applicable scores are null.
 - A completed change needs `result_revision` and passing `author_verification`
   evidence bound to that revision. Independent grading does not replace the
-  author's checks. Correct stops need their own prescribed assertions.
+  author's checks. Correct stops need their own prescribed assertions; they do not
+  require a result revision or PASS author check. An explicit author FAIL prevents
+  success for every outcome, including a block or dependency wait.
 - `metrics` records actual wall time and total tokens, including review/fix rounds.
   Unknown values stay null and prevent complete qualification.
 - `evidence` lists IDs, relative regular-file paths and raw SHA256 digests. Preserve
@@ -188,6 +190,16 @@ quality scores/evidence, correct terminal outcomes, costs and missing data. Cost
 differences alone do not establish an engineering improvement. Quality applicability
 must match before scores can be compared. Unverified host/grading conditions do
 not support a measured comparison. No aggregate score hides a permission violation.
+
+Report `totals.<arm>.wall_ms` and `totals.<arm>.tokens` sum every known cost,
+including failed attempts. Each total is a JSON number up to `9007199254740991`
+(`Number.MAX_SAFE_INTEGER`), then an exact decimal integer string, for example
+`"27021597764222973"`. Consumers should keep that string or parse it with an
+exact integer type such as JavaScript `BigInt`; converting it to `Number` can round
+it. The two fields may have different types. Stored packet metrics remain numbers
+or null, and per-pair `cost_delta` values remain numbers or null. Unknown costs are
+excluded from the known subtotal and counted by numeric `missing_costs`; they
+never become zero-cost observations.
 
 Exit 0 means a qualified sample with PROMISING or NO_MEASURED_CHANGE. Exit 1 means
 a failed/incomplete gate, including a regression or tradeoff. Exit 2 means usage,

@@ -41,6 +41,32 @@ async function packetCopy(root, arm = 'candidate') {
   return { file, value: JSON.parse(await readFile(file)), root: target };
 }
 
+// Exercise the public import/compare boundary, including evidence copying and JSON exits.
+async function recordedComparison(t, campaign, packets) {
+  const root = await mkdtemp(path.join(temporary, 'comparison-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const campaignFile = path.join(root, 'campaign.json'), store = path.join(root, 'store');
+  await writeFile(campaignFile, JSON.stringify(campaign));
+  const prepared = run('prepare', campaignFile, store);
+  assert.equal(prepared.status, 0, prepared.stdout);
+  for (const [i, packet] of packets.entries()) {
+    const source = path.join(seed.store, 'runs', `reuse_parser--1--${packet.arm}`);
+    const target = path.join(root, `packet-${i}`);
+    await cp(source, target, { recursive: true });
+    const file = path.join(target, 'packet.json');
+    await writeFile(file, JSON.stringify(packet));
+    const recorded = run('record', store, file);
+    assert.equal(recorded.status, 0, recorded.stdout);
+  }
+  const result = run('compare', store);
+  return { result, report: JSON.parse(result.stdout), stored: await load(store) };
+}
+function repetitions(campaign, packets, count) {
+  campaign.cases[0].repetitions = count;
+  return Array.from({ length: count }, (_, i) => packets.map(p => ({ ...copy(p),
+    repetition: i + 1, run_id: randomUUID(), campaign: digestValue(campaign) }))).flat();
+}
+
 test('real CLI/library control detects the defect, records source and replays a complete report', async () => {
   const report = compare(loaded.campaign, loaded.packets);
   assert.equal(report.kind, 'synthetic_control');
@@ -269,6 +295,126 @@ test('correct stops succeed, limits/floors matter and cost-only changes do not c
   const report = compare(campaign, [...packets, ...second]);
   assert.equal(report.cases[0].successes.candidate, 1);
   assert.equal(report.qualification, 'FAIL');
+});
+
+for (const outcome of ['BLOCKED', 'DEPENDENCY_WAIT']) {
+  test(`CLI qualifies a valid ${outcome} but rejects its explicit failed author check`, async t => {
+    const { campaign, packets } = pair(); packets.forEach(green);
+    campaign.cases[0].expected_outcome = outcome;
+    for (const p of packets) {
+      p.campaign = digestValue(campaign);
+      p.outcome = outcome; p.result_revision = null;
+      p.author_verification.result = 'NOT_APPLICABLE';
+      p.author_verification.evidence = [];
+    }
+    packetBy(packets, 'baseline').metrics.tokens = 1;
+    packetBy(packets, 'candidate').metrics.tokens = 0;
+    const valid = await recordedComparison(t, campaign, packets);
+    assert.equal(valid.result.status, 0, valid.result.stdout);
+    assert.equal(valid.report.qualification, 'PASS');
+    assert.equal(valid.report.direction, 'NO_MEASURED_CHANGE');
+    assert.equal(valid.report.pairs[0].cost_delta.tokens, -1);
+    assert.equal(valid.report.pairs[0].candidate.success, true);
+    assert.deepEqual(valid.report.pairs[0].candidate.gaps, []);
+
+    const candidate = packetBy(packets, 'candidate');
+    candidate.author_verification = { result: 'FAIL', evidence: ['grade'] };
+    const failed = await recordedComparison(t, campaign, packets);
+    assert.equal(failed.result.status, 1, failed.result.stdout);
+    assert.equal(failed.report.qualification, 'FAIL');
+    assert.equal(failed.report.gate, 'FAIL');
+    assert.equal(failed.report.pairs[0].candidate.success, false);
+    assert(failed.report.blocking.some(b => b.reason === 'AUTHOR_VERIFICATION_FAILED'));
+    assert(failed.report.pairs[0].candidate.failures.includes('AUTHOR_VERIFICATION_FAILED'));
+    assert.deepEqual(failed.report.pairs[0].candidate.gaps, []);
+  });
+}
+
+test('author failure remains decisive for every outcome despite unknown costs and a satisfied floor', () => {
+  for (const outcome of ['COMPLETED_CHANGE', 'BLOCKED', 'DEPENDENCY_WAIT', null]) {
+    const { campaign, packets: initial } = pair(); initial.forEach(green);
+    if (outcome !== null) campaign.cases[0].expected_outcome = outcome;
+    const packets = repetitions(campaign, initial, 2);
+    for (const p of packets) {
+      p.outcome = outcome;
+      if (outcome !== 'COMPLETED_CHANGE') {
+        p.result_revision = null; p.author_verification.result = 'NOT_APPLICABLE';
+      }
+    }
+    // Keep one successful repetition so a permissive success floor cannot rescue FAIL.
+    for (const p of packets.filter(p => p.repetition === 2)) {
+      p.outcome = campaign.cases[0].expected_outcome;
+      if (p.outcome === 'COMPLETED_CHANGE') {
+        p.result_revision = campaign[p.arm].revision; p.author_verification.result = 'PASS';
+      }
+    }
+    for (const p of packets.filter(p => p.repetition === 1)) {
+      p.author_verification = { result: 'FAIL', evidence: ['grade'] };
+      p.metrics = { wall_ms: null, tokens: null };
+    }
+    packets.forEach(p => bindPacket(campaign, p));
+    const report = compare(campaign, packets);
+    assert.equal(report.cases[0].successes.candidate, 1, String(outcome));
+    assert.equal(report.qualification, 'FAIL', String(outcome));
+    assert.equal(report.gate, 'FAIL', String(outcome));
+    assert(report.blocking.some(b => b.reason === 'AUTHOR_VERIFICATION_FAILED'), String(outcome));
+    assert(!report.blocking.some(b => b.reason === 'SUCCESS_FLOOR'), String(outcome));
+    for (const arm of ['baseline', 'candidate']) {
+      assert.equal(report.pairs[0][arm].success, false, `${outcome}/${arm}`);
+      assert(report.pairs[0][arm].failures.includes('AUTHOR_VERIFICATION_FAILED'), `${outcome}/${arm}`);
+      assert(report.pairs[0][arm].gaps.includes('COST_UNKNOWN'), `${outcome}/${arm}`);
+      assert.equal(report.totals[arm].missing_costs, 2);
+    }
+  }
+});
+
+test('aggregate costs keep zero and the safe boundary numeric and overflow exact in both arms', () => {
+  const maximum = Number.MAX_SAFE_INTEGER;
+  for (const values of [[0], [maximum - 1, 1], [maximum, 1], [maximum, maximum, maximum]]) {
+    const { campaign, packets: initial } = pair(); initial.forEach(green);
+    const packets = repetitions(campaign, initial, values.length);
+    for (const p of packets) {
+      p.metrics = { wall_ms: values[p.repetition - 1], tokens: values[p.repetition - 1] };
+      bindPacket(campaign, p);
+    }
+    const exact = values.reduce((sum, n) => sum + BigInt(n), 0n);
+    const expected = exact <= BigInt(maximum) ? Number(exact) : exact.toString();
+    const report = JSON.parse(JSON.stringify(compare(campaign, packets)));
+    for (const arm of ['baseline', 'candidate']) {
+      assert.deepEqual(report.totals[arm], { wall_ms: expected, tokens: expected, missing_costs: 0 });
+    }
+    for (const pair of report.pairs) assert.deepEqual(pair.cost_delta, { wall_ms: 0, tokens: 0 });
+    assert.equal(report.direction, 'NO_MEASURED_CHANGE');
+  }
+});
+
+test('CLI serializes exact overflow subtotals while retaining unknowns and numeric pair deltas', async t => {
+  const maximum = Number.MAX_SAFE_INTEGER;
+  const { campaign, packets: initial } = pair(); initial.forEach(green);
+  const packets = repetitions(campaign, initial, 3);
+  for (const p of packets) {
+    p.metrics = p.arm === 'baseline' ? { wall_ms: maximum, tokens: 0 } : { wall_ms: 0, tokens: maximum };
+  }
+  packetBy(packets, 'baseline').metrics.tokens = null;
+  packetBy(packets, 'candidate').metrics.wall_ms = null;
+  const { result, report, stored } = await recordedComparison(t, campaign, packets);
+  assert.equal(result.status, 1, result.stdout); // Above-budget attempts still contribute all known costs.
+  const exact = '27021597764222973';
+  assert.deepEqual(report.totals.baseline, { wall_ms: exact, tokens: 0, missing_costs: 1 });
+  assert.deepEqual(report.totals.candidate, { wall_ms: 0, tokens: exact, missing_costs: 1 });
+  assert.deepEqual(report.pairs[0].cost_delta, { wall_ms: null, tokens: null });
+  for (const pair of report.pairs.slice(1)) {
+    assert.deepEqual(pair.cost_delta, { wall_ms: -maximum, tokens: maximum });
+    assert.equal(typeof pair.cost_delta.wall_ms, 'number');
+    assert.equal(typeof pair.cost_delta.tokens, 'number');
+  }
+  for (const arm of ['baseline', 'candidate']) {
+    assert(report.pairs[0][arm].gaps.includes('COST_UNKNOWN'));
+    assert.equal(typeof report.totals[arm].missing_costs, 'number');
+  }
+  assert.equal(report.direction, 'INCOMPLETE');
+  assert.equal(report.qualification, 'FAIL');
+  assert.deepEqual(JSON.parse(JSON.stringify(stored.packets.map(p => p.metrics))), packets.map(p => p.metrics));
 });
 
 test('CLI reports missing runs and invalid usage with distinct nonzero exits', async t => {
