@@ -301,3 +301,16 @@ for(const spec of prerequisitePathCases(fixtures))test(`prerequisite path ${spec
  if(spec.readable){const temp=mkdtempSync(path.join(tmpdir(),'pgb-prerequisite-path-'));try{const config=path.join(temp,'config.json'),input=path.join(temp,'snapshot.json');writeFileSync(config,JSON.stringify(spec.c.config));writeFileSync(input,JSON.stringify(spec.c.snapshot));if(spec.strictProof){const proof=path.join(temp,'proof.json');writeFileSync(proof,spec.c.snapshot.completion_receipts[0]);const p=spawnSync(process.execPath,[new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname,'--mode','chain','--input',proof,'--json'],{cwd:temp,encoding:'utf8',timeout:5000});assert.equal(p.status,0);assert.equal(p.stderr,'');assert.equal(JSON.parse(p.stdout).valid,true);assert.equal(JSON.parse(p.stdout).completion_established,true);rmSync(proof);}
   const original=[readFileSync(config,'utf8'),readFileSync(input,'utf8')],args=[new URL('../scripts/manager-preview.mjs',import.meta.url).pathname,'--config',config,'--input',input];for(const json of [false,true]){const invoke=()=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:temp,encoding:'utf8',timeout:5000}),p=invoke();assert.equal(p.status,spec.field?1:0);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout);if(json)assertPrerequisitePathResult(JSON.parse(p.stdout),spec);else assertPrerequisitePathText(p.stdout,spec);}assert.deepEqual([readFileSync(config,'utf8'),readFileSync(input,'utf8')],original);assert.deepEqual(readdirSync(temp).sort(),['config.json','snapshot.json']);}finally{rmSync(temp,{recursive:true,force:true});}}
 });
+
+const proofConflicts=JSON.parse(readFileSync(new URL('./fixtures/manager-proof-conflicts.json',import.meta.url)));
+for(const c of proofConflicts.cases)test(`fixed current completion observations ${c.id}`,()=>{
+ const before=JSON.stringify(c),r=run(c);assert.deepEqual(JSON.parse(JSON.stringify(r)),c.expected,c.id);
+ assert.equal(JSON.stringify(c),before);assert.equal(r.writes,0);assert.equal(r.execution_authorized,false);
+ assert(!JSON.stringify(r).includes('FICTITIOUS-MARKER'));
+ // A second call must not retain a previous invocation's conflict index.
+ assert.deepEqual(run(c),r);
+});
+test('the original 66 candidate fixtures remain byte-identical',()=>{
+ assert.equal(createHash('sha256').update(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).digest('hex'),proofConflicts.provenance.manager_candidates_sha256);
+ assert.equal(fixtures.length,66);
+});
