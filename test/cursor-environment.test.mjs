@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 13);
+  assert.equal(first.verification.entrypoints, 14);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -166,7 +166,7 @@ test('installed writer ships full hashed folders and validates its own templates
   const guide = await readFile(guidePath, 'utf8');
   assert.equal(guide, await readFile(new URL('../docs/authoring.md', import.meta.url), 'utf8'));
   const routes = [...guide.matchAll(/^\| ([^|]+) \| \[Source [^\]]+\]\(([^)]+)\) \| \[Installed [^\]]+\]\(([^)]+)\) \|$/gm)];
-  assert.equal(routes.length, 4, 'all four source/installed help routes must be explicit');
+  assert.equal(routes.length, 5, 'all five source/installed help routes must be explicit');
   const installedRoutes = {};
   for (const [, label, sourceLink, installedLink] of routes) {
     const sourcePath = new URL('../docs/' + sourceLink, import.meta.url);
@@ -310,4 +310,47 @@ test('installed composed implementer retains complete links and runs source-iden
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
+});
+
+// Closure/encoding evidence only; instruction decisions are independently exercised.
+test('reviewer sibling installation preserves complete folders and real formatter output from unrelated cwd',async t=>{
+ const o=await fixture(t),first=await installCursorSkills(o,fakeInstall);
+ for(const name of ['pigboard-pr-review','reviewer-jira','implementer-entrypoint']){
+  async function compare(relative=''){
+   for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})){
+    const sub=path.join(relative,entry.name);
+    if(entry.isDirectory())await compare(sub);
+    else assert.deepEqual(await readFile(path.join(first.skills,name,sub)),await readFile(path.join(o.source,'skills',name,sub)));
+   }
+  }
+  await compare();
+ }
+ const guide=await readFile(path.join(first.skills,'work-validator/docs/handoffs.md'),'utf8');
+ assert(guide.includes('[Installed reviewer](../../pigboard-pr-review/references/jira-handoff.md)'));
+ assert.equal(await readFile(path.resolve(first.skills,'work-validator/docs/../../pigboard-pr-review/references/jira-handoff.md'),'utf8'),await readFile(path.join(o.source,'skills/pigboard-pr-review/references/jira-handoff.md'),'utf8'));
+ const wrapper=await readFile(path.join(first.skills,'pigboard-pr-review/SKILL.md'),'utf8');
+ assert(wrapper.includes('../reviewer-jira/SKILL.md'));
+ for(const relative of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md']){
+  const text=await readFile(path.join(first.skills,relative),'utf8');assert(text.includes('structured reviewer'));
+ }
+ const seeds=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).chains;
+ const {extractHandoff,digestValue}=await import('../lib/contracts/handoff.mjs');
+ const record=seeds.human.comment_pages.flatMap(p=>p.comments).map(c=>extractHandoff(c.body,{format:c.format}).value).find(r=>r.kind==='review');
+ const input=path.join(o.app,'review.json'),summary=path.join(o.app,'summary.txt');
+ await writeFile(input,JSON.stringify(record));await writeFile(summary,'Complete review <literal> & exact implementation.');
+ for(const format of ['html','adf']){
+  const args=['--input',input,'--summary',summary,'--format',format];
+  const installed=execFileSync(process.execPath,[path.join(first.skills,'work-validator/scripts/prepare-handoff.mjs'),...args],{cwd:o.app,encoding:'utf8'});
+  const source=execFileSync(process.execPath,[new URL('../scripts/prepare-handoff.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8'});
+  assert.equal(installed,source);assert.equal(JSON.parse(installed).record_digest,digestValue(record));
+ }
+ await assert.rejects(installCursorSkills(o,async dir=>{
+  await fakeInstall(dir);
+  if(path.basename(dir)==='work-validator')await writeFile(path.join(dir,'../reviewer-jira/SKILL.md'),'corrupted reviewer sibling');
+ }),/hash mismatch/);
+ assert.equal(await realpath(first.stableSkills),first.skills);
+ await rm(path.join(o.source,'skills/reviewer-jira'),{recursive:true});
+ git(o.source,'add','.');git(o.source,'commit','-m','missing reviewer sibling');
+ await assert.rejects(installCursorSkills(o,fakeInstall));
+ assert.equal(await realpath(first.stableSkills),first.skills);
 });

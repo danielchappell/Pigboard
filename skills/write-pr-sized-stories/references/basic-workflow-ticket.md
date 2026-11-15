@@ -1,7 +1,7 @@
 # Basic-worker contract — retained prose workflow
 
-This is the existing Story contract consumed by the unmigrated reviewer
-and QA entrypoints. It remains a prose contract for those workers. New
+This is the existing Story contract consumed only by retained QA. The
+[structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; reviewer outputs follow its typed contract. This remains a prose contract for QA. New
 versioned YAML authoring uses [the ticket guide](pigboard-ticket.md); its local
 validation does not make YAML executable by these basic workers. No automatic
 conversion or activation is provided.

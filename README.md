@@ -27,12 +27,12 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Thirteen shared skills: authoring, composed implementation, review, writing and QA | In the repository and installation allowlist |
+| Fourteen shared skills: authoring, composed implementation, review, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
-| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; reviewer/QA migration and full-loop acceptance remain pending |
+| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer receipt handoff is available, QA migration and full-loop acceptance remain pending |
 | Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
@@ -51,8 +51,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-Retained reviewer/QA workers still return confirmed fixes to In Progress on the same PR.
-They do not consume the new implementer record; this mixed bundle must stay inactive. Missing access,
+The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. Retained QA still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
 Discussion stays in Review or QA. Workers do not select new work, merge, deploy or
 retry blocked work. The planned manager changes admission and repair routing only
@@ -92,7 +91,7 @@ and explicit unresolved inputs. See [authoring and local validation](docs/author
 for the Epic route, templates, trusted facts and actual checks. Generic research
 and design remain Tasks. The [implementer composer](skills/implementer-entrypoint/SKILL.md)
 accepts current structured Story/Bug assignments and separates job evidence from
-verified Jira publication. Reviewer/QA still use the retained prose contract;
+verified Jira publication. The reviewer uses canonical implementation receipts; only QA retains its basic prose contract;
 compatible full-loop execution, manager admission and activation remain later work.
 
 ## Cursor automations

@@ -22,13 +22,14 @@ separate discussion and is not defined by this cleanup.
 | Component | Responsibility and evidence |
 | --- | --- |
 | Jira | Requirements, native issue metadata, workflow status and configured stage triggers; [setup record](docs/jira-setup.md) |
-| Pigboard bundle | Thirteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
+| Pigboard bundle | Fourteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
 | Setup scripts | Fetch a pinned source, prepare full folders, verify a stable installation and return a receipt; [install guide](docs/install.md) |
 | Cursor environment | Prepared tools, source checkout and role-specific model controls; [automation matrix](config/cursor/automations.md) |
 | Implementer composer | Dispatch preflight, High plan/one review and Medium job/final handoff; [entrypoint](skills/implementer-entrypoint/SKILL.md) |
 | Implementer job | Assigned code, same PR, current CI and preparation evidence; no Jira writes; [job](skills/implementer-job/SKILL.md) |
 | Implementer Jira skill | Native/configured eligibility, exact receipts, typed append/read-back and direct transition; no code/PR or admission writes; [Jira](skills/implementer-jira/SKILL.md) |
-| Retained reviewer/QA entrypoints | Existing basic prose review and prescribed QA, pending coordinated migration; [workflow](docs/workflow.md) |
+| Reviewer wrapper / reviewer-jira | Shared read-only pr-review job and existing comments/approval; separate exact receipt preflight/publication/direct transition, no admission state; [contract](skills/pigboard-pr-review/references/jira-handoff.md) |
+| Retained QA entrypoint | Existing basic prose prescribed QA, pending migration; [workflow](docs/workflow.md) |
 | Humans and pipelines | Resolve blockers, approve scope/merge, supply PR environments and verify UAT/production outcomes |
 
 The installed code consists of skills and setup scripts. A successful Build proves
@@ -36,8 +37,8 @@ preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
 assignments and emits canonical implementation/dependency-wait/blocked records.
-Reviewer/QA retain basic Story/prose behavior and direct In Progress rework; they
-do not consume the new record. This mixed bundle stays inactive until coordinated
+Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. QA retains basic Story/prose behavior and direct In Progress rework; it
+does not consume the new record. This mixed bundle stays inactive until coordinated
 worker/manager release and acceptance. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
 
@@ -112,7 +113,7 @@ evidence. The `write-pr-sized-stories` skill now authors structured YAML while
 retaining `human-writing` and the generic Task route. It uses the shared validator
 from the same prepared release; no private schema or runtime is added. See
 [authoring](docs/authoring.md). The implementer now consumes versioned assignments;
-reviewer/QA retain their basic prose contract until later coordinated migration.
+reviewer consumes canonical implementation receipts through reviewer-jira; only QA retains its basic prose contract until later migration.
 Installation does not activate them or convert old tickets. The pure local
 `prepare-handoff.mjs` helper validates and encodes records in the existing validator
 payload; it has no provider/model calls, mutation/retry or launch logic.

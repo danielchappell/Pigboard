@@ -22,9 +22,9 @@ Research, discovery, design-only and documentation-only work stays a Task using
 this skill's Markdown structure. For generic work outside Pigboard, use that
 same structure and the applicable testing guidance below. The
 [structured implementer](../implementer-entrypoint/SKILL.md) consumes current versioned
-Story/Bug assignments. Reviewer/QA still consume their
+Story/Bug assignments. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Only retained QA consumes the
 [retained prose contract](references/basic-workflow-ticket.md); compatible full-loop
-delivery awaits their migration. Authoring does not activate delivery or convert prose.
+delivery awaits QA migration. Authoring does not activate delivery or convert prose.
 
 This adaptation starts from ai-working-kit main checked 13 November 2026, commit
 `5bef5cf140bd5ea92e6600f0ff2a0be726e4c7ac`, source Story blob

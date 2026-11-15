@@ -5,8 +5,8 @@ facts, local start semantics. It never reads Jira, changes a file, starts a work
 computes a digest, executes tests or establishes live readiness. The
 writing skill now authors versioned
 Epic and Story/Bug YAML with full templates and readable requirements. The
-structured implementer consumes current versioned assignments; reviewer/QA still
-consume their retained prose contract. Compatible full-loop delivery and the
+structured implementer and reviewer consume current versioned assignments and canonical receipts; only retained QA
+consumes its basic prose contract. Compatible full-loop delivery and the
 manager require later coordinated release; authoring does not activate workers.
 
 ## Author a draft
@@ -25,6 +25,7 @@ directory. Both routes work offline; use only the column matching your layout.
 
 | Open | Source checkout only | Prepared installation only |
 | --- | --- | --- |
+| Reviewer entrypoint | [Source reviewer](../skills/pigboard-pr-review/SKILL.md) | [Installed reviewer](../../pigboard-pr-review/SKILL.md) |
 | Writer entrypoint | [Source writer](../skills/write-pr-sized-stories/SKILL.md) | [Installed writer](../../write-pr-sized-stories/SKILL.md) |
 | Epic template | [Source Epic](../skills/write-pr-sized-stories/references/epic.yaml) | [Installed Epic](../../write-pr-sized-stories/references/epic.yaml) |
 | Ticket template | [Source ticket](../skills/write-pr-sized-stories/references/ticket.yaml) | [Installed ticket](../../write-pr-sized-stories/references/ticket.yaml) |
