@@ -719,7 +719,7 @@
             ],
             "format": "yaml",
             "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-3\",\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
-            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[\"EX-3\"]}],\"related_changes\":[],\"operations\":[]}",
             "pointer": null,
             "required_requests": []
           },
@@ -882,7 +882,7 @@
             ],
             "format": "yaml",
             "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-1\",\"EX-20\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
-            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-1\",\"prerequisites\":[]},{\"ticket\":\"EX-20\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-1\",\"prerequisites\":[]},{\"ticket\":\"EX-20\",\"prerequisites\":[\"EX-1\"]}],\"related_changes\":[],\"operations\":[]}",
             "pointer": null,
             "required_requests": []
           },
@@ -3990,7 +3990,7 @@
             ],
             "format": "yaml",
             "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-3\",\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
-            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-3\",\"prerequisites\":[]},{\"ticket\":\"EX-2\",\"prerequisites\":[\"EX-3\"]}],\"related_changes\":[],\"operations\":[]}",
             "pointer": null,
             "required_requests": []
           },
@@ -5086,7 +5086,7 @@
             ],
             "format": "yaml",
             "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-1\",\"EX-20\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
-            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-1\",\"prerequisites\":[]},{\"ticket\":\"EX-20\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}",
+            "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-90\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-90\",\"prerequisites\":[]},{\"ticket\":\"EX-1\",\"prerequisites\":[]},{\"ticket\":\"EX-20\",\"prerequisites\":[\"EX-1\"]}],\"related_changes\":[],\"operations\":[]}",
             "pointer": null,
             "required_requests": []
           },
@@ -6580,5 +6580,6 @@
       }
     }
   ],
-  "oracle_corrections": "Only S35 return_count amended from accidental default1 to null: the only member has unmapped native status999, so whether it is Human Review is unknown. Original frozen oracles and first failing output preserved outside repository. Ownership-only holds S30/S31/S32 retain known Human Review0 / return1. S18/S32 assert both scopes; H03 variants assert entire scope set."
+  "oracle_corrections": "Only S35 return_count amended from accidental default1 to null: the only member has unmapped native status999, so whether it is Human Review is unknown. Original frozen oracles and first failing output preserved outside repository. Ownership-only holds S30/S31/S32 retain known Human Review0 / return1. S18/S32 assert both scopes; H03 variants assert entire scope set.",
+  "fixture_input_corrections": "Author-found graph-binding correction: Epic graph child edges now match actual prerequisite documents in S05,S06,S34,repair-prerequisite-complete. Expected decisions/selections/reasons/counts unchanged. The initial positive input helper had flattened child edges. Original frozen inputs remain preserved outside repository."
 }
