@@ -459,7 +459,7 @@ import { isAbsolute, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { deflateSync } from 'node:zlib';
 import { parse, stringify } from 'yaml';
-import { digestValue } from '../../lib/contracts/handoff.mjs';
+import { digestValue, validateHandoff } from '../../lib/contracts/handoff.mjs';
 import { partialFixtures, transitiveFixtures, executionProofFixtures, records, targetRecord, changeTarget } from './qa-partial-results.mjs';
 
 const qaSeeds = JSON.parse(readFileSync(new URL('./handoff-chains.json', import.meta.url))).chains;
@@ -721,6 +721,7 @@ function mockQaPng(checkpoint='result') {
 }
 
 export async function prepareQaFixture(runDir,{suite='publication'}={}) {
+  if(suite==='dispatch-inputs')return prepareDispatchInputs(runDir);
   if(suite!=='publication')throw Error('Unsupported QA fixture suite.');
   if(typeof runDir!=='string'||!isAbsolute(runDir))throw Error('Supply a fresh absolute private directory.');
   const root=resolve(runDir);await mkdir(root,{mode:0o700}); // Exclusive: no recursive root/old evidence mixing.
@@ -1024,4 +1025,127 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
   await put('manual-echo.md',manual);
   const preparation=await put('preparation.json',{suite,state:'NOT_READY',notice:qaNotice,fixture_version:1,source_revision:'BIND_ACTUAL_REVIEWED_COMMIT_AND_INPUT_HASHES',cases,required:['Bind actual immutable installed skill/manifest/payload hashes','Freeze inputs/cards before exercise','Prepare bounded manual echo operator','Keep expectations/candidates withheld','Record actual Sol model/profile and actual output separately'],cleanup:'Retain sanitized evidence first; remove only this owned disposable fixture root. No services/resources were created.',human_acceptance:'R1-24-H01/H02/H03 NOT RUN'});
   return {runDir:root,preparation,cases,ready:false};
+}
+
+// PGB-138 PREP-01: finite source-only input copies, never a dispatcher or result
+// producer. Publication specimens and their default export remain untouched.
+async function prepareDispatchInputs(runDir) {
+  if(typeof runDir!=='string'||!isAbsolute(runDir))throw Error('Supply a fresh absolute private directory.');
+  const root=resolve(runDir);await mkdir(root,{mode:0o700});
+  const cases={},index=[];
+  const put=async(name,value)=>{
+    const file=join(root,name);await mkdir(resolve(file,'..'),{recursive:true,mode:0o700});
+    const bytes=Buffer.isBuffer(value)||typeof value==='string'?value:JSON.stringify(value,null,2)+'\n';
+    await writeFile(file,bytes,{flag:'wx',mode:0o600});return {path:name,digest:qaHash(bytes)};
+  };
+  const fixed={'I01-story':mixedQa(),'I02-parameters':mixedQa(),'I11-stale-environment':mixedQa()};
+  for(const [id,original]of Object.entries(fixed)) {
+    for(const {r}of records(original))if(!validateHandoff(JSON.stringify(r),{mode:'record'}).valid)throw Error('Invalid original fixed record: '+id);
+    const e=structuredClone(original),terminal=structuredClone(targetRecord(e));
+    const issue=e.issues.find(x=>x.id===terminal.ticket_id),project=e.trusted.projects.find(x=>x.id===issue.project_id);
+    const requirement=e.requirements.find(x=>x.ticket_id===terminal.ticket_id),work=JSON.parse(requirement.body);
+    const facts=JSON.parse(requirement.context_body),steps=work.testing_strategy.cases.flatMap(c=>c.steps);
+    const parent=steps.find(s=>s.skill==='qa-api'),child=steps.find(s=>s.skill==='qa-bruno');
+    const db=steps.find(s=>s.skill==='qa-database'),uiStep=steps.find(s=>s.skill==='qa-ui');
+    const review=records(e).filter(x=>x.r.ticket_id===terminal.ticket_id&&x.r.kind==='review').at(-1);
+    // Original canonical bytes are inspected before a fixed copy is changed.
+    // The synthetic unattempted current result and its report/finding artifacts
+    // are never input to a new instruction exercise. Upstream history is kept.
+    const preserved=new Set();
+    for(const {r}of records(e).filter(x=>x.r.record_id!==terminal.record_id)){
+      const p=r.payload;
+      const refs=[p.plan,p.plan_review,p.ci,p.approval,
+        ...(p.verification??[]),...(p.prepared_inputs??[]).flatMap(slot=>slot.artifacts),
+        ...(p.evidence??[]),...(p.report?.steps??p.qa_report?.steps??[]).flatMap(row=>row.evidence),
+        ...(p.findings??[]).flatMap(f=>f.evidence),...(p.report?.uri?[p.report]:[])];
+      for(const ref of refs)if(ref?.uri)preserved.add(ref.uri);
+    }
+    // These four source-seed namespaces and four exact step-artifact identities
+    // are fixed here before the work is reshaped. No PR/substr garbage collection.
+    const namespaces={
+      '00000000-0000-4000-8000-000000000001':'1000-001-1',
+      '00000000-0000-4000-8000-000000000005':'1000-005-1',
+      '00000000-0000-4000-8000-000000000009':'1000-009-1',
+      '00000000-0000-4000-8000-000000000013':'1000-013-1'
+    },namespace=namespaces[terminal.assignment.record_id];
+    if(!namespace)throw Error('Unknown fixed current-execution namespace.');
+    const currentArtifacts=new Set(['TC-01.S1','TC-01.S2','TC-01.S3','TC-01.S4'].map(step=>`https://evidence.example.invalid/${namespace}-${step}-0`));
+    if(namespace==='1000-009-1')currentArtifacts.add('https://evidence.example.invalid/finding');
+    for(const row of (terminal.payload.report??terminal.payload.qa_report)?.steps??[])for(const ref of row.evidence)currentArtifacts.add(ref.uri);
+    for(const finding of terminal.payload.findings??[])for(const ref of finding.evidence)currentArtifacts.add(ref.uri);
+    const removed=new Set([...currentArtifacts].filter(uri=>!preserved.has(uri)));
+    for(const page of e.comment_pages){const n=page.comments.length;page.comments=page.comments.filter(c=>!(page.ticket_id===terminal.ticket_id&&c.id===e.target.comment_id));page.total-=n-page.comments.length;}
+    e.evidence_receipts=e.evidence_receipts.filter(r=>!removed.has(r.uri));
+    e.trusted.projects.forEach(p=>p.evidence_uris=p.evidence_uris.filter(uri=>!removed.has(uri)));
+    e.target=qaRef(review.r,review.c.id);issue.stage_id=project.stages.QA;
+    // Missing reviewed count is a trusted-input refusal; work and SQL stay intact.
+    if(id==='I02-parameters')facts.operations.find(o=>o.step===db.id).parameter_count=null;
+    const clock={notice:qaNotice,origin:'2026-11-15T10:00:00Z',offsets:[0],deadline_seconds:null,
+      now_offsets_seconds:[0,30,60],unit_elapsed_seconds:[5,5,5],
+      whole_unit_bound_seconds:20,child_bound_seconds:5,database_outer_bound_seconds:20};
+    uiStep.ui.surface='supplied/mock browser';uiStep.ui.browser='supplied/mock Chromium';
+    // Refresh only fixed copied work references. Original publication bytes and
+    // real externally supplied receipts are never rewritten.
+    requirement.context_body=JSON.stringify(facts);
+    qaRebindWork(e,work);
+    const bound=e.requirements.find(x=>x.ticket_id===terminal.ticket_id);
+    const boundFacts=JSON.parse(bound.context_body);
+    const native={notice:qaNotice,id:issue.id,key:issue.key,site:issue.site,project_id:issue.project_id,
+      type_id:'22',
+      stage_id:issue.stage_id,labels:['pigboard',issue.stream],pointer:issue.pointer,description:bound.body};
+    const access=qaMockAccess(work);
+    const capabilities={notice:qaNotice,model_profile:'Grok High',clock:'fixed supplied/mock clock cards',
+      helpers:['qa-api','qa-bruno','qa-database','qa-ui'],publisher_reads:true,publisher_append:true,publisher_direct_transition:true};
+    const responseBody={record_id:'record-001',tenant_id:'tenant-a',state:'ready'};
+    // Build original pipeline comments only after making the receipt stale.
+    if(id==='I11-stale-environment')e.evidence_receipts.filter(r=>r.kind==='environment').forEach(r=>r.pr.source_revision='f'.repeat(40));
+    const pipeline=e.evidence_receipts.filter(r=>r.kind==='environment').map(r=>({notice:qaNotice,id:r.details.comment_id,author_id:r.details.pipeline_actor_id,update_author_id:r.details.pipeline_actor_id,created:'2026-11-15T09:30:00Z',updated:'2026-11-15T09:30:00Z',uri:r.uri,repository:r.pr?.repository,pr_number:r.pr?.number,
+      body:JSON.stringify({notice:qaNotice,event:'deployment_ready',readiness:'ready',source_revision:r.pr?.source_revision,deployed_revision:r.pr?.source_revision,target_reference:r.details.target_reference,target_uri:'https://qa.example.invalid/pgb132',repository:r.pr?.repository,pr_number:r.pr?.number,target_branch:r.pr?.target_branch})}));
+    const cards={notice:qaNotice,category:'supplied/mock',
+      caller_scope:'Requires independently supplied trusted caller identity and allowed actions; these cards grant no authority.',
+      reads:{native,comments:e.comment_pages,pr:e.pr_receipts,evidence:e.evidence_receipts,pipeline:{original_comments:pipeline},access},
+      tool_inputs:{api:parent?{step:parent.id,child:child.id,selected_request_count:1,responses:[{status:200,body:responseBody}]}:null,
+        database:db?{step:db.id,rows:[{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}],rollback:'complete',close:'complete'}:null,
+        ui:uiStep?{step:uiStep.id,surface:uiStep.ui.surface,browser:uiStep.ui.browser,viewport:{width:440,height:130},route:uiStep.ui.entry_route,checkpoints:uiStep.ui.screenshot_checkpoints.map((checkpoint,i)=>({checkpoint,screenshot:`screens/ui-${i}.png`,width:440,height:130,digest:qaHash(mockQaPng(['start','input','result'][i])),visible_text:[['SUPPLIED MOCK','RECORD ID','LOOKUP'],['SUPPLIED MOCK','RECORD ID RECORD-001','LOOKUP'],['SUPPLIED MOCK','RECORD-001','TENANT-A READY']][i]}))}:null},
+      capability_observations:[],dependency_observations:[],
+      append:{storage:'stored',reply:{id:'9901'}},
+      readback:{id:'9901',author_id:project.actors.qa[0],update_author_id:project.actors.qa[0],created:'2026-11-15T14:00:00Z',updated:'2026-11-15T14:00:00Z',body:'ECHO_ONLY_ACTUAL_SUBMITTED_TRANSPORT'},
+      capabilities:{actor_id:project.actors.qa[0],append:true,read_exact:true,direct_transitions:true},
+      transitions:['Human Review','Rework Queued','Blocked'].map((stage,i)=>({id:String(61+i),from:project.stages.QA,to:project.stages[stage],name:stage})),
+      transition:{reply:'accepted',resolving_status:'requested destination'}};
+    const base=`cases/${id}`,input=`${base}/input`,artifacts=[];
+    const emit=async(name,value)=>artifacts.push(await put(`${input}/${name}`,value));
+    await emit('work.yaml',bound.body);await emit('facts.yaml',JSON.stringify(boundFacts));
+    const config=parse(readFileSync(new URL('../../config/pigboss.example.yaml',import.meta.url),'utf8'));
+    Object.assign(config.defaults,{stages:project.stages,accepted_later_stage_ids:project.accepted_later_stage_ids,actors:project.actors,repositories:project.repositories,worker_prefixes:['stream-'],types:{epic:'21',story:'22',bug:'23'}});
+    config.projects=[{id:issue.project_id,key:'EX',board_ids:[],inherit:Object.keys(config.defaults),mappings:{}}];
+    await emit('scope.yaml',stringify(config));await emit('predecessors.json',e);
+    await emit('known-requests.json',terminal.payload.requests??[]);await emit('access.json',access);
+    await emit('cards.json',cards);await emit('clock.json',clock);await emit('capabilities.json',capabilities);
+    if(parent){
+      const request=selected.replace('http://127.0.0.1:REQUIRED_PORT','https://qa.example.invalid');
+      await emit(`collection/${child.api.request_selector}`,request);
+      await emit('collection/bruno.json',{version:'1',name:'Supplied mock prescribed collection',type:'collection',ignore:['node_modules','.git']});
+      await emit('extraction.json',{step:child.id,output:'record_id',json_pointer:'/response/body/record_id',source:'actual selected request response in retained original Bruno report',parent_exposes:`${parent.id}.record_id`,value:null});
+    }
+    if(db){await emit('query.sql',query);await emit('parameters.json',id==='I02-parameters'?null:db.database.parameters);
+      await emit('database-context.json',{notice:qaNotice,environment:'test',stage:'pgb132-mock',targetIdentityEvidence:'fixture://pgb132/mock-target',readOnlyRoleEvidence:'fixture://pgb132/mock-role',database:{host:'qa.example.invalid',port:5432,name:'pgb132_mock',user:'qa_reader'},tls:{required:true,rejectUnauthorized:true,ca_reference:'fixture://pgb132/mock-ca',servername:'qa.example.invalid'},role:{rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolreplication:false,rolbypassrls:false},scope:db.database.scope,parameter_layout:db.database.parameter_bindings});}
+    if(uiStep)for(let i=0;i<cards.tool_inputs.ui.checkpoints.length;i++)await emit(`screens/ui-${i}.png`,mockQaPng(['start','input','result'][i]));
+    await emit('reference-map.json',{
+      fixtures:work.testing_strategy.fixtures.map(f=>({reference:f.reference,consumer:f.id,source:'Fixed supplied/mock data and cards.json; not live readiness.'})),
+      artifacts:steps.filter(s=>s.prepared_artifact.reference).map(s=>({reference:s.prepared_artifact.reference,consumer:s.id,path:s.database?'query.sql':'collection/'})),
+      access:steps.filter(s=>s.database).map(s=>({reference:s.database.access_reference,consumer:s.id,path:'access.json'})),
+      extraction:parent?{consumer:child.id,path:'extraction.json',parent:parent.id,downstream:steps.filter(s=>s.bindings.some(b=>b.from_step===parent.id)).map(s=>s.id)}:null,
+      viewport:uiStep?{consumer:uiStep.id,reference:uiStep.ui.viewport.reference,path:'cards.json',pointer:'/tool_inputs/ui/viewport'}:null
+    });
+    await emit('index.json',{notice:qaNotice,preparation_id:'PREP-01',consumers:steps.map(s=>s.id),artifacts,source_inputs:qaHash(readFileSync(new URL('./handoff-chains.json',import.meta.url))),output:'../output',binding:'Extraction value remains null until original actual helper evidence exists. Bind no expected value.',readiness:'NOT_READY until independently supplied source/installed hashes, caller and chosen exercise capabilities are frozen.'});
+    await mkdir(join(root,base,'output'),{mode:0o700});
+    await put(`${base}/invocation.txt`,'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
+    await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-30-H01','R1-30-H02','R1-30-H03'],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
+    cases[id]=join(root,base);index.push({id,group:id.slice(0,3),input:join(root,input)});
+  }
+  const preparation=await put('preparation.json',{suite:'dispatch-inputs',state:'NOT_READY',notice:qaNotice,cases:index,source_module_sha256:qaHash(readFileSync(fileURLToPath(import.meta.url))),
+    binding_required:['Actual reviewed full source commit','Immutable installed skills/manifest/payload hashes','Hashes of emitted inputs before exercise','Independent caller/action/actor/tenant scope','Actual selected exercise capabilities; fixed mock facts prove no live engine or deployment'],
+    human_acceptance:'R1-30-H01/H02/H03 NOT RUN',cleanup:'Retain sanitized inputs, actual results and audit first; remove only this owned disposable root. No services or live resources created.'});
+  return {runDir:root,preparation:join(root,preparation.path),cases,ready:false};
 }
