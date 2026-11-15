@@ -722,3 +722,128 @@ test('scoped UI cause controls preserve independent DB inability, completed obse
  }
  assert.equal(corrected,17);
 });
+
+// PGB-132 checks emitted raw inputs independently of helper/dispatcher decisions.
+// These checks do not execute designated human acceptance or infer a QA verdict.
+test('dispatch-inputs supplies the finite prescribed handoff without producing an assessment',async t=>{
+ const temp=await mkdtemp(path.join(tmpdir(),'pgb-dispatch-inputs-'));t.after(()=>rm(temp,{recursive:true,force:true}));
+ const p=await prepareQaFixture(path.join(temp,'private'),{suite:'dispatch-inputs'});
+ const input=async(id,file)=>JSON.parse(await readFile(path.join(p.cases[id],'input',file),'utf8'));
+ const raw=async(id,file)=>readFile(path.join(p.cases[id],'input',file),'utf8');
+ assert.equal(p.ready,false);assert.equal((await stat(p.runDir)).mode&0o777,0o700);
+ await assert.rejects(prepareQaFixture(p.runDir,{suite:'dispatch-inputs'}),/exist/i);
+ await assert.rejects(prepareQaFixture('relative',{suite:'dispatch-inputs'}),/absolute/);
+ assert.deepEqual([...new Set(Object.keys(p.cases).map(id=>id.slice(0,3)))].sort(),Array.from({length:14},(_,i)=>'I'+String(i+1).padStart(2,'0')));
+ const summary=JSON.parse(await readFile(p.preparation,'utf8'));assert.equal(summary.cases.length,51);
+ assert.equal(summary.human_acceptance,'R1-27-H01/H02/H03 NOT RUN');
+ assert.equal(summary.source_module_sha256,'sha256:'+hash(await readFile(new URL('./fixtures/qa-helper-case.mjs',import.meta.url))));
+ for(const [id,dir]of Object.entries(p.cases)){
+  assert.deepEqual(await readdir(path.join(dir,'output')),[],id);
+  const files=await readdir(path.join(dir,'input'));for(const forbidden of ['assessment.json','record.yaml','verdict.json','expectations.json','candidate.json'])assert(!files.includes(forbidden),id);
+  const index=await input(id,'index.json');assert.equal(index.preparation_id,'PREP-01');
+  for(const a of index.artifacts){const bytes=await readFile(path.join(p.runDir,a.path));assert.equal(a.digest,'sha256:'+hash(bytes));assert.equal((await stat(path.join(p.runDir,a.path))).mode&0o777,0o600);}
+  const work=JSON.parse(await raw(id,'work.yaml')),facts=await raw(id,'facts.yaml');
+  assert.deepEqual(index.consumers,work.testing_strategy.cases.flatMap(c=>c.steps.map(s=>s.id)));
+  const result=validateWork(await raw(id,'work.yaml'),{mode:'start',contextInput:facts});
+  assert.equal(result.valid,id!=='I05-missing-bound',id+JSON.stringify(result.diagnostics));
+  if(id==='I05-missing-bound')assert(result.diagnostics.some(d=>d.code==='OBSERVATION'));
+  assert.equal(parseConfig(await raw(id,'scope.yaml')).valid,true,id);
+  const e=await input(id,'predecessors.json'),target=targetRecord(e);assert.equal(target.kind,'review',id);
+  assert.equal(validateHandoff(JSON.stringify(target),{mode:'record'}).valid,true);
+  const expectedChain=!['I05-missing-bound','I10-incomplete-pages','I13-untrusted-approval'].includes(id);
+  const receipt=chain(e);assert.equal(receipt.valid,expectedChain,id+JSON.stringify(receipt.diagnostics));
+  for(const {r}of records(e).filter(x=>x.r.ticket_id===target.ticket_id)){
+   assert(!['qa','repair_request','dependency_wait'].includes(r.kind),id+' current terminal leak');
+   if(r.kind==='blocked'||r.kind==='resume_authorization')assert(id.startsWith('I13-'));
+  }
+  const cards=await input(id,'cards.json');assert.equal(cards.category,'supplied/mock');
+  assert.deepEqual(cards.reads.evidence,e.evidence_receipts,id+' receipt mirrors');
+  for(const {r}of records(e).filter(x=>x.r.kind==='implementation'))for(const ref of r.payload.verification){assert(e.evidence_receipts.some(receipt=>receipt.uri===ref.uri),id+' retained verification');assert(e.trusted.projects.some(project=>project.evidence_uris.includes(ref.uri)));}
+  const currentOnly=e.evidence_receipts.filter(receipt=>/^https:\/\/evidence\.example\.invalid\/1000-(?:005|009|013)-1-TC-01\.S[1-4]-0$/.test(receipt.uri));
+  assert.deepEqual(currentOnly.map(r=>r.uri).sort(),id.startsWith('I13-')?['https://evidence.example.invalid/1000-013-1-TC-01.S1-0','https://evidence.example.invalid/1000-013-1-TC-01.S2-0']:[],id+' no unused current-step receipt');
+  for(const uri of ['https://evidence.example.invalid/1000-009-1-TC-01.S2-0','https://evidence.example.invalid/1000-009-1-TC-01.S3-0','https://evidence.example.invalid/1000-009-1-TC-01.S4-0']){assert(!cards.reads.evidence.some(r=>r.uri===uri),id);assert(!e.trusted.projects.some(project=>project.evidence_uris.includes(uri)),id);}
+  assert(!e.evidence_receipts.some(r=>r.uri==='https://evidence.example.invalid/finding'),id+' no unused current finding');
+  for(const forbidden of ['assessment','qa_report','findings','proposed_outcome','destination','candidate'])assert(!Object.hasOwn(cards,forbidden),id);
+  assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('independently authorize caller qa-entrypoint'));
+ }
+ await t.test('mixed Story/Bug preserve exact types, consumers, request/assertions, two-hop extraction and three actual image inputs',async()=>{
+  for(const id of ['I01-story','I01-bug']){
+   const work=JSON.parse(await raw(id,'work.yaml')),cards=await input(id,'cards.json'),[api,child,db,ui]=work.testing_strategy.cases[0].steps;
+   assert.deepEqual(work.testing_strategy.dispatch_order,[api.id,db.id,ui.id]);assert.deepEqual(api.children,[child.id]);assert.equal(child.caller,api.id);
+   assert.equal(cards.reads.native.type_id,id==='I01-story'?'22':'23');
+   const request=await raw(id,'collection/selected.bru');for(const text of ['/api/record','res.status: 200','res.body.tenant_id: tenant-a','res.body.state: ready','res.getBody().record_id'])assert(request.includes(text));
+   assert(!request.includes('REQUIRED_PORT'));assert.equal(await raw(id,'query.sql'),query);
+   assert.deepEqual(await input(id,'parameters.json'),['tenant-a',null]);assert.deepEqual(db.database.parameter_bindings,[{input:'record_id',index:1}]);
+   const extraction=await input(id,'extraction.json');assert.equal(extraction.json_pointer,'/response/body/record_id');assert.equal(extraction.value,null);assert.equal(extraction.parent_exposes,api.id+'.record_id');
+   assert.deepEqual(ui.bindings,[{from_step:api.id,output:'record_id',to_input:'record_id'}]);
+   assert.equal(cards.tool_inputs.ui.checkpoints.length,3);
+   for(const point of cards.tool_inputs.ui.checkpoints){const png=await readFile(path.join(p.cases[id],'input',point.screenshot));assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),point.width);assert.equal(png.readUInt32BE(20),point.height);assert.equal(point.digest,'sha256:'+hash(png));}
+   assert.equal(cards.reads.pipeline.original_comments[0].author_id,'pipeline');
+   assert.equal(cards.reads.access.actor_id,'ACTOR-01');assert.equal(cards.reads.access.tenant,'tenant-a');
+   assert.deepEqual(cards.tool_inputs.api.responses,[{status:200,body:{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}}]);
+  }
+ });
+ await t.test('negative facts remain incomplete at their own boundary without rewriting original expectations',async()=>{
+  const positive=await raw('I01-story','work.yaml');
+  for(const id of ['I02-child-receipt','I02-extraction','I02-provenance','I02-query','I02-parameters','I02-checkpoint','I10-wrong-actor','I10-wrong-tenant'])assert.equal(await raw(id,'work.yaml'),positive,id);
+  assert.equal((await input('I02-extraction','extraction.json')).json_pointer,null);
+  await assert.rejects(stat(path.join(p.cases['I02-query'],'input/query.sql')),/ENOENT/);
+  assert.equal(await input('I02-parameters','parameters.json'),null);
+  assert.equal((await input('I02-checkpoint','cards.json')).tool_inputs.ui.checkpoints.length,2);
+  assert.equal((await input('I02-child-receipt','cards.json')).tool_inputs.api.child_reply.status,'unavailable');
+  assert.equal((await input('I02-provenance','cards.json')).tool_inputs.api.responses[0].actor_id,'OTHER');
+  assert.deepEqual((await input('I10-wrong-actor','access.json')).actors,[]);
+  assert.equal((await input('I10-wrong-tenant','access.json')).actors[0].tenant,'tenant-b');
+  assert.equal((await input('I14-no-model','capabilities.json')).model_profile,null);
+  assert.equal((await input('I14-no-clock','capabilities.json')).clock,null);
+  assert.deepEqual((await input('I14-no-helper','capabilities.json')).helpers,[]);
+ });
+ await t.test('finite observation, dependency, inability, static and publisher seam inputs retain distinct facts',async()=>{
+  for(const id of ['I03-pending-ready','I03-all-pending','I04-all-ready','I04-one-mismatch']){
+   const work=JSON.parse(await raw(id,'work.yaml')),c=work.testing_strategy.cases[0],clock=await input(id,'clock.json');
+   assert.deepEqual(c.observation.schedule,[0,30,60]);assert.equal(c.observation.deadline_seconds,90);assert.equal(c.observation.completion,id.startsWith('I03')?'until_expected':'all_observations');
+   assert.deepEqual(work.testing_strategy.dispatch_order,['E01.S1']);assert.deepEqual(clock.offsets,[0,30,60]);assert.equal(clock.whole_unit_bound_seconds,20);assert.equal(clock.child_bound_seconds,5);
+  }
+  assert.deepEqual((await input('I03-pending-ready','cards.json')).tool_inputs.api.responses.map(r=>r.body.state),['pending','ready','ready']);
+  assert.deepEqual((await input('I04-one-mismatch','cards.json')).tool_inputs.api.responses.map(r=>r.body.state),['ready','pending','ready']);
+  assert.deepEqual((await input('I05-next-offset','clock.json')).unit_elapsed_seconds,[31]);
+  assert.deepEqual((await input('I05-missed-offset','clock.json')).now_offsets_seconds,[0,31]);
+  const pure=await input('I08-pure-wait','cards.json'),fail=await input('I08-fail-wait','cards.json');
+  for(const cards of [pure,fail]){assert.equal(cards.dependency_observations.length,1);const cause=cards.dependency_observations[0];assert.equal(cause.original_response.body.resolved,false);assert.equal(cause.original_response.body.case_id,cause.case_id);assert.equal(cause.upstream.request.digest,cause.original_response.body.request.digest);}
+  assert.deepEqual((await input('I08-missing-cause','cards.json')).dependency_observations,[]);
+  assert.notDeepEqual(pure.tool_inputs.api.responses,fail.tool_inputs.api.responses);
+  assert.equal((await input('I07-cleanup-inability','cards.json')).tool_inputs.database.rollback,'unavailable');
+  assert.equal((await input('I07-domain-inability','cards.json')).capability_observations[0].body.observation_started,false);
+  const joined=JSON.parse(await raw('I06-join','work.yaml')),dbCase=joined.testing_strategy.cases.find(c=>c.steps.some(s=>s.skill==='qa-database')),db=dbCase.steps.find(s=>s.skill==='qa-database');
+  assert.deepEqual(dbCase.depends_on,[]);assert.deepEqual(db.bindings,[]);assert.deepEqual(db.inputs,{record_id:'fixture-1'});assert.deepEqual(db.database.parameters,['example','fixture-1']);assert.deepEqual(db.database.parameter_bindings,[]);
+  assert.deepEqual((await input('I06-join','cards.json')).tool_inputs.api.responses[0].body,{results:[]});assert.deepEqual((await input('I06-join','cards.json')).tool_inputs.database.rows,[]);
+  const joinCase=joined.testing_strategy.cases.find(c=>c.depends_on.length===2);assert(joinCase);assert.deepEqual(joinCase.depends_on.map(d=>d.step).sort(),['TC-01.S3','TC-01.S4']);
+  assert.equal((await input('I01-story','cards.json')).tool_inputs.database.rows.length,1);
+  const staticWork=JSON.parse(await raw('I09-static-bug','work.yaml'));assert.deepEqual(staticWork.testing_strategy.cases,[]);assert.deepEqual(staticWork.testing_strategy.human_review.cases.map(c=>c.id),['HQA-01','HQA-02']);
+  assert.deepEqual((await input('I11-missing-environment','cards.json')).reads.pipeline.original_comments,[]);
+  assert.equal((await input('I11-partial-pass-null-proof','cards.json')).proof_inputs.tested_pr,null);
+  assert.equal((await input('I12-append-unknown','cards.json')).append.storage,'ambiguous');
+  assert.equal((await input('I12-transition-unknown','cards.json')).transition.resolving_status,'unknown');
+ });
+ await t.test('designated historical reuse closes the review/blocker/auth proofs and separates earlier observations from current output',async()=>{
+  const e=await input('I13-valid','predecessors.json'),history=await input('I13-valid','historical.json'),rows=records(e);
+  const blocker=rows.find(x=>x.r.kind==='blocked'),auth=rows.find(x=>x.r.kind==='resume_authorization');
+  assert.deepEqual(blocker.r.payload.qa_report.steps.map(s=>s.result),['PASS','PASS','NOT_RUN','NOT_RUN']);assert(!blocker.r.payload.findings);
+  assert.deepEqual(auth.r.payload.blocked_result,history.blocker);assert.equal(auth.c.author_id,'human');
+  const parent=history.artifacts.find(a=>a.body.kind==='api_parent_observation'),child=history.artifacts.find(a=>a.body.kind==='bruno_response');
+  assert.deepEqual(parent.body.response,child.body.response);assert.equal(parent.body.child_source.uri,child.uri);
+  assert.equal(parent.body.child_source.response_digest,'sha256:'+hash(JSON.stringify(child.body.response)));
+  for(const artifact of history.artifacts){assert.equal(artifact.body_sha256,'sha256:'+hash(JSON.stringify(artifact.body)));assert.equal(artifact.body.category,'historical supplied/mock');assert(artifact.body.observed_at<history.domain_inabilities[0].observed_at);assert(e.evidence_receipts.some(r=>r.uri===artifact.uri&&r.observed_digest===artifact.body_sha256));}
+  assert(history.domain_inabilities.every(f=>f.observed_at<blocker.c.created));assert(blocker.c.updated<auth.c.created);assert(auth.c.updated<history.new_execution_not_before);
+  assert.equal(history.reuse.length,2);for(const ref of history.reuse){const receipt=e.evidence_receipts.find(r=>r.uri===ref.uri);assert.equal(receipt.kind,'reuse');assert.deepEqual(receipt.details.source,history.blocker);assert.equal(receipt.details.case_id,'TC-01');assert(['TC-01.S1','TC-01.S2'].includes(receipt.details.step_id));}
+  // Validate separate historical snapshots; future authorization is not present
+  // in the earlier blocker snapshot. No current terminal is invented for a pass.
+  for(const entry of [blocker,auth]){const copy=structuredClone(e);copy.target={ticket_id:entry.r.ticket_id,comment_id:entry.c.id,record_id:entry.r.record_id,digest:digestValue(entry.r)};copy.issues[0].stage_id=copy.trusted.projects[0].stages[entry.r.to_stage];if(entry===blocker)for(const page of copy.comment_pages){page.comments=page.comments.filter(c=>c.created<=blocker.c.created);page.total=page.comments.length;}const r=chain(copy);assert.equal(r.valid,true,entry.r.kind+JSON.stringify(r.diagnostics));}
+  const stale=await input('I13-stale','historical.json');assert(stale.artifacts.every(a=>a.body.pr.source_revision==='f'.repeat(40)));
+  assert.equal((await input('I13-wrong-tenant','historical.json')).artifacts.find(a=>a.body.kind==='bruno_response').body.tenant,'foreign');
+  const untrusted=await input('I13-untrusted-approval','predecessors.json');assert(chain(untrusted).diagnostics.some(d=>d.code==='ACTOR'));
+  for(const id of ['I13-stale','I13-wrong-tenant','I13-untrusted-approval'])assert.equal(await raw(id,'work.yaml'),await raw('I13-valid','work.yaml'));
+  for(const id of ['I13-valid','I13-stale','I13-wrong-tenant','I13-untrusted-approval']){const clock=await input(id,'clock.json'),old=await input(id,'historical.json');assert.equal(clock.origin,old.new_execution_not_before);assert.equal(clock.origin,'2026-11-15T10:03:01Z');assert.equal(old.artifacts[0].body.observed_at,'2026-11-15T10:01:03Z');assert.deepEqual(clock.offsets,[0]);assert.equal(clock.whole_unit_bound_seconds,20);}
+  assert.equal((await input('I01-story','clock.json')).origin,'2026-11-15T10:00:00Z');
+ });
+});

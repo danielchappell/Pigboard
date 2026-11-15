@@ -5,9 +5,11 @@ facts, local start semantics. It never reads Jira, changes a file, starts a work
 computes a digest, executes tests or establishes live readiness. The
 writing skill now authors versioned
 Epic and Story/Bug YAML with full templates and readable requirements. The
-structured implementer and reviewer consume current versioned assignments and canonical receipts; only the retained QA entrypoint
-consumes its basic prose contract. Compatible full-loop delivery and the
-manager require later coordinated release; authoring does not activate workers.
+structured implementer and reviewer consume current versioned assignments and
+canonical receipts. Use the QA contract declared by the selected installed
+entrypoint; the basic prose contract applies only to a release that declares it.
+Current compatible full-loop delivery still requires PGB-78. Authoring does not
+activate workers or convert their inputs.
 
 ## Author a draft
 
@@ -350,6 +352,24 @@ full operation facts, actual earlier observations and resolved preparation; pros
 or a selected YAML fragment is insufficient. API child ownership, two-hop SQL
 bindings and UI checkpoints follow the existing schema, with no new fields.
 The helpers return observations only and never execute human cases or publish a
-canonical QA ledger. Only the retained QA entrypoint remains a basic prose worker;
-its structured orchestration/Jira handoff is PGB-78. Do not infer compatible
+canonical QA ledger. The selected installed entrypoint owns its input contract;
+the current legacy entrypoint remains incompatible with these structured inputs
+until PGB-78. Do not infer compatible
 full-loop delivery from valid authoring or an isolated helper result.
+
+## Prepare the declared inputs
+
+A `testing_strategy.preparation` slot names one mechanical obligation, its owner,
+exact `used_by` consumers and preserved requirements. The implementation receipt's
+`prepared_inputs` must cover every slot once with hashed, retrievable artifacts;
+its evidence receipt repeats the slot ID and exact consumer order. Review the
+actual request/assertions, query/parameter positions, UI checkpoints and extraction
+mapping with the full original work and separately trusted context. Keep expected
+values separate from actual outputs and caller/access authority.
+
+Record source commit, immutable installed skills/manifest/payload hashes and input
+hashes before use. A missing route, mapping, identity/tenant, capability, bound or
+proof remains incomplete; name the owner and required fact, preserve results and
+resume only the uncompleted authorized work. The source checkout's
+`docs/using-pigboard.md#prepare-prescribed-qa-inputs` has the source-only PREP-01
+command and existing helper handoff; this fixture guide is not installed.

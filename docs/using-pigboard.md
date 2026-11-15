@@ -366,3 +366,101 @@ human cases. Retain sanitized commands/results, hashes, ordered calls, mutations
 actual model/profile, native status or unknown, cleanup and human action before
 removing only the owned disposable root. R1-24-H01/H02/H03 remain human-owned until
 the designated developer and QA reviewer execute them.
+
+## Prepare prescribed QA inputs
+
+PGB-132's source-only PREP-01 exports the finite I01–I14 inputs for human-owned
+R1-27-H01/H02/H03. Use the already prepared same-release source checkout and
+immutable installed skills. This command creates a fresh private folder; it
+runs no helpers, timers, model, provider transport or publication:
+
+```sh
+node --input-type=module -e 'import {prepareQaFixture} from "./test/fixtures/qa-helper-case.mjs"; await prepareQaFixture(process.argv[1], {suite:"dispatch-inputs"});' /absolute/private/fresh-run
+```
+
+Use a new absolute path each time. Existing paths are rejected, preserving prior
+failed evidence. The default `prepareQaFixture` publication suite, older local
+helper `prepare`/`serve` commands and fixed histories are unchanged. The source
+preparer is not installed into customer bundles.
+
+`preparation.json` lists every variant. Each `cases/<variant>/input/` contains:
+
+- Full original `work.yaml`, separately trusted mock `facts.yaml`, customer
+  `scope.yaml`, current-review `predecessors.json` and exact `known-requests.json`.
+- Separate `access.json` and pipeline/server metadata in `cards.json`. Mock access
+  and deployment facts are labelled mock and grant no live permission.
+- The selected Bruno request/assertions, `extraction.json`, SQL and parameter
+  layout, database context, UI route/browser/viewport and named screenshot cards.
+- Finite `clock.json`, operation bounds, capabilities and a hashed `index.json`.
+  These are supplied inputs; the preparer executes no schedule.
+
+`output/` is empty. `operator/` is outside each consumer root and must be withheld.
+No current terminal record, assessment, verdict or final ledger is supplied.
+Designated human cases remain NOT RUN. The I13 control alone keeps the required
+historical partial observations, blocker and later human authorization; they are
+historical supplied/mock inputs, with separate case-specific reuse proof.
+
+Before exercising a variant, record `git rev-parse HEAD`, the SHA256 of
+`test/fixtures/qa-helper-case.mjs`, the exact immutable installed `skills` root,
+its source revision and manifest/payload hashes from the preparation/install
+receipt. Record each emitted input's actual SHA256 and compare the hashes in
+`input/index.json`; hash the index itself too. `preparation.json` remains
+`NOT_READY` until these bindings and the chosen exercise capabilities are supplied.
+Do not use a mutable installed link as revision proof. Fixed `.invalid` destinations,
+dummy identity and simulated database/TLS facts are mock inputs, not usable live
+connection credentials or hosted acceptance.
+
+For R1-27-H01, choose fresh I01 Story and Bug folders. An independently authorized
+caller opens the immutable installed `qa-api/SKILL.md` and common structured-step
+reference. Supply full raw work/context, scope, exact assignment/current review,
+PR/revision, access, capabilities, output/audience and exact case/step/caller.
+Top-level logical caller is `qa-entrypoint`; trusted invocation must establish its
+identity and action scope independently of the ticket. Run the API unit once;
+it alone calls its named Bruno child. The fixed operator responds only to actual
+requested tool actions using the frozen cards and retains request/response audit.
+Keep all helper output under `output/`, labelled supplied/mock.
+
+Use the actual child's declared output and original report pointer to expose the
+parent output. Pass that actual value and provenance through the declared DB and
+UI bindings; never use the requirement's expected ID or prefill a bound parameter.
+Invoke the installed database and UI instructions for their exact units. Inspect
+the original query, parameters, rollback/close evidence and actual three UI
+checkpoint screenshots. A card is an input response; a helper's actual retained
+result is the observation. These exercises do not prove live Bruno, PostgreSQL,
+browser or deployment behavior.
+
+Independently assess those actual results, preserving every row, finding, unknown
+effect and pending human. Invoke immutable `qa-jira/SKILL.md` in `preflight`, then
+`final` when appropriate, with that actual `prepared_assessment`, full raw work
+and trusted context, scope/capabilities, assignment, original predecessors,
+known requests and any valid retained delivery. The publisher owns destination,
+append/readback, transition and uncertain-write recovery. For simulated stored
+writes, echo only the actual submitted transport bytes with the fixed card's
+metadata; retain ordered calls and actual/unknown status. Never inject an expected
+record, verdict, UUID or route. Use the existing standalone publisher guidance
+above; the legacy full `qa-entrypoint` remains incompatible until PGB-78.
+
+For R1-27-H02, inspect positive controls and the named missing extraction,
+query/parameters, checkpoint, identity/tenant, bounds and cause variants in fresh
+folders. Run only the applicable existing read-only validation/preflight. Some
+missing artifact facts belong to instruction preflight rather than the raw work
+schema; start-valid declarations alone do not mean execution-ready. Do not fix a
+negative by guessing a fact, inferring permission or changing case expectations.
+
+For R1-27-H03, inspect static human-only work, all-NOT_RUN missing-environment,
+partial observations without proof, earlier mismatch then inability, pure wait,
+mismatch plus wait and retained-evidence controls. A typed unresolved request
+needs its actual current-case cause. Any supplied PASS/FAIL or reused claim needs
+nonnull tested PR and trusted matching environment proof. Static human-only work
+needs no invented environment. Preserve prior findings when a later unit cannot
+run. I12 contains only the existing publisher's unknown-write seam; it does not
+repeat the publication matrix or permit replay.
+
+When a required fact is missing, retain the original inputs, exact missing
+field/artifact/consumer, parser or preflight diagnostics and actual partial results.
+Ask the named preparation/access owner for that fact through the authorized
+workflow. Stop the affected prescribed check after its bounded attempt; an
+untestable case remains unverified for the authorized human decision. The PGB-110
+evidence exception does not transfer. Do not reconstruct a result or retry a
+completed action. Retain sanitized evidence first, then remove only the owned
+disposable fixture folder; this preparer creates no services or live resources.

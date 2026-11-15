@@ -127,7 +127,7 @@ test('writer retains owned provenance, shared dependencies and generic Task rout
   const basic = await read('references/basic-workflow-ticket.md');
   assert(basic.includes('Ticket contract: pigboard-story/v1'));
   assert(skill.includes('[structured implementer](../implementer-entrypoint/SKILL.md)'));
-  assert(basic.includes('consumed only by the retained QA entrypoint'));
+  assert(basic.includes("selected release's QA entrypoint"));
   assert(basic.includes('structured reviewer'));
   assert(!basic.includes('unmigrated implementation'));
   assert(basic.includes('separate [structured implementer route]'));
@@ -151,7 +151,12 @@ test('writer distinguishes current structured helpers from retained prose orches
   assert(basic.includes('prose examples alone cannot invoke them'));
   assert(basic.includes('PGB-78'));
   const guide=await readFile(path.join(root,'docs/authoring.md'),'utf8');
-  assert(guide.includes('Only the retained QA entrypoint remains a basic prose worker'));
+  assert(guide.includes('selected installed entrypoint owns its input contract'));
+  assert(guide.includes('current legacy entrypoint remains incompatible'));
+  for(const relative of ['skills/implementer-entrypoint/references/handoff.md','skills/pigboard-pr-review/references/jira-handoff.md']){
+    const recipe=await readFile(path.join(root,relative),'utf8');
+    for(const field of ['prepared_inputs','consumers','SHA256','extraction','tenant','pending'])assert(recipe.includes(field),relative+': '+field);
+  }
   // All existing examples and raw trusted start checks above remain authoritative;
   // this change adds no schema, acceptance fields or prose-to-structured adapter.
 });
