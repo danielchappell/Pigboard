@@ -135,9 +135,10 @@ the retained basic-worker prose guide. Its human-writing sibling and same-releas
 work-validator are required; copying just the writer entrypoint loses the contract.
 The implementer composer loads complete `implementer-job` and `implementer-jira`
 siblings and its shared handoff/Cursor/review references. The reviewer wrapper loads
-complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only the retained QA entrypoint
-remains a basic prose consumer. These prepared capabilities do not make the mixed
-bundle an accepted delivery loop or activate automations.
+complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. QA
+loads complete qa-entrypoint references, the selected qa-api/qa-bruno/qa-database/
+qa-ui folders, qa-jira and work-validator from that same release. These prepared
+capabilities do not establish an accepted delivery loop or activate saved wiring.
 
 ## Check project configuration locally
 
@@ -290,7 +291,8 @@ record is not completion. Missing/corrupt parser, canonicalizer, schema or scrip
 fails preparation/verification and keeps the previous stable skills binding.
 Validation/preparation writes nothing. The composed implementer is a configured
 producer of typed results, but installation activates no automation, manager or
-human-unblock path; the reviewer now uses [reviewer-jira](../skills/reviewer-jira/SKILL.md) for canonical receipt preflight and one final append/read-back/recheck/direct QA, Rework Queued or Blocked handoff. Prepare actual configured independent actor approval/own-revocation controls, exact receipt reads and direct transition rights before use. QA migration and live acceptance remain pending. See the guide for the complete closed
+human-unblock path; the reviewer now uses [reviewer-jira](../skills/reviewer-jira/SKILL.md) for canonical receipt preflight and one final append/read-back/recheck/direct QA, Rework Queued or Blocked handoff. Prepare actual configured independent actor approval/own-revocation controls, exact receipt reads and direct transition rights before use. QA source composition is available; compatible saved wiring and live acceptance
+remain separate. See the guide for the complete closed
 envelope, synthetic examples, exit meanings, budgets and recovery.
 
 
@@ -351,10 +353,14 @@ manifest; run existing install verification/smoke checks. Those checks establish
 installation only. [Bounded helper use](using-pigboard.md#prescribed-structured-qa-helpers)
 also needs complete work/trusted context, ready original PR deployment proof,
 restricted access, prepared artifacts, actual outputs and retrievable evidence.
-The retained QA entrypoint still accepts basic prose; structured dispatch and
-canonical QA publication are PGB-78. PGB-90 owns saved automation compatibility;
+The QA entrypoint now composes full structured Story/Bug work, ordered helpers
+and one actual qa-jira final assessment. Prepare actual Grok High, allowed helper
+execution, identity/tenant/access, private evidence retrieval and bounded clock/
+wait capabilities when prescribed. A model string or fixed clock card proves none
+of those capabilities. Static zero-AI work requires no runtime helper/deployment.
+PGB-90 owns saved automation compatibility;
 PGB-58 owns full-loop acceptance and activation remains a separate owner decision.
-This mixed bundle must stay inactive. Do not treat local fixture or installation
+Keep saved wiring inactive until its separate gates pass. Do not treat local fixture or installation
 success as hosted/customer delivery acceptance.
 
 ## Prepared QA publisher setup
@@ -372,5 +378,10 @@ to run raw start, record, chain and HTML/ADF formatter checks on the prepared in
 Local tests copy real locked validator dependencies and simulate unrelated helper
 installation; they establish parity/recovery, not default installation, provider
 execution or live acceptance. The source fixture is never shipped. Keep dated
-installation receipts at their original scope. PGB-78 integration and PGB-90/PGB-58
-compatible installed/live acceptance remain required before activation.
+installation receipts at their original scope. Changed entrypoint/reference/
+publisher bytes require a new immutable source/manifest/payload hash binding,
+complete sibling/link closure and installation smokes. Freeze `receipt.skills`
+for each run; refresh only outside delivery, preserving the previous verified
+release and retained evidence. Never repair dependencies or switch a running QA
+to a new stable link. PGB-90/PGB-58 compatible installed/live acceptance and
+owner activation remain separate gates.

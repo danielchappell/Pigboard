@@ -31,8 +31,8 @@ entrypoints and helpers, not twenty-two autonomous workers:
 | [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
 | [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
 | [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
-| [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
-| [qa-jira](../skills/qa-jira/SKILL.md) | Read-only eligibility preflight or standalone publication of a complete prepared QA assessment for the current native Story/Bug, assignment/review/open PR and configured tools. Executes no helpers; retained dispatcher integration remains PGB-78. |
+| [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized native Story/Bug in QA with full structured raw work/trusted context, current receipts/PR/CI, actual Grok High, prepared access/artifacts/evidence and clock when needed. Composes exact AI units and one qa-jira final assessment. |
+| [qa-jira](../skills/qa-jira/SKILL.md) | Read-only eligibility preflight or standalone publication of a complete prepared QA assessment for the current native Story/Bug, assignment/review/open PR and configured tools. Executes no helpers; used standalone or by the compatible qa-entrypoint. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
 | [request-rework](../skills/request-rework/SKILL.md) | Explicit human record-and-queue request, in-scope findings/evidence, current Human Review assignment and compatible completed QA chain on the same open PR, configured actor/tools and durable output. Human invoked; no automatic worker. |
@@ -46,7 +46,7 @@ See [engineering skills](engineering-skills.md) for the composed planning, diagn
 and verification flow, worked examples and current trial limits. Read the selected
 skill for its complete contract. Structured QA helpers receive
 complete bounded AI step inputs and original expectations from an authorized
-caller; the retained QA entrypoint does not yet construct these inputs. Helpers
+caller; qa-entrypoint constructs those complete handoffs and inspects actual results. Helpers
 do not select new work or change the whole ticket's stage. Preserve required sibling references.
 Load only assigned helpers, preserving case order and avoiding duplicate execution
 when one helper delegates a step to another.
@@ -73,8 +73,10 @@ Draft/structure need no trusted context; start does and never proves live readin
 Missing setup/context preserves the draft and checks-not-run report. The writer
 does not install dependencies, mark readiness, publish without separate authority
 or request rework. The implementer consumes structured Story/Bug assignments;
-the reviewer consumes structured assignments and canonical implementation receipts. Only the retained QA entrypoint requires its [basic prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
-Do not feed YAML to the retained QA entrypoint or activate this mixed bundle.
+the reviewer and QA composer consume structured assignments and canonical
+implementation/review receipts. [Basic prose examples](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
+are historical; no ticket is automatically converted. Saved wiring and actual
+installed/live acceptance remain separate from source compatibility.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -125,7 +127,8 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
 | Complete confirmed reviewer findings | Publish all finding IDs in a same-PR repair_request and verify Rework Queued. |
 | Explicit authorized human findings in Human Review | request-rework verifies current QA/open PR, appends/read-backs one repair request, rechecks and verifies direct Rework Queued; active B continues. |
-| Confirmed defect in retained QA | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
+| Confirmed QA defect, no unresolved inability or causal upstream wait | qa-jira publishes the full repair assessment and verifies same-PR Rework Queued. |
+| Actual causal upstream wait during QA | Retain typed unresolved request, findings and full partial ledger; qa-jira selects dependency_wait/Rework Queued only without higher-priority inability. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
@@ -148,8 +151,9 @@ manager-owned admission and queued repair. Its
 and human-assigned tests; human tests remain pending at the AI handoff. Versioned
 YAML authoring, full templates/examples, the `human-writing` dependency
 and local validation are available. The implementer composer/job/Jira split now
-accepts current structured Story/Bug assignments. Reviewer receipt handoff is available; QA migration, manager
-admission and full-loop acceptance remain later work. Existing prose tickets are
+accepts current structured Story/Bug assignments. Reviewer and QA receipt handoffs
+are available; manager admission, compatible saved wiring and full-loop acceptance
+remain separate work. Existing prose tickets are
 not automatically converted. Keep automations inactive until the compatible
 release is accepted; prompt changes do not establish compatibility.
 
@@ -188,8 +192,9 @@ A proven mismatch under valid prerequisites returns FAIL. Never repeat an uncert
 child, repair setup/tests or install a fallback. Obtain the specific missing
 prerequisite, preserve completed evidence and use a fresh authorized assignment;
 do not replay completed/uncertain effects. Helpers do not move Jira or publish the
-whole-ticket ledger. PGB-78 owns retained QA entrypoint migration; the mixed loop
-remains inactive. Human H01/H02, hosted CI and release acceptance remain separate.
+whole-ticket ledger. The compatible composer now owns that ledger and delegates
+publication to qa-jira. Human H01/H02 tracking, actual helper acceptance, hosted CI
+and release acceptance remain separate.
 
 ### Fixed source-only preparation example
 
@@ -298,8 +303,8 @@ acceptance. It explains dependency preparation, evidence retention and cleanup.
 
 Load `<receipt.skills>/qa-jira/SKILL.md` directly. The source entrypoint is
 [qa-jira](../skills/qa-jira/SKILL.md). It is the permanent publication/failure
-contract; the retained qa-entrypoint remains incompatible until PGB-78 integrates
-it. The caller retains evidence and supplies an assessment; this skill executes
+contract, used standalone or by the compatible qa-entrypoint. The caller retains
+evidence and supplies an assessment; this skill executes
 no QA helpers and makes no human test pass.
 
 Supply these named instruction inputs (references contain no secret values):
@@ -440,7 +445,9 @@ append/readback, transition and uncertain-write recovery. For simulated stored
 writes, echo only the actual submitted transport bytes with the fixed card's
 metadata; retain ordered calls and actual/unknown status. Never inject an expected
 record, verdict, UUID or route. Use the existing standalone publisher guidance
-above; the legacy full `qa-entrypoint` remains incompatible until PGB-78.
+above for direct-helper exercises. The final composer route below uses the same
+prepared inputs; it requires its own actual Grok High/clock/helper capability
+binding and never imports an expected assessment.
 
 For R1-27-H02, inspect positive controls and the named missing extraction,
 query/parameters, checkpoint, identity/tenant, bounds and cause variants in fresh
@@ -530,3 +537,65 @@ PGB-132's original independent QA report remains INCOMPLETE. Owner decision
 10765 accepts its specific actual-helper/dependent-publisher evidence gap; this
 source extension does not rerun or waive that gap, transfer it to PGB-138, or
 claim human, live, installed, CI, merge or activation acceptance.
+
+## Compose a prescribed QA run
+
+Use the same-release [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) and its
+[Cursor profile](../skills/qa-entrypoint/references/cursor.md). It accepts native
+Story/Bug work with full original YAML/ADF, separately trusted start context,
+configured scope, current assignment/review/open PR, actual Grok High and prepared
+access/artifacts/evidence. Supply an actual clock/wait interface and trusted
+whole-unit/child bounds for prescribed asynchronous work. Do not infer capabilities
+from a label, fixed response card or installed file. No setup repair occurs in QA.
+
+```text
+Load <immutable receipt.skills>/qa-entrypoint/SKILL.md for <native ticket key>.
+scope: <trusted configured site/project/full stream/native identity>
+work: <full raw YAML/ADF and separately trusted start-context bytes>
+assignment: <current pointer hint, verified by qa-jira>
+capabilities: <actual Grok High, prepared exact tools/access, clock when needed,
+immutable same-release root, private evidence audience, publisher transports>
+retained_delivery: <existing original candidate/receipts/resume reference or null>
+Use qa-jira preflight, exact prescribed AI units, and one final actual assessment.
+Keep human IDs pending, every partial row and unknown effect. Return the publisher
+result and end this invocation.
+```
+
+For the finite R1-08 developer verification, the existing dispatch-inputs
+`cases/<id>/invocation.txt` is the composer view. Freeze source/install/input hashes
+and independent caller/action authority first. Keep `operator/` outside the actor
+view; return a fixed card only for its actual requested tool action and retain the
+ordered request/response audit. `output/` starts empty. The preparer does not run
+the composer, create its assessment or establish actual model/helper/clock behavior.
+Do not replace missing capabilities with a JavaScript engine, another model or a
+new live Bruno/API/DB experiment. Stop the affected bounded check and report its
+exact missing requirement for an authorized decision; another Story's exception
+does not transfer. Authorized independent agent verification can establish
+applicable developer requirements with truthful actor/category evidence. Designated
+human tracking stays honest; its NOT RUN label alone adds no replay requirement.
+
+Expected routes below describe the contract, not completed acceptance results:
+
+| Actual run | Retained result and handoff |
+| --- | --- |
+| Ordered API-child → database → UI completes | Inspect all actual artifacts and earlier named-output provenance; retain one row per expanded step and exact pending humans. qa-jira alone verifies publication before Human Review. |
+| Static native Bug with zero AI cases | No runtime helper or invented deployment; exact human IDs/no-AI reason, current PR/review/CI. No human PASS or fabricated AI test PASS. |
+| Mismatch followed by capability/cleanup inability | Preserve verified FAIL/PASS, findings and all attempts; remaining rows NOT_RUN. Inability takes priority. Explicit dependency skips carry the finding-ID union through chains/joins; bindings alone add no cause. |
+| Real current-case outstanding upstream request | Supply exact typed unresolved request and causal observation; retain earlier defects. Without higher-priority inability, qa-jira queues dependency_wait on the same PR. Discussion stays QA. |
+| Unknown append or transition | Retain original bytes/UUID, known receipts, actual/unknown status and recovery. No second final call, direct fallback transition or repeated helper. |
+| Valid explicit resume | Consume the existing unique human authorization and independently valid case-specific history. Keep original typed artifacts/category, use the current clock for remaining allowed work and never replay known completed actions. |
+
+Finite observations start at offset zero using the first-dispatch origin; no
+late dispatch, overlap, catch-up or origin reset. Whole-unit bounds include the
+API child and must fit the next offset/deadline; database keeps its 20-second outer
+bound. `until_expected` stops at the first verified match or fails at the last
+prescribed observation; inability before that point leaves pending attempts and
+aggregate NOT_RUN. `all_observations` preserves any demonstrated mismatch as FAIL;
+otherwise an unfinished schedule is NOT_RUN. Every attempt
+remains detailed evidence, with one aggregate canonical row per step.
+
+Return qa-jira's exact `test_verdict`, `human_only`, `qa_report`, `findings`,
+`human_pending`, `intended_destination`, receipts, `actual_jira_status`,
+`delivery_outcome` and `recovery`. Local fields are not new canonical keys.
+COMPLETED means the intended handoff was verified, including Blocked; tests,
+human acceptance, hosted CI, merge and activation have separate evidence.

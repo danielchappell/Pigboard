@@ -347,6 +347,24 @@
     "hours": {
       "min": 10.5,
       "max": 14.5
+    },
+    "delivery_state": "Source implementation on Director-authorized PGB-132 development stack; final actual Core/PGB-132 composition, immutable installation binding, actual capability/acceptance disposition, exact committed-code review, hosted checks and merge remain separate.",
+    "development_binding": {
+      "base_commit": "0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a",
+      "base_tree": "991e23fff8ac436e4f0bcfb92e82df2743f5d628",
+      "native_description_sha256": "6a553206c0768143f0b478fc787c98140a233cc937189b6818cb83a5db02c97a",
+      "stage": "In Progress",
+      "start_comment": "10803",
+      "plan_reviews": "Two complementary affected plan reviews CLEAN before implementation; source code verdict not yet obtained",
+      "scope": {
+        "paths": 17,
+        "criteria": 7,
+        "original_cases": 3,
+        "direct_prerequisites": 6,
+        "input_families": 14,
+        "inputs": 51
+      },
+      "acceptance": "Actual Grok High/helper/clock behavior unproven; no exception transferred from PGB-132 or PGB-110; no activation"
     }
   },
   {

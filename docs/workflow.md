@@ -9,10 +9,13 @@ and pull request. The human employee remains accountable.
 The [writing skill](../skills/write-pr-sized-stories/SKILL.md) prepares versioned YAML
 with [local validation](authoring.md). The structured implementer accepts native
 Story/Bug current assignments through [its input contract](../skills/implementer-entrypoint/references/handoff.md#input-contract).
-The [retained basic-worker Story reference](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
-remains canonical only for retained QA entrypoint prose field labels, ordering
-and preparation ownership. The [reviewer](../skills/pigboard-pr-review/SKILL.md) consumes canonical implementation receipts through [reviewer-jira](../skills/reviewer-jira/SKILL.md). The retained QA entrypoint does not yet consume the typed result.
-This mixed bundle remains inactive; no automatic prose conversion is provided. Native
+The [QA composer](../skills/qa-entrypoint/SKILL.md) also requires full structured
+work, separately trusted start context and current canonical predecessors. The
+[basic examples](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
+remain historical; no automatic prose conversion is provided. The
+[reviewer](../skills/pigboard-pr-review/SKILL.md) consumes canonical implementation
+receipts through [reviewer-jira](../skills/reviewer-jira/SKILL.md). Saved wiring,
+installed/live acceptance and activation remain separate gates. Native
 Jira metadata stays in Jira fields; accepted requirements stay in the description;
 implementation/review/QA outputs use versioned handoff comments. All acceptance
 cases and expectations remain on the ticket, with reviewed executable artifacts
@@ -37,7 +40,7 @@ prepared testing information for review and QA.
 | --- | --- | --- |
 | In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, same or new PR, passing current CI/artifacts, typed append/read-back and recheck before direct In Review; known dependency wait to Rework Queued, human blocker to Blocked. |
 | In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or publish all confirmed in-scope findings as a same-PR repair_request and move to Rework Queued. |
-| QA | `qa-entrypoint` | Grok High; execute named QA skills and prescribed cases in order, collect outcomes and evidence; move to Human Review on pass, In Progress for confirmed implementation defects, or Blocked if unable to complete. |
+| QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs and verifies Human Review, same-PR Rework Queued for repair/causal wait, or Blocked for inability. Humans stay pending. |
 
 QA remains on the open PR. The four domain helpers now accept exact structured
 AI steps under their [common contract](../skills/qa-api/references/structured-steps.md).
@@ -45,12 +48,19 @@ AI steps under their [common contract](../skills/qa-api/references/structured-st
 outputs to prepared read-only PostgreSQL parameters; `qa-ui` follows the supplied
 surface/viewport and retains inspected checkpoints. All return revision-bound
 observations and explicit inability/defect results, without Jira or human cases.
-The retained QA entrypoint has not migrated to these inputs or canonical QA
-publication (PGB-78), so the mixed loop remains inactive. Local bounded helper
-exercises are not compatible full-loop acceptance or activation.
+The composer follows `dispatch_order` without regrouping. It binds only actual
+earlier named values with original extraction/revision/actor/tenant provenance.
+Finite observations use the supplied actual clock, whole-unit/child bounds and
+deadline: no overlap, missed-offset catch-up or origin reset. It retains every
+attempt and one aggregate canonical PASS/FAIL/NOT_RUN row per expanded step.
+Local bounded helper exercises are not full-loop acceptance or activation.
 
-Reviewer fixes queue on the same PR; discussion stays In Review. The retained QA entrypoint returns fixes to In Progress on the same PR. Its migration
-to structured queued repair is later work; this is not an accepted compatible loop.
+Reviewer and QA fixes queue on the same open PR; discussion stays In Review or
+QA. QA retains defects during later inability, marks every unfinished row NOT_RUN
+and carries the union of finding IDs only through explicit failed/skipped case
+dependencies, including chains and joins. Actual causal upstream wait retains
+its typed unresolved request and findings; inability takes priority. These are
+source contracts, not proof that an active loop has been accepted.
 The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
 [Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates
 Jira, while preflight/publication never edits code/PRs. Exact current assignment,
@@ -88,20 +98,21 @@ A under its normal gates; no manual card drag is needed. Missing access/evidence
 discussion, new scope, closed PR or stale facts yields no queue transition. Already
 queued work is inspection-only; unknown writes stop without replay and preserve
 findings/receipts. See the [complete usage and fixed cases](../skills/request-rework/references/example.md).
-Retained QA still cannot supply the compatible typed chain; this separate prepared
-producer does not migrate QA, deploy the manager or activate the mixed loop.
+The compatible QA composer supplies that typed chain through qa-jira when its
+checks succeed. This does not deploy the manager or activate saved wiring.
 
 ## Deterministic wiring and setup
 
 The dated basic Jira wiring selected new work for a stream such as `AI-Daniel-1`.
 The planned manager will own new/repair admission; the implementer never admits
 work. Current implementer/reviewer instructions use structured assignments and
-receipts. QA's basic entrypoint and the dated pilot wiring remain unmigrated.
+receipts. QA now composes the structured contract; dated pilot wiring still needs
+its separate compatibility check.
 The matrix's [structured reviewer setup boundary](../config/cursor/automations.md#structured-reviewer-setup-boundary)
 distinguishes the current Story/Bug reviewer and QA/Rework Queued/Blocked outcomes
 from the old Story-only filter and reviewer In Progress checklist. Following that
-old checklist does not prepare the structured reviewer; the retained QA entrypoint still follows
-its own current basic contract.
+old checklist does not prepare the structured reviewer or QA composer. Use the
+current QA profile and same-release siblings for source invocation.
 
 Project/label/status filtering, authorized repository selection and webhook
 authentication belong in deterministic Jira/Cursor wiring. The ticket repository
@@ -155,7 +166,9 @@ records the agreed producer interface; pipeline publication and full-loop accept
 remain separate. Structured helpers now inspect the supplied raw receipt and
 configured author before runtime actions. The implementer consumes configured deployment evidence where its assigned work
 needs an environment; static work does not require one. No pipeline producer or
-preview infrastructure is delivered here; retained QA entrypoint migration remains separate.
+preview infrastructure is delivered here. Static zero-AI work retains its exact
+human IDs/no-AI reason and current PR/review/CI without invented deployment or
+helper execution. Humans are never marked PASS by the composer.
 
  Teams blocker alerts are later Jira wiring; alert routing
 does not belong in skills. No hosted Pigboard runtime is required for this MVP.
@@ -187,5 +200,9 @@ Publication and native transition are separate effects. Keep the complete durabl
 result and exact known receipts on failure; an uncertain append/transition permits
 one resolving read, never replay or a fallback transition. The
 [direct guide](using-pigboard.md#publish-prepared-qa-evidence) supplies inputs and
-recovery. This standalone producer does not make the retained legacy qa-entrypoint
-compatible; PGB-78 owns that integration. Do not enable a mixed release.
+recovery. The compatible qa-entrypoint submits one complete actual assessment
+through this boundary. It never writes directly, issues a second final call or
+replays helpers after an unknown publisher return. Valid resume needs the existing
+unique human authorization and case-specific reuse proof. Preserve completed
+actions, original bytes/receipts and actual/unknown status. Same-release source
+compatibility does not enable delivery or prove installed/live acceptance.

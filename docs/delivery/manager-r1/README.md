@@ -332,3 +332,37 @@ evidence reuse, hosted CI/Codex, merge/release and activation are distinct.
 The reviewed residual forecast remains 12 maximum authored paths and
 6.75–9.75 familiar-human hours including prior allocated work and ordinary
 corrections; unchanged publication bodies are not edited merely to fill that list.
+
+
+## PGB-78 source implementation checkpoint
+
+The accepted 17-path PGB-78 composer is being implemented on the Director-authorized
+PGB-132 development stack `0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a`, tree
+`991e23fff8ac436e4f0bcfb92e82df2743f5d628`, after two complementary affected plan
+reviews were CLEAN. This checkpoint changes no Story body, prerequisite outcome,
+publication count or other owner's history. The inclusive forecast remains
+10.5–14.5 familiar-human hours, including docs/tests/reviews, ordinary corrections
+and PR preparation. Source at this development base is 28 Stories/122 cases and
+53 requirements/41 scenarios; actual later Core/PGB-132 composition must be
+inspected before final binding, without guessed counts or merge hashes.
+
+The source instructions compose current qa-jira preflight, full raw-work inventory,
+ordered exact AI units, API-owned Bruno child, actual named-output binding, finite
+nonoverlapping observations, full partial ledgers and one publisher final call.
+Confirmed defect, causal upstream wait, inability and discussion remain distinct.
+Human-only static work preserves exact pending humans without invented runtime
+proof. Resume consumes existing authority and case-specific history; unknown
+writes never trigger fallback publication or helper replay. Existing 51 inputs in
+14 families remain preparation, including corrected trusted parameter-count and
+coherent stale-environment controls, independent DB mismatch/join and typed resume
+history. No new engine/schema/helper/provider/dependency is introduced.
+
+Implementation evidence and exact reviewed revision are recorded in the delivery
+handoff. A source check or installation smoke is not actual Grok High/helper/clock
+acceptance. Required actual capabilities remain unproven at this checkpoint;
+PGB-132's owner evidence exception does not transfer. Designated human NOT RUN
+tracking alone adds no mandatory replay or actor gate. Actual missing required
+behavior still needs its own bounded disposition. Final upstream composition,
+required final tests, immutable installation binding, fresh committed-code reviews,
+truthful acceptance disposition, current-head CI/Codex and authorized merge/tree
+verification remain outstanding. No saved wiring, activation or deployment changes.

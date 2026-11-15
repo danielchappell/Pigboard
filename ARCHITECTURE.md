@@ -32,7 +32,8 @@ remain separate.
 | Implementer Jira skill | Native/configured eligibility, exact receipts, typed append/read-back and direct transition; no code/PR or admission writes; [Jira](skills/implementer-jira/SKILL.md) |
 | Reviewer wrapper / reviewer-jira | Shared read-only pr-review job and existing comments/approval; separate exact receipt preflight/publication/direct transition, no admission state; [contract](skills/pigboard-pr-review/references/jira-handoff.md) |
 | Human request-rework | Human-invoked current-QA/open-PR preflight, one verified repair comment and direct Human Review -> Rework Queued; no worker, pointer or admission writes; [skill](skills/request-rework/SKILL.md) |
-| Retained QA entrypoint | Existing basic prose prescribed QA, pending migration; [workflow](docs/workflow.md) |
+| QA composer | Structured native Story/Bug inventory, ordered helpers/observations and complete partial ledger; [entrypoint](skills/qa-entrypoint/SKILL.md) |
+| QA Jira publisher | Current authority/proof checks, one canonical append/readback/direct transition and bounded recovery; [qa-jira](skills/qa-jira/SKILL.md) |
 | Humans and pipelines | Resolve blockers, approve scope/merge, supply PR environments and verify UAT/production outcomes |
 
 The installed code consists of skills and setup scripts. A successful Build proves
@@ -40,9 +41,9 @@ preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
 assignments and emits canonical implementation/dependency-wait/blocked records.
-Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. The retained QA entrypoint retains basic Story/prose behavior and direct In Progress rework; it
-does not consume the new record. This mixed bundle stays inactive until coordinated
-worker/manager release and acceptance. No provider adapter or manager state engine
+Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. The QA composer consumes current structured work and canonical predecessors; it
+delegates publication to qa-jira. Saved wiring, installed/live acceptance and owner
+activation remain separate gates. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
 
 ## First manager: approved direction, still in discovery
@@ -116,7 +117,8 @@ evidence. The `write-pr-sized-stories` skill now authors structured YAML while
 retaining `human-writing` and the generic Task route. It uses the shared validator
 from the same prepared release; no private schema or runtime is added. See
 [authoring](docs/authoring.md). The implementer now consumes versioned assignments;
-reviewer consumes canonical implementation receipts through reviewer-jira; only the retained QA entrypoint retains its basic prose contract until later migration.
+reviewer consumes canonical implementation receipts through reviewer-jira; QA
+composes structured helpers and canonical publication through qa-jira.
 Installation does not activate them or convert old tickets. The pure local
 `prepare-handoff.mjs` helper validates and encodes records in the existing validator
 payload; it has no provider/model calls, mutation/retry or launch logic.
@@ -164,10 +166,14 @@ the unchanged bounded reader, and prepared computer use. No controller, schema,
 connector or dependency is added. Same-release complete sibling folders carry
 shared references. A source-only fixed fixture supports preparation, not runtime.
 
-The caller owns global scheduling/ledger/continuation; PGB-78 owns structured QA
-job/entrypoint and Jira publication. The retained entrypoint still uses basic
-prose/direct In Progress rework. This mixed bundle stays inactive pending compatible
-release and PGB-58 acceptance; local helper evidence is not deployment acceptance.
+The [QA composer](skills/qa-entrypoint/SKILL.md) owns full raw-work inventory,
+top-level order, finite clock-bound offsets, named actual-output binding and the
+complete partial ledger. API alone owns its Bruno child. Helpers execute one exact
+unit; they do not schedule, publish or choose another case. The composer retains
+all attempts, transitive explicit dependency finding unions, unknown effects and
+case-specific reuse proof. It submits one actual assessment to qa-jira. No new
+engine, schema or provider adapter is added. Source instructions and fixed cards
+do not establish actual Grok High/helper/clock behavior or deployment acceptance.
 
 ## Prepared QA publication boundary
 
@@ -175,6 +181,9 @@ The current bundle contains 22 skills. [qa-jira](skills/qa-jira/SKILL.md) is the
 permanent QA Jira publication/failure owner. A trusted caller supplies the complete
 prepared assessment; qa-jira independently checks current authority, canonical
 records/receipts, evidence, publication and one direct native transition. It never
-executes domain helpers. PGB-78 will compose it with the dispatcher; retained
-qa-entrypoint cannot produce this compatible flow. The manager remains a design;
+executes domain helpers. The compatible qa-entrypoint composes preflight and one
+final actual assessment; it never falls back to direct writes or replays helpers
+after uncertainty. Inability retains defects, causal upstream wait/repair queues
+the same PR, and static zero-AI work keeps humans pending. Current proof, unique
+resume authority and no-replay rules remain publisher-owned. The manager remains a design;
 this worker boundary adds no manager state access or activation authority.

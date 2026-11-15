@@ -60,8 +60,9 @@ complete implementation Story coverage.
 | Offline manager policy preview of supplied complete snapshots | Implemented in source and prepared validator; nonexecuting proposals, no live discovery or repair ordering |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
-| Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; revision-bound observations, exact bindings and retained evidence; QA entrypoint/full-loop migration remains pending |
-| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer receipt handoff is available, QA migration and full-loop acceptance remain pending |
+| Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; composed by qa-entrypoint with ordered actual observations and a complete partial ledger |
+| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer and QA receipt handoffs are available; full-loop acceptance remains pending |
+| Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
 | Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
 
@@ -81,7 +82,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. The retained QA entrypoint still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
+The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. The [QA composer](skills/qa-entrypoint/SKILL.md) retains prescribed helper results and delegates canonical handoff to [qa-jira](skills/qa-jira/SKILL.md); confirmed defects and causal upstream waits queue on the same PR. Saved wiring and live acceptance still require their separate gates before activation. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
 Discussion stays in Review or QA. [request-rework](skills/request-rework/SKILL.md)
 verifies current completed QA, records human findings and queues only that ticket.
@@ -124,8 +125,9 @@ and explicit unresolved inputs. See [authoring and local validation](docs/author
 for the Epic route, templates, trusted facts and actual checks. Generic research
 and design remain Tasks. The [implementer composer](skills/implementer-entrypoint/SKILL.md)
 accepts current structured Story/Bug assignments and separates job evidence from
-verified Jira publication. The reviewer uses canonical implementation receipts; only the retained QA entrypoint retains its basic prose contract;
-compatible full-loop execution, manager admission and activation remain later work.
+verified Jira publication. The reviewer and QA composer consume canonical current receipts.
+Compatible saved wiring, full-loop acceptance, manager admission and activation
+remain separate work; old prose tickets are not automatically converted.
 
 ## Cursor automations
 
@@ -232,8 +234,10 @@ The [structured helper guide](docs/using-pigboard.md#prescribed-structured-qa-he
 explains exact inputs, preparation and recovery. API owns one Bruno child;
 PostgreSQL uses parameterized two-hop bindings; UI retains prescribed screenshots.
 Missing prerequisites return inability, demonstrated mismatches return defects.
-Helpers do not move Jira or run human cases. These capabilities do not complete
-PGB-78's retained QA entrypoint migration or activate the mixed delivery loop.
+Helpers do not move Jira or run human cases. The [QA composer](skills/qa-entrypoint/SKILL.md)
+now supplies their structured inputs, inspects actual outputs and retains every
+partial row. Its source presence does not prove actual model/helper/clock behavior
+or activate delivery.
 
 ## Publish an already prepared QA assessment
 
@@ -242,6 +246,8 @@ Story/Bug authority, validates the complete supplied ledger and publishes one
 verified handoff. Prepare current assignment/review/open-PR/CI evidence, accessible
 artifacts, same-release validators and configured Jira actor/append/read/direct
 transition access first. [Direct use and recovery](docs/using-pigboard.md#publish-prepared-qa-evidence)
-cover preflight and final modes. It runs no QA helpers. The retained qa-entrypoint
-remains incompatible; PGB-78 delivers dispatcher integration. Installed/live release
-acceptance and automation activation remain separate gates.
+cover preflight and final modes. It runs no QA helpers. The compatible qa-entrypoint
+composes ordered execution with one final publisher call. Install all siblings from
+one reviewed release; actual Grok High, bounded clock and qualified helper execution
+need their own evidence. Installed/live release acceptance and automation activation
+remain separate gates.

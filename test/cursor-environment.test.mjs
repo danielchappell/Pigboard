@@ -404,7 +404,7 @@ test('reviewer sibling installation preserves complete folders and real formatte
  assert.equal(await realpath(first.stableSkills),first.skills);
 });
 
-test('installed structured QA helpers retain full sibling closure and validate fixed packet outside source', async t => {
+test('installed structured QA composer/helpers/publisher retain full sibling closure and validate fixed packet outside source', async t => {
   // Dependency mocks here test installation only; the actual validator runtime is
   // copied above. Actual Bruno/PostgreSQL instruction execution is separate QA.
   const o=await fixture(t), installed=await installCursorSkills(o,fakeInstall);
@@ -412,6 +412,8 @@ test('installed structured QA helpers retain full sibling closure and validate f
   const run=path.join(o.app,'fixed-helper-input');await prepareFixture(run);
   const common=path.join(installed.skills,'qa-api/references/structured-steps.md');
   assert.equal(await readFile(common,'utf8'),await readFile(new URL('../skills/qa-api/references/structured-steps.md',import.meta.url),'utf8'));
+  // qa-jira's deliberate source/installed route pairs are exercised by the
+  // standalone publisher installation test below; check its bytes here too.
   for(const name of ['qa-api','qa-bruno','qa-database','qa-ui','qa-entrypoint']){
     async function inspect(relative=''){
       for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})){
@@ -437,6 +439,10 @@ test('installed structured QA helpers retain full sibling closure and validate f
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
   assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.dependencies,'verified');
+  assert.deepEqual(installed.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection']);
+  // Changed instruction bytes are copied exactly; neither this check nor the
+  // dependency mocks establish actual Grok/helper/clock or publisher execution.
+  for(const relative of ['qa-entrypoint/SKILL.md','qa-entrypoint/references/execution-record.md','qa-entrypoint/references/cursor.md','qa-jira/SKILL.md'])assert.deepEqual(await readFile(path.join(installed.skills,relative)),await readFile(path.join(o.source,'skills',relative)),relative);
   await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
 });
 

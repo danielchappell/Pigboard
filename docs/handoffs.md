@@ -679,8 +679,13 @@ prerequisite cause propagation, nonnull actual tested PR and claim-sensitive
 recursive environment/reuse rules above without changing their schema. A complete
 all-NOT_RUN inability may retain missing proof; executed claims cannot evade proof
 by selecting a null-PR blocker. Publication once attempted is immutable history;
-correction guidance never authorizes replacement append/replay. The retained
-dispatcher integration is PGB-78. See the source direct-use guide for preparation;
+correction guidance never authorizes replacement append/replay. The compatible
+qa-entrypoint composes full structured work, ordered actual helper results and
+one final assessment for qa-jira. It owns no canonical write or fallback status.
+Helper BLOCKED remains inability; canonical rows remain PASS/FAIL/NOT_RUN.
+Current proof, exact human_pending, causal finding unions, typed upstream wait,
+unique resume authorization and bounded unknown-write recovery are unchanged.
+See the source direct-use guide for preparation;
 installed callers follow the complete skill and these copied canonical contracts.
 
 ## Repeated-parent repairs
