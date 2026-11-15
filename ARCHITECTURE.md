@@ -14,21 +14,23 @@ requirements and coverage map. Its
 source for checkouts predating that merge. Product requirements define scope;
 architecture documents express technical contracts. Neither replaces the installed
 skill contract or proves implementation. Use the current product decisions for
-human-only QA and Epic pause; the human repair-entry interface remains under
-separate discussion and is not defined by this cleanup.
+human-only QA and Epic pause; the human repair-entry design is implemented by the
+separate prepared request-rework skill below. Live acceptance and activation
+remain separate.
 
 ## Installed today: prepared skills and Jira/Cursor wiring
 
 | Component | Responsibility and evidence |
 | --- | --- |
 | Jira | Requirements, native issue metadata, workflow status and configured stage triggers; [setup record](docs/jira-setup.md) |
-| Pigboard bundle | Fourteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
+| Pigboard bundle | Fifteen allowlisted authoring/execution/helper skills, references and locked QA dependencies; [manifest](config/skill-bundle.json) |
 | Setup scripts | Fetch a pinned source, prepare full folders, verify a stable installation and return a receipt; [install guide](docs/install.md) |
 | Cursor environment | Prepared tools, source checkout and role-specific model controls; [automation matrix](config/cursor/automations.md) |
 | Implementer composer | Dispatch preflight, High plan/one review and Medium job/final handoff; [entrypoint](skills/implementer-entrypoint/SKILL.md) |
 | Implementer job | Assigned code, same PR, current CI and preparation evidence; no Jira writes; [job](skills/implementer-job/SKILL.md) |
 | Implementer Jira skill | Native/configured eligibility, exact receipts, typed append/read-back and direct transition; no code/PR or admission writes; [Jira](skills/implementer-jira/SKILL.md) |
 | Reviewer wrapper / reviewer-jira | Shared read-only pr-review job and existing comments/approval; separate exact receipt preflight/publication/direct transition, no admission state; [contract](skills/pigboard-pr-review/references/jira-handoff.md) |
+| Human request-rework | Human-invoked current-QA/open-PR preflight, one verified repair comment and direct Human Review -> Rework Queued; no worker, pointer or admission writes; [skill](skills/request-rework/SKILL.md) |
 | Retained QA entrypoint | Existing basic prose prescribed QA, pending migration; [workflow](docs/workflow.md) |
 | Humans and pipelines | Resolve blockers, approve scope/merge, supply PR environments and verify UAT/production outcomes |
 
@@ -37,7 +39,7 @@ preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
 assignments and emits canonical implementation/dependency-wait/blocked records.
-Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. QA retains basic Story/prose behavior and direct In Progress rework; it
+Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. The retained QA entrypoint retains basic Story/prose behavior and direct In Progress rework; it
 does not consume the new record. This mixed bundle stays inactive until coordinated
 worker/manager release and acceptance. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
@@ -113,7 +115,7 @@ evidence. The `write-pr-sized-stories` skill now authors structured YAML while
 retaining `human-writing` and the generic Task route. It uses the shared validator
 from the same prepared release; no private schema or runtime is added. See
 [authoring](docs/authoring.md). The implementer now consumes versioned assignments;
-reviewer consumes canonical implementation receipts through reviewer-jira; only QA retains its basic prose contract until later migration.
+reviewer consumes canonical implementation receipts through reviewer-jira; only the retained QA entrypoint retains its basic prose contract until later migration.
 Installation does not activate them or convert old tickets. The pure local
 `prepare-handoff.mjs` helper validates and encodes records in the existing validator
 payload; it has no provider/model calls, mutation/retry or launch logic.
@@ -148,3 +150,20 @@ intent/apply operation or worker activation is added. Full repair ordering and l
 bounded Jira discovery remain later increments; a known unresolved repair waits
 explicitly. Supplied completeness/receipts do not establish live freshness or
 permissions. Human acceptance, hosted checks, merge and release remain separate.
+
+## Prescribed helper boundary
+
+The existing [four QA helpers](skills/qa-api/SKILL.md) use a
+[shared structured-step contract](skills/qa-api/references/structured-steps.md):
+raw validated AI case/step and trusted start facts in; revision-bound observations,
+evidence, defect or inability out. API owns one named Bruno child, PostgreSQL
+resolves declared output/input/parameter bindings, and UI uses the prescribed
+surface/viewport/checkpoints. Engines remain locked Bruno 4.2.1, pg 8.23.1 with
+the unchanged bounded reader, and prepared computer use. No controller, schema,
+connector or dependency is added. Same-release complete sibling folders carry
+shared references. A source-only fixed fixture supports preparation, not runtime.
+
+The caller owns global scheduling/ledger/continuation; PGB-78 owns structured QA
+job/entrypoint and Jira publication. The retained entrypoint still uses basic
+prose/direct In Progress rework. This mixed bundle stays inactive pending compatible
+release and PGB-58 acceptance; local helper evidence is not deployment acceptance.
