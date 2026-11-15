@@ -27,12 +27,13 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Fourteen shared skills: authoring, composed implementation, review, writing and QA | In the repository and installation allowlist |
+| Fifteen shared skills: authoring, composed implementation, review, human rework, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer receipt handoff is available, QA migration and full-loop acceptance remain pending |
+| Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
 | Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
@@ -47,13 +48,16 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Known dependency wait goes to Rework Queued; human blockers to Blocked. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
-| Human Review | Responsible developer and human QA reviewer assess the PR before human merge. |
+| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicitly authorized in-scope findings can use request-rework to record and queue the same open PR. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
 The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. Retained QA still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
-Discussion stays in Review or QA. Workers do not select new work, merge, deploy or
+Discussion stays in Review or QA. [request-rework](skills/request-rework/SKILL.md)
+verifies current completed QA, records human findings and queues only that ticket.
+Active work continues; later manager admission remains separate. Workers do not
+select new work, merge, deploy or
 retry blocked work. The planned manager changes admission and repair routing only
 when its coordinated release is implemented and accepted. See the
 [installed workflow](docs/workflow.md) for current contracts.

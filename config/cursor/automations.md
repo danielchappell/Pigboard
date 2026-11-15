@@ -30,8 +30,13 @@ remote writes. This Build contains the earlier prose authoring contract, not the
 later YAML writer. It predates the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
-The current bundle contains fourteen skill folders, including `write-pr-sized-stories`,
+The current bundle contains fifteen skill folders, including `write-pr-sized-stories`,
 `implementer-job` and `implementer-jira`. Dated Build counts below remain historical.
+The separate [request-rework](../../skills/request-rework/SKILL.md) capability is
+human invoked through an existing prepared assistant, not a fourth automation.
+It needs explicit authorization, configured actor/direct queue rights and compatible
+current QA/open-PR evidence. Missing that chain stops the request; this addition
+does not migrate QA, change saved Builds/prompts or activate any automation.
 The current writer prepares [versioned YAML](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
 and complete examples for local validation. The
 [implementer composer](../../skills/implementer-entrypoint/SKILL.md) now consumes
@@ -169,7 +174,7 @@ acceptance remain separate rollout checks in PGB-58/PGB-60.
 ## Refresh and recovery
 
 Publish reviewed changes, update the environment's skill pin, preserve the current
-CLI setup/secrets, and run a draft Build. Inspect the manifest, fourteen entrypoints,
+CLI setup/secrets, and run a draft Build. Inspect the manifest, fifteen entrypoints,
 canonical reference/example and helper probes before selecting it. Keep the prior
 Build on failure; do not enable an automation as part of selecting a Build. Record
 new Build/UI acceptance here after observation, including any remaining limitations.
