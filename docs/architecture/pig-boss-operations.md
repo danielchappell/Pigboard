@@ -9,6 +9,11 @@ Existing technical filenames and schema identifiers keep their names.
 Pig Boss coordinates the [Pigboard crew](../product/branding.md): Hardhat Ham
 (implementer), Inspector Pork (PR reviewer) and Snout Scout (QA).
 
+The [local configuration checker](../configuration.md) now validates and resolves
+project scope and previews changes without provider calls or state writes. This
+local capability does not implement the proposed manager or health behavior below,
+prove native readiness, or establish live capacity.
+
 ## One installation, multiple projects
 
 A company deploys Pig Boss once into its AWS account for one Jira site. One

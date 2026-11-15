@@ -234,3 +234,42 @@ e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/
 ```
 
 No repository edits or provider mutations were performed by this reviewer. These exact-artifact CLEAN verdicts do not provide final owner approval, runtime implementation, installed AWS/worker acceptance, current-head hosted CI/Codex, merge, deployment, release or activation authority.
+
+## Preparation binding correction — product review
+
+15 November 2026. **Delivery plan: CLEAN. Committed change: PASS (CLEAN)** for `bb832c47299962ed58dd40c46f9a711ae118056c` against `3309af2924e82612b950a25197f52c6cd932c630`. **Design: unchanged; previous CLEAN remains applicable to identical design bytes.** Independent product/experience lens; no unresolved confirmed in-scope finding. Earlier full reviews cover unchanged scope; this bounded review covers the correction and current manifest.
+
+| Review criterion | Result | Evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Completes existing A09 mechanical-preparation obligations. |
+| Scope and design | PASS | Only structured drafts and publication receipt change. |
+| Security and review integrity | PASS | Preparation preserves scope/expectations and grants no authority. |
+| Compatibility and regressions | PASS | All 104 case objects unchanged; Unicode escape changes preserve parsed values. |
+| Reliability and operations | PASS | Every case has preparation ownership and a complete consumer link. |
+| Tests and verification | PASS | Consumer, preservation, native-body and hash checks pass. |
+| Repository fit and maintainability | PASS | Reuses the existing PREP-01/DATA-01 contract across every affected Story. |
+| Documentation and usability | PASS | Structured preparation now matches existing readable instructions. |
+
+**Correction:** R1-21/22/23 now declare the missing implementer-owned PREP-01 and DATA-01. Existing used_by lists now include the omitted added cases in R1-04/10/12/14/20. The root-cause sweep covers all eight affected Stories. Each slot supplies exact local fixtures/commands bound to the PR revision, preserves inputs/order/expectations/evidence/cleanup and excludes live data. DATA-01 is fresh per case, uses simulated receipts/dummy credentials and resolves to PREP-01. This satisfies `manager-work-schema.md:137–141`; preparation defers no expectation, authority, skill or scope decision.
+
+**Coverage:** **2/2 changed files, 8/8 affected contracts, 104/104 case-consumer links, 23/23 fixture→preparation links, 23/23 exact unique used_by sets and 7/7 manifest files**. Every used_by set equals its Story's case IDs plus DATA-01. Removing preparation/fixtures from before/after parsed drafts yields complete equality. All 104 case objects, 88 original baseline cases and 154 criterion mappings are unchanged; human cases remain outside AI dispatch. Dependencies/forecasts are unchanged. Prior complete review coverage of 53 requirements, 23 Stories and 41 scenarios remains applicable.
+
+**Publication:** All **8/8** supplied before snapshots match the original contracts. Combining fresh `/private/tmp/pigboss-prep-readback.json` for the eight changed Stories with unchanged captures for the other 15 gives **23/23 exact native YAML trees** after prerequisite-key substitution and **23/23 matching raw YAML-byte hashes**. All retain PGB-66 parent, To Do, owner-review-required and no AI worker label. The whole draft digest and three current design bindings match. This is captured publication fidelity, not live acceptance; the unchanged graph retains its prior 54-edge audit.
+
+**Second sweep:** completed over **2/2 files, 8/8 contracts, 104/104 consumers and 23/23 fixture/slot pairs**. Rechecked missing/duplicate/foreign links, owner/revision binding, isolation, forbidden deferrals, unchanged cases and native bodies/hashes. No further finding. Checks directly verify changed preparation semantics; no new runtime/schema-execution claim is made.
+
+Seven principles: **Intuitive**—one explicit preparer per Story. **Discoverable**—every case/fixture consumer is traceable. **Delightful experience**—promised fixtures cannot lack a declared preparer. **Token saver**—complete links remove guesswork without dropping instructions. **Secure**—preparation invents neither authority nor expectations; fixtures stay isolated. **Agents are equal**—structured slots match human guidance and retain human acceptance ownership. **Dependable**—all cases and current publication hashes are accounted for.
+
+Current SHA256 continuity manifest at `bb832c47299962ed58dd40c46f9a711ae118056c`:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+34c8b44a09a1355c0a9ff827b67f02ee82e92fffc0607e382e26aed8265c7fc8  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+fe1eb14cb6d79d02b7445821daa219d1cf7d1615525489b3deaa84614a415871  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation performed. Owner approval, current-head hosted CI/Codex, implementation, installed acceptance, merge/release and activation remain separate gates. Earlier manifests remain historical.

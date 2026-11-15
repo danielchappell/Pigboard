@@ -1,0 +1,49 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, readdirSync, cpSync, mkdirSync, symlinkSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import path from 'node:path';
+import os from 'node:os';
+import { diffConfig } from '../lib/config/diff.mjs';
+const base=JSON.parse(readFileSync(new URL('./fixtures/project-configs.json',import.meta.url))).two_project;
+const fresh=()=>structuredClone(base),script=new URL('../scripts/check-config.mjs',import.meta.url).pathname;
+function setup(t){const dir=mkdtempSync(path.join(os.tmpdir(),'config-check-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));const input=path.join(dir,'input.json'),previous=path.join(dir,'previous.json');writeFileSync(input,JSON.stringify(base));writeFileSync(previous,JSON.stringify(base));return{dir,input,previous};}
+const run=(input,args=[],cwd=os.tmpdir(),entry=script)=>spawnSync(process.execPath,[entry,'--input',input,...args],{cwd,encoding:'utf8',timeout:10000});
+test('preview compares native identity, effective mappings and display changes without state actions',()=>{
+ assert.equal(diffConfig(base,base).status,'unchanged');const v=fresh();v.projects[0].key='NEW';v.projects[0].board_ids=['999'];let result=diffConfig(base,v);assert.deepEqual(result.display_changed,[{site:base.jira.site,project_id:'10001',fields:['key','board_ids']}]);assert.deepEqual(result.mappings_changed,[]);assert.deepEqual(result.checks_required,[]);
+ v.projects[0].id='99999';result=diffConfig(base,v);assert.deepEqual(result.added,[{site:base.jira.site,project_id:'99999'}]);assert.deepEqual(result.removed,[{site:base.jira.site,project_id:'10001'}]);assert.equal(result.retained.length,1);assert.ok(result.checks_required.every(c=>c.status==='pending'));assert.deepEqual(result.state_actions,[]);
+ for(const field of ['repositories','worker_prefixes','actors']){const c=fresh();if(field==='actors')c.defaults.actors.qa=['new-actor'];else if(field==='repositories')c.defaults.repositories=['https://enterprise.example.invalid/new'];else c.defaults.worker_prefixes=['AI-New-'];const d=diffConfig(base,c);assert.ok(d.mappings_changed.length);assert.ok(d.checks_required.some(c=>c.code==='RETAINED_MEMBERS'));assert.ok(d.checks_required.some(c=>c.code==='UNRESOLVED_ATTEMPTS'));assert.ok(d.checks_required.some(c=>c.code==='RELEASE_READINESS'));}
+ const c=fresh();c.defaults.repositories=['https://enterprise.example.invalid/new'];assert.deepEqual(diffConfig(base,c).mappings_changed.map(p=>p.project_id),['10001']);
+ c.projects[0].inherit=c.projects[0].inherit.filter(s=>s!=='repositories');c.projects[0].mappings.repositories=base.defaults.repositories;assert.equal(diffConfig(base,c).status,'unchanged');
+ const site=fresh();site.jira.site='https://new-jira.example.invalid';result=diffConfig(base,site);assert.equal(result.status,'identity_change_held');assert.equal(result.added.length,2);assert.equal(result.removed.length,2);assert.deepEqual(result.retained,[]);assert.ok(result.checks_required.some(c=>c.code==='SITE_IDENTITY_RECONCILIATION'&&c.scope===null));
+ const before=JSON.stringify(base);diffConfig(base,fresh());assert.equal(JSON.stringify(base),before);assert.throws(()=>diffConfig(base,{trusted:true}));
+});
+test('readable/JSON CLI expose complete resolved scope, streams, digest and pending checks',t=>{
+ const{dir,input,previous}=setup(t),before=readFileSync(input);let json=run(input,['--json','--label','AI-Daniel-01','--expected-site',base.jira.site],dir);assert.equal(json.status,0,json.stderr);let result=JSON.parse(json.stdout);assert.equal(result.streams.length,2);assert.notEqual(result.streams[0].key,result.streams[1].key);assert.equal(result.destination_authority,'matched_expected_site');
+ const text=run(input,['--label','AI-Daniel-01','--expected-site',base.jira.site],dir);assert.equal(text.status,0);assert.ok(text.stdout.includes(JSON.stringify(result.resolved_scope,null,2)));assert.ok(text.stdout.includes(JSON.stringify(result.streams,null,2)));assert.ok(text.stdout.includes(result.configuration_digest));
+ const c=fresh();c.projects.shift();writeFileSync(input,JSON.stringify(c));json=run(input,['--json','--previous',previous],dir);assert.equal(json.status,0);result=JSON.parse(json.stdout);assert.equal(result.mode,'preview');assert.equal(result.preview.status,'review_required');assert.ok(result.preview.checks_required.some(c=>c.code==='RETAINED_MEMBERS'));
+ assert.match(run(input,['--previous',previous],dir).stdout,/retained active, queued, Blocked and Human Review/);
+ c.jira.site='https://new-jira.example.invalid';writeFileSync(input,JSON.stringify(c));json=run(input,['--json','--previous',previous,'--expected-site',c.jira.site],dir);assert.equal(json.status,1);result=JSON.parse(json.stdout);assert.equal(result.valid,true);assert.equal(result.preview.status,'identity_change_held');assert.equal(result.destination_authority,'matched_expected_site');
+ writeFileSync(input,before);assert.deepEqual(readFileSync(input),before);assert.deepEqual(readdirSync(dir).sort(),['input.json','previous.json']);
+});
+test('CLI usage/input/config failures are sanitized and distinguish exit 0/1/2',t=>{
+ const{dir,input,previous}=setup(t);
+ for(const args of [['--input',input],['--wat','SECRET'],['--label','bad label'],['--expected-site','https://bad.example.invalid/'],['--previous'],['--json','--json']]){const p=run(input,[...args,'--json'],dir);assert.equal(p.status,2);assert.ok(!p.stdout.includes('SECRET'));}
+ for(const file of [path.join(dir,'missing'),dir]){const p=run(file,['--json'],dir);assert.equal(p.status,2);assert.equal(JSON.parse(p.stdout).diagnostics[0].code,'INPUT');}
+ const fifo=path.join(dir,'fifo');execFileSync('mkfifo',[fifo]);assert.equal(run(fifo,['--json'],dir).status,2);
+ writeFileSync(previous,'jira:\n  token-secret: SENSITIVE-123');let result=JSON.parse(run(input,['--previous',previous,'--json'],dir).stdout);assert.equal(result.valid,false);assert.equal(result.resolved_scope,null);assert.equal(result.preview,null);assert.ok(result.diagnostics[0].path.startsWith('/previous'));assert.ok(!JSON.stringify(result).includes('SENSITIVE'));
+ writeFileSync(input,'schema: pigboard-config/v1\njira:\n  token: SENSITIVE-123');const p=run(input,['--json'],dir);assert.equal(p.status,1);assert.ok(!p.stdout.includes('SENSITIVE'));
+ for(const flags of [['--help'],['--help','--json']]){const help=spawnSync(process.execPath,[script,...flags],{cwd:dir,encoding:'utf8'});assert.equal(help.status,0);assert.match(help.stdout,/--expected-site/);}
+ const detached=path.join(dir,'detached');mkdirSync(path.join(detached,'scripts'),{recursive:true});cpSync(script,path.join(detached,'scripts/check-config.mjs'));const failed=run(input,['--json'],dir,path.join(detached,'scripts/check-config.mjs'));assert.equal(failed.status,2);assert.equal(JSON.parse(failed.stdout).diagnostics[0].code,'SETUP');
+ const sources=JSON.parse(readFileSync(new URL('../config/skill-bundle.json',import.meta.url))).validatorPayload.sources;
+ for(const relative of sources){const target=path.join(detached,relative);mkdirSync(path.dirname(target),{recursive:true});cpSync(new URL('../'+relative,import.meta.url),target);}
+ symlinkSync(new URL('../node_modules',import.meta.url).pathname,path.join(detached,'node_modules'));
+ writeFileSync(path.join(detached,'lib/config/parse.mjs'),`export const sections=[];export const CONFIG_LIMITS={};export const configError=()=>Error('SECRET-INTERNAL');export const validateConfigValue=()=>{};export const httpsURL=()=>true;export const parseConfig=()=>{throw Error('SECRET-INTERNAL')};`);
+ const internal=run(input,['--json'],dir,path.join(detached,'scripts/check-config.mjs'));assert.equal(internal.status,2);assert.equal(JSON.parse(internal.stdout).diagnostics[0].code,'INTERNAL');assert.ok(!internal.stdout.includes('SECRET-INTERNAL'));
+
+});
+test('source checker performs no network calls or input/output writes',t=>{
+ const{dir,input,previous}=setup(t),guard=path.join(dir,'guard.mjs');
+ writeFileSync(guard,`import fs from 'node:fs';import fsp from 'node:fs/promises';import http from 'node:http';import https from 'node:https';import net from 'node:net';import tls from 'node:tls';import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';let attempts=0;const fail=()=>{attempts++;throw Error('unexpected effect')};for(const api of [fs,fsp])for(const key of ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'])for(const name of [key,key+'Sync'])if(typeof api[name]==='function')api[name]=fail;const original=fsp.open;fsp.open=async(...args)=>{if(args[1]!==fs.constants.O_NONBLOCK)fail();const h=await original(...args);for(const key of ['write','writeFile','appendFile','writev','truncate','chmod','chown'])h[key]=fail;return h;};for(const api of [http,https])for(const key of ['request','get'])api[key]=fail;for(const api of [net,tls])for(const key of ['connect','createConnection','createServer'])if(api[key])api[key]=fail;for(const key of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[key]=fail;globalThis.fetch=fail;syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('AUDIT attempts='+attempts+'\\n'));`);
+ const before=readdirSync(dir).sort(),raw=readFileSync(input);const p=spawnSync(process.execPath,['--import',guard,script,'--input',input,'--previous',previous,'--label','AI-Daniel-1','--json'],{cwd:dir,encoding:'utf8'});assert.equal(p.status,0,p.stderr);assert.match(p.stderr,/AUDIT attempts=0/);assert.deepEqual(readdirSync(dir).sort(),before);assert.deepEqual(readFileSync(input),raw);assert.deepEqual(readFileSync(previous),raw);
+});

@@ -170,3 +170,54 @@ e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/
 ```
 
 No repository edit or provider mutation was performed by this reviewer. These verdicts do not establish runtime implementation, installed alarm/worker acceptance, current-head CI/Codex approval, owner approval, merge/release or activation. Earlier evidence and manifests remain historical rather than being rewritten.
+
+## Preparation bindings correction — final technical review
+
+15 November 2026. **Design applicability: unchanged design remains CLEAN. Delivery-plan verdict: CLEAN. Committed-change verdict: PASS (CLEAN)** for exact source `bb832c47299962ed58dd40c46f9a711ae118056c` against `3309af2924e82612b950a25197f52c6cd932c630`. No unresolved confirmed in-scope finding. This bounded correction completes preparation metadata under the existing PGB-93 plan; it adds no requirement, runtime feature or activation authority.
+
+**Coverage:** **2/2 changed files** (`ticket-drafts.json`, `publication.json`), **8/8 affected contracts**, **104/104 consumer links**, **23/23 fixture/preparation pairs**, **23/23 native contracts** and **7/7 manifest artifacts**. Prior complete coverage of the unchanged 53 requirements, 23 Story outcomes, 41 scenarios and 54 dependency links remains applicable; no full review restart is claimed.
+
+**Finding resolved.** R1-21/22/23 now declare implementer-owned DATA-01/PREP-01 slots; R1-04/10/12/14/20 add omitted case consumers. Every fixture resolves to its preparation, owners agree, and used_by names DATA-01 plus exactly every human case in order. This satisfies the existing “Prepared details” contract in `docs/architecture/manager-work-schema.md`.
+
+The slots defer mechanical local fixtures/commands only, preserving prescribed scope, authority, expectations, evidence and cleanup. Human cases remain human-owned; dummy-provider boundaries remain explicit.
+
+Parsed comparisons prove only fixture/preparation metadata changes semantically; Unicode serialization changes preserve values. All **104/104 full case objects**, including the 88 baseline cases, remain exact; **154/154 AC/TAC** remain covered. Readable Stories, design, dependencies, forecasts and scope are unchanged.
+
+**Verification:** **23/23 schema/format checks** pass. Eight fresh `/private/tmp/pigboss-prep-readback.json` bodies plus 15 unchanged snapshots equal current drafts after native prerequisite substitution; all **23 raw YAML hashes**, the draft hash and three design bindings match. Eight `/private/tmp/pigboss-prep-before.json` bodies equal their original contracts. Parent, To Do status, owner-review labels and absence of AI labels are preserved. These are captured readbacks, not live acceptance.
+
+**Second sweep:** rechecked **2/2 files**, **104/104 ordered consumers**, **23/23 DATA/PREP pairs**, **8/8 original bodies**, unchanged guides and hash updates. Inventory and `git diff --check` pass. No omitted affected surface or finding; no runtime test was warranted.
+
+| Review criterion | Result | Evidence |
+| --- | --- | --- |
+| Jira requirements | PASS | Completes PGB-93's executable planning metadata without changing agreed product outcomes. |
+| Scope and design | PASS | Only preparation declarations and their publication receipt change; prior design applies unchanged. |
+| Security and review integrity | PASS | Slots preserve established authority/scope/expectations and use simulated local data; native status/labels remain inactive. |
+| Compatibility and regressions | PASS | All 104 complete case objects and unaffected contract values remain exact. |
+| Reliability and operations | PASS | Every case has an explicit implementer-owned fixture/command producer; no missing consumer or inferred completion remains. |
+| Tests and verification | PASS | Schema, full-case preservation, all consumer mappings, native bodies/raw hashes, design bindings and diff checks pass. |
+| Repository fit and maintainability | PASS | Reuses the existing DATA-01/PREP-01 convention and semantic contract consistently across all 23 Stories. |
+| Documentation and usability | PASS | Structured contracts now match the existing readable preparation instructions; humans and agents can resolve who supplies each case's fixtures. |
+
+Seven principles for this correction:
+
+- **Intuitive:** all cases use one consistent preparation convention.
+- **Discoverable:** explicit IDs, owners and consumers reveal setup responsibility.
+- **Delightful experience:** no rediscovery of omitted ownership is needed.
+- **Token saver:** shared per-Story slots preserve complete case coverage without duplication.
+- **Secure:** preparation cannot expand access/scope or rewrite results.
+- **Agents are equal:** structured bindings expose the same responsibilities as human guidance; human cases remain human-owned.
+- **Dependable:** all links resolve, case content survives, and publication remains distinct from execution.
+
+Final source-artifact SHA256 manifest at `bb832c47299962ed58dd40c46f9a711ae118056c`, superseding older hashes only for these files:
+
+```text
+a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03  docs/architecture/pig-boss-operations.md
+34c8b44a09a1355c0a9ff827b67f02ee82e92fffc0607e382e26aed8265c7fc8  docs/delivery/manager-r1/ticket-drafts.json
+0bd5ed587eda4be9213c8209fa640e830b6b557b6836948ff3fa574d32466638  docs/delivery/manager-r1/stories.md
+fe1eb14cb6d79d02b7445821daa219d1cf7d1615525489b3deaa84614a415871  docs/delivery/manager-r1/publication.json
+d07a75dc39c74def146621ecd2bad48828aff0728113528798b995009ada6aa4  docs/product/coverage.md
+0b43de1edfd8028de21a14f001068f52cddfba3409571039ac939d1c4c7e71e3  docs/delivery/manager-r1/coverage.md
+e9911eb1464caeed26dfc53d61c90ee47dab9b6752dcdcc9cb7a7d43a71a5e4b  docs/delivery/manager-r1/README.md
+```
+
+No repository edit or provider mutation was performed by this reviewer. These verdicts do not establish runtime implementation, installed AWS/worker acceptance, current-head CI/Codex approval, owner approval, merge/release or activation. Earlier findings, verdicts and manifests remain historical evidence.

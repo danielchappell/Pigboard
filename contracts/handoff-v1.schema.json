@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://pigboard.example.invalid/contracts/pigboard-handoff-v1.schema.json",
-  "title": "Pigboard first-manager handoff design \u2014 not installed",
+  "title": "Pigboard handoff v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

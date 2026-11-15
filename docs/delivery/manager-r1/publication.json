@@ -256,7 +256,7 @@
     }
   ],
   "published_body_check": "23/23 exact YAML comparison after native prerequisite substitution; original parent/status and absence of AI labels verified.",
-  "reviewed_draft_sha256": "df8b5234321d831af2acc825e4eb6490ab1252af3fbb8ea0baa614dcde51bec3",
+  "reviewed_draft_sha256": "34c8b44a09a1355c0a9ff827b67f02ee82e92fffc0607e382e26aed8265c7fc8",
   "fresh_readback_verification": {
     "stories": [
       {
@@ -284,14 +284,14 @@
         "id": "R1-04",
         "key": "PGB-74",
         "status": "To Do",
-        "contract_sha256": "5b79db1681f73ed5a3ea4148916c8669402d9f480cfa6e60fdf27be902ba8880",
+        "contract_sha256": "10e1817b5293f1979e46df99436975dd1655702127456e115b3671c6f960e8f4",
         "human_cases": 4
       },
       {
         "id": "R1-21",
         "key": "PGB-99",
         "status": "To Do",
-        "contract_sha256": "6f7e8ce98e11db38a5ca9738a951d81416b9463d1af2fe349e12ab740bd0efc6",
+        "contract_sha256": "58b48b457308957ece4fb5e42bda897515d71f57bd29245fbe23dbee21a91382",
         "human_cases": 3
       },
       {
@@ -333,7 +333,7 @@
         "id": "R1-10",
         "key": "PGB-80",
         "status": "To Do",
-        "contract_sha256": "324cfcb3d603917127f380380c6c69a4083d8c8b9bcbba34b2f67f043545b9b7",
+        "contract_sha256": "eebfca385a1d433558f2bcedfb2b3b060a760bcbd78c335925188ebe92fd2286",
         "human_cases": 3
       },
       {
@@ -347,7 +347,7 @@
         "id": "R1-12",
         "key": "PGB-82",
         "status": "To Do",
-        "contract_sha256": "3aabb34bbbc8eec2c066a435fd74919a62f9ecec653674e6dafb9f930cfcf60c",
+        "contract_sha256": "d0d69fa0077e926886935372126e2c2588cea1eef877436a660c9374af9fe4da",
         "human_cases": 4
       },
       {
@@ -361,7 +361,7 @@
         "id": "R1-14",
         "key": "PGB-84",
         "status": "To Do",
-        "contract_sha256": "c90fc752e37660d8630ea3e22f67ef266b1e283e59368230863fe8511c83bab6",
+        "contract_sha256": "7a435ff4d26d04d3e70346042afc8b0404ee11e599f62044974385deae6b8a49",
         "human_cases": 3
       },
       {
@@ -382,14 +382,14 @@
         "id": "R1-22",
         "key": "PGB-100",
         "status": "To Do",
-        "contract_sha256": "fb0dd808087587f435fab43c39f0075c0227a92dd2339e6a329a79926265565f",
+        "contract_sha256": "0579673b96f56950766a2ca0d45dc3391cd4c6ea30a5f99b3e792ec3e1913564",
         "human_cases": 4
       },
       {
         "id": "R1-23",
         "key": "PGB-101",
         "status": "To Do",
-        "contract_sha256": "c23004365602128a66db5ce08e2bab0416bccc9cc2fcc798f8ea9b6f1c8eb5dc",
+        "contract_sha256": "e8215572817ec7c4fe8e8ff52dcbbd31843ac85145f382eb092e066f0226b2d6",
         "human_cases": 4
       },
       {
@@ -417,7 +417,7 @@
         "id": "R1-20",
         "key": "PGB-90",
         "status": "To Do",
-        "contract_sha256": "07325f37d3a27a46b7e58825bcc00a193c42b252a113a1009e26d67f4a5d5f67",
+        "contract_sha256": "a616f32504e158bec7562ad1c0ea809db8cbbf5d78ed828ab63755865d03a9f9",
         "human_cases": 4
       }
     ],
@@ -601,5 +601,6 @@
     "docs/product/manager.md": "c06a42067e351de808cf33d9ea07a3e0f521eac6de84d46f5f733bbb90db7c34",
     "docs/product/installation.md": "f811278447abb57df71b08aa55235f2d05a3a743c209d322a0a0fd48cfe4af56"
   },
-  "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical."
+  "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical.",
+  "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged."
 }

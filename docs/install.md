@@ -14,11 +14,18 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the eleven folders in
+The installer prepares the fifteen folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
-scripts and lockfiles. Bruno and PostgreSQL helper dependencies use
+scripts and lockfiles, plus the separate `work-validator` payload with canonical
+Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
+manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 3.0.1
+dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.
+The complete request-rework folder retains its sibling human-writing and same-release
+work-validator helpers/help. It is human invoked, with separately prepared actor,
+current QA/PR/evidence reads and direct queue rights; installing it grants none of
+those permissions. Refresh the whole bundle rather than copying its SKILL.md alone.
 
 A successful skill installation does not establish Jira/Bitbucket access, Cursor
 model controls, computer use, preview readiness or permission to execute a ticket.
@@ -45,8 +52,10 @@ Verify that the printed revision matches the approved commit. For an existing
 setup checkout, inspect its status and preserve changes before fetching and
 selecting a new revision. Use scripts and the manifest from the same approved
 revision you request for the bundle. A local unpushed commit is not a remote release.
-The root package has no production dependencies; running root `npm ci` is not
-skill installation. There is no published `npm install pigboard` distribution here.
+Root `npm ci --ignore-scripts --no-audit --no-fund` prepares source-checkout
+validation dependencies; it is not skill installation. Prepare/install commands
+use standard Node APIs and separately prepare their bundle, so installation-only
+operators need no additional root install step. There is no published `npm install pigboard` distribution here.
 
 ## Prepare a release for explicit file loading
 
@@ -67,7 +76,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing the complete skill folders |
+| `skills` | Absolute root containing fifteen complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -79,7 +88,7 @@ skills with a host or prove that host's supported execution capabilities.
 ## Install a verified stable path
 
 The installer adds source-hash and dependency verification, loads `pg.Client`,
-runs the locked `bru --version`, then exposes a stable `skills` symlink:
+runs the locked `bru --version` and both validator skeleton draft checks, then exposes a stable `skills` symlink:
 
 ```sh
 node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
@@ -91,8 +100,16 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all eleven entrypoints,
-`dependencies: "verified"`, and the `pg.Client` / `bru --version` smoke checks.
+`verification`. Inspect the expected commit, all fifteen entrypoints,
+`dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
+`work-validator epic draft`, `work-validator ticket draft`, and
+`handoff-validator admission record`, and `config-validator project scope`. The
+configuration check runs the shipped synthetic two-project example through the real
+installed CLI and checks resolved mappings and independent stream keys. The admission check validates a complete
+setup-only disposable record and its independently computed canonical digest. The validator checks
+load the real parser, semantic modules and schemas, require draft-valid skeletons
+and require structural-start false. These unchanged draft smoke checks do not run
+local start semantics, contact providers or establish live readiness.
 Use the versioned `skills` path for a run that may overlap a refresh; it binds
 subsequent sibling-reference reads to that release. `stableSkills` is a mutable
 entry path for new runs. Do not replace its link while any run still reads through
@@ -101,7 +118,57 @@ it. A manifest proves source matching, not provider access.
 This script installs files; it does not configure a Cursor account. It rejects an
 unmanaged destination and preserves the previous stable link on failed preparation
 or verification. Keep full sibling folders intact rather than copying a SKILL.md
-alone. Resolve referenced paths within the prepared bundle.
+alone. Resolve referenced paths within the prepared bundle. The writer includes full
+Epic/ticket YAML templates, both authoring guides, complete worked examples and
+the retained basic-worker prose guide. Its human-writing sibling and same-release
+work-validator are required; copying just the writer entrypoint loses the contract.
+The implementer composer loads complete `implementer-job` and `implementer-jira`
+siblings and its shared handoff/Cursor/review references. The reviewer wrapper loads
+complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only the retained QA entrypoint
+remains a basic prose consumer. These prepared capabilities do not make the mixed
+bundle an accepted delivery loop or activate automations.
+
+## Check project configuration locally
+
+The same prepared `work-validator` includes the canonical scope schema, pure config
+modules, synthetic example and [configuration guide](configuration.md). It adds no
+new dependency directory or editable cloud bindings. Use the actual receipt path:
+
+```sh
+node /absolute/receipt/skills/work-validator/scripts/check-config.mjs --input /absolute/company.yaml --json
+node /absolute/receipt/skills/work-validator/scripts/check-config.mjs --input /absolute/next.yaml --previous /absolute/previous.yaml --json
+```
+
+Validation/preview never changes either input or provider state. Installed smoke
+checks prove local parsing/mappings only; native Jira access, retained work,
+readiness, manager deployment and activation remain separate gates. Failed config
+module/schema verification preserves the previous stable link.
+
+## Check work locally
+
+The preparation receipt's `skills` path also contains the validator. Substitute
+that actual versioned path when refresh can overlap a run, and your absolute
+input file; the stable example uses the default
+root (use `stableSkills` for another root):
+
+```sh
+node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode draft --input /absolute/work.yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --context /absolute/facts.yaml --json
+```
+
+`draft` checks editable structure; `structure` checks complete structure without
+context. `start` additionally requires the separate approved local YAML/JSON facts
+snapshot shown above. Prepare it outside the ticket using the complete context
+examples linked from [authoring](authoring.md); every field is required. Keep operation facts
+bound to the full current step prescriptions. Installation supplies the parser and
+schemas, not those caller facts or permission to execute tests.
+
+See [authoring](authoring.md) for modes, limits, diagnostics and recovery. Keep the
+whole payload with its release; refresh/removal applies to it with the skills.
+Preparation installs dependencies but does not perform installation-only smoke
+checks. A successful explicit start check proves only the checked local semantics and
+ledger projection. Neither installation nor local validation authorizes delivery,
+proves live readiness or checks actual final evidence publication.
 
 ## Cursor environment setup
 
@@ -178,6 +245,8 @@ code, PRs or Jira actions. The scripts never silently fall back to an older rele
 
 On failure, the command exits nonzero with a blocked message and no success receipt.
 Resolve the named source, dependency, path or access issue during setup, then rerun.
+Missing/corrupt validator sources, lockfiles, wrong dependency versions or runtime
+smoke failures also block installation and preserve the previous stable binding.
 Agents executing a ticket report missing preparation instead of installing packages
 or finding replacement tools. Reconcile uncertain external actions before retrying.
 
@@ -186,5 +255,72 @@ evidence. Remove the Pigboard Build step and prompt references from the affected
 configuration, then remove only the confirmed installation root/releases after no
 run uses them. Cache pruning/removal is operator work; no uninstall command or
 automatic pruning is implemented. Retain evidence required by the team. Removing
-skills does not remove Jira rules, revoke provider credentials or cancel agents;
+skills (including the validator payload in the same release/root) does not remove Jira rules, revoke provider credentials or cancel agents;
 handle those explicitly within the authorized setup scope.
+
+
+## Local handoff validation
+
+The same `work-validator` payload now includes the canonical handoff/pointer
+schemas, receipt-chain runtime and [handoff guide](handoffs.md). Prepared releases
+pin canonicalize 4.0.0 and parse5 8.0.0 alongside Ajv 8.20.0, ajv-formats 3.0.1 and
+YAML 2.9.1. Node 20+ support is unchanged. No packages are fetched during validation.
+
+```sh
+node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode record --input /absolute/record.yaml --format yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode chain --input /absolute/receipts.json --json
+```
+
+The installed guide lives at `<receipt.skills>/work-validator/docs/handoffs.md`.
+Source use runs the same commands with `scripts/validate-handoff.mjs` after root
+setup. Record mode checks shape/digest; chain mode checks bounded supplied provider
+observations. Both report live freshness as not evaluated. A valid partial/blocked
+record is not completion. Missing/corrupt parser, canonicalizer, schema or script
+fails preparation/verification and keeps the previous stable skills binding.
+Validation/preparation writes nothing. The composed implementer is a configured
+producer of typed results, but installation activates no automation, manager or
+human-unblock path; the reviewer now uses [reviewer-jira](../skills/reviewer-jira/SKILL.md) for canonical receipt preflight and one final append/read-back/recheck/direct QA, Rework Queued or Blocked handoff. Prepare actual configured independent actor approval/own-revocation controls, exact receipt reads and direct transition rights before use. QA migration and live acceptance remain pending. See the guide for the complete closed
+envelope, synthetic examples, exit meanings, budgets and recovery.
+
+
+## Prepare a typed implementer comment
+
+The same-release validator payload includes `scripts/prepare-handoff.mjs`. It
+validates original complete YAML, escapes the summary and builds supported HTML
+(or ADF), then checks extraction/digest equality before returning one JSON object:
+
+```sh
+node /opt/pigboard/skills/work-validator/scripts/prepare-handoff.mjs --input /absolute/record.yaml --summary /absolute/summary.txt --format html
+```
+
+Use the receipt's actual skills path. Source use is `node scripts/prepare-handoff.mjs`
+with the same arguments. No provider calls or file writes occur. The unchanged
+standard installation smoke does not execute this helper or prove agent behavior;
+installed regression checks execute the helper and chain validation from an
+unrelated working directory. Missing/changed helper or sibling files fail existing
+manifest verification, preserving the previous binding. See [handoffs](handoffs.md)
+for bounds, diagnostics, local examples and safe publication responsibilities.
+
+## Verify the structured QA helper closure
+
+Install/refresh the entire pinned, reviewed published bundle, not four loose
+`SKILL.md` files. All four helpers depend on
+`qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
+and the prepared validator. The existing fifteen-skill allowlist already ships
+these folders; there is no added skill or engine. Use the receipt's immutable
+versioned `skills` path for a run, rather than following a later stable-link refresh.
+Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
+Missing runtime/reference/hash or a failed check blocks the run; preserve the last
+verified installation and refresh from the approved published revision during
+operator setup. Never repair/fetch dependencies within delivery.
+
+Check all four installed entrypoints and the common reference against the pinned
+manifest; run existing install verification/smoke checks. Those checks establish
+installation only. [Bounded helper use](using-pigboard.md#prescribed-structured-qa-helpers)
+also needs complete work/trusted context, ready original PR deployment proof,
+restricted access, prepared artifacts, actual outputs and retrievable evidence.
+The retained QA entrypoint still accepts basic prose; structured dispatch and
+canonical QA publication are PGB-78. PGB-90 owns saved automation compatibility;
+PGB-58 owns full-loop acceptance and activation remains a separate owner decision.
+This mixed bundle must stay inactive. Do not treat local fixture or installation
+success as hosted/customer delivery acceptance.

@@ -16,10 +16,12 @@ npm ci --ignore-scripts --no-audit --no-fund
 npm test
 ```
 
-The root package has no production dependencies. Prefer standard Node.js APIs for
-setup scripts. Runtime helpers keep exact dependency versions and lockfiles in
-their skill folders. Tests use disposable fixtures and simulated dependency
-installations; they do not prove npm network access or live Cursor/Jira behavior.
+The root validator uses exact YAML/schema dependency versions and its lockfile.
+Root `npm ci` prepares source validation; prepare/install scripts separately build
+the installed bundle and need no root install step. Prefer standard Node.js APIs
+for setup scripts. Runtime helpers keep exact dependency versions and lockfiles
+in their skill folders. Tests use disposable fixtures, real copied validator
+dependencies and simulated QA-helper installations; they do not prove npm network access or live Cursor/Jira behavior.
 Documentation-only changes need link/contract checks, not new behavior tests.
 
 ## Change the complete user and agent contract

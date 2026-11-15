@@ -660,7 +660,8 @@
               "DATA-01",
               "R1-04-H01",
               "R1-04-H02",
-              "R1-04-H03"
+              "R1-04-H03",
+              "R1-04-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -874,8 +875,32 @@
           "required_capabilities": []
         },
         "actors": [],
-        "fixtures": [],
-        "preparation": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-21-H01",
+              "R1-21-H02",
+              "R1-21-H03"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
         "dispatch_order": [],
         "cases": [],
         "human_review": {
@@ -1742,7 +1767,7 @@
   },
   {
     "id": "R1-09",
-    "title": "Request rework through the human\u2019s assistant",
+    "title": "Request rework through the human’s assistant",
     "contract": {
       "schema": "pigboard-ticket/v1",
       "problem_to_solve": "A human who rejects an open PR needs to record actionable findings without starting a second worker. Story authoring should remain focused on specifications.",
@@ -1923,7 +1948,7 @@
     "title": "Preview ready work from a complete snapshot",
     "contract": {
       "schema": "pigboard-ticket/v1",
-      "problem_to_solve": "An operator needs to see why a stream can or cannot start work before granting write access. The manager\u2019s core rules must run without AWS or Jira credentials.",
+      "problem_to_solve": "An operator needs to see why a stream can or cannot start work before granting write access. The manager’s core rules must run without AWS or Jira credentials.",
       "prerequisites": [
         {
           "ticket": "R1-02",
@@ -2021,7 +2046,8 @@
             "used_by": [
               "DATA-01",
               "R1-10-H01",
-              "R1-10-H02"
+              "R1-10-H02",
+              "R1-10-H03"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -2043,7 +2069,7 @@
                 "TAC1"
               ],
               "prerequisites": [
-                "Complete snapshots S01\u2013S18, S30\u2013S40 with explicit expected result from the reviewed matrix."
+                "Complete snapshots S01–S18, S30–S40 with explicit expected result from the reviewed matrix."
               ],
               "steps": [
                 "Run manager-preview for each named fixture.",
@@ -2153,7 +2179,7 @@
         },
         {
           "id": "AC2",
-          "requirement": "It proposes queueing B only from actual stale parent lineage after A\u2019s full repaired completion; active or Blocked B is left alone."
+          "requirement": "It proposes queueing B only from actual stale parent lineage after A’s full repaired completion; active or Blocked B is left alone."
         },
         {
           "id": "AC3",
@@ -2195,7 +2221,7 @@
           },
           {
             "id": "TAC2",
-            "requirement": "Return typed decisions for only Ready to Work\u2192In Progress, Rework Queued\u2192In Progress and Human Review\u2192Rework Queued."
+            "requirement": "Return typed decisions for only Ready to Work→In Progress, Rework Queued→In Progress and Human Review→Rework Queued."
           }
         ]
       },
@@ -3435,7 +3461,7 @@
                 "AC4"
               ],
               "prerequisites": [
-                "A a1\u2192a2 repair, B old completion, C actual child; second A root arrives while B queued; independent D."
+                "A a1→a2 repair, B old completion, C actual child; second A root arrives while B queued; independent D."
               ],
               "steps": [
                 "Preview before A completes.",
@@ -3568,7 +3594,8 @@
               "DATA-01",
               "R1-12-H01",
               "R1-12-H02",
-              "R1-12-H03"
+              "R1-12-H03",
+              "R1-12-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -3776,7 +3803,7 @@
           },
           {
             "id": "TAC3",
-            "requirement": "Runtime IAM names only this installation\u2019s configured secret, log group and state resource; scheduler may invoke only its function. No resource deployment occurs as part of editing this Story."
+            "requirement": "Runtime IAM names only this installation’s configured secret, log group and state resource; scheduler may invoke only its function. No resource deployment occurs as part of editing this Story."
           }
         ]
       },
@@ -3989,7 +4016,8 @@
             "used_by": [
               "DATA-01",
               "R1-14-H01",
-              "R1-14-H02"
+              "R1-14-H02",
+              "R1-14-H03"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -4540,8 +4568,33 @@
           "required_capabilities": []
         },
         "actors": [],
-        "fixtures": [],
-        "preparation": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-22-H01",
+              "R1-22-H02",
+              "R1-22-H03",
+              "R1-22-H04"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
         "dispatch_order": [],
         "cases": [],
         "human_review": {
@@ -4770,8 +4823,33 @@
           "required_capabilities": []
         },
         "actors": [],
-        "fixtures": [],
-        "preparation": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-23-H01",
+              "R1-23-H02",
+              "R1-23-H03",
+              "R1-23-H04"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
         "dispatch_order": [],
         "cases": [],
         "human_review": {
@@ -4957,7 +5035,7 @@
         },
         {
           "id": "AC2",
-          "requirement": "It verifies the admission comment and pointer, rechecks source facts, sends one configured Ready to Work\u2192In Progress transition and conditionally confirms the same attempt."
+          "requirement": "It verifies the admission comment and pointer, rechecks source facts, sends one configured Ready to Work→In Progress transition and conditionally confirms the same attempt."
         },
         {
           "id": "AC3",
@@ -5168,7 +5246,7 @@
       "acceptance_criteria": [
         {
           "id": "AC1",
-          "requirement": "When the stream/capacity/prerequisites permit, apply admits the oldest understood queued repair before unrelated Bugs/Stories through Rework Queued\u2192In Progress."
+          "requirement": "When the stream/capacity/prerequisites permit, apply admits the oldest understood queued repair before unrelated Bugs/Stories through Rework Queued→In Progress."
         },
         {
           "id": "AC2",
@@ -5363,7 +5441,7 @@
     "title": "Queue a completed dependent PR for repair",
     "contract": {
       "schema": "pigboard-ticket/v1",
-      "problem_to_solve": "When A\u2019s repair completes, a stale dependent B in Human Review needs updating. The manager must queue that specific PR without restarting unrelated or active work.",
+      "problem_to_solve": "When A’s repair completes, a stale dependent B in Human Review needs updating. The manager must queue that specific PR without restarting unrelated or active work.",
       "prerequisites": [
         {
           "ticket": "R1-18",
@@ -5373,11 +5451,11 @@
       "acceptance_criteria": [
         {
           "id": "AC1",
-          "requirement": "A coherent repaired parent completion plus B\u2019s actual stale lineage permits one Human Review\u2192Rework Queued transition with the recorded cause."
+          "requirement": "A coherent repaired parent completion plus B’s actual stale lineage permits one Human Review→Rework Queued transition with the recorded cause."
         },
         {
           "id": "AC2",
-          "requirement": "Queueing preserves B\u2019s old assignment pointer; later admission replaces it through the normal admission path."
+          "requirement": "Queueing preserves B’s old assignment pointer; later admission replaces it through the normal admission path."
         },
         {
           "id": "AC3",
@@ -5385,7 +5463,7 @@
         },
         {
           "id": "AC4",
-          "requirement": "A\u2192B\u2192C and a second A repair preserve every unresolved cause, require the latest coherent immediate parent and do not repeatedly queue already-consumed updates."
+          "requirement": "A→B→C and a second A repair preserve every unresolved cause, require the latest coherent immediate parent and do not repeatedly queue already-consumed updates."
         }
       ],
       "technical_acceptance_criteria": {
@@ -5472,7 +5550,7 @@
                 "TAC1"
               ],
               "prerequisites": [
-                "A completes a1\u2192a2 repair; B HR records A at a1; C ready."
+                "A completes a1→a2 repair; B HR records A at a1; C ready."
               ],
               "steps": [
                 "Apply queue-only decision.",
@@ -5504,7 +5582,7 @@
                 "TAC2"
               ],
               "prerequisites": [
-                "A\u2192B\u2192C chain plus independent D; A gets second repair while B queued."
+                "A→B→C chain plus independent D; A gets second repair while B queued."
               ],
               "steps": [
                 "Run queue/admit/complete fixtures through both repair rounds.",
@@ -5695,7 +5773,8 @@
               "DATA-01",
               "R1-20-H01",
               "R1-20-H02",
-              "R1-20-H03"
+              "R1-20-H03",
+              "R1-20-H04"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."

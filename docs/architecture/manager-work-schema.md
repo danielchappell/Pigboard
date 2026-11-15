@@ -1,27 +1,31 @@
-# Epic and Story schema draft
+# Epic and Story schemas
 
-These two [design schemas](contracts/) describe the structure required before
-admission. They do not install a validator, change the story-writing skill or
-make a ticket ready by themselves. The [work contract](manager-work-contract.md)
+The canonical [Epic](../../contracts/epic-v1.schema.json) and
+[ticket](../../contracts/ticket-v1.schema.json) schemas describe structure. The
+[local validator](../authoring.md) checks draft, complete structure and trusted-context local-start modes and ships
+with the prepared bundle. The writing skill now emits full editable versioned
+YAML using these same schemas; neither authoring nor validation makes a ticket
+ready by itself. The [work contract](manager-work-contract.md)
 owns readiness and authority; this document resolves field types and lists the
 checks that JSON Schema cannot perform.
 
-Use `pigboard-epic-v1.schema.json` for `pigboard-epic/v1` and
-`pigboard-ticket-v1.schema.json` for `pigboard-ticket/v1`. Both use JSON Schema
+Use `contracts/epic-v1.schema.json` for `pigboard-epic/v1` and
+`contracts/ticket-v1.schema.json` for `pigboard-ticket/v1`. Both use JSON Schema
 2020-12. Every declared field is present, including nullable fields. Unknown fields
 are rejected except inside named input values. Empty strings are never a substitute
 for null. `technical_acceptance_criteria.constraints` may be `[]` when no technical
 constraint applies; do not invent a TAC or empty entry to satisfy a schema.
 The editable YAML skeletons deliberately fail start validation until
-completed. This publication does not add a separate draft validator.
+completed. Draft validation derives its rules from the canonical schemas; it
+permits explicit null placeholders and incomplete alternatives while retaining required keys.
 
 ## Human editing
 
-The writing skill will produce the full skeleton. Humans edit values in familiar
+The writing skill produces the full skeleton. Humans edit values in familiar
 sections: problem, acceptance criteria, repository and testing strategy. They can
 use YAML multiline strings for prose. They need not write escaped JSON or invent
-field placement. The future writer must leave optional null fields visible and
-replace unused optional lists with `[]`.
+field placement. The writer leaves optional null fields visible and
+replaces unused optional lists with `[]`.
 
 One populated example is included as a synthetic illustration of field types. Its
 repository, branch, access and fixtures are placeholders, not verified resources
@@ -107,8 +111,11 @@ states why no automated regression is applicable; it is never an unexplained nul
 
 ## Validation after structural parsing
 
-These checks are mandatory in the future validator and remain separate from the
-schemas. A schema-valid document is not sufficient to admit work.
+These checks remain separate from JSON Schema. Installed local `start` checks use
+a separately supplied [trusted context](../../contracts/work-validation-context-v1.schema.json)
+for explicit scope, references and operation facts; they perform no provider reads
+or execution. The following list also includes native/admission gates that remain
+future manager work. A schema-valid or locally valid document cannot admit work.
 
 1. **Native facts and scope.** Confirm Jira type, Ready to Work/Rework Queued stage,
    parent, full stream label and allowed project. Resolve the exact repository and
@@ -150,14 +157,34 @@ schemas. A schema-valid document is not sufficient to admit work.
    prerequisite completion, repair lineage and unresolved-intent rules. Parser limits,
    configured scope, live-read completeness and provider checks are independent gates.
 
+Local checks cover declared uniqueness, coverage, references, graph/bindings,
+preparation consumers, approved scope/skills and required ownership/evidence fields.
+Operation facts bind by deep equality to each full step (object order ignored,
+array order preserved); stale facts fail. Explicit read-only/duration/parameter
+facts support database and observation checks; prose does not prove safety or
+expectation quality. Human case IDs remain pending.
+
+Local start also checks a complete, untruncated small-placeholder QA ledger
+projection: 16,384 UTF-8 bytes, depth 16, 100 list entries, 255-character IDs and a
+2,000-character all-human reason. It counts every helper and evidence obligation
+in compact JSON/YAML 1.2 plus a final newline. This deterministic model is not
+actual evidence or a guarantee that longer final records fit. `ledger_budget`
+reports its bytes/counts with `omitted_entries: 0` and
+`actual_publication: "not_evaluated"`; actual publication is checked separately.
+`readiness` always remains `not_evaluated`. Native facts/stable-ID access, stream
+ownership, prerequisite completion and admission in items 1, 2 and 7 require
+separate provider/manager verification. Existing-reference checks establish only
+membership in supplied facts, not live accessibility.
+
 No validation step fetches secrets from ticket text or executes its values. JSON
 Schema checks only data shape; safe YAML parsing, document byte/depth/list budgets,
 semantic validation and live authorization remain required. Reject non-finite
 numbers (NaN and positive/negative Infinity) before schema validation and canonical
 JSON hashing, including nested inputs and SQL parameters. Some JSON Schema libraries
 accept their host language's non-finite numbers even though JSON does not. The local
-check explicitly rejects non-JSON values before invoking its schema validator; it
-is not the production safe-YAML parser. Mapping keys must already be strings at
+check explicitly rejects non-JSON values before invoking its schema validator.
+The installed Node validator adds safe YAML parsing and bounded extraction.
+Mapping keys must already be strings at
 all depths; never coerce them, because numeric `1` and string `"1"` would collide.
 Require valid Unicode without lone surrogates and acyclic JSON values. Integer
 literals in this contract are restricted to the exact JavaScript safe-integer
@@ -167,8 +194,10 @@ research and future JavaScript/JCS boundary. Finite decimal values follow the
 JSON binary64 representation; an exact decimal that must preserve more precision
 also belongs in a string with its prescribed interpretation. These are value-domain
 checks in addition to schema shape, not permission to rewrite inputs.
-Final budgets must be
-measured in the platform proof, not guessed from this small example.
+Local work budgets are 65,536 UTF-8 bytes, depth 32 and 100 sequence items. ADF
+envelopes use 262,144 bytes, depth 32, 1,000 array items and 100 code blocks; selected
+YAML retains work limits. These measured local boundaries do not prove platform
+or handoff capacity.
 
 ## Verification and rollout
 
@@ -182,19 +211,22 @@ Validate the schema documents themselves and exercise positive and negative
 structural examples locally. The blank skeletons must parse but fail start
 validation. Mutation cases should reject missing required fields, unknown fields,
 wrong skill sections, invalid alternatives and mixed human/AI dispatch shapes.
-Semantic cases require the future validator and provider evidence; local schema
-tests cannot claim them passed.
+Local semantic behavior is covered by the Node semantic/graph suites described in
+[authoring](../authoring.md). Provider evidence, native/admission checks and actual
+publication remain separate; local schema tests cannot claim them passed.
 
-The authoring skill, validators, separate role handoffs, Story/Bug filters and
-worker environment must roll out together with manager writes and delivery
-automations disabled. Existing prose tickets are not silently accepted as this
-version. The complete Story set remains subject to owner review before building.
+Authoring templates and shared local validation are available for preparation.
+Separate role handoffs, compatible Story/Bug filters, worker environment and
+manager still require coordinated release with writes/automations disabled until
+authorized activation. Current workers retain their prose contract; existing
+tickets are not silently converted or accepted as this version. See
+[authoring](../authoring.md) for the usable writer route and its limits.
 
 ## Author assessment
 
 - Intuitive: standard story sections and visible nulls keep editing predictable.
 - Discoverable: exact field types and the remaining semantic checks show what a
-  human must supply and what a future validator must explain.
+  human must supply and what the local validator checks.
 - Delightful: one complete skeleton avoids repeated formatting decisions; the
   detailed case structure is a deliberate cost for deterministic execution.
 - Token saver: fixed dispatch and named references reduce worker inference, while

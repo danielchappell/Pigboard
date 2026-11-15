@@ -1,0 +1,104 @@
+{
+  "two_project": {
+    "schema": "pigboard-config/v1",
+    "jira": {
+      "site": "https://jira.example.invalid"
+    },
+    "defaults": {
+      "stages": {
+        "Ready to Work": "11",
+        "In Progress": "12",
+        "In Review": "13",
+        "QA": "14",
+        "Human Review": "15",
+        "Rework Queued": "16",
+        "Blocked": "17"
+      },
+      "accepted_later_stage_ids": [
+        "18"
+      ],
+      "types": {
+        "epic": "21",
+        "story": "22",
+        "bug": "23"
+      },
+      "actors": {
+        "manager": [
+          "operator-demo"
+        ],
+        "implementer": [
+          "operator-demo"
+        ],
+        "reviewer": [
+          "operator-demo"
+        ],
+        "qa": [
+          "operator-demo"
+        ],
+        "human_request": [
+          "operator-demo"
+        ]
+      },
+      "repositories": [
+        "https://git.example.invalid/team/app"
+      ],
+      "worker_prefixes": [
+        "AI-Daniel-"
+      ],
+      "opt_in_label": "pigboard"
+    },
+    "projects": [
+      {
+        "id": "10001",
+        "key": "APP",
+        "board_ids": [
+          "101"
+        ],
+        "inherit": [
+          "stages",
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "repositories",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {}
+      },
+      {
+        "id": "10002",
+        "key": "OPS",
+        "board_ids": [
+          "102"
+        ],
+        "inherit": [
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {
+          "stages": {
+            "Ready to Work": "31",
+            "In Progress": "32",
+            "In Review": "33",
+            "QA": "34",
+            "Human Review": "35",
+            "Rework Queued": "36",
+            "Blocked": "37"
+          },
+          "repositories": [
+            "https://code.example.invalid/ops/service"
+          ]
+        }
+      }
+    ]
+  },
+  "mutations": {
+    "duplicate_project": "Copy projects[0] into projects",
+    "missing_inheritance": "Delete defaults.stages",
+    "untrusted_origin": "Set jira.site to https://untrusted.example.invalid; use --expected-site https://jira.example.invalid",
+    "secret_value": "Add token to jira"
+  }
+}

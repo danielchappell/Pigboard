@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:pigboard:work-validation-context-v1",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "pigboard-work-validation-context/v1"
+    },
+    "subject_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "repositories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "base_branches": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "url",
+          "base_branches"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "allowed_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "configured_targets": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "prerequisite_graph": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "minLength": 1
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "ticket",
+          "prerequisites"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "related_changes": {
+      "description": "Minimum caller-supplied related-change obligations: each exact repository/change_story pair must be retained in work. An empty list supplies no required obligation; this is not an exhaustive approval list for separately cited work and grants no extra write, launch or completion authority. Prerequisites remain independent.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "type": "string",
+            "minLength": 1
+          },
+          "change_story": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "repository",
+          "change_story"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "minLength": 1
+          },
+          "contract": {
+            "$ref": "urn:pigboard:ticket-v1#/$defs/step"
+          },
+          "read_only": {
+            "type": "boolean"
+          },
+          "max_duration_seconds": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parameter_count": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "step",
+          "contract",
+          "read_only",
+          "max_duration_seconds",
+          "parameter_count"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "subject_key",
+    "repositories",
+    "allowed_skills",
+    "configured_targets",
+    "references",
+    "prerequisite_graph",
+    "related_changes",
+    "operations"
+  ],
+  "additionalProperties": false
+}

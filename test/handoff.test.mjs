@@ -1,0 +1,188 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { stringify } from 'yaml';
+import { validateHandoff, extractHandoff, digestValue, checkURLs } from '../lib/contracts/handoff.mjs';
+import { parseContract } from '../lib/contracts/work.mjs';
+
+const hash = text => 'sha256:' + createHash('sha256').update(text, 'utf8').digest('hex');
+const uuid = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const ref = n => ({ ticket_id: '1', comment_id: String(n), record_id: uuid(n), digest: 'sha256:' + 'a'.repeat(64) });
+const pr = () => ({ provider: 'github', repository: 'https://example.invalid/repo', number: '1', source_revision: 'a'.repeat(40), target_branch: 'main' });
+const evidence = () => ({ label: 'Supplied evidence', uri: 'https://example.invalid/evidence', digest: null });
+const report = () => ({ steps: [], human_pending: ['H01'], no_ai_cases_reason: 'A person verifies this outcome.' });
+function record(kind = 'admission') {
+  const base = { schema: 'pigboard-handoff/v1', record_id: uuid(1), operation_id: uuid(1), ticket_id: '1', requirements_digest: 'sha256:' + 'b'.repeat(64), assignment: ref(1), role: 'implementer', kind, from_stage: 'In Progress', to_stage: 'In Review', payload: {}, resume_authorization: null };
+  const variants = {
+    admission: { role: 'manager', assignment: null, from_stage: 'Ready to Work', to_stage: 'In Progress', payload: { project_id: '100', stream: 'stream-1', mode: 'new_work', previous_assignment: null, requests: [], existing_pr: null } },
+    implementation: { payload: { pr: pr(), stack_parent: null, consumed_requests: [], plan: evidence(), plan_review: evidence(), ci: evidence(), verification: [evidence()], prepared_inputs: [] } },
+    review: { role: 'reviewer', from_stage: 'In Review', to_stage: 'QA', payload: { implementation: ref(2), pr: pr(), approval: evidence(), report: evidence() } },
+    qa: { role: 'qa', from_stage: 'QA', to_stage: 'Human Review', payload: { review: ref(3), pr: pr(), report: report() } },
+    repair_request: { role: 'qa', from_stage: 'QA', to_stage: 'Rework Queued', payload: { basis: ref(3), pr: pr(), findings: [{ id: 'F01', summary: 'Confirmed defect.', evidence: [evidence()] }], qa_report: report() } },
+    stack_update_request: { role: 'manager', from_stage: 'Human Review', to_stage: 'Rework Queued', payload: { child_completion: ref(4), child_pr: pr(), roots: [ref(5)], parent_completion: { ...ref(6), ticket_id: '2' }, parent_pr: { ...pr(), number: '2' }, required_parent_revision: 'c'.repeat(40), reason: 'The recorded parent changed.' } },
+    dependency_wait: { to_stage: 'Rework Queued', payload: { pr: null, requests: [ref(5)], reason: 'Await the supplied request.', qa_report: null } },
+    blocked: { to_stage: 'Blocked', payload: { pr: null, basis: null, reason: 'access', detail: 'Prepared access is missing.', human_action: 'Supply access.', evidence: [], qa_report: null } },
+    resume_authorization: { role: 'human_request', from_stage: 'Blocked', to_stage: 'In Progress', payload: { blocked_result: ref(7), pr: null, reason: 'Access restored.' } },
+  };
+  return Object.assign(base, variants[kind]);
+}
+const raw = value => stringify(value);
+const adf = text => JSON.stringify({ type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Supplied result.' }] }, { type: 'codeBlock', attrs: { language: 'yaml' }, content: [{ type: 'text', text: text.slice(0, 20) }, { type: 'text', text: text.slice(20) }] }] });
+const escape = text => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+const html = text => `<p>Supplied result.</p><pre><code class="language-yaml">${escape(text)}</code></pre>`;
+function rejects(input, code, options, expectedPath) {
+  const result = validateHandoff(input, options);
+  assert.equal(result.valid, false);
+  assert(result.diagnostics.some(d => d.code === code && (expectedPath === undefined || d.path === expectedPath)), JSON.stringify(result));
+  assert.equal(result.completion_established, false);
+  assert.equal(result.record_digest, null);
+}
+
+test('all nine complete kinds are record-valid without claiming authority or completion', () => {
+  for (const kind of ['admission', 'implementation', 'review', 'qa', 'repair_request', 'stack_update_request', 'dependency_wait', 'blocked', 'resume_authorization']) {
+    const result = validateHandoff(raw(record(kind)));
+    assert.equal(result.valid, true, kind + JSON.stringify(result.diagnostics));
+    assert.equal(result.mode, 'record'); assert.equal(result.validation_scope, 'record');
+    assert.equal(result.live_freshness, 'not_evaluated'); assert.equal(result.outcome, kind);
+    assert.equal(result.completion_established, false); assert.equal(result.target, null);
+    assert.equal(result.ai_steps, null); assert.equal(result.human_pending, null);
+    assert.match(result.record_digest, /^sha256:[0-9a-f]{64}$/);
+  }
+});
+test('JCS known bytes cover recursive and numeric-looking keys, UTF-16 sort, escaping and Unicode composition', () => {
+  const vectors = [
+    [{ z: { b: 1, a: null }, a: [true, false, 'x'] }, '{"a":[true,false,"x"],"z":{"a":null,"b":1}}'],
+    [{ 2: 'two', 10: 'ten' }, '{"10":"ten","2":"two"}'],
+    [{ '\ufb33': 'Hebrew', '😀': 'emoji', '\u20ac': 'Euro', '\u000d': 'CR', '1': 'one', '\u0080': 'control', 'ö': 'Latin' }, '{"\\r":"CR","1":"one","\u0080":"control","ö":"Latin","€":"Euro","😀":"emoji","דּ":"Hebrew"}'],
+    [{ text: '\u000f\n"\\/' }, '{"text":"\\u000f\\n\\"\\\\/"}'],
+    [{ a: -0, b: [333333333.3333333, 4.5, 0.002, 1e-27, 0.000001, 1e-7] }, '{"a":0,"b":[333333333.3333333,4.5,0.002,1e-27,0.000001,1e-7]}'],
+  ];
+  for (const [value, canonical] of vectors) assert.equal(digestValue(value), hash(canonical));
+  assert.notEqual(digestValue({ text: 'é' }), digestValue({ text: 'e\u0301' }));
+  assert.notEqual(digestValue([1, 2]), digestValue([2, 1]));
+  assert.throws(() => digestValue({ number: 1e20 }), error => error.diagnostic.code === 'NUMBER');
+  assert.throws(() => digestValue({ number: 9007199254740992 }), error => error.diagnostic.code === 'NUMBER');
+  for (const value of [undefined, NaN, Infinity, 1n, new Date(), { get value() { throw new Error('must not execute'); } }, Object.assign([1], { extra: 2 })]) assert.throws(() => digestValue(value));
+  const cycle = {}; cycle.self = cycle; assert.throws(() => digestValue(cycle));
+});
+test('YAML, split ADF text and entity-encoded HTML preserve identical records and digest', () => {
+  const value = record(); value.payload.stream = 'stream-1 café & "quoted"';
+  const text = raw(value), expected = validateHandoff(text);
+  for (const [format, input] of [['adf', adf(text)], ['html', html(text)]]) {
+    const before = input, result = validateHandoff(input, { format });
+    assert.equal(result.valid, true, JSON.stringify(result)); assert.equal(result.record_digest, expected.record_digest); assert.equal(input, before);
+    assert.deepEqual(JSON.parse(JSON.stringify(extractHandoff(input, { format }).value)), value);
+  }
+  value.payload.stream += '!'; assert.notEqual(validateHandoff(raw(value)).record_digest, expected.record_digest);
+});
+test('structural, format and YAML domain errors reject before a digest exists', () => {
+  for (const [mutate, path] of [
+    [r => delete r.resume_authorization, '/resume_authorization'], [r => r.extra = true, ''],
+    [r => r.schema = 'pigboard-handoff/v2', '/schema'], [r => r.record_id = 'not-a-uuid', '/record_id'],
+    [r => r.payload.project_id = null, '/payload/project_id'], [r => r.assignment = ref(2), '/assignment'],
+  ]) { const value = record(); mutate(value); const result = validateHandoff(raw(value)); assert.equal(result.valid, false); assert(result.diagnostics.some(d => d.path === path), JSON.stringify(result)); }
+  const text = raw(record());
+  for (const [input, code] of [[text + '\n---\n' + text, 'DOCUMENT_COUNT'], [text + '\nschema: pigboard-handoff/v1\n', 'DUPLICATE_KEY'], [text.replace('stream-1', '&item value') + '\nalias: *item\n', 'ALIAS'], [text.replace('stream-1', '!Custom value'), 'YAML_SYNTAX'], [text.replace('stream-1', '.inf'), 'NUMBER'], [text.replace('stream-1', '9007199254740992'), 'NUMBER'], ['? [a,b]\n: c\n', 'KEY_TYPE'], [Buffer.from([0xff]), 'UTF8'], [text + '\n#\ud800', 'UNICODE']]) rejects(input, code);
+  const skeleton = readFileSync(new URL('../docs/architecture/examples/handoffs/admission.yaml', import.meta.url), 'utf8');
+  assert.equal(validateHandoff(skeleton).valid, false);
+});
+test('all nested PR and evidence URLs reject userinfo without echoing credentials', () => {
+  const locations = [
+    ['implementation', r => r.payload.pr, '/payload/pr/repository', 'repository'],
+    ['implementation', r => r.payload.stack_parent = { ticket_id: '2', pr: pr(), incorporated_revision: 'a'.repeat(40), completion: ref(5) }, '/payload/stack_parent/pr/repository', 'parent'],
+    ['implementation', r => r.payload.plan, '/payload/plan/uri', 'uri'],
+    ['stack_update_request', r => r.payload.parent_pr, '/payload/parent_pr/repository', 'repository'],
+    ['stack_update_request', r => r.payload.child_pr, '/payload/child_pr/repository', 'repository'],
+    ['blocked', r => r.payload.pr = pr(), '/payload/pr/repository', 'repository'],
+    ['resume_authorization', r => r.payload.pr = pr(), '/payload/pr/repository', 'repository'],
+  ];
+  for (const [kind, select, expectedPath, key] of locations) for (const userinfo of ['user@', 'user:password@', '@']) {
+    const value = record(kind), target = select(value), url = `https://${userinfo}example.invalid/repo`;
+    if (key === 'parent') target.pr.repository = url; else target[key] = url;
+    rejects(raw(value), 'FORMAT', undefined, expectedPath);
+    assert(!JSON.stringify(validateHandoff(raw(value))).includes(url));
+  }
+  const repair = record(); repair.from_stage = 'Rework Queued'; Object.assign(repair.payload, { mode: 'repair', previous_assignment: ref(8), requests: [ref(9)], existing_pr: pr() });
+  assert(validateHandoff(raw(repair)).valid); repair.payload.existing_pr.repository = 'https://user@example.invalid/repo'; rejects(raw(repair), 'FORMAT', undefined, '/payload/existing_pr/repository');
+  for (const url of ['https://example.invalid/raw space', 'https://example.invalid/%GG', 'https://example.invalid/%2', 'https://exa[mple.invalid/repo', 'https://[::1/repo', 'https://café.invalid/repo', 'https://example.invalid/café']) {
+    const value = record('implementation'); value.payload.pr.repository = url; rejects(raw(value), 'FORMAT', undefined, '/payload/pr/repository');
+  }
+  const allowlists = { trusted: { repositories: ['https://user@example.invalid/repo'], evidence_uris: ['https://user:password@example.invalid/evidence'] } };
+  assert.deepEqual(checkURLs(allowlists).map(d => d.path), ['/trusted/evidence_uris/0', '/trusted/repositories/0']);
+});
+test('ADF and HTML reject ambiguous, unsupported, malformed and truncated wrappers', () => {
+  const text = raw(record()), doc = JSON.parse(adf(text));
+  doc.content.push(structuredClone(doc.content[1])); rejects(JSON.stringify(doc), 'HANDOFF_BLOCK_COUNT', { format: 'adf' });
+  const wrong = JSON.parse(adf(text)); wrong.version = 2; rejects(JSON.stringify(wrong), 'ADF_SHAPE', { format: 'adf' });
+  wrong.version = 1; wrong.content[1].attrs.language = 'json'; rejects(JSON.stringify(wrong), 'ADF_BLOCK', { format: 'adf' });
+  wrong.content[1].attrs.language = 'yaml'; wrong.content[1].content[0].content = []; rejects(JSON.stringify(wrong), 'ADF_BLOCK', { format: 'adf' });
+  rejects(JSON.stringify({ type: 'doc', version: 1, content: [{ type: 'text', text: 'bad\0text' }] }), 'ADF_SHAPE', { format: 'adf' });
+  rejects('{"type":"doc","type":"doc","version":1,"content":[]}', 'DUPLICATE_KEY', { format: 'adf' });
+  for (const [input, code] of [[html(text) + html(text), 'HANDOFF_BLOCK_COUNT'], ['<p>```yaml\n' + escape(text) + '\n```</p>', 'HANDOFF_BLOCK_COUNT'], [html(text).replace('</code>', ''), 'HTML_BLOCK'], [html(text).replace('</pre>', ''), 'HTML_BLOCK'], [html(text).replace('schema:', '<em>schema:</em>'), 'HTML_BLOCK'], [html(text).replace('schema:', '&bogus;schema:'), 'HTML_PARSE'], [html(text).replace('schema:', '&#0;schema:'), 'HTML_PARSE'], [html(text).replace('schema:', '\0schema:'), 'PARSE']]) rejects(input, code, { format: 'html' });
+  assert(validateHandoff('<script>throw Error("never run")</script>' + html(text), { format: 'html' }).valid);
+  for (const [format, input] of [['adf', JSON.stringify({ type: 'doc', version: 1, content: [] })], ['html', '<p>Ordinary comment.</p>']]) assert.throws(() => extractHandoff(input, { format }), error => error.diagnostic.code === 'HANDOFF_BLOCK_COUNT' && error.diagnostic.blocks === 0);
+});
+test('byte, container, array and wrapper bounds reject at the boundary without truncation', () => {
+  const text = raw(record()), padding = 16384 - Buffer.byteLength(text) - 2, exact = text + '#' + 'x'.repeat(padding) + '\n';
+  assert.equal(Buffer.byteLength(exact), 16384); assert(validateHandoff(exact).valid); rejects(exact + 'x', 'BYTE_LIMIT');
+  const recordValue = record(); recordValue.from_stage = 'Rework Queued'; Object.assign(recordValue.payload, { mode: 'repair', previous_assignment: ref(1), requests: Array.from({ length: 100 }, (_, i) => ref(i + 2)) });
+  const evidenceBound = record('blocked'); evidenceBound.payload.evidence = Array.from({ length: 100 }, (_, index) => ({ ...evidence(), label: String(index) }));
+  assert(validateHandoff(raw(evidenceBound)).valid);
+  const duplicate = structuredClone(evidenceBound); duplicate.payload.evidence[99] = { digest: duplicate.payload.evidence[0].digest, uri: duplicate.payload.evidence[0].uri, label: duplicate.payload.evidence[0].label }; rejects(raw(duplicate), 'STRUCTURE');
+  const maliciousKey = structuredClone(evidenceBound); maliciousKey.payload.evidence[0].valueOf = 'ordinary JSON data'; rejects(raw(maliciousKey), 'STRUCTURE');
+  evidenceBound.payload.evidence.push({ ...evidence(), label: '101' }); rejects(raw(evidenceBound), 'LIST_LIMIT');
+  // A full 100-reference handoff exceeds the 16 KiB record bound first. Exercise
+  // the reachable array limit through the shared parser, never label it record-valid.
+  assert(Buffer.byteLength(raw(recordValue)) > 16384); rejects(raw(recordValue), 'BYTE_LIMIT');
+  assert.equal(parseContract('{"items":[' + Array(100).fill('0').join(',') + ']}', { bytes: 16384, depth: 16, list: 100 }).items.length, 100);
+  assert.throws(() => parseContract('{"items":[' + Array(101).fill('0').join(',') + ']}', { bytes: 16384, depth: 16, list: 100 }), error => error.diagnostic.code === 'LIST_LIMIT');
+  const nested = n => '{"value":'.repeat(n) + 'null' + '}'.repeat(n);
+  assert(parseContract(nested(16), { bytes: 16384, depth: 16, list: 100 }));
+  assert.throws(() => parseContract(nested(17), { bytes: 16384, depth: 16, list: 100 }), error => error.diagnostic.code === 'DEPTH_LIMIT');
+  for (const format of ['adf', 'html']) {
+    const base = format === 'adf' ? adf(text) : html(text);
+    const exactWrapper = base + ' '.repeat(65536 - Buffer.byteLength(base));
+    assert(validateHandoff(exactWrapper, { format }).valid); rejects(exactWrapper + ' ', 'BYTE_LIMIT', { format });
+  }
+  assert(validateHandoff('<div>'.repeat(28) + html(text) + '</div>'.repeat(28), { format: 'html' }).valid);
+  rejects('x'.repeat(65537), 'BYTE_LIMIT', { format: 'html' });
+  rejects('<div>'.repeat(33) + html(text) + '</div>'.repeat(33), 'DEPTH_LIMIT', { format: 'html' });
+  rejects('<p>' + '<span>x</span>'.repeat(101) + '</p>' + html(text), 'LIST_LIMIT', { format: 'html' });
+  const wrapper = { type: 'doc', version: 1, content: [{ type: 'codeBlock', attrs: { language: 'yaml' }, content: [{ type: 'text', text }] }, ...Array.from({ length: 10 }, (_, index) => ({ type: 'paragraph', content: Array.from({ length: index === 9 ? 87 : 100 }, () => ({ type: 'text', text: 'x' })) }))] };
+  assert(validateHandoff(JSON.stringify(wrapper), { format: 'adf' }).valid);
+  wrapper.content.at(-1).content.push({ type: 'text', text: 'x' }); rejects(JSON.stringify(wrapper), 'NODE_LIMIT', { format: 'adf' });
+  for (const bounds of [{ bytes: 0 }, { depth: Infinity }, { list: -1 }, { list: 1.5 }]) assert.throws(() => parseContract('{}', bounds), error => error.diagnostic.code === 'USAGE');
+});
+test('CLI exposes read-only record behavior and sanitized usage/input failures', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'handoff-cli-'));
+  const cli = new URL('../scripts/validate-handoff.mjs', import.meta.url).pathname;
+  try {
+    const file = path.join(directory, 'record.yaml'); await writeFile(file, raw(record()));
+    const run = args => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', cwd: directory });
+    const passed = run(['--mode', 'record', '--format', 'yaml', '--input', file, '--json']); assert.equal(passed.status, 0, passed.stderr + passed.stdout); assert.equal(JSON.parse(passed.stdout).completion_established, false);
+    const help = run(['--help']); assert.equal(help.status, 0); assert(help.stdout.includes('Installed:')); assert(help.stdout.includes('--mode'));
+    for (const args of [['--mode', 'record', '--input', file, '--input', file, '--json'], ['--mode', 'record', '--input', directory, '--json'], ['--mode', 'record', '--input', path.join(directory, 'missing'), '--json'], ['--mode', 'record', '--input', file, '--output', 'write', '--json']]) {
+      const result = run(args); assert.equal(result.status, 2); assert.equal(JSON.parse(result.stdout).valid, false); assert(!result.stdout.includes(directory));
+    }
+    const invalid = path.join(directory, 'invalid.yaml'); await writeFile(invalid, raw({ ...record(), schema: 'unknown' })); assert.equal(run(['--mode', 'record', '--input', invalid, '--format', 'yaml', '--json']).status, 1);
+    assert.equal(readFileSync(file, 'utf8'), raw(record()));
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('undeclared property diagnostics retain safe containers without reproducing schema/parser/wrapper/URL-scan keys',async t=>{
+ const cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
+ const dir=await mkdtemp(path.join(os.tmpdir(),'record-safe-path-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const secret='https://user:FICTITIOUS-SECRET@example.invalid/private-report',key=JSON.stringify(secret),r=record('admission'),raw=JSON.stringify(r),cases=[];
+ cases.push([JSON.stringify({...r,[secret]:true}),'yaml','']);
+ cases.push([JSON.stringify({...r,payload:{...r.payload,[secret]:{uri:'https://user:FICTITIOUS-SECRET@example.invalid'}}}),'yaml','/payload']);
+ cases.push([raw.replace('"schema":"pigboard-handoff/v1"',`"schema":"pigboard-handoff/v1",${key}:0,${key}:1`),'yaml','']);
+ cases.push([raw.replace('"schema":"pigboard-handoff/v1"',`"schema":"pigboard-handoff/v1",${key}:9007199254740993`),'yaml','']);
+ const doc={type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml',[secret]:'MARK'},content:[{type:'text',text:raw}]}]};cases.push([JSON.stringify(doc).replace('"MARK"','9007199254740993'),'adf','/content/0/attrs']);
+ for(const [i,[input,format,safePath]]of cases.entries()){const result=validateHandoff(input,{format});assert.equal(result.valid,false);assert(result.diagnostics.some(d=>d.path===safePath),JSON.stringify(result.diagnostics));assert(!JSON.stringify(result).includes('FICTITIOUS-SECRET'));assert(!JSON.stringify(result).includes('private-report'));const file=path.join(dir,'record-'+i);await writeFile(file,input);for(const json of [false,true]){const p=spawnSync(process.execPath,[cli,'--mode','record','--input',file,'--format',format,...(json?['--json']:[])],{encoding:'utf8'});assert.equal(p.status,1,p.stdout+p.stderr);assert(!p.stdout.includes('FICTITIOUS-SECRET'));assert(!p.stdout.includes('private-report'));assert(!p.stderr);}}
+ const urls=checkURLs({payload:{[secret]:{uri:'https://user:FICTITIOUS-SECRET@example.invalid'}}});assert.equal(urls[0].path,'/payload');assert(!JSON.stringify(urls).includes('FICTITIOUS-SECRET'));
+});

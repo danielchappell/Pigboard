@@ -26,14 +26,52 @@ enabling it. Selected successful Build
 `bld-20261113-15ee43f7-bf69-40ed-8b43-c61cf657f092` installed skill pin
 `b5004d81f227ff7e3bea0680ea86c5d7a78e47dd`, Rovito 0.1.295 and review-write profile.
 The owner saved the five-scope token; account/Plexus read checks passed with zero
-remote writes. This Build contains the structured authoring contract. It predates
-the later model-control checks below. No PR-write acceptance, Jira run or delivery run
+remote writes. This Build contains the earlier prose authoring contract, not the
+later YAML writer. It predates the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
-The new bundle adds `write-pr-sized-stories` to the ten execution skills. Authoring
-uses its [structured ticket contract](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-and examples. The three stage entrypoints link the same contract. Having the
-writer installed does not start a grooming automation or load all skills as context.
+The current bundle contains fifteen skill folders, including `write-pr-sized-stories`,
+`implementer-job` and `implementer-jira`. Dated Build counts below remain historical.
+The separate [request-rework](../../skills/request-rework/SKILL.md) capability is
+human invoked through an existing prepared assistant, not a fourth automation.
+It needs explicit authorization, configured actor/direct queue rights and compatible
+current QA/open-PR evidence. Missing that chain stops the request; this addition
+does not migrate QA, change saved Builds/prompts or activate any automation.
+The current writer prepares [versioned YAML](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
+and complete examples for local validation. The
+[implementer composer](../../skills/implementer-entrypoint/SKILL.md) now consumes
+versioned Story/Bug assignments through separate job/Jira skills. The reviewer composes [reviewer-jira](../../skills/reviewer-jira/SKILL.md) for exact receipt preflight and typed final handoff; only retained QA consumes the [retained basic-worker prose contract](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+The mixed bundle is not a compatible active loop; coordinated migration and
+acceptance remain required. This does not change the dated Build evidence, prompts,
+automations or activation. Having the writer installed does not start a grooming
+automation or load all skills as context.
+
+### Structured reviewer setup boundary
+
+The [current structured reviewer profile](../../skills/pigboard-pr-review/references/cursor.md)
+requires an authorized native Story or Bug currently In Review, trusted structured
+inputs/current receipts and prepared direct QA/Rework Queued/Blocked outcomes.
+Discussion stays In Review; confirmed fixes never go directly to In Progress.
+
+The [older reviewer checklist](AI-Daniel-1-pr-review.md), the Story filter in the
+[Jira setup record](../../docs/jira-setup.md#automation-inventory-saved-and-deferred) and the
+[saved reviewer export](../jira/exports/AI-Daniel-1-pr-review.json) describe the
+earlier basic pilot setup. Their Story-only routing and QA/In Progress/Blocked
+reviewer checklist do not prepare the current structured reviewer. They remain
+inactive historical records, not compatible setup recipes or fallback instructions.
+This subsection is the current clarification delegated to by those setup records.
+
+[PGB-90](https://scubapig.atlassian.net/browse/PGB-90),
+[R1-20 in the delivery plan](../../docs/delivery/manager-r1/stories.md#r1-20-check-a-compatible-release-before-enabling-delivery),
+owns updating or superseding the saved inactive artifacts and checking the pinned
+release, canonical configuration, capabilities and Story/Bug routing. That work is
+not completed here. Its checker does not change hosted settings or activate
+anything. Actual provider configuration/readiness evidence, bounded
+[PGB-58 acceptance](https://scubapig.atlassian.net/browse/PGB-58) and explicit
+activation remain distinct operator gates. This matrix does not prove Bug triggers,
+direct Rework Queued edges or current reviewer bits exist in a historical selected
+Build. A separately authorized prepared local exercise remains possible; it is not
+full-loop or activation acceptance.
 
 The later phase Build `bld-20261113-6159d5c3-112c-41a9-997f-1c9bf6bab5f5`
 successfully installed custom user-agent files, but the runtime rejected their
@@ -136,7 +174,7 @@ acceptance remain separate rollout checks in PGB-58/PGB-60.
 ## Refresh and recovery
 
 Publish reviewed changes, update the environment's skill pin, preserve the current
-CLI setup/secrets, and run a draft Build. Inspect the manifest, eleven entrypoints,
+CLI setup/secrets, and run a draft Build. Inspect the manifest, fifteen entrypoints,
 canonical reference/example and helper probes before selecting it. Keep the prior
 Build on failure; do not enable an automation as part of selecting a Build. Record
 new Build/UI acceptance here after observation, including any remaining limitations.

@@ -14,26 +14,31 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists eleven skills. These are
-entrypoints and helpers, not eleven autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists fifteen skills. These are
+entrypoints and helpers, not fifteen autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
 | [write-pr-sized-stories](../skills/write-pr-sized-stories/SKILL.md) | Author or split scoped work from supplied requirements and verified repository ownership. Reads human-writing and its ticket references. Drafting does not authorize Jira publication. |
-| [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | An authorized Jira Story in In Progress, allowed checkout/base, complete requirements and testing contract, prepared High/Medium controls, CI and PR/Jira tools. Owns plan, independent review, implementation and handoff. |
-| [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized Story in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence, approval and Jira handoff. |
+| [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | Compose one authorized native Story/Bug in In Progress using its current versioned assignment, verified scope, High/Medium controls and prepared tools. |
+| [implementer-job](../skills/implementer-job/SKILL.md) | Plan/execute the assigned code, same PR, current CI and prepared artifacts. Returns evidence; never changes Jira. |
+| [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
+| [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
+| [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
+| [request-rework](../skills/request-rework/SKILL.md) | Explicit human record-and-queue request, in-scope findings/evidence, current Human Review assignment and compatible completed QA chain on the same open PR, configured actor/tools and durable output. Human invoked; no automatic worker. |
 | [human-writing](../skills/human-writing/SKILL.md) | Clear writing for work items, reports and comments, using the supplied facts and intended audience. |
 | [qa-api](../skills/qa-api/SKILL.md) | Assess prescribed API cases with exact expectations and named prepared execution helpers. |
 | [qa-bruno](../skills/qa-bruno/SKILL.md) | Execute the assigned prepared Bruno requests/assertions with supplied environment, access and evidence requirements. Locked CLI dependencies are installed beforehand. |
 | [qa-database](../skills/qa-database/SKILL.md) | Prepared read-only observations with exact queries, parameters, permitted data and restricted access. The bundled reader is PostgreSQL; do not infer DynamoDB support. |
 | [qa-ui](../skills/qa-ui/SKILL.md) | Prescribed UI cases using prepared computer use, test identity/data, a supplied target and inspected screenshot evidence. |
 
-Read the selected skill for its complete contract. QA helpers get bounded cases,
-step IDs and original expectations from the QA entrypoint; they do not select new
-work or change the whole ticket's stage. Preserve required sibling references.
+Read the selected skill for its complete contract. Structured QA helpers receive
+complete bounded AI step inputs and original expectations from an authorized
+caller; the retained QA entrypoint does not yet construct these inputs. Helpers
+do not select new work or change the whole ticket's stage. Preserve required sibling references.
 Load only assigned helpers, preserving case order and avoiding duplicate execution
 when one helper delegates a step to another.
 
@@ -45,15 +50,22 @@ path returned by the installer:
 
 > Read `<skills>/write-pr-sized-stories/SKILL.md`. Turn the supplied agreed scope
 > into a draft work item for the verified repository and base branch. Use its
-> structured Story contract for Pigboard delivery. Identify unresolved inputs;
+> versioned Epic or Story/Bug YAML template for Pigboard authoring. Validate saved
+> raw YAML with the shared checker. Identify unresolved inputs;
 > keep research/design as Tasks. Return the draft for review.
 
-The installed Story contract uses four named body sections, fixed labels and
-stable requirement/case/step IDs. All required acceptance cases, expectations and
-exact QA skill order belong on the ticket. See its
-[canonical reference](../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-and [filled examples](../skills/write-pr-sized-stories/references/pigboard-example.md).
-Do not replace that contract with the manager's draft YAML skeletons yet.
+The writer keeps four readable sections inside complete YAML, with stable IDs,
+explicit nulls/lists and every prescribed AI/human case. See its
+[ticket guide](../skills/write-pr-sized-stories/references/pigboard-ticket.md),
+[Epic guide](../skills/write-pr-sized-stories/references/pigboard-epic.md) and
+[complete examples](../skills/write-pr-sized-stories/references/pigboard-example.md).
+Use [local validation](authoring.md) with the same receipt's prepared checker.
+Draft/structure need no trusted context; start does and never proves live readiness.
+Missing setup/context preserves the draft and checks-not-run report. The writer
+does not install dependencies, mark readiness, publish without separate authority
+or request rework. The implementer consumes structured Story/Bug assignments;
+the reviewer consumes structured assignments and canonical implementation receipts. Only the retained QA entrypoint requires its [basic prose contract](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+Do not feed YAML to the retained QA entrypoint or activate this mixed bundle.
 
 Other helpers can be reused for an explicitly assigned task when their full
 prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
@@ -101,9 +113,18 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Complete implementation with current required CI | Publish the implementation handoff and verify In Review transition. |
 | Complete passing PR review | Publish reports, verify current-revision approval, then verify QA transition. |
 | Complete prescribed QA pass | Retain required evidence and verify Human Review transition; keep the PR open. |
-| Confirmed in-scope defect | Current worker contract returns the same Story/PR to In Progress. |
+| Known upstream repair prevents implementation | Typed dependency_wait with exact requests and unfinished checks; verified handoff to Rework Queued. |
+| Complete confirmed reviewer findings | Publish all finding IDs in a same-PR repair_request and verify Rework Queued. |
+| Explicit authorized human findings in Human Review | request-rework verifies current QA/open PR, appends/read-backs one repair request, rechecks and verifies direct Rework Queued; active B continues. |
+| Confirmed defect in retained QA | Its basic contract still returns the same Story/PR to In Progress; migration is later. |
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
+
+The implementer retains `implementationOutcome` READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN
+and separate `deliveryOutcome` NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE.
+COMPLETED describes a verified intended handoff, including wait/blocked, not code
+success. Delivery failure preserves revision-bound READY but never claims Jira moved.
+See the [durable result](../skills/implementer-entrypoint/references/handoff.md#durable-result).
 
 A PASS label without current complete evidence is insufficient. Human review,
 merge, UAT acceptance and production deployment remain separate. The basic MVP
@@ -115,10 +136,151 @@ one. Workers neither admit new tickets nor investigate competing runs.
 The [first-manager design](architecture/manager-release-one.md) introduces
 manager-owned admission and queued repair. Its
 [discovery record](architecture/manager-discovery.md) also separates AI-assigned
-and human-assigned tests; human tests remain pending at the AI handoff. YAML work
-contracts (with proposed schemas and examples), migration of the existing
-`write-pr-sized-stories` authoring skill with its `human-writing` dependency,
-role-specific Jira handoff skills and prepared Bug execution require a
-coordinated release and acceptance. The current installed entrypoints accept
-Stories and their existing contract. Do not enable target behavior by changing
-prompts or silently weakening the current skill's requirements.
+and human-assigned tests; human tests remain pending at the AI handoff. Versioned
+YAML authoring, full templates/examples, the `human-writing` dependency
+and local validation are available. The implementer composer/job/Jira split now
+accepts current structured Story/Bug assignments. Reviewer receipt handoff is available; QA migration, manager
+admission and full-loop acceptance remain later work. Existing prose tickets are
+not automatically converted. Keep automations inactive until the compatible
+release is accepted; prompt changes do not establish compatibility.
+
+For reviewer runs, invoke `pigboard-pr-review`; it calls `reviewer-jira` in read-only
+preflight, then final mode only for a terminal handoff. Its [durable result](../skills/pigboard-pr-review/references/jira-handoff.md#durable-result) separates review verdict, workflow decision and delivery outcome. Discussion stays without a typed terminal record. Prepare the configured independent actor and actual current-approval/own-revocation controls. Failed/unknown writes stop; after final append is attempted there is no replacement record or fallback transition. Preserve receipts for human recovery instead of replaying actions.
+
+## Prescribed structured QA helpers
+
+Read the [shared contract](../skills/qa-api/references/structured-steps.md) and the
+selected domain skill from the same pinned release. Supply original raw
+`pigboard-ticket/v1` work, separately trusted start facts, exact AI case/step/caller,
+requirements digest and assignment, reviewed PR/current full source/target/deployed
+revisions, original ready pipeline comment plus server author metadata, approved
+identity/tenant/destinations, prepared artifacts, actual earlier observations,
+tool capabilities and private evidence/reviewer access. Compare raw receipt to
+normalized facts; neither a URL nor `configured_target` proves deployment.
+Validate the complete original work/context with the source or installed CLI.
+Do not turn prose into inputs or run human cases on their owners' behalf.
+
+API invokes only its one named Bruno child once and exposes its actual declared
+outputs with unchanged provenance. Bruno uses the exact selected prepared request,
+locked CLI/safe sandbox and private JSON report; inspect request, assertion and
+test-script counts/errors, plus explicit actual-response extraction mapping.
+Database binds earlier output → named input → zero-based prepared parameter slot;
+keep SQL/literals/intentional unbound nulls unchanged. Only PostgreSQL with the
+existing reader is supported. Resolve `qa-database/read-postgres.mjs` through the
+selected skill to its `scripts/read-postgres.mjs`; OBSERVED is not PASS. UI requires
+the actual selected surface/viewport, visible prescribed actions and inspected,
+retrievable screenshots at every checkpoint. No hidden API/DOM substitute.
+
+Return every assigned step (including API child), expected/actual, timestamps,
+revision-bound named observations/evidence, omitted/NOT RUN reasons, partial effects,
+findings/blockers and cleanup. Missing receipt/access/artifact/output/capability,
+unsupported engine or uncertain cleanup returns BLOCKED before further action.
+A proven mismatch under valid prerequisites returns FAIL. Never repeat an uncertain
+child, repair setup/tests or install a fallback. Obtain the specific missing
+prerequisite, preserve completed evidence and use a fresh authorized assignment;
+do not replay completed/uncertain effects. Helpers do not move Jira or publish the
+whole-ticket ledger. PGB-78 owns retained QA entrypoint migration; the mixed loop
+remains inactive. Human H01/H02, hosted CI and release acceptance remain separate.
+
+### Fixed source-only preparation example
+
+For the designated developer/human QA reviewer, the fixed fixture exports one
+synthetic `record-001`/`tenant-a`/`ready` journey and a distinct inaccessible tenant-b
+row. It is test-only, not installed or a helper executor. Node 20+, the committed
+source and locked dependencies must already be prepared. Choose an owned private
+run directory and unused loopback HTTP/PostgreSQL ports. Run before any helper:
+
+```sh
+PGB77_SOURCE=/absolute/committed/pigboard
+PGB77_RUN=/absolute/private/disposable-run
+node "$PGB77_SOURCE/test/fixtures/qa-helper-case.mjs" prepare "$PGB77_RUN"
+node "$PGB77_SOURCE/test/fixtures/qa-helper-case.mjs" serve "$PGB77_RUN" HTTP_PORT
+```
+
+`prepare` writes the collection/selected request and unselected sentinel, immutable
+query/seed, work/context templates, explicit response-output mapping, DB context
+and UI assets. `serve` binds 127.0.0.1 only; retain its actual endpoint/PID receipt
+and private method/path/time audit. It does not seed a database or assert results.
+Inspect `preparation.json`: fill actual endpoint, installed/source full revision,
+mock raw PR receipt/metadata, separately trusted scope, DB/TLS/role evidence and
+supported UI surface/viewport/retention receipt. Freeze matching complete operation
+facts and input/artifact hashes. Templates are **not ready** until these facts are
+established; do not invent deployment, role or viewport proof. Validate `work.yaml`
+and `facts.yaml` after preparation; JSON text is valid YAML for these templates.
+
+Prepare a disposable existing PostgreSQL installation separately as fixture owner:
+private cluster/socket/unused port, loopback only, TLS with short-lived CA and
+localhost/127.0.0.1 SAN, key mode 0600, hostssl SCRAM for only the fixture DB/reader,
+non-TLS rejection. Apply `seed.sql`; create `qa_reader` with no super/create-db/
+create-role/replication/bypass-RLS/membership/ownership privileges, only database
+CONNECT, schema USAGE and SELECT on the three columns. Enable/force RLS with the
+tenant-a policy in the seed. Owner administration uses only the owned private
+socket, never QA credentials. Retain actual grants/policy/TLS proof separately;
+provide QA only restricted access. Keep ephemeral password out of commands/source/
+shared reports; supply runtime `PGB77_DATABASE_URL`, `QA_DB_CA_FILE` and
+`QA_DB_TLS_SERVERNAME=localhost`. URL/context must agree on numeric 127.0.0.1,
+port/database/qa_reader, with no URL options. Never weaken TLS or repair during QA.
+
+Install the exact local committed candidate into an isolated root with the real
+installer before local instruction exercises (customer installs use published
+reviewed revisions). Inspect its receipt, fifteen entrypoints, six smoke checks,
+locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
+
+```sh
+node "$PGB77_SOURCE/scripts/install-cursor-skills.mjs" --source "$PGB77_SOURCE" --ref FULL_COMMIT --app "$PGB77_RUN/app" --root "$PGB77_RUN/installed"
+# From any unrelated working directory, using receipt-derived PIGBOARD_SKILLS:
+node "$PIGBOARD_SKILLS/work-validator/scripts/validate-work.mjs" --mode start --input "$PGB77_RUN/work.yaml" --context "$PGB77_RUN/facts.yaml" --json
+# From the prepared collection directory, using supplied absolute roots:
+"$QA_BRUNO_ROOT/scripts/node_modules/.bin/bru" run selected.bru --sandbox=safe --bail --noproxy --reporter-json "$PGB77_RUN/bruno-report.json" --reporter-skip-all-headers
+node "$QA_DATABASE_ROOT/scripts/read-postgres.mjs" "$PGB77_RUN/db-context.json" PGB77_DATABASE_URL "$PGB77_RUN/query.sql" "$PGB77_RUN/bound-params.json"
+```
+
+The caller must read/execute the installed helper instructions; running engines
+alone proves only engine behavior. Use the actual Bruno report's explicit mapped
+record ID for both parent observation and generated bound-params array; the frozen
+expectation is not an observation. Audit one selected request/zero sentinel and
+one database **observation** query (existing reader prerequisite catalog queries
+are separate), original/bound parameters, rows, rollback/close and unchanged SQL.
+Through supported computer use navigate `/ui`, capture/inspect/retain start,
+enter that actual ID, capture input, activate Lookup once, then capture result.
+Record actual dimensions and retrievable image references; inability to retain
+means BLOCKED. No guessed artifact paths or viewport/mobile claims.
+
+For isolated H02 preparations, preserve coherent inputs except the single missing/
+stale/untrusted receipt, absent selected request, wrong-tenant output/access,
+unsupported engine, unavailable UI evidence capability or unresolved child receipt.
+Retain supplied mock history as mock and observe zero new operation calls; do not
+manufacture an uncertain write. An isolated `response.json` state `pending` variant
+keeps the prepared `ready` assertion unchanged to demonstrate FAIL. No retry/test
+repair. These exercises do not mark designated human H01/H02 complete.
+
+After retaining sanitized evidence, stop only the owned HTTP process and private
+PostgreSQL cluster (`pg_ctl -D OWNED_PGDATA stop`), then remove only owned disposable
+output. Preserve uncertain cleanup instead of claiming it succeeded. The reader's
+advertised missing standalone test suite is pre-existing PGB-103; do not install/
+restore it here or claim it passed. Direct reader regressions/local fallback and
+actual installed-helper acceptance are distinct evidence categories.
+
+## Ask your assistant to queue human findings
+
+After installation, load `<receipt.skills>/request-rework/SKILL.md` and its complete
+example. For example: “For EX-1, F01: searching the exact saved-filter name gives
+no result; F02: the no-match message is unclear. Expected: exact-name results and
+understandable wording under AC-01. Evidence: the supplied current-PR observations.
+I authorize recording these in-scope findings and queueing EX-1 for rework.”
+
+Prepare trusted config, native identity/full stream, current compatible completed QA
+chain, open-PR/evidence reads, configured human actor and direct append/read/transition
+capabilities beforehand. Retained QA does not produce that chain yet; missing
+compatible evidence means inability, not an invented QA completion. No manual card
+drag or extra routine approval is required when the explicit authorization exists.
+Story writing stays separate. Discussion/new scope/stale facts make no queue move.
+Already queued work is inspected without another append or transition; additional
+findings are retained as unrecorded. Unknown publication or transition stops without
+retry. The result distinguishes the recorded request from confirmed queueing; the
+manager later admits A when its separate normal gates pass, while B continues.
+
+[The complete example](../skills/request-rework/references/example.md) supplies exact
+source/installed validation commands and all twelve fixed PREP-01 variants. These
+are synthetic local instruction exercises, not live Jira or completed human
+acceptance. It explains dependency preparation, evidence retention and cleanup.

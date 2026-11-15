@@ -5,10 +5,20 @@
   "description": "Shared Jira delivery skills and deterministic Cursor environment setup",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "validate-work": "node scripts/validate-work.mjs",
+    "validate-handoff": "node scripts/validate-handoff.mjs",
+    "check-config": "node scripts/check-config.mjs"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "canonicalize": "4.0.0",
+    "parse5": "8.0.0",
+    "yaml": "2.9.1"
+  }
 }

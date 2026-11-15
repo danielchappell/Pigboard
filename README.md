@@ -14,6 +14,7 @@ prepared skills; humans review and approve what ships.
 | Install or update the shared skills | [Installation, verification and recovery](docs/install.md) |
 | Contribute to Pigboard | [Agent entry point](AGENTS.md) and [contributor agreement](CONTRIBUTING.md) |
 | Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
+| Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
 The [product specification consolidation](https://github.com/danielchappell/Pigboard/pull/73)
@@ -26,31 +27,38 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Eleven shared skills: Story authoring, implementation, review, writing and QA | In the repository and installation allowlist |
+| Fifteen shared skills: authoring, composed implementation, review, human rework, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
+| Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
-| Manager-driven repairs, separate AI/human test ownership and YAML work contracts | Target contracts under discovery; not the installed worker behavior |
+| Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; revision-bound observations, exact bindings and retained evidence; QA entrypoint/full-loop migration remains pending |
+| Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer receipt handoff is available, QA migration and full-loop acceptance remain pending |
+| Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
+| Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
 installation's settings, not values to copy into a new customer's setup. Each
-assigned Story names one repository allowed by its prepared environment.
+assigned Story or Bug names one repository allowed by its prepared environment.
 
 ## How the installed workflow moves
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens the PR and verifies current CI before In Review. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Known dependency wait goes to Rework Queued; human blockers to Blocked. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
-| Human Review | Responsible developer and human QA reviewer assess the PR before human merge. |
+| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicitly authorized in-scope findings can use request-rework to record and queue the same open PR. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-Confirmed fixes currently return to In Progress on the same PR. Missing access,
+The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. The retained QA entrypoint still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
-Discussion stays in Review or QA. Workers do not select new work, merge, deploy or
+Discussion stays in Review or QA. [request-rework](skills/request-rework/SKILL.md)
+verifies current completed QA, records human findings and queues only that ticket.
+Active work continues; later manager admission remains separate. Workers do not
+select new work, merge, deploy or
 retry blocked work. The planned manager changes admission and repair routing only
 when its coordinated release is implemented and accepted. See the
 [installed workflow](docs/workflow.md) for current contracts.
@@ -78,12 +86,18 @@ An agent consumes its prepared snapshot. Operators change the source pin and
 verify the Build before an authorized activation. A failed Build can leave an
 older snapshot selected.
 
-## Write an executable Story
+## Author an Epic, Story or Bug
 
 Use [write-pr-sized-stories](skills/write-pr-sized-stories/SKILL.md), its
-[installed ticket contract](skills/write-pr-sized-stories/references/pigboard-ticket.md)
+[versioned ticket guide](skills/write-pr-sized-stories/references/pigboard-ticket.md)
 and [examples](skills/write-pr-sized-stories/references/pigboard-example.md).
-The future YAML contract remains in discovery; it does not replace these inputs yet.
+The writer emits full editable YAML with plain prose, separate AI/human cases
+and explicit unresolved inputs. See [authoring and local validation](docs/authoring.md)
+for the Epic route, templates, trusted facts and actual checks. Generic research
+and design remain Tasks. The [implementer composer](skills/implementer-entrypoint/SKILL.md)
+accepts current structured Story/Bug assignments and separates job evidence from
+verified Jira publication. The reviewer uses canonical implementation receipts; only the retained QA entrypoint retains its basic prose contract;
+compatible full-loop execution, manager admission and activation remain later work.
 
 ## Cursor automations
 
@@ -181,3 +195,10 @@ or credentials. Monitoring and duplicate-launch prevention are later work.
 
 Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
 for retained copyright notices. Third-party dependencies retain their own licenses.
+
+The [structured helper guide](docs/using-pigboard.md#prescribed-structured-qa-helpers)
+explains exact inputs, preparation and recovery. API owns one Bruno child;
+PostgreSQL uses parameterized two-hop bindings; UI retains prescribed screenshots.
+Missing prerequisites return inability, demonstrated mismatches return defects.
+Helpers do not move Jira or run human cases. These capabilities do not complete
+PGB-78's retained QA entrypoint migration or activate the mixed delivery loop.
