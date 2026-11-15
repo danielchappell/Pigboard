@@ -10,6 +10,10 @@ an effectiveness improvement in comparative model trials. Installation does not
 activate the mixed worker bundle; the existing release and live-acceptance gates
 still apply.
 
+Use the [evaluation framework](skill-evaluation.md) to retain and compare observed
+results. The [scenario plan](evaluation-scenarios.md) defines the later trials;
+its realistic fixtures and verified model host still need preparation.
+
 ## Which skill does what?
 
 | Skill | Use | Result |
