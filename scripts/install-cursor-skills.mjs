@@ -57,7 +57,7 @@ export async function verifyRelease(receipt) {
   }
   const validatorRoot = path.join(receipt.skills, bundle.validatorPayload.directory);
   const validatorDependencies = JSON.parse(await readFile(path.join(validatorRoot, 'package.json'))).dependencies;
-  if (JSON.stringify(validatorDependencies) !== JSON.stringify({ yaml: '2.9.1', ajv: '8.20.0' })) throw new Error('Validator direct dependencies mismatch.');
+  if (JSON.stringify(validatorDependencies) !== JSON.stringify({ ajv: '8.20.0', 'ajv-formats': '3.0.1', yaml: '2.9.1' })) throw new Error('Validator direct dependencies mismatch.');
   for (const [relative, hash] of Object.entries(manifest.sourceFiles)) {
     const file = path.resolve(receipt.skills, relative);
     if (!inside(receipt.skills, file) || !(await lstat(file)).isFile() || await realpath(file) !== file) throw new Error('Invalid release source path.');

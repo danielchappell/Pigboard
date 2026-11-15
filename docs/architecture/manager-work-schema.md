@@ -2,7 +2,7 @@
 
 The canonical [Epic](../../contracts/epic-v1.schema.json) and
 [ticket](../../contracts/ticket-v1.schema.json) schemas describe structure. The
-[local validator](../authoring.md) checks draft and structural-start modes and ships
+[local validator](../authoring.md) checks draft, complete structure and trusted-context local-start modes and ships
 with the prepared bundle. It does not change the story-writing skill or make a
 ticket ready by itself. The [work contract](manager-work-contract.md)
 owns readiness and authority; this document resolves field types and lists the
@@ -110,8 +110,11 @@ states why no automated regression is applicable; it is never an unexplained nul
 
 ## Validation after structural parsing
 
-These checks are mandatory in the future validator and remain separate from the
-schemas. A schema-valid document is not sufficient to admit work.
+These checks remain separate from JSON Schema. Installed local `start` checks use
+a separately supplied [trusted context](../../contracts/work-validation-context-v1.schema.json)
+for explicit scope, references and operation facts; they perform no provider reads
+or execution. The following list also includes native/admission gates that remain
+future manager work. A schema-valid or locally valid document cannot admit work.
 
 1. **Native facts and scope.** Confirm Jira type, Ready to Work/Rework Queued stage,
    parent, full stream label and allowed project. Resolve the exact repository and
@@ -153,6 +156,25 @@ schemas. A schema-valid document is not sufficient to admit work.
    prerequisite completion, repair lineage and unresolved-intent rules. Parser limits,
    configured scope, live-read completeness and provider checks are independent gates.
 
+Local checks cover declared uniqueness, coverage, references, graph/bindings,
+preparation consumers, approved scope/skills and required ownership/evidence fields.
+Operation facts bind by deep equality to each full step (object order ignored,
+array order preserved); stale facts fail. Explicit read-only/duration/parameter
+facts support database and observation checks; prose does not prove safety or
+expectation quality. Human case IDs remain pending.
+
+Local start also checks a complete, untruncated small-placeholder QA ledger
+projection: 16,384 UTF-8 bytes, depth 16, 100 list entries, 255-character IDs and a
+2,000-character all-human reason. It counts every helper and evidence obligation
+in compact JSON/YAML 1.2 plus a final newline. This deterministic model is not
+actual evidence or a guarantee that longer final records fit. `ledger_budget`
+reports its bytes/counts with `omitted_entries: 0` and
+`actual_publication: "not_evaluated"`; actual publication is checked separately.
+`readiness` always remains `not_evaluated`. Native facts/stable-ID access, stream
+ownership, prerequisite completion and admission in items 1, 2 and 7 require
+separate provider/manager verification. Existing-reference checks establish only
+membership in supplied facts, not live accessibility.
+
 No validation step fetches secrets from ticket text or executes its values. JSON
 Schema checks only data shape; safe YAML parsing, document byte/depth/list budgets,
 semantic validation and live authorization remain required. Reject non-finite
@@ -188,8 +210,9 @@ Validate the schema documents themselves and exercise positive and negative
 structural examples locally. The blank skeletons must parse but fail start
 validation. Mutation cases should reject missing required fields, unknown fields,
 wrong skill sections, invalid alternatives and mixed human/AI dispatch shapes.
-Semantic cases require later semantic validation and provider evidence; local schema
-tests cannot claim them passed.
+Local semantic behavior is covered by the Node semantic/graph suites described in
+[authoring](../authoring.md). Provider evidence, native/admission checks and actual
+publication remain separate; local schema tests cannot claim them passed.
 
 The authoring skill, validators, separate role handoffs, Story/Bug filters and
 worker environment must roll out together with manager writes and delivery
@@ -200,7 +223,7 @@ version. The complete Story set remains subject to owner review before building.
 
 - Intuitive: standard story sections and visible nulls keep editing predictable.
 - Discoverable: exact field types and the remaining semantic checks show what a
-  human must supply and what a future validator must explain.
+  human must supply and what the local validator checks.
 - Delightful: one complete skeleton avoids repeated formatting decisions; the
   detailed case structure is a deliberate cost for deterministic execution.
 - Token saver: fixed dispatch and named references reduce worker inference, while

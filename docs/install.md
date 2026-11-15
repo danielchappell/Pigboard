@@ -17,7 +17,8 @@ outside commands and prompts; never embed credentials in a URL.
 The installer prepares the eleven folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
-Epic/ticket schemas, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0
+Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
+manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 3.0.1
 dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.
@@ -98,8 +99,9 @@ The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all eleven entrypoints,
 `dependencies: "verified"`, and four smoke checks: `pg.Client`, `bru --version`,
 `work-validator epic draft` and `work-validator ticket draft`. The validator checks
-load the real parser and both schemas, require draft-valid skeletons and require
-structural-start false. They do not establish semantic/live readiness.
+load the real parser, semantic modules and schemas, require draft-valid skeletons
+and require structural-start false. These unchanged draft smoke checks do not run
+local start semantics, contact providers or establish live readiness.
 Use the versioned `skills` path for a run that may overlap a refresh; it binds
 subsequent sibling-reference reads to that release. `stableSkills` is a mutable
 entry path for new runs. Do not replace its link while any run still reads through
@@ -118,13 +120,22 @@ root (use `stableSkills` for another root):
 
 ```sh
 node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode draft --input /absolute/work.yaml --json
-node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --context /absolute/facts.yaml --json
 ```
+
+`draft` checks editable structure; `structure` checks complete structure without
+context. `start` additionally requires the separate approved local YAML/JSON facts
+snapshot shown above. Prepare it outside the ticket using the complete context
+example in [authoring](authoring.md); every field is required. Keep operation facts
+bound to the full current step prescriptions. Installation supplies the parser and
+schemas, not those caller facts or permission to execute tests.
 
 See [authoring](authoring.md) for modes, limits, diagnostics and recovery. Keep the
 whole payload with its release; refresh/removal applies to it with the skills.
 Preparation installs dependencies but does not perform installation-only smoke
-checks. Neither result authorizes delivery or proves semantic/live readiness.
+checks. A successful explicit start check proves only the checked local semantics and
+ledger projection. Neither installation nor local validation authorizes delivery,
+proves live readiness or checks actual final evidence publication.
 
 ## Cursor environment setup
 

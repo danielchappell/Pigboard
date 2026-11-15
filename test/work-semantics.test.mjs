@@ -1,0 +1,151 @@
+import { test } from 'node:test';import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,readdir,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';import { stringify } from 'yaml';import Ajv2020 from 'ajv/dist/2020.js';import addFormats from 'ajv-formats';
+import { validateValue,validateWork,parseWork } from '../lib/contracts/work.mjs';import { sizeLedger } from '../lib/contracts/work-semantics.mjs';
+const fixtures=JSON.parse(readFileSync(new URL('./fixtures/work-semantics.json',import.meta.url))),cli=new URL('../scripts/validate-work.mjs',import.meta.url).pathname;
+const clone=(name='mixed')=>structuredClone(fixtures[name]),run=p=>validateValue(p.work,{mode:'start',context:p.context});
+const uriControls=[
+ ['https://example.invalid/repo',true],
+ ['https://example.invalid/saved%20filters',true],
+ ['https://example.invalid/caf%C3%A9',true],
+ ['https://xn--caf-dma.invalid/repo',true],
+ ['https://[2001:db8::1]/repo',true],
+ ['https://example.invalid/a%2Fb?name=one%20two&sort=a#section',true],
+ ['https://example.invalid/raw space',false],
+ ['https://example.invalid/raw\tpath',false],
+ ['https://example.invalid/raw\npath',false],
+ ['https://[2001:db8::1/repo',false],
+ ['https://exa[mple.invalid/repo',false],
+ ['https://example.invalid/%',false],
+ ['https://example.invalid/%2',false],
+ ['https://example.invalid/%GG',false],
+ ['https://example.invalid/café',false],
+ ['https://café.invalid/repo',false],
+];
+const refresh=p=>{for(const o of p.context.operations){const s=p.work.testing_strategy.cases.flatMap(c=>c.steps).find(s=>s.id===o.step);if(s)o.contract=structuredClone(s);}};
+function reject(mutate,code,name='mixed'){const p=clone(name);mutate(p);refresh(p);const r=run(p);assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code===code),JSON.stringify(r.diagnostics));}
+test('H01 mixed and human-only local starts are truthful and immutable',()=>{for(const name of ['mixed','human']){const p=clone(name),before=JSON.stringify(p),r=run(p);assert.equal(r.valid,true);assert.equal(r.validation_scope,'local_start');assert.equal(r.readiness,'not_evaluated');assert.equal(r.start_semantics_valid,true);assert.equal(r.ledger_budget.omitted_entries,0);assert.equal(r.ledger_budget.human_cases,1);assert(!JSON.stringify(r).includes('"PASS"'));assert.equal(JSON.stringify(p),before);}});
+test('H02 explicit structure and draft preserve shape-only contract',()=>{const p=clone();p.work.testing_strategy.dispatch_order=['missing'];for(const mode of ['draft','structure']){const r=validateValue(p.work,{mode});assert(r.valid);assert.equal(r.start_semantics_valid,null);assert.equal(r.ledger_budget,null);}assert.equal(run(p).valid,false);assert.equal(validateValue(p.work,{mode:'start'}).diagnostics[0].path,'/context');});
+test('H02 optional documentary citations remain prose while runtime references and repositories stay trusted',()=>{
+ const citation='docs/supporting/unprepared-contract.md',relatedUrl='https://example.invalid/related';
+ const ticket=clone('human');ticket.work.technical_acceptance_criteria.accepted_decisions=[{id:'D-1',decision:'Keep the reviewed boundary.',reference:citation}];
+ ticket.work.technical_acceptance_criteria.repository.related_repositories=[{url:relatedUrl,responsibility:'Reference-only supporting contract; no related code change.',contract_reference:citation,change_story:null}];
+ ticket.context.repositories.push({url:relatedUrl,base_branches:['main']});assert.deepEqual(ticket.context.references,[]);
+ const epic={work:{schema:'pigboard-epic/v1',problem_to_solve:'Describe the agreed shared outcome.',outcome:'Reviewed work has a clear order.',scope:{included:['The agreed local behavior.'],excluded:[]},workstreams:[{label:'stream-1',story_order:['EX-2']}],accepted_decisions:[{id:'D-1',decision:'Keep the reviewed boundary.',reference:citation}],open_questions:[]},context:structuredClone(ticket.context)};
+ epic.context.prerequisite_graph.push({ticket:'EX-2',prerequisites:[]});
+ for(const pair of [ticket,epic]){const before=JSON.stringify(pair),r=run(pair);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');assert.equal(JSON.stringify(pair),before);assert(!JSON.stringify(r).includes(citation));}
+ for(const [source,path,setBlank]of [
+  [ticket,'/technical_acceptance_criteria/accepted_decisions/0/reference',p=>p.work.technical_acceptance_criteria.accepted_decisions[0].reference=' '],
+  [ticket,'/technical_acceptance_criteria/repository/related_repositories/0/contract_reference',p=>p.work.technical_acceptance_criteria.repository.related_repositories[0].contract_reference=' '],
+  [epic,'/accepted_decisions/0/reference',p=>p.work.accepted_decisions[0].reference=' '],
+ ]){const p=structuredClone(source);setBlank(p);const r=run(p);assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code==='BLANK_CONTENT'&&d.path===path));}
+ const untrustedRepository=structuredClone(ticket);untrustedRepository.context.repositories.pop();assert(run(untrustedRepository).diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path==='/technical_acceptance_criteria/repository/related_repositories/0/url'));
+ const fixture=structuredClone(ticket);fixture.work.testing_strategy.fixtures=[{id:'DATA-citation',description:'A supplied fixture.',initial_state:'Prepared initial state.',reference:citation,preparation_id:null,owner:'Fixture owner'}];assert(run(fixture).diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path==='/testing_strategy/fixtures/0/reference'));
+ const artifact=clone();artifact.work.testing_strategy.cases[0].steps[0].prepared_artifact.reference=citation;refresh(artifact);assert(!artifact.context.references.includes(citation));assert(run(artifact).diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path==='/testing_strategy/cases/0/steps/0/prepared_artifact/reference'));
+});
+test('H02 related changes retain every supplied obligation without turning separate links into execution authority',()=>{
+ const url='https://example.invalid/related',extraUrl='https://example.invalid/another';
+ const base=clone('human');base.context.repositories.push({url,base_branches:['main']},{url:extraUrl,base_branches:['main']});
+ const related=(repository,story)=>({url:repository,responsibility:'Separately owned related work; no second PR in this ticket.',contract_reference:null,change_story:story});
+ base.work.technical_acceptance_criteria.repository.related_repositories=[related(url,'EX-2')];assert.deepEqual(base.context.related_changes,[]);
+ const controls=[
+  ['additional separate link with no required obligation',p=>{},true,null],
+  ['matching required repository and Story',p=>p.context.related_changes=[{repository:url,change_story:'EX-2'}],true,null],
+  ['required pair plus additional separate link',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories.push(related(extraUrl,'EX-3'));},true,null],
+  ['omitted required pair',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories=[];},false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['substituted required Story',p=>{p.context.related_changes=[{repository:url,change_story:'EX-2'}];p.work.technical_acceptance_criteria.repository.related_repositories[0].change_story='EX-3';},false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['substituted required repository',p=>p.context.related_changes=[{repository:extraUrl,change_story:'EX-2'}],false,'/technical_acceptance_criteria/repository/related_repositories'],
+  ['unapproved related repository',p=>p.context.repositories=p.context.repositories.filter(r=>r.url!==url),false,'/technical_acceptance_criteria/repository/related_repositories/0/url'],
+  ['unapproved primary branch remains forbidden',p=>{p.work.technical_acceptance_criteria.repository.url=url;p.work.technical_acceptance_criteria.repository.base_branch='unapproved';},false,'/technical_acceptance_criteria/repository'],
+ ];
+ for(const [name,mutate,expected,path]of controls){const pair=structuredClone(base);mutate(pair);const before=JSON.stringify(pair),r=run(pair);assert.equal(r.valid,expected,name+JSON.stringify(r.diagnostics));if(!expected)assert(r.diagnostics.some(d=>d.code==='TRUSTED_SCOPE'&&d.path===path),name);assert.equal(r.readiness,'not_evaluated');assert.equal(r.ledger_budget.ai_steps,0);assert.deepEqual(pair.context.operations,[]);assert.deepEqual(pair.work.prerequisites,[]);assert.equal(JSON.stringify(pair),before);}
+});
+test('H02 strict JS context and raw YAML/ADF floating provenance remain separate',()=>{for(const format of ['yaml','adf']){const p=clone();p.work.testing_strategy.cases[0].steps[0].inputs.amount='MARK';refresh(p);const raw=stringify(p.work).replace('MARK','1e20'),context=stringify(p.context).replace('MARK','1e20');const input=format==='adf'?JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:raw}]}]}):raw;assert(validateWork(input,{mode:'start',format,contextInput:context}).valid);assert.equal(validateValue(parseWork(raw),{mode:'structure'}).diagnostics[0].code,'NUMBER');const v=clone();v.context.operations[0].contract.inputs.amount=1e20;const r=run(v);assert.equal(r.diagnostics[0].code,'NUMBER');assert.equal(r.diagnostics[0].path,'/context/operations/0/contract/inputs/amount');}});
+const rules=[
+ ['blank prose',p=>p.work.problem_to_solve=' \n','BLANK_CONTENT'],
+ ['blank evidence',p=>p.work.testing_strategy.cases[0].steps[0].evidence=[' '],'BLANK_CONTENT'],
+ ['blank access owner',p=>p.work.testing_strategy.actors[0].access_owner=' ','BLANK_CONTENT'],
+ ['blank screenshot',p=>p.work.testing_strategy.cases[0].steps[3].ui.screenshot_checkpoints=[' '],'BLANK_CONTENT'],
+ ['untrusted repo',p=>p.work.technical_acceptance_criteria.repository.url='other','TRUSTED_SCOPE'],
+ ['untrusted branch',p=>p.work.technical_acceptance_criteria.repository.base_branch='other','TRUSTED_SCOPE'],
+ ['untrusted reference',p=>p.work.testing_strategy.actors[0].identity_reference='other','TRUSTED_SCOPE'],
+ ['uninstalled skill extension',p=>p.context.allowed_skills.push('new-qa-engine'),'TRUSTED_SCOPE'],
+ ['context narrows skill',p=>p.context.allowed_skills=[],'TRUSTED_SCOPE'],
+ ['missing graph node',p=>{p.work.prerequisites=[{ticket:'EX-2',required_outcome:'ai_qa_complete'}];p.context.prerequisite_graph[0].prerequisites=['EX-2'];},'MISSING_REFERENCE'],
+ ['self prerequisite',p=>{p.work.prerequisites=[{ticket:'EX-1',required_outcome:'ai_qa_complete'}];p.context.prerequisite_graph[0].prerequisites=['EX-1'];},'PREREQUISITE_CYCLE'],
+ ['graph cycle',p=>{p.work.prerequisites=[{ticket:'EX-2',required_outcome:'ai_qa_complete'}];p.context.prerequisite_graph[0].prerequisites=['EX-2'];p.context.prerequisite_graph.push({ticket:'EX-2',prerequisites:['EX-1']});},'PREREQUISITE_CYCLE'],
+ ['subject graph mismatch',p=>p.context.prerequisite_graph[0].prerequisites=['EX-2'],'CONTEXT_GRAPH'],
+ ['duplicate graph node',p=>p.context.prerequisite_graph.push(structuredClone(p.context.prerequisite_graph[0])),'DUPLICATE_ID'],
+ ['missing operation',p=>p.context.operations.pop(),'CONTEXT_OPERATION'],
+ ['extra operation',p=>p.context.operations.push({...structuredClone(p.context.operations[0]),step:'extra'}),'CONTEXT_OPERATION'],
+ ['related change obligation',p=>p.context.related_changes=[{repository:'other',change_story:'EX-2'}],'TRUSTED_SCOPE'],
+ ['DB count mismatch',p=>p.context.operations[2].parameter_count=1,'DATABASE_PARAMETERS'],
+ ['DB index range',p=>p.work.testing_strategy.cases[0].steps[2].database.parameter_bindings[0].index=2,'DATABASE_PARAMETERS'],
+ ['DB duplicate position',p=>p.work.testing_strategy.cases[0].steps[2].database.parameter_bindings.push({input:'record_id',index:1}),'DATABASE_PARAMETERS'],
+ ['DB missing input',p=>p.work.testing_strategy.cases[0].steps[2].database.parameter_bindings[0].input='missing','DATABASE_PARAMETERS'],
+ ['DB non-null placeholder',p=>p.work.testing_strategy.cases[0].steps[2].database.parameters[1]='value','DATABASE_PARAMETERS'],
+ ['sync DB mutation',p=>p.context.operations[2].read_only=false,'DATABASE_READ_ONLY'],
+];for(const[name,mutate,code]of rules)test('H02 rejects '+name,()=>reject(mutate,code));
+test('H02 stale context cannot bless changed prescription',()=>{const p=clone();p.work.testing_strategy.cases[0].steps[0].action='Changed operation.';assert(run(p).diagnostics.some(d=>d.code==='CONTEXT_OPERATION'));});
+test('H02 opaque input/SQL strings and supported synchronous API/UI mutations remain valid',()=>{const p=clone();p.work.testing_strategy.cases[0].steps[0].inputs.record_id=' ';p.work.testing_strategy.cases[0].steps[2].database.parameters[0]=' ';p.context.operations[0].read_only=false;p.context.operations[1].read_only=false;p.context.operations[3].read_only=false;refresh(p);assert(run(p).valid);});
+function asyncDb(){const p=clone(),t=p.work.testing_strategy,c=t.cases[0];c.steps=[c.steps[2]];const s=c.steps[0];s.bindings=[];s.inputs.record_id='fixture-1';c.observation={mode:'asynchronous',schedule:[0,25],deadline_seconds:45,step:s.id,completion:'until_expected'};t.dispatch_order=[s.id];t.testing_types=['database'];p.context.operations=[p.context.operations[2]];refresh(p);return p;}
+test('H02 asynchronous observation uses reviewed read-only durations without guessing prose',()=>{const p=asyncDb();assert(run(p).valid,JSON.stringify(run(p).diagnostics));for(const mutate of [q=>q.context.operations[0].read_only=false,q=>q.context.operations[0].max_duration_seconds=19,q=>q.context.operations[0].max_duration_seconds=null,q=>q.work.testing_strategy.cases[0].observation.schedule=[0,10],q=>q.work.testing_strategy.cases[0].observation.schedule=[0,0],q=>q.work.testing_strategy.cases[0].observation.deadline_seconds=44,q=>q.work.testing_strategy.cases[0].observation.step='other']){const q=structuredClone(p);mutate(q);refresh(q);assert(run(q).diagnostics.some(d=>d.code==='OBSERVATION'));}});
+test('H02 context schema fails closed, safely and before semantics',()=>{for(const mutate of [p=>p.context.schema='wrong',p=>p.context.extra='secret',p=>delete p.context.references,p=>p.context.operations[0].max_duration_seconds=0,p=>p.context.operations[2].parameter_count=-1]){const p=clone();mutate(p);const r=run(p);assert(!r.valid);assert(r.diagnostics.every(d=>d.path.startsWith('/context')));}const p=clone();p.work.problem_to_solve=null;const r=validateWork(stringify(p.work),{mode:'start',contextInput:'broken: ['});assert.equal(r.start_structure_valid,false);assert(!r.diagnostics.some(d=>d.path.startsWith('/context')));});
+test('H02 asynchronous API bound covers child without double counting',()=>{const p=clone(),t=p.work.testing_strategy,c=t.cases[0];c.steps=c.steps.slice(0,2);t.testing_types=['api'];t.dispatch_order=['TC-01.S1'];p.context.operations=p.context.operations.slice(0,2);p.context.operations[0].max_duration_seconds=5;p.context.operations[1].max_duration_seconds=4;c.observation={mode:'asynchronous',schedule:[0,5],deadline_seconds:10,step:'TC-01.S1',completion:'all_observations'};refresh(p);assert(run(p).valid);p.context.operations[1].max_duration_seconds=6;assert(run(p).diagnostics.some(d=>d.code==='OBSERVATION'));});
+test('H03 deterministic complete-ledger byte boundary and multi-evidence retention',()=>{const p=clone();const step=p.work.testing_strategy.cases[0].steps[0];step.evidence.push('Second evidence obligation.');let r=run(p); // intentionally stale until refreshed
+ refresh(p);r=run(p);assert(r.valid);const before=r.ledger_budget.projection_bytes;step.id+='x'.repeat(20); // size-only oracle independent of graph
+ assert.equal(sizeLedger(p.work).ledger_budget.projection_bytes,before+20);
+ const h=clone('human');const base=sizeLedger(h.work).ledger_budget.projection_bytes;
+ // Pad human identifiers within 255 chars over many cases to reach 16KiB without violating other limits.
+ const template=h.work.testing_strategy.human_review.cases[0];h.work.testing_strategy.human_review.cases=Array.from({length:65},(_,i)=>({...structuredClone(template),id:'H'+i+'x'.repeat(200)}));let size=sizeLedger(h.work).ledger_budget.projection_bytes;
+ while(size>16384){h.work.testing_strategy.human_review.cases.pop();size=sizeLedger(h.work).ledger_budget.projection_bytes;}
+ let remaining=16384-size;for(const c of h.work.testing_strategy.human_review.cases){const n=Math.min(255-c.id.length,remaining);c.id+='x'.repeat(n);remaining-=n;}if(remaining){h.work.testing_strategy.human_review.no_ai_cases_reason+='x'.repeat(remaining);}assert.equal(sizeLedger(h.work).ledger_budget.projection_bytes,16384);assert.equal(run(h).valid,true);h.work.testing_strategy.human_review.no_ai_cases_reason+='x';const over=run(h);assert(!over.valid);assert(over.diagnostics.some(d=>d.code==='LEDGER_BYTES'));assert.equal(over.ledger_budget.omitted_entries,0);assert.equal(over.ledger_budget.human_cases,h.work.testing_strategy.human_review.cases.length);
+ const count=clone();const all=Array(101).fill(count.work.testing_strategy.cases[0].steps[0]);assert(sizeLedger(count.work,all).diagnostics.some(d=>d.code==='LEDGER_LIST'));assert(base>0);
+});
+test('H03 publication field bounds and earlier reachable parser/context limits stay distinct',()=>{reject(p=>p.work.testing_strategy.human_review.cases[0].id='h'.repeat(256),'LEDGER_FIELD','human');reject(p=>p.work.testing_strategy.human_review.no_ai_cases_reason='r'.repeat(2001),'LEDGER_FIELD','human');const p=clone();p.context.operations=Array(101).fill(p.context.operations[0]);const r=run(p);assert.equal(r.diagnostics[0].code,'LIST_LIMIT');assert.equal(r.ledger_budget,null);assert.equal(r.diagnostics[0].path,'/context/operations');});
+test('H03 copied repository handoff bounds retain the complete ledger with matching trusted context',()=>{
+ const prefix='https://example.invalid/';
+ const cases=[
+  {url:prefix+'a'.repeat(2048-prefix.length),valid:true},
+  {url:prefix+'a'.repeat(2049-prefix.length),valid:false,reason:/at most 2048 characters/},
+  {url:'ssh://example.invalid/repo',valid:false,reason:/HTTPS repository URL/},
+  {url:'http://example.invalid/repo',valid:false,reason:/HTTPS repository URL/},
+ ];
+ for(const name of ['mixed','human'])for(const {url,valid,reason}of cases){
+  const p=clone(name);p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;
+  const r=run(p);assert.equal(r.valid,valid);assert.equal(r.start_structure_valid,true);assert.equal(r.start_semantics_valid,valid);
+  assert.equal(r.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(r.ledger_budget.human_cases,1);assert.equal(r.ledger_budget.omitted_entries,0);
+  assert.equal(r.ledger_budget.actual_publication,'not_evaluated');
+  if(!valid){assert.equal(r.diagnostics.length,1);assert.equal(r.diagnostics[0].code,'LEDGER_FIELD');assert.equal(r.diagnostics[0].path,'/technical_acceptance_criteria/repository/url');assert.match(r.diagnostics[0].message,reason);}
+ }
+});
+test('H03 URI lexical syntax rejects malformed original strings without normalization',()=>{
+ for(const name of ['mixed','human'])for(const [url,expected]of uriControls){const p=clone(name);p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;const before=JSON.stringify(p),r=run(p);assert.equal(r.valid,expected,JSON.stringify({url,diagnostics:r.diagnostics}));assert.equal(JSON.stringify(p),before);assert.equal(r.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(r.ledger_budget.human_cases,1);assert.equal(r.ledger_budget.omitted_entries,0);if(!expected)assert(r.diagnostics.some(d=>d.code==='LEDGER_FIELD'&&d.path==='/technical_acceptance_criteria/repository/url'&&d.message.includes('valid URI')));}
+});
+test('H03 independent full-envelope oracle matches design schema and byte projection',()=>{
+ const w=clone().work,uuid='00000000-0000-4000-8000-000000000000',digest='sha256:'+'0'.repeat(64),ref={ticket_id:'0',comment_id:'0',record_id:uuid,digest};
+ const records=w.testing_strategy.cases.flatMap(c=>c.steps).map(s=>({id:s.id,skill:s.skill,result:'PASS',evidence:s.evidence.map((_,j)=>({label:`e${j+1}`,uri:`https://e.invalid/${j+1}`,digest:null})),finding_ids:[],not_run_reason:null,reused_from:null}));
+ const oracle={schema:'pigboard-handoff/v1',record_id:uuid,operation_id:uuid,ticket_id:'0',requirements_digest:digest,assignment:ref,role:'qa',kind:'qa',from_stage:'QA',to_stage:'Human Review',payload:{review:ref,pr:{provider:'github',repository:w.technical_acceptance_criteria.repository.url,number:'0',source_revision:'0'.repeat(40),target_branch:'a'},report:{steps:records,human_pending:w.testing_strategy.human_review.cases.map(c=>c.id),no_ai_cases_reason:null}},resume_authorization:null};
+ const schema=JSON.parse(readFileSync(new URL('../docs/architecture/contracts/pigboard-handoff-v1.schema.json',import.meta.url)));const ajv=new Ajv2020({strict:false});addFormats(ajv,{mode:'full',formats:['uri','uuid']});const validate=ajv.compile(schema);assert(validate(oracle),JSON.stringify(validate.errors));
+ assert.equal(sizeLedger(w).ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(oracle)+'\n'));assert.equal(records.length,4);assert.equal(records[1].skill,'qa-bruno');
+ for(const [repository,expected]of uriControls){const envelope=structuredClone(oracle);envelope.payload.pr.repository=repository;assert.equal(validate(envelope),expected,repository);if(!expected)assert(validate.errors.some(e=>e.keyword==='format'&&e.instancePath==='/payload/pr/repository'));const work=structuredClone(w);work.technical_acceptance_criteria.repository.url=repository;assert.equal(sizeLedger(work).ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(envelope)+'\n'));}
+ const invalidUuid=structuredClone(oracle);invalidUuid.record_id='invalid';assert.equal(validate(invalidUuid),false);assert(validate.errors.some(e=>e.keyword==='format'&&e.instancePath==='/record_id'));
+
+ // Independently verify every carried repository boundary against the complete
+ // current handoff schema, rather than reproducing the product guard.
+ const prefix='https://example.invalid/';
+ for(const [repository,valid,keyword]of [[prefix+'a'.repeat(2048-prefix.length),true,null],[prefix+'a'.repeat(2049-prefix.length),false,'maxLength'],['ssh://example.invalid/repo',false,'pattern']]){
+  const envelope=structuredClone(oracle);envelope.payload.pr.repository=repository;
+  assert.equal(validate(envelope),valid,JSON.stringify(validate.errors));
+  if(!valid)assert(validate.errors.some(e=>e.keyword===keyword&&e.instancePath==='/payload/pr/repository'));
+  const work=structuredClone(w);work.technical_acceptance_criteria.repository.url=repository;
+  const sized=sizeLedger(work);assert.equal(sized.diagnostics.length===0,valid);assert.equal(sized.ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(envelope)+'\n'));
+ }
+
+});
+test('H01/H02 actual CLI preserves local files and reports modes/context exits',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));const p=clone(),work=path.join(dir,'work.json'),context=path.join(dir,'facts.json');await writeFile(work,JSON.stringify(p.work));await writeFile(context,JSON.stringify(p.context));const before=await readdir(dir);const command=(args)=>{const c=spawnSync(process.execPath,[cli,...args,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});return {...c,result:JSON.parse(c.stdout)};};let c=command(['--mode','start','--input',work,'--context',context]);assert.equal(c.status,0);assert.equal(c.result.valid,true);for(const args of [['--mode','start','--input',work],['--mode','draft','--input',work,'--context',context],['--mode','start','--input',work,'--context',context,'--context',context]])assert.equal(command(args).status,2);await writeFile(context,'unknown: [');c=command(['--mode','start','--input',work,'--context',context]);assert.equal(c.status,2);assert(c.result.diagnostics[0].path.startsWith('/context'));assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(work,'utf8'),JSON.stringify(p.work));});
+
+test('H01 actual local-start CLI has no filesystem writes, network or subprocess effects',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-audit-'));t.after(()=>rm(dir,{recursive:true,force:true}));const p=clone(),work=path.join(dir,'work.json'),context=path.join(dir,'facts.json'),guard=path.join(dir,'guard.mjs');const inputs=[JSON.stringify(p.work),JSON.stringify(p.context)];await writeFile(work,inputs[0]);await writeFile(context,inputs[1]);
+ await writeFile(guard,`import fs from 'node:fs';import fsp from 'node:fs/promises';import http from 'node:http';import https from 'node:https';import net from 'node:net';import tls from 'node:tls';import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';let attempts=0;const deny=()=>{attempts++;throw Error('unexpected effect');};for(const api of [fs,fsp])for(const key of ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'])for(const name of [key,key+'Sync'])if(typeof api[name]==='function')api[name]=deny;const original=fsp.open;fsp.open=async(...args)=>{if(args[1]!==undefined&&args[1]!==0&&args[1]!==fs.constants.O_NONBLOCK&&args[1]!=='r')deny();const h=await original(...args);for(const key of ['write','writeFile','appendFile','writev','truncate','chmod','chown'])h[key]=deny;return h;};for(const api of [http,https])for(const key of ['request','get'])api[key]=deny;for(const api of [net,tls])for(const key of ['connect','createConnection','createServer'])if(api[key])api[key]=deny;for(const key of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[key]=deny;globalThis.fetch=deny;syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('AUDIT attempts='+attempts+'\\n'));`);
+ const before=await readdir(dir),command=spawnSync(process.execPath,['--import',guard,cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(JSON.parse(command.stdout).valid,true);assert.equal(command.stderr,'AUDIT attempts=0\n');assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(work,'utf8'),inputs[0]);assert.equal(await readFile(context,'utf8'),inputs[1]);});
+
+test('H03 actual source CLI checks original repository URI syntax and leaves both inputs unchanged',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-uri-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));const work=path.join(dir,'work.json'),context=path.join(dir,'facts.json');for(const url of ['https://example.invalid/a%20b','https://example.invalid/raw space']){const p=clone();p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;const before=[JSON.stringify(p.work),JSON.stringify(p.context)];await writeFile(work,before[0]);await writeFile(context,before[1]);const command=spawnSync(process.execPath,[cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000}),result=JSON.parse(command.stdout);assert.equal(command.status,url.includes('%20')?0:1);assert.equal(result.valid,url.includes('%20'));assert.equal(result.ledger_budget.ai_steps,4);assert.equal(result.ledger_budget.human_cases,1);assert.equal(result.ledger_budget.omitted_entries,0);if(!result.valid)assert(result.diagnostics.some(d=>d.code==='LEDGER_FIELD'&&d.path==='/technical_acceptance_criteria/repository/url'));assert.equal(await readFile(work,'utf8'),before[0]);assert.equal(await readFile(context,'utf8'),before[1]);}});

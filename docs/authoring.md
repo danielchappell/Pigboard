@@ -1,7 +1,8 @@
 # Check an editable Epic or ticket
 
-This local command checks structure only. It never reads Jira, changes a file,
-starts a worker, computes a digest, or establishes semantic/live readiness. The
+This local command checks editable structure and, with separately supplied trusted
+facts, local start semantics. It never reads Jira, changes a file, starts a worker,
+computes a digest, executes tests or establishes live readiness. The
 existing writing skill still uses its installed contract; the structured writer
 and complete manager release are separate work.
 
@@ -12,7 +13,8 @@ Use Node.js 20+. For a source checkout, prepare the locked dependencies once wit
 
 ```sh
 node scripts/validate-work.mjs --mode draft --input docs/architecture/examples/manager-ticket.yaml
-node scripts/validate-work.mjs --mode start --input docs/architecture/examples/manager-ticket-populated.yaml --json
+node scripts/validate-work.mjs --mode structure --input docs/architecture/examples/manager-ticket-populated.yaml --json
+node scripts/validate-work.mjs --mode start --input /absolute/work.yaml --context /absolute/facts.yaml --json
 node scripts/validate-work.mjs --help
 ```
 
@@ -21,7 +23,7 @@ receipt. Replace `/absolute/receipt/skills` and the work-file path below:
 
 ```sh
 node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode draft --input /absolute/work.yaml --json
-node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --json
+node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/work.yaml --context /absolute/facts.yaml --json
 ```
 
 The second command uses the default stable installation. For another install root,
@@ -46,20 +48,25 @@ present. Use explicit `null` for unresolved values and `[]` for an empty list.
 Non-null supplied values must have the declared type/enum; use null rather than
 an empty string. Unknown fields fail, including misspellings inside skill sections.
 Draft permits incomplete alternatives, empty lists and open questions; it does
-not certify a populated plan. `start` enforces all canonical structural constraints,
+not certify a populated plan. `structure` enforces all canonical structural constraints,
 including required values, alternatives and no open questions. Optional nulls stay
-visible and pass where prescribed. Both modes enforce the same safe value domain.
+visible and pass where prescribed. `start` adds local semantic checks and requires
+`--context FILE`. All three modes enforce the same safe value domain. Context is
+rejected in draft/structure mode.
 
 The canonical [Epic](../contracts/epic-v1.schema.json) and
 [ticket](../contracts/ticket-v1.schema.json) schemas are JSON Schema 2020-12.
-Draft rules are projected from them, not a second field inventory. Semantic
-uniqueness, coverage, reference/dispatch/binding graphs, whitespace-only prose,
-installed-skill/customer authority, publication sizing and native readiness are
-not evaluated here. A shape-valid document may still fail those later checks.
+Draft rules are projected from them, not a second field inventory. Local start checks add uniqueness, AC/TAC coverage, reference/dispatch/binding
+graphs, nonblank prose, preparation consumers, supplied scope and installed-skill
+allowlists, observation/read-only/duration facts, ownership/cleanup/evidence
+requirements and complete-ledger sizing. They check explicit declarations, not
+the adequacy of natural-language expectations or observed permissions. Native
+state, provider access, admission, prerequisite completion and actual evidence
+publication remain separate gates.
 
 ## Input, limits and diagnostics
 
-Supply `--mode draft|start --input FILE`; `--format yaml` is the default. Input must
+Supply `--mode draft|structure|start --input FILE`; `--format yaml` is the default. Input must
 be one local regular file, never a URL or stdin. Options cannot repeat; unknown
 options and extra arguments fail. A filename beginning with `-` is accepted as an
 input option value. Values are never executed or interpolated.
@@ -98,14 +105,150 @@ Issue wrappers, HTML and Markdown-fence extraction are unsupported.
 
 JSON mode prints exactly one `pigboard-work-validation/v1` object. `valid` is the
 selected mode; `draft_valid` and `start_structure_valid` report both checks or null
-when unavailable. `readiness` is always `not_evaluated`. `diagnostics` contains
+when unavailable. `start_semantics_valid` is boolean or null; `validation_scope` is `draft`,
+`structure` or `local_start`. `ledger_budget` is null or the sizing summary below.
+`readiness` is always `not_evaluated`. `diagnostics` contains
 selected-mode failures. In draft mode, `start_diagnostics` lists remaining structure
-work; in start mode that array is empty to avoid duplication. Each diagnostic has
+work; in structure/start modes that array is empty to avoid duplication. Each diagnostic has
 a stable code, JSON Pointer path and safe reason, with line/column or zero-based
 ADF block index when known. Root is `""`; `~0` and `~1` escape key characters.
 Human output safely quotes paths. No values, source snippets or stack traces are
 printed. Fix the named field, then rerun; the input stays unchanged. Exit 0 means
-selected-mode validity/help, 1 invalid work, 2 usage/read/setup/internal failure.
+selected-mode validity/help, 1 invalid work, 2 usage/read/setup/invalid-context/internal failure. Context
+diagnostics use `/context/...`; structural failures are reported before semantics.
+
+## Prepare trusted local facts
+
+The caller supplies a separate YAML or JSON file matching the closed
+[context schema](../contracts/work-validation-context-v1.schema.json). Every field
+is required; use `[]` for inapplicable collections and null only where permitted.
+It is an invocation snapshot from approved setup/review, not customer configuration,
+a freshness guarantee or authority supplied by the work document. Never copy ticket
+claims into it as permission. Do not put secrets in either file. Context uses the
+same safe parser and 65,536-byte/depth-32/list-100 bounds as work; `--format adf`
+selects only the work encoding, not context extraction.
+
+This complete context matches the synthetic all-human fixture below:
+
+```yaml
+schema: pigboard-work-validation-context/v1
+subject_key: EX-1
+repositories:
+  - url: https://example.invalid/example/application
+    base_branches: [main]
+allowed_skills: []
+configured_targets: [local-review]
+references: []
+prerequisite_graph:
+  - ticket: EX-1
+    prerequisites: []
+related_changes: []
+operations: []
+```
+
+For mixed plans, supply exact approved repository/branch pairs, targets, references,
+the complete reachable prerequisite graph and related-change Story obligations.
+`context.related_changes` lists caller-supplied obligations: every supplied
+`(repository, change_story)` pair must appear unchanged in the work's related
+repositories. `[]` supplies no required obligation. This is not a complete approval
+list of separate work: a ticket may name additional separate Stories in already
+allowed repositories, subject to normal scope review. Those links grant no extra
+writes, second PR, launch or completion authority, and this local check does not
+prove that the linked tickets exist or are approved. Prerequisites are independent:
+when linked work is a dependency, declare it in `prerequisites` and the matching
+reachable graph; a `change_story` link alone is neither a dependency edge nor proof
+of its completion.
+
+`context.references` checks exact prepared values for actor `identity_reference`,
+fixture `reference`, step `prepared_artifact.reference`, database `access_reference`
+and a supplied-default UI viewport `reference`. Repository/branch and configured
+location checks use `repositories` and `configured_targets` instead.
+
+Related repositories' optional `contract_reference` and ticket/Epic accepted
+decisions' optional `reference` fields are supporting citations. They need not
+appear in `context.references`; supplied text must still be nonblank. These
+citations do not grant access, approve a source, override instructions or become
+URLs to fetch. A successful local check does not prove the source exists, is
+current or supports the decision; authors and reviewers still assess that content.
+Reusing a citation as a fixture, prepared artifact or other runtime reference
+requires the corresponding prepared-context membership above.
+
+Allowed QA skills are intersected with the installed manifest; context cannot add
+an uninstalled engine. Each AI step, including a Bruno child, needs an operation
+fact with `step`, `contract`, `read_only`, `max_duration_seconds` and
+`parameter_count`. `contract` is the complete corresponding step object: object
+key order is irrelevant, array order matters. Changed work requires newly reviewed
+matching facts; a reused step ID cannot reuse stale authority. Duration is a
+positive finite bound where needed, otherwise null; parameter count is the reviewed
+SQL layout count for database steps, otherwise null. Read-only is an explicit
+boolean, never inferred from GET or prose. Database operations must be read-only;
+asynchronous operations also need reviewed read-only and duration facts.
+
+Fix work errors at the named field. Missing scope, access references or operation
+facts require the caller to prepare the context. Do not widen ticket text to grant
+authority. Local checks do not fetch a referenced artifact or verify credentials.
+All-human plans still need coverage, scope, ownership, cleanup and ledger checks;
+a configured non-runtime review target needs no invented deployment receipt.
+Their human cases remain pending, never automated passes.
+
+## Complete-ledger budget
+
+The repository URL copied into the sizing envelope must be a valid URI beginning
+with `https://` and at most 2,048 characters. Percent-encode spaces and non-ASCII
+path characters (for example, `/saved%20filters` or `/caf%C3%A9`); use an ASCII
+punycode hostname where needed. Invalid text is rejected at the repository field
+without normalization. This syntax check does not contact or establish access to
+the repository.
+
+Local start expands every AI step (including nested helpers), every human case ID
+and every prescribed step evidence entry without truncation. It checks the handoff
+bounds: 16,384 UTF-8 bytes, container depth 16, 100 entries per list, IDs up to 255
+characters and an all-human reason up to 2,000 characters. Parser/context bounds
+can reject a document before this phase; that is not a ledger validation result.
+
+The deterministic byte projection is the complete QA envelope in compact JSON
+(a supported YAML 1.2 encoding), with one final newline. It uses fixed small valid
+assignment/review/PR placeholders and one distinct nonempty placeholder per evidence
+obligation. It is a sizing model, never a report, evidence or test PASS. It is not a
+minimum over every YAML spelling. Longer real values may fail: actual final records
+must be checked again at publication. This command does not publish them.
+
+The summary is `ledger_budget` with `encoding: "json-yaml-1.2"`,
+`projection_bytes`, `limit_bytes: 16384`, `ai_steps`, `human_cases`,
+`omitted_entries: 0` and `actual_publication: "not_evaluated"`. An overflow names
+the affected count/field/budget; rescope through the normal Story process rather
+than omitting cases or splitting automatically.
+
+## Mechanical preparation for R1-02-H01, H02 and H03
+
+These three cases remain human-owned and pending until their owners execute them.
+Developer tests and agent verification cannot claim a human PASS. From the reviewed
+source checkout, prepare disposable mixed and all-human YAML/JSON inputs:
+
+```sh
+node --input-type=module -e 'import fs from "node:fs"; import os from "node:os"; import path from "node:path"; import YAML from "yaml"; const fixtures=JSON.parse(fs.readFileSync("test/fixtures/work-semantics.json","utf8")); const dir=fs.mkdtempSync(path.join(os.tmpdir(),"pgb72-human-")); for(const name of ["mixed","human"]) for(const kind of ["work","context"]) { const value=fixtures[name][kind]; fs.writeFileSync(path.join(dir,`${name}-${kind}.json`),JSON.stringify(value)+"\n"); fs.writeFileSync(path.join(dir,`${name}-${kind}.yaml`),YAML.stringify(value)); } console.log(dir);'
+```
+
+Use the printed directory as `/absolute/fixture-directory` in these commands:
+
+```sh
+node scripts/validate-work.mjs --mode start --input /absolute/fixture-directory/mixed-work.yaml --context /absolute/fixture-directory/mixed-context.yaml --json
+node scripts/validate-work.mjs --mode start --input /absolute/fixture-directory/human-work.json --context /absolute/fixture-directory/human-context.json --json
+node --test test/work-semantics.test.mjs test/case-graph.test.mjs
+```
+
+H01 checks valid mixed/all-human plans and paired coverage, human/child dispatch
+and unsupported-skill mutations. H02 exercises namespace/reference/order/binding,
+preparation, parameter-layout, trusted-operation, observation and ownership failures
+with valid controls. It includes a synchronous database read-only pair with matching
+operation contracts, so stale-context rejection cannot mask the read-only rule.
+H03 checks exact/+1 projected bytes, complete IDs/evidence obligations, reachable
+field/list bounds and isolated sizing guards. More than 100 operation facts fail
+the earlier context limit; that CLI ledger-overflow variant is unreachable and must
+not be recorded as a ledger PASS. Tests distinguish isolated sizing coverage from
+reachable CLI checks. Save complete output, exit statuses, tested revision and
+before/after fixture evidence. Retain evidence before removing disposable files.
+Neither these commands nor installation tests contact providers or execute cases.
 
 ## Mechanical preparation for R1-01-H01 and H02
 
@@ -117,7 +260,7 @@ node --test test/work-syntax.test.mjs
 node --test test/skill-distribution.test.mjs test/cursor-environment.test.mjs
 ```
 
-The named H01 tests run all four reviewed examples in both modes and formats of
+The named H01 tests run all four reviewed examples in draft/structure modes and formats of
 output, fill exactly the first missing acceptance requirement in a disposable
 copy, compare input bytes, and report the disappearing field error. H02 tests build
 separate syntax/value/byte/depth/list/ADF fixtures, run the actual CLI with guarded
@@ -127,9 +270,9 @@ output, tested PR revision and fixture before/after evidence before cleanup.
 Installation tests use real copied parser/schema runtime packages offline; helper
 service packages are simulated. They do not prove live providers.
 
-For manual inspection run the three source commands above on all four example
-paths, replacing `draft` with `start` and adding/removing `--json`. Keep the
+For manual structural inspection run the source draft command on all four example
+paths, replacing `draft` with `structure` and adding/removing `--json`. Keep the
 complete output and exit status. Copy a skeleton to a disposable directory, fill
-only `acceptance_criteria[0].requirement`, rerun both modes and compare that exact
+only `acceptance_criteria[0].requirement`, rerun draft/structure modes and compare that exact
 path with remaining failures. The validator writes nothing. Retain evidence, then
 remove disposable fixtures/build outputs without changing live records/resources.

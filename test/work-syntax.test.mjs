@@ -21,10 +21,10 @@ function withValue(value,section='inputs') { const v=structuredClone(populated);
 test('H01 all four reviewed examples: draft/start readable/JSON and zero input changes',async t=>{
  for(const kind of ['epic','ticket','epic-populated','ticket-populated']) {
   const text=await example(kind), file=path.join(root,`docs/architecture/examples/manager-${kind}.yaml`);
-  for(const mode of ['draft','start']) for(const json of [false,true]) {
+  for(const mode of ['draft','structure']) for(const json of [false,true]) {
    const p=spawnSync(process.execPath,[cli,'--mode',mode,'--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});
-   assert.equal(p.status,mode==='start'&&!kind.includes('populated')?1:0,kind+' '+p.stdout+p.stderr);
-   if(json){const r=JSON.parse(p.stdout);assert.equal(r.readiness,'not_evaluated');assert.equal(r.start_structure_valid,kind.includes('populated'));assert.equal(r.valid,mode==='draft'||kind.includes('populated'));if(mode==='start')assert.deepEqual(r.start_diagnostics,[]);}
+   assert.equal(p.status,mode==='structure'&&!kind.includes('populated')?1:0,kind+' '+p.stdout+p.stderr);
+   if(json){const r=JSON.parse(p.stdout);assert.equal(r.readiness,'not_evaluated');assert.equal(r.start_structure_valid,kind.includes('populated'));assert.equal(r.valid,mode==='draft'||kind.includes('populated'));if(mode==='structure')assert.deepEqual(r.start_diagnostics,[]);}
    else assert.match(p.stdout,/Structure only; semantic and live readiness are not evaluated/);
   }
   assert.equal(await readFile(file,'utf8'),text);
@@ -51,13 +51,13 @@ test('H01 canonical schemas moved; required keys, nulls, unknown fields and clos
  }
  const v=parseWork(skeleton);delete v.technical_acceptance_criteria.repository.url;assert.equal(validateValue(v).valid,false);
  v.technical_acceptance_criteria.repository.url=12;assert.equal(validateValue(v).valid,false);
- const c=structuredClone(populated);c.problem_to_solve=null;assert(validateValue(c).valid);assert(!validateValue(c,{mode:'start'}).valid);
- assert.equal(validateValue(populated,{mode:'start'}).valid,true);
+ const c=structuredClone(populated);c.problem_to_solve=null;assert(validateValue(c).valid);assert(!validateValue(c,{mode:'structure'}).valid);
+ assert.equal(validateValue(populated,{mode:'structure'}).valid,true);
  const q=parseWork(skeleton);q.open_questions=[{question:null,owner:null}];assert(validateValue(q).valid);delete q.open_questions[0].owner;assert(!validateValue(q).valid);
 });
 test('H01 human-only ticket and semantic-invalid shape remain correctly bounded',async()=>{
- const human=JSON.parse(await readFile(path.join(root,'docs/delivery/manager-r1/ticket-drafts.json')))[0].contract;assert.equal(validateValue(human,{mode:'start'}).valid,true);
- for(const mutate of [v=>v.acceptance_criteria.push(structuredClone(v.acceptance_criteria[0])),v=>v.testing_strategy.dispatch_order[0]='nonexistent',v=>v.problem_to_solve='   ']){const v=structuredClone(populated);mutate(v);assert.equal(validateValue(v,{mode:'start'}).valid,true);}
+ const human=JSON.parse(await readFile(path.join(root,'docs/delivery/manager-r1/ticket-drafts.json')))[0].contract;assert.equal(validateValue(human,{mode:'structure'}).valid,true);
+ for(const mutate of [v=>v.acceptance_criteria.push(structuredClone(v.acceptance_criteria[0])),v=>v.testing_strategy.dispatch_order[0]='nonexistent',v=>v.problem_to_solve='   ']){const v=structuredClone(populated);mutate(v);assert.equal(validateValue(v,{mode:'structure'}).valid,true);}
 });
 test('H01 CLI numeric bound failures name the inclusive limit and exact field in readable and JSON output',async t=>{
  const dir=await fixture(t), file=path.join(dir,'numeric-bound.yaml');
@@ -66,7 +66,7 @@ test('H01 CLI numeric bound failures name the inclusive limit and exact field in
  for(const [pointer,key,bad,code,message] of [[status,'expected_status',99,'MINIMUM','Supply a number greater than or equal to 100.'],[rows,'max_rows',201,'MAXIMUM','Supply a number less than or equal to 200.']]) {
   const value=structuredClone(populated);field(value,pointer)[key]=bad;value.problem_to_solve='PRIVATE_WORK_TEXT_MUST_NOT_BE_ECHOED';const input=stringify(value);await writeFile(file,input);
   for(const json of [false,true]) {
-   const command=spawnSync(process.execPath,[cli,'--mode','start','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,1);assert.equal(command.stderr,'');assert(!command.stdout.includes('PRIVATE_WORK_TEXT_MUST_NOT_BE_ECHOED'));
+   const command=spawnSync(process.execPath,[cli,'--mode','structure','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,1);assert.equal(command.stderr,'');assert(!command.stdout.includes('PRIVATE_WORK_TEXT_MUST_NOT_BE_ECHOED'));
    if(json){const result=JSON.parse(command.stdout);assert.equal(result.valid,false);assert.equal(result.start_structure_valid,false);assert(result.diagnostics.some(d=>d.path===pointer&&d.code===code&&d.message===message));}
    else assert(command.stdout.includes(`${code} ${JSON.stringify(pointer)}: ${message}`));
   }
@@ -75,8 +75,8 @@ test('H01 CLI numeric bound failures name the inclusive limit and exact field in
  for(const [pointer,key,boundary] of [[status,'expected_status',100],[status,'expected_status',599],[rows,'max_rows',1],[rows,'max_rows',200]]) {
   const value=structuredClone(populated);field(value,pointer)[key]=boundary;await writeFile(file,stringify(value));
   for(const json of [false,true]) {
-   const command=spawnSync(process.execPath,[cli,'--mode','start','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(command.stderr,'');
-   if(json){const result=JSON.parse(command.stdout);assert.equal(result.valid,true);assert.equal(result.start_structure_valid,true);assert.deepEqual(result.diagnostics,[]);}else assert.match(command.stdout,/^Valid start structure/);
+   const command=spawnSync(process.execPath,[cli,'--mode','structure','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(command.stderr,'');
+   if(json){const result=JSON.parse(command.stdout);assert.equal(result.valid,true);assert.equal(result.start_structure_valid,true);assert.deepEqual(result.diagnostics,[]);}else assert.match(command.stdout,/^Valid structure structure/);
   }
  }
 });
@@ -90,7 +90,7 @@ test('H02 nested inputs/SQL values: integer literals, nonfinite values, Unicode,
  for(const section of ['inputs','parameters']) for(const literal of ['.nan','.inf','-.inf','1e309','9007199254740992','-9007199254740992','0x20000000000000','0o400000000000000000']) {
   const text=stringify(withValue('MARK',section)).replace('MARK',literal);const r=validateWork(text);assert.equal(codeOf(r),'NUMBER',section+' '+literal);assert(r.diagnostics[0].path.includes(section==='inputs'?'/inputs/value':'/parameters/0'));
  }
- for(const literal of ['9007199254740991','-9007199254740991','0x1fffffffffffff','0o377777777777777777','1.5','1e20','1.7976931348623157e308']) { const text=stringify(withValue('MARK')).replace('MARK',literal);assert.equal(validateWork(text,{mode:'start'}).valid,true,literal); }
+ for(const literal of ['9007199254740991','-9007199254740991','0x1fffffffffffff','0o377777777777777777','1.5','1e20','1.7976931348623157e308']) { const text=stringify(withValue('MARK')).replace('MARK',literal);assert.equal(validateWork(text,{mode:'structure'}).valid,true,literal); }
  for(const literal of ['"\\uD800"','"\\uDC00"']) assert.equal(codeOf(validateWork(stringify(withValue('MARK')).replace('MARK',literal))),'UNICODE');
  assert.equal(codeOf(validateWork('"\\uD800": x')),'UNICODE');
  assert.equal(validateValue(withValue('😀')).valid,true);
@@ -106,42 +106,42 @@ test('H02 public JS numeric guards are strict without a caller-selectable raw-nu
   const field=section==='inputs'?'/testing_strategy/cases/0/steps/0/inputs/value':'/testing_strategy/cases/0/steps/2/database/parameters/0';
   for(const options of [{},{strictNumbers:false,allowUnsafeIntegers:true,trusted:true,parsed:true,astVerified:true}]) {
    assert.throws(()=>checkValue(value,options,false),error=>error.diagnostic?.code==='NUMBER'&&error.diagnostic.path===field);
-   const result=validateValue(value,{mode:'start',...options},false);assert.equal(result.valid,false);assert.equal(codeOf(result),'NUMBER');assert.equal(result.diagnostics[0].path,field);assert.equal(result.draft_valid,null);assert.equal(result.start_structure_valid,null);
+   const result=validateValue(value,{mode:'structure',...options},false);assert.equal(result.valid,false);assert.equal(codeOf(result),'NUMBER');assert.equal(result.diagnostics[0].path,field);assert.equal(result.draft_valid,null);assert.equal(result.start_structure_valid,null);
    assert.deepEqual(value,before);
   }
  }
  for(const number of [9007199254740991,-9007199254740991,1.5,-1.5,Number.MIN_VALUE]) for(const section of ['inputs','parameters']) {
-  const value=withValue(number,section), before=structuredClone(value);assert.equal(checkValue(value),value);assert.equal(validateValue(value,{mode:'start'}).valid,true);assert.deepEqual(value,before);
+  const value=withValue(number,section), before=structuredClone(value);assert.equal(checkValue(value),value);assert.equal(validateValue(value,{mode:'structure'}).valid,true);assert.deepEqual(value,before);
  }
 });
 test('H02 raw YAML/ADF finite floats keep parser provenance only within validateWork and CLI',async t=>{
  const dir=await fixture(t), file=path.join(dir,'number.txt');
  for(const section of ['inputs','parameters']) for(const literal of ['1e20','-1e20','100000000000000000000.0','1.7976931348623157e308']) {
   const yaml=stringify(withValue('MARK',section)).replace('MARK',literal);
-  const parsed=parseWork(yaml);assert.equal(codeOf(validateValue(parsed,{mode:'start'})),'NUMBER');assert.throws(()=>checkValue(parsed),error=>error.diagnostic?.code==='NUMBER');
+  const parsed=parseWork(yaml);assert.equal(codeOf(validateValue(parsed,{mode:'structure'})),'NUMBER');assert.throws(()=>checkValue(parsed),error=>error.diagnostic?.code==='NUMBER');
   for(const format of ['yaml','adf']) {
-   const input=format==='yaml'?yaml:adf([yaml]);assert.equal(validateWork(input,{format,mode:'start'}).valid,true);
+   const input=format==='yaml'?yaml:adf([yaml]);assert.equal(validateWork(input,{format,mode:'structure'}).valid,true);
    await writeFile(file,input);const command=run(file,'--format',format);assert.equal(command.status,0);assert.equal(command.result.valid,true);assert.equal(await readFile(file,'utf8'),input);
   }
  }
  const parsed=parseWork(stringify(withValue(1.5)));parsed.testing_strategy.cases[0].steps[0].inputs.value=9007199254740992;const before=JSON.stringify(parsed);assert.equal(codeOf(validateValue(parsed)),'NUMBER');assert.throws(()=>checkValue(parsed));assert.equal(JSON.stringify(parsed),before);assert.equal(Object.getPrototypeOf(parsed),null);
  for(const section of ['inputs','parameters']) for(const literal of ['9007199254740992','-9007199254740992','9007199254740993','-9007199254740993']) {
   const yaml=stringify(withValue('MARK',section)).replace('MARK',literal);
-  for(const format of ['yaml','adf'])assert.equal(codeOf(validateWork(format==='yaml'?yaml:adf([yaml]),{format,mode:'start'})),'NUMBER');
+  for(const format of ['yaml','adf'])assert.equal(codeOf(validateWork(format==='yaml'?yaml:adf([yaml]),{format,mode:'structure'})),'NUMBER');
  }
 });
 test('H02 exact/+1 work byte, depth, list and UTF-8 limits with local measurements',t=>{
  const start=performance.now();
- const at=epic+'\n#'+ 'x'.repeat(LIMITS.workBytes-Buffer.byteLength(epic)-2);assert.equal(Buffer.byteLength(at),65536);assert(validateWork(at,{mode:'start'}).valid);assert.equal(codeOf(validateWork(at+'x')),'BYTE_LIMIT');
+ const at=epic+'\n#'+ 'x'.repeat(LIMITS.workBytes-Buffer.byteLength(epic)-2);assert.equal(Buffer.byteLength(at),65536);assert(validateWork(at,{mode:'structure'}).valid);assert.equal(codeOf(validateWork(at+'x')),'BYTE_LIMIT');
  const unicode=epic+'\n#'+'é'.repeat(Math.floor((65536-Buffer.byteLength(epic)-2)/2));assert(validateWork(unicode).valid);assert.equal(codeOf(validateWork(unicode+'é')),'BYTE_LIMIT');
  const base=withValue(null);const depthFor=v=>{let n=0;function walk(x,d){if(x&&typeof x==='object'){n=Math.max(n,d+1);Object.values(x).forEach(y=>walk(y,d+1));}}walk(v,0);return n;};
- while(depthFor(base)<32){const input=base.testing_strategy.cases[0].steps[0].inputs;input.value={value:input.value};}assert.equal(depthFor(base),32);assert(validateWork(stringify(base),{mode:'start'}).valid);base.testing_strategy.cases[0].steps[0].inputs.value={value:base.testing_strategy.cases[0].steps[0].inputs.value};assert.equal(codeOf(validateWork(stringify(base))),'DEPTH_LIMIT');
+ while(depthFor(base)<32){const input=base.testing_strategy.cases[0].steps[0].inputs;input.value={value:input.value};}assert.equal(depthFor(base),32);assert(validateWork(stringify(base),{mode:'structure'}).valid);base.testing_strategy.cases[0].steps[0].inputs.value={value:base.testing_strategy.cases[0].steps[0].inputs.value};assert.equal(codeOf(validateWork(stringify(base))),'DEPTH_LIMIT');
  assert(validateWork(stringify(withValue(Array(100).fill(null)))).valid);assert.equal(codeOf(validateWork(stringify(withValue(Array(101).fill(null))))),'LIST_LIMIT');
  assert(['YAML_SYNTAX','DEPTH_LIMIT'].includes(codeOf(validateWork('a: '+ '['.repeat(5000)+'0'+']'.repeat(5000)))));
  t.diagnostic(JSON.stringify({localOnly:true,elapsedMs:Math.round(performance.now()-start),peakRSSBytes:process.resourceUsage().maxRSS*1024,bounds:LIMITS}));
 });
 test('H02 ADF safe selection, ambiguity, code-block children, envelope bounds and no prose guessing',()=>{
- assert(validateWork(adf([epic]),{format:'adf',mode:'start'}).valid);
+ assert(validateWork(adf([epic]),{format:'adf',mode:'structure'}).valid);
  for(const blocks of [[],['print(1)'],[epic,epic],[epic,epic.replace('/v1','/v9')]])assert(!validateWork(adf(blocks),{format:'adf'}).valid);
  assert(!validateWork(adf([epic,'bad: [']),{format:'adf'}).valid);
  assert.equal(codeOf(validateWork('{"type":"doc","type":"doc","version":1,"content":[]}',{format:'adf'})),'DUPLICATE_KEY');
@@ -184,5 +184,5 @@ test('H02 actual CLI external side-effect audit and before/after fixture tree',a
  const dir=await fixture(t), input=path.join(dir,'work.yaml'), guard=path.join(dir,'guard.mjs');await writeFile(input,epic);
  await writeFile(guard,`import fs from 'node:fs';import fsp from 'node:fs/promises';import http from 'node:http';import https from 'node:https';import net from 'node:net';import tls from 'node:tls';import cp from 'node:child_process';import {syncBuiltinESMExports} from 'node:module';let count=0;const deny=()=>{count++;throw Error('unexpected effect')};for(const obj of [fs,fsp])for(const key of ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'])for(const name of [key,key+'Sync'])if(typeof obj[name]==='function')obj[name]=deny;const original=fsp.open;fsp.open=async(...args)=>{if(args[1]!==undefined&&args[1]!==0&&args[1]!==fs.constants.O_NONBLOCK&&args[1]!=='r')deny();const h=await original(...args);for(const key of ['write','writeFile','appendFile','writev','truncate','chmod','chown'])h[key]=deny;return h;};for(const obj of [http,https])for(const key of ['request','get'])obj[key]=deny;for(const obj of [net,tls])for(const key of ['connect','createConnection','createServer'])if(obj[key])obj[key]=deny;for(const key of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[key]=deny;globalThis.fetch=deny;syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('AUDIT attemptedEffects='+count+'\\n'));
 `);
- const before=await readdir(dir);const p=spawnSync(process.execPath,['--import',guard,cli,'--mode','start','--input',input,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(p.status,0,p.stderr+p.stdout);assert.equal(JSON.parse(p.stdout).valid,true);assert.match(p.stderr,/AUDIT attemptedEffects=0/);assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(input,'utf8'),epic);t.diagnostic(p.stderr.trim()+'; fixture tree and input unchanged.');
+ const before=await readdir(dir);const p=spawnSync(process.execPath,['--import',guard,cli,'--mode','structure','--input',input,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(p.status,0,p.stderr+p.stdout);assert.equal(JSON.parse(p.stdout).valid,true);assert.match(p.stderr,/AUDIT attemptedEffects=0/);assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(input,'utf8'),epic);t.diagnostic(p.stderr.trim()+'; fixture tree and input unchanged.');
 });

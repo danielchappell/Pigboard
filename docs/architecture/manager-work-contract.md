@@ -1,10 +1,12 @@
-> Local implementation boundary: [the authoring validator](../authoring.md) now
-> provides safe YAML/ADF extraction and draft/structural-start checks from the
-> canonical Epic/ticket schemas. Semantic checks and manager admission below are
-> target behavior, not shipped by this local checker. It performs no provider
-> actions. Work limits: 65,536 UTF-8 bytes, 32 containers, 100 sequence items;
-> ADF envelopes: 262,144 bytes, 32 containers, 1,000 items per array, 100 code blocks.
-> Selected YAML retains work limits. These are local parser budgets only.
+> Local implementation boundary: [the authoring validator](../authoring.md) provides
+> safe YAML/ADF extraction, draft/structure checks and local start semantics with
+> a separate trusted YAML/JSON context. It checks explicit graphs, coverage,
+> preparation, scope, operation facts and complete-ledger sizing without provider
+> actions or test execution. Native/admission checks and actual handoff publication
+> remain separate; live readiness stays `not_evaluated`. Work/context limits:
+> 65,536 UTF-8 bytes, 32 containers, 100 sequence items. ADF work envelopes:
+> 262,144 bytes, 32 containers, 1,000 items per array, 100 code blocks; selected
+> YAML retains work limits. These are local parser budgets only.
 
 # Work and handoff contracts for the first manager
 
@@ -54,8 +56,8 @@ not scheduling instructions. No regex/LLM extraction or execution of YAML values
 Reject duplicate mapping keys, aliases, custom tags, multiple YAML documents,
 unsupported schema versions, unknown fields and excessive depth/size. Error output
 names the ticket and field path without dumping its content or secrets. Draft
-validation reports missing values; start validation rejects unresolved required
-values. Optional fields stay visible as null; explicitly empty lists mean none.
+validation permits explicit unresolved values; structure validation rejects unresolved
+required values. Local start additionally requires independently prepared facts. Optional fields stay visible as null; explicitly empty lists mean none.
 Final numeric parser/request limits must fit the tested installation budget.
 
 Cross-reference checks are part of the contract, not AI interpretation:
@@ -73,6 +75,23 @@ Cross-reference checks are part of the contract, not AI interpretation:
 - Named skills are the installed approved set. Required test expectations, action
   scope and evidence must exist before start; implementation may fill only declared
   mechanical preparation slots without changing expectations or scope.
+
+Local start facts use the closed
+[context schema](../../contracts/work-validation-context-v1.schema.json); every
+field is required. They describe an invocation snapshot, not a second customer
+configuration or fresh access proof. Allowed skills intersect the installed bundle.
+Per-step operation facts bind to the complete current prescription by deep equality;
+changing a step requires refreshed reviewed facts. Read-only, duration and SQL
+layout are explicit supplied facts, never inferred from methods or prose.
+
+The local checker verifies declarations and relationships, not the adequacy of
+natural-language requirements, actual artifact access or observed evidence. It
+projects the complete QA ledger with small fixed placeholders, every helper/human
+ID and every evidence obligation; it rejects determinable field/list/depth and
+16,384-byte compact JSON/YAML 1.2 budget overflows without omissions. Longer real
+values need a fresh check at actual publication. The projection is never a handoff
+or test PASS. Human cases stay pending and `readiness` stays `not_evaluated`.
+See [authoring](../authoring.md) for commands, recovery and exact limits.
 
 ## What must be ready before starting
 
