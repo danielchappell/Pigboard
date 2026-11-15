@@ -89,6 +89,18 @@ Relabel/parent/project mismatches retain old and proposed scopes. An independent
 unstarted preparation/Ready member may be removed when no retained assignment or
 incoming prerequisite requires it. Removal/cancellation is never completion.
 
+A current label alone cannot prove that an unlisted native child's former stream
+is free. For example, an active child removed from its parent's only stream order
+and relabeled from `stream-1` to `stream-2` still counts in the known parent stream;
+both affected scopes hold. If that parent declares both streams and neither order
+nor a coherent retained owner locates the child, both parent streams hold with
+`MEMBERSHIP_MISMATCH` at the child's issue path. Occupancy remains in its observed
+stream; preview does not invent a former stream or copy the count into siblings.
+A listed child or coherent retained owner resolves which parent stream it belongs
+to; independent, safely removable unstarted work does not create this ambiguity.
+Reconcile the actual order, native identity and retained facts with the owner;
+never remove active work or rewrite retained rows just to obtain a selection.
+
 Completion requires native Human Review or configured accepted-later status and
 canonical receipt validation with current AI-QA completion established. The
 receipt's trusted site/maps/actors/repositories, issue identity/stage/stream,
