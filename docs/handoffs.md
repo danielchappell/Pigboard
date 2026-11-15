@@ -264,7 +264,14 @@ and at least one approved retrievable evidence reference. Omit the property when
 there are no findings; do not supply an empty array or add it to another role.
 Retain each earlier FAIL, its evidence and finding IDs, every remaining NOT_RUN
 step with its reason, and the exact prescribed human-pending list. A
-defect-dependent skip retains the defect's finding ID. These findings preserve
+defect-dependent skip retains the defect's finding ID. On this reviewed validator,
+NOT_RUN rows retain the distinct finding IDs of FAIL or NOT_RUN prerequisite rows
+named by their case's `depends_on`. This carries the cause through declared
+skipped prerequisites: A FAIL/F1 → B NOT_RUN/F1 → C NOT_RUN/F1. One copy of each
+required ID suffices when paths join. A skipped prerequisite with no finding IDs
+contributes none. Ownership, bindings, same-case membership, earlier rows and
+PASS metadata create no such requirement; an independent access/evidence blocker
+can retain its own reason without inheriting an unrelated failure. These findings preserve
 observations; they do not queue a new repair request, prove a repair or authorize
 resume. A wait still references a real typed upstream request.
 
@@ -281,6 +288,14 @@ release. If an older installation rejects `findings`, install the approved match
 release and validate the original input again. Never strip findings, change a FAIL
 or retry against an older validator to obtain acceptance. Keep the immutable
 release/manifest binding; publication of this change does not activate delivery.
+
+If validation reports missing prerequisite finding IDs at a consumer's
+`finding_ids` field, preserve the original evidence and prepare a new corrected
+receipt with those IDs and the complete original ledger. Use the existing
+canonical publication process. Never mutate an already published signed receipt,
+strip a finding, rewrite a FAIL to PASS/NOT_RUN or downgrade validation to force
+acceptance. Validation reports the error; it never repairs inputs or authorizes
+execution or resume.
 
 For a source checkout with its locked dependencies already prepared, generate
 fixed synthetic examples in a **new, absolute directory** whose parent exists:

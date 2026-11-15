@@ -151,7 +151,13 @@ A well-shaped object alone is insufficient. The validator and role skill require
    deployed revision and comes from the pipeline's PR comment, not a guessed URL.
 8. QA `steps` cover the ticket's full AI step ledger, including prescribed nested
    helper calls, once and in order. Each PASS/FAIL has its required evidence. A
-   NOT_RUN has its reason and, when defect-dependent, the finding ID. `qa` requires
+   NOT_RUN has its reason and, when defect-dependent, the finding ID. A NOT_RUN
+   row retains the distinct finding IDs on FAIL or NOT_RUN prerequisite rows named
+   by its case's `depends_on`, including through a chain of skipped prerequisites.
+   Joined paths need only one copy of each ID; an empty-ID skipped prerequisite
+   contributes none. Ownership, bindings, same-case membership, earlier rows and
+   PASS metadata do not establish this requirement. Independent blockers retain
+   their own reasons without invented causal IDs. `qa` requires
    all assigned steps PASS. Other records retain partial results and skipped steps.
    Reused evidence needs an explicit case-specific basis in its linked report.
    QA `blocked` and `dependency_wait` may retain optional `findings` using the
@@ -166,7 +172,12 @@ A well-shaped object alone is insufficient. The validator and role skill require
    QA retains that requirement and human-only static completion its exception.
    This reporting exception grants no runtime or provider authority. New optional
    findings require the matching reviewed validator release; never strip them or
-   downgrade validation. Existing immutable installation binding is unchanged.
+   downgrade validation. A missing-ID LEDGER error names the consumer field:
+   preserve evidence and prepare a new corrected receipt with the complete ledger
+   through canonical publication; never mutate an already published signed receipt
+   or rewrite a FAIL to obtain acceptance. The validator neither repairs inputs
+   nor grants execution/resume authority. Existing immutable installation binding
+   is unchanged.
 9. `human_pending` equals the ticket's human case IDs. Agents never report human
    PASS. Owner-approved on 14 November 2026: an explicitly all-human ticket is allowed only with no AI steps, complete
    human cases and a nonempty matching `no_ai_cases_reason`; QA reports zero AI

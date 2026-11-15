@@ -97,8 +97,84 @@ export function partialFixtures() {
     ['altered-human-list', r => r.payload.qa_report.human_pending = []],
     ['missing-findings', r => delete r.payload.findings],
   ]) cases[name] = changeTarget(blocked(), mutate);
-  return cases;
+  return { ...cases, ...transitiveFixtures() };
 }
+
+// Rebind only the target issue. A wait's distinct upstream lineage stays intact.
+function rebindWork(e, work) {
+  const ticket = e.target.ticket_id, requirement = e.requirements.find(x => x.ticket_id === ticket);
+  const old = requirement.digest, digest = digestValue(work);
+  const context = JSON.parse(requirement.context_body);
+  context.operations = work.testing_strategy.cases.flatMap(c => c.steps.map(step => {
+    const fact = context.operations.find(x => x.step === step.id) ?? context.operations.find(x => x.contract.skill === step.skill);
+    return { ...structuredClone(fact), step: step.id, contract: structuredClone(step) };
+  }));
+  requirement.context_body = JSON.stringify(context);
+  requirement.body = JSON.stringify(work); requirement.digest = digest;
+  e.issues.find(x => x.id === ticket).requirements_digest = digest;
+  for (const { c, r } of records(e)) if (r.ticket_id === ticket) { r.requirements_digest = digest; c.body = body(r); }
+  for (const evidence of e.evidence_receipts) if (evidence.details.requirements_digest === old && evidence.pr.number === targetRecord(e).payload.pr.number) evidence.details.requirements_digest = digest;
+  return seal(e);
+}
+export function transitiveFixtures() {
+  const inputs = {};
+  for (const kind of ['repair', 'blocked', 'wait']) {
+    function chain(shape = 'three') {
+      const e = kind === 'repair' ? structuredClone(seeds.partial) : kind === 'blocked' ? blocked() : waiting();
+      const work = JSON.parse(e.requirements.find(x => x.ticket_id === e.target.ticket_id).body), t = work.testing_strategy, original = t.cases[0], [api, child, database, ui] = original.steps;
+      const dependency = step => ({ step, required_outcome: 'PASS' });
+      const makeCase = (id, steps, depends_on) => ({ ...structuredClone(original), id, steps, depends_on });
+      t.cases = [makeCase('TC-01', [api, child], []), makeCase('TC-02', [database], [dependency(api.id)]), makeCase('TC-03', [ui], [dependency(database.id)])];
+      if (shape === 'four' || shape === 'join') {
+        const last = structuredClone(ui); last.id = 'TC-04.S1';
+        t.cases.push(makeCase('TC-04', [last], [dependency(ui.id)])); t.dispatch_order.push(last.id);
+        changeTarget(e, r => { const row = structuredClone(r.payload.qa_report.steps.at(-1)); row.id = last.id; r.payload.qa_report.steps.push(row); });
+      }
+      if (shape === 'join') {
+        // B carries F1 plus a genuine second finding. C carries F1 independently;
+        // D joins B/C so F1 arrives twice but is retained only once.
+        t.cases[2].depends_on = [dependency(api.id)];
+        t.cases[3].depends_on = [dependency(database.id), dependency(ui.id)];
+        changeTarget(e, r => {
+          const finding = structuredClone(r.payload.findings[0]); finding.id = 'F2'; finding.summary = 'A distinct database mismatch.';
+          const evidence = structuredClone(r.payload.qa_report.steps[2].evidence[0] ?? r.payload.qa_report.steps[0].evidence[0]);
+          // This approved, exact-revision artifact is already supplied by the seed.
+          evidence.uri = e.evidence_receipts.find(x => x.uri.includes('TC-01.S3-0')).uri; evidence.label = 'Distinct database observation';
+          finding.evidence = [evidence]; r.payload.findings.push(finding);
+          const row = r.payload.qa_report.steps[2]; row.result = 'FAIL'; row.finding_ids = ['F1', 'F2']; row.evidence = [structuredClone(evidence)]; row.not_run_reason = null;
+          r.payload.qa_report.steps[4].finding_ids = ['F1', 'F2'];
+        });
+      }
+      if (shape === 'independent') {
+        t.cases[1].depends_on = [];
+        changeTarget(e, r => { for (const row of r.payload.qa_report.steps.slice(1)) { row.finding_ids = []; row.not_run_reason = 'Prepared access unavailable independently of the earlier defect.'; } });
+      }
+      if (shape === 'ownership' || shape === 'binding') {
+        t.cases = [original];
+        changeTarget(e, r => { for (const row of r.payload.qa_report.steps.slice(1)) { row.finding_ids = []; row.not_run_reason = 'Independent evidence blocker; no declared prerequisite.'; } });
+        if (shape === 'ownership') { database.bindings = []; database.inputs.record_id = 'fixture-1'; database.database.parameters[1] = 'fixture-1'; database.database.parameter_bindings = []; }
+      }
+      if (shape === 'empty') {
+        changeTarget(e, r => { delete r.payload.findings; for (const row of r.payload.qa_report.steps) { row.result = 'NOT_RUN'; row.evidence = []; row.finding_ids = []; row.not_run_reason = 'Deployment unavailable; no runtime dispatch.'; } });
+        e.evidence_receipts = e.evidence_receipts.filter(x => x.kind !== 'environment');
+      }
+      if (shape === 'pass') changeTarget(e, r => { const rows = r.payload.qa_report.steps; rows[0].result = 'PASS'; for (const row of rows.slice(1)) { row.finding_ids = []; row.not_run_reason = 'Independent prepared access blocker.'; } });
+      return rebindWork(e, work);
+    }
+    const add = (name, e) => { inputs['transitive-' + kind + '-' + name] = e; };
+    add('three', chain());
+    for (const [name, index] of [['missing-middle', 2], ['missing-last', 3]]) add(name, changeTarget(chain(), r => r.payload.qa_report.steps[index].finding_ids = []));
+    add('unknown-last', changeTarget(chain(), r => r.payload.qa_report.steps[3].finding_ids = ['unknown']));
+    add('four', chain('four'));
+    add('four-missing-last', changeTarget(chain('four'), r => r.payload.qa_report.steps[4].finding_ids = []));
+    add('join', chain('join'));
+    for (const id of ['F1', 'F2']) add('join-missing-' + id, changeTarget(chain('join'), r => r.payload.qa_report.steps[4].finding_ids = r.payload.qa_report.steps[4].finding_ids.filter(x => x !== id)));
+    for (const shape of ['independent', 'ownership', 'binding', 'pass', 'empty']) add(shape, chain(shape));
+    if (kind === 'repair') add('empty-array', changeTarget(chain('empty'), r => r.payload.findings = []));
+  }
+  return inputs;
+}
+
 export async function preparePartialFixtures(directory) {
   // An existing directory is rejected, so preparation cannot overwrite evidence.
   await mkdir(directory);

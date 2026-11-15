@@ -157,3 +157,65 @@ test('fixture preparation preserves every input hash and refuses to overwrite ev
   }
   await assert.rejects(preparePartialFixtures(out), { code: 'EEXIST' });
 });
+
+// An intermediate skipped prerequisite must not sever the declared finding chain.
+test('transitive skipped prerequisites retain the original finding at the final consumer', async () => {
+  const { transitiveFixtures } = await import('./fixtures/qa-partial-results.mjs');
+  const inputs = transitiveFixtures();
+  for (const kind of ['repair', 'blocked', 'wait']) {
+    const complete = run(inputs['transitive-' + kind + '-three']);
+    assert.equal(complete.valid, true, JSON.stringify(complete.diagnostics));
+    const omitted = run(inputs['transitive-' + kind + '-missing-last']);
+    assert.equal(omitted.valid, false, kind + ': omitted final finding must reject');
+    assert(omitted.diagnostics.some(x => x.code === 'LEDGER' && x.path.endsWith('/qa_report/steps/3/finding_ids')), JSON.stringify(omitted));
+  }
+});
+
+// Expectations are independent of fixture preparation and validator decisions.
+test('declared prerequisite matrix preserves complete partial evidence without inferring other edges', async () => {
+  const { transitiveFixtures, targetRecord, records, partialFixtures } = await import('./fixtures/qa-partial-results.mjs');
+  const inputs = transitiveFixtures();
+  const validVariants = ['three', 'four', 'join', 'independent', 'ownership', 'binding', 'pass'];
+  const invalidVariants = { 'missing-middle': ['LEDGER', '/steps/2/finding_ids'], 'missing-last': ['LEDGER', '/steps/3/finding_ids'], 'unknown-last': ['LEDGER', '/steps/3/finding_ids'], 'four-missing-last': ['LEDGER', '/steps/4/finding_ids'], 'join-missing-F1': ['LEDGER', '/steps/4/finding_ids'], 'join-missing-F2': ['LEDGER', '/steps/4/finding_ids'] };
+  let examined = 0, valid = 0;
+  for (const kind of ['repair', 'blocked', 'wait']) {
+    const variants = [...validVariants, ...Object.keys(invalidVariants), 'empty', ...(kind === 'repair' ? ['empty-array'] : [])];
+    for (const variant of variants) {
+      const name = 'transitive-' + kind + '-' + variant, e = inputs[name], before = JSON.stringify(e), hash = createHash('sha256').update(before).digest('hex'), target = targetRecord(e), r = run(e);
+      const expectedValid = validVariants.includes(variant) || (variant === 'empty' && kind !== 'repair');
+      assert.equal(r.valid, expectedValid, name + JSON.stringify(r.diagnostics));
+      assert.equal(r.completion_established, false, name);
+      assert.equal(JSON.stringify(e), before, name);
+      assert.equal(createHash('sha256').update(JSON.stringify(e)).digest('hex'), hash, name);
+      if (expectedValid) {
+        valid++;
+        assert.deepEqual(JSON.parse(JSON.stringify(r.qa_report)), target.payload.qa_report, name);
+        assert.deepEqual(r.human_pending, target.payload.qa_report.human_pending, name);
+        assert.deepEqual(r.human_pending, ['HQA-01'], name);
+        if (!['empty', 'pass'].includes(variant)) {
+          assert.equal(r.qa_report.steps[0].result, 'FAIL', name);
+          assert.deepEqual(r.qa_report.steps[0].finding_ids, ['F1'], name);
+          assert(target.payload.findings[0].evidence.length, name);
+        }
+        if (variant === 'join') assert.deepEqual(r.qa_report.steps[4].finding_ids, ['F1', 'F2'], name);
+        if (['independent', 'ownership', 'binding', 'pass', 'empty'].includes(variant)) assert(r.qa_report.steps.slice(1).every(x => x.finding_ids.length === 0), name);
+        if (variant === 'empty') { assert(!Object.hasOwn(target.payload, 'findings')); assert(e.evidence_receipts.every(x => x.kind !== 'environment')); }
+        if (kind === 'wait') {
+          const reference = target.payload.requests[0], upstream = records(e).find(x => x.r.record_id === reference.record_id).r;
+          assert.equal(upstream.kind, 'repair_request'); assert.notEqual(upstream.ticket_id, target.ticket_id);
+          assert.equal(reference.digest, digestValue(upstream));
+          const original = partialFixtures()['wait-retained-fail'];
+          assert.deepEqual(e.requirements.find(x => x.ticket_id === upstream.ticket_id), original.requirements.find(x => x.ticket_id === upstream.ticket_id));
+          assert.deepEqual(records(e).filter(x => x.r.ticket_id === upstream.ticket_id), records(original).filter(x => x.r.ticket_id === upstream.ticket_id));
+          assert.equal(records(e).find(x => x.r.record_id === upstream.payload.basis.record_id).r.kind, 'qa');
+        }
+      } else {
+        const [code, suffix] = invalidVariants[variant] ?? ['STRUCTURE', null];
+        const expectedPath = suffix ? '/comment_pages/0/comments/3/body/payload/qa_report' + suffix : '/comment_pages/0/comments/3/body/payload/findings';
+        assert(r.diagnostics.some(x => x.code === code && x.path === expectedPath), name + JSON.stringify(r.diagnostics));
+      }
+      examined++;
+    }
+  }
+  assert.equal(examined, 43); assert.equal(valid, 23); assert.equal(Object.keys(inputs).length, examined);
+});

@@ -472,6 +472,10 @@ test('installed receipt validator preserves incomplete QA outcomes and old input
  }
  assert(!Object.keys(manifest.sourceFiles).some(k => k.includes('qa-partial-results')));
  const { spawnSync } = await import('node:child_process');
+ const { targetRecord } = await import('./fixtures/qa-partial-results.mjs');
+ const validTransitive = new Set(['three', 'four', 'join', 'independent', 'ownership', 'binding', 'pass']);
+ const invalidTransitive = { 'missing-middle': '/steps/2/finding_ids', 'missing-last': '/steps/3/finding_ids', 'unknown-last': '/steps/3/finding_ids', 'four-missing-last': '/steps/4/finding_ids', 'join-missing-F1': '/steps/4/finding_ids', 'join-missing-F2': '/steps/4/finding_ids' };
+ let transitiveChains = 0, transitiveValid = 0, transitiveRecords = 0;
  for (const [file, hash] of Object.entries(hashes)) {
   const mode = file.endsWith('.json') ? 'chain' : 'record', input = path.join(inputRoot, file);
   const args = ['--mode', mode, '--input', input, ...(mode === 'record' ? ['--format', 'yaml'] : []), '--json'];
@@ -479,10 +483,32 @@ test('installed receipt validator preserves incomplete QA outcomes and old input
   const source = run(new URL('../scripts/validate-handoff.mjs', import.meta.url).pathname), actual = run(path.join(validator, 'scripts/validate-handoff.mjs'));
   assert.equal(actual.status, source.status, file + actual.stderr); assert.equal(actual.stdout, source.stdout, file); assert.equal(actual.stderr, '', file);
   const result = JSON.parse(actual.stdout);
-  if (['blocked-no-environment.json', 'blocked-retained-fail.json', 'wait-retained-fail.json', 'old-blocked.json', 'old-wait.json', 'human-static.json'].includes(file)) {
+  const transitive = /^transitive-(repair|blocked|wait)-(.+)\.(json|yaml)$/.exec(file);
+  if (transitive) {
+   const [, kind, variant] = transitive;
+   const shapeInvalid = kind === 'repair' && ['empty', 'empty-array'].includes(variant);
+   const expectedValid = mode === 'record' ? !shapeInvalid : validTransitive.has(variant) || (variant === 'empty' && kind !== 'repair');
+   assert.equal(result.valid, expectedValid, file + actual.stdout);
+   assert.equal(result.completion_established, false, file);
+   if (mode === 'chain') {
+    transitiveChains++;
+    if (expectedValid) {
+     transitiveValid++;
+     const envelope = JSON.parse(await readFile(input, 'utf8')), target = targetRecord(envelope);
+     assert.deepEqual(result.qa_report, target.payload.qa_report, file);
+     assert.deepEqual(result.human_pending, target.payload.qa_report.human_pending, file);
+     assert.deepEqual(result.human_pending, ['HQA-01'], file);
+    } else {
+     const suffix = invalidTransitive[variant], code = shapeInvalid ? 'STRUCTURE' : 'LEDGER';
+     const expectedPath = '/comment_pages/0/comments/3/body/payload/' + (shapeInvalid ? 'findings' : 'qa_report' + suffix);
+     assert(result.diagnostics.some(x => x.code === code && x.path === expectedPath), file + actual.stdout);
+    }
+   } else transitiveRecords++;
+  } else if (['blocked-no-environment.json', 'blocked-retained-fail.json', 'wait-retained-fail.json', 'old-blocked.json', 'old-wait.json', 'human-static.json'].includes(file)) {
    assert.equal(result.valid, true, file); assert.equal(result.completion_established, file === 'human-static.json');
   } else if (mode === 'chain') { assert.equal(result.valid, false, file); assert.equal(result.completion_established, false); }
   assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'), hash, file);
  }
+ assert.equal(transitiveChains, 43); assert.equal(transitiveValid, 23); assert.equal(transitiveRecords, 43);
  assert.equal(await realpath(installed.stableSkills), installed.skills);
 });
