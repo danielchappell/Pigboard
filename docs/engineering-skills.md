@@ -99,15 +99,25 @@ independent review, CI and live acceptance remain separate claims.
 
 The [review core](../skills/pr-review/SKILL.md) keeps its 20 checks, eight reported
 categories, evidence rules, verdict precedence and saved review-state design.
-Only four criteria gain guidance: C06 checks a changed approach against its reviewed
+The earlier engineering-skill additions sharpened four criteria: C06 checks a changed approach against its reviewed
 plan; C07 checks actual execution and final-revision evidence; C13 checks whether
 reuse is suitable; C19 checks whether the verification handoff is usable.
 
 Shared engineering principles help the reviewer investigate. They do not override
 project authority, create findings from preferences or add another report. A
-compatibility test reconstructs the original review file by removing only these
-declared additions, then verifies its original hash. The remaining review-state,
+compatibility test reconstructs the original review file by removing only those
+declared additions and reversing the exact approved report edits, then verifies
+its original hash. The remaining review-state,
 commenting and launch-prompt files retain their original hashes.
+
+The report also gives humans a short change summary and a **Where to look** table.
+The summary explains behavior, main choices and supported verification. The table
+groups useful code, test and guidance links by behavior, including necessary
+supporting work. Humans use it to understand the PR and choose what to spot-check;
+the AI still reviews the complete required scope. A passing report still needs
+evidence, and a test-file link does not claim execution. Missing evidence remains
+visible. See the [fictional report example](../skills/pr-review/references/report-example.md).
+These report additions do not change the criteria or add a review pass.
 
 ## Research influences and choices
 

@@ -56,8 +56,9 @@ completed evidence. Verify private cache is ignored/untracked or use prepared st
 Publish each confirmed finding once through pr-commenting with correct diff side and
 smallest useful range, or justified top-level fallback. Reuse existing threads;
 resolve only after verified fixes/counterevidence, retain superseded links and stable
-IDs. Evidence gaps are not invented code defects. Final human summary keeps eight
-rows plus coverage and linked full evidence, not a mandatory twenty-row appendix.
+IDs. Evidence gaps are not invented code defects. Final human report includes the change
+summary and grouped file map, eight category rows, coverage and linked full evidence.
+It does not require a twenty-row appendix.
 Never omit low-severity in-scope findings or pending finding references.
 Replace the progress summary with the final report. When editing is known unsupported
 before an attempt, publish a linked replacement; failed/unknown attempted editing
