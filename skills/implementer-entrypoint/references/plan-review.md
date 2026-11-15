@@ -7,6 +7,11 @@ revision/hash, relevant source/base revisions, repository rules, case definition
 accepted decisions, prior finding dispositions and evidence. Do not provide the
 author's conclusion as a substitute for source inspection.
 
+Read [engineering-principles](../../engineering-principles/SKILL.md) as investigation
+guidance. Independently check the proposed reuse, affected callers, binding choices
+and verification against the actual source; principles do not add scope or replace
+the target repository's authority.
+
 Review request:
 
 ```text

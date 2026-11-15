@@ -27,7 +27,7 @@ complete implementation Story coverage.
 
 | Capability | State |
 | --- | --- |
-| Fifteen shared skills: authoring, composed implementation, review, human rework, writing and QA | In the repository and installation allowlist |
+| Twenty-one shared skills: engineering methods, authoring, composed delivery, review, human rework, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
@@ -195,6 +195,10 @@ or credentials. Monitoring and duplicate-launch prevention are later work.
 
 Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
 for retained copyright notices. Third-party dependencies retain their own licenses.
+
+The [engineering skills guide](docs/engineering-skills.md) explains the focused planner,
+codebase investigation, design, diagnosis and author-verification methods. Their
+comparative effectiveness has not yet been measured.
 
 The [structured helper guide](docs/using-pigboard.md#prescribed-structured-qa-helpers)
 explains exact inputs, preparation and recovery. API owns one Bruno child;
