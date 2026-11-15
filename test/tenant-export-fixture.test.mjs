@@ -173,7 +173,7 @@ test('trusted HTTP setup denial is incomplete while subject errors remain failur
     assert.equal(result.status,2);
     const grade=JSON.parse(result.stdout);assert.equal(grade.adapter,'PASS');
     assert.deepEqual(grade.requirements,{...pass,'M1.2':'INCOMPLETE','M1.4':'INCOMPLETE'});
-    const httpIds=['http-identity','http-source-error','old-library-and-http'];
+    const httpIds=['http-identity','http-default-page-size','http-source-error','old-library-and-http'];
     for(const id of httpIds) {
       const observation=grade.observations.find(o=>o.id===id);assert.equal(observation.result,'INCOMPLETE');
       assert.deepEqual(observation.evidence.httpSetup,{phase:'trusted-http-listen',address:'127.0.0.1',port:0,status:'INCOMPLETE',code});
@@ -188,9 +188,55 @@ test('trusted HTTP setup denial is incomplete while subject errors remain failur
   await writeFile(server,source.replace(declaration,declaration+"\n  throw Object.assign(new Error('subject server defect'),{code:'EPERM'});"));
   const spoof=await run('subject-error',process.execPath,[grader,subject]);assert.equal(spoof.status,1);
   const failed=JSON.parse(spoof.stdout);assert.deepEqual(failed.requirements,{...pass,'M1.2':'FAIL','M1.4':'FAIL'});
-  for(const id of ['http-identity','http-source-error','old-library-and-http']) {
+  for(const id of ['http-identity','http-default-page-size','http-source-error','old-library-and-http']) {
     const observation=failed.observations.find(o=>o.id===id);assert.equal(observation.result,'FAIL');
     assert.equal(observation.evidence.httpSetup.status,'PASS');assert.match(observation.detail,/subject server defect/);
+  }
+  await rm(root,{recursive:true});
+});
+
+test('HTTP grading detects rejection and wrong value for omitted page size',async()=>{
+  const root=await mkdtemp(path.join(os.tmpdir(),'pigboard-tenant-default-'));
+  const grader=fileURLToPath(new URL('../evals/tenant-export/private/grade.mjs',import.meta.url));
+  const reference=fileURLToPath(new URL('../evals/tenant-export/private/reference.patch',import.meta.url));
+  const env={...process.env};delete env.NODE_TEST_CONTEXT;
+  const pass={'M1.1':'PASS','M1.2':'PASS','M1.3':'PASS','M1.4':'PASS'};
+  for(const id of ['reference','reject-omitted','wrong-default']) {
+    const subject=path.join(root,id);await exportPublic(subject);
+    async function run(label,executable,args) {
+      const result=spawnSync(executable,args,{cwd:subject,env,encoding:'utf8',timeout:10000});
+      await writeFile(path.join(root,id+'-'+label+'.stdout.txt'),result.stdout??'');
+      await writeFile(path.join(root,id+'-'+label+'.stderr.txt'),result.stderr??'');
+      await writeFile(path.join(root,id+'-'+label+'.receipt.json'),JSON.stringify({executable,args,cwd:subject,status:result.status,signal:result.signal,error:result.error?.message??null},null,2));
+      assert.equal(result.error,undefined,`Setup error; evidence: ${root}`);assert.equal(result.signal,null);
+      return result;
+    }
+    assert.equal((await run('reference','git',['apply',reference])).status,0);
+    const server=path.join(subject,'server.mjs'),source=await readFile(server,'utf8');
+    if(id==='reject-omitted') {
+      const needle="      const rawSize = url.searchParams.get('pageSize');";
+      assert.equal(source.split(needle).length,2);
+      await writeFile(server,source.replace(needle,needle+"\n      if (url.pathname === '/records/export' && rawSize === null) throw new ValidationError('pageSize required');"));
+    } else if(id==='wrong-default') {
+      const needle='const pageSize = rawSize === null ? 10 : Number(rawSize);';
+      assert.equal(source.split(needle).length,2);
+      await writeFile(server,source.replace(needle,"const pageSize = rawSize === null ? (url.pathname === '/records/export' ? 20 : 10) : Number(rawSize);"));
+    }
+    const result=await run('grade',process.execPath,[grader,subject]);
+    assert.equal(result.status,id==='reference'?0:1,`Unexpected verdict; evidence: ${root}`);
+    const grade=JSON.parse(result.stdout);assert.equal(grade.adapter,'PASS');
+    assert.deepEqual(grade.requirements,id==='reference'?pass:{...pass,'M1.2':'FAIL'});
+    const observation=grade.observations.find(value=>value.id==='http-default-page-size');
+    assert.ok(observation);assert.equal(observation.evidence.httpSetup.status,'PASS');
+    assert.equal(observation.result,id==='reference'?'PASS':'FAIL');
+    assert.equal(grade.observations.find(value=>value.id==='http-identity').result,'PASS');
+    if(id==='reject-omitted') {
+      assert.deepEqual(observation.evidence.queries,[]);assert.match(observation.detail,/400.*200/s);
+    } else {
+      assert.ok(observation.evidence.queries.length>0);
+      assert.ok(observation.evidence.queries.every(query=>query.method==='tenant'&&query.pageSize===(id==='reference'?10:20)));
+      if(id==='wrong-default')assert.match(observation.detail,/must default to 10/);
+    }
   }
   await rm(root,{recursive:true});
 });

@@ -78,6 +78,17 @@ export async function grade(subject, { withoutFaults = false } = {}) {
     },evidence);
     evidence.queries=repository.observations();
   });
+  await check('http-default-page-size', 'M1.2', async evidence => {
+    const repository = createRepository(rows);
+    await withServer(repository, async get => {
+      const response = await get('/records/export', 'oak');
+      evidence.queries = repository.observations();
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, {records: expected('oak')});
+      assert.ok(evidence.queries.some(query => query.method === 'tenant'), 'Default request must use the tenant source');
+      assert.ok(evidence.queries.every(query => query.pageSize === 10), 'Omitted HTTP pageSize must default to 10');
+    }, evidence);
+  });
   async function fault(kind, controls, operation, inspect, evidence) {
     const repository=createRepository(rows,withoutFaults?{}:controls);
     let value,error;
