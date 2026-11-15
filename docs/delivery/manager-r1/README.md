@@ -26,7 +26,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
 | R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
-| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 2–2.34375 | 20 |
+| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 2.5625–3.1875 | 20 |
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.625–1.875 | 20 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
@@ -43,7 +43,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.125–37.71875 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.6875–38.5625 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -89,7 +89,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/qa-api/SKILL.md`, `skills/qa-bruno/SKILL.md`, `skills/qa-database/SKILL.md`, `skills/qa-ui/SKILL.md`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-cases.json`, `docs/qa-cases.md`.
 
-### R1-24 — 20 forecast files, 16–18.75 hours
+### R1-24 — 20 forecast files, 20.5–25.5 hours
 
 `skills/qa-jira/SKILL.md`, `config/skill-bundle.json`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/cursor-environment.test.mjs`, `README.md`, `ARCHITECTURE.md`, `docs/workflow.md`, `docs/install.md`, `docs/using-pigboard.md`, `docs/handoffs.md`, `config/cursor/automations.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
@@ -234,7 +234,7 @@ PGB-110 estimate refreshed after independent review and the first simulated inst
 The owner approved “Allow the fixed-scope time exception” on 15 November 2026,
 recorded in [PGB-110 comment 10684](https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684).
 This exception applies only to PGB-110's ordinary less-than-two-day rule. The current
-forecast is 16–18.75 familiar-human hours, including integration with merged main
+forecast is 20.5–25.5 familiar-human hours, including integration with merged main
 `6595e645bd91cec263a5ee0eaf1a3db95e7b9109` and the coherent mock actor/access correction.
 The earlier 12.5–15h and 14–15.5h forecasts remain dated history; the proposed 18h
 ceiling was superseded and was never approval. No replacement hourly cap applies.
@@ -243,3 +243,12 @@ scope, all acceptance cases, documentation and independent review/QA/CI gates re
 This decision grants no new product scope, release, deployment or activation, and
 transfers to neither PGB-78 nor another Story. PGB-80's separate historical exception
 remains unchanged. Source coverage remains 24 Stories/107 cases; PGB-113 owns its later amendment.
+
+Current PGB-110 forecast after R2 evidence/cause correction and integration with main335
+is **20.5–25.5 familiar-human hours** (upper forecast3.1875days). The former16–18.75h
+forecast remains historical. The additional work completes saved-filter resume proof,
+six distinct H02 outcomes with independently frozen dependency/browser facts and
+coherent joined control, then reconciles the new preview payload/configuration and
+seven ordered installation checks. The actual10684 fixed-scope exception remains
+unchanged, without an hourly cap; one PR, exact20paths, all cases and gates remain.
+These preparation/validation changes do not claim successful instruction/human acceptance.

@@ -135,6 +135,23 @@ It does not discover native mappings or access providers. Optional expected-site
 binding proves only an exact site match. Deployment, scheduling, health, secrets
 and enablement remain with their later owners in the same canonical configuration.
 
+## Offline manager policy preview
+
+The [local preview](docs/manager-preview.md) implements the first pure policy
+increment in `lib/manager/`: closed supplied snapshot parsing/binding, complete
+member availability and deterministic candidate decisions. It reuses canonical
+configuration, raw work start validation and current receipt-chain validation.
+Optional preparation/cancelled native mappings live only in canonical configuration
+with explicit inheritance and backward-compatible empty resolution.
+
+The same four source modules/CLI, guide and executable fixtures ship in the existing
+prepared validator payload. Installer verification exercises a real nonexecuting
+selection before stable-link replacement. No provider/AWS/state client, discovery,
+intent/apply operation or worker activation is added. Full repair ordering and live
+bounded Jira discovery remain later increments; a known unresolved repair waits
+explicitly. Supplied completeness/receipts do not establish live freshness or
+permissions. Human acceptance, hosted checks, merge and release remain separate.
+
 ## Prescribed helper boundary
 
 The existing [four QA helpers](skills/qa-api/SKILL.md) use a

@@ -177,10 +177,10 @@
       "R1-07",
       "PGB-108"
     ],
-    "days": 2.34375,
+    "days": 3.1875,
     "hours": {
-      "min": 16,
-      "max": 18.75
+      "min": 20.5,
+      "max": 25.5
     },
     "files": [
       "skills/qa-jira/SKILL.md",

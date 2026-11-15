@@ -232,7 +232,7 @@ port/database/qa_reader, with no URL options. Never weaken TLS or repair during 
 
 Install the exact local committed candidate into an isolated root with the real
 installer before local instruction exercises (customer installs use published
-reviewed revisions). Inspect its receipt, twenty-two entrypoints, six smoke checks,
+reviewed revisions). Inspect its receipt, twenty-two entrypoints, seven smoke checks,
 locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
 
 ```sh

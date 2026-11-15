@@ -60,7 +60,13 @@
       "contracts/config-v1.schema.json",
       "config/pigboss.example.yaml",
       "docs/configuration.md",
-      "scripts/prepare-handoff.mjs"
+      "scripts/prepare-handoff.mjs",
+      "lib/manager/snapshot.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "scripts/manager-preview.mjs",
+      "docs/manager-preview.md",
+      "test/fixtures/manager-candidates.json"
     ]
   }
 }

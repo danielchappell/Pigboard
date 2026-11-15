@@ -178,3 +178,20 @@ Depth-limit adversarial shapes may fail schema earlier; they are not valid confi
 examples. Fifty complete project entries are regression-tested locally. Neither
 that result nor the 1,000-item parser bound promises live throughput or that 1,000
 maximum-size projects fit the byte bound simultaneously.
+
+## Known preparation and cancelled native stages
+
+Optional whole sections `preparation_stage_ids` and `cancelled_stage_ids` classify
+known noncandidate native statuses for the [offline manager preview](manager-preview.md).
+They use unique quoted decimal IDs, at most100 each, and are pairwise disjoint
+with the seven operational stages, accepted-later IDs and each other within every
+resolved project. Preparation is skipped; cancellation never proves completion.
+Jira status names and broad categories cannot replace these explicit mappings.
+
+Old v1 configurations remain valid and resolve omitted optional sections to `[]`.
+A default is used only through explicit project `inherit`; no default is inherited
+implicitly. Local-plus-inherited is ambiguous, and inheriting an absent default
+fails. The example shows explicit inheritance and a local override/empty section.
+The version remains v1 with optional declarations; older revisions reject these
+new fields. Upgrade the reviewed source and configuration together before using
+them. No native discovery, automatic provisioning or second customer file is added.
