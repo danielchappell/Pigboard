@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readFile, mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -66,12 +67,17 @@ test('reviewer repair/block preserve every finding, null and implementation basi
  const oversized=structuredClone(x.r);oversized.kind='repair_request';oversized.to_stage='Rework Queued';oversized.payload={basis:x.r.payload.implementation,pr:x.r.payload.pr,findings:[...findings,...Array.from({length:101},(_,i)=>({...findings[0],id:`Extra${i}`}))],qa_report:null};
  assert.equal(validateHandoff(stringify(JSON.parse(JSON.stringify(oversized)))).valid,false);
 });
-test('shared review core and comment contracts remain byte-identical to implementation base',()=>{
- for(const file of ['skills/pr-review/SKILL.md','skills/pr-review/references/review-state.md','skills/pr-commenting/SKILL.md','config/cursor/pr-review-prompt.txt']){
-  const base=spawnSync('git',['show',`9f03c1561b0e32de05cd296b24e50885f4abbe91:${file}`],{cwd:root});
-  const current=spawnSync('git',['hash-object',file],{cwd:root,encoding:'utf8'});
-  const original=spawnSync('git',['hash-object','--stdin'],{cwd:root,input:base.stdout,encoding:'utf8'});
-  assert.equal(base.status,0);assert.equal(current.stdout,original.stdout,file);
+test('shared review core and comment contracts remain byte-identical to implementation base',async()=>{
+ // Fixed SHA256 of raw baseline bytes at 9f03c1561b0e32de05cd296b24e50885f4abbe91.
+ const baseline = {
+  'skills/pr-review/SKILL.md': 'd15c0c072b4e43c1893f7456fe007045590dc2178ab1fe6a55480a496902effe',
+  'skills/pr-review/references/review-state.md': 'cb63c3bd4f55ecd036ce435a63e56ea9884582a8bd138a7977ce0705520167d5',
+  'skills/pr-commenting/SKILL.md': '10436d8f7b2700b7ab44ac30310f4c99c9b3983583212388d270d27c95dfc2a4',
+  'config/cursor/pr-review-prompt.txt': '6ac09b149eeac87b09559dc7998561b8f1cb33d690f53ea3ceaf3f207eb1e58a'
+ };
+ for(const [file,expected] of Object.entries(baseline)){
+  const bytes=await readFile(new URL('../'+file,import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),expected,file);
  }
 });
 
