@@ -719,6 +719,15 @@
               "type": "null"
             }
           ]
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true
         }
       }
     },
@@ -795,6 +804,15 @@
               "type": "null"
             }
           ]
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/finding"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "uniqueItems": true
         }
       }
     },
@@ -1095,6 +1113,11 @@
               },
               "from_stage": {
                 "const": "In Review"
+              },
+              "payload": {
+                "properties": {
+                  "findings": false
+                }
               }
             }
           },
@@ -1115,6 +1138,11 @@
               },
               "from_stage": {
                 "const": "In Progress"
+              },
+              "payload": {
+                "properties": {
+                  "findings": false
+                }
               }
             }
           }
@@ -1156,6 +1184,11 @@
               },
               "from_stage": {
                 "const": "In Review"
+              },
+              "payload": {
+                "properties": {
+                  "findings": false
+                }
               }
             }
           },
@@ -1176,6 +1209,11 @@
               },
               "from_stage": {
                 "const": "In Progress"
+              },
+              "payload": {
+                "properties": {
+                  "findings": false
+                }
               }
             }
           }

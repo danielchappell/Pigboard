@@ -22,7 +22,7 @@ Research, discovery, design-only and documentation-only work stays a Task using
 this skill's Markdown structure. For generic work outside Pigboard, use that
 same structure and the applicable testing guidance below. The
 [structured implementer](../implementer-entrypoint/SKILL.md) consumes current versioned
-Story/Bug assignments. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Only retained QA consumes the
+Story/Bug assignments. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Only the retained QA entrypoint consumes the
 [retained prose contract](references/basic-workflow-ticket.md); compatible full-loop
 delivery awaits QA migration. Authoring does not activate delivery or convert prose.
 
@@ -32,6 +32,11 @@ This adaptation starts from ai-working-kit main checked 13 November 2026, commit
 amendments: one repository/PR, at most 20 files, less than two working days, explicit
 ownership and all acceptance cases with named QA skills. Pigboard owns this copy;
 upstream's shorter human-only test strategy does not override those decisions.
+
+The four [structured QA helpers](../qa-api/references/structured-steps.md) consume
+complete exact AI steps with separately trusted start facts. This is distinct from
+the retained QA entrypoint's prose contract: its orchestration/publication migration
+remains PGB-78. Do not author incomplete prose helper inputs or imply activation.
 
 ## Apply human-writing
 

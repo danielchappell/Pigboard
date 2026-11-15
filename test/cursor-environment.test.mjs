@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 20);
+  assert.equal(first.verification.entrypoints, 21);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -353,4 +353,186 @@ test('reviewer sibling installation preserves complete folders and real formatte
  git(o.source,'add','.');git(o.source,'commit','-m','missing reviewer sibling');
  await assert.rejects(installCursorSkills(o,fakeInstall));
  assert.equal(await realpath(first.stableSkills),first.skills);
+});
+
+test('installed structured QA helpers retain full sibling closure and validate fixed packet outside source', async t => {
+  // Dependency mocks here test installation only; the actual validator runtime is
+  // copied above. Actual Bruno/PostgreSQL instruction execution is separate QA.
+  const o=await fixture(t), installed=await installCursorSkills(o,fakeInstall);
+  const {prepareFixture}=await import('./fixtures/qa-helper-case.mjs');
+  const run=path.join(o.app,'fixed-helper-input');await prepareFixture(run);
+  const common=path.join(installed.skills,'qa-api/references/structured-steps.md');
+  assert.equal(await readFile(common,'utf8'),await readFile(new URL('../skills/qa-api/references/structured-steps.md',import.meta.url),'utf8'));
+  for(const name of ['qa-api','qa-bruno','qa-database','qa-ui','qa-entrypoint']){
+    async function inspect(relative=''){
+      for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})){
+        const file=path.join(relative,entry.name);if(entry.isDirectory()){await inspect(file);continue;}
+        const source=await readFile(path.join(o.source,'skills',name,file)),target=path.join(installed.skills,name,file);
+        assert.deepEqual(await readFile(target),source,`${name}/${file}`);
+        if(!file.endsWith('.md'))continue;
+        for(const match of source.toString().matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){
+          const [link]=match[1].split('#');if(!link||/^[a-z][a-z0-9+.-]*:/i.test(link))continue;
+          const resolved=path.resolve(path.dirname(target),decodeURIComponent(link));assert(resolved.startsWith(installed.skills+path.sep));await readFile(resolved);
+        }
+      }
+    }
+    await inspect();
+  }
+  for(const guide of ['authoring.md','handoffs.md']){
+    const fromCommon=path.resolve(path.dirname(common),'../../work-validator/docs',guide);
+    assert.equal(await readFile(fromCommon,'utf8'),await readFile(new URL('../docs/'+guide,import.meta.url),'utf8'));
+  }
+  const args=['--mode','start','--input',path.join(run,'work.yaml'),'--context',path.join(run,'facts.yaml'),'--json'];
+  const cli=path.join(installed.skills,'work-validator/scripts/validate-work.mjs');
+  const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
+  assert.equal(installed.verification.entrypoints,21);assert.equal(installed.verification.dependencies,'verified');
+  await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
+});
+
+// This existing installation fixture simulates QA-helper packages, while copying
+// real locked validator dependencies. Genuine default installer acceptance is a
+// separate candidate receipt; neither test establishes agent/provider behavior.
+test('human rework folder/siblings survive installation and real canonical CLIs match source from an unrelated cwd',async t=>{
+ const o=await fixture(t),first=await installCursorSkills(o,fakeInstall);
+ const {packet}=await import('./fixtures/human-rework.mjs');
+ const {extractHandoff}=await import('../lib/contracts/handoff.mjs');
+ const {stringify}=await import('yaml');
+ const {createHash}=await import('node:crypto');
+ assert.equal(first.verification.entrypoints,21);
+ const manifest=JSON.parse(await readFile(first.manifest,'utf8'));
+ const actualManifest=Object.keys(manifest.sourceFiles);
+ for(const name of ['request-rework','human-writing']) {
+  async function compare(relative='') {
+   for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})) {
+    const sub=path.join(relative,entry.name);
+    if(entry.isDirectory())await compare(sub);
+    else {
+     const expected=await readFile(path.join(o.source,'skills',name,sub));
+     assert.deepEqual(await readFile(path.join(first.skills,name,sub)),expected);
+     const key=actualManifest.find(k=>k.endsWith(`${name}/${sub}`));assert(key,`${name}/${sub} manifest`);
+     assert.equal(manifest.sourceFiles[key],createHash('sha256').update(expected).digest('hex'));
+    }
+   }
+  }
+  await compare();
+ }
+ const skill=await readFile(path.join(first.skills,'request-rework/SKILL.md'),'utf8');
+ assert.equal(await readFile(path.resolve(first.skills,'request-rework/../human-writing/SKILL.md'),'utf8'),await readFile(path.join(o.source,'skills/human-writing/SKILL.md'),'utf8'));
+ assert(skill.includes('../human-writing/SKILL.md'));
+ const referencePath=path.join(first.skills,'request-rework/references/example.md'),example=await readFile(referencePath,'utf8');
+ assert.equal(await readFile(path.resolve(path.dirname(referencePath),'../../human-writing/SKILL.md'),'utf8'),await readFile(path.join(o.source,'skills/human-writing/SKILL.md'),'utf8'));
+ const route=[...example.matchAll(/^\| Canonical handoff \| \[Source handoff\]\(([^)]+)\) \| \[Installed handoff\]\(([^)]+)\) \|$/gm)];
+ assert.equal(route.length,1);
+ const sourceHelp=new URL('../skills/request-rework/references/'+route[0][1],import.meta.url);
+ assert.equal(await readFile(path.resolve(path.dirname(referencePath),route[0][2]),'utf8'),await readFile(sourceHelp,'utf8'));
+ const p=packet(),files={
+  'record.yaml':stringify(p.record),'summary.txt':p.summary,
+  'work.yaml':p.preflight.requirements[0].body,'facts.yaml':p.preflight.requirements[0].context_body,
+  'preflight.json':JSON.stringify(p.preflight),'published.json':JSON.stringify(p.published)
+ };
+ for(const [name,text]of Object.entries(files))await writeFile(path.join(o.app,name),text);
+ const cases=[
+  ['validate-work.mjs',['--mode','start','--input',path.join(o.app,'work.yaml'),'--context',path.join(o.app,'facts.yaml'),'--json']],
+  ['validate-handoff.mjs',['--mode','record','--input',path.join(o.app,'record.yaml'),'--format','yaml','--json']],
+  ...['preflight','published'].map(name=>['validate-handoff.mjs',['--mode','chain','--input',path.join(o.app,name+'.json'),'--json']]),
+  ...['html','adf'].map(format=>['prepare-handoff.mjs',['--input',path.join(o.app,'record.yaml'),'--summary',path.join(o.app,'summary.txt'),'--format',format]])
+ ];
+ for(const [script,args]of cases) {
+  const run=cli=>execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  const installed=run(path.join(first.skills,'work-validator/scripts',script));
+  assert.equal(installed,run(new URL('../scripts/'+script,import.meta.url).pathname));
+  const result=JSON.parse(installed);
+  if(script==='prepare-handoff.mjs')assert.deepEqual(JSON.parse(JSON.stringify(extractHandoff(result.format==='html'?result.body:JSON.stringify(result.body),{format:result.format}).value)),p.record);
+  else assert.equal(result.valid,true);
+ }
+ for(const [name,text]of Object.entries(files))assert.equal(await readFile(path.join(o.app,name),'utf8'),text);
+ for(const relative of ['request-rework/SKILL.md','request-rework/references/example.md']) {
+  await assert.rejects(installCursorSkills(o,async dir=>{
+   await fakeInstall(dir);if(path.basename(dir)==='work-validator')await writeFile(path.join(dir,'..',relative),'changed new skill');
+  }),/hash mismatch/);
+  assert.equal(await realpath(first.stableSkills),first.skills);
+ }
+});
+
+// Real copied validator and manifest, simulated unrelated QA-helper packages.
+// This checks release closure/parity, not default installer or provider acceptance.
+test('installed receipt validator preserves incomplete QA outcomes and old input bytes from unrelated cwd', async t => {
+ const o = await fixture(t), installed = await installCursorSkills(o, fakeInstall);
+ const { preparePartialFixtures } = await import('./fixtures/qa-partial-results.mjs');
+ const { createHash } = await import('node:crypto');
+ const inputRoot = path.join(o.app, 'partial-inputs'), hashes = await preparePartialFixtures(inputRoot);
+ const validator = path.join(installed.skills, 'work-validator'), manifest = JSON.parse(await readFile(installed.manifest));
+ assert.equal(manifest.commit, installed.commit);
+ for (const relative of ['contracts/handoff-v1.schema.json', 'lib/contracts/receipts.mjs', 'docs/handoffs.md']) {
+  const key = 'work-validator/' + relative;
+  assert.equal(manifest.sourceFiles[key], createHash('sha256').update(await readFile(new URL('../' + relative, import.meta.url))).digest('hex'));
+  assert.deepEqual(await readFile(path.join(validator, relative)), await readFile(new URL('../' + relative, import.meta.url)));
+ }
+ assert(!Object.keys(manifest.sourceFiles).some(k => k.includes('qa-partial-results')));
+ const { spawnSync } = await import('node:child_process');
+ const { targetRecord } = await import('./fixtures/qa-partial-results.mjs');
+ const validTransitive = new Set(['three', 'four', 'join', 'independent', 'ownership', 'binding', 'pass']);
+ const invalidTransitive = { 'missing-middle': '/steps/2/finding_ids', 'missing-last': '/steps/3/finding_ids', 'unknown-last': '/steps/3/finding_ids', 'four-missing-last': '/steps/4/finding_ids', 'join-missing-F1': '/steps/4/finding_ids', 'join-missing-F2': '/steps/4/finding_ids' };
+ let transitiveChains = 0, transitiveValid = 0, transitiveRecords = 0, proofChains = 0, proofValid = 0, proofRecords = 0;
+ for (const [file, hash] of Object.entries(hashes)) {
+  const mode = file.endsWith('.json') ? 'chain' : 'record', input = path.join(inputRoot, file);
+  const args = ['--mode', mode, '--input', input, ...(mode === 'record' ? ['--format', 'yaml'] : []), '--json'];
+  const run = cli => spawnSync(process.execPath, [cli, ...args], { cwd: o.app, encoding: 'utf8', timeout: 30000 });
+  const source = run(new URL('../scripts/validate-handoff.mjs', import.meta.url).pathname), actual = run(path.join(validator, 'scripts/validate-handoff.mjs'));
+  assert.equal(actual.status, source.status, file + actual.stderr); assert.equal(actual.stdout, source.stdout, file); assert.equal(actual.stderr, '', file);
+  const result = JSON.parse(actual.stdout);
+  const transitive = /^transitive-(repair|blocked|wait)-(.+)\.(json|yaml)$/.exec(file);
+  const proof = file.startsWith('proof-') || file === 'human-static.json';
+  if (proof) {
+   const name = file.replace(/\.(json|yaml)$/, '');
+   const expectedValid = mode === 'record' || /-exact-(pass|fail)$|-not-run$/.test(name) || name === 'human-static';
+   assert.equal(source.status, expectedValid ? 0 : 1, file + source.stdout);
+   assert.equal(actual.status, expectedValid ? 0 : 1, file + actual.stdout);
+   assert.equal(result.valid, expectedValid, file + actual.stdout);
+   assert.equal(result.completion_established, mode === 'chain' && name === 'human-static', file);
+   if (mode === 'chain') {
+    proofChains++;
+    if (expectedValid) {
+     proofValid++;
+     const target = targetRecord(JSON.parse(await readFile(input, 'utf8')));
+     assert.deepEqual(result.qa_report, target.payload.qa_report ?? target.payload.report, file);
+     assert.deepEqual(result.human_pending, ['HQA-01'], file);
+     if (name === 'human-static') { assert.equal(result.ai_steps, 0); assert.deepEqual(result.qa_report.steps, []); }
+    } else {
+     const base = '/comment_pages/0/comments/3/body/payload/';
+     const [code, field] = name.endsWith('-real-null-environment') ? ['EVIDENCE', 'qa_report/environment'] : name.endsWith('-foreign-result') ? ['EVIDENCE', 'qa_report/steps/0/evidence/0'] : name.endsWith('-foreign-finding') ? ['EVIDENCE', 'findings/0/evidence/0'] : ['PR', 'pr'];
+     assert(result.diagnostics.some(x => x.code === code && x.path === base + field), file + actual.stdout);
+    }
+    t.diagnostic(JSON.stringify({ file, input_sha256: hash, source: { status: source.status, output: JSON.parse(source.stdout) }, installed: { status: actual.status, output: result } }));
+   } else proofRecords++;
+  } else if (transitive) {
+   const [, kind, variant] = transitive;
+   const shapeInvalid = kind === 'repair' && ['empty', 'empty-array'].includes(variant);
+   const expectedValid = mode === 'record' ? !shapeInvalid : validTransitive.has(variant) || (variant === 'empty' && kind !== 'repair');
+   assert.equal(result.valid, expectedValid, file + actual.stdout);
+   assert.equal(result.completion_established, false, file);
+   if (mode === 'chain') {
+    transitiveChains++;
+    if (expectedValid) {
+     transitiveValid++;
+     const envelope = JSON.parse(await readFile(input, 'utf8')), target = targetRecord(envelope);
+     assert.deepEqual(result.qa_report, target.payload.qa_report, file);
+     assert.deepEqual(result.human_pending, target.payload.qa_report.human_pending, file);
+     assert.deepEqual(result.human_pending, ['HQA-01'], file);
+    } else {
+     const suffix = invalidTransitive[variant], code = shapeInvalid ? 'STRUCTURE' : 'LEDGER';
+     const expectedPath = '/comment_pages/0/comments/3/body/payload/' + (shapeInvalid ? 'findings' : 'qa_report' + suffix);
+     assert(result.diagnostics.some(x => x.code === code && x.path === expectedPath), file + actual.stdout);
+    }
+   } else transitiveRecords++;
+  } else if (['blocked-no-environment.json', 'blocked-retained-fail.json', 'wait-retained-fail.json', 'old-blocked.json', 'old-wait.json', 'human-static.json'].includes(file)) {
+   assert.equal(result.valid, true, file); assert.equal(result.completion_established, file === 'human-static.json');
+  } else if (mode === 'chain') { assert.equal(result.valid, false, file); assert.equal(result.completion_established, false); }
+  assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'), hash, file);
+ }
+ assert.equal(transitiveChains, 43); assert.equal(transitiveValid, 23); assert.equal(transitiveRecords, 43);
+ assert.equal(proofChains, 19); assert.equal(proofValid, 7); assert.equal(proofRecords, 18);
+ assert.equal(await realpath(installed.stableSkills), installed.skills);
 });

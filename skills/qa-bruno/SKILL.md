@@ -16,6 +16,14 @@ PR, permitted network destinations/actions/data, prepared identity/tenant and se
 references, evidence destination and prescribed cleanup (or explicit none).
 Do not discover collection conventions or create a collection during QA.
 
+## Structured invocation
+
+Read the [common structured-step contract](../qa-api/references/structured-steps.md) before acting. It owns original
+raw work/start context, exact AI assignment, trusted environment receipt, declared
+observations, revision-bound results and stop rules. Require the full original
+inputs; a basic prose handoff or a helper fragment is insufficient.
+
+
 ## Prepared runtime
 
 Resolve `QA_BRUNO_ROOT` to the absolute directory containing this `SKILL.md`.
@@ -70,14 +78,26 @@ defect under the verified identity is FAIL.
 Use only explicitly prescribed finite observation intervals/deadlines for async
 cases, retaining the initial response. No ad hoc retry, connection recovery or
 replay of an uncertain write. An assertion mismatch under valid prerequisites is
-FAIL. Continue other independent prescribed cases; if later steps need state that
-the defect prevented, mark those steps/cases NOT RUN. Stop execution immediately
+FAIL. Return the assigned unit and causal NOT RUN reasons; only the caller may
+continue already prescribed independent work. If later assigned steps need state
+the defect prevented, mark them NOT RUN. Stop execution immediately
 on a prerequisite blocker. A batch command must support these stop/dependency
 rules; if it cannot, the handoff is BLOCKED before running that batch.
 
+## Named observations
+
+Use the supplied explicit extraction mapping against the **actual** report/body.
+Inspect the real JSON structure, assertion results and test-script results rather
+than assuming a PASS field or substituting fixture expectations. Return only this
+step's declared output names with original value/evidence/revision/tenant/time.
+Missing mapping, body, output or required assertion evidence means BLOCKED; no
+invented output, expression evaluation or coercion. The API parent may expose
+these observations without running the request again.
+
 ## Evidence and result
 
-Verify report creation, exit state, actual request/assertion counts, each expected
+Verify report creation, exit state, actual request count and separate assertion
+and test-script counts, each expected
 assertion and unexecuted cases; command success or a report file alone is not PASS.
 Count actual checks in both Bruno's assertion and test-script results. Inspect
 runtime errors too: a script/assertion-engine failure is BLOCKED even if a report

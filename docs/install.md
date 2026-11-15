@@ -14,7 +14,7 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the twenty folders in
+The installer prepares the twenty-one folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
@@ -22,6 +22,10 @@ manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 
 dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.
+The complete request-rework folder retains its sibling human-writing and same-release
+work-validator helpers/help. It is human invoked, with separately prepared actor,
+current QA/PR/evidence reads and direct queue rights; installing it grants none of
+those permissions. Refresh the whole bundle rather than copying its SKILL.md alone.
 
 A successful skill installation does not establish Jira/Bitbucket access, Cursor
 model controls, computer use, preview readiness or permission to execute a ticket.
@@ -72,7 +76,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing twenty complete skill folders and `work-validator` |
+| `skills` | Absolute root containing twenty-one complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -96,7 +100,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all twenty entrypoints,
+`verification`. Inspect the expected commit, all twenty-one entrypoints,
 `dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
 `work-validator epic draft`, `work-validator ticket draft`, and
 `handoff-validator admission record`, and `config-validator project scope`. The
@@ -120,7 +124,7 @@ the retained basic-worker prose guide. Its human-writing sibling and same-releas
 work-validator are required; copying just the writer entrypoint loses the contract.
 The implementer composer loads complete `implementer-job` and `implementer-jira`
 siblings and its shared handoff/Cursor/review references. The reviewer wrapper loads
-complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only QA
+complete reviewer-jira, pr-review, pr-commenting and human-writing siblings. Only the retained QA entrypoint
 remains a basic prose consumer. These prepared capabilities do not make the mixed
 bundle an accepted delivery loop or activate automations.
 
@@ -296,3 +300,27 @@ installed regression checks execute the helper and chain validation from an
 unrelated working directory. Missing/changed helper or sibling files fail existing
 manifest verification, preserving the previous binding. See [handoffs](handoffs.md)
 for bounds, diagnostics, local examples and safe publication responsibilities.
+
+## Verify the structured QA helper closure
+
+Install/refresh the entire pinned, reviewed published bundle, not four loose
+`SKILL.md` files. All four helpers depend on
+`qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
+and the prepared validator. The current twenty-one-skill allowlist ships
+these folders; there is no added skill or engine. Use the receipt's immutable
+versioned `skills` path for a run, rather than following a later stable-link refresh.
+Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
+Missing runtime/reference/hash or a failed check blocks the run; preserve the last
+verified installation and refresh from the approved published revision during
+operator setup. Never repair/fetch dependencies within delivery.
+
+Check all four installed entrypoints and the common reference against the pinned
+manifest; run existing install verification/smoke checks. Those checks establish
+installation only. [Bounded helper use](using-pigboard.md#prescribed-structured-qa-helpers)
+also needs complete work/trusted context, ready original PR deployment proof,
+restricted access, prepared artifacts, actual outputs and retrievable evidence.
+The retained QA entrypoint still accepts basic prose; structured dispatch and
+canonical QA publication are PGB-78. PGB-90 owns saved automation compatibility;
+PGB-58 owns full-loop acceptance and activation remains a separate owner decision.
+This mixed bundle must stay inactive. Do not treat local fixture or installation
+success as hosted/customer delivery acceptance.

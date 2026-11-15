@@ -10,6 +10,14 @@ causality and evidence; do not choose cases, invent expectations or discover ano
 way to test. The implementer prepares execution artifacts and the reviewer checks
 them against the ticket. A response or implementation claim is not the expectation.
 
+## Structured invocation
+
+Read the [common structured-step contract](references/structured-steps.md) before acting. It owns original
+raw work/start context, exact AI assignment, trusted environment receipt, declared
+observations, revision-bound results and stop rules. Require the full original
+inputs; a basic prose handoff or a helper fragment is insufficient.
+
+
 ## Required handoff
 
 Before any request, require:
@@ -33,12 +41,20 @@ permission to rewrite the test or weaken the requirement.
 
 ## Execute and assess
 
-Invoke only the skills named for these cases, in the prescribed order. If
-`qa-bruno` is named, it runs the prepared requests. If another approved execution
-skill is explicitly named, follow that selection; do not fall back to it after a
-failure. A missing selected skill blocks. Database/event observations are required
-only where prescribed; missing necessary downstream evidence blocks the claim,
-rather than authorizing new database/event testing.
+Own exactly one prescribed `qa-api` parent and its one named `qa-bruno` child.
+Verify `children` names that child, its `caller` is this parent, and complete API
+contracts agree: method, operation, route, actor, selector and expectations. Reject
+missing/mismatched ownership or artifacts before execution. Invoke the child once
+per prescribed parent execution. An unresolved earlier child-operation receipt
+blocks without another call, even if its response/report was lost. The top-level
+caller must not separately dispatch the nested child.
+
+Return separate parent and child step results. Expose only the parent's declared
+corresponding child outputs, preserving actual values, evidence and provenance.
+Assess parent assertions and causality from that evidence; do not repeat the HTTP
+request. Do not select another execution skill or execute downstream SQL/UI.
+Those observations belong to their separately prescribed positions/caller; return
+the actual declared outputs for binding there, without claiming downstream PASS.
 
 Inspect resolved destinations, identity scope and supplied request scripts before
 execution. They cannot expand permitted actions or destinations. Wrong targets,
@@ -70,8 +86,8 @@ Keep credentials and unnecessary personal data out of shared evidence.
 - **PASS:** all prescribed steps and necessary assertions/evidence for this case
   are complete and satisfy the supplied expectations.
 - **FAIL:** execution against verified prerequisites demonstrates a requirement
-  mismatch. Continue only remaining independent prescribed cases; mark dependent
-  cases NOT RUN when the failed behavior prevents their prerequisites. Never count
+  mismatch. Return this assigned unit's defect and dependent NOT RUN reasons;
+  only the caller may continue already prescribed independent work. Never count
   those cases as passed. A defect-caused dependency skip alone does not turn FAIL
   into a setup blocker.
 - **BLOCKED:** a prerequisite, test artifact, required evidence or scope decision
