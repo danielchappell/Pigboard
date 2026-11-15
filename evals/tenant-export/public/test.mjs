@@ -4,7 +4,7 @@ import { createRepository } from './repository.mjs';
 import { createService } from './service.mjs';
 import { collectPages } from './pagination.mjs';
 import { createServer, demoRows, demoAuthenticate } from './server.mjs';
-const taskOnly = process.argv.some(arg => arg.includes('task-test')) || process.env.EXPORT_TASK_TEST === '1';
+const taskOnly = process.env.EXPORT_TASK_TEST === '1';
 // npm test covers supported regressions. npm run task-test enables the requested feature checks.
 const selected = process.env.npm_lifecycle_event === 'task-test';
 test('existing tenant list and administrator access', async () => {
