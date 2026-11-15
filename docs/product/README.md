@@ -99,4 +99,6 @@ The manager is named Pig Boss. One customer AWS installation manages several pro
 
 ## Current delivery amendment
 
-The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Source mirrors 24 Stories/107 cases; Jira has 25/110, with PGB-110/R1-24 source publication pending. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
+The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. That publication mirrored 24 Stories/107 cases while Jira had 25/110, with PGB-110/R1-24 source publication pending. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
+
+PGB-129/R1-26 now precedes PGB-81 to reject contradictory current completion observations in the offline preview. It preserves current retained-empty compatibility; complete repair scheduling/history remain PGB-81. Source mirrors 25 Stories/113 cases; native Jira has 26/116, with PGB-110 source publication pending. All original PGB-81 criteria and 42 human cases remain. The six new human cases are NOT_RUN; this amendment does not claim a shipped manager or activation.

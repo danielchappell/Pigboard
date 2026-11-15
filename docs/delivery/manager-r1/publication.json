@@ -652,10 +652,10 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 24,
-    "case_count": 107,
-    "native_story_count": 25,
-    "native_case_count": 110,
+    "story_count": 25,
+    "case_count": 113,
+    "native_story_count": 26,
+    "native_case_count": 116,
     "pending_source_amendments": [
       {
         "local_id": "R1-24",
@@ -664,7 +664,70 @@
         "status": "source publication pending"
       }
     ],
-    "source_order": "R1-25 immediately before R1-11; other relative order unchanged.",
-    "status": "PGB-113 amendment mirrored; PGB-110 source amendment pending. This is publication, not delivery completion."
+    "source_order": "R1-25 then R1-26 immediately before R1-11; other relative order unchanged.",
+    "status": "PGB-113 and PGB-129 amendments mirrored; PGB-110 source amendment pending. Publication is not delivery completion."
+  },
+  "current_proof_conflict_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-26": "PGB-129"
+    },
+    "native_id": "10589",
+    "amended_story": "PGB-81",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "b6bacbb594b7008dfeba4722fd686b5379bd7336834cbcfa811d07187ce255b5",
+      "preview_before": "8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe",
+      "preview_after": "a7eadcb589c911b1466b17d1b3dc9b8fabfaafa8c5945b772e2ce47c4fcf546e"
+    },
+    "dependency_links": [
+      {
+        "id": "10704",
+        "type_id": "10000",
+        "from": "PGB-113",
+        "to": "PGB-129"
+      },
+      {
+        "id": "10705",
+        "type_id": "10000",
+        "from": "PGB-129",
+        "to": "PGB-81"
+      }
+    ],
+    "preserved_links": [
+      {
+        "id": "10637",
+        "from": "PGB-80",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10686",
+        "from": "PGB-113",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10638",
+        "from": "PGB-81",
+        "to": "PGB-82"
+      }
+    ],
+    "readback_scope": "Full PGB-113/PGB-129/PGB-81 bodies and native links; PGB-81 unchanged except appended PGB-129/ai_qa_complete prerequisite. Director PGB-66 introduction preserved. Exact new native description matches reviewed body after trailing-newline trim.",
+    "original_preview_cases": 42,
+    "additive_cases": 6,
+    "criteria_preserved": true,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "plan_sha256": "d99c3c85c1a70bd39b29afd2483cec476dcc1368b663b12c7f402f256129fadf",
+    "forecasts": {
+      "prerequisite": {
+        "files": 17,
+        "days": 1.2
+      },
+      "remaining_preview": {
+        "files": 20,
+        "days": 1.89
+      }
+    },
+    "publication_variant": "PGB-129 first; PGB-110/R1-24 source publication remains pending and is not a product dependency."
   }
 }

@@ -124,8 +124,8 @@ test('shared instruction/reference closure keeps exact ownership, observations a
 
 test('PGB-113 source amendment preserves native contracts, full preview and pending other-owner publication',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-08','R1-09','R1-10','R1-25','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,24);
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,25);
  const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
  // Fixed original335036 object hashes, frozen before source publication edits.
  assert.equal(hash(preview.acceptance_criteria),'1ee61a851ab66f31145a483f68c8bc1bb83dfd9e3422d3caaf4cb7e11e059639');
@@ -133,20 +133,35 @@ test('PGB-113 source amendment preserves native contracts, full preview and pend
  assert.equal(hash(preview.testing_strategy),'efacc7e0fe916c48cb664d75748883054e694a60de119a7c5783aefdd3ea09db');
  assert.equal(preview.testing_strategy.human_review.cases.length,42);
  assert.equal(hash(contract('R1-12')),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');
- assert.equal(hash(drafts.filter(x=>!['R1-11','R1-25'].includes(x.id))),'a6e266f99e7ab85fb7b0e3b0475f5228f71cd4662579955c363e41ccdb56af7b');
- assert.equal(hash(metadata.filter(x=>!['R1-11','R1-25'].includes(x.id))),'0b6f7ca4170a3ec06b9926197c11cca2de7f18660e65e80b0a3aba86cfd7a714');
+ assert.equal(hash(drafts.filter(x=>!['R1-11','R1-25','R1-26'].includes(x.id))),'a6e266f99e7ab85fb7b0e3b0475f5228f71cd4662579955c363e41ccdb56af7b');
+ assert.equal(hash(metadata.filter(x=>!['R1-11','R1-25','R1-26'].includes(x.id))),'0b6f7ca4170a3ec06b9926197c11cca2de7f18660e65e80b0a3aba86cfd7a714');
  const native113=structuredClone(contract('R1-25'));native113.prerequisites[0].ticket='PGB-80';assert.equal(hash(native113),'36bdc9fc15aa1dfc69db7e8f9d81e1ff3d089fb43d876aa9df37734ab0b9052a');
- assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'}]);
- assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.7,19]);
- assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),107);
+ assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'},{ticket:'R1-26',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25','R1-26']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.89,20]);
+ assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),113);
  for(const id of ['R1-25','R1-11']){const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');}
- const baseline=structuredClone(publication);delete baseline.repeated_parent_amendment;delete baseline.current_source_scope;assert.equal(hash(baseline),'aeeaa43078df97c68c580211cdc9bb8bca05d0f06161d004626c87c55b93d20a');
+ const baseline=structuredClone(publication);delete baseline.repeated_parent_amendment;delete baseline.current_source_scope;delete baseline.current_proof_conflict_amendment;assert.equal(hash(baseline),'aeeaa43078df97c68c580211cdc9bb8bca05d0f06161d004626c87c55b93d20a');
  assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[23,104,53,41]);
- const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count,current.native_story_count,current.native_case_count],[24,107,25,110]);assert.deepEqual(current.pending_source_amendments,[{local_id:'R1-24',ticket:'PGB-110',owner:'Skills',status:'source publication pending'}]);
+ const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count,current.native_story_count,current.native_case_count],[25,113,26,116]);assert.deepEqual(current.pending_source_amendments,[{local_id:'R1-24',ticket:'PGB-110',owner:'Skills',status:'source publication pending'}]);
  const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,24);assert.equal(new Set(Object.values(mapping)).size,24);assert(!('R1-24'in mapping));
  assert.deepEqual(amendment.dependency_links,[{id:'10685',from:'PGB-80',to:'PGB-113'},{id:'10686',from:'PGB-113',to:'PGB-81'}]);assert.deepEqual(amendment.preserved_links,[{id:'10637',from:'PGB-80',to:'PGB-81'},{id:'10638',from:'PGB-81',to:'PGB-82'}]);assert.equal(amendment.human_acceptance,'NOT_RUN');assert.equal(amendment.activation_authorized,false);
  assert.deepEqual(amendment.description_sha256,{original:'edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497',validator:'c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8',final_preview:'8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe'});
  for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){const text=await read(file),requirements=text.split('\n').filter(line=>/^\| [AWMO]\d\d/.test(line)),covered=new Set(requirements.flatMap(line=>line.split('|')[1].match(/[AWMO]\d\d/g)??[]));assert.deepEqual([...covered].sort(),['A','W','M','O'].flatMap((prefix,i)=>Array.from({length:[12,12,14,15][i]},(_,j)=>prefix+String(j+1).padStart(2,'0'))).sort());for(const id of ['W04','W12','M10']){const row=requirements.find(line=>line.startsWith('| '+id+' |'));for(const caseId of ['R1-25-C01','R1-25-C02','R1-25-C03'])assert(row.includes(caseId));}assert(text.includes('R1-11-H02'));}
  const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-25:')<stories.indexOf('## R1-11:'));for(const c of contract('R1-25').testing_strategy.human_review.cases){assert(stories.includes(c.id));for(const key of ['prerequisites','steps','expected','evidence'])for(const value of c[key])assert(stories.includes(value));}
  const bundle=JSON.parse(await read('config/skill-bundle.json'));for(const name of ['qa-entrypoint','qa-api','qa-bruno','qa-database','qa-ui','human-writing','write-pr-sized-stories'])assert(bundle.skills.includes(name));assert(!JSON.stringify(bundle).includes('qa-helper-case'));assert(!JSON.stringify(bundle).includes('handoff-chains'));
+});
+
+test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
+ const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
+ assert.equal(draft.title,'Reject conflicting completion receipts');assert.deepEqual(draft.contract.prerequisites,[{ticket:'R1-25',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(plan.dependencies,['R1-25']);assert.equal(plan.days,1.28);assert.equal(plan.files.length,17);assert.equal(new Set(plan.files).size,17);
+ assert.equal(draft.contract.acceptance_criteria.length,3);assert.equal(draft.contract.technical_acceptance_criteria.constraints.length,3);assert.equal(draft.contract.testing_strategy.human_review.cases.length,6);
+ assert.deepEqual(draft.contract.testing_strategy.cases,[]);assert.deepEqual(draft.contract.testing_strategy.testing_types,[]);assert(draft.contract.testing_strategy.human_review.no_ai_cases_reason);
+ const native=structuredClone(draft.contract);native.prerequisites[0].ticket='PGB-113';assert.equal(createHash('sha256').update(JSON.stringify(native)).digest('hex'),'b4443ea379deebc69e3deb56a4b94d8932ebd68bc772728d52700216069f191c');
+ assert.deepEqual(a.stories,{'R1-26':'PGB-129'});assert.equal(a.native_id,'10589');assert.equal(a.native_publication_verified,true);assert.equal(a.description_sha256.prerequisite,'b6bacbb594b7008dfeba4722fd686b5379bd7336834cbcfa811d07187ce255b5');
+ assert.deepEqual(a.dependency_links,[{id:'10704',type_id:'10000',from:'PGB-113',to:'PGB-129'},{id:'10705',type_id:'10000',from:'PGB-129',to:'PGB-81'}]);assert.equal(a.original_preview_cases,42);assert.equal(a.additive_cases,6);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
+ const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-25:')<stories.indexOf('## R1-26:'));assert(stories.indexOf('## R1-26:')<stories.indexOf('## R1-11:'));assert(stories.includes(JSON.stringify(draft.contract,null,2)));
+ for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md'])for(const id of ['W04','W12','M10'])assert((await read(file)).split('\n').find(l=>l.startsWith('| '+id+' |')).includes('R1-26-PC01–PC06'));
+ const r=validateWork(JSON.stringify(draft.contract),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');
 });

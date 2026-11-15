@@ -791,3 +791,34 @@ test('installed repeated-parent chain matrix and layered work bounds preserve ex
  }
  assert.equal(digest(await readFile(modulePath)),digest(sourceBytes));assert.deepEqual((await readdir(o.app)).sort(),['repeated-inputs']);
 });
+
+// Conflict inputs stay source-only; the real installed command reads absolute files.
+test('installed preview rejects frozen current-proof contradictions and preserves complete current results',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
+ const F=JSON.parse(await readFile(new URL('./fixtures/manager-proof-conflicts.json',import.meta.url)));
+ const {createHash}=await import('node:crypto'),hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+ const manifest=JSON.parse(await readFile(installed.manifest));
+ for(const relative of ['lib/contracts/receipts.mjs','lib/manager/snapshot.mjs']){
+  const bytes=await readFile(new URL('../'+relative,import.meta.url));assert.equal(hash(await readFile(path.join(validator,relative))),hash(bytes));assert.equal(manifest.sourceFiles['work-validator/'+relative],hash(bytes));
+ }
+ assert(!Object.keys(manifest.sourceFiles).some(k=>k.includes('manager-proof-conflicts')));
+ const {pathToFileURL}=await import('node:url'),{inspectManagerCompletion}=await import(pathToFileURL(path.join(validator,'lib/contracts/receipts.mjs')).href);
+ const matching=F.cases.find(c=>c.id==='matching-shared-inventory-123'),expected=F.matching_overlap.expected_bindings,groups=new Map();
+ const sorted=bs=>structuredClone(bs).sort((a,b)=>JSON.stringify([a.kind,a.key,a.digest]).localeCompare(JSON.stringify([b.kind,b.key,b.digest])));
+ assert.equal(expected.length,57);assert.equal(new Set(expected.map(b=>JSON.stringify([b.kind,b.key]))).size,57);
+ for(const [index,raw]of matching.snapshot.completion_receipts.entries()){
+  const target=F.matching_overlap.targets[index],control=F.public_controls.find(c=>c.input.target.ticket_id===target.ticket_id),r=inspectManagerCompletion(raw);
+  const validation=JSON.parse(JSON.stringify(r.validation));assert.deepEqual(validation,control.expected);assert.deepEqual(validation.target,target);assert.deepEqual(sorted(r.bindings),sorted(expected));assert.equal(new Set(r.bindings.map(b=>JSON.stringify([b.kind,b.key]))).size,57);
+  for(const b of r.bindings){const key=JSON.stringify([b.kind,b.key]);if(!groups.has(key))groups.set(key,{digests:new Set(),participants:new Set()});groups.get(key).digests.add(b.digest);groups.get(key).participants.add(target.ticket_id);}
+ }
+ assert.equal(groups.size,57);for(const b of expected){const group=groups.get(JSON.stringify([b.kind,b.key]));assert.deepEqual([...group.digests],[b.digest]);assert.deepEqual([...group.participants],['1000','2000','3000']);}
+ const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),proof=path.join(o.app,'proof.json');
+ for(const c of F.public_controls){const raw=JSON.stringify(c.input);await writeFile(proof,raw);const p=spawnSync(process.execPath,[path.join(validator,'scripts/validate-handoff.mjs'),'--mode','chain','--input',proof,'--json'],{cwd:o.app,encoding:'utf8',timeout:5000});assert.equal(p.status,0);assert.equal(p.stderr,'');assert.deepEqual(JSON.parse(p.stdout),c.expected,c.name);assert.equal(await readFile(proof,'utf8'),raw);}await rm(proof);
+ for(const c of F.invalid_public_controls){const raw=JSON.stringify(c.input);await writeFile(proof,raw);const p=spawnSync(process.execPath,[path.join(validator,'scripts/validate-handoff.mjs'),'--mode','chain','--input',proof,'--json'],{cwd:o.app,encoding:'utf8',timeout:5000});assert.equal(p.status,1);assert.equal(p.stderr,'');assert.deepEqual(JSON.parse(p.stdout),c.expected,c.name);assert.equal(await readFile(proof,'utf8'),raw);}await rm(proof);
+ for(const c of F.cases){
+  const rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const before=(await readdir(o.app)).sort();
+  const args=[path.join(validator,'scripts/manager-preview.mjs'),'--config',config,'--input',input];
+  for(const json of [true,false]){const p=spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000});assert.equal(p.status,c.expected.status==='complete'?0:1,c.id+p.stderr);assert.equal(p.stderr,'');assert(!p.stdout.includes('FICTITIOUS-MARKER'));if(json)assert.deepEqual(JSON.parse(p.stdout),c.expected,c.id);else {assert.match(p.stdout,/Local supplied snapshot only/);if(c.expected.status==='partial')assert.match(p.stdout,/REPAIR_PROOF_INVALID/);}}
+  assert.deepEqual((await readdir(o.app)).sort(),before);assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.equal(c.expected.writes,0);assert.equal(c.expected.execution_authorized,false);
+ }
+});

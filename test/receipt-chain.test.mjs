@@ -1,6 +1,6 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
-import { validateReceiptChain,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
+import { validateReceiptChain,inspectManagerCompletion,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
 const entries=e=>e.comment_pages.flatMap(p=>p.comments.map(c=>({p,c,r:JSON.parse(JSON.parse(c.body).content[0].content[0].text)}))),target=e=>entries(e).find(x=>x.r.record_id===e.target.record_id);
 function seal(e){for(let round=0;round<20;round++){let changed=false;const map=new Map(entries(e).map(x=>[x.r.record_id,digestValue(x.r)]));function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='digest'&&v.record_id&&map.has(v.record_id)&&x!==map.get(v.record_id)){v[k]=map.get(v.record_id);changed=true;}else if(x&&typeof x==='object')walk(x);}}walk(e);for(const x of entries(e)){walk(x.r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(x.r)}]}]});}if(!changed&&round>0)return e;}return e;}
@@ -299,4 +299,44 @@ async function measuredReceiptCall(raw,validate,moduleURL){
 }
 test('source shared-DAG closures finish below the independently fixed whole-module entry budgets',async t=>{
  for(const name of ['layered-positive','layered-extra-r2']){const input=repeated.inputs[name],{result,entries}=await measuredReceiptCall(JSON.stringify(input),validateReceiptChain,new URL('../lib/contracts/receipts.mjs',import.meta.url).href);checkRepeatedResult(result,repeated.expected[name],input,name);assert(entries>0&&entries<=repeated.layered_budgets[name],`${name}: ${entries} > ${repeated.layered_budgets[name]}`);t.diagnostic(`${name}: ${entries} receipt-module entries <= ${repeated.layered_budgets[name]}`);}
+});
+
+const proofConflictFixtures=JSON.parse(readFileSync(new URL('./fixtures/manager-proof-conflicts.json',import.meta.url)));
+test('private current inspection preserves complete fixed public results and retained-empty authority',()=>{
+ for(const c of proofConflictFixtures.public_controls){
+  const raw=JSON.stringify(c.input),before=raw,inspected=inspectManagerCompletion(raw);
+  assert.deepEqual(Object.keys(inspected).sort(),['bindings','validation']);
+  assert.deepEqual(JSON.parse(JSON.stringify(inspected.validation)),c.expected,c.name);
+  assert.deepEqual(validateReceiptChain(raw),inspected.validation);
+  assert.equal(c.input.retained.length,0);assert(inspected.bindings.length>0);
+  assert.deepEqual([...new Set(inspected.bindings.map(b=>b.kind))].sort(),['comment','current','current_pr','evidence','pr','requirements','uuid']);
+  for(const b of inspected.bindings){assert.deepEqual(Object.keys(b).sort(),['digest','key','kind']);assert.match(b.digest,/^sha256:[0-9a-f]{64}$/);}
+  assert.deepEqual(inspectManagerCompletion(JSON.stringify(c.input,null,2)),inspected,'Envelope formatting does not change canonical observations.');
+  assert.equal(JSON.stringify(c.input),before);
+ }
+ for(const raw of ['{}','not JSON',JSON.stringify({...proofConflictFixtures.public_controls[0].input,retained:[{}]})]){
+  const r=inspectManagerCompletion(raw);assert.equal(r.validation.valid,false);assert.deepEqual(r.bindings,[]);assert.deepEqual(r.validation,validateReceiptChain(raw));
+ }
+});
+
+test('five remaining observation boundaries retain canonical validity and authority separation',()=>{
+ for(const c of proofConflictFixtures.invalid_public_controls){const r=inspectManagerCompletion(JSON.stringify(c.input));assert.deepEqual(JSON.parse(JSON.stringify(r.validation)),c.expected,c.name);assert.deepEqual(r.bindings,[]);}
+ const requirementCase=proofConflictFixtures.cases.find(c=>c.id==='requirements-context-duplicate'),inspected=inspectManagerCompletion(requirementCase.snapshot.completion_receipts[0]);
+ assert.equal(inspected.validation.valid,true);const requirements=inspected.bindings.filter(b=>b.kind==='requirements');assert.equal(requirements.length,2);assert.equal(requirements[0].key,requirements[1].key);assert.notEqual(requirements[0].digest,requirements[1].digest,'Keep every validated context before map overwrite.');
+ const currentCase=proofConflictFixtures.cases.find(c=>c.id==='current-outer-unbound'),current=inspectManagerCompletion(currentCase.snapshot.completion_receipts[0]);assert.equal(current.validation.valid,true);assert.equal(current.validation.completion_established,false,'Valid current QA before Human Review grants no completion.');
+ assert.equal(Object.keys(proofConflictFixtures.family_boundaries).length,7);
+});
+
+test('three distinct current envelopes export all 57 matching observation bindings',()=>{
+ const F=proofConflictFixtures,c=F.cases.find(c=>c.id==='matching-shared-inventory-123'),expected=F.matching_overlap.expected_bindings;
+ const sorted=bs=>structuredClone(bs).sort((a,b)=>JSON.stringify([a.kind,a.key,a.digest]).localeCompare(JSON.stringify([b.kind,b.key,b.digest]))),groups=new Map();
+ assert.equal(expected.length,57);assert.equal(new Set(expected.map(b=>JSON.stringify([b.kind,b.key]))).size,57);
+ for(const [index,raw]of c.snapshot.completion_receipts.entries()){
+  const target=F.matching_overlap.targets[index],control=F.public_controls.find(c=>c.input.target.ticket_id===target.ticket_id),r=inspectManagerCompletion(raw);
+  const validation=JSON.parse(JSON.stringify(r.validation));assert.deepEqual(validation,control.expected);assert.deepEqual(validation.target,target);
+  assert.deepEqual(sorted(r.bindings),sorted(expected));assert.equal(new Set(r.bindings.map(b=>JSON.stringify([b.kind,b.key]))).size,57);
+  for(const b of r.bindings){const key=JSON.stringify([b.kind,b.key]);if(!groups.has(key))groups.set(key,{digests:new Set(),participants:new Set()});groups.get(key).digests.add(b.digest);groups.get(key).participants.add(target.ticket_id);}
+ }
+ assert.equal(groups.size,57);
+ for(const b of expected){const group=groups.get(JSON.stringify([b.kind,b.key]));assert.deepEqual([...group.digests],[b.digest]);assert.deepEqual([...group.participants],['1000','2000','3000']);}
 });

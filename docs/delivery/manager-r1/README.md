@@ -1,6 +1,6 @@
 # Pig Boss release one: complete delivery plan
 
-**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. The historical 23-Story baseline is preserved. Current source mirrors 24 Stories / 107 cases; native Jira has 25 / 110. PGB-110/R1-24 source publication is pending with its Skills owner. Jira remains the queue; this pack is its reviewable design/acceptance record.
+**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. The historical 23-Story baseline is preserved. Current source mirrors 25 Stories / 113 cases; native Jira has 26 / 116. PGB-110/R1-24 source publication is pending with its Skills owner. Jira remains the queue; this pack is its reviewable design/acceptance record.
 
 ## What this release delivers
 
@@ -14,7 +14,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 
 ## Ordered Stories
 
-[Complete source Story bodies and 107 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current execution status is in Jira; publication and historical review status do not prove implementation or acceptance. All human acceptance remains NOT_RUN.
+[Complete source Story bodies and 113 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current execution status is in Jira; publication and historical review status do not prove implementation or acceptance. All human acceptance remains NOT_RUN.
 
 | ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
 | --- | --- | --- | ---: | ---: |
@@ -30,7 +30,8 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
 | R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
-| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25 | 1.70 | 19 |
+| R1-26 / [PGB-129](https://scubapig.atlassian.net/browse/PGB-129) | Reject conflicting completion receipts | R1-25 | 1.28 | 17 |
+| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25, R1-26 | 1.89 | 20 |
 | R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21 | 1.75 | 12 |
 | R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
 | R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 | 1.75 | 10 |
@@ -43,7 +44,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.43 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **38.90 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. Each per-slice forecast in this table is less than two human working days and at most 20 files; separately recorded exceptions remain specific to their existing Stories. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -229,7 +230,7 @@ Configuration ownership: R1-21 creates the sole `contracts/config-v1.schema.json
 
 ## Repeated-parent amendment, 15 November 2026
 
-PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source is 24 Stories/107 cases; native Jira is 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. At that amendment, source was 24 Stories/107 cases; native Jira was 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
 
 The independently reviewed F1 preservation repair carries the selected worker's
 existing proof through final authorized-resume checks and reuses only the exact
@@ -238,3 +239,9 @@ is 15 files/1.98 familiar-human days, with 0.23 days remaining from the frozen
 066f24c candidate. Prior 468-test and 100-case results remain evidence for their
 original inputs and revision; repaired-candidate checks and independent reviews
 are required separately. Human acceptance remains NOT_RUN.
+
+## Current-proof conflict amendment, 15 November 2026
+
+PGB-129/R1-26 follows PGB-113 and precedes PGB-81. It rejects contradictory current completion observations in the existing offline preview. PGB-81 keeps all four AC, two TAC and 42 original human cases, including complete repair ordering and history projection. The new six cases add coverage; human acceptance remains NOT_RUN.
+
+The reviewed forecasts are 17 files/1.28 days for PGB-129 and 20 files/1.89 days for remaining PGB-81, including checks, documentation, review and PR preparation. Earlier estimates remain historical. Source now mirrors 25 Stories/113 cases; native Jira has 26/116. PGB-110/R1-24 source publication is pending with Skills and is not a product dependency. Native links 10704 (PGB-113→PGB-129) and 10705 (PGB-129→PGB-81) were read back; old links and all original PGB-81 fields outside its appended prerequisite were preserved. Publication does not establish acceptance, deployment or activation.
