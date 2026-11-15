@@ -133,7 +133,7 @@ import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
 import { validateHandoff, extractHandoff, digestValue } from '../lib/contracts/handoff.mjs';
 import { parseConfig } from '../lib/config/parse.mjs';
 const chain = e => validateReceiptChain(JSON.stringify(e));
-const hash = v => createHash('sha256').update(typeof v==='string'?v:JSON.stringify(v)).digest('hex');
+const hash = v => createHash('sha256').update(typeof v==='string'||Buffer.isBuffer(v)?v:JSON.stringify(v)).digest('hex');
 async function publisher(t) {
   const parent=await mkdtemp(path.join(tmpdir(),'pgb-publisher-'));t.after(()=>rm(parent,{recursive:true,force:true}));
   const prepared=await prepareQaFixture(path.join(parent,'private'));
@@ -249,4 +249,96 @@ test('approved delivery mirrors preserve original contracts/order, counts and al
  assert.equal(new Set([...coverage.matchAll(/R1-11-S\d\d/g)].map(x=>x[0])).size,41);
  const expectedBoundaries=['A06','A08','W06','W08','W09','W11','W12'];for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md'])for(const id of expectedBoundaries)assert((await read(file)).split('\n').find(line=>line.startsWith('| '+id+' |')).includes('R1-24-H'));
  assert.equal(publication.qa_split.verified_body_count,2);assert.equal(publication.qa_split.current_all_story_status_verification,false);assert.equal(publication.history[0].story_count,23);
+});
+
+test('native H03 frozen preparation separates requirements drift, stale deployment, ledger byte bounds and definite append rejection',async t=>{
+ const p=await publisher(t),baseline=await p.input('H01-story','operator/validator-inputs/published.json');
+ assert.equal(chain(baseline).valid,true);
+ const originalCards=await p.input('H01-story','operator/cards.json');
+ const changed=await p.input('H03-changed-requirements','operator/cards.json');
+ const restored=structuredClone(changed.reads.native);restored.description=originalCards.reads.native.description;
+ assert.deepEqual(restored,originalCards.reads.native,'only native requirement content changes');
+ const oldWork=JSON.parse(await readFile(path.join(p.cases['H03-changed-requirements'],'inputs/work.yaml'),'utf8'));
+ const currentWork=JSON.parse(changed.reads.native.description);
+ assert.notEqual(digestValue(currentWork),digestValue(oldWork));
+ assert.deepEqual({...currentWork,problem_to_solve:oldWork.problem_to_solve},oldWork);
+ assert.equal(validateWork(changed.reads.native.description,{mode:'start',contextInput:await readFile(path.join(p.cases['H03-changed-requirements'],'inputs/facts.yaml'),'utf8')}).valid,true,'changed content remains valid work; mismatch is authority drift, not malformed syntax');
+ assert.deepEqual(await p.input('H03-changed-requirements','inputs/predecessors.json'),await p.input('H01-story','inputs/predecessors.json'));
+ const stale=await p.input('H03-stale-deployment','operator/validator-inputs/published.json');
+ const repaired=structuredClone(stale),environment=repaired.evidence_receipts.find(x=>x.kind==='environment');
+ environment.pr.source_revision=baseline.evidence_receipts.find(x=>x.kind==='environment').pr.source_revision;
+ assert.deepEqual(repaired,baseline,'only environment source revision changes');
+ assert.equal(chain(repaired).valid,true);
+ const staleResult=chain(stale);assert.equal(staleResult.valid,false);
+ assert(staleResult.diagnostics.some(x=>x.code==='EVIDENCE'&&x.path.endsWith('/payload/report/environment')),JSON.stringify(staleResult));
+ const small=await p.input('H03-ledger-within-limit','operator/validator-inputs/published.json'),large=await p.input('H03-oversized-ledger','operator/validator-inputs/published.json');
+ assert.equal(chain(small).valid,true);
+ const smallRecord=targetRecord(small),largeRecord=targetRecord(large),compact=structuredClone(largeRecord);
+ for(let i=0;i<compact.payload.report.steps.length;i++){
+  assert.equal(largeRecord.payload.report.steps[i].evidence.length,3);
+  largeRecord.payload.report.steps[i].evidence.forEach(x=>assert(x.label.length<=2000));
+  for(let j=0;j<3;j++)compact.payload.report.steps[i].evidence[j].label=smallRecord.payload.report.steps[i].evidence[j].label;
+ }
+ assert.deepEqual(compact,smallRecord,'same full ledger/evidence identities; label size is the only record difference');
+ assert.equal(validateHandoff(JSON.stringify(compact)).valid,true);
+ const raw=await readFile(path.join(p.cases['H03-oversized-ledger'],'operator/validator-inputs/record.yaml'),'utf8');
+ assert(Buffer.byteLength(raw)>16384);
+ assert.equal(validateHandoff(raw).diagnostics[0].code,'BYTE_LIMIT');
+ const bigChain=chain(large);assert.equal(bigChain.valid,false);assert.equal(bigChain.diagnostics[0].code,'BYTE_LIMIT');
+ const rejected=await p.input('Q14-append-rejected','operator/cards.json'),timeout=await p.input('Q14-append-absent','operator/cards.json');
+ assert.deepEqual(rejected.reads,originalCards.reads,'definite rejection starts with the same valid read facts');
+ assert.equal(rejected.append.storage,'not_stored');assert.equal(rejected.append.reply.definite_failure,true);assert.equal(rejected.append.reply.status,403);
+ assert.equal(timeout.append.reply,'timeout');assert.equal(timeout.append.storage,'not_stored');
+ assert.equal(chain(await p.input('Q14-append-rejected','operator/validator-inputs/published.json')).valid,true);
+ for(const id of ['H03-changed-requirements','H03-stale-deployment','H03-oversized-ledger','Q14-append-rejected']){
+  const expected=await p.input(id,'operator/expectations.json');
+  assert.equal(expected.append_attempts,id==='Q14-append-rejected'?1:0);assert.equal(expected.transition_attempts,0);
+  assert((await readFile(path.join(p.cases[id],'preparation-notes.txt'),'utf8')).length>100);
+  assert.deepEqual(await readdir(path.join(p.cases[id],'output')),[]);
+ }
+});
+
+test('H01 prepared original mock deployment and typed bound API/database/UI artifacts are accessible before instruction execution',async t=>{
+ const p=await publisher(t);
+ for(const id of ['H01-story','H01-bug']){
+  const cards=await p.input(id,'operator/cards.json'),assessment=await p.input(id,'inputs/assessment.json');
+  const original=cards.reads.pipeline.original_comments.find(x=>x.id==='999');assert(original);
+  assert.equal(original.author_id,'pipeline');assert.equal(original.update_author_id,'pipeline');assert.equal(original.created,original.updated);
+  assert.match(original.created,/^2026-11-15T/);assert(original.notice.includes('MOCK'));
+  const deployment=JSON.parse(original.body),pr=cards.reads.pr.find(x=>x.current);
+  assert.equal(deployment.readiness,'ready');assert.equal(deployment.source_revision,pr.source_revision);assert.equal(deployment.deployed_revision,pr.source_revision);
+  assert.equal(deployment.target_reference,'local-review');assert.equal(new URL(deployment.target_uri).protocol,'https:');
+  assert.deepEqual(await p.input(id,'inputs/evidence/pipeline-comment.json'),cards.reads.pipeline.original_comments);
+  const byStep=new Map(assessment.qa_report.steps.map(row=>{
+    const artifact=cards.reads.artifacts.find(x=>x.uri===row.evidence[0].uri);assert(artifact?.available,row.id);
+    assert.equal(artifact.category,'supplied/mock');assert.equal(artifact.body.step,row.id);assert.equal(artifact.body.pr.source_revision,pr.source_revision);
+    assert.equal(artifact.body_sha256,'sha256:'+hash(JSON.stringify(artifact.body)));return [row.id,artifact.body];
+  }));
+  const child=byStep.get('E01.S2'),parent=byStep.get('E01.S1'),database=byStep.get('E01.S3'),ui=byStep.get('E01.S4');
+  assert.equal(child.kind,'bruno_response');assert.equal(child.response.body.record_id,'record-001');assert.equal(child.selected_request_count,1);assert.equal(child.sentinel_request_count,0);
+  assert.equal(parent.exposed_output.record_id,child.response.body.record_id);
+  const provenance=await p.input(id,'inputs/evidence/output-binding.json');
+  assert.equal(provenance.original_source.step,'E01.S2');assert.equal(provenance.original_source.artifact_uri,assessment.qa_report.steps[1].evidence[0].uri);
+  assert.equal(provenance.original_source.json_pointer,'/response/body/record_id');assert.equal(provenance.original_source.value,child.response.body.record_id);
+  assert.equal(provenance.parent_exposure.step,'E01.S1');assert.equal(provenance.consumer.step,'E01.S3');
+  assert.equal(database.kind,'postgresql_read_only_observation');assert.equal(database.query,query);assert.equal(database.query_sha256,'sha256:'+hash(query));
+  assert.deepEqual(database.original_parameters,['tenant-a',null]);assert.deepEqual(database.bound_parameters,['tenant-a',child.response.body.record_id]);
+  assert.deepEqual(database.rows,[{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}]);assert.equal(database.row_count,1);assert.equal(database.truncated,false);
+  assert.deepEqual(database.transaction,{begin:'BEGIN READ ONLY',observation_count:1,rollback:'completed',close:'completed'});assert.equal(database.identity.read_only,true);
+  assert(!('request_observation'in database));assert.equal(ui.kind,'ui_observation');assert(!('request_observation'in ui));
+  const work=JSON.parse(await readFile(path.join(p.cases[id],'inputs/work.yaml'),'utf8')),uiContract=work.testing_strategy.cases[0].steps.find(step=>step.id==='E01.S4').ui;
+  assert.equal(ui.surface,uiContract.surface);assert.equal(ui.browser,uiContract.browser);
+  assert.equal(ui.input_value,child.response.body.record_id);assert.deepEqual(ui.checkpoints.map(x=>x.id),['start','input','result']);
+  const images=[];
+  for(const checkpoint of ui.checkpoints){
+    const bytes=await readFile(path.join(p.cases[id],'inputs',checkpoint.screenshot.path));images.push(hash(bytes));
+    assert.equal(checkpoint.category,'supplied/mock');assert.equal(checkpoint.screenshot.digest,'sha256:'+hash(bytes));
+    assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(bytes.readUInt32BE(16),440);assert.equal(bytes.readUInt32BE(20),130);
+  }
+  assert.equal(new Set(images).size,3,'three separately inspectable checkpoint images');
+  assert(ui.checkpoints[0].visible_text.includes('RECORD ID'));assert(ui.checkpoints[1].visible_text.includes('RECORD ID RECORD-001'));assert(ui.checkpoints[2].visible_text.includes('TENANT-A READY'));
+  const observations=await p.input(id,'inputs/evidence/observations.json');assert.deepEqual(observations.artifacts,cards.reads.artifacts);assert.deepEqual(observations.output_binding,provenance);
+  assert.equal(chain(await p.input(id,'operator/validator-inputs/published.json')).valid,true,'typed mock facts do not alter canonical positive chain');
+  assert.deepEqual(await readdir(path.join(p.cases[id],'output')),[],'preparation still emits no observed skill result');
+ }
 });
