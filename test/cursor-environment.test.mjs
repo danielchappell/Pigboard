@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 11);
+  assert.equal(first.verification.entrypoints, 13);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -143,7 +143,7 @@ test('installed writer ships full hashed folders and validates its own templates
     }
     return result;
   }
-  for (const name of ['write-pr-sized-stories', 'human-writing']) {
+  for (const name of ['write-pr-sized-stories', 'human-writing', 'implementer-entrypoint', 'implementer-job', 'implementer-jira']) {
     const target = path.join(installed.skills, name);
     const sourceFiles = await inventory(path.join(o.source, 'skills', name));
     assert.deepEqual(await inventory(target), sourceFiles);
@@ -151,11 +151,12 @@ test('installed writer ships full hashed folders and validates its own templates
     for (const relative of Object.keys(sourceFiles).filter(p => p.endsWith('.md'))) {
       const markdown = await readFile(path.join(target, relative), 'utf8');
       for (const match of markdown.matchAll(/\[[^\]]*\]\(([^)]+)\)/g)) {
-        const link = match[1].split('#')[0];
-        if (!link || /^[a-z][a-z0-9+.-]*:/i.test(link)) continue;
-        const resolved = path.resolve(target, path.dirname(relative), decodeURIComponent(link));
+        const [link, anchor] = match[1].split('#');
+        if (/^[a-z][a-z0-9+.-]*:/i.test(link)) continue;
+        const resolved = link ? path.resolve(target, path.dirname(relative), decodeURIComponent(link)) : path.join(target, relative);
         assert(resolved.startsWith(installed.skills + path.sep), `${relative}: ${link} escapes bundle`);
-        await readFile(resolved);
+        const linked = await readFile(resolved, 'utf8');
+        if (anchor) assert(linked.split('\n').some(line => line.startsWith('#') && line.replace(/^#+ /, '').toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/ /g, '-') === anchor), `${relative}: missing ${anchor}`);
       }
     }
   }
@@ -218,7 +219,7 @@ test('installed writer ships full hashed folders and validates its own templates
     }
   }
   for (const { file, text } of Object.values(files)) assert.equal(await readFile(file, 'utf8'), text);
-  for (const name of ['write-pr-sized-stories', 'human-writing']) assert.deepEqual(await inventory(path.join(installed.skills, name)), await inventory(path.join(o.source, 'skills', name)));
+  for (const name of ['write-pr-sized-stories', 'human-writing', 'implementer-entrypoint', 'implementer-job', 'implementer-jira']) assert.deepEqual(await inventory(path.join(installed.skills, name)), await inventory(path.join(o.source, 'skills', name)));
 });
 
 
@@ -258,4 +259,55 @@ test('installed config checker validates and previews outside checkout; corrupt 
   await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.equal(await readFile(input,'utf8'),'token: SECRET-INSTALLED');assert.equal(await readFile(previous,'utf8'),JSON.stringify(JSON.parse(await readFile(new URL('./fixtures/project-configs.json',import.meta.url),'utf8')).two_project));
+});
+
+test('installed composed implementer retains complete links and runs source-identical publication helper outside app', async t => {
+ const o = await fixture(t), first = await installCursorSkills(o, fakeInstall);
+ const { extractHandoff } = await import('../lib/contracts/handoff.mjs');
+ const { createHash } = await import('node:crypto');
+ const envelope = JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json', import.meta.url), 'utf8')).chains.human;
+ const comment = envelope.comment_pages[0].comments.find(c => extractHandoff(c.body, {format:c.format}).value.kind === 'implementation');
+ const record = extractHandoff(comment.body, {format:comment.format}).value;
+ const input = path.join(o.app, 'record.yaml'), summary = path.join(o.app, 'summary.txt');
+ const before = JSON.stringify(record), prose = `Ready <literal> &amp; 🐷`;
+ await writeFile(input, before); await writeFile(summary, prose);
+ const sourceCLI = new URL('../scripts/prepare-handoff.mjs', import.meta.url).pathname;
+ const helper = path.join(first.skills, 'work-validator/scripts/prepare-handoff.mjs');
+ const manifest = JSON.parse(await readFile(first.manifest, 'utf8'));
+ assert(manifest.sourceFiles['work-validator/scripts/prepare-handoff.mjs'] || Object.keys(manifest.sourceFiles).some(k=>k.endsWith('scripts/prepare-handoff.mjs')));
+ for (const format of ['html','adf']) {
+  const args = ['--input', input, '--summary', summary, '--format', format];
+  const installed = execFileSync(process.execPath, [helper, ...args], {cwd:o.app,encoding:'utf8',timeout:30000});
+  const source = execFileSync(process.execPath, [sourceCLI, ...args], {cwd:o.app,encoding:'utf8',timeout:30000});
+  assert.equal(installed, source);
+  const result = JSON.parse(installed);
+  const extracted = extractHandoff(format === 'html' ? result.body : JSON.stringify(result.body), {format});
+  assert.equal(extracted.record_digest, result.record_digest);
+  assert.deepEqual(JSON.parse(JSON.stringify(extracted.value)), JSON.parse(JSON.stringify(record)));
+  // Use the actual prepared transport as the exact observed comment in a complete
+  // supplied receipt chain; no synthetic provider success or agent run is inferred.
+  const supplied = structuredClone(envelope);
+  const actual = supplied.comment_pages[0].comments.find(c => c.id === comment.id);
+  actual.format = format; actual.body = format === 'html' ? result.body : JSON.stringify(result.body);
+  supplied.target = {ticket_id:record.ticket_id,comment_id:comment.id,record_id:record.record_id,digest:result.record_digest};
+  supplied.issues[0].stage_id = supplied.trusted.projects[0].stages['In Progress'];
+  const receiptInput = path.join(o.app,'receipts.json'); await writeFile(receiptInput,JSON.stringify(supplied));
+  const validated = JSON.parse(execFileSync(process.execPath,[path.join(first.skills,'work-validator/scripts/validate-handoff.mjs'),'--mode','chain','--input',receiptInput,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000}));
+  assert.equal(validated.valid,true);assert.deepEqual(validated.validated_leaf,supplied.target);assert.equal(validated.qa_report,null);assert.equal(validated.completion_established,false);
+  await rm(receiptInput);
+ }
+ assert.equal(await readFile(input,'utf8'), before);assert.equal(await readFile(summary,'utf8'), prose);
+ await rm(input);await rm(summary);
+ const original = await readFile(path.join(o.source,'scripts/prepare-handoff.mjs'));
+ assert.equal(createHash('sha256').update(await readFile(helper)).digest('hex'),createHash('sha256').update(original).digest('hex'));
+ for (const mutate of [
+  async dir => rm(path.join(dir,'scripts/prepare-handoff.mjs')),
+  async dir => writeFile(path.join(dir,'scripts/prepare-handoff.mjs'),'process.exit(0);'),
+  async dir => rm(path.join(dir,'../implementer-job/SKILL.md')),
+  async dir => writeFile(path.join(dir,'../implementer-jira/SKILL.md'),'corrupt sibling'),
+ ]) {
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  assert.equal(await realpath(first.stableSkills),first.skills);
+ }
+ assert.deepEqual(await readdir(o.app),[]);
 });

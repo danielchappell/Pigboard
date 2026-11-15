@@ -6,9 +6,9 @@ exact target against the provider observations and trusted configuration supplie
 in a local JSON file. Neither check fetches evidence or proves it is fresh or
 provider-authentic. A valid blocked, queued or partial result is not completion.
 
-These local checks are available in this release. Manager scheduling, provider
-adapters, handoff-producing role skills and human unblock automation are separate
-work. Installation does not activate automations or authorize a Jira/PR write.
+These local checks and the composed implementer producer are available in this
+release. Reviewer/QA remain basic prose workers; their typed migration, manager
+scheduling/provider adapters and human unblock automation are separate work. Installation does not activate automations or authorize a Jira/PR write.
 Workers need no database access; manager mode compares a separately supplied
 stored assignment and never contacts its operational store.
 
@@ -39,6 +39,41 @@ unknown command options reject. Exit 0 means the selected local check passed;
 exit 1 means the record/evidence was rejected; exit 2 means usage, regular-file
 input, missing/corrupt runtime or internal failure. A record-only success always
 reports `completion_established: false`.
+
+## Prepare immutable publication text
+
+Use the same-release local helper after completing a canonical record and readable
+summary. It validates the original YAML before encoding; duplicate keys, unsupported
+fields and invalid raw literals are not lost through a parse/stringify conversion.
+
+```sh
+# Source
+node scripts/prepare-handoff.mjs --input /absolute/record.yaml --summary /absolute/summary.txt --format html
+node scripts/prepare-handoff.mjs --input /absolute/record.yaml --summary /absolute/summary.txt --format adf
+# Installed: use the receipt's actual skills path
+node /opt/pigboard/skills/work-validator/scripts/prepare-handoff.mjs --input /absolute/record.yaml --summary /absolute/summary.txt --format html
+```
+
+Exit 0 writes one JSON object to stdout: `schema: pigboard-handoff-publication/v1`,
+`record_id`, canonical `record_digest`, `format`, and `body`. HTML body is a string
+with escaped summary and exactly one supported pre/code block containing escaped
+original YAML. ADF body is a doc/version 1 object with summary paragraph and one
+YAML codeBlock/text node. Identical inputs produce identical output. The helper
+extracts its own body through the existing parser and compares the digest. It
+generates no UUID, writes no file, contacts no provider and never launches/retries.
+Use `--help` for readable usage; there is no `--json` switch. Invalid input yields
+sanitized JSON diagnostics on stderr and exit 1; usage/read/setup failures exit 2.
+Successful stdout contains only the object; failures produce no publication object.
+
+Inputs must be regular UTF-8 files. Record bound is 16 KiB, depth 16 and list 100;
+summary bound is 2,000 UTF-8 bytes, without NUL/lone surrogates. The prepared body
+must satisfy the existing 64-KiB wrapper bound; entity expansion can exceed it
+before the record bound. Fail without truncating reports, nulls or findings and
+without silently selecting another transport. Retain exact bytes/digest/record ID
+before publication. Local preparation does not authorize a write or prove semantic
+evidence/freshness. Configured Jira skills own exact receipt lookup, append once,
+read-back, chain validation, final recheck and one directed transition. Unknown
+effects stop without replay or a replacement record.
 
 ## Record representation
 

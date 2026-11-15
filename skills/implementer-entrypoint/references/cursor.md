@@ -17,7 +17,7 @@ phase support blocks implementation. PR review and QA remain separate High runs.
 
 The trusted invocation supplies:
 
-- Configured Jira project, exact workstream label, Story key, In Progress status
+- Configured Jira project, exact workstream label, Story/Bug native ID and key, In Progress status
   and actual destination/transition mapping. First workstream: Safeguard INT board
   1234 with `AI-Daniel-1`; a board number is not a project or transition identifier.
 - Retained plan, phase results and action receipts across continuations. Record an
@@ -38,13 +38,13 @@ The trusted invocation supplies:
 Do not activate until repo instructions and this profile are compatible. Additional
 mandatory repo gates need an explicitly configured supported path; the skill may
 neither waive them nor silently expand its workflow. No second simultaneous plan
-reviewer is introduced by this MVP profile. The deterministic Jira admission script
-starts new work; reviewer/QA transitions route confirmed rework.
+reviewer is introduced by this MVP profile. The planned manager owns admission; this worker never starts new work.
+Retained reviewer/QA workers are not migrated by this implementer slice.
 
 Invocation shape:
 
 ```text
-Use implementer-entrypoint for the assigned <Story> currently In Progress.
+Use implementer-entrypoint for the assigned <Story or Bug> currently In Progress.
 Use the verified Grok High planning and isolated one-reviewer profile, then the
 verified Grok Medium execution continuation. Reuse the same PR for rework.
 Publish the evidence and move to In Review only after current required CI passes.
@@ -73,11 +73,12 @@ new VM. Missing availability, rejected dispatch, conflicting model metadata or
 invalid setup evidence blocks without substitution. Any model/version/runner
 change requires renewed setup acceptance.
 
-The High parent owns phases 1–2, including replanning. Invoke exactly one fresh
+The High parent composes [Jira preflight](../../implementer-jira/SKILL.md) and
+[job planning](../../implementer-job/SKILL.md), including replanning. Invoke exactly one fresh
 foreground review per round, with no resume, using the existing plan-review prompt
 and actual ticket/plan/source/base/instructions. Review is read-only by contract;
 generalPurpose does not establish a readonly sandbox. After CLEAN, invoke Medium
-execution with phases 3–5 of the shared entrypoint, actual ticket, accepted plan
+execution with the job execute mode then Jira final mode, actual ticket, accepted plan
 and review, source/base, checkout/PR identity, previous action receipts and
 prepared tools/evidence. Wait for the result. Do not repeat execution at High.
 

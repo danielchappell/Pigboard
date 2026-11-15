@@ -30,11 +30,15 @@ remote writes. This Build contains the earlier prose authoring contract, not the
 later YAML writer. It predates the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
-The bundle includes `write-pr-sized-stories` alongside the ten execution skills.
+The current bundle contains thirteen skill folders, including `write-pr-sized-stories`,
+`implementer-job` and `implementer-jira`. Dated Build counts below remain historical.
 The current writer prepares [versioned YAML](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-and complete examples for local validation. The three existing stage entrypoints
-consume the [retained basic-worker prose contract](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md),
-not those YAML drafts. This does not change the dated Build evidence, prompts,
+and complete examples for local validation. The
+[implementer composer](../../skills/implementer-entrypoint/SKILL.md) now consumes
+versioned Story/Bug assignments through separate job/Jira skills. Reviewer/QA
+consume the [retained basic-worker prose contract](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
+The mixed bundle is not a compatible active loop; coordinated migration and
+acceptance remain required. This does not change the dated Build evidence, prompts,
 automations or activation. Having the writer installed does not start a grooming
 automation or load all skills as context.
 
@@ -139,7 +143,7 @@ acceptance remain separate rollout checks in PGB-58/PGB-60.
 ## Refresh and recovery
 
 Publish reviewed changes, update the environment's skill pin, preserve the current
-CLI setup/secrets, and run a draft Build. Inspect the manifest, eleven entrypoints,
+CLI setup/secrets, and run a draft Build. Inspect the manifest, thirteen entrypoints,
 canonical reference/example and helper probes before selecting it. Keep the prior
 Build on failure; do not enable an automation as part of selecting a Build. Record
 new Build/UI acceptance here after observation, including any remaining limitations.
