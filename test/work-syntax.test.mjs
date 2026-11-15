@@ -105,6 +105,21 @@ test('H02 ADF safe selection, ambiguity, code-block children, envelope bounds an
  const depthEnvelope={type:'doc',version:1,content:[{type:'codeBlock',content:[{type:'text',text:epic}]}],padding:null};let data=null;for(let i=0;i<31;i++)data={value:data};depthEnvelope.padding=data;assert(validateWork(JSON.stringify(depthEnvelope),{format:'adf'}).valid);depthEnvelope.padding={value:data};assert.equal(codeOf(validateWork(JSON.stringify(depthEnvelope),{format:'adf'})),'DEPTH_LIMIT');
 
 });
+test('H02 malformed ADF language metadata returns controlled block diagnostics in helper and CLI',async t=>{
+ const dir=await fixture(t), file=path.join(dir,'description.json');
+ const block=(text,language)=>({type:'codeBlock',attrs:{language},content:[{type:'text',text}]});
+ for(const language of [{toLowerCase:'bad'},{toLowerCase:null},{},[],['yaml'],true,1,null]) {
+  const input=JSON.stringify({type:'doc',version:1,content:[{type:'paragraph',content:[]},block('ordinary code','python'),block(epic,language)]});
+  let result;assert.doesNotThrow(()=>{result=validateWork(input,{format:'adf'});});
+  assert.equal(result.valid,false);assert.equal(codeOf(result),'ADF_BLOCK');assert.equal(result.diagnostics[0].block,1);
+  await writeFile(file,input);const command=run(file,'--format','adf');assert.equal(command.status,1);assert.equal(codeOf(command.result),'ADF_BLOCK');assert.equal(command.result.diagnostics[0].block,1);assert.equal(command.stderr,'');
+ }
+ for(const language of ['python','', 'YaML',undefined]) {
+  const input=JSON.stringify({type:'doc',version:1,content:[block('ordinary code: [','python'),block(epic,language)]});
+  assert.equal(validateWork(input,{format:'adf'}).valid,true);
+  await writeFile(file,input);assert.equal(run(file,'--format','adf').status,0);
+ }
+});
 test('H02 actual CLI argument/read/setup boundaries including dash names and nonblocking FIFO',async t=>{
  const dir=await fixture(t), file=path.join(dir,'-input');await writeFile(file,epic);assert.equal(run(file).status,0);
  await writeFile(path.join(dir,'--json'),epic);const dash=spawnSync(process.execPath,[cli,'--mode','draft','--input','--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(dash.status,0);assert.match(dash.stdout,/^Valid draft structure/);
