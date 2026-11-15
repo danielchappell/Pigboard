@@ -19,7 +19,7 @@
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01 |
 | W02 | R1-05-H01 |
 | W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
-| W04 | R1-05-H01, R1-05-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03 |
+| W04 | R1-05-H01, R1-05-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05 |
 | W05 | R1-06-H01, R1-06-H02 |
 | W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H03; R1-30-H01, R1-30-H03 |
 | W07 | R1-07-H01, R1-07-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
@@ -27,17 +27,17 @@
 | W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03 |
 | W10 | R1-09-H01, R1-09-H02, R1-20-H03 |
 | W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03 |
-| M01 | R1-11-S01, R1-11-S02, R1-17-H01 |
-| M02 | R1-11-S18, R1-11-S30 |
-| M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09 |
-| M04 | R1-11-S11, R1-11-S17, R1-11-S39, R1-17-H03 |
-| M05 | R1-11-S12, R1-11-S13, R1-11-S14, R1-11-S15, R1-11-S16, R1-18-H01 |
-| M06 | R1-11-S07, R1-11-S08, R1-11-S09, R1-11-S10, R1-11-S37, R1-18-H01 |
-| M07 | R1-11-S05, R1-11-S06, R1-11-S34 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03; R1-28-OC02, R1-28-OC05, R1-28-OC06 |
+| M01 | R1-11-S01, R1-11-S02, R1-17-H01; R1-28-OC04 |
+| M02 | R1-11-S18, R1-11-S30; R1-28-OC04 |
+| M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09; R1-28-OC01, R1-28-OC05 |
+| M04 | R1-11-S11, R1-11-S17, R1-11-S39, R1-17-H03; R1-28-OC04 |
+| M05 | R1-11-S12, R1-11-S13, R1-11-S14, R1-11-S15, R1-11-S16, R1-18-H01; R1-28-OC04 |
+| M06 | R1-11-S07, R1-11-S08, R1-11-S09, R1-11-S10, R1-11-S37, R1-18-H01; R1-28-OC01, R1-28-OC03, R1-28-OC06 |
+| M07 | R1-11-S05, R1-11-S06, R1-11-S34; R1-28-OC03 |
 | M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01 |
 | M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01 |
-| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03 |
+| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05 |
 | M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03 |
 | M12 | R1-11-S02, R1-11-S40, R1-19-H03 |
 | M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01 |
@@ -126,6 +126,10 @@ PGB-132/R1-27 adds three supporting preparation cases immediately before PGB-78/
 
 ## Three-input controls amendment, 15 November 2026
 
-PGB-138/R1-30 adds three preparation/inspection cases before the unchanged full PGB-132 outcome. Source at main275 composes 28 Stories/122 human cases, preserving all 53 requirement rows, 41 scenarios and prior case IDs. R1-30-H01 inspects the complete mixed Story handoff, hashes and occupied-root refusal; H02 isolates missing trusted parameter_count with DATABASE_PARAMETERS; H03 isolates coherent stale deployment proof. These are supporting input checks, not helper execution, publisher acceptance or runtime delivery. All three remain NOT_RUN; PGB-132's original three also remain NOT_RUN.
+PGB-138/R1-30 adds three preparation/inspection cases before the unchanged full PGB-132 outcome. The preceding PGB-138 source checkpoint at main275 composed 28 Stories/122 human cases, preserving all 53 requirement rows, 41 scenarios and prior case IDs. R1-30-H01 inspects the complete mixed Story handoff, hashes and occupied-root refusal; H02 isolates missing trusted parameter_count with DATABASE_PARAMETERS; H03 isolates coherent stale deployment proof. These are supporting input checks, not helper execution, publisher acceptance or runtime delivery. All three remain NOT_RUN; PGB-132's original three also remain NOT_RUN.
 
-The separate Director native inventory on 15 November is30 Stories/130 cases, including native-only PGB-136/137. It is not this source count. PGB-132 adds the remaining 48 inputs after the three available here; full-suite coverage is pending. Owner10765 is specific to PGB-132's historical helper/publisher evidence gap and does not waive PGB-138 acceptance. Final PGB-78 still requires actual prerequisite completion and a rebound/reviewed concrete plan.
+The separate Director native inventory on 15 November is30 Stories/130 cases, including then-native-only PGB-136/137. It is not this source count. PGB-132 adds the remaining 48 inputs after the three available here; full-suite coverage is pending. Owner10765 is specific to PGB-132's historical helper/publisher evidence gap and does not waive PGB-138 acceptance. Final PGB-78 still requires actual prerequisite completion and a rebound/reviewed concrete plan.
+
+## Own-ticket selection support — 15 November 2026
+
+R1-28/PGB-136 adds six supporting cases OC01–OC06 for own selection, exact same-ticket consumption, necessary prerequisites, existing safety gates, safe unsupported outcomes and actual installed use. These supplement the original requirement/scenario rows; all 53 requirements, 41 scenarios and all 42 PGB-81 cases remain unchanged. All six new and 42 original human cases remain NOT_RUN. This partial source checkpoint has 29 Stories/128 cases; native PGB-137/R1-29 composition is pending. Publication is not implementation or acceptance.

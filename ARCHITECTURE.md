@@ -147,9 +147,11 @@ with explicit inheritance and backward-compatible empty resolution.
 The same four source modules/CLI, guide and executable fixtures ship in the existing
 prepared validator payload. Installer verification exercises a real nonexecuting
 selection before stable-link replacement. No provider/AWS/state client, discovery,
-intent/apply operation or worker activation is added. Full repair ordering and live
-bounded Jira discovery remain later increments; a known unresolved repair waits
-explicitly. Supplied completeness/receipts do not establish live freshness or
+intent/apply operation or worker activation is added. Own-ticket repairs on an
+existing open PR can be selected from authenticated history, including a necessary ready prerequisite. Full typed stack repair
+ordering and live bounded Jira discovery remain later increments; unsupported or
+unproved repairs still wait explicitly. Supplied completeness/receipts do not
+establish live freshness or
 permissions. Human acceptance, hosted checks, merge and release remain separate.
 
 ## Prescribed helper boundary
@@ -178,3 +180,9 @@ records/receipts, evidence, publication and one direct native transition. It nev
 executes domain helpers. PGB-78 will compose it with the dispatcher; retained
 qa-entrypoint cannot produce this compatible flow. The manager remains a design;
 this worker boundary adds no manager state access or activation authority.
+
+The private canonical history route is consumed immediately by own-ticket
+selection. It preserves validated direct consumption and actual stack parents
+without granting current completion. The existing preview result shape and four
+packaged manager modules are unchanged. No later-parent coverage segment output,
+new public inspection command or installed fixture path is added.

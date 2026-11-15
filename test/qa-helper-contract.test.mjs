@@ -262,17 +262,32 @@ function assertDeliverySizing(entries) {
  assert.equal(exceptions,1);
 }
 
+// Reconstruct the exact pre-PGB-136 source checkpoint for immutable historical hashes.
+// Only the new Story and its single added PGB-81 prerequisite are reversed.
+function beforeOwnSelection(drafts) {
+ const baseline=structuredClone(drafts).filter(x=>x.id!=='R1-28');
+ const preview=baseline.find(x=>x.id==='R1-11').contract;
+ assert.deepEqual(preview.prerequisites,[
+  {ticket:'R1-10',required_outcome:'ai_qa_complete'},
+  {ticket:'R1-25',required_outcome:'ai_qa_complete'},
+  {ticket:'R1-26',required_outcome:'ai_qa_complete'},
+  {ticket:'R1-28',required_outcome:'ai_qa_complete'}
+ ]);
+ preview.prerequisites.pop();
+ return baseline;
+}
+
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,28);assert.equal(new Set(drafts.map(x=>x.id)).size,28);assert.equal(new Set(Object.values(publication.stories)).size,28);assert.equal(publication.stories['R1-24'],'PGB-110');assert.equal(publication.stories['R1-27'],'PGB-132');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,29);assert.equal(new Set(drafts.map(x=>x.id)).size,29);assert.equal(new Set(Object.values(publication.stories)).size,29);assert.equal(publication.stories['R1-24'],'PGB-110');assert.equal(publication.stories['R1-27'],'PGB-132');
+ assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30','R1-28'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
  const b=drafts.find(x=>x.id==='R1-08').contract;
  assert.equal(hash([b.acceptance_criteria,b.technical_acceptance_criteria.constraints,b.testing_strategy.human_review.cases]),'1146a6dcd1340d1c9ecbff1c13249e937a2268a364e3e83da6a63898f1bb1c9d');
  for(const [id,count]of [['R1-24',20],['R1-30',18],['R1-27',12],['R1-08',17]]){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,count);assert.equal(new Set(entry.files).size,count);assert(entry.dependencies.includes('PGB-108'));}
  assertDeliverySizing(plan);
  assert(plan.find(x=>x.id==='R1-08').dependencies.includes('R1-24'));
- const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,122);assert.equal(publication.case_count,122);assert.equal(publication.story_count,28);
+ const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,128);assert.equal(publication.case_count,128);assert.equal(publication.story_count,29);
  for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
  const coverage=await read('docs/delivery/manager-r1/coverage.md');const requirements=new Set(coverage.split('\n').filter(line=>/^\| [AWMO]\d/.test(line)).flatMap(line=>[...line.split('|')[1].matchAll(/[AWMO]\d\d/g)].map(x=>x[0])));assert.equal(requirements.size,53);
  for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(cases.has(id[0]),id[0]);
@@ -572,8 +587,8 @@ test('R2 six distinct H02 families and joined control have independently inspect
 
 test('PGB-113 source amendment preserves native contracts and full preview in combined publication',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,28);
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,29);
  const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
  // Fixed original335036 object hashes, frozen before source publication edits.
  assert.equal(hash(preview.acceptance_criteria),'1ee61a851ab66f31145a483f68c8bc1bb83dfd9e3422d3caaf4cb7e11e059639');
@@ -581,17 +596,17 @@ test('PGB-113 source amendment preserves native contracts and full preview in co
  assert.equal(hash(preview.testing_strategy),'efacc7e0fe916c48cb664d75748883054e694a60de119a7c5783aefdd3ea09db');
  assert.equal(preview.testing_strategy.human_review.cases.length,42);
  assert.equal(hash(contract('R1-12')),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
- assert.equal(hash(metadata.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'0f95ad054e6ebf772addea9b8a55edea1f5c24ca2947cb17739800a5a463d128');
+ assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30','R1-28'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
+ assert.equal(hash(metadata.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30','R1-28'].includes(x.id))),'0f95ad054e6ebf772addea9b8a55edea1f5c24ca2947cb17739800a5a463d128');
  const native113=structuredClone(contract('R1-25'));native113.prerequisites[0].ticket='PGB-80';assert.equal(hash(native113),'36bdc9fc15aa1dfc69db7e8f9d81e1ff3d089fb43d876aa9df37734ab0b9052a');
- assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'},{ticket:'R1-26',required_outcome:'ai_qa_complete'}]);
- assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25','R1-26']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.89,20]);
- assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),122);
+ assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'},{ticket:'R1-26',required_outcome:'ai_qa_complete'},{ticket:'R1-28',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25','R1-26','R1-28']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.53,20]);
+ assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),128);
  for(const id of ['R1-25','R1-11']){const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');}
  const baseline=structuredClone(publication.baseline_before_amendments);assert.equal(hash(baseline),'aeeaa43078df97c68c580211cdc9bb8bca05d0f06161d004626c87c55b93d20a');
- assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[28,122,53,41]);
- const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count],[28,122]);assert.deepEqual([current.native_snapshot.story_count,current.native_snapshot.case_count],[30,130]);assert.deepEqual(current.pending_source_amendments,['PGB-136','PGB-137']);
- const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,28);assert.equal(new Set(Object.values(mapping)).size,28);assert.equal(mapping['R1-24'],'PGB-110');
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[29,128,53,41]);
+ const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count],[29,128]);assert.deepEqual([current.native_snapshot.story_count,current.native_snapshot.case_count],[30,130]);assert.deepEqual(current.pending_source_amendments,['PGB-137']);
+ const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,29);assert.equal(new Set(Object.values(mapping)).size,29);assert.equal(mapping['R1-24'],'PGB-110');
  assert.deepEqual(amendment.dependency_links,[{id:'10685',from:'PGB-80',to:'PGB-113'},{id:'10686',from:'PGB-113',to:'PGB-81'}]);assert.deepEqual(amendment.preserved_links,[{id:'10637',from:'PGB-80',to:'PGB-81'},{id:'10638',from:'PGB-81',to:'PGB-82'}]);assert.equal(amendment.human_acceptance,'NOT_RUN');assert.equal(amendment.activation_authorized,false);
  assert.deepEqual(amendment.description_sha256,{original:'edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497',validator:'c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8',final_preview:'8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe'});
  for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){const text=await read(file),requirements=text.split('\n').filter(line=>/^\| [AWMO]\d\d/.test(line)),covered=new Set(requirements.flatMap(line=>line.split('|')[1].match(/[AWMO]\d\d/g)??[]));assert.deepEqual([...covered].sort(),['A','W','M','O'].flatMap((prefix,i)=>Array.from({length:[12,12,14,15][i]},(_,j)=>prefix+String(j+1).padStart(2,'0'))).sort());for(const id of ['W04','W12','M10']){const row=requirements.find(line=>line.startsWith('| '+id+' |'));for(const caseId of ['R1-25-C01','R1-25-C02','R1-25-C03'])assert(row.includes(caseId));}assert(text.includes('R1-11-H02'));}
@@ -836,7 +851,7 @@ test('PGB-129 source publication binds the actual native prerequisite and preser
 test('PGB-132 source publication preserves Core history and binds the preparation-only slice',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
  const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),a=publication.qa_input_preparation_amendment,prepared=contract('R1-27'),dispatcher=contract('R1-08');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-27','R1-30'].includes(x.id))),'7a152baf7eeb37385f7560fc430d50a2ed7cfdd26de05df75c202695420ab4ad');
+ assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-27','R1-30','R1-28'].includes(x.id))),'7a152baf7eeb37385f7560fc430d50a2ed7cfdd26de05df75c202695420ab4ad');
  const upstream=['R1-04','R1-06','R1-07','PGB-108','R1-24'];
  assert.deepEqual(plan('R1-27').dependencies,[...upstream,'R1-30']);assert.deepEqual(plan('R1-08').dependencies,[...upstream,'R1-27']);
  assert.deepEqual(prepared.prerequisites,[...upstream,'R1-30'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
@@ -864,4 +879,43 @@ test('PGB-132 source publication preserves Core history and binds the preparatio
  const support={H01:['A06','A07','W03','W06','W07'],H02:['A06','A07','W03','W07','W08'],H03:['A08','W06','W08','W09','W11','W12']};
  for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const rows=(await read(file)).split('\n');for(const [human,ids]of Object.entries(support))for(const id of ids)assert(rows.find(row=>row.startsWith('| '+id+' |')).includes('R1-27-'+human),file+': '+id+' '+human);}
  const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-24:')<stories.indexOf('## R1-27:'));assert(stories.indexOf('## R1-27:')<stories.indexOf('## R1-08:'));assert(stories.includes(JSON.stringify(prepared,null,2)));
+});
+
+// Reconstruct the historical 27-Story checkpoint without changing its fixed hash.
+function beforeThreeInputControls(drafts) {
+ const baseline=structuredClone(drafts).filter(x=>x.id!=='R1-30');
+ const preparation=baseline.find(x=>x.id==='R1-27').contract;
+ assert.deepEqual(preparation.prerequisites.map(x=>x.ticket),['R1-04','R1-06','R1-07','PGB-108','R1-24','R1-30']);
+ preparation.prerequisites.pop();
+ return baseline;
+}
+
+test('PGB-136 partial source publication binds the exact own-selection split and preserves all earlier contracts',async()=>{
+ const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),own=contract('R1-28'),preview=contract('R1-11'),a=publication.own_ticket_selection_amendment;
+ assert.equal(hash(beforeThreeInputControls(beforeOwnSelection(drafts)).filter(x=>x.id!=='R1-11')),'9e9e6274f7677f1150650cef8dd44233bec0e17769624af4646082f02cc28a81');
+ assert.equal(hash(beforeOwnSelection(drafts).find(x=>x.id==='R1-11').contract),'a913b1a7e2f8efe4a129d35d8c15d29f3474a647851dfacdaea8f4a3fe32b403');
+ assert.deepEqual(own.prerequisites,[{ticket:'R1-26',required_outcome:'ai_qa_complete'}]);assert.deepEqual(plan('R1-28').dependencies,['R1-26']);
+ assert.equal(own.acceptance_criteria.length,3);assert.equal(own.technical_acceptance_criteria.constraints.length,3);
+ assert.deepEqual(own.testing_strategy.human_review.cases.map(c=>c.id),['R1-28-OC01','R1-28-OC02','R1-28-OC03','R1-28-OC04','R1-28-OC05','R1-28-OC06']);
+ for(const field of ['cases','testing_types','dispatch_order'])assert.deepEqual(own.testing_strategy[field],[]);assert(own.testing_strategy.human_review.no_ai_cases_reason);
+ const native=structuredClone(own);native.prerequisites[0].ticket='PGB-129';assert.equal(hash(native),'1138b04d17c451dbeac01a1d8c3e9463fed4070ae844a5d10d71483d65cd001f');
+ const residual=structuredClone(preview);for(const prerequisite of residual.prerequisites)prerequisite.ticket=publication.stories[prerequisite.ticket]??prerequisite.ticket;
+ assert.equal(hash(residual),'b5d07161501b813ef54e978fe6f8ca7095eadd7c01b83c2876384ec6df1720d2');
+ for(const [id,days]of [['R1-28',1.92],['R1-11',1.53]]){assert.equal(plan(id).days,days);assert.equal(plan(id).files.length,20);assert.equal(new Set(plan(id).files).size,20);assert(!plan(id).time_limit_exception);}
+ const publicationFiles=['docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/ticket-drafts.json','docs/delivery/manager-r1/publication.json','docs/delivery/manager-r1/stories.md','docs/delivery/manager-r1/coverage.md','docs/product/README.md','docs/product/coverage.md','test/qa-helper-contract.test.mjs'];
+ for(const file of publicationFiles)assert(plan('R1-28').files.includes(file),file);for(const file of ['test/story-authoring.test.mjs','test/manager-preview.test.mjs'])assert(plan('R1-28').files.includes(file),file);assert(!plan('R1-28').files.includes('test/receipt-chain.test.mjs'));assert(plan('R1-28').files.includes('README.md'));assert(!plan('R1-28').files.includes('lib/manager/availability.mjs'));
+ assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),47.86625);
+ assert.equal(publication.stories['R1-28'],'PGB-136');assert.equal(a.native_id,'10596');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);
+ assert.deepEqual(a.dependency_links,[{id:'10715',type_id:'10000',from:'PGB-129',to:'PGB-136'},{id:'10716',type_id:'10000',from:'PGB-136',to:'PGB-81'}]);for(const edge of a.dependency_links)assert(publication.dependency_links.some(x=>x.id===edge.id&&x.from===edge.from&&x.to===edge.to));
+ assert.deepEqual(a.preserved_link_ids,['10637','10638','10686','10705']);assert.equal(a.description_sha256.prerequisite,'905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7');assert.equal(a.description_sha256.preview_after,'7506971ef565beb236c1006ade1104ad83762e748526dedc45c28420ffdadfb4');
+ assert.equal(a.plan_sha256,'9ee1a33ad6862b62fb3f5639b2013041916a6292c4fc29456c07f9b0b4bb5694');assert.equal(a.review_manifest_sha256,'4b61a0a13355f58c35314d57afb96e59421499bdaa005f7320c268fa8eab97d1');
+ assert.deepEqual(a.stage_receipt,{'PGB-136':{status:'In Progress',comment_id:'10772'},'PGB-81':{status:'Blocked',comment_id:'10773'}});assert(a.initial_edit_failure.includes('CONTENT_LIMIT_EXCEEDED'));
+ assert.equal(a.source_composition_base.commit,'29ba86017ec8ce5c27392f699a9a387cc8902260');assert(a.source_composition_base.status.includes('unmerged PGB-132'));
+ assert.equal(a.original_preview_cases,42);assert.equal(a.additive_cases,6);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.original_preview_human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
+ assert(publication.history.some(x=>x.story_count===27&&x.case_count===119));assert.deepEqual(publication.current_source_scope.pending_source_amendments,['PGB-137']);
+ const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-26:')<stories.indexOf('## R1-28:'));assert(stories.indexOf('## R1-28:')<stories.indexOf('## R1-11:'));assert(stories.includes(JSON.stringify(own,null,2)));
+ const support={W04:['OC02','OC05'],W12:['OC02','OC05','OC06'],M01:['OC04'],M02:['OC04'],M03:['OC01','OC05'],M04:['OC04'],M05:['OC04'],M06:['OC01','OC03','OC06'],M07:['OC03'],M10:['OC02','OC05']};
+ for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const rows=(await read(file)).split('\n');for(const [id,cases]of Object.entries(support))for(const caseId of cases)assert(rows.find(row=>row.startsWith('| '+id+' |')).includes('R1-28-'+caseId),file+': '+id+' '+caseId);}
+ const result=validateWork(JSON.stringify(own),{mode:'structure'});assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.readiness,'not_evaluated');
 });

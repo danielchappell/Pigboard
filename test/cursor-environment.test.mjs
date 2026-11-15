@@ -862,3 +862,16 @@ test('installed preview rejects frozen current-proof contradictions and preserve
   assert.deepEqual((await readdir(o.app)).sort(),before);assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.equal(c.expected.writes,0);assert.equal(c.expected.execution_authorized,false);
  }
 });
+
+test('installed old-shape preview selects an own repair and preserves cap/deferred-stack outcomes',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),F=JSON.parse(await readFile(new URL('./fixtures/manager-repairs.json',import.meta.url)));
+ const {createHash}=await import('node:crypto'),sha=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(await readFile(installed.manifest));
+ assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.smokeChecks.length,7);assert(!Object.keys(manifest.sourceFiles).some(k=>k.includes('manager-repairs')||k.includes('repair-policy')));
+ for(const relative of ['lib/contracts/receipts.mjs','lib/manager/snapshot.mjs','lib/manager/decisions.mjs']){const bytes=await readFile(new URL('../'+relative,import.meta.url));assert.equal(sha(await readFile(path.join(validator,relative))),sha(bytes));assert.equal(manifest.sourceFiles['work-validator/'+relative],sha(bytes));}
+ assert.deepEqual(F.installed_case_ids,['OC01-selection','OC04-cap-5','OC05-stack-request']);
+ const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
+ for(const id of F.installed_case_ids){const c=F.cases.find(c=>c.id===id),rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot),exit=c.expected.status==='complete'?0:1;await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const before=(await readdir(o.app)).sort(),args=[cli,'--config',config,'--input',input];
+  for(const json of [true,false]){const p=spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000});assert.equal(p.status,exit,id+p.stderr);assert.equal(p.stderr,'');if(json)assert.deepEqual(JSON.parse(p.stdout),c.expected,id);else{assert.match(p.stdout,/No execution authority; writes: 0/);for(const s of c.expected.streams){if(s.selected_key)assert(p.stdout.includes('selected '+s.selected_key+'.'));for(const r of s.reasons)assert(p.stdout.includes(r.code+' '+r.path+':'));}}}
+  assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),before);
+ }
+});

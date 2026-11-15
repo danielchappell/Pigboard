@@ -1,4 +1,4 @@
-# Preview ready work locally
+# Preview ready work and own-ticket repairs locally
 
 The offline manager preview answers which ticket could start in each exact Jira
 site, immutable project ID and full numbered label. It is available in source and
@@ -8,8 +8,10 @@ A selection is a proposal with **no execution authority**. Live freshness and
 permissions are not evaluated. Complete supplied facts are an assertion by the
 caller, not proof that hidden Jira issues or inaccessible pages do not exist.
 
-Full repair ordering is later PGB-81 work. An outstanding queued or unproved repair
-explicitly waits with `REPAIR_POLICY_PENDING`; a ready Bug cannot bypass it. A
+Own-ticket repairs on an existing open PR can take the next free slot before
+unrelated new work. They require authenticated requests and completed history.
+Unproved repairs and full stack repair ordering still wait with
+`REPAIR_POLICY_PENDING`; a ready Bug cannot bypass them. A
 current, exactly bound canonical QA envelope may account for a member's retained
 request obligations. Keep those request lists and historical references intact;
 preview does not clear or rewrite them. Human acceptance is separate from these
@@ -217,7 +219,7 @@ fixture bounds, not AWS, production throughput or whole-install capacity claims.
 | `PENDING_INTENT`, `BLOCKED`, `INCONSISTENT_OCCUPANCY` | Use owner handling; preview cannot unblock, clear, expire or stop workers. |
 | `NO_OPT_IN`, `EPIC_PAUSED`, `OCCUPIED`, `HUMAN_REVIEW_CAP` | Wait for authorized native workflow changes; existing cycles continue. |
 | `INVALID_WORK`, `NO_READY_CANDIDATE`, `PREREQUISITE_UNSATISFIED` | Correct reviewed requirements/context or supply coherent current completion; cancellation alone cannot satisfy prerequisites. |
-| `REPAIR_POLICY_PENDING` | Preserve all requests; obtain exact current member QA if already completed, otherwise wait for PGB-81 repair ordering. |
+| `REPAIR_POLICY_PENDING` | Preserve all requests; obtain exact current member QA if already completed, otherwise supply authentic own history or wait for PGB-81 stack/first-PR support. |
 | `REPAIR_ACCOUNTED_FOR` | Informational canonical proof only; requests, assignments and state remain unchanged. |
 | `CHANGED_INPUT` | Review a new actual preview; never repeat an old proposal automatically. |
 | `SETUP`, `INPUT` | Prepare the approved runtime outside preview or supply readable regular files; failed installation preserves the previous stable release. |
@@ -309,5 +311,72 @@ then preview the new snapshot. Preview cannot authorize a replay or repair.
 
 A valid current completion still works with an empty retained-history list.
 Malformed or unbound receipts grant no completion authority and keep their
-existing handling. This current-proof check does not implement PGB-81's later
-historical projection or complete repair ordering.
+existing handling. The same fingerprint index checks bound private history before own selection;
+complete typed stack repair ordering remains PGB-81 work.
+
+## Select an own-ticket repair
+
+Supply optional `repair_receipts`: raw manager receipt-envelope JSON strings with
+complete current outer facts and exact retained metadata. They share the existing
+100-envelope limit with `completion_receipts`; all existing byte/depth/list limits
+remain. Add separate envelopes for required subjects outside a target's validated
+closure. Complete comment pages alone do not authenticate every historical row.
+
+A queued repair can be selected when its current assignment has coherent completed
+own history, its own requests are authentic, its existing PR is currently observed
+open, and it has no actual stack parent. Completed same-ticket consumption on that
+assignment's ancestry accounts for exact direct requests. The supplied request
+arrays remain unchanged. A required ready prerequisite is selected first; history
+alone never proves that prerequisite complete.
+
+Across supplied envelopes, each represented assignment in that current lineage
+must have one coherent logical QA completion: the same ticket, record UUID and
+digest. Identical publications with different comment IDs are one result.
+Competing completions keep the stream's existing `REPAIR_POLICY_PENDING` wait,
+regardless of envelope order. Private history validity authenticates one envelope;
+it does not establish current completion or coherence across envelopes. Reconcile
+the supplied history through its owner and supply one coherent observation while
+preserving all retained causes. Agents receive the same structured wait and
+unchanged authority fields.
+
+The result keeps its existing fields. `REPAIR_READY` identifies a selected queued
+ticket; `REPAIR_PREREQUISITE` identifies the necessary ready prerequisite. To inspect
+a repair's existing PR, find its native issue by `selected_ticket_id`, read its
+current `pointer.assignment`, and inspect the supplied receipt's current PR
+observation and authenticated same-ticket completion. The selection does not
+provide an admission payload or authorize a transition.
+
+All existing safety gates still apply: pause, no opt-in, occupancy, Blocked work,
+intent, conflicting ownership, incomplete facts and five Human Review items prevent
+selection. Every pending repair in the stream must be understood before one can be
+selected. A supported own repair cannot bypass an unsupported sibling.
+
+Stack-update requests, actual stack parents, first-PR repairs and null/closed/merged
+or unknown current PRs remain a safe wait or evidence hold. Obtain authentic missing
+receipts or reconcile conflicting observations through their owner. Do not drop
+retained causes, clear an intent or replay a transition to obtain a selection.
+
+The source fixture is a preparation aid and is not installed. From a source checkout,
+export its own-selection example to disposable absolute files; set `validator` to
+the source root or the actual installed work-validator directory from its receipt:
+
+```sh
+validator="$PWD" # Or the receipt's absolute installed work-validator directory.
+export PGB_OWN_REPAIR_DIR="$(mktemp -d /tmp/pigboard-own-repair.XXXXXX)"
+node --input-type=module - "$PWD/test/fixtures/manager-repairs.json" "$PGB_OWN_REPAIR_DIR" <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+const [file,directory]=process.argv.slice(2);
+const c=JSON.parse(fs.readFileSync(file)).cases.find(c=>c.id==='OC01-selection');
+for(const [name,value]of Object.entries({config:c.config,snapshot:c.snapshot,expected:c.expected}))
+ fs.writeFileSync(path.join(directory,name+'.json'),JSON.stringify(value));
+NODE
+node "$validator/scripts/manager-preview.mjs" --config "$PGB_OWN_REPAIR_DIR/config.json" --input "$PGB_OWN_REPAIR_DIR/snapshot.json" --json
+node "$validator/scripts/manager-preview.mjs" --config "$PGB_OWN_REPAIR_DIR/config.json" --input "$PGB_OWN_REPAIR_DIR/snapshot.json"
+```
+
+Compare the complete JSON with `expected.json`, inspect the readable selected ticket
+and reasons, and retain before/after input hashes. Only fixture export writes files.
+These local examples do not mark the six designated human groups or any of PGB-81's
+42 original cases passed. Full typed admission, queue proposals and stack ordering
+remain later PGB-81 work.

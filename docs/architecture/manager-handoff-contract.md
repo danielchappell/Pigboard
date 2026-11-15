@@ -333,8 +333,8 @@ by it needs a matching exact retained server metadata tuple. The selected worker
 actual incorporated successor is validated as current accepted completion; selecting
 old A2/U1 directly remains strict. A selected admission/queue publication receives
 no permission from a possible future implementation found in complete discovery.
-Only strict current accepted QA establishes completion. No schema, public option,
-manager history projection or role authority changes.
+Only strict current accepted QA establishes completion. No schema, public option or role authority changes. The private manager history
+route below grants no current completion.
 
 Per-call completed structural root closures are private immutable data, separate
 from active traversal and purpose/anchor-bound authority proofs. A completed closure
@@ -353,7 +353,7 @@ The canonical receipt evaluator owns parsing and strict validation. Its internal
 same validated parse. `validation` is the unchanged public strict-current chain
 result; invalid input returns empty bindings. Public `validateReceiptChain(raw)`
 keeps its existing full result, check order and retained-empty compatibility.
-There is no caller-authored trusted summary or historical projection mode.
+There is no caller-authored trusted summary or public historical mode.
 
 Bindings contain only kind, identity key and canonical digest. The seven identity
 families are exact server comment (site/ticket/comment with reference, metadata
@@ -374,4 +374,46 @@ shared evaluation. Safe `REPAIR_PROOF_INVALID` diagnostics name only the supplie
 completion index. Independent coherent scopes continue. Invalid or unbound input
 never supplies trusted observations; the exact current-QA and repair-accounting
 gates still own completion authority. Existing receipt and snapshot limits bound
-the call-local index. No history, provider action or execution authority is added.
+the call-local index. No provider action or execution authority is added.
+
+## Private own-repair history
+
+`inspectManagerHistory(raw)` uses the same private canonical evaluator with an
+explicit historical purpose and requires the manager consumer. Exact retained
+metadata and authenticated target closure remain mandatory. It returns only
+`valid`, `validation_scope`, `live_freshness`, `completion_established:false`,
+`execution_authorized:false`, `target`, `records`, `bindings` and `diagnostics`.
+Invalid results export empty rows and bindings. There is no coverage-segment field
+or later-parent expansion in this increment.
+
+Each accepted row retains its exact reference, ticket, assignment, assigned
+requirements digest, own PR, actual requested refs and authenticated assignment
+lineage. Review and QA inherit their validated implementation's direct consumed
+requests, roots and actual stack parent. Their own identity and PR stay their own.
+The row's completed flag means authentic historical QA, never current authority.
+
+Own selection uses only completed same-ticket direct consumption on the lineage
+ending at the native current assignment. Retained request inventory stays intact;
+only exact consumed direct refs are excluded from the next own repair. Another
+ticket, future assignment, implementation/review-only witness or shared root does
+not discharge a request. Non-null actual stack parents remain deferred to PGB-81.
+
+Before using either a current baseline or historical consumption, own selection
+requires one coherent logical QA completion for each represented exact assignment
+in that current same-ticket lineage. Logical identity is ticket ID, record UUID
+and digest; identical publications with different comment IDs are one result.
+Distinct assignments remain separate. Competing completions preserve the existing
+pending wait independently of envelope order. Per-envelope private history
+validity grants neither aggregated coherence nor current completion. Humans
+reconcile the supplied history through its owner and supply one coherent
+observation, preserving retained causes; agents receive the existing structured
+wait and unchanged authority fields.
+
+Current and history routes use one same-evaluation seven-family fingerprint
+collector. It preserves stringified tuple keys, one canonical UUID observation,
+all requirement-context observations, and exact current values containing
+`issue` and `manager_assignment`. Snapshot completes every conflict group before
+accepting either history rows or strict current proofs. A current-valid envelope
+with empty retention still contributes current fingerprints if history fails; a
+valid history route cannot enter the current prerequisite-proof map. No public
+result, CLI flag or caller-controlled purpose changes this boundary.
