@@ -1556,7 +1556,7 @@
     "source_composition_base": {
       "commit": "261a3856c9710a62be3c2c8ac4424778cb1ca0a0",
       "tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
-      "status": "Independently CLEAN and pushed Core checkpoint; stacked source base until its PR merges. Director authorizes same-scope source layering without waiting for PR98 merge; PGB-129 is no product dependency."
+      "status": "Core checkpoint merged through PR #98 at 275aebf86affcd1ac974c8e6222d66679ac1cbd7; the merge tree exactly equals the independently reviewed source tree. PGB-129 is no product dependency. Initial same-scope layering authority is retained in the separate dated merge receipt."
     },
     "forecasts": {
       "preparation": {
@@ -1575,6 +1575,21 @@
       }
     },
     "final_dispatcher_readiness": "Provisional — not ready for delivery. Rebind and independently review the concrete final PGB-78 plan after PGB-132 actually merges. No original R1-08 case is completed by preparation.",
-    "verification_limits": "Source/native semantic audit only; local tests, independent instruction exercise, designated human cases, hosted CI, merge, release and activation remain separate. PGB-110's fixed-scope time/evidence exceptions do not transfer."
+    "verification_limits": "Source/native semantic audit only; local tests, independent instruction exercise, designated human cases, hosted CI, merge, release and activation remain separate. PGB-110's fixed-scope time/evidence exceptions do not transfer.",
+    "source_composition_merge_receipt": {
+      "date": "2026-11-15",
+      "pull_request": "https://github.com/danielchappell/Pigboard/pull/98",
+      "merge_commit": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+      "merge_tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "parents": [
+        "19649b701646af065b583c8c603dca648d7413ca",
+        "261a3856c9710a62be3c2c8ac4424778cb1ca0a0"
+      ],
+      "reviewed_source_commit": "261a3856c9710a62be3c2c8ac4424778cb1ca0a0",
+      "reviewed_source_tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "merge_tree_equals_reviewed_source_tree": true,
+      "prior_source_composition_status": "Independently CLEAN and pushed Core checkpoint; stacked source base until its PR merges. Director authorizes same-scope source layering without waiting for PR98 merge; PGB-129 is no product dependency.",
+      "verification": "Director verified the actual merge; local read-only Git object inspection confirms merge/tree/parents. The prior26/116 checkpoint and all earlier readbacks remain historical. Source/native counts stay27/119; merge does not establish PGB-132 human acceptance, installed dispatch or activation."
+    }
   }
 }
