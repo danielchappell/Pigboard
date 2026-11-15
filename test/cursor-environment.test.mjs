@@ -355,6 +355,42 @@ test('reviewer sibling installation preserves complete folders and real formatte
  assert.equal(await realpath(first.stableSkills),first.skills);
 });
 
+test('installed structured QA helpers retain full sibling closure and validate fixed packet outside source', async t => {
+  // Dependency mocks here test installation only; the actual validator runtime is
+  // copied above. Actual Bruno/PostgreSQL instruction execution is separate QA.
+  const o=await fixture(t), installed=await installCursorSkills(o,fakeInstall);
+  const {prepareFixture}=await import('./fixtures/qa-helper-case.mjs');
+  const run=path.join(o.app,'fixed-helper-input');await prepareFixture(run);
+  const common=path.join(installed.skills,'qa-api/references/structured-steps.md');
+  assert.equal(await readFile(common,'utf8'),await readFile(new URL('../skills/qa-api/references/structured-steps.md',import.meta.url),'utf8'));
+  for(const name of ['qa-api','qa-bruno','qa-database','qa-ui','qa-entrypoint']){
+    async function inspect(relative=''){
+      for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})){
+        const file=path.join(relative,entry.name);if(entry.isDirectory()){await inspect(file);continue;}
+        const source=await readFile(path.join(o.source,'skills',name,file)),target=path.join(installed.skills,name,file);
+        assert.deepEqual(await readFile(target),source,`${name}/${file}`);
+        if(!file.endsWith('.md'))continue;
+        for(const match of source.toString().matchAll(/\[[^\]]*\]\(([^)]+)\)/g)){
+          const [link]=match[1].split('#');if(!link||/^[a-z][a-z0-9+.-]*:/i.test(link))continue;
+          const resolved=path.resolve(path.dirname(target),decodeURIComponent(link));assert(resolved.startsWith(installed.skills+path.sep));await readFile(resolved);
+        }
+      }
+    }
+    await inspect();
+  }
+  for(const guide of ['authoring.md','handoffs.md']){
+    const fromCommon=path.resolve(path.dirname(common),'../../work-validator/docs',guide);
+    assert.equal(await readFile(fromCommon,'utf8'),await readFile(new URL('../docs/'+guide,import.meta.url),'utf8'));
+  }
+  const args=['--mode','start','--input',path.join(run,'work.yaml'),'--context',path.join(run,'facts.yaml'),'--json'];
+  const cli=path.join(installed.skills,'work-validator/scripts/validate-work.mjs');
+  const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
+  assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
+  assert.equal(installed.verification.entrypoints,15);assert.equal(installed.verification.dependencies,'verified');
+  await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
+});
+
 // This existing installation fixture simulates QA-helper packages, while copying
 // real locked validator dependencies. Genuine default installer acceptance is a
 // separate candidate receipt; neither test establishes agent/provider behavior.

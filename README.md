@@ -32,6 +32,7 @@ complete implementation Story coverage.
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
+| Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; revision-bound observations, exact bindings and retained evidence; QA entrypoint/full-loop migration remains pending |
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer receipt handoff is available, QA migration and full-loop acceptance remain pending |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
 | Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
@@ -52,7 +53,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. Retained QA still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
+The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. The retained QA entrypoint still returns defects to In Progress and does not consume typed receipts; this mixed bundle must stay inactive. Missing access,
 incomplete instructions or required scope expansion blocks the ticket for a human.
 Discussion stays in Review or QA. [request-rework](skills/request-rework/SKILL.md)
 verifies current completed QA, records human findings and queues only that ticket.
@@ -95,7 +96,7 @@ and explicit unresolved inputs. See [authoring and local validation](docs/author
 for the Epic route, templates, trusted facts and actual checks. Generic research
 and design remain Tasks. The [implementer composer](skills/implementer-entrypoint/SKILL.md)
 accepts current structured Story/Bug assignments and separates job evidence from
-verified Jira publication. The reviewer uses canonical implementation receipts; only QA retains its basic prose contract;
+verified Jira publication. The reviewer uses canonical implementation receipts; only the retained QA entrypoint retains its basic prose contract;
 compatible full-loop execution, manager admission and activation remain later work.
 
 ## Cursor automations
@@ -194,3 +195,10 @@ or credentials. Monitoring and duplicate-launch prevention are later work.
 
 Pigboard is licensed under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE)
 for retained copyright notices. Third-party dependencies retain their own licenses.
+
+The [structured helper guide](docs/using-pigboard.md#prescribed-structured-qa-helpers)
+explains exact inputs, preparation and recovery. API owns one Bruno child;
+PostgreSQL uses parameterized two-hop bindings; UI retains prescribed screenshots.
+Missing prerequisites return inability, demonstrated mismatches return defects.
+Helpers do not move Jira or run human cases. These capabilities do not complete
+PGB-78's retained QA entrypoint migration or activate the mixed delivery loop.

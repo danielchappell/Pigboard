@@ -10,8 +10,8 @@ The [writing skill](../skills/write-pr-sized-stories/SKILL.md) prepares versione
 with [local validation](authoring.md). The structured implementer accepts native
 Story/Bug current assignments through [its input contract](../skills/implementer-entrypoint/references/handoff.md#input-contract).
 The [retained basic-worker Story reference](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
-remains canonical only for retained QA prose field labels, ordering
-and preparation ownership. The [reviewer](../skills/pigboard-pr-review/SKILL.md) consumes canonical implementation receipts through [reviewer-jira](../skills/reviewer-jira/SKILL.md). QA does not yet consume the typed result.
+remains canonical only for retained QA entrypoint prose field labels, ordering
+and preparation ownership. The [reviewer](../skills/pigboard-pr-review/SKILL.md) consumes canonical implementation receipts through [reviewer-jira](../skills/reviewer-jira/SKILL.md). The retained QA entrypoint does not yet consume the typed result.
 This mixed bundle remains inactive; no automatic prose conversion is provided. Native
 Jira metadata stays in Jira fields; accepted requirements stay in the description;
 implementation/review/QA outputs use versioned handoff comments. All acceptance
@@ -26,8 +26,7 @@ days. Split cross-repository work into linked Stories before execution.
 
 QA instructions name the skills in execution order. Each case supplies its ID,
 steps or prepared request/query, expected outcome, required test data/access and
-evidence requirements. Supply the PR and tested commit before QA. The pipeline
-will publish the environment URL and deployed revision in its PR comment, as
+evidence requirements. Supply the PR and tested commit before QA. The configured pipeline must supply the environment URL and deployed revision in its PR comment, as
 described below; do not duplicate that environment handoff on the Jira ticket. Agents do not invent missing cases, discover environments or
 expand scope to make a ticket executable. Implementation records verification and
 prepared testing information for review and QA.
@@ -40,12 +39,17 @@ prepared testing information for review and QA.
 | In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or publish all confirmed in-scope findings as a same-PR repair_request and move to Rework Queued. |
 | QA | `qa-entrypoint` | Grok High; execute named QA skills and prescribed cases in order, collect outcomes and evidence; move to Human Review on pass, In Progress for confirmed implementation defects, or Blocked if unable to complete. |
 
-QA remains on the open PR. `qa-api` assesses prescribed API cases and calls the
-named execution helper (such as `qa-bruno`). `qa-database` executes prepared
-read-only database observations. `qa-ui` uses computer use and captures screenshots.
-Exact inputs, stopping conditions and evidence formats live in each skill.
+QA remains on the open PR. The four domain helpers now accept exact structured
+AI steps under their [common contract](../skills/qa-api/references/structured-steps.md).
+`qa-api` owns its one named `qa-bruno` child once; `qa-database` binds actual named
+outputs to prepared read-only PostgreSQL parameters; `qa-ui` follows the supplied
+surface/viewport and retains inspected checkpoints. All return revision-bound
+observations and explicit inability/defect results, without Jira or human cases.
+The retained QA entrypoint has not migrated to these inputs or canonical QA
+publication (PGB-78), so the mixed loop remains inactive. Local bounded helper
+exercises are not compatible full-loop acceptance or activation.
 
-Reviewer fixes queue on the same PR; discussion stays In Review. Retained QA fixes return to In Progress on the same PR. QA migration
+Reviewer fixes queue on the same PR; discussion stays In Review. The retained QA entrypoint returns fixes to In Progress on the same PR. Its migration
 to structured queued repair is later work; this is not an accepted compatible loop.
 The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
 [Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates
@@ -96,7 +100,7 @@ receipts. QA's basic entrypoint and the dated pilot wiring remain unmigrated.
 The matrix's [structured reviewer setup boundary](../config/cursor/automations.md#structured-reviewer-setup-boundary)
 distinguishes the current Story/Bug reviewer and QA/Rework Queued/Blocked outcomes
 from the old Story-only filter and reviewer In Progress checklist. Following that
-old checklist does not prepare the structured reviewer; retained QA still follows
+old checklist does not prepare the structured reviewer; the retained QA entrypoint still follows
 its own current basic contract.
 
 Project/label/status filtering, authorized repository selection and webhook
@@ -130,7 +134,7 @@ full-loop acceptance under PGB-58 and explicit activation remain separate gates.
 An authorized bounded direct exercise with complete current inputs/capabilities
 can proceed under its skill contract without claiming those gates are complete.
 
-## PR environment handoff — agreed contract, pending implementation
+## PR environment handoff — consumer checks and pending producer
 
 Per-PR environment provisioning and its comment producer are a separate pipeline
 task. The pipeline, not an agent, will publish or update a recognizable comment on
@@ -147,10 +151,23 @@ nor create, repair or poll environments. The pipeline owns refresh on new commit
 
 QA always needs its supplied target. Static PR review can proceed without a
 preview; runtime diagnostics require a ready matching environment. This change
-records the agreed interface only: comment format/producer identity and verified
-consumer handling still need implementation and acceptance. The implementer consumes configured deployment evidence where its assigned work
+records the agreed producer interface; pipeline publication and full-loop acceptance
+remain separate. Structured helpers now inspect the supplied raw receipt and
+configured author before runtime actions. The implementer consumes configured deployment evidence where its assigned work
 needs an environment; static work does not require one. No pipeline producer or
-preview infrastructure is delivered here; retained QA migration remains separate.
+preview infrastructure is delivered here; retained QA entrypoint migration remains separate.
 
  Teams blocker alerts are later Jira wiring; alert routing
 does not belong in skills. No hosted Pigboard runtime is required for this MVP.
+
+## Structured helper preparation and recovery
+
+Follow [the usage guide](using-pigboard.md#prescribed-structured-qa-helpers) for
+complete work/start facts, original trusted ready PR receipt, scope/access,
+prepared artifacts, exact installed revision and private evidence. The helpers
+consume that supplied environment receipt; they do not create previews or add a
+pipeline receipt producer. PGB-90 owns saved automation compatibility and PGB-58
+owns full-loop live acceptance; neither follows from a helper PASS. Missing/stale
+receipt, artifact/access, unsupported engine or UI capability stops before action.
+Keep partial effects/defects and NOT RUN reasons; obtain the concrete missing
+prerequisite before a fresh assigned run. Never retry an uncertain child action.
