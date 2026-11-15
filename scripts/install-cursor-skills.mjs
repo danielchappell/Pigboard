@@ -107,7 +107,16 @@ export async function verifyRelease(receipt) {
       if (project.id !== id || project.stages.QA !== qa || project.types.story !== '22' || project.actors.manager[0] !== 'operator-demo' || project.repositories[0] !== repository || project.worker_prefixes[0] !== 'AI-Daniel-' || project.opt_in_label !== 'pigboard' || !stream.mapped || stream.key !== JSON.stringify(['https://jira.example.invalid',id,'AI-Daniel-1'])) throw new Error();
     }
   } catch { throw new Error('Configuration validator scope smoke check failed.'); }
-  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record', 'config-validator project scope'] };
+  const previewTemporary = await mkdtemp(path.join(os.tmpdir(), 'pigboard-preview-smoke-'));
+  try {
+    const fixture = JSON.parse(await readFile(path.join(validatorRoot, 'test/fixtures/manager-candidates.json'))).cases.find(c=>c.id==='S01');
+    const config = path.join(previewTemporary, 'config.json'), input = path.join(previewTemporary, 'snapshot.json');
+    await writeFile(config, JSON.stringify(fixture.config)); await writeFile(input, JSON.stringify(fixture.snapshot));
+    const result = JSON.parse(execFileSync(process.execPath, [path.join(validatorRoot, 'scripts/manager-preview.mjs'), '--config', config, '--input', input, '--json'], { cwd:previewTemporary, encoding:'utf8', stdio:['ignore','pipe','pipe'], timeout:30000 }));
+    if (result.schema !== 'pigboard-manager-preview/v1' || result.valid !== true || result.status !== 'complete' || result.validation_scope !== 'supplied_snapshot' || result.execution_authorized !== false || result.writes !== 0 || result.live_freshness !== 'not_evaluated' || result.permission !== 'not_evaluated' || result.streams.length !== 1 || result.streams[0].decision !== 'select' || result.streams[0].selected_ticket_id !== '1001' || result.streams[0].return_count !== 1) throw new Error();
+  } catch { throw new Error('Manager preview nonexecuting smoke check failed.'); }
+  finally { await rm(previewTemporary, { recursive:true, force:true }); }
+  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record', 'config-validator project scope', 'manager-preview nonexecuting selection'] };
 }
 
 export async function installCursorSkills({ source, ref, app, root = '/opt/pigboard' }, install) {

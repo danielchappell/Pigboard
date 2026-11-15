@@ -87,8 +87,8 @@ skills with a host or prove that host's supported execution capabilities.
 
 ## Install a verified stable path
 
-The installer adds source-hash and dependency verification, loads `pg.Client`,
-runs the locked `bru --version` and both validator skeleton draft checks, then exposes a stable `skills` symlink:
+The installer adds source-hash and dependency verification and the seven checks
+below before exposing a stable `skills` symlink:
 
 ```sh
 node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
@@ -101,12 +101,23 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all twenty-one entrypoints,
-`dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
-`work-validator epic draft`, `work-validator ticket draft`, and
-`handoff-validator admission record`, and `config-validator project scope`. The
-configuration check runs the shipped synthetic two-project example through the real
-installed CLI and checks resolved mappings and independent stream keys. The admission check validates a complete
-setup-only disposable record and its independently computed canonical digest. The validator checks
+`dependencies: "verified"`, and these seven ordered `smokeChecks` values:
+
+1. `pg.Client`
+2. `bru --version`
+3. `work-validator epic draft`
+4. `work-validator ticket draft`
+5. `handoff-validator admission record`
+6. `config-validator project scope`
+7. `manager-preview nonexecuting selection`
+
+The manager preview check executes a synthetic selection through the copied runtime
+and verifies zero writes and no execution authority. It does not establish provider
+permissions, live freshness, human acceptance or activation. The configuration
+check runs the shipped synthetic two-project example through the real installed CLI
+and checks resolved mappings and independent stream keys. The admission check
+validates a complete setup-only disposable record and its independently computed
+canonical digest. The validator checks
 load the real parser, semantic modules and schemas, require draft-valid skeletons
 and require structural-start false. These unchanged draft smoke checks do not run
 local start semantics, contact providers or establish live readiness.
@@ -300,6 +311,27 @@ installed regression checks execute the helper and chain validation from an
 unrelated working directory. Missing/changed helper or sibling files fail existing
 manifest verification, preserving the previous binding. See [handoffs](handoffs.md)
 for bounds, diagnostics, local examples and safe publication responsibilities.
+
+## Installed offline manager preview
+
+The prepared `work-validator` now includes the [offline manager preview](manager-preview.md),
+its pure policy modules and complete runnable synthetic fixtures. From any working
+directory use Node20+ and the actual receipt's skills location:
+
+```sh
+node /opt/pigboard/skills/work-validator/scripts/manager-preview.mjs --help
+node /opt/pigboard/skills/work-validator/scripts/manager-preview.mjs --config /tmp/config.json --input /tmp/snapshot.json --json
+```
+
+Normal preparation installs the locked validator dependencies; installation verifies
+an actual nonexecuting selection with the copied runtime before replacing the
+stable skills link. Missing/corrupt modules or wrong smoke output leave the previous
+stable release selected. Run normal preparation again at the approved pin outside
+a delivery command; preview never repairs/fetches dependencies. Root source use
+requires the normal contributor dependency preparation. The preview guide provides
+snapshot fields, bounds, complete human-case commands, structured/readable output
+and recovery. This local proposal performs zero provider/state writes and provides
+no activation, live freshness, permission or human acceptance evidence.
 
 ## Verify the structured QA helper closure
 

@@ -71,7 +71,9 @@
                 "actors",
                 "repositories",
                 "worker_prefixes",
-                "opt_in_label"
+                "opt_in_label",
+                "preparation_stage_ids",
+                "cancelled_stage_ids"
               ]
             },
             "minItems": 0,
@@ -291,6 +293,28 @@
           "minLength": 1,
           "maxLength": 255,
           "pattern": "^\\S+$"
+        },
+        "preparation_stage_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "maxLength": 255
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "uniqueItems": true
+        },
+        "cancelled_stage_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "maxLength": 255
+          },
+          "minItems": 0,
+          "maxItems": 100,
+          "uniqueItems": true
         }
       },
       "required": []

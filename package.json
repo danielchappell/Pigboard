@@ -8,7 +8,8 @@
     "test": "node --test test/*.test.mjs",
     "validate-work": "node scripts/validate-work.mjs",
     "validate-handoff": "node scripts/validate-handoff.mjs",
-    "check-config": "node scripts/check-config.mjs"
+    "check-config": "node scripts/check-config.mjs",
+    "manager-preview": "node scripts/manager-preview.mjs"
   },
   "engines": {
     "node": ">=20"
