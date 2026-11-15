@@ -78,6 +78,37 @@ test('H02 nested inputs/SQL values: integer literals, nonfinite values, Unicode,
  const cycle={};cycle.x=cycle;for(const x of [cycle,undefined,()=>{},Symbol(),1n,NaN,Infinity,new Date(),{[Symbol()]:1},[,,],Object.defineProperty({},'x',{enumerable:true,get(){throw Error('must not execute')}})])assert.throws(()=>checkValue(x));
  const shared={x:1};assert.doesNotThrow(()=>checkValue([shared,shared]));
 });
+test('H02 public JS numeric guards are strict without a caller-selectable raw-number bypass',()=>{
+ const invalid=[9007199254740992,-9007199254740992,Number('9007199254740993'),Number('-9007199254740993'),1e20,NaN,Infinity,-Infinity];
+ for(const section of ['inputs','parameters']) for(const number of invalid) {
+  const value=withValue(number,section), before=structuredClone(value);
+  const field=section==='inputs'?'/testing_strategy/cases/0/steps/0/inputs/value':'/testing_strategy/cases/0/steps/2/database/parameters/0';
+  for(const options of [{},{strictNumbers:false,allowUnsafeIntegers:true,trusted:true,parsed:true,astVerified:true}]) {
+   assert.throws(()=>checkValue(value,options,false),error=>error.diagnostic?.code==='NUMBER'&&error.diagnostic.path===field);
+   const result=validateValue(value,{mode:'start',...options},false);assert.equal(result.valid,false);assert.equal(codeOf(result),'NUMBER');assert.equal(result.diagnostics[0].path,field);assert.equal(result.draft_valid,null);assert.equal(result.start_structure_valid,null);
+   assert.deepEqual(value,before);
+  }
+ }
+ for(const number of [9007199254740991,-9007199254740991,1.5,-1.5,Number.MIN_VALUE]) for(const section of ['inputs','parameters']) {
+  const value=withValue(number,section), before=structuredClone(value);assert.equal(checkValue(value),value);assert.equal(validateValue(value,{mode:'start'}).valid,true);assert.deepEqual(value,before);
+ }
+});
+test('H02 raw YAML/ADF finite floats keep parser provenance only within validateWork and CLI',async t=>{
+ const dir=await fixture(t), file=path.join(dir,'number.txt');
+ for(const section of ['inputs','parameters']) for(const literal of ['1e20','-1e20','100000000000000000000.0','1.7976931348623157e308']) {
+  const yaml=stringify(withValue('MARK',section)).replace('MARK',literal);
+  const parsed=parseWork(yaml);assert.equal(codeOf(validateValue(parsed,{mode:'start'})),'NUMBER');assert.throws(()=>checkValue(parsed),error=>error.diagnostic?.code==='NUMBER');
+  for(const format of ['yaml','adf']) {
+   const input=format==='yaml'?yaml:adf([yaml]);assert.equal(validateWork(input,{format,mode:'start'}).valid,true);
+   await writeFile(file,input);const command=run(file,'--format',format);assert.equal(command.status,0);assert.equal(command.result.valid,true);assert.equal(await readFile(file,'utf8'),input);
+  }
+ }
+ const parsed=parseWork(stringify(withValue(1.5)));parsed.testing_strategy.cases[0].steps[0].inputs.value=9007199254740992;const before=JSON.stringify(parsed);assert.equal(codeOf(validateValue(parsed)),'NUMBER');assert.throws(()=>checkValue(parsed));assert.equal(JSON.stringify(parsed),before);assert.equal(Object.getPrototypeOf(parsed),null);
+ for(const section of ['inputs','parameters']) for(const literal of ['9007199254740992','-9007199254740992','9007199254740993','-9007199254740993']) {
+  const yaml=stringify(withValue('MARK',section)).replace('MARK',literal);
+  for(const format of ['yaml','adf'])assert.equal(codeOf(validateWork(format==='yaml'?yaml:adf([yaml]),{format,mode:'start'})),'NUMBER');
+ }
+});
 test('H02 exact/+1 work byte, depth, list and UTF-8 limits with local measurements',t=>{
  const start=performance.now();
  const at=epic+'\n#'+ 'x'.repeat(LIMITS.workBytes-Buffer.byteLength(epic)-2);assert.equal(Buffer.byteLength(at),65536);assert(validateWork(at,{mode:'start'}).valid);assert.equal(codeOf(validateWork(at+'x')),'BYTE_LIMIT');

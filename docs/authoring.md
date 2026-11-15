@@ -71,6 +71,17 @@ identifiers must be strings. Finite decimals use binary64 representation; quote
 values needing exact higher precision. Nonfinite values, invalid UTF-8 and lone
 Unicode surrogates fail, including nested input values and SQL parameters.
 
+For JavaScript callers, `checkValue` and `validateValue` reject nonfinite Numbers
+and integral Numbers outside the safe-integer range at every depth. Direct JS
+values cannot prove whether a Number originated as an integer or floating literal.
+These public checks have no option to bypass that rule. `parseWork` returns
+ordinary data: passing a parsed `1e20` value separately to `validateValue` therefore
+fails the strict JS check, as does mutating parsed data to an unsafe integral
+Number. To retain the supported raw finite-floating-literal behavior, call
+`validateWork` with the original YAML/ADF text or bytes. That single call checks
+integer literal precision in the AST before privately validating the parsed data;
+it does not mark returned values as trusted or cache their provenance.
+
 Local immutable budgets: work text at most 65,536 UTF-8 bytes (comments count),
 32 nested containers including the root, and 100 items per sequence. For an ADF
 JSON envelope: 262,144 UTF-8 bytes, 32 containers, 1,000 items per array and 100
