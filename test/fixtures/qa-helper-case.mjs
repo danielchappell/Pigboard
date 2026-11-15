@@ -1159,6 +1159,9 @@ async function prepareDispatchInputs(runDir) {
       unit_elapsed_seconds:id==='I05-next-offset'?[31]:id==='I05-deadline'?[5,5,31]:[5,5,5],
       whole_unit_bound_seconds:id==='I05-missing-bound'?null:20,child_bound_seconds:5,database_outer_bound_seconds:20};
     if(uiStep&&!id.startsWith('I13-')){uiStep.ui.surface='supplied/mock browser';uiStep.ui.browser='supplied/mock Chromium';}
+    // This negative exercises the existing complete-ledger projection before
+    // dispatch. Declare required evidence, never supplied observation results.
+    if(id==='I14-oversized-ledger')for(const step of steps)step.evidence=[step.evidence[0],...Array.from({length:99},(_,i)=>`${step.id} supplied evidence ${i+2}`)];
     // Refresh only fixed copied work references. Original publication bytes and
     // real externally supplied receipts are never rewritten.
     requirement.context_body=JSON.stringify(facts);
@@ -1178,6 +1181,8 @@ async function prepareDispatchInputs(runDir) {
       if(mixed)responseBody.state='pending';else responseBody.results=[];
     }
     const responses=asyncCase?(id==='I03-pending-ready'?[{...responseBody,state:'pending'},responseBody,responseBody]:id==='I04-one-mismatch'?[responseBody,{...responseBody,state:'pending'},responseBody]:[responseBody,responseBody,responseBody]):[responseBody];
+    // Remove absent proof before constructing any consumer receipt/body mirror.
+    if(['I11-missing-environment','I11-partial-pass-null-proof','I11-partial-fail-null-proof'].includes(id))e.evidence_receipts=e.evidence_receipts.filter(r=>r.kind!=='environment');
     // Build original pipeline comments only after making the receipt stale.
     if(id==='I11-stale-environment')e.evidence_receipts.filter(r=>r.kind==='environment').forEach(r=>r.pr.source_revision='f'.repeat(40));
     const pipeline=e.evidence_receipts.filter(r=>r.kind==='environment').map(r=>({notice:qaNotice,id:r.details.comment_id,author_id:r.details.pipeline_actor_id,update_author_id:r.details.pipeline_actor_id,created:'2026-11-15T09:30:00Z',updated:'2026-11-15T09:30:00Z',uri:r.uri,repository:r.pr?.repository,pr_number:r.pr?.number,
@@ -1234,12 +1239,9 @@ async function prepareDispatchInputs(runDir) {
     if(id==='I10-wrong-scope')native.project_id='999';
     if(id==='I10-wrong-actor')access.actors=[];
     if(id==='I10-wrong-tenant')access.actors.forEach(a=>a.tenant='tenant-b');
-    if(id==='I11-missing-environment'){e.evidence_receipts=e.evidence_receipts.filter(r=>r.kind!=='environment');cards.reads.evidence=e.evidence_receipts;pipeline.length=0;}
-    if(id.includes('null-proof'))cards.proof_inputs={tested_pr:null,environment:null,preserve_actual_observations_locally:true};
     if(id==='I14-no-model')capabilities.model_profile=null;
     if(id==='I14-no-clock')capabilities.clock=null;
     if(id==='I14-no-helper')capabilities.helpers=[];
-    if(id==='I14-oversized-ledger')cards.evidence_label_inputs=Object.fromEntries(steps.map(s=>[s.id,[0,1,2].map(n=>`${s.id} supplied observation ${n} `+'x'.repeat(1800))]));
     const base=`cases/${id}`,input=`${base}/input`,artifacts=[];
     const emit=async(name,value)=>artifacts.push(await put(`${input}/${name}`,value));
     await emit('work.yaml',bound.body);await emit('facts.yaml',JSON.stringify(boundFacts));

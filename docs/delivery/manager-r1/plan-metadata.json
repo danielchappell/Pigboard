@@ -265,7 +265,7 @@
       "R1-24",
       "R1-30"
     ],
-    "days": 1.21875,
+    "days": 1.40625,
     "files": [
       "test/story-authoring.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
@@ -281,8 +281,8 @@
       "docs/product/README.md"
     ],
     "hours": {
-      "min": 6.75,
-      "max": 9.75
+      "min": 7.5,
+      "max": 11.25
     },
     "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
@@ -311,7 +311,8 @@
         "docs/product/coverage.md",
         "docs/product/README.md"
       ]
-    }
+    },
+    "estimate_basis": "Prior residual 6.75\u20139.75h plus 0.75\u20131.5h for the bounded actual-consumer proof/size control repair, affected tests, docs, ordinary correction and independent review/PR evidence; current whole residual 7.5\u201311.25h. Prior allocations remain counted. No other Story forecast or source ownership changes."
   },
   {
     "id": "R1-08",
@@ -348,7 +349,7 @@
       "min": 10.5,
       "max": 14.5
     },
-    "delivery_state": "Source composed with actual reviewed integrated PGB-132/Core/PGB-139; final immutable installation/source checks, exact-composition code review, actual capability/acceptance disposition, hosted checks and ordered publication/merge remain separate.",
+    "delivery_state": "Source composed with the actual reviewed PGB-132 consumed-proof/projected-size correction; final composed-source checks, unchanged installed-payload applicability binding, fresh exact-code review, actual capability/acceptance disposition and ordered hosted/publication/merge gates remain separate.",
     "development_binding": {
       "base_commit": "0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a",
       "base_tree": "991e23fff8ac436e4f0bcfb92e82df2743f5d628",
@@ -381,6 +382,26 @@
       "requirement_count": 53,
       "scenario_count": 41,
       "acceptance": "Source/test/install evidence only; actual required Grok/helper/clock and resulting publisher behavior remain separate; no transferred evidence exception or activation."
+    },
+    "controls_correction_binding": {
+      "incoming_commit": "003160f4fa4bb4ba744ee0d5a1af9a686033e38c",
+      "incoming_tree": "e4a833ce1b4d0038e1866112678524100f04d9dc",
+      "prior_source_commit": "bf10e04cf8955fdd6fcfb4e62e3993192ac76d87",
+      "integration_plan_sha256": "5fa592a264b4bfe0f31fb17dc53bc974656641fe2bae6d6ae5799c3228bce207",
+      "review_state": "Both exact prerequisite code reviews and both affected controls-integration plan reviews CLEAN before composition; fresh final78 committed-code review remains required.",
+      "incoming_paths": 5,
+      "shared_authored_paths": 5,
+      "residual_authored_paths": 17,
+      "source_story_count": 29,
+      "source_case_count": 128,
+      "requirement_count": 53,
+      "scenario_count": 41,
+      "current_aggregate_days": {
+        "min": 45.36625,
+        "max": 48.05375
+      },
+      "installed_evidence": "Check final81 source/installed/manifest hashes and config/dependency closure; reuse original bf10 22/81/7-smoke evidence only on exact identity, without rewriting its receipt or claiming a new installation.",
+      "acceptance": "Actual Grok/helpers/clock/resulting publisher evidence or authorized disposition remains separate; no transferred exception or activation."
     }
   },
   {
