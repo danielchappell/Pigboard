@@ -99,7 +99,15 @@ export async function verifyRelease(receipt) {
     if (result.schema !== 'pigboard-handoff-validation/v1' || result.valid !== true || result.mode !== 'record' || result.record_digest !== expected || result.completion_established !== false || result.live_freshness !== 'not_evaluated') throw new Error();
   } catch { throw new Error('Handoff validator record smoke check failed.'); }
   finally { await rm(temporary, { recursive:true, force:true }); }
-  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record'] };
+  try {
+    const result = JSON.parse(execFileSync(process.execPath, [path.join(validatorRoot, 'scripts/check-config.mjs'), '--input', path.join(validatorRoot, 'config/pigboss.example.yaml'), '--label', 'AI-Daniel-1', '--json'], { cwd:receipt.release, encoding:'utf8', stdio:['ignore','pipe','pipe'], timeout:30000 }));
+    if (result.schema !== 'pigboard-config-check/v1' || result.valid !== true || result.live_readiness !== 'not_evaluated' || result.destination_authority !== 'not_evaluated' || result.resolved_scope.site !== 'https://jira.example.invalid' || result.resolved_scope.projects.length !== 2 || result.streams.length !== 2) throw new Error();
+    for (const [i,id,qa,repository] of [[0,'10001','14','https://git.example.invalid/team/app'],[1,'10002','34','https://code.example.invalid/ops/service']]) {
+      const project=result.resolved_scope.projects[i],stream=result.streams[i];
+      if (project.id !== id || project.stages.QA !== qa || project.types.story !== '22' || project.actors.manager[0] !== 'operator-demo' || project.repositories[0] !== repository || project.worker_prefixes[0] !== 'AI-Daniel-' || project.opt_in_label !== 'pigboard' || !stream.mapped || stream.key !== JSON.stringify(['https://jira.example.invalid',id,'AI-Daniel-1'])) throw new Error();
+    }
+  } catch { throw new Error('Configuration validator scope smoke check failed.'); }
+  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record', 'config-validator project scope'] };
 }
 
 export async function installCursorSkills({ source, ref, app, root = '/opt/pigboard' }, install) {

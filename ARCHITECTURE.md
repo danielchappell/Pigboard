@@ -108,3 +108,17 @@ from the same prepared release; no private schema or runtime is added. See
 [authoring](docs/authoring.md). Existing roles retain their basic prose contract
 until later coordinated worker/handoff/manager migration; installation does not
 activate them or convert old tickets.
+
+
+## Local canonical project configuration
+
+The [configuration guide](docs/configuration.md) and closed
+[scope schema](contracts/config-v1.schema.json) define the currently implemented
+local scope checker. One authored document resolves explicit project/default
+sections; exact site/project/full-label tuple identities are independent of keys
+and boards. Pure modules in `lib/config/` validate, normalize and preview changes;
+`scripts/check-config.mjs` is copied into the existing prepared `work-validator`.
+The preview reports pending retained-work/readiness checks and no state actions.
+It does not discover native mappings or access providers. Optional expected-site
+binding proves only an exact site match. Deployment, scheduling, health, secrets
+and enablement remain with their later owners in the same canonical configuration.

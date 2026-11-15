@@ -41,7 +41,14 @@
       "lib/contracts/handoff.mjs",
       "lib/contracts/receipts.mjs",
       "scripts/validate-handoff.mjs",
-      "docs/handoffs.md"
+      "docs/handoffs.md",
+      "scripts/check-config.mjs",
+      "lib/config/parse.mjs",
+      "lib/config/projects.mjs",
+      "lib/config/diff.mjs",
+      "contracts/config-v1.schema.json",
+      "config/pigboss.example.yaml",
+      "docs/configuration.md"
     ]
   }
 }
