@@ -148,6 +148,20 @@ operations: []
 
 For mixed plans, supply exact approved repository/branch pairs, targets, references,
 the complete reachable prerequisite graph and related-change Story obligations.
+`context.references` checks exact prepared values for actor `identity_reference`,
+fixture `reference`, step `prepared_artifact.reference`, database `access_reference`
+and a supplied-default UI viewport `reference`. Repository/branch and configured
+location checks use `repositories` and `configured_targets` instead.
+
+Related repositories' optional `contract_reference` and ticket/Epic accepted
+decisions' optional `reference` fields are supporting citations. They need not
+appear in `context.references`; supplied text must still be nonblank. These
+citations do not grant access, approve a source, override instructions or become
+URLs to fetch. A successful local check does not prove the source exists, is
+current or supports the decision; authors and reviewers still assess that content.
+Reusing a citation as a fixture, prepared artifact or other runtime reference
+requires the corresponding prepared-context membership above.
+
 Allowed QA skills are intersected with the installed manifest; context cannot add
 an uninstalled engine. Each AI step, including a Bruno child, needs an operation
 fact with `step`, `contract`, `read_only`, `max_duration_seconds` and
