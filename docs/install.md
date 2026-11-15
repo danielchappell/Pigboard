@@ -14,7 +14,7 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the fifteen folders in
+The installer prepares the twenty-one folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
@@ -76,7 +76,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing fifteen complete skill folders and `work-validator` |
+| `skills` | Absolute root containing twenty-one complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -100,7 +100,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all fifteen entrypoints,
+`verification`. Inspect the expected commit, all twenty-one entrypoints,
 `dependencies: "verified"`, and these seven ordered `smokeChecks` values:
 
 1. `pg.Client`
@@ -338,7 +338,7 @@ no activation, live freshness, permission or human acceptance evidence.
 Install/refresh the entire pinned, reviewed published bundle, not four loose
 `SKILL.md` files. All four helpers depend on
 `qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
-and the prepared validator. The existing fifteen-skill allowlist already ships
+and the prepared validator. The current twenty-one-skill allowlist ships
 these folders; there is no added skill or engine. Use the receipt's immutable
 versioned `skills` path for a run, rather than following a later stable-link refresh.
 Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
