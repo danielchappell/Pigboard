@@ -1,9 +1,28 @@
 # Cursor review profile
 
-Verify this profile during setup; it is not a claim about enabled account features.
-Invoke `pigboard-pr-review` when an opted-in native Story or Bug enters In Review. First workstream:
-Safeguard INT board 1234, exact label `AI-Daniel-1`. Resolve real project/status IDs;
-a board label/number is not authorization or a transition identifier.
+This profile states the requirements of the current structured reviewer; it does
+not describe the saved pilot's verified routing. An authorized native Story or Bug
+currently In Review may use this skill only with the trusted assignment, current
+receipts and prepared capabilities below. Its outcomes are QA, Rework Queued or
+Blocked; discussion stays In Review. It never hands confirmed fixes directly to
+In Progress.
+
+The saved INT/AI-Daniel-1 basic pilot is inactive and still contains Story-only
+routing and an older In Progress repair checklist. Those records do not configure
+or establish compatibility with this profile.
+[PGB-90](https://scubapig.atlassian.net/browse/PGB-90) owns compatible-release
+readiness and updating or superseding the saved inactive setup artifacts before
+full-loop acceptance or activation. Keep triggers inactive; verify actual
+Story/Bug routing and the required direct QA/Rework Queued/Blocked edges as
+separate setup evidence. Local skill tests or this profile's publication do not
+prove them.
+
+A separately authorized bounded Story/Bug exercise remains possible with complete
+trusted inputs, receipts and prepared capabilities under this skill's current
+contract. It does not establish compatible full-loop or hosted activation readiness.
+The dated first-pilot context is Safeguard INT board 1234, exact label
+`AI-Daniel-1`. Resolve real project/status IDs; a board label or number is not
+authorization or a transition identifier.
 
 Use the latest available configured **Grok at High** throughout review and handoff.
 Pin the actual available model identifier at setup and record actual model/effort

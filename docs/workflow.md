@@ -78,10 +78,17 @@ means production deployment. Those human and release stages are not agent trigge
 ## Deterministic wiring and setup
 
 The dated basic Jira wiring selected new work for a stream such as `AI-Daniel-1`.
-The planned manager will own new/repair admission. This implementer never admits
-work; retained column owners still follow their current basic contract. Project/label/status
-filtering, authorized repository selection and webhook authentication belong in
-deterministic Jira/Cursor wiring. The ticket repository
+The planned manager will own new/repair admission; the implementer never admits
+work. Current implementer/reviewer instructions use structured assignments and
+receipts. QA's basic entrypoint and the dated pilot wiring remain unmigrated.
+The matrix's [structured reviewer setup boundary](../config/cursor/automations.md#structured-reviewer-setup-boundary)
+distinguishes the current Story/Bug reviewer and QA/Rework Queued/Blocked outcomes
+from the old Story-only filter and reviewer In Progress checklist. Following that
+old checklist does not prepare the structured reviewer; retained QA still follows
+its own current basic contract.
+
+Project/label/status filtering, authorized repository selection and webhook
+authentication belong in deterministic Jira/Cursor wiring. The ticket repository
 must be available to the selected environment; initially Plexus/master.
 
 The basic MVP does not provide automatic duplicate prevention, cross-run locks or
@@ -102,8 +109,14 @@ happens during a human-controlled environment Build, never through agent-led set
 Cursor environment does not yet prove a real Jira Story can complete. Verify Jira event/authentication wiring,
 connected Jira/Bitbucket tools and full handoffs before dispatching tickets.
 Explicit High/Medium Task selections were verified in a separate setup-only run;
-that is not real-Story or provider-write acceptance. Use the [three-stage setup matrix](../config/cursor/automations.md), complete its
-remaining capabilities, then verify an explicitly authorized bounded end-to-end Story.
+that is not real-Story or provider-write acceptance. Use the [three-stage setup matrix](../config/cursor/automations.md#structured-reviewer-setup-boundary)
+for the current reviewer boundary. [PGB-90](https://scubapig.atlassian.net/browse/PGB-90)
+owns coordinated updating or superseding of saved inactive setup artifacts and
+compatible-release readiness; it has not migrated the old Story-only reviewer
+filter or In Progress checklist here. Actual provider setup evidence, compatible
+full-loop acceptance under PGB-58 and explicit activation remain separate gates.
+An authorized bounded direct exercise with complete current inputs/capabilities
+can proceed under its skill contract without claiming those gates are complete.
 
 ## PR environment handoff — agreed contract, pending implementation
 
