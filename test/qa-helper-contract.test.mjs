@@ -121,3 +121,132 @@ test('shared instruction/reference closure keeps exact ownership, observations a
   for(const [file,expected] of [['skills/qa-bruno/scripts/package.json','4.2.1'],['skills/qa-database/scripts/package.json','8.23.1']])assert(Object.values(JSON.parse(await read(file)).dependencies).includes(expected));
   const hash=createHash('sha256').update(await read('skills/qa-database/scripts/read-postgres.mjs')).digest('hex');assert.equal(hash,'7dad94032016c48210ea115d0a62a7632d50f8193fb2fa621376e60b9f64f0d7');
 });
+
+// Real canonical boundary checks below consume fixed preparation data. They do
+// not execute qa-jira instructions or treat expected cards as observed output.
+import { readdir } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { parse, stringify } from 'yaml';
+import { prepareQaFixture } from './fixtures/qa-helper-case.mjs';
+import { records, targetRecord, changeTarget } from './fixtures/qa-partial-results.mjs';
+import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
+import { validateHandoff, extractHandoff, digestValue } from '../lib/contracts/handoff.mjs';
+import { parseConfig } from '../lib/config/parse.mjs';
+const chain = e => validateReceiptChain(JSON.stringify(e));
+const hash = v => createHash('sha256').update(typeof v==='string'?v:JSON.stringify(v)).digest('hex');
+async function publisher(t) {
+  const parent=await mkdtemp(path.join(tmpdir(),'pgb-publisher-'));t.after(()=>rm(parent,{recursive:true,force:true}));
+  const prepared=await prepareQaFixture(path.join(parent,'private'));
+  const input=async(id,file)=>JSON.parse(await readFile(path.join(prepared.cases[id],file),'utf8'));
+  return {...prepared,input};
+}
+
+test('publisher preparation is private/exclusive, fixed, source-only and leaves every output empty',async t=>{
+ const p=await publisher(t);
+ assert.equal(p.ready,false);assert.equal((await stat(p.runDir)).mode&0o777,0o700);
+ await assert.rejects(prepareQaFixture(p.runDir),/exist/i);
+ const bad=path.join(p.runDir,'unsupported');await assert.rejects(prepareQaFixture(bad,{suite:'dispatch'}),/Unsupported/);await assert.rejects(stat(bad));
+ await assert.rejects(prepareQaFixture('relative-path'),/absolute/);
+ for(const [id,dir]of Object.entries(p.cases)){
+  assert.deepEqual(await readdir(path.join(dir,'output')),[],id);
+  assert.equal((await stat(path.join(dir,'inputs/assessment.json'))).mode&0o777,0o600);
+  const cards=await p.input(id,'operator/cards.json');assert(cards.notice.includes('MOCK'));
+  assert.equal(cards.readback.body,'MANUAL_ECHO_ACTUAL_SUBMITTED_TRANSPORT_ONLY');
+  const terminal=targetRecord(await p.input(id,'operator/validator-inputs/published.json'));
+  assert(!cards.reads.comments.filter(page=>page.ticket_id===terminal.ticket_id).flatMap(page=>page.comments).some(c=>JSON.parse(JSON.parse(c.body).content[0].content[0].text).record_id===terminal.record_id),'no current terminal candidate in cards: '+id);
+ }
+ const png=await readFile(path.join(p.cases['H01-story'],'inputs/evidence/mock.png'));
+ assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),440);assert.equal(png.readUInt32BE(20),130);
+ assert((await readFile(path.join(p.runDir,'manual-echo.md'),'utf8')).includes('unchanged submitted body'));
+});
+
+test('prepared native Story/Bug mixed reports raw-start and complete canonical chains validate with exact humans',async t=>{
+ const p=await publisher(t);
+ for(const id of ['H01-story','H01-bug']){
+  const input=path.join(p.cases[id],'inputs');
+  const raw=await readFile(path.join(input,'work.yaml'),'utf8'),facts=await readFile(path.join(input,'facts.yaml'),'utf8');
+  const result=validateWork(raw,{mode:'start',contextInput:facts});assert.equal(result.valid,true,JSON.stringify(result));
+  assert.equal(parseConfig(await readFile(path.join(input,'scope.yaml'),'utf8')).valid,true);
+  const e=await p.input(id,'operator/validator-inputs/published.json'),r=chain(e);assert.equal(r.valid,true,JSON.stringify(r));assert.equal(r.completion_established,true);assert.equal(r.ai_steps,4);assert.deepEqual(r.human_pending,['HQA-01','HQA-02']);
+  assert.deepEqual(r.qa_report.steps.map(x=>[x.id,x.skill,x.result]),[['E01.S1','qa-api','PASS'],['E01.S2','qa-bruno','PASS'],['E01.S3','qa-database','PASS'],['E01.S4','qa-ui','PASS']]);
+  const pre=await p.input(id,'inputs/predecessors.json');assert.equal(chain(pre).valid,true,JSON.stringify(chain(pre)));assert.equal(records(pre).filter(x=>x.r.role==='qa').length,0);assert.equal(chain(pre).completion_established,false);
+ }
+});
+
+test('prepared partial, explicit transitive and tested-PR controls retain exact delivered boundaries',async t=>{
+ const p=await publisher(t);
+ const valid=['H02-defect','H02-wait','H02-inability','H02-defect-inability','H03-static','H03-resume','V03-three','V03-join','V03-independent','V04-proof-blocked-exact-pass','V04-proof-blocked-exact-fail','V04-proof-blocked-not-run'];
+ for(const id of valid){const e=await p.input(id,'operator/validator-inputs/published.json'),before=JSON.stringify(e),r=chain(e);assert.equal(r.valid,true,id+JSON.stringify(r));assert.equal(JSON.stringify(e),before);if(id==='H03-static'){assert.equal(r.ai_steps,0);assert(r.human_pending.length>0);assert(r.no_ai_cases_reason);}if(id==='H02-defect-inability'||id==='H02-wait')assert.equal(targetRecord(e).payload.findings[0].id,'F1');}
+ for(const id of ['V03-missing-middle','V04-proof-blocked-null-pass','V04-proof-blocked-null-fail','V04-proof-blocked-real-null-environment','V04-proof-blocked-foreign-result','V04-proof-wait-foreign-finding']){
+  const e=await p.input(id,'operator/validator-inputs/published.json'),r=chain(e);assert.equal(r.valid,false,id);if(id.includes('null-pass')||id.includes('null-fail'))assert(r.diagnostics.some(x=>x.code==='PR'&&x.path.endsWith('/payload/pr')),JSON.stringify(r));
+ }
+});
+
+test('complete positive control prevents unrelated record/chain negatives from masking ledger and authority guards',async t=>{
+ const p=await publisher(t),original=await p.input('H01-story','operator/validator-inputs/published.json');assert.equal(chain(original).valid,true);
+ const negatives=[
+  ['missing row',e=>changeTarget(e,r=>r.payload.report.steps.pop())],
+  ['extra row',e=>changeTarget(e,r=>r.payload.report.steps.push({...r.payload.report.steps[0],id:'extra'}))],
+  ['duplicate row',e=>changeTarget(e,r=>r.payload.report.steps[1]=r.payload.report.steps[0])],
+  ['reordered child',e=>changeTarget(e,r=>r.payload.report.steps.reverse())],
+  ['wrong skill',e=>changeTarget(e,r=>r.payload.report.steps[0].skill='qa-ui')],
+  ['helper PASS only',e=>changeTarget(e,r=>r.payload.report.steps[0].evidence=[])],
+  ['unknown finding',e=>changeTarget(e,r=>{r.payload.report.steps[0].result='FAIL';r.payload.report.steps[0].finding_ids=['unknown'];})],
+  ['human omitted',e=>changeTarget(e,r=>r.payload.report.human_pending=[])],
+  ['invented zero AI',e=>changeTarget(e,r=>r.payload.report.no_ai_cases_reason='Expected no AI')],
+  ['unavailable evidence',e=>e.evidence_receipts.at(-1).available=false],
+  ['wrong actor',e=>{e.comment_pages[0].comments.at(-1).author_id='stranger';e.comment_pages[0].comments.at(-1).update_author_id='stranger';}],
+  ['assignment',e=>e.issues[0].pointer.assignment.comment_id='999'],
+  ['requirements',e=>e.issues[0].requirements_digest='sha256:'+'0'.repeat(64)],
+  ['source',e=>e.pr_receipts[0].source_revision='f'.repeat(40)],
+  ['incomplete pages',e=>e.comment_pages[0].is_last=false],
+  ['approval',e=>e.evidence_receipts.find(x=>x.kind==='approval').actor_id='stranger'],
+  ['environment',e=>e.evidence_receipts.find(x=>x.kind==='environment').pr.source_revision='f'.repeat(40)]
+ ];
+ for(const [name,mutate]of negatives){const e=structuredClone(original);mutate(e);assert.equal(chain(e).valid,false,name);}
+ const partial=await p.input('H02-defect-inability','operator/validator-inputs/published.json');changeTarget(partial,r=>r.payload.findings=[]);assert.equal(chain(partial).valid,false);
+ const resumed=await p.input('H03-resume','operator/validator-inputs/published.json');const auth=records(resumed).find(x=>x.r.kind==='resume_authorization');const duplicate=structuredClone(auth.c),authRecord=structuredClone(auth.r);authRecord.record_id='93000000-0000-4000-8000-000000000003';duplicate.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(authRecord)}]}]});duplicate.id='9999';resumed.comment_pages[0].comments.push(duplicate);resumed.comment_pages[0].total++;assert.equal(chain(resumed).valid,false);
+});
+
+test('actual independently chosen candidate encodings roundtrip and exact simulated transport echo validates each observed leaf',async t=>{
+ const p=await publisher(t),e=await p.input('H01-story','operator/validator-inputs/published.json');
+ for(const [i,uuid]of ['91000000-0000-4000-8000-000000000001','92000000-0000-4000-8000-000000000002'].entries()){
+  const record=structuredClone(targetRecord(e));record.record_id=uuid;
+  const raw=i?stringify(record):JSON.stringify(record,null,2),input=path.join(p.runDir,'actual-'+i+'.yaml'),summary=path.join(p.runDir,'summary-'+i+'.txt');
+  await import('node:fs/promises').then(fs=>Promise.all([fs.writeFile(input,raw),fs.writeFile(summary,'Prepared <literal> & complete evidence.')]));
+  assert.equal(validateHandoff(raw,{mode:'record'}).valid,true);
+  for(const format of ['html','adf']){
+   const output=JSON.parse(execFileSync(process.execPath,[new URL('../scripts/prepare-handoff.mjs',import.meta.url).pathname,'--input',input,'--summary',summary,'--format',format],{encoding:'utf8'}));
+   const submitted=format==='html'?output.body:JSON.stringify(output.body),observed=extractHandoff(submitted,{format});
+   assert.equal(observed.record_digest,digestValue(record));assert.equal(observed.value.record_id,uuid);assert.deepEqual(JSON.parse(JSON.stringify(observed.value)),record);
+   if(format==='html')assert(output.body.includes('&lt;literal&gt; &amp;'));
+   // Only actual submitted transport is echoed, with fixed mock metadata. No
+   // expected candidate is substituted into the readback under test.
+   const receipts=structuredClone(e),comment=receipts.comment_pages[0].comments.at(-1);comment.id='9901';comment.format=format;comment.body=submitted;
+   receipts.target={ticket_id:record.ticket_id,comment_id:comment.id,record_id:observed.value.record_id,digest:observed.record_digest};
+   const result=chain(receipts);assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(result.validated_leaf,receipts.target);
+   const wrong=structuredClone(receipts);wrong.target.record_id='93000000-0000-4000-8000-000000000003';assert.equal(chain(wrong).valid,false);
+   const wrongBody=structuredClone(receipts);wrongBody.comment_pages[0].comments.at(-1).body='unrelated discussion';assert.equal(chain(wrongBody).valid,false);
+  }
+ }
+ const record=targetRecord(e);assert.equal(validateHandoff(JSON.stringify({...record,unexpected:true}),{mode:'record'}).valid,false);
+ assert.equal(validateHandoff(' '.repeat(16385),{mode:'record'}).valid,false);
+});
+
+test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
+ const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,24);assert.equal(new Set(drafts.map(x=>x.id)).size,24);assert.equal(new Set(Object.values(publication.stories)).size,24);assert.equal(publication.stories['R1-24'],'PGB-110');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24'].includes(x.id))),'32dfca8539691420f84e55d5346063429a14c9e16ccbb76a6c311c284b816e27');
+ const b=drafts.find(x=>x.id==='R1-08').contract;
+ assert.equal(hash([b.acceptance_criteria,b.technical_acceptance_criteria.constraints,b.testing_strategy.human_review.cases]),'1146a6dcd1340d1c9ecbff1c13249e937a2268a364e3e83da6a63898f1bb1c9d');
+ for(const id of ['R1-24','R1-08']){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,20);assert.equal(new Set(entry.files).size,20);assert(entry.hours.max<16);assert(entry.dependencies.includes('PGB-108'));}
+ assert(plan.find(x=>x.id==='R1-08').dependencies.includes('R1-24'));
+ const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,107);assert.equal(publication.case_count,107);assert.equal(publication.story_count,24);
+ for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
+ const coverage=await read('docs/delivery/manager-r1/coverage.md');const requirements=new Set(coverage.split('\n').filter(line=>/^\| [AWMO]\d/.test(line)).flatMap(line=>[...line.split('|')[1].matchAll(/[AWMO]\d\d/g)].map(x=>x[0])));assert.equal(requirements.size,53);
+ for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(cases.has(id[0]),id[0]);
+ assert.equal(new Set([...coverage.matchAll(/R1-11-S\d\d/g)].map(x=>x[0])).size,41);
+ const expectedBoundaries=['A06','A08','W06','W08','W09','W11','W12'];for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md'])for(const id of expectedBoundaries)assert((await read(file)).split('\n').find(line=>line.startsWith('| '+id+' |')).includes('R1-24-H'));
+ assert.equal(publication.qa_split.verified_body_count,2);assert.equal(publication.qa_split.current_all_story_status_verification,false);assert.equal(publication.history[0].story_count,23);
+});

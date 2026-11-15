@@ -9,9 +9,9 @@
 | A03 | R1-01-H01, R1-03-H01 |
 | A04 | R1-03-H01 |
 | A05 | R1-02-H02, R1-03-H01, R1-03-H02 |
-| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01 |
+| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; R1-24-H01, R1-24-H02, R1-24-H03 |
 | A07 | R1-02-H01, R1-07-H01, R1-08-H01 |
-| A08 | R1-02-H01, R1-08-H03 |
+| A08 | R1-02-H01, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
 | A09 | R1-02-H02, R1-05-H01, R1-07-H02 |
 | A10 | R1-01-H02, R1-02-H02 |
 | A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02 |
@@ -21,13 +21,13 @@
 | W03 | R1-05-H01, R1-05-H02 |
 | W04 | R1-05-H01, R1-05-H02 |
 | W05 | R1-06-H01, R1-06-H02 |
-| W06 | R1-08-H01, R1-08-H02, R1-08-H03 |
+| W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
 | W07 | R1-07-H01, R1-07-H02 |
-| W08 | R1-07-H02, R1-08-H03 |
-| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01 |
+| W08 | R1-07-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
+| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03 |
 | W10 | R1-09-H01, R1-09-H02, R1-20-H03 |
-| W11 | R1-08-H03, R1-20-H03 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02 |
+| W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03 |
 | M01 | R1-11-S01, R1-11-S02, R1-17-H01 |
 | M02 | R1-11-S18, R1-11-S30 |
 | M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09 |
@@ -101,7 +101,7 @@
 
 ## Approved company/health delta coverage
 
-The original 50-requirement reviews remain historical evidence. The current 53-requirement, 23-Story set has CLEAN independent [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. Final owner review and installed acceptance remain pending.
+The original 50-requirement reviews remain historical evidence. The historical 53-requirement, 23-Story set had CLEAN independent [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. The later 24-Story QA split is owner-approved; installed acceptance remains pending.
 
 | Requirement | Additional Story cases | Installed acceptance |
 | --- | --- | --- |
@@ -114,3 +114,5 @@ The original 50-requirement reviews remain historical evidence. The current 53-r
 The original 41 scheduling scenarios remain; these additional explicit cases cover
 project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
+
+The owner-approved QA split adds publisher coverage only. All 53 requirements and 41 scenarios, including R1-08 execution coverage, remain. Earlier 20/23-Story review records retain their historical scope; mapping is not passing acceptance.

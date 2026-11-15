@@ -1,6 +1,6 @@
 # Release coverage and gaps
 
-This is the requirements audit for the [independently reviewed delivery set](../delivery/manager-r1/README.md), awaiting owner approval. Jira remains the delivery queue.
+This is the requirements audit for the [independently reviewed delivery set](../delivery/manager-r1/README.md), with the owner-approved 24-Story QA split. Jira remains the delivery queue.
 There are 53 requirements: A01–A12, W01–W12, M01–M14 and O01–O15. Every row below
 now map to implementation Stories and acceptance cases. PGB-91 is installed manager acceptance, PGB-58 is actual worker acceptance, and PGB-92 records the later activation decision. No test is claimed passed by this mapping.
 
@@ -28,9 +28,9 @@ The complete case instructions are in the Jira Story and [review pack](../delive
 | A03 | Epic/ticket skeletons; schema guide | Full editable YAML output | [PGB-71](https://scubapig.atlassian.net/browse/PGB-71), [PGB-73](https://scubapig.atlassian.net/browse/PGB-73); R1-01-H01, R1-03-H01 |
 | A04 | Epic schema; work contract | Explicit stream membership/order | [PGB-73](https://scubapig.atlassian.net/browse/PGB-73); R1-03-H01 |
 | A05 | Ticket schema; work contract | One-repository scope and prerequisites | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-73](https://scubapig.atlassian.net/browse/PGB-73); R1-02-H02, R1-03-H01, R1-03-H02 |
-| A06 | Ticket schema testing strategy | Complete executable acceptance cases | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01 |
+| A06 | Ticket schema testing strategy | Complete executable acceptance cases | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
 | A07 | Schema execution graph | Exact dispatch and helper ownership | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-77](https://scubapig.atlassian.net/browse/PGB-77), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-02-H01, R1-07-H01, R1-08-H01 |
-| A08 | Human cases; coverage validation | AI/human separation and requirement coverage | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-02-H01, R1-08-H03 |
+| A08 | Human cases; coverage validation | AI/human separation and requirement coverage | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-02-H01, R1-08-H03; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
 | A09 | Preparation slots | Prepared execution details without changed expectations | [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-75](https://scubapig.atlassian.net/browse/PGB-75), [PGB-77](https://scubapig.atlassian.net/browse/PGB-77); R1-02-H02, R1-05-H01, R1-07-H02 |
 | A10 | Extraction/semantic rules | Safe parsing and useful validation errors | [PGB-71](https://scubapig.atlassian.net/browse/PGB-71), [PGB-72](https://scubapig.atlassian.net/browse/PGB-72); R1-01-H02, R1-02-H02 |
 | A11 | Start conditions | Invalid/unresolved ticket cannot start | [PGB-71](https://scubapig.atlassian.net/browse/PGB-71), [PGB-72](https://scubapig.atlassian.net/browse/PGB-72), [PGB-73](https://scubapig.atlassian.net/browse/PGB-73); R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02 |
@@ -40,13 +40,13 @@ The complete case instructions are in the Jira Story and [review pack](../delive
 | W03 | Implementation handoff | Current CI, PR and prepared QA evidence | [PGB-75](https://scubapig.atlassian.net/browse/PGB-75); R1-05-H01, R1-05-H02 |
 | W04 | Actual lineage fields | Correct PR target and recorded parent revision | [PGB-75](https://scubapig.atlassian.net/browse/PGB-75); R1-05-H01, R1-05-H02 |
 | W05 | Review handoff; shared pr-review | Approval or queued repair with PR/Jira findings | [PGB-76](https://scubapig.atlassian.net/browse/PGB-76); R1-06-H01, R1-06-H02 |
-| W06 | QA ledger/handoff | Exact cases, evidence and correct stage result | [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-08-H01, R1-08-H02, R1-08-H03 |
+| W06 | QA ledger/handoff | Exact cases, evidence and correct stage result | [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-08-H01, R1-08-H02, R1-08-H03; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
 | W07 | Existing QA helpers; schema skill sections | Prescribed API/PostgreSQL/UI execution | [PGB-77](https://scubapig.atlassian.net/browse/PGB-77); R1-07-H01, R1-07-H02 |
-| W08 | Workflow environment contract | Trusted current-revision supplied environment | [PGB-77](https://scubapig.atlassian.net/browse/PGB-77), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-07-H02, R1-08-H03 |
-| W09 | Repair/dependency-wait handoffs | Queue understood rework without launching it | [PGB-75](https://scubapig.atlassian.net/browse/PGB-75), [PGB-76](https://scubapig.atlassian.net/browse/PGB-76), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-79](https://scubapig.atlassian.net/browse/PGB-79), [PGB-88](https://scubapig.atlassian.net/browse/PGB-88); R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01 |
+| W08 | Workflow environment contract | Trusted current-revision supplied environment | [PGB-77](https://scubapig.atlassian.net/browse/PGB-77), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78); R1-07-H02, R1-08-H03; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
+| W09 | Repair/dependency-wait handoffs | Queue understood rework without launching it | [PGB-75](https://scubapig.atlassian.net/browse/PGB-75), [PGB-76](https://scubapig.atlassian.net/browse/PGB-76), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-79](https://scubapig.atlassian.net/browse/PGB-79), [PGB-88](https://scubapig.atlassian.net/browse/PGB-88); R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
 | W10 | Role authority; resume contract | Human-requested repair producer and human-only authority | [PGB-79](https://scubapig.atlassian.net/browse/PGB-79), [PGB-90](https://scubapig.atlassian.net/browse/PGB-90); R1-09-H01, R1-09-H02, R1-20-H03 |
-| W11 | Human Review / UAT / production stages | Human reviews/cases recorded before acceptance | [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-90](https://scubapig.atlassian.net/browse/PGB-90); R1-08-H03, R1-20-H03 |
-| W12 | Publication/semantic rules | Structured trustworthy role result and single transition | [PGB-74](https://scubapig.atlassian.net/browse/PGB-74), [PGB-75](https://scubapig.atlassian.net/browse/PGB-75), [PGB-76](https://scubapig.atlassian.net/browse/PGB-76), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-79](https://scubapig.atlassian.net/browse/PGB-79); R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02 |
+| W11 | Human Review / UAT / production stages | Human reviews/cases recorded before acceptance | [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-90](https://scubapig.atlassian.net/browse/PGB-90); R1-08-H03, R1-20-H03; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
+| W12 | Publication/semantic rules | Structured trustworthy role result and single transition | [PGB-74](https://scubapig.atlassian.net/browse/PGB-74), [PGB-75](https://scubapig.atlassian.net/browse/PGB-75), [PGB-76](https://scubapig.atlassian.net/browse/PGB-76), [PGB-78](https://scubapig.atlassian.net/browse/PGB-78), [PGB-79](https://scubapig.atlassian.net/browse/PGB-79); R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; [PGB-110](https://scubapig.atlassian.net/browse/PGB-110); R1-24-H01, R1-24-H02, R1-24-H03 |
 | M01 | S01–S02 | Opt-in, active Epic and full stream identity | [PGB-81](https://scubapig.atlassian.net/browse/PGB-81), [PGB-87](https://scubapig.atlassian.net/browse/PGB-87); R1-11-S01, R1-11-S02, R1-17-H01 |
 | M02 | S18, S30 | Independent streams; conflicting ownership hold | [PGB-81](https://scubapig.atlassian.net/browse/PGB-81); R1-11-S18, R1-11-S30 |
 | M03 | S03–S04, S08–S09 | Ignore unready work without bypassing repair | [PGB-81](https://scubapig.atlassian.net/browse/PGB-81); R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09 |
@@ -116,7 +116,7 @@ feature silently added to this release. The original consolidation reviewed 50 r
 
 ## Approved company/health delta coverage
 
-The original 50-requirement reviews remain historical evidence. The current 53-requirement, 23-Story set has CLEAN independent [product](../reviews/pigboss-plan-product.md) and [technical](../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. Final owner review and installed acceptance remain pending.
+The original 50-requirement reviews remain historical evidence. The historical 53-requirement, 23-Story set had CLEAN independent [product](../reviews/pigboss-plan-product.md) and [technical](../reviews/pigboss-plan-technical.md) reviews, including native Jira publication audits and second sweeps. The later 24-Story QA split is owner-approved; installed acceptance remains pending.
 
 | Requirement | Additional Story cases | Installed acceptance |
 | --- | --- | --- |
@@ -129,3 +129,5 @@ The original 50-requirement reviews remain historical evidence. The current 53-r
 The original 41 scheduling scenarios remain; these additional explicit cases cover
 project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
+
+The owner-approved QA split adds publisher coverage only. All 53 requirements and 41 scenarios, including R1-08 execution coverage, remain. Earlier 20/23-Story review records retain their historical scope; mapping is not passing acceptance.

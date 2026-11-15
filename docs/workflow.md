@@ -171,3 +171,21 @@ owns full-loop live acceptance; neither follows from a helper PASS. Missing/stal
 receipt, artifact/access, unsupported engine or UI capability stops before action.
 Keep partial effects/defects and NOT RUN reasons; obtain the concrete missing
 prerequisite before a fresh assigned run. Never retry an uncertain child action.
+
+## Standalone prepared QA publication
+
+Use [qa-jira](../skills/qa-jira/SKILL.md) directly with a complete prepared
+assessment and trusted setup. Its read-only preflight establishes eligibility;
+final repeats current checks. Verified complete AI evidence or explicit static
+zero-AI work goes directly from QA to Human Review, with exact pending human IDs.
+A confirmed defect or real outstanding typed upstream request goes to Rework
+Queued. Unresolved access/evidence/cleanup/scope inability takes priority and goes
+to Blocked only when a supported complete canonical blocker can validate. Preserve
+earlier findings and partial rows. Discussion stays QA with no terminal record.
+
+Publication and native transition are separate effects. Keep the complete durable
+result and exact known receipts on failure; an uncertain append/transition permits
+one resolving read, never replay or a fallback transition. The
+[direct guide](using-pigboard.md#publish-prepared-qa-evidence) supplies inputs and
+recovery. This standalone producer does not make the retained legacy qa-entrypoint
+compatible; PGB-78 owns that integration. Do not enable a mixed release.

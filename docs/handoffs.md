@@ -6,7 +6,7 @@ exact target against the provider observations and trusted configuration supplie
 in a local JSON file. Neither check fetches evidence or proves it is fresh or
 provider-authentic. A valid blocked, queued or partial result is not completion.
 
-These local checks and composed implementer and reviewer producers are available in this
+These local checks, composed implementer/reviewer producers and the standalone prepared QA publisher are available in this
 release. The reviewer contract below binds approval/repair to actual implementation receipts. Retained QA remains a basic prose worker; its typed migration, manager
 scheduling/provider adapters and human unblock automation are separate work. Installation does not activate automations or authorize a Jira/PR write.
 Workers need no database access; manager mode compares a separately supplied
@@ -668,3 +668,17 @@ and supplied-evidence coherence, not real approval, human execution or freshness
   "request_resolutions": []
 }
 ```
+
+## Prepared QA producer
+
+[Source qa-jira](../skills/qa-jira/SKILL.md) and
+[installed qa-jira](../../qa-jira/SKILL.md) refer to the source and installed layouts
+respectively; use the link for your layout only. This is the sole permanent QA
+publication/failure protocol. It consumes the incomplete-QA findings, declared
+prerequisite cause propagation, nonnull actual tested PR and claim-sensitive
+recursive environment/reuse rules above without changing their schema. A complete
+all-NOT_RUN inability may retain missing proof; executed claims cannot evade proof
+by selecting a null-PR blocker. Publication once attempted is immutable history;
+correction guidance never authorizes replacement append/replay. The retained
+dispatcher integration is PGB-78. See the source direct-use guide for preparation;
+installed callers follow the complete skill and these copied canonical contracts.

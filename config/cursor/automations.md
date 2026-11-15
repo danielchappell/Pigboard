@@ -178,3 +178,13 @@ CLI setup/secrets, and run a draft Build. Inspect the manifest, fifteen entrypoi
 canonical reference/example and helper probes before selecting it. Keep the prior
 Build on failure; do not enable an automation as part of selecting a Build. Record
 new Build/UI acceptance here after observation, including any remaining limitations.
+
+## Standalone prepared publisher availability
+
+The current bundle contains 16 skills, including qa-jira. A separately authorized
+QA caller may load qa-jira directly with a complete prepared ledger and current
+trusted native/review/PR/evidence/actor setup. Compose a publisher profile from its
+preflight/final contract; it does not execute helpers. The retained qa-entrypoint
+is incompatible until PGB-78 completes integration. Keep saved inactive automation
+settings/prompts and dated Build receipts at their original scope. This addition
+neither activates automation nor establishes compatible live release acceptance.

@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 15);
+  assert.equal(first.verification.entrypoints, 16);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -387,7 +387,7 @@ test('installed structured QA helpers retain full sibling closure and validate f
   const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
-  assert.equal(installed.verification.entrypoints,15);assert.equal(installed.verification.dependencies,'verified');
+  assert.equal(installed.verification.entrypoints,16);assert.equal(installed.verification.dependencies,'verified');
   await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
 });
 
@@ -400,7 +400,7 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
  const {extractHandoff}=await import('../lib/contracts/handoff.mjs');
  const {stringify}=await import('yaml');
  const {createHash}=await import('node:crypto');
- assert.equal(first.verification.entrypoints,15);
+ assert.equal(first.verification.entrypoints,16);
  const manifest=JSON.parse(await readFile(first.manifest,'utf8'));
  const actualManifest=Object.keys(manifest.sourceFiles);
  for(const name of ['request-rework','human-writing']) {
@@ -535,4 +535,44 @@ test('installed receipt validator preserves incomplete QA outcomes and old input
  assert.equal(transitiveChains, 43); assert.equal(transitiveValid, 23); assert.equal(transitiveRecords, 43);
  assert.equal(proofChains, 19); assert.equal(proofValid, 7); assert.equal(proofRecords, 18);
  assert.equal(await realpath(installed.stableSkills), installed.skills);
+});
+
+// Full publisher closure and actual copied canonical CLIs. Helper-package mocks
+// remain installation fixtures; this test is not instruction/provider acceptance.
+test('standalone QA publisher ships exact folder and same-release contracts; source-only inputs stay outside installed payload',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall);
+ const {prepareQaFixture}=await import('./fixtures/qa-helper-case.mjs');
+ const {createHash}=await import('node:crypto');
+ const {targetRecord}=await import('./fixtures/qa-partial-results.mjs');
+ const {stringify}=await import('yaml');
+ const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
+ assert.equal(installed.verification.entrypoints,16);
+ const relative='qa-jira/SKILL.md',publisher=path.join(installed.skills,relative),source=await readFile(new URL('../skills/'+relative,import.meta.url));
+ assert.deepEqual(await readFile(publisher),source);assert.equal(manifest.sourceFiles[relative],createHash('sha256').update(source).digest('hex'));
+ assert.deepEqual(await readdir(path.dirname(publisher)),['SKILL.md']);
+ const guide=source.toString();
+ const routes=[...guide.matchAll(/^\| [^|]+ \| \[Source [^\]]+\]\(([^)]+)\) \| \[Installed [^\]]+\]\(([^)]+)\) \|$/gm)];assert.equal(routes.length,3);
+ for(const [,sourceLink,installedLink]of routes){const actual=path.resolve(path.dirname(publisher),installedLink),expected=new URL('../skills/qa-jira/'+sourceLink,import.meta.url);assert(actual.startsWith(installed.skills+path.sep));assert.deepEqual(await readFile(actual),await readFile(expected));}
+ assert(!Object.keys(manifest.sourceFiles).some(k=>k.includes('qa-helper-case')||k.includes('qa-partial-results')));
+ const p=await prepareQaFixture(path.join(o.app,'publisher-inputs')),validator=path.join(installed.skills,'work-validator');
+ for(const id of ['H01-story','H01-bug','H02-defect','H02-defect-inability','H02-wait','H03-static','H03-resume']){
+  const base=p.cases[id],input=path.join(base,'inputs'),full=path.join(base,'operator/validator-inputs/published.json'),record=targetRecord(JSON.parse(await readFile(full,'utf8'))),candidate=path.join(o.app,'candidate.yaml'),summary=path.join(o.app,'summary.txt');
+  await writeFile(candidate,stringify(record));await writeFile(summary,'Prepared <QA> & preserved evidence.');
+  const commands=[
+   ['validate-work.mjs',['--mode','start','--input',path.join(input,'work.yaml'),'--context',path.join(input,'facts.yaml'),'--json']],
+   ['validate-handoff.mjs',['--mode','record','--input',candidate,'--format','yaml','--json']],
+   ['validate-handoff.mjs',['--mode','chain','--input',full,'--json']],
+   ...['html','adf'].map(format=>['prepare-handoff.mjs',['--input',candidate,'--summary',summary,'--format',format]])
+  ];
+  for(const [script,args]of commands){const run=cli=>execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000}),actual=run(path.join(validator,'scripts',script));assert.equal(actual,run(new URL('../scripts/'+script,import.meta.url).pathname),id+script);const output=JSON.parse(actual);if(script!=='prepare-handoff.mjs')assert.equal(output.valid,true);}
+ }
+ for(const corrupt of [
+  dir=>writeFile(path.join(dir,'../qa-jira/SKILL.md'),'corrupted publisher'),
+  dir=>rm(path.join(dir,'scripts/prepare-handoff.mjs')),
+  dir=>writeFile(path.join(dir,'docs/configuration.md'),'corrupted scope guide'),
+ ]){
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await corrupt(dir);}));
+  assert.equal(await realpath(installed.stableSkills),installed.skills);
+ }
+ await rm(path.join(o.source,'skills/qa-jira'),{recursive:true});git(o.source,'add','.');git(o.source,'commit','-m','missing publisher fixture');await assert.rejects(installCursorSkills(o,fakeInstall));assert.equal(await realpath(installed.stableSkills),installed.skills);
 });
