@@ -139,6 +139,22 @@ Receipt-only evidence permissions are supplied trusted observations; tickets do
 not grant access. A nested completion for another member is not a substitute for
 that member's targeted current envelope. No human merge gate is added.
 
+For dependent admission, every advertised repair reference for its prerequisite
+must occur exactly in that prerequisite's native requests, and strict current
+completion must still succeed. Qualification follows the ticket ID across all
+advertised rows and claimed scopes; one covered row cannot waive an uncovered one.
+A canonical receipt may remain valid for the original native facts while a newly
+advertised, unrepresented repair keeps the dependent waiting with
+`PREREQUISITE_UNSATISFIED`. Reconcile complete authoritative native requests and
+current completion through the owner; do not edit published receipts or remove
+advertised rows to obtain selection. Independent eligible work can continue.
+
+Missing native facts keep their affected-scope hold and unknown counts. A missing
+side-list ticket's `MISSING_KNOWN_ID` path identifies its actual original row:
+`/retained_members/<index>`, `/pending_intents/<index>` or
+`/required_repairs/<index>`. Use that location to obtain the missing facts while
+preserving the row; the corrected path does not make an incomplete snapshot safe.
+
 ## Policy and result
 
 Every known In Progress, In Review or QA Story/Bug occupies the stream. Multiple
