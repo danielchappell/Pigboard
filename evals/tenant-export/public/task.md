@@ -50,4 +50,3 @@ export; changing datasets and distributed access control are outside this task.
 
 Public examples: two pages with another tenant interleaved; empty result; bad
 page size; upstream failure. The starter documents both admin and tenant contracts.
-
