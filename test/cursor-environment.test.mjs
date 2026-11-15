@@ -331,6 +331,9 @@ test('installed manager preview runs all frozen complete snapshots with real cop
  for(const spec of parentCases(cases)){
   const rawConfig=JSON.stringify(spec.c.config),rawSnapshot=JSON.stringify(spec.c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[cli,'--config',config,'--input',input],invoke=json=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000}),p=invoke(true);assert.equal(p.status,spec.valid?0:1);assert.equal(p.stderr,'');assertParentResult(JSON.parse(p.stdout),spec);assert.equal(invoke(true).stdout,p.stdout);if(spec.readable){const human=invoke(false);assert.equal(human.status,1);assert.equal(human.stderr,'');assertParentText(human.stdout);assert.equal(invoke(false).stdout,human.stdout);}assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);
  }
+ for(const spec of obligationCases(cases)){
+  const rawConfig=JSON.stringify(spec.c.config),rawSnapshot=JSON.stringify(spec.c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[cli,'--config',config,'--input',input],invoke=json=>spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:5000}),p=invoke(true);assert.equal(p.status,spec.decision==='hold'?1:0);assert.equal(p.stderr,'');assertObligationResult(JSON.parse(p.stdout),spec);assert.equal(invoke(true).stdout,p.stdout);if(spec.readable){const human=invoke(false);assert.equal(human.status,1);assert.equal(human.stderr,'');assertObligationText(human.stdout,spec);assert.equal(invoke(false).stdout,human.stdout);}assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);
+ }
  const formatDir=await mkdtemp(path.join(os.tmpdir(),'installed-json-format-'));t.after(()=>rm(formatDir,{recursive:true,force:true}));
  const control=cases.find(c=>c.id==='S01'),literal=path.join(formatDir,'--json'),snapshot=path.join(formatDir,'snapshot.json'),hook=path.join(formatDir,'audit-open.mjs');
  await writeFile(literal,JSON.stringify(control.config));await writeFile(snapshot,JSON.stringify(control.snapshot));await writeFile(hook,"import fsp from 'node:fs/promises';import{syncBuiltinESMExports}from'node:module';let calls=0;fsp.open=async()=>{calls++;throw Error('AUDITED_INPUT_OPEN');};syncBuiltinESMExports();process.on('exit',()=>process.stderr.write('OPEN_ATTEMPTS='+calls+'\\n'));\n");
@@ -660,3 +663,52 @@ test('installed receipt validator preserves incomplete QA outcomes and old input
  assert.equal(proofChains, 19); assert.equal(proofValid, 7); assert.equal(proofRecords, 18);
  assert.equal(await realpath(installed.stableSkills), installed.skills);
 });
+
+// These local copies preserve the eight sealed triage inputs, including raw packet bytes.
+function obligationCases(fixtures){
+ const fresh=id=>structuredClone(fixtures.find(c=>c.id===id));
+ const base=fresh('S18');base.snapshot.issues[2].body="{\"schema\": \"pigboard-epic/v1\", \"problem_to_solve\": \"Choose complete work.\", \"outcome\": \"One usable proposal.\", \"scope\": {\"included\": [\"Offline preview.\"], \"excluded\": [\"Execution.\"]}, \"workstreams\": [{\"label\": \"stream-3\", \"story_order\": [\"EX-3\"]}], \"accepted_decisions\": [], \"open_questions\": []}";
+ for(const i of base.snapshot.issues.filter(i=>['901','1002'].includes(i.id)))i.labels=i.labels.map(l=>l==='stream-2'?'stream-3':l);
+ base.snapshot.issues[3].status_id='1';base.snapshot.stream_checks[1].label='stream-3';
+ const cases=[],add=(id,c,decision,selected,reason=null,path='',extra={})=>{c.id='obligation-'+id;const spec={id,c,decision,selected,reason,path,...extra};cases.push(spec);return spec;};
+ for(const [id,mode]of [['P1','wrong-label'],['P2','wrong-project'],['P3','correct-scope'],['P4','no-intent']]){
+  const c=structuredClone(base);let claimed=null;
+  if(mode!=='no-intent'){claimed=mode==='wrong-project'?['200','stream-1']:['100',mode==='wrong-label'?'stream-2':'stream-1'];c.snapshot.pending_intents=[{project_id:claimed[0],label:claimed[1],ticket_id:'1001',attempt_id:'intent-'+(mode==='correct-scope'?'correct':mode)}];}
+  if(mode==='wrong-label')c.snapshot.stream_checks.push({...c.snapshot.stream_checks[0],label:'stream-2'});
+  if(mode==='wrong-project'){const h=fresh('H03-A-full');c.config=h.config;c.snapshot.projects=h.snapshot.projects;c.snapshot.issues.push(...h.snapshot.issues.filter(i=>i.project_id==='200'));c.snapshot.stream_checks.push(...h.snapshot.stream_checks.filter(s=>s.project_id==='200'));}
+  add(id,c,claimed?'hold':'select',claimed?null:'1001',claimed?'PENDING_INTENT':null,'/pending_intents',{claimed,seal:['pending-intent',mode],readable:['P1','P2'].includes(id)});
+ }
+ const reference={ticket_id:'1001',comment_id:'2023',record_id:'00000000-0000-4000-8000-000000000023',digest:'sha256:'+'1'.repeat(64)};
+ for(const [id,mode,wrong,native]of [['R1','wrong-label',true,false],['R2','correct-scope-unbound-native-reference',false,false],['R3','wrong-label-native-reference-present',true,true],['R4','correct-scope-native-reference-present',false,true]]){
+  const c=structuredClone(base),claimed=['100',wrong?'stream-2':'stream-1'];c.snapshot.required_repairs=[{project_id:'100',label:claimed[1],ticket_id:'1001',reason:'required_request',references:[structuredClone(reference)]}];if(native)c.snapshot.issues[1].required_requests=[structuredClone(reference)];if(wrong)c.snapshot.stream_checks.push({...c.snapshot.stream_checks[0],label:'stream-2'});
+  add(id,c,wrong?'hold':'wait',null,wrong?'MEMBERSHIP_MISMATCH':'REPAIR_POLICY_PENDING',wrong?'/required_repairs/0':'',{claimed,seal:['required-repair-scope',mode],readable:wrong});
+ }
+ const proof=fresh('repair-independent-complete'),target=proof.snapshot.issues.find(i=>i.id==='1000');proof.snapshot.required_repairs=[{project_id:'100',label:'stream-1',ticket_id:'1000',reason:'required_request',references:structuredClone(target.required_requests)}];proof.snapshot.issues.push(...structuredClone(base.snapshot.issues.filter(i=>['901','1002'].includes(i.id))));proof.snapshot.stream_checks.push(structuredClone(base.snapshot.stream_checks[1]));add('R5',proof,'select','1100','REPAIR_ACCOUNTED_FOR','/issues/2',{accounted:true});
+ for(const [id,kind,native]of [['B1','pending',false],['B2-absent','repair',false],['B2-present','repair',true],['B3','none',false]]){
+  const c=structuredClone(base),child=c.snapshot.issues[1],alternative=structuredClone(child);child.labels=[];alternative.id='1003';alternative.key='EX-4';alternative.context_body=alternative.context_body.replaceAll('EX-2','EX-4');c.snapshot.issues.push(alternative);const ep=c.snapshot.issues[0],w=JSON.parse(ep.body),ctx=JSON.parse(ep.context_body);w.workstreams[0].story_order=['EX-4'];ctx.prerequisite_graph=ctx.prerequisite_graph.map(n=>n.ticket==='EX-2'?{...n,ticket:'EX-4'}:n);ep.body=JSON.stringify(w);ep.context_body=JSON.stringify(ctx);
+  if(kind==='pending')c.snapshot.pending_intents=[{project_id:'100',label:'stream-2',ticket_id:'1001',attempt_id:'unpublished-intent'}];
+  if(kind==='repair'){c.snapshot.required_repairs=[{project_id:'100',label:'stream-2',ticket_id:'1001',reason:'required_request',references:[structuredClone(reference)]}];if(native)child.required_requests=[structuredClone(reference)];}
+  if(kind!=='none')c.snapshot.stream_checks.push({...c.snapshot.stream_checks[0],label:'stream-2'});
+  add(id,c,kind==='none'?'select':'hold',kind==='none'?'1003':null,kind==='pending'?'PENDING_INTENT':kind==='repair'?'MEMBERSHIP_MISMATCH':null,kind==='pending'?'/pending_intents':kind==='repair'?'/required_repairs/0':'',{claimed:kind==='none'?null:['100','stream-2'],removal:true});
+ }
+ return cases;
+}
+function assertObligationResult(result,spec){
+ const {c,decision,selected,reason,path,claimed,accounted,removal}=spec;
+ assert.equal(result.valid,true,'HARNESS_INVALID_SNAPSHOT '+c.id+' '+JSON.stringify(result.scope_diagnostics));assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);
+ const find=([project_id,label])=>result.streams.find(s=>s.scope.project_id===project_id&&s.scope.label===label),native=find(['100','stream-1']),independent=find(['100','stream-3']);
+ assert.deepEqual(native.scope,{site:c.snapshot.site,project_id:'100',label:'stream-1'});assert.equal(native.decision,decision,c.id);assert.equal(native.selected_ticket_id,selected,c.id);assert.equal(native.selected_key,selected==='1001'?'EX-2':selected==='1003'?'EX-4':selected==='1100'?'EX-20':null,c.id);
+ const has=(s,code,path)=>s.reasons.some(r=>r.code===code&&r.path===path);
+ if(reason)assert.ok(has(native,reason,path),c.id+' native '+reason+' '+path);
+ if(claimed){const target=find(claimed);assert.equal(target.decision,decision==='wait'?'wait':'hold',c.id+' claimed');assert.equal(target.selected_ticket_id,null);assert.deepEqual(target.scope,{site:c.snapshot.site,project_id:claimed[0],label:claimed[1]});if(reason==='PENDING_INTENT')assert.ok(has(target,'PENDING_INTENT','/pending_intents'));if(reason==='MEMBERSHIP_MISMATCH')for(const s of [native,target]){assert.ok(has(s,reason,path));assert.ok(result.scope_diagnostics.some(d=>d.code===reason&&d.path===path&&JSON.stringify(d.scope)===JSON.stringify(s.scope)));}}
+ if(decision==='wait'||accounted)assert.ok(!result.scope_diagnostics.some(d=>d.code==='MEMBERSHIP_MISMATCH'&&d.path.startsWith('/required_repairs/')),c.id);
+ assert.deepEqual(independent.scope,{site:c.snapshot.site,project_id:'100',label:'stream-3'});assert.equal(independent.decision,'select');assert.equal(independent.selected_ticket_id,'1002');assert.deepEqual(independent.reasons,[]);
+ for(const s of result.streams){assert.equal(s.counts_complete,true,c.id);assert.deepEqual(s.occupied_ids,[]);assert.deepEqual(s.blocked_ids,[]);assert.deepEqual(s.human_review_ids,accounted&&s===native?['1000']:[]);assert.equal(s.return_count,accounted&&s===native?2:1,c.id);}
+ if(removal)assert.ok(native.candidates.some(c=>c.ticket_id==='1003'&&c.eligible));
+ if(removal&&!claimed){assert.ok(!native.reasons.some(r=>r.code==='MEMBERSHIP_MISMATCH'));assert.ok(!native.candidates.some(c=>c.ticket_id==='1001'));}
+ assert.equal(result.status,decision==='hold'?'partial':'complete');
+ const serialized=JSON.stringify(result);for(const i of c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!serialized.includes(JSON.stringify(raw)),c.id+' raw document');
+}
+function assertObligationText(text,spec){
+ assert.ok(text.includes(`${spec.reason} ${spec.path}:`),spec.c.id);assert.ok(text.includes('selected EX-3.'),spec.c.id);assert.ok(!text.includes('selected EX-2.'),spec.c.id);for(const i of spec.c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!text.includes(raw));
+}

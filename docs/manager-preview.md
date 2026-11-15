@@ -69,7 +69,7 @@ only from canonical configuration, never Jira names/categories or snapshot maps.
 | `issues` | Native facts `{id,key,project_id,type_id,status_id,parent_id,labels,format,body,context_body,pointer,required_requests}`. `parent_id` is ID/null; labels unique; format `yaml`/`adf`; body/context are original raw strings/null; pointer is canonical work pointer/null; request references have exact ticket/comment/record/digest fields. Null or malformed preparation work is inventory, never permission to start. |
 | `retained_members` | `{ticket_id,project_id,epic_id,label,assignment}` preserving original ownership and exact stored assignment reference/null. Never omit known active/queued/Blocked/Human Review members. Conflicting rows hold all affected scopes; identical rows reject. |
 | `stream_checks` | Exactly one `{project_id,label,known_ids_complete,repair_inventory_complete}` for every scope in the union of Epic plans, relevant native labels, retained members, pending intents and repairs. Missing/false checks hold; there is no implicit true. |
-| `pending_intents` | Every unresolved `{project_id,label,ticket_id,attempt_id}`. Presence holds that scope. No clearing, expiry or inferred outcome exists here. |
+| `pending_intents` | Every unresolved `{project_id,label,ticket_id,attempt_id}`. Presence holds the claimed scope and every known member scope for that ticket. No clearing, expiry or inferred outcome exists here. |
 | `required_repairs` | `{project_id,label,ticket_id,reason,references}`, reason `required_request`/`required_stack_update`; nonempty canonical references. Every side-list reference must also occur exactly in that member's native `required_requests`. Accounted-for obligations stay recorded; list presence alone is not an eternal hold. |
 | `completion_receipts` | Original JSON text strings of complete `pigboard-receipt-input/v1` envelopes, `consumer: manager`, targeted to each relevant member whose current QA is needed. Duplicate target tickets reject. These are supplied envelopes, never file paths/URLs to fetch. |
 
@@ -86,8 +86,25 @@ unknown native stages hold. The manager unions all ordered, native and retained
 members before counting. Active, queued, Blocked or Human Review members outside
 current valid membership hold rather than disappear through a Ready-only filter.
 Relabel/parent/project mismatches retain old and proposed scopes. An independent
-unstarted preparation/Ready member may be removed when no retained assignment or
-incoming prerequisite requires it. Removal/cancellation is never completion.
+unstarted preparation/Ready member may be removed when no retained assignment,
+pending intent, repair/native-request obligation or incoming prerequisite requires
+it. Removal/cancellation is never completion.
+
+Known obligations remain attached to their ticket. A pending attempt holds both
+its claimed scope and every established member scope, even if its supplied project
+or label disagrees with native facts. A repair row whose claimed scope contradicts
+established membership holds those scopes with `MEMBERSHIP_MISMATCH` at
+`/required_repairs/<index>`. Correctly scoped unproved repairs still wait; exact
+native request binding and strict current proof are required before reporting
+`REPAIR_ACCOUNTED_FOR`. Unrelated complete streams can continue.
+
+An unlisted preparation/Ready/cancelled ticket is not safely removable while it
+has a pending intent, advertised repair or native request obligation, even before
+a pointer is published. Retain those rows and reconcile native, retained and
+claimed identity through the owner. Obtain complete exact native requests/current
+proof before treating repair as accounted. Do not migrate, expire, delete or
+replay the attempt, rewrite published evidence, or infer completion from an empty
+list. Preview performs none of those actions.
 
 A ticket still declared in an Epic's stream order must have that Epic as its
 native parent. For example, declared ticket `1001` with a null or different parent
