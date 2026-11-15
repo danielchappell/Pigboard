@@ -31,7 +31,11 @@
       "docs/architecture/examples/manager-epic.yaml",
       "docs/architecture/examples/manager-epic-populated.yaml",
       "docs/architecture/examples/manager-ticket.yaml",
-      "docs/architecture/examples/manager-ticket-populated.yaml"
+      "docs/architecture/examples/manager-ticket-populated.yaml",
+      "lib/contracts/work-semantics.mjs",
+      "lib/contracts/case-graph.mjs",
+      "contracts/work-validation-context-v1.schema.json",
+      "config/skill-bundle.json"
     ]
   }
 }

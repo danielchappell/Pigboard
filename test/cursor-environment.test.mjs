@@ -85,11 +85,24 @@ test('real installed validator runs outside checkout and failed runtime variants
  const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
  assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft']);
  const validator=path.join(first.stableSkills,'work-validator');
- for(const mode of ['draft','start']) {
+ const pair=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8')).mixed;
+ const workFile=path.join(o.app,'work.json'),contextFile=path.join(o.app,'facts.json');
+ await writeFile(workFile,JSON.stringify(pair.work));await writeFile(contextFile,JSON.stringify(pair.context));
+ const start=()=>execFileSync(process.execPath,[path.join(validator,'scripts/validate-work.mjs'),'--mode','start','--input',workFile,'--context',contextFile,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});
+ assert.equal(JSON.parse(start()).valid,true);
+ pair.context.operations[0].contract.action='Stale reviewed prescription.';await writeFile(contextFile,JSON.stringify(pair.context));
+ assert.throws(start,error=>{assert.equal(error.status,2);assert(JSON.parse(error.stdout).diagnostics.some(d=>d.code==='CONTEXT_OPERATION'));return true;});
+ assert.equal(await realpath(first.stableSkills),first.skills);
+ await rm(workFile);await rm(contextFile);
+ for(const mode of ['draft','structure']) {
   const output=execFileSync(process.execPath,[path.join(validator,'scripts/validate-work.mjs'),'--mode',mode,'--input',path.join(validator,'docs/architecture/examples/manager-ticket-populated.yaml'),'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});assert.equal(JSON.parse(output).valid,true);
  }
  for(const mutate of [
   async dir=>rm(path.join(dir,'node_modules/yaml'),{recursive:true}),
+  async dir=>rm(path.join(dir,'lib/contracts/work-semantics.mjs')),
+  async dir=>writeFile(path.join(dir,'lib/contracts/case-graph.mjs'),'throw Error("corrupt semantics");'),
+  async dir=>rm(path.join(dir,'contracts/work-validation-context-v1.schema.json')),
+  async dir=>writeFile(path.join(dir,'config/skill-bundle.json'),'{}'),
   async dir=>writeFile(path.join(dir,'node_modules/yaml/package.json'),'{"version":"0.0.0"}'),
   async dir=>writeFile(path.join(dir,'node_modules/yaml/dist/index.js'),'throw Error("corrupt runtime");'),
   async dir=>writeFile(path.join(dir,'scripts/validate-work.mjs'),'process.exit(0);'),
