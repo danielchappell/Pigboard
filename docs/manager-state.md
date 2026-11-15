@@ -344,7 +344,7 @@ node scripts/manager-state.mjs inspect --config company.yaml --installation inst
 node scripts/manager-state.mjs reconcile --config company.yaml --installation installation.json --request request.json --json
 ```
 
-The request is a closed JSON object, maximum 16 KiB:
+Use a local regular file containing a closed JSON object, maximum 16 KiB:
 
 ```json
 {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { pathToFileURL } from 'node:url';
 import { open } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { result, transitionProof, parseReconciliationRequest } from '../lib/state/contract.mjs';
 import { reconcile } from '../lib/manager/reconcile.mjs';
@@ -10,9 +11,10 @@ const help = `Usage:
   node scripts/manager-state.mjs inspect --config FILE --installation FILE --kind installation|stream|attempt|member [--record-id ID|--cursor CURSOR] [--limit 1..100] [--json]
   node scripts/manager-state.mjs reconcile --config FILE --installation FILE --request FILE [--json]
 
-Initialize a verified fresh installation while disabled, or inspect retained state.
+Initialize a verified fresh installation while disabled, inspect retained state,
+or reconcile one positively proved outcome.
 Use the canonical configuration and generated installation receipt. No resource
-override, enable, unlock, purge, reconciliation or retry command exists.
+override, enable, unlock, purge or retry command exists.
 Prepare pinned root and runtime/aws dependencies before use; commands never install.
 This early checkpoint requires the core installation resolver before normal use.
 An unknown write must be inspected using the same installation and attempt ID.
@@ -69,9 +71,20 @@ function readable(outcome) {
  * function never reads an alternate config, imports arbitrary modules or accepts
  * resource/credential/freshness assertions from command-line inputs. */
 async function readRequestFile(path) {
-  const file = await open(path, 'r');
-  try { const buffer = Buffer.alloc(16385); const { bytesRead } = await file.read(buffer, 0, buffer.length, 0); if (bytesRead > 16384) throw Object.assign(Error(), { stateResult: result('invalid', 'INVALID_INPUT') }); return buffer.subarray(0, bytesRead); }
-  finally { await file.close(); }
+  let file;
+  try {
+    file = await open(path, constants.O_RDONLY | constants.O_NONBLOCK);
+    if (!(await file.stat()).isFile()) throw Error();
+    const buffer = Buffer.alloc(16385); let count = 0;
+    while (count < buffer.length) {
+      const part = await file.read(buffer, count, buffer.length - count, null);
+      if (!part.bytesRead) break;
+      count += part.bytesRead;
+    }
+    if (count > 16384) throw Error();
+    return buffer.subarray(0, count);
+  } catch { throw Object.assign(Error(), { stateResult: result('invalid', 'INVALID_INPUT') }); }
+  finally { await file?.close(); }
 }
 export async function runStateCommand(argv, { resolveInstallation, createState = createDynamoState, now = () => new Date().toISOString(), readRequest = readRequestFile, reconciliationCapabilities } = {}) {
   let options;

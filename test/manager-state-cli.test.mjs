@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawnSync, execFileSync } from 'node:child_process';
+import { mkdtemp, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { runStateCommand, stateExitCode } from '../scripts/manager-state.mjs';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { result } from '../lib/state/contract.mjs';
@@ -9,8 +12,11 @@ import { transitionFixture, proofFixture } from '../scripts/test-transition-proo
 import { reconciliationContext } from '../scripts/test-manager-state.mjs';
 const flags = ['--config', '/fixture/company.yaml', '--installation', '/fixture/generated.json'];
 test('help is available without constructing SDK or resolving installation', async () => {
-  const answer = await runStateCommand(['--help'], { resolveInstallation() { throw Error('must not run'); } });
+  const answer = await runStateCommand(['--help'], { resolveInstallation() { throw Error('must not run'); }, createState() { throw Error('must not construct'); } });
   assert.equal(answer.exitCode, 0); assert.match(answer.stdout, /canonical configuration/);
+  assert.match(answer.stdout, /manager-state\.mjs reconcile --config FILE --installation FILE --request FILE/);
+  assert.match(answer.stdout, /actual operator\/stop\/runtime/); assert.match(answer.stdout, /core installation resolver/);
+  assert.doesNotMatch(answer.stdout, /purge,\s*reconciliation/);
   const process = spawnSync('node', ['scripts/manager-state.mjs', '--help'], { encoding: 'utf8' }); assert.equal(process.status, 0);
 });
 test('unknown, duplicate, raw resource and unbounded flags reject before the resolver', async () => {
@@ -76,4 +82,26 @@ test('reconcile command preserves readable/JSON outcomes and rejects caller auth
   assert.equal((await c.command({ drained: true })).outcome.status, 'invalid'); assert.equal(c.provider.snapshot(), before); assert.equal(c.audit.runtime_reads, 0);
   assert.equal((await runStateCommand(['reconcile', ...flags, '--request', 'file', '--actor', 'caller'])).outcome.status, 'invalid');
   assert.equal((await runStateCommand(['reconcile', ...flags, '--request', 'file'], { readRequest: async () => JSON.stringify(c.request()) })).outcome.code, 'CORE_PREREQUISITE');
+});
+test('real request files are regular, nonblocking and bounded at16KiB before providers', async t => {
+  const directory = await mkdtemp(join(tmpdir(), 'pigboard-state-file-'));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  const request = { schema: 'pigboard-reconciliation-request/v1', attempt_id: fixture.attemptA.attempt_id, disposition: 'confirmed_applied', expected_installation_revision: 0, expected_stream_revision: 0, expected_attempt_revision: 0 };
+  const body = JSON.stringify(request), regular = join(directory, 'request.json'), limit = join(directory, 'limit.json'), oversized = join(directory, 'oversized.json'), fifo = join(directory, 'request.fifo');
+  await writeFile(regular, body); await writeFile(limit, body.padEnd(16384, ' ')); await writeFile(oversized, body.padEnd(16385, ' '));
+  const args = path => ['reconcile', ...flags, '--request', path, '--json'];
+  for (const path of [regular, limit]) assert.equal((await runStateCommand(args(path))).outcome.code, 'CORE_PREREQUISITE');
+  let constructed = 0;
+  const forbidden = { resolveInstallation() { constructed++; throw Error('must not resolve'); }, createState() { constructed++; throw Error('must not construct'); } };
+  for (const path of [directory, join(directory, 'missing.json'), oversized]) {
+    const answer = await runStateCommand(args(path), forbidden);
+    assert.equal(answer.exitCode, 2); assert.equal(answer.outcome.status, 'invalid'); assert.equal(answer.outcome.data, null);
+    assert(!answer.stdout.includes(directory));
+  }
+  assert.equal(constructed, 0);
+  execFileSync('mkfifo', [fifo]);
+  const child = spawnSync(process.execPath, ['scripts/manager-state.mjs', ...args(fifo)], { encoding: 'utf8', timeout: 2000 });
+  assert.equal(child.error, undefined); assert.equal(child.signal, null); assert.equal(child.status, 2); assert.equal(child.stderr, '');
+  const outcome = JSON.parse(child.stdout); assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
+  assert(!child.stdout.includes(directory));
 });
