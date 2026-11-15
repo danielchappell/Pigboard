@@ -75,7 +75,7 @@ No new runtime validates this output shape. Existing validators continue to vali
 | Condition | Existing kind / destination | Required payload |
 | --- | --- | --- |
 | Every AI step PASS, or explicit zero-AI human-only work | `qa` / Human Review | Current `review`, same `pr`, complete `report`; exact human IDs/no-AI reason |
-| Confirmed in-scope defect with no unresolved inability | QA `repair_request` / Rework Queued | Current review `basis`, same PR, findings, full `qa_report` |
+| Confirmed in-scope defect with no unresolved inability and no actual outstanding upstream request preventing completion | QA `repair_request` / Rework Queued | Current review `basis`, same PR, findings, full `qa_report` |
 | Actual outstanding upstream request prevents completion | `dependency_wait` / Rework Queued | Exact `requests`, PR, reason, full partial `qa_report`, retained findings under the delivered incomplete-QA contract |
 | Inability or scope increase | `blocked` / Blocked | Existing supported reason/detail/human_action, known PR/basis/evidence, full partial report and required retained findings |
 | Discussion only | None / stay QA | NOT_ATTEMPTED delivery and readable result; no approval-shaped terminal record or transition |
