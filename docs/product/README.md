@@ -96,3 +96,7 @@ See [the Pigboard crew](branding.md) for the approved names and roles: Pig Boss,
 Hardhat Ham, Inspector Pork and Snout Scout.
 
 The manager is named Pig Boss. One customer AWS installation manages several projects in one Jira site. Stream identity includes the immutable project ID. O13–O15 add multi-project acceptance and basic manager health. The [scope design](../architecture/pig-boss-operations.md) supersedes any label-global or all-monitoring-deferred wording above. The earlier 20-Story review remains historical; the updated delivery set has independent CLEAN delta reviews and awaits final owner review before implementation. Fifty-project capacity is a follow-on target, not a ten-project limit.
+
+## Current delivery amendment
+
+The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Source mirrors 24 Stories/107 cases; Jira has 25/110, with PGB-110/R1-24 source publication pending. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.

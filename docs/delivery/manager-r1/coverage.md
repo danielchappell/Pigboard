@@ -19,7 +19,7 @@
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01 |
 | W02 | R1-05-H01 |
 | W03 | R1-05-H01, R1-05-H02 |
-| W04 | R1-05-H01, R1-05-H02 |
+| W04 | R1-05-H01, R1-05-H02, R1-25-C01, R1-25-C02, R1-25-C03 |
 | W05 | R1-06-H01, R1-06-H02 |
 | W06 | R1-08-H01, R1-08-H02, R1-08-H03 |
 | W07 | R1-07-H01, R1-07-H02 |
@@ -27,7 +27,7 @@
 | W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01 |
 | W10 | R1-09-H01, R1-09-H02, R1-20-H03 |
 | W11 | R1-08-H03, R1-20-H03 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02, R1-25-C01, R1-25-C02, R1-25-C03 |
 | M01 | R1-11-S01, R1-11-S02, R1-17-H01 |
 | M02 | R1-11-S18, R1-11-S30 |
 | M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09 |
@@ -37,7 +37,7 @@
 | M07 | R1-11-S05, R1-11-S06, R1-11-S34 |
 | M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01 |
 | M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01 |
-| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02 |
+| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-25-C01, R1-25-C02, R1-25-C03 |
 | M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03 |
 | M12 | R1-11-S02, R1-11-S40, R1-19-H03 |
 | M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01 |
@@ -114,3 +114,5 @@ The original 50-requirement reviews remain historical evidence. The current 53-r
 The original 41 scheduling scenarios remain; these additional explicit cases cover
 project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
+
+PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Source mirrors 24 Stories/107 cases; native Jira has 25/110. PGB-110/R1-24 source publication is pending. These mappings do not record acceptance execution.
