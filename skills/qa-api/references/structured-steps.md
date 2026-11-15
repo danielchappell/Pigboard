@@ -103,7 +103,8 @@ result, not a new persisted schema or canonical Jira ledger:
 Keep detailed artifacts in the approved private location; verify actual retrieval
 and intended audience. A local path is not a hosted HTTPS receipt. Never invent
 links, fabricate all-PASS records, mutate Jira/approval/PR state or publish a
-canonical QA report. The future caller owns global order, ledger and handoff.
+canonical QA report. The compatible caller owns global order and the combined
+ledger; [qa-jira](../../qa-jira/SKILL.md) owns canonical publication.
 Canonical ledger statuses remain PASS/FAIL/NOT RUN with reason/finding references;
 helper BLOCKED is inability in this run result, not a new canonical ledger enum.
 
@@ -130,8 +131,9 @@ work/context and hashes before invoking helpers. It is not installed in the skil
 bundle. See the source `docs/using-pigboard.md` preparation instructions.
 Instruction exercises, real local engine evidence, mocks, designated human-case
 execution, hosted CI and release acceptance are separate. Never execute or mark a
-human case complete on its owner's behalf. Retained QA entrypoint migration and
-canonical QA publication remain PGB-78; this helper contract does not activate it.
+human case complete on its owner's behalf. Use the selected installed entrypoint's
+compatibility instructions for orchestration and the standalone qa-jira contract
+for canonical publication. This helper contract does not activate delivery.
 
 ### Input-only PREP-01 exercise
 

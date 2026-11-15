@@ -10,8 +10,8 @@ executable by a worker with a different contract.
 The helper tables below are retained basic/historical orchestration examples.
 Current [structured helpers](../../qa-api/references/structured-steps.md) require
 the complete raw structured ticket, trusted start context and exact preparation/
-receipt bindings; these prose examples alone cannot invoke them. Retained QA
-entrypoint migration and canonical QA publication remain PGB-78. Do not adapt
+receipt bindings; these prose examples alone cannot invoke them. Read the selected
+installed entrypoint for compatible orchestration and publication. Do not adapt
 these examples automatically or activate a mixed bundle.
 
 # Pigboard structured ticket contract v1

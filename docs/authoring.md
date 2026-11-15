@@ -8,8 +8,7 @@ Epic and Story/Bug YAML with full templates and readable requirements. The
 structured implementer and reviewer consume current versioned assignments and
 canonical receipts. Use the QA contract declared by the selected installed
 entrypoint; the basic prose contract applies only to a release that declares it.
-Current compatible full-loop delivery still requires PGB-78. Authoring does not
-activate workers or convert their inputs.
+Authoring does not activate workers or convert their inputs.
 
 ## Author a draft
 
@@ -344,7 +343,7 @@ Never fabricate authority, credentials, routes, skill replacements, state change
 or rework actions. Preserve evidence before removing disposable assets; do not
 change live Jira, PRs, deployment or other resources for these exercises.
 
-## Structured helpers and the retained QA entrypoint
+## Structured helpers and the selected QA entrypoint
 
 Current `qa-api`, `qa-bruno`, `qa-database` and `qa-ui` consume the exact structured
 AI steps in a complete start-valid ticket plus separately trusted context. Supply
@@ -352,10 +351,10 @@ full operation facts, actual earlier observations and resolved preparation; pros
 or a selected YAML fragment is insufficient. API child ownership, two-hop SQL
 bindings and UI checkpoints follow the existing schema, with no new fields.
 The helpers return observations only and never execute human cases or publish a
-canonical QA ledger. The selected installed entrypoint owns its input contract;
-the current legacy entrypoint remains incompatible with these structured inputs
-until PGB-78. Do not infer compatible
-full-loop delivery from valid authoring or an isolated helper result.
+canonical QA ledger. The selected installed entrypoint owns its input contract.
+Check its compatibility instructions before connecting these helpers into a
+delivery loop. Do not infer compatible full-loop delivery from valid authoring or
+an isolated helper result.
 
 ## Prepare the declared inputs
 

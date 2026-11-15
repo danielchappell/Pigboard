@@ -24,8 +24,7 @@ same structure and the applicable testing guidance below. The
 [structured implementer](../implementer-entrypoint/SKILL.md) consumes current versioned
 Story/Bug assignments. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Select the QA contract declared by the installed release's entrypoint. The
 [retained prose contract](references/basic-workflow-ticket.md) applies only when that
-entrypoint declares it. Current full-loop delivery awaits PGB-78; authoring does
-not activate delivery or convert prose.
+entrypoint declares it. Authoring does not activate delivery or convert prose.
 
 This adaptation starts from ai-working-kit main checked 13 November 2026, commit
 `5bef5cf140bd5ea92e6600f0ff2a0be726e4c7ac`, source Story blob
@@ -35,9 +34,10 @@ ownership and all acceptance cases with named QA skills. Pigboard owns this copy
 upstream's shorter human-only test strategy does not override those decisions.
 
 The four [structured QA helpers](../qa-api/references/structured-steps.md) consume
-complete exact AI steps with separately trusted start facts. This is distinct from
-the retained QA entrypoint's prose contract: its orchestration/publication migration
-remains PGB-78. Do not author incomplete prose helper inputs or imply activation.
+complete exact AI steps with separately trusted start facts. Helpers require
+complete structured inputs independently of the selected entrypoint's contract.
+Read that installed entrypoint before composing a QA run; do not author incomplete
+prose helper inputs or imply activation.
 
 ## Apply human-writing
 

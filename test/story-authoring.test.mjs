@@ -143,16 +143,19 @@ test('writer retains owned provenance, shared dependencies and generic Task rout
 });
 
 
-test('writer distinguishes current structured helpers from retained prose orchestration', async () => {
+test('writer scopes prose and structured-helper compatibility to the selected installed entrypoint', async () => {
   const skill=await read('SKILL.md'),basic=await read('references/basic-workflow-ticket.md');
   assert(skill.includes('../qa-api/references/structured-steps.md'));
   assert(basic.includes('../../qa-api/references/structured-steps.md'));
   assert(basic.includes('basic/historical orchestration examples'));
   assert(basic.includes('prose examples alone cannot invoke them'));
-  assert(basic.includes('PGB-78'));
+  assert(basic.replace(/\s+/g,' ').includes('selected installed entrypoint'));
+  assert(basic.includes('compatible orchestration and publication'));
   const guide=await readFile(path.join(root,'docs/authoring.md'),'utf8');
   assert(guide.includes('selected installed entrypoint owns its input contract'));
-  assert(guide.includes('current legacy entrypoint remains incompatible'));
+  const readable=guide.replace(/\s+/g,' ');
+  assert(readable.includes('Do not infer compatible full-loop delivery from valid authoring'));
+  assert(readable.includes('or an isolated helper result'));
   for(const relative of ['skills/implementer-entrypoint/references/handoff.md','skills/pigboard-pr-review/references/jira-handoff.md']){
     const recipe=await readFile(path.join(root,relative),'utf8');
     for(const field of ['prepared_inputs','consumers','SHA256','extraction','tenant','pending'])assert(recipe.includes(field),relative+': '+field);

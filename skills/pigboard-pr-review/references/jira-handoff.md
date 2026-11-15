@@ -21,7 +21,8 @@ start context with shipped work validation, not parsed finite floats through the
 stricter direct-JS route. No inferred requirements or automatic prose conversion.
 The [structured authoring contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
 is current. Use retained basic prose only when the selected installed QA entrypoint
-declares it; current full-loop migration remains PGB-78.
+declares it; consult that entrypoint's current compatibility and publication
+instructions.
 
 Read exact `pigboard.work-context` pointer, assignment and implementation via exact
 issue/comment/record/digest references and complete bounded pages. Verify server
