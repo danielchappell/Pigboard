@@ -369,7 +369,8 @@ the designated developer and QA reviewer execute them.
 
 ## Prepare prescribed QA inputs
 
-PGB-132's source-only PREP-01 exports the finite I01–I14 inputs for human-owned
+PGB-132's source-only PREP-01 exports all 51 finite inputs in the I01–I14 families
+for human-owned
 R1-27-H01/H02/H03. Use the already prepared same-release source checkout and
 immutable installed skills. This command creates a fresh private folder; it
 runs no helpers, timers, model, provider transport or publication:
@@ -396,7 +397,8 @@ preparer is not installed into customer bundles.
 
 `output/` is empty. `operator/` is outside each consumer root and must be withheld.
 No current terminal record, assessment, verdict or final ledger is supplied.
-Designated human cases remain NOT RUN. The I13 control alone keeps the required
+R1-27-H01/H02/H03 and the shared controls' R1-30-H01/H02/H03
+remain NOT RUN. The I13 control alone keeps the required
 historical partial observations, blocker and later human authorization; they are
 historical supplied/mock inputs, with separate case-specific reuse proof.
 
@@ -464,3 +466,67 @@ untestable case remains unverified for the authorized human decision. The PGB-11
 evidence exception does not transfer. Do not reconstruct a result or retry a
 completed action. Retain sanitized evidence first, then remove only the owned
 disposable fixture folder; this preparer creates no services or live resources.
+
+### Complete source catalogue
+
+Each row lists the fixed variant IDs in `preparation.json`. Families describe
+supplied inputs; their names do not assert an executed outcome.
+
+| Family | Fixed variants |
+| --- | --- |
+| I01 — mixed work | `I01-story`, `I01-bug` |
+| I02 — missing handoff facts | `I02-child-receipt`, `I02-extraction`, `I02-provenance`, `I02-query`, `I02-parameters`, `I02-checkpoint` |
+| I03 — until expected | `I03-pending-ready`, `I03-all-pending` |
+| I04 — all observations | `I04-all-ready`, `I04-one-mismatch` |
+| I05 — time and access | `I05-next-offset`, `I05-deadline`, `I05-missed-offset`, `I05-access-loss`, `I05-missing-bound` |
+| I06 — dependency graphs | `I06-dependent-independent`, `I06-chain`, `I06-join`, `I06-unbound-output` |
+| I07 — inability | `I07-domain-inability`, `I07-cleanup-inability` |
+| I08 — wait and discussion | `I08-pure-wait`, `I08-fail-wait`, `I08-discussion`, `I08-missing-cause` |
+| I09 — native work types | `I09-static-bug`, `I09-task`, `I09-epic` |
+| I10 — current authority and reads | `I10-source-drift`, `I10-requirement-drift`, `I10-stage-drift`, `I10-incomplete-pages`, `I10-wrong-scope`, `I10-wrong-actor`, `I10-wrong-tenant` |
+| I11 — environment proof | `I11-missing-environment`, `I11-stale-environment`, `I11-partial-pass-null-proof`, `I11-partial-fail-null-proof` |
+| I12 — uncertain writes | `I12-append-unknown`, `I12-transition-unknown` |
+| I13 — historical reuse | `I13-valid`, `I13-stale`, `I13-wrong-tenant`, `I13-untrusted-approval` |
+| I14 — capabilities and size | `I14-no-model`, `I14-no-clock`, `I14-no-helper`, `I14-oversized-ledger` |
+
+### Inspect the three shared PGB-138 controls
+
+The full catalogue above is PGB-132's preparation contract. The three corrected
+controls `I01-story`, `I02-parameters` and `I11-stale-environment` retain
+PGB-138's narrower inspection provenance; their inspection does
+not complete the original PGB-132 human cases.
+
+For R1-30-H01, record `git rev-parse HEAD`, the SHA256 of
+`test/fixtures/qa-helper-case.mjs`, all emitted input hashes and the index hash.
+Compare actual input hashes with `input/index.json`; inspect I01's raw work,
+context, current review, selected request, child ownership, extraction pointer,
+SQL layout and the three PNG checkpoint bindings. Using the existing source
+validators, check the raw work and review chain without invoking helpers:
+
+```sh
+node scripts/validate-work.mjs --input /absolute/private/fresh-run/cases/I01-story/input/work.yaml --mode start --context /absolute/private/fresh-run/cases/I01-story/input/facts.yaml
+node scripts/validate-handoff.mjs --input /absolute/private/fresh-run/cases/I01-story/input/predecessors.json --mode chain
+```
+
+Confirm empty output and NOT_READY. Retain before/after hashes when repeating the
+preparation command once against that occupied path to inspect refusal.
+
+For R1-30-H02, compare I02 with I01. Raw work, SQL, parameter declarations,
+bindings and expectations are identical. Only the matching trusted database
+operation's `parameter_count` is null in both `facts.yaml` and the predecessor's
+requirement context. Run the same two validators with I02 paths: both expose
+`DATABASE_PARAMETERS`. The separate null `parameters.json` sidecar is not the
+refusal cause. Do not infer the required trusted count from SQL or array length,
+fill the extraction's null value with an expected ID, or change expectations.
+
+For R1-30-H03, inspect I11's environment receipt and its original mock pipeline
+comment by URI, comment ID, repository and PR number. Parse the original comment
+body: source/deployed revision must equal the stale receipt revision and differ
+from current review/PR. Actor, target, readiness and remaining proof identities
+stay consistent with I01. This isolates stale deployment; inspection does not
+assert a runtime publisher result or live deployment readiness.
+
+PGB-132's original independent QA report remains INCOMPLETE. Owner decision
+10765 accepts its specific actual-helper/dependent-publisher evidence gap; this
+source extension does not rerun or waive that gap, transfer it to PGB-138, or
+claim human, live, installed, CI, merge or activation acceptance.

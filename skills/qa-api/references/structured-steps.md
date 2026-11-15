@@ -138,7 +138,8 @@ for canonical publication. This helper contract does not activate delivery.
 ### Input-only PREP-01 exercise
 
 The source fixture module also exports `prepareQaFixture(runDir,
-{suite:'dispatch-inputs'})` for PGB-132's prescribed R1-27-H01/H02/H03 inputs.
+{suite:'dispatch-inputs'})` for the variants listed in the source preparation
+guide and generated index.
 The exact import command and hash/recovery steps are in the source
 `docs/using-pigboard.md#prepare-prescribed-qa-inputs`. This is preparation for
 today's direct installed-helper and standalone-publisher interfaces, not a new
@@ -150,7 +151,6 @@ it. API alone owns the selected Bruno child. Consumer input contains fixed mock
 response/tool cards, original work/context, review predecessors and extraction
 layout. Return a card only in response to its actual requested tool action, retain
 the transcript and bind only actual helper outputs. `output/` starts empty.
-Historical retained evidence is labelled historical supplied/mock and is never a
-current result. Keep operator material outside the consumer view. An actual
-assessment formed later from retained results may use standalone `qa-jira`;
+Keep operator material outside the consumer view. An actual assessment formed
+later from retained results may use standalone `qa-jira`;
 preparation supplies no assessment, verdict, destination or completed human case.

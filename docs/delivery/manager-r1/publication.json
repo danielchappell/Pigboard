@@ -2,7 +2,7 @@
   "date": "2026-11-15",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Owner-approved combined 27-Story/119-case source amendments; Jira owns progress; human/live acceptance and activation remain separate.",
+  "status": "Owner-approved same-scope 28-Story/122-case source composition at main275, including pending PGB-132 and actual PGB-138; Jira owns progress. Human/live acceptance and activation remain separate.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -30,15 +30,16 @@
     "R1-22": "PGB-100",
     "R1-23": "PGB-101",
     "R1-25": "PGB-113",
-    "R1-26": "PGB-129"
+    "R1-26": "PGB-129",
+    "R1-30": "PGB-138"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 27,
-  "case_count": 119,
+  "story_count": 28,
+  "case_count": 122,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -313,6 +314,30 @@
     {
       "from": "PGB-132",
       "to": "PGB-78"
+    },
+    {
+      "from": "PGB-74",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-76",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-77",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-108",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-110",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-138",
+      "to": "PGB-132"
     }
   ],
   "baseline_publication": {
@@ -688,6 +713,21 @@
         "source_order": "R1-24 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
         "status": "Actual PGB-110-first source composition includes PGB-113 and PGB-129:26 Stories/116 cases. Native counts retain the separately recorded amendment snapshots, not a fresh all-ticket readback or status claim. Jira owns subsequent queue changes; publication is not delivery completion."
       }
+    },
+    {
+      "date": "2026-11-15",
+      "story_count": 27,
+      "case_count": 119,
+      "status": "PGB-132 native amendment and candidate source composition before R1-30; acceptance remained pending.",
+      "current_source_scope": {
+        "story_count": 27,
+        "case_count": 119,
+        "native_story_count": 27,
+        "native_case_count": 119,
+        "pending_source_amendments": [],
+        "source_order": "R1-24 then R1-27 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
+        "status": "15 November PGB-132 amendment composes Core's independently reviewed stacked source checkpoint at 261a3856c9710a62be3c2c8ac4424778cb1ca0a0: source/native 27 Stories/119 cases. Director verified the full native enumeration and Epic introduction. This is a dated publication count, not an all-ticket status claim or delivery completion. The PGB-129 source stack is not a product dependency of PGB-132."
+      }
     }
   ],
   "qa_split": {
@@ -764,13 +804,21 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 27,
-    "case_count": 119,
-    "native_story_count": 27,
-    "native_case_count": 119,
-    "pending_source_amendments": [],
-    "source_order": "R1-24 then R1-27 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
-    "status": "15 November PGB-132 amendment composes Core's independently reviewed stacked source checkpoint at 261a3856c9710a62be3c2c8ac4424778cb1ca0a0: source/native 27 Stories/119 cases. Director verified the full native enumeration and Epic introduction. This is a dated publication count, not an all-ticket status claim or delivery completion. The PGB-129 source stack is not a product dependency of PGB-132."
+    "story_count": 28,
+    "case_count": 122,
+    "source_base": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+    "source_order": "R1-24 then R1-30 then R1-27 before R1-08; all other relative order preserved.",
+    "native_snapshot": {
+      "date": "2026-11-15",
+      "story_count": 30,
+      "case_count": 130,
+      "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
+    },
+    "pending_source_amendments": [
+      "PGB-136",
+      "PGB-137"
+    ],
+    "status": "Actual serialized source is28/122. PGB-136/137 are native-only and not present on this source base. PGB-132 remains pending; no live or human completion follows from publication."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1590,6 +1638,113 @@
       "merge_tree_equals_reviewed_source_tree": true,
       "prior_source_composition_status": "Independently CLEAN and pushed Core checkpoint; stacked source base until its PR merges. Director authorizes same-scope source layering without waiting for PR98 merge; PGB-129 is no product dependency.",
       "verification": "Director verified the actual merge; local read-only Git object inspection confirms merge/tree/parents. The prior26/116 checkpoint and all earlier readbacks remain historical. Source/native counts stay27/119; merge does not establish PGB-132 human acceptance, installed dispatch or activation."
+    },
+    "residual_source_candidate": {
+      "date": "2026-11-15",
+      "preserved_branch_head": "29ba86017ec8ce5c27392f699a9a387cc8902260",
+      "temporary_prerequisite_commit": "3b3a26f5810ca12f5b7bf8b295a49c15397aad25",
+      "temporary_prerequisite_tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
+      "composition": "Normal merge retains original PR100 ancestry; explicitly authorized temporary unmerged prerequisite stack. Final publication waits actual PGB-138 merge and coordinated PGB-136 source preservation.",
+      "input_count": 51,
+      "family_count": 14,
+      "shared_control_ids": [
+        "I01-story",
+        "I02-parameters",
+        "I11-stale-environment"
+      ],
+      "additional_inputs": 48,
+      "human_acceptance": "R1-27-H01/H02/H03 NOT RUN; R1-30-H01/H02/H03 NOT RUN",
+      "accepted_evidence_limit": {
+        "owner_comment": "10765",
+        "original_qa_report": "INCOMPLETE",
+        "scope": "Specific actual-helper/dependent-publisher evidence gap; no rerun or transfer."
+      },
+      "verification_limits": "Source preparation only. No helper/Bruno/model/provider acceptance, new native publication, installed runtime capability, hosted CI, merge/release or activation is established by this record."
     }
+  },
+  "qa_input_controls_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-30": "PGB-138"
+    },
+    "native_id": "10598",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "0a78de20124a8eecca08dc1a8c39f3434951f60a7b453822964f34b557b79cb0",
+      "preparation_before": "42b2b5e0334cc2c520e802b83bb4f6dcf1afa58a59f1650ad13b60fddfbc3ca5",
+      "preparation_after": "5284ae68d9f54e809409ed8dd966fa4494c813f57b70ef3c6038a84bdfcbb38a"
+    },
+    "dependency_links": [
+      {
+        "id": "10719",
+        "type_id": "10000",
+        "from": "PGB-74",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10720",
+        "type_id": "10000",
+        "from": "PGB-76",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10721",
+        "type_id": "10000",
+        "from": "PGB-77",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10722",
+        "type_id": "10000",
+        "from": "PGB-108",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10723",
+        "type_id": "10000",
+        "from": "PGB-110",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10724",
+        "type_id": "10000",
+        "from": "PGB-138",
+        "to": "PGB-132"
+      }
+    ],
+    "rank": "edit response reported ranked before PGB-132",
+    "publication_comment": "https://scubapig.atlassian.net/browse/PGB-138?focusedCommentId=10779",
+    "dependent_comment": "https://scubapig.atlassian.net/browse/PGB-132?focusedCommentId=10780",
+    "original_preparation_body_preserved_except_prerequisite": true,
+    "original_preparation_cases": 3,
+    "additive_cases": 3,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "plan_sha256": "54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593",
+    "plan_reviews": {
+      "product": "8f1a46790fb3f6c8100137749eef742ff646693082052d0fee775889926e2179",
+      "technical": "de4841dd3a6e11702bb6ca54120eb7962b6f763fc0d9fb9852e5058848b4fec5"
+    },
+    "source_base": {
+      "commit": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+      "tree": "e1e16b1221473f1754661ca4a56925621c21f31d"
+    },
+    "forecasts": {
+      "controls": {
+        "files": 18,
+        "hours": {
+          "min": 8.5,
+          "max": 12.5
+        }
+      },
+      "remaining_preparation": {
+        "files": 12,
+        "hours": {
+          "min": 6.75,
+          "max": 9.75
+        }
+      }
+    },
+    "verification_limits": "Source preparation and read-only validation/inspection only. PGB-132 owner10765 exception remains specific to that historical helper/publisher gap; no reruns or transfer to PGB-138/PGB-78. R1-27 and R1-30 human cases remain NOT_RUN. Local tests, installed evidence, hosted CI, merge/release and activation are separate."
   }
 }

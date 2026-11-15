@@ -1151,6 +1151,8 @@ async function prepareDispatchInputs(runDir) {
       if(id==='I05-missing-bound')facts.operations.find(o=>o.step===parent.id).max_duration_seconds=null;
       steps=[parent,child];db=undefined;uiStep=undefined;
     }
+    // Missing reviewed count is a trusted-input refusal; work and SQL stay intact.
+    if(id==='I02-parameters')facts.operations.find(o=>o.step===db.id).parameter_count=null;
     // Whole-unit and child bounds are supplied facts, never run by preparation.
     const clock={notice:qaNotice,origin:id.startsWith('I13-')?retained.historical.new_execution_not_before:'2026-11-15T10:00:00Z',offsets:asyncCase?[0,30,60]:[0],deadline_seconds:asyncCase?90:null,
       now_offsets_seconds:id==='I05-missed-offset'?[0,31]:[0,30,60],
@@ -1176,6 +1178,8 @@ async function prepareDispatchInputs(runDir) {
       if(mixed)responseBody.state='pending';else responseBody.results=[];
     }
     const responses=asyncCase?(id==='I03-pending-ready'?[{...responseBody,state:'pending'},responseBody,responseBody]:id==='I04-one-mismatch'?[responseBody,{...responseBody,state:'pending'},responseBody]:[responseBody,responseBody,responseBody]):[responseBody];
+    // Build original pipeline comments only after making the receipt stale.
+    if(id==='I11-stale-environment')e.evidence_receipts.filter(r=>r.kind==='environment').forEach(r=>r.pr.source_revision='f'.repeat(40));
     const pipeline=e.evidence_receipts.filter(r=>r.kind==='environment').map(r=>({notice:qaNotice,id:r.details.comment_id,author_id:r.details.pipeline_actor_id,update_author_id:r.details.pipeline_actor_id,created:'2026-11-15T09:30:00Z',updated:'2026-11-15T09:30:00Z',uri:r.uri,repository:r.pr?.repository,pr_number:r.pr?.number,
       body:JSON.stringify({notice:qaNotice,event:'deployment_ready',readiness:'ready',source_revision:r.pr?.source_revision,deployed_revision:r.pr?.source_revision,target_reference:r.details.target_reference,target_uri:'https://qa.example.invalid/pgb132',repository:r.pr?.repository,pr_number:r.pr?.number,target_branch:r.pr?.target_branch})}));
     const report=terminal.payload.report??terminal.payload.qa_report;
@@ -1231,7 +1235,6 @@ async function prepareDispatchInputs(runDir) {
     if(id==='I10-wrong-actor')access.actors=[];
     if(id==='I10-wrong-tenant')access.actors.forEach(a=>a.tenant='tenant-b');
     if(id==='I11-missing-environment'){e.evidence_receipts=e.evidence_receipts.filter(r=>r.kind!=='environment');cards.reads.evidence=e.evidence_receipts;pipeline.length=0;}
-    if(id==='I11-stale-environment')e.evidence_receipts.filter(r=>r.kind==='environment').forEach(r=>r.pr.source_revision='f'.repeat(40));
     if(id.includes('null-proof'))cards.proof_inputs={tested_pr:null,environment:null,preserve_actual_observations_locally:true};
     if(id==='I14-no-model')capabilities.model_profile=null;
     if(id==='I14-no-clock')capabilities.clock=null;
@@ -1266,11 +1269,11 @@ async function prepareDispatchInputs(runDir) {
     await emit('index.json',{notice:qaNotice,preparation_id:'PREP-01',consumers:steps.map(s=>s.id),artifacts,source_inputs:qaHash(readFileSync(new URL('./handoff-chains.json',import.meta.url))),output:'../output',binding:'Extraction value remains null until original actual helper evidence exists. Bind no expected value.',readiness:'NOT_READY until independently supplied source/installed hashes, caller and chosen exercise capabilities are frozen.'});
     await mkdir(join(root,base,'output'),{mode:0o700});
     await put(`${base}/invocation.txt`,'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
-    await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-27-H01','R1-27-H02','R1-27-H03'],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
+    await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-27-H01','R1-27-H02','R1-27-H03'],shared_control_cases:['I01-story','I02-parameters','I11-stale-environment'].includes(id)?['R1-30-H01','R1-30-H02','R1-30-H03']:[],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
     cases[id]=join(root,base);index.push({id,group:id.slice(0,3),input:join(root,input)});
   }
   const preparation=await put('preparation.json',{suite:'dispatch-inputs',state:'NOT_READY',notice:qaNotice,cases:index,source_module_sha256:qaHash(readFileSync(fileURLToPath(import.meta.url))),
     binding_required:['Actual reviewed full source commit','Immutable installed skills/manifest/payload hashes','Hashes of emitted inputs before exercise','Independent caller/action/actor/tenant scope','Actual selected exercise capabilities; fixed mock facts prove no live engine or deployment'],
-    human_acceptance:'R1-27-H01/H02/H03 NOT RUN',cleanup:'Retain sanitized inputs, actual results and audit first; remove only this owned disposable root. No services or live resources created.'});
+    human_acceptance:'R1-27-H01/H02/H03 NOT RUN; R1-30-H01/H02/H03 NOT RUN',cleanup:'Retain sanitized inputs, actual results and audit first; remove only this owned disposable root. No services or live resources created.'});
   return {runDir:root,preparation:join(root,preparation.path),cases,ready:false};
 }

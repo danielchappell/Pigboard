@@ -1786,6 +1786,241 @@
     }
   },
   {
+    "id": "R1-30",
+    "title": "Prepare mixed QA inputs and two boundary controls",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Developers and QA reviewers need a complete mixed QA input handoff and honest missing-parameter and stale-deployment controls before the larger preparation suite is available. Existing fixed controls do not yet isolate those two required-input boundaries.",
+      "prerequisites": [
+        {
+          "ticket": "R1-04",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-06",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-07",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "PGB-108",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-24",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A developer can create and inspect a fresh private mixed Story input packet with the selected request, extraction mapping, SQL parameters, UI checkpoints and exact consumer bindings."
+        },
+        {
+          "id": "AC2",
+          "requirement": "The separate missing reviewed parameter-count and stale-deployment controls expose those precise boundaries without contradictory proof, guessed inputs or changed work expectations."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Preparation preserves existing publication fixtures, creates empty execution outputs and explains input inspection, authority requirements and safe cleanup without claiming helper execution or live readiness."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Deliver the existing source-only prepareQaFixture dispatch-inputs command with I01-story, I02-parameters and I11-stale-environment, their regression coverage, current producer/reviewer guidance and publication metadata in one PR.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Reuse existing raw-work/context, receipt validators, fixture module and helper/publisher contracts without a new schema, engine, provider adapter or installed skill."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Keep supplied/mock facts and operator guidance separate from actual output and authority; preserve current-review and artifact/actor/tenant/PR bindings and withhold any expected terminal result."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Use a fresh private absolute folder, exclusive writes and artifact hashes; keep default publication preparation unchanged and never overwrite retained evidence."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "The three fixed supplied/mock inputs I01-story, I02-parameters and I11-stale-environment, produced in a fresh private folder.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "The exact source-only preparation command, three complete fixed input packets and existing read-only validation/inspection commands for R1-30-H01 through R1-30-H03, bound to the reviewed source revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-30-H01",
+              "R1-30-H02",
+              "R1-30-H03"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain commands, input hashes and inspection evidence first; remove only the owned disposable preparation root. No live resources are created."
+                ]
+              },
+              "id": "R1-30-H01",
+              "requirements": [
+                "AC1",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Reviewed same-release source checkout with its already prepared validator dependencies; a fresh absolute private output path; dummy supplied/mock data only."
+              ],
+              "steps": [
+                "Run the delivered source-only preparation command and record source revision, module hash and emitted input hashes.",
+                "Inspect I01-story raw work, separate context, current-review predecessors, child ownership, request/assertions, extraction pointer, SQL layout and three UI image/checkpoint bindings.",
+                "Verify the existing raw-work and predecessor checks, empty output directory and NOT_READY authority/capability notice; repeat the command only against the same occupied path to verify refusal without overwriting files."
+              ],
+              "expected": [
+                "Exactly the three declared variants are listed, with complete retrievable inputs and matching hashes.",
+                "The baseline has valid declared work/context and coherent current proof; extraction values remain unbound until actual helper evidence exists.",
+                "No helper, timer, provider or publisher is run; no assessment, verdict or current terminal is supplied, and original files survive the occupied-path refusal."
+              ],
+              "evidence": [
+                "Exact source command, revision and hashes, validator output, artifact/consumer inspection and before/after occupied-path file hashes."
+              ]
+            },
+            {
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain commands, input hashes and inspection evidence first; remove only the owned disposable preparation root. No live resources are created."
+                ]
+              },
+              "id": "R1-30-H02",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Fresh generated I01-story and I02-parameters inputs from the reviewed source and existing read-only work/receipt validators."
+              ],
+              "steps": [
+                "Compare raw work, query, parameter array and bindings with the baseline.",
+                "Inspect the matching DB operation in facts.yaml and predecessor requirement context, then run existing read-only start/predecessor validation.",
+                "Retain the diagnostic and inspect that no supplied expected value repairs the missing trusted count or populates output."
+              ],
+              "expected": [
+                "The named negative keeps original work expectations and differs at the required reviewed DB parameter_count, which is null in both trusted-context copies.",
+                "Start validation rejects with DATABASE_PARAMETERS at the DB parameter boundary; predecessor validation exposes the same missing-count cause.",
+                "The baseline remains valid and the optional null parameter sidecar is not claimed as the rejection cause."
+              ],
+              "evidence": [
+                "Raw positive/negative inputs, context comparison, exact parser/receipt diagnostics and empty output listing."
+              ]
+            },
+            {
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain commands, input hashes and inspection evidence first; remove only the owned disposable preparation root. No live resources are created."
+                ]
+              },
+              "id": "R1-30-H03",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Fresh generated I01-story and I11-stale-environment inputs; current review/PR facts and original mock pipeline comments are available."
+              ],
+              "steps": [
+                "Match each environment receipt to its original pipeline comment by URI, comment ID, repository and PR number.",
+                "Parse the original comment body and compare source/deployed revision with normalized proof and current review/PR.",
+                "Compare the baseline and inspect preserved actor, target, readiness, original publication input bytes and empty output."
+              ],
+              "expected": [
+                "Stale receipt and original comment source/deployed revision agree with each other and differ from current reviewed PR; no current pipeline body contradicts that stale claim.",
+                "The baseline remains current, all other proof identities stay consistent, and the negative is visibly unsuitable as current deployment proof.",
+                "Inspection does not assert a helper/publisher runtime result, human acceptance of PGB-132 or live deployment readiness."
+              ],
+              "evidence": [
+                "Receipt/original-comment/current-PR comparison, positive-control comparison, preservation hashes and input/output listings."
+              ]
+            }
+          ]
+        },
+        "automated_regression": "Use the existing emitted-input tests and raw-work/receipt validators to check the mixed handoff, exact missing trusted count, coherent stale proof, artifact hashes and preserved empty outputs/default publication fixtures."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-27",
     "title": "Prepare the prescribed QA inputs",
     "contract": {
@@ -1810,6 +2045,10 @@
         },
         {
           "ticket": "R1-24",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-30",
           "required_outcome": "ai_qa_complete"
         }
       ],
