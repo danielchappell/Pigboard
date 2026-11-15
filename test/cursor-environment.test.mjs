@@ -38,7 +38,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 16);
+  assert.equal(first.verification.entrypoints, 22);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -387,7 +387,7 @@ test('installed structured QA helpers retain full sibling closure and validate f
   const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
-  assert.equal(installed.verification.entrypoints,16);assert.equal(installed.verification.dependencies,'verified');
+  assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.dependencies,'verified');
   await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
 });
 
@@ -400,7 +400,7 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
  const {extractHandoff}=await import('../lib/contracts/handoff.mjs');
  const {stringify}=await import('yaml');
  const {createHash}=await import('node:crypto');
- assert.equal(first.verification.entrypoints,16);
+ assert.equal(first.verification.entrypoints,22);
  const manifest=JSON.parse(await readFile(first.manifest,'utf8'));
  const actualManifest=Object.keys(manifest.sourceFiles);
  for(const name of ['request-rework','human-writing']) {
@@ -546,7 +546,7 @@ test('standalone QA publisher ships exact folder and same-release contracts; sou
  const {targetRecord}=await import('./fixtures/qa-partial-results.mjs');
  const {stringify}=await import('yaml');
  const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
- assert.equal(installed.verification.entrypoints,16);
+ assert.equal(installed.verification.entrypoints,22);
  const relative='qa-jira/SKILL.md',publisher=path.join(installed.skills,relative),source=await readFile(new URL('../skills/'+relative,import.meta.url));
  assert.deepEqual(await readFile(publisher),source);assert.equal(manifest.sourceFiles[relative],createHash('sha256').update(source).digest('hex'));
  assert.deepEqual(await readdir(path.dirname(publisher)),['SKILL.md']);

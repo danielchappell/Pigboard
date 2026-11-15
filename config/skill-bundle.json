@@ -16,7 +16,13 @@
     "qa-bruno",
     "qa-database",
     "qa-ui",
-    "write-pr-sized-stories"
+    "write-pr-sized-stories",
+    "engineering-principles",
+    "investigate-codebase",
+    "design-change",
+    "planner",
+    "diagnose-problem",
+    "verify-change"
   ],
   "dependencyDirectories": [
     "qa-bruno/scripts",

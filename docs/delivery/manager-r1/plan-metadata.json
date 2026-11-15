@@ -177,10 +177,10 @@
       "R1-07",
       "PGB-108"
     ],
-    "days": 1.9375,
+    "days": 2.34375,
     "hours": {
-      "min": 14,
-      "max": 15.5
+      "min": 16,
+      "max": 18.75
     },
     "files": [
       "skills/qa-jira/SKILL.md",
@@ -203,7 +203,17 @@
       "docs/delivery/manager-r1/coverage.md",
       "docs/product/coverage.md",
       "docs/product/README.md"
-    ]
+    ],
+    "time_limit_exception": {
+      "ticket": "PGB-110",
+      "rule": "ordinary less-than-two-human-working-days limit",
+      "approved_by": "owner",
+      "approval_reference": "https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684",
+      "approved_at": "2026-11-15",
+      "scope": "Existing standalone prepared QA publisher; one PR; exact approved 20 files; all acceptance cases and review/QA/CI gates retained",
+      "reason": "Required integration with merged engineering methods and coherent fixed mock access preparation; estimate is a forecast, not a replacement hourly authorization cap",
+      "base_commit": "6595e645bd91cec263a5ee0eaf1a3db95e7b9109"
+    }
   },
   {
     "id": "R1-08",

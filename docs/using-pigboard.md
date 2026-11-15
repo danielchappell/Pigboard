@@ -14,18 +14,25 @@ permission to publish, transition, merge or deploy.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists fifteen skills. These are
-entrypoints and helpers, not fifteen autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists twenty-two skills. These are
+entrypoints and helpers, not twenty-two autonomous workers:
 
 | Skill | Use and minimum context |
 | --- | --- |
 | [write-pr-sized-stories](../skills/write-pr-sized-stories/SKILL.md) | Author or split scoped work from supplied requirements and verified repository ownership. Reads human-writing and its ticket references. Drafting does not authorize Jira publication. |
 | [implementer-entrypoint](../skills/implementer-entrypoint/SKILL.md) | Compose one authorized native Story/Bug in In Progress using its current versioned assignment, verified scope, High/Medium controls and prepared tools. |
 | [implementer-job](../skills/implementer-job/SKILL.md) | Plan/execute the assigned code, same PR, current CI and prepared artifacts. Returns evidence; never changes Jira. |
+| [planner](../skills/planner/SKILL.md) | One source-grounded implementation plan from the job's verified assignment; no scheduling or execution approval. |
+| [investigate-codebase](../skills/investigate-codebase/SKILL.md) | Read the affected flow, suitable reuse and constraints needed for a specific engineering decision. |
+| [design-change](../skills/design-change/SKILL.md) | Choose or reuse the design, ownership and interfaces within the agreed scope. |
+| [engineering-principles](../skills/engineering-principles/SKILL.md) | Shared judgment loaded once per phase; no extra report or authority. |
+| [diagnose-problem](../skills/diagnose-problem/SKILL.md) | Bounded investigation of an unexpected result; return a supported correction and recovery route to the job. |
+| [verify-change](../skills/verify-change/SKILL.md) | Final author checks, relevant intermediate checks and a repeatable verification recipe for the exact code state. |
 | [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
 | [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
 | [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized Story in QA, reviewed open PR/current CI, prescribed cases, prepared artifacts, required ready preview/access and evidence destination. Dispatches only the named QA skills in order. |
+| [qa-jira](../skills/qa-jira/SKILL.md) | Read-only eligibility preflight or standalone publication of a complete prepared QA assessment for the current native Story/Bug, assignment/review/open PR and configured tools. Executes no helpers; retained dispatcher integration remains PGB-78. |
 | [pr-review](../skills/pr-review/SKILL.md) | Shared review criteria and saved review-state contract; used by pigboard-pr-review. Read it for review mechanics, not as a replacement for the Jira stage wrapper. |
 | [pr-commenting](../skills/pr-commenting/SKILL.md) | Publication and existing-thread handling for review comments. Requires the specific PR, findings and authorized tool route. |
 | [request-rework](../skills/request-rework/SKILL.md) | Explicit human record-and-queue request, in-scope findings/evidence, current Human Review assignment and compatible completed QA chain on the same open PR, configured actor/tools and durable output. Human invoked; no automatic worker. |
@@ -35,7 +42,9 @@ entrypoints and helpers, not fifteen autonomous workers:
 | [qa-database](../skills/qa-database/SKILL.md) | Prepared read-only observations with exact queries, parameters, permitted data and restricted access. The bundled reader is PostgreSQL; do not infer DynamoDB support. |
 | [qa-ui](../skills/qa-ui/SKILL.md) | Prescribed UI cases using prepared computer use, test identity/data, a supplied target and inspected screenshot evidence. |
 
-Read the selected skill for its complete contract. Structured QA helpers receive
+See [engineering skills](engineering-skills.md) for the composed planning, diagnosis
+and verification flow, worked examples and current trial limits. Read the selected
+skill for its complete contract. Structured QA helpers receive
 complete bounded AI step inputs and original expectations from an authorized
 caller; the retained QA entrypoint does not yet construct these inputs. Helpers
 do not select new work or change the whole ticket's stage. Preserve required sibling references.
@@ -223,7 +232,7 @@ port/database/qa_reader, with no URL options. Never weaken TLS or repair during 
 
 Install the exact local committed candidate into an isolated root with the real
 installer before local instruction exercises (customer installs use published
-reviewed revisions). Inspect its receipt, fifteen entrypoints, six smoke checks,
+reviewed revisions). Inspect its receipt, twenty-two entrypoints, six smoke checks,
 locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
 
 ```sh

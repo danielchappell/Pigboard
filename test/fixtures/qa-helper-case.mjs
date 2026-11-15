@@ -507,6 +507,37 @@ function staticQa() {
   for(const receipt of e.evidence_receipts)if(receipt.details.requirements_digest===old)receipt.details.requirements_digest=digest;
   return sealQa(e);
 }
+// Fixed mock identity facts for the two existing synthetic fixture families.
+// These are prepared test data, never a production grant inferred from work text.
+function qaMockAccess(work) {
+  const known={
+    'fixture://pgb77/tenant-a':{id:'ACTOR-01',role:'reader',tenant:'tenant-a',access_owner:'Fixture operator',identity:'synthetic tenant-a reader'},
+    'fixture://example/reader':{id:'ACTOR-01',role:'reader',tenant:'example',access_owner:'Fixture operator',identity:'synthetic example reader'}
+  };
+  const required=work.testing_strategy.cases.length>0;
+  const actors=work.testing_strategy.actors.map(actor=>{
+    const fixed=known[actor.identity_reference];
+    if(!fixed||['id','role','tenant','access_owner'].some(key=>actor[key]!==fixed[key]))throw Error('Unknown or incoherent fixed QA actor identity.');
+    return {...fixed,actor_id:fixed.id,identity_reference:actor.identity_reference,read_only:true,available:true};
+  });
+  if(required&&!actors.length)throw Error('Fixed runtime prescription has no prepared mock actor.');
+  const steps=work.testing_strategy.cases.flatMap(c=>c.steps);
+  for(const step of steps.filter(step=>step.api))if(!actors.some(actor=>actor.id===step.api.actor))throw Error('Unprepared fixed API actor.');
+  const database_access=steps.filter(step=>step.database).map(step=>{
+    const fixed=actors.find(actor=>actor.tenant===step.database.scope.tenant);
+    const reference=fixed?.tenant==='tenant-a'?'fixture://pgb77/restricted-access':'fixture://example/restricted-reader-receipt';
+    if(!fixed||step.database.access_reference!==reference)throw Error('Incoherent fixed database access identity.');
+    return {step:step.id,actor_id:fixed.id,tenant:fixed.tenant,identity_reference:fixed.identity_reference,access_reference:reference,database_role:'qa_reader',read_only:true,scope:structuredClone(step.database.scope)};
+  });
+  const single=actors.length===1?actors[0]:null;
+  return {notice:qaNotice,category:'supplied/mock',runtime_access_required:required,
+    identity:single?.identity??null,actor_id:single?.id??null,role:single?.role??null,
+    tenant:single?.tenant??null,identity_reference:single?.identity_reference??null,access_owner:single?.access_owner??null,
+    actors,database_access,available:required&&actors.every(actor=>actor.available),
+    availability:required?'fixed mock access supplied':'no runtime access required',
+    proof_scope:'Fixed synthetic identity/access only; no deployment availability or executed observation is established.',
+    audience:'private fixture operator and reviewer'};
+}
 // Real labelled PNG with a tiny built-in bitmap alphabet; no image dependency.
 function mockQaPng(checkpoint='result') {
   const glyphs={S:['111','100','111','001','111'],U:['101','101','101','101','111'],P:['110','101','110','100','100'],L:['100','100','100','100','111'],I:['111','010','010','010','111'],E:['111','100','110','100','111'],D:['110','101','101','101','110'],M:['101','111','111','101','101'],O:['111','101','101','101','111'],C:['111','100','100','100','111'],K:['101','101','110','101','101'],R:['110','101','110','101','101'],'0':['111','101','101','101','111'],'1':['010','110','010','010','111'],T:['111','010','010','010','010'],N:['101','111','111','111','101'],A:['010','101','111','101','101'],Y:['101','101','010','010','010'],'-':['000','000','111','000','000'],' ':['000','000','000','000','000']};
@@ -673,7 +704,7 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
     });
     const scenario=id.startsWith('Q')?id:'normal';
     if(id==='H02-discussion'||id==='Q12-discussion'){assessment.proposed_outcome='discussion';assessment.reason='Discuss the supplied observations only; no final publication or transition requested.';}
-    const cards={notice:qaNotice,scenario,reads:{native,comments:e.comment_pages,pr:e.pr_receipts,evidence:e.evidence_receipts,artifacts,access:{identity:'synthetic qa-reader',tenant:'tenant-a',audience:'private fixture operator and reviewer',available:true},pipeline:{author:'pipeline',origin:'supplied/mock PR comment',original_comments:pipelineComments,receipts:e.evidence_receipts.filter(x=>x.kind==='environment')},freshness:{native,pr:e.pr_receipts}},capabilities:{actor_id:project.actors.qa[0],append:true,read_exact:true,direct_transitions:true},transitions:['Human Review','Rework Queued','Blocked'].map((stage,i)=>({id:String(61+i),from:project.stages.QA,to:project.stages[stage],name:stage})),append:{storage:['Q14-append-absent','Q14-append-rejected'].includes(scenario)?'not_stored':scenario==='Q14-append-ambiguous'?'ambiguous':'stored',reply:scenario==='Q14-append-rejected'?{status:403,error:'Simulated append permission denied; request was definitely rejected before storage.',definite_failure:true}:scenario.startsWith('Q14-')?'timeout':{id:'9901'}},readback:{id:'9901',author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],update_author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],created:'2026-11-15T14:00:00Z',updated:'2026-11-15T14:00:00Z',body:'MANUAL_ECHO_ACTUAL_SUBMITTED_TRANSPORT_ONLY',fault:scenario==='Q15-wrong-body'?'replace body with unrelated discussion':scenario==='Q15-wrong-uuid'?'replace observed record UUID with 99000000-0000-4000-8000-000000000099':scenario==='Q15-readback-failed'?'unavailable':scenario==='Q16-chain-pages'?'omit final comment page':null},after_publish:scenario==='Q17-source-drift'?'source revision becomes ffffffffffffffffffffffffffffffffffffffff':'same requirement bytes, assignment, source/target, approval/CI and access; issue updated timestamp may change',transition:{reply:scenario==='Q18-transition-failed'?'definite failure':scenario.includes('transition-')?'timeout':'accepted',resolving_status:scenario==='Q20-transition-stored-timeout'?'requested destination':scenario==='Q19-transition-ambiguous'?'unknown':scenario==='Q18-transition-failed'?'QA':'requested destination'},resume_fault:scenario==='Q21-resume-ambiguous'?'no unique explicit resume authorization':null};
+    const cards={notice:qaNotice,scenario,reads:{native,comments:e.comment_pages,pr:e.pr_receipts,evidence:e.evidence_receipts,artifacts,access:qaMockAccess(currentWork),pipeline:{author:'pipeline',origin:'supplied/mock PR comment',original_comments:pipelineComments,receipts:e.evidence_receipts.filter(x=>x.kind==='environment')},freshness:{native,pr:e.pr_receipts}},capabilities:{actor_id:project.actors.qa[0],append:true,read_exact:true,direct_transitions:true},transitions:['Human Review','Rework Queued','Blocked'].map((stage,i)=>({id:String(61+i),from:project.stages.QA,to:project.stages[stage],name:stage})),append:{storage:['Q14-append-absent','Q14-append-rejected'].includes(scenario)?'not_stored':scenario==='Q14-append-ambiguous'?'ambiguous':'stored',reply:scenario==='Q14-append-rejected'?{status:403,error:'Simulated append permission denied; request was definitely rejected before storage.',definite_failure:true}:scenario.startsWith('Q14-')?'timeout':{id:'9901'}},readback:{id:'9901',author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],update_author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],created:'2026-11-15T14:00:00Z',updated:'2026-11-15T14:00:00Z',body:'MANUAL_ECHO_ACTUAL_SUBMITTED_TRANSPORT_ONLY',fault:scenario==='Q15-wrong-body'?'replace body with unrelated discussion':scenario==='Q15-wrong-uuid'?'replace observed record UUID with 99000000-0000-4000-8000-000000000099':scenario==='Q15-readback-failed'?'unavailable':scenario==='Q16-chain-pages'?'omit final comment page':null},after_publish:scenario==='Q17-source-drift'?'source revision becomes ffffffffffffffffffffffffffffffffffffffff':'same requirement bytes, assignment, source/target, approval/CI and access; issue updated timestamp may change',transition:{reply:scenario==='Q18-transition-failed'?'definite failure':scenario.includes('transition-')?'timeout':'accepted',resolving_status:scenario==='Q20-transition-stored-timeout'?'requested destination':scenario==='Q19-transition-ambiguous'?'unknown':scenario==='Q18-transition-failed'?'QA':'requested destination'},resume_fault:scenario==='Q21-resume-ambiguous'?'no unique explicit resume authorization':null};
     const rejected=new Set([...Object.keys(faults),'V03-missing-middle','V04-proof-blocked-null-pass','V04-proof-blocked-null-fail','V04-proof-blocked-null-foreign-artifacts','V04-proof-blocked-null-real-environment','V04-proof-blocked-real-null-environment','V04-proof-blocked-foreign-result','V04-proof-wait-foreign-finding','H03-task','H03-epic','H03-wrong-scope','H03-changed-stage','H03-changed-requirements','H03-oversized-ledger','Q21-resume-ambiguous']);
     const discussion=['H02-discussion','Q12-discussion'].includes(id);
     const route=['H02-defect','Q08-defect'].includes(id)?'Rework Queued':

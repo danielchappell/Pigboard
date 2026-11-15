@@ -118,8 +118,9 @@ node "$PGB79_SKILLS/work-validator/scripts/prepare-handoff.mjs" --input "$PGB79_
 node "$PGB79_SKILLS/work-validator/scripts/validate-handoff.mjs" --mode chain --input "$PGB79_RUN/H01/published-chain.json" --json
 ```
 
-Inspect receipt commit, manifest hashes, fifteen entrypoints, verified dependencies
-and every existing smoke check. Compare source and installed outputs/extracted
+Inspect receipt commit and manifest hashes. Compare the installed skill entrypoints
+with the pinned prepared manifest's `bundle.skills`; require an exact match.
+Verify dependencies and every existing smoke check. Compare source and installed outputs/extracted
 records exactly; inspect the complete installed new folder and human-writing.
 Stop and retain failure evidence if setup fails; no substitute dependencies or
 invented success. Installation verifies packaging, not provider access or instruction

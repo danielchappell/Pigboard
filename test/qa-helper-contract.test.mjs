@@ -233,6 +233,35 @@ test('actual independently chosen candidate encodings roundtrip and exact simula
  assert.equal(validateHandoff(' '.repeat(16385),{mode:'record'}).valid,false);
 });
 
+// Narrow evidence check for the actual PGB-110-only owner decision. This is
+// delivery metadata validation in tests, not a runtime policy/permission engine.
+function assertDeliverySizing(entries) {
+ let exceptions=0;
+ for(const entry of entries){
+  if(entry.hours){
+   assert(Number.isFinite(entry.hours.min)&&Number.isFinite(entry.hours.max));
+   assert(entry.hours.min>=0&&entry.hours.max>=entry.hours.min);
+   assert.equal(entry.days,entry.hours.max/8);
+  }
+  if(entry.time_limit_exception){
+   exceptions++;
+   const decision=entry.time_limit_exception;
+   assert.equal(entry.id,'R1-24');assert.equal(decision.ticket,'PGB-110');
+   assert.equal(decision.approved_by,'owner');
+   assert.equal(decision.approval_reference,'https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684');
+   assert.equal(decision.approved_at,'2026-11-15');
+   assert.equal(decision.rule,'ordinary less-than-two-human-working-days limit');
+   assert.equal(decision.base_commit,'6595e645bd91cec263a5ee0eaf1a3db95e7b9109');
+   assert.equal(decision.scope,'Existing standalone prepared QA publisher; one PR; exact approved 20 files; all acceptance cases and review/QA/CI gates retained');
+   assert(!Object.hasOwn(decision,'maximum_hours'));assert(entry.hours);
+   assert.equal(entry.files.length,20);
+   assert.equal(hash([...entry.files].sort()),'6005fc4ca4f126d52ec43f21279e63db4f1c344a7082bd1ccb709d68573ef35a');
+  }else if(entry.hours)assert(entry.hours.max<16);
+  else assert(Number.isFinite(entry.days)&&entry.days>=0&&entry.days<2);
+ }
+ assert.equal(exceptions,1);
+}
+
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
  const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
@@ -240,7 +269,8 @@ test('approved delivery mirrors preserve original contracts/order, counts and al
  assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24'].includes(x.id))),'32dfca8539691420f84e55d5346063429a14c9e16ccbb76a6c311c284b816e27');
  const b=drafts.find(x=>x.id==='R1-08').contract;
  assert.equal(hash([b.acceptance_criteria,b.technical_acceptance_criteria.constraints,b.testing_strategy.human_review.cases]),'1146a6dcd1340d1c9ecbff1c13249e937a2268a364e3e83da6a63898f1bb1c9d');
- for(const id of ['R1-24','R1-08']){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,20);assert.equal(new Set(entry.files).size,20);assert(entry.hours.max<16);assert(entry.dependencies.includes('PGB-108'));}
+ for(const id of ['R1-24','R1-08']){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,20);assert.equal(new Set(entry.files).size,20);assert(entry.dependencies.includes('PGB-108'));}
+ assertDeliverySizing(plan);
  assert(plan.find(x=>x.id==='R1-08').dependencies.includes('R1-24'));
  const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,107);assert.equal(publication.case_count,107);assert.equal(publication.story_count,24);
  for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
@@ -340,5 +370,74 @@ test('H01 prepared original mock deployment and typed bound API/database/UI arti
   const observations=await p.input(id,'inputs/evidence/observations.json');assert.deepEqual(observations.artifacts,cards.reads.artifacts);assert.deepEqual(observations.output_binding,provenance);
   assert.equal(chain(await p.input(id,'operator/validator-inputs/published.json')).valid,true,'typed mock facts do not alter canonical positive chain');
   assert.deepEqual(await readdir(path.join(p.cases[id],'output')),[],'preparation still emits no observed skill result');
+ }
+});
+
+
+test('only the actual fixed-scope PGB-110 owner decision exempts the ordinary time limit without a replacement hourly cap',async()=>{
+ const plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json'));
+ assertDeliverySizing(plan);
+ for(const change of [
+  entries=>{entries.find(x=>x.id==='R1-08').time_limit_exception=structuredClone(entries.find(x=>x.id==='R1-24').time_limit_exception);},
+  entries=>{delete entries.find(x=>x.id==='R1-24').time_limit_exception;},
+  entries=>{entries.find(x=>x.id==='R1-24').time_limit_exception.approved_by='reviewer';},
+  entries=>{entries.find(x=>x.id==='R1-24').time_limit_exception.approval_reference='https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=0';},
+  entries=>{entries.find(x=>x.id==='R1-24').time_limit_exception.approved_at='2026-11-14';},
+  entries=>{entries.find(x=>x.id==='R1-24').files[0]='unapproved/path';},
+  entries=>{entries.find(x=>x.id==='R1-24').hours.max=Infinity;},
+  entries=>{entries.find(x=>x.id==='R1-24').hours.min=100;},
+  entries=>{entries.find(x=>x.id==='R1-24').time_limit_exception.maximum_hours=18;},
+  entries=>{entries.find(x=>x.id==='R1-08').hours.max=16;}
+ ]){const mutated=structuredClone(plan);change(mutated);assert.throws(()=>assertDeliverySizing(mutated));}
+ const reforecast=structuredClone(plan),a=reforecast.find(x=>x.id==='R1-24');a.hours.max=19;a.days=19/8;
+ assertDeliverySizing(reforecast); // Forecast update is not a substitute permission cap.
+});
+
+test('all61 fixed packets bind complete mock actor/access facts and preserve canonical negatives and expectations',async t=>{
+ const p=await publisher(t),ids=Object.keys(p.cases).sort(),preserved=[];assert.equal(ids.length,61);
+ const fixed={
+  'fixture://pgb77/tenant-a':{id:'ACTOR-01',role:'reader',tenant:'tenant-a',identity_reference:'fixture://pgb77/tenant-a',access_owner:'Fixture operator'},
+  'fixture://example/reader':{id:'ACTOR-01',role:'reader',tenant:'example',identity_reference:'fixture://example/reader',access_owner:'Fixture operator'}
+ };
+ for(const id of ids){
+  const work=JSON.parse(await readFile(path.join(p.cases[id],'inputs/work.yaml'),'utf8')),
+    assessment=await p.input(id,'inputs/assessment.json'),cards=await p.input(id,'operator/cards.json'),access=cards.reads.access;
+  assert(access.notice.includes('MOCK'));assert.equal(access.category,'supplied/mock');
+  assert.equal(access.runtime_access_required,work.testing_strategy.cases.length>0,id);
+  assert.equal(access.actors.length,work.testing_strategy.actors.length,id);
+  if(!work.testing_strategy.cases.length){
+   assert.equal(access.available,false);assert.deepEqual(access.actors,[]);assert.equal(access.tenant,null);assert.equal(access.actor_id,null);assert.deepEqual(access.database_access,[]);
+   assert.equal(access.availability,'no runtime access required');
+  }
+  for(const actor of work.testing_strategy.actors){
+   assert.deepEqual(actor,fixed[actor.identity_reference],id+' independently frozen actor tuple');
+   const supplied=access.actors.find(x=>x.actor_id===actor.id);assert(supplied,id);
+   for(const key of ['role','tenant','identity_reference','access_owner'])assert.equal(supplied[key],actor[key],id+':'+key);
+   assert.equal(supplied.read_only,true);assert.equal(supplied.available,true);
+   if(access.actors.length===1){assert.equal(access.actor_id,actor.id);assert.equal(access.role,actor.role);assert.equal(access.tenant,actor.tenant);assert.equal(access.identity_reference,actor.identity_reference);assert.equal(access.access_owner,actor.access_owner);}
+  }
+  for(const step of work.testing_strategy.cases.flatMap(c=>c.steps)){
+   if(step.api)assert(access.actors.some(actor=>actor.actor_id===step.api.actor),id+' API actor');
+   if(step.database){const db=access.database_access.find(x=>x.step===step.id);assert(db,id);assert.equal(db.tenant,step.database.scope.tenant);assert.equal(db.access_reference,step.database.access_reference);assert.equal(db.database_role,'qa_reader');assert.equal(db.read_only,true);assert.deepEqual(db.scope,step.database.scope);}
+  }
+  for(const row of assessment.qa_report.steps.filter(x=>x.result==='PASS'||x.result==='FAIL')){
+   for(const ref of row.evidence){const artifact=cards.reads.artifacts.find(x=>x.uri===ref.uri);assert(artifact,id);assert(access.actors.some(actor=>actor.tenant===artifact.body.tenant),id+' claimed observation tenant');}
+  }
+  if(assessment.qa_report.steps.length&&assessment.qa_report.steps.every(x=>x.result==='NOT_RUN')){
+   assert.equal(access.available,true,id+' supplied identity remains truthful');
+   assert(!JSON.stringify(access).includes('deployment_ready'));assert(access.proof_scope.includes('no deployment availability'));
+  }
+  preserved.push([id,...await Promise.all(['operator/validator-inputs/record.yaml','operator/validator-inputs/published.json','operator/expectations.json'].map(async file=>hash(await readFile(path.join(p.cases[id],file)))))]);
+ }
+ // Independent frozen70c68b preparation hashes, not newly generated expectations.
+ assert.equal(hash(preserved),'06ad8c11010321c29a6f28f6704a2c0fe694470746f4d0885382d5ac8bc916e8');
+ for(const id of ['H02-defect','H02-wait','H02-defect-inability','H03-resume']){
+  const cards=await p.input(id,'operator/cards.json');assert.equal(cards.reads.access.tenant,'example');assert.equal(chain(await p.input(id,'operator/validator-inputs/published.json')).valid,true,id);
+ }
+ for(const id of ['V04-proof-blocked-null-pass','V04-proof-blocked-null-fail','V04-proof-blocked-real-null-environment','V04-proof-blocked-foreign-result','V04-proof-wait-foreign-finding','V03-missing-middle','Q21-resume-ambiguous']){
+  const result=chain(await p.input(id,'operator/validator-inputs/published.json'));assert.equal(result.valid,false,id);
+  if(id.includes('null-pass')||id.includes('null-fail'))assert(result.diagnostics.some(x=>x.code==='PR'&&x.path.endsWith('/payload/pr')));
+  if(id==='V03-missing-middle')assert(result.diagnostics.some(x=>x.code==='LEDGER'&&x.path.endsWith('/finding_ids')));
+  if(id==='Q21-resume-ambiguous')assert(result.diagnostics.some(x=>x.code==='RESUME'));
  }
 });

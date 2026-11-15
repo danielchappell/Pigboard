@@ -14,7 +14,7 @@ Git, npm and access to the Git source and npm registry are required. Public
 Pigboard HTTPS needs no GitHub credential. For a private fork, prepare Git access
 outside commands and prompts; never embed credentials in a URL.
 
-The installer prepares the sixteen folders in
+The installer prepares the twenty-two folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
@@ -76,7 +76,7 @@ Success prints one JSON object:
 | --- | --- |
 | `commit` | Exact fetched source revision |
 | `release` | Absolute directory for this invocation's prepared release |
-| `skills` | Absolute root containing sixteen complete skill folders and `work-validator` |
+| `skills` | Absolute root containing twenty-two complete skill folders and `work-validator` |
 | `manifest` | Absolute manifest path with source hashes, bundle, Node and platform metadata |
 
 Retain the receipt and verify `commit` against the approved revision. Point the
@@ -100,7 +100,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
-`verification`. Inspect the expected commit, all sixteen entrypoints,
+`verification`. Inspect the expected commit, all twenty-two entrypoints,
 `dependencies: "verified"`, and six smoke checks: `pg.Client`, `bru --version`,
 `work-validator epic draft`, `work-validator ticket draft`, and
 `handoff-validator admission record`, and `config-validator project scope`. The
@@ -306,7 +306,7 @@ for bounds, diagnostics, local examples and safe publication responsibilities.
 Install/refresh the entire pinned, reviewed published bundle, not four loose
 `SKILL.md` files. All four helpers depend on
 `qa-api/references/structured-steps.md`, same-release authoring/handoff siblings
-and the prepared validator. The current sixteen-skill allowlist ships
+and the prepared validator. The current twenty-two-skill allowlist ships
 these helper folders. The separate qa-jira addition supplies publication only, with no new engine. Use the receipt's immutable
 versioned `skills` path for a run, rather than following a later stable-link refresh.
 Prepare locked Bruno 4.2.1 and pg 8.23.1 through normal installation **before** QA.
@@ -327,7 +327,7 @@ success as hosted/customer delivery acceptance.
 
 ## Prepared QA publisher setup
 
-The 16-skill bundle includes the full qa-jira folder and its same-release
+The 22-skill bundle includes the full qa-jira folder and its same-release
 work-validator dependency. Source entrypoint: [qa-jira](../skills/qa-jira/SKILL.md);
 installed entrypoint: `<receipt.skills>/qa-jira/SKILL.md`. Prepare the configured
 QA actor, native/PR/evidence reads, canonical append transport, exact comment read,
