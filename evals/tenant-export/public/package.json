@@ -1,0 +1,13 @@
+{
+  "name": "tenant-export-trial",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test.mjs",
+    "task-test": "node --test --test-name-pattern=export test.mjs",
+    "start": "node server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
