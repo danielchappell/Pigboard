@@ -59,6 +59,27 @@ test('H01 human-only ticket and semantic-invalid shape remain correctly bounded'
  const human=JSON.parse(await readFile(path.join(root,'docs/delivery/manager-r1/ticket-drafts.json')))[0].contract;assert.equal(validateValue(human,{mode:'start'}).valid,true);
  for(const mutate of [v=>v.acceptance_criteria.push(structuredClone(v.acceptance_criteria[0])),v=>v.testing_strategy.dispatch_order[0]='nonexistent',v=>v.problem_to_solve='   ']){const v=structuredClone(populated);mutate(v);assert.equal(validateValue(v,{mode:'start'}).valid,true);}
 });
+test('H01 CLI numeric bound failures name the inclusive limit and exact field in readable and JSON output',async t=>{
+ const dir=await fixture(t), file=path.join(dir,'numeric-bound.yaml');
+ const status='/testing_strategy/cases/0/steps/0/api/expected_status', rows='/testing_strategy/cases/0/steps/2/database/scope/max_rows';
+ const field=(value,pointer)=>pointer===status?value.testing_strategy.cases[0].steps[0].api:value.testing_strategy.cases[0].steps[2].database.scope;
+ for(const [pointer,key,bad,code,message] of [[status,'expected_status',99,'MINIMUM','Supply a number greater than or equal to 100.'],[rows,'max_rows',201,'MAXIMUM','Supply a number less than or equal to 200.']]) {
+  const value=structuredClone(populated);field(value,pointer)[key]=bad;value.problem_to_solve='PRIVATE_WORK_TEXT_MUST_NOT_BE_ECHOED';const input=stringify(value);await writeFile(file,input);
+  for(const json of [false,true]) {
+   const command=spawnSync(process.execPath,[cli,'--mode','start','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,1);assert.equal(command.stderr,'');assert(!command.stdout.includes('PRIVATE_WORK_TEXT_MUST_NOT_BE_ECHOED'));
+   if(json){const result=JSON.parse(command.stdout);assert.equal(result.valid,false);assert.equal(result.start_structure_valid,false);assert(result.diagnostics.some(d=>d.path===pointer&&d.code===code&&d.message===message));}
+   else assert(command.stdout.includes(`${code} ${JSON.stringify(pointer)}: ${message}`));
+  }
+  assert.equal(await readFile(file,'utf8'),input);
+ }
+ for(const [pointer,key,boundary] of [[status,'expected_status',100],[status,'expected_status',599],[rows,'max_rows',1],[rows,'max_rows',200]]) {
+  const value=structuredClone(populated);field(value,pointer)[key]=boundary;await writeFile(file,stringify(value));
+  for(const json of [false,true]) {
+   const command=spawnSync(process.execPath,[cli,'--mode','start','--input',file,...json?['--json']:[]],{encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(command.stderr,'');
+   if(json){const result=JSON.parse(command.stdout);assert.equal(result.valid,true);assert.equal(result.start_structure_valid,true);assert.deepEqual(result.diagnostics,[]);}else assert.match(command.stdout,/^Valid start structure/);
+  }
+ }
+});
 test('H02 forbidden syntax, keys, directives, aliases, document boundaries and safe diagnostics',()=>{
  const bad=['schema: pigboard-epic/v1\nschema: pigboard-ticket/v1','a: {b: 1, b: 2}','a: 1\n"\\u0061": 2','1: a','true: a','null: a','[a]: b','{a: b}: c','1: a\n"1": b','a: &x [*x]','a: &x 1\nb: *x','a: !custom x','a: !!timestamp 2020-01-01','a: !!set {}','%YAML 1.1\n---\na: yes','%TAG !e! tag:example.org,2020:\n---\na: x','a: [','', 'null','[]','a: x\n---','---\n---','schema: pigboard-epic/v999'];
  for(const text of bad){const r=validateWork(text);assert(!r.valid,JSON.stringify(text));assert(r.diagnostics.length);assert(!JSON.stringify(r).includes('Error:'));}
