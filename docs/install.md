@@ -295,3 +295,24 @@ installed regression checks execute the helper and chain validation from an
 unrelated working directory. Missing/changed helper or sibling files fail existing
 manifest verification, preserving the previous binding. See [handoffs](handoffs.md)
 for bounds, diagnostics, local examples and safe publication responsibilities.
+
+## Installed offline manager preview
+
+The prepared `work-validator` now includes the [offline manager preview](manager-preview.md),
+its pure policy modules and complete runnable synthetic fixtures. From any working
+directory use Node20+ and the actual receipt's skills location:
+
+```sh
+node /opt/pigboard/skills/work-validator/scripts/manager-preview.mjs --help
+node /opt/pigboard/skills/work-validator/scripts/manager-preview.mjs --config /tmp/config.json --input /tmp/snapshot.json --json
+```
+
+Normal preparation installs the locked validator dependencies; installation verifies
+an actual nonexecuting selection with the copied runtime before replacing the
+stable skills link. Missing/corrupt modules or wrong smoke output leave the previous
+stable release selected. Run normal preparation again at the approved pin outside
+a delivery command; preview never repairs/fetches dependencies. Root source use
+requires the normal contributor dependency preparation. The preview guide provides
+snapshot fields, bounds, complete human-case commands, structured/readable output
+and recovery. This local proposal performs zero provider/state writes and provides
+no activation, live freshness, permission or human acceptance evidence.

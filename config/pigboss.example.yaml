@@ -45,7 +45,13 @@
     "worker_prefixes": [
       "AI-Daniel-"
     ],
-    "opt_in_label": "pigboard"
+    "opt_in_label": "pigboard",
+    "preparation_stage_ids": [
+      "19"
+    ],
+    "cancelled_stage_ids": [
+      "20"
+    ]
   },
   "projects": [
     {
@@ -61,7 +67,9 @@
         "actors",
         "repositories",
         "worker_prefixes",
-        "opt_in_label"
+        "opt_in_label",
+        "preparation_stage_ids",
+        "cancelled_stage_ids"
       ],
       "mappings": {}
     },
@@ -90,7 +98,11 @@
         },
         "repositories": [
           "https://code.example.invalid/ops/service"
-        ]
+        ],
+        "preparation_stage_ids": [
+          "39"
+        ],
+        "cancelled_stage_ids": []
       }
     }
   ]

@@ -14,6 +14,7 @@ prepared skills; humans review and approve what ships.
 | Install or update the shared skills | [Installation, verification and recovery](docs/install.md) |
 | Contribute to Pigboard | [Agent entry point](AGENTS.md) and [contributor agreement](CONTRIBUTING.md) |
 | Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
+| Preview ready work from complete local facts | [Offline manager preview, examples and recovery](docs/manager-preview.md) |
 | Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
@@ -30,6 +31,7 @@ complete implementation Story coverage.
 | Thirteen shared skills: authoring, composed implementation, review, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
+| Offline manager policy preview of supplied complete snapshots | Implemented in source and prepared validator; nonexecuting proposals, no live discovery or repair ordering |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; reviewer/QA migration and full-loop acceptance remain pending |

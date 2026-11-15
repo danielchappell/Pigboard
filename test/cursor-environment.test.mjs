@@ -83,7 +83,7 @@ test('unsafe roots and unmanaged destinations are rejected before preparation', 
 });
 test('real installed validator runs outside checkout and failed runtime variants preserve stable link',async t=>{
  const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
- assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope']);
+ assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection']);
  const validator=path.join(first.stableSkills,'work-validator');
  const pair=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8')).mixed;
  const workFile=path.join(o.app,'work.json'),contextFile=path.join(o.app,'facts.json');
@@ -310,4 +310,22 @@ test('installed composed implementer retains complete links and runs source-iden
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
+});
+
+test('installed manager preview runs all frozen complete snapshots with real copied dependencies and no input writes',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
+ const {previewSnapshot}=await import('../lib/manager/decisions.mjs');
+ const cases=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-candidates.json'))).cases;
+ const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
+ for(const c of cases){const rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[cli,'--config',config,'--input',input,'--json',...(c.options?.expectedSnapshotDigest?['--expected-snapshot-digest',c.options.expectedSnapshotDigest]:[])];let output;try{output=execFileSync(process.execPath,args,{cwd:o.app,encoding:'utf8',timeout:30000});}catch(e){assert.equal(e.status,1);output=e.stdout.toString();}const result=JSON.parse(output);assert.deepEqual(result,previewSnapshot(rawConfig,rawSnapshot,c.options),c.id);assert.equal(result.streams.length,c.expected.streams.length);for(const expected of c.expected.streams){const actual=result.streams.find(s=>s.scope.project_id===expected.project_id&&s.scope.label===expected.label);assert.equal(actual.decision,expected.decision,c.id);assert.equal(actual.selected_ticket_id,expected.selected_ticket_id,c.id);assert.equal(actual.return_count,expected.return_count,c.id);if(expected.reason)assert.ok(actual.reasons.some(r=>r.code===expected.reason),c.id);}assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);}
+ assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);
+ for(const mutate of [async dir=>rm(path.join(dir,'lib/manager/availability.mjs')),async dir=>writeFile(path.join(dir,'lib/manager/snapshot.mjs'),'throw Error("corrupt preview runtime")'),async dir=>writeFile(path.join(dir,'scripts/manager-preview.mjs'),'process.exit(0);')]){await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));assert.equal(await realpath(installed.stableSkills),installed.skills);}
+ // Committed wrong-result sources pass source hashing, so actual smoke semantics
+ // (rather than tamper detection alone) must reject them before stable selection.
+ for(const badSource of ['process.exit(0);', 'console.log(JSON.stringify({schema:"pigboard-manager-preview/v1",valid:true,status:"complete",execution_authorized:true,writes:0,streams:[]}));']){
+  await writeFile(path.join(o.source,'scripts/manager-preview.mjs'),badSource);git(o.source,'add','.');git(o.source,'commit','-m','wrong preview smoke fixture');
+  await assert.rejects(installCursorSkills(o,fakeInstall),/Manager preview nonexecuting smoke check failed/);assert.equal(await realpath(installed.stableSkills),installed.skills);
+ }
+ const manifest=JSON.parse(await readFile(installed.manifest));for(const relative of ['scripts/manager-preview.mjs','lib/manager/snapshot.mjs','lib/manager/availability.mjs','lib/manager/decisions.mjs','docs/manager-preview.md','test/fixtures/manager-candidates.json'])assert.ok(manifest.sourceFiles['work-validator/'+relative]);
+ const guide=await readFile(path.join(validator,'docs/manager-preview.md'),'utf8');for(const match of guide.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)){if(/^(?:https?:|<)/.test(match[1]))continue;await readFile(path.resolve(path.dirname(path.join(validator,'docs/manager-preview.md')),match[1]));}
 });

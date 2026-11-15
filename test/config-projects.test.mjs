@@ -9,7 +9,7 @@ const fresh=()=>structuredClone(base),check=value=>parseConfig(JSON.stringify(va
 test('explicit whole-section inheritance resolves complete independent maps without mutation',()=>{
  const input=fresh(),before=JSON.stringify(input),scope=resolveProjects(input);assert.equal(JSON.stringify(input),before);
  assert.deepEqual(scope.projects.map(p=>p.id),['10001','10002']);assert.equal(scope.projects[0].stages.QA,'14');assert.equal(scope.projects[1].stages.QA,'34');
- assert.deepEqual(Object.keys(scope.projects[0]),['id','key','board_ids','stages','accepted_later_stage_ids','types','actors','repositories','worker_prefixes','opt_in_label']);
+ assert.deepEqual(Object.keys(scope.projects[0]),['id','key','board_ids','stages','accepted_later_stage_ids','types','actors','repositories','worker_prefixes','opt_in_label','preparation_stage_ids','cancelled_stage_ids']);
  assert.equal(check(input).valid,true);scope.projects[0].actors.manager.push('changed');assert.deepEqual(input.defaults.actors.manager,['operator-demo']);
  const fifty=fresh();fifty.projects=Array.from({length:50},(_,i)=>({...structuredClone(base.projects[i%2]),id:String(20000+i)}));const raw=JSON.stringify(fifty);assert.ok(Buffer.byteLength(raw)<CONFIG_LIMITS.bytes);assert.equal(parseConfig(raw).resolved_scope.projects.length,50);
 });
@@ -58,4 +58,12 @@ test('resolved authority fields compose with complete independent receipt fixtur
  const config=fresh(),native=envelope.trusted.projects[0];config.jira.site=envelope.trusted.site;config.projects=[{id:native.id,key:null,board_ids:[],inherit:[],mappings:{stages:native.stages,accepted_later_stage_ids:native.accepted_later_stage_ids,actors:native.actors,repositories:native.repositories,types:base.defaults.types,worker_prefixes:['AI-Daniel-'],opt_in_label:'pigboard'}}];
  const p=resolveProjects(config).projects[0];envelope.trusted.site=resolveProjects(config).site;envelope.trusted.projects[0]={...native,id:p.id,stages:p.stages,accepted_later_stage_ids:p.accepted_later_stage_ids,actors:p.actors,repositories:p.repositories};
  assert.equal(validateReceiptChain(JSON.stringify(envelope)).valid,true);
+});
+
+test('optional preparation/cancelled mappings preserve old configs, explicit inheritance and all disjoint sets',async()=>{
+ const old=check(base);assert.equal(old.valid,true);for(const p of old.resolved_scope.projects){assert.deepEqual(p.preparation_stage_ids,[]);assert.deepEqual(p.cancelled_stage_ids,[]);assert.equal(resolveProject(old.resolved_scope,{site:old.resolved_scope.site,project_id:p.id}).id,p.id);}
+ const v=fresh();v.defaults.preparation_stage_ids=['90'];v.defaults.cancelled_stage_ids=['91'];assert.deepEqual(check(v).resolved_scope.projects[0].preparation_stage_ids,[]);
+ v.projects[0].inherit.push('preparation_stage_ids');v.projects[0].mappings.cancelled_stage_ids=['92'];assert.deepEqual(check(v).resolved_scope.projects[0].preparation_stage_ids,['90']);assert.deepEqual(check(v).resolved_scope.projects[0].cancelled_stage_ids,['92']);
+ for(const change of [c=>c.projects[0].mappings.preparation_stage_ids=[],c=>delete c.defaults.preparation_stage_ids,c=>c.projects[0].mappings.cancelled_stage_ids=['90'],c=>c.projects[0].mappings.cancelled_stage_ids=[c.defaults.stages.QA],c=>c.projects[0].mappings.cancelled_stage_ids=[c.defaults.accepted_later_stage_ids[0]],c=>c.defaults.preparation_stage_ids=['90','90']]){const c=structuredClone(v);change(c);assert.equal(check(c).valid,false);}
+ const {diffConfig}=await import('../lib/config/diff.mjs');const diff=diffConfig(base,v);assert.ok(diff.mappings_changed.length);assert.ok(diff.checks_required.length);assert.deepEqual(diff.state_actions,[]);
 });
