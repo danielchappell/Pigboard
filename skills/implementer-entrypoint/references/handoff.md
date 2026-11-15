@@ -107,7 +107,8 @@ reference and retain completed actions. Without it, no polling or automatic resu
 The High plan records exact source/base/requirements fingerprint, plan hash,
 ordered edits/interfaces, requirement-to-change/test and every prescribed-case
 mapping, docs, preparation artifacts, failure/recovery, repo gates, file/time
-estimate and an individual assessment of all seven principles. Follow the shared
+estimate and an individual assessment of the target repository's accepted
+principles in its required categories. Follow the shared
 [one-reviewer prompt](plan-review.md) and [verified Cursor profile](cursor.md),
 including fresh read-only context, coverage denominator/second sweep, same model
 controls and honest absent per-call telemetry. Pigboard's two-reviewer contributor

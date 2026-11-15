@@ -27,21 +27,18 @@ If satisfying the ticket needs more scope, identify the human decision and stop.
 Enumerate the requirement/step/contract review surface, report examined/total
 counts, and perform a second sweep for missed findings. Give concrete evidenced
 findings with stable IDs, severity, requirement/source references and scope
-classification. Distinguish demonstrated issues from speculation. Assess all
-seven principles individually using the descriptions below, including human and
-agent differences. Return CLEAN or NOT CLEAN for the exact plan/revisions, with
+classification. Distinguish demonstrated issues from speculation. Independently
+find the target repository's accepted principles in its supplied rules and
+referenced standards; do not rely on the author's selection. Cite those sources
+and assess each principle using the project's names, groups and required format.
+Return CLEAN or NOT CLEAN for the exact plan/revisions, with
 limitations; unavailable evidence or incomplete coverage cannot be CLEAN.
 ```
 
-The author and reviewer separately assess:
-
-1. **Intuitive:** familiar behavior and sensible defaults for users and maintainers.
-2. **Discoverable:** humans can find use/help; agents have explicit inputs/errors.
-3. **Delightful experience:** avoid repeated setup, confusing results and needless work.
-4. **Token saver:** concise useful handoffs and bounded effort without hiding omissions.
-5. **Secure:** preserve credentials, permissions and consequential-action boundaries.
-6. **Agents are equal:** noninteractive capability and readable human evidence both work.
-7. **Dependable:** success, partial results, failure and recovery remain distinguishable.
+The author and reviewer make separate assessments. Do not impose a fixed count or
+another project's list. If the project defines no principles, say so; still assess
+the assignment and applicable standards. Consider differences between human and
+agent use where relevant.
 
 Explain how each is met, a concrete gap/tradeoff, or why unaffected. Principles do
 not authorize scope expansion. Return reviewer identity and model/effort evidence
