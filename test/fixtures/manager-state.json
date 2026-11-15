@@ -1,0 +1,75 @@
+{
+  "binding": {
+    "schema": "pigboard-aws-installation/v1",
+    "installation_id": "install-fixture",
+    "domain_id": "domain-fixture",
+    "site": "https://example.atlassian.net",
+    "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "package_revision": "5555555555555555555555555555555555555555",
+    "region": "eu-west-1",
+    "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard/fixture",
+    "table_name": "pigboard-fixture",
+    "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture",
+    "installation_generation": "generation-1"
+  },
+  "control": {
+    "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "schedule_enabled": false,
+    "writes_enabled": false,
+    "maintenance": false
+  },
+  "fresh": {
+    "installation_id": "install-fixture",
+    "domain_id": "domain-fixture",
+    "site": "https://example.atlassian.net",
+    "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "installation_generation": "generation-1",
+    "observed_at": "2026-11-15T12:00:00.000Z",
+    "new_installation": true,
+    "table_empty": true
+  },
+  "now": "2026-11-15T12:00:00.000Z",
+  "streamA": {
+    "site": "https://example.atlassian.net",
+    "project_id": "100",
+    "label": "AI-Maria-1"
+  },
+  "memberA": {
+    "site": "https://example.atlassian.net",
+    "project_id": "100",
+    "label": "AI-Maria-1",
+    "epic_id": "1000",
+    "ticket_id": "1001",
+    "assignment": null,
+    "expected_revision": null
+  },
+  "attemptA": {
+    "attempt_id": "11111111-1111-4111-8111-111111111111",
+    "ticket_id": "1001",
+    "epic_id": "1000",
+    "issue_key": "AAA-1",
+    "operation": "admit_ready",
+    "source_status_id": "10",
+    "target_status_id": "20",
+    "configuration_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "cause": [],
+    "publication": []
+  },
+  "evidence": {
+    "references": [
+      {
+        "ticket_id": "1001",
+        "comment_id": "700",
+        "record_id": "22222222-2222-4222-8222-222222222222",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    ],
+    "disposition": "confirmed_applied",
+    "actor_id": "fixture-manager"
+  },
+  "expected": {
+    "H01": "Four kinds readable; retained preview integration pending real82/83.",
+    "H02": "Atomic conditional winner; uncertain writes retained; stale finalizer rejected.",
+    "H03": "Original project/label identities and pending occupancy retained."
+  }
+}
