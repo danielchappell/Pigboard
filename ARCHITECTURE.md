@@ -98,9 +98,13 @@ complete Story set precedes implementation; activation is a separate gate.
 The [target walkthrough](docs/architecture/target/review-guide.md) explains the
 ratified diagrams. It is design context, not an installation or execution contract.
 
-The JSON schemas and YAML examples under `docs/architecture/` are proposed work
-contracts. The bounded `probes/` fixtures, including AWS discovery infrastructure,
+The canonical schemas and full writer YAML templates support authoring and local
+validation now; they do not supply live readiness or compatible worker execution.
+The bounded `probes/` fixtures, including AWS discovery infrastructure,
 are acceptance research tools, not the manager implementation. Preserve them as
-evidence. Migrating the existing `write-pr-sized-stories` skill to the structured
-YAML contract, retaining `human-writing`, is planned authoring work owned by that
-coordinated release; the current skill must remain usable until then.
+evidence. The `write-pr-sized-stories` skill now authors structured YAML while
+retaining `human-writing` and the generic Task route. It uses the shared validator
+from the same prepared release; no private schema or runtime is added. See
+[authoring](docs/authoring.md). Existing roles retain their basic prose contract
+until later coordinated worker/handoff/manager migration; installation does not
+activate them or convert old tickets.

@@ -78,12 +78,16 @@ An agent consumes its prepared snapshot. Operators change the source pin and
 verify the Build before an authorized activation. A failed Build can leave an
 older snapshot selected.
 
-## Write an executable Story
+## Author an Epic, Story or Bug
 
 Use [write-pr-sized-stories](skills/write-pr-sized-stories/SKILL.md), its
-[installed ticket contract](skills/write-pr-sized-stories/references/pigboard-ticket.md)
+[versioned ticket guide](skills/write-pr-sized-stories/references/pigboard-ticket.md)
 and [examples](skills/write-pr-sized-stories/references/pigboard-example.md).
-The future YAML contract remains in discovery; it does not replace these inputs yet.
+The writer emits full editable YAML with plain prose, separate AI/human cases
+and explicit unresolved inputs. See [authoring and local validation](docs/authoring.md)
+for the Epic route, templates, trusted facts and actual checks. Generic research
+and design remain Tasks. Existing workers still use the retained prose contract;
+compatible execution, manager admission and activation remain later release work.
 
 ## Cursor automations
 

@@ -26,14 +26,17 @@ enabling it. Selected successful Build
 `bld-20261113-15ee43f7-bf69-40ed-8b43-c61cf657f092` installed skill pin
 `b5004d81f227ff7e3bea0680ea86c5d7a78e47dd`, Rovito 0.1.295 and review-write profile.
 The owner saved the five-scope token; account/Plexus read checks passed with zero
-remote writes. This Build contains the structured authoring contract. It predates
-the later model-control checks below. No PR-write acceptance, Jira run or delivery run
+remote writes. This Build contains the earlier prose authoring contract, not the
+later YAML writer. It predates the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
-The new bundle adds `write-pr-sized-stories` to the ten execution skills. Authoring
-uses its [structured ticket contract](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-and examples. The three stage entrypoints link the same contract. Having the
-writer installed does not start a grooming automation or load all skills as context.
+The bundle includes `write-pr-sized-stories` alongside the ten execution skills.
+The current writer prepares [versioned YAML](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
+and complete examples for local validation. The three existing stage entrypoints
+consume the [retained basic-worker prose contract](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md),
+not those YAML drafts. This does not change the dated Build evidence, prompts,
+automations or activation. Having the writer installed does not start a grooming
+automation or load all skills as context.
 
 The later phase Build `bld-20261113-6159d5c3-112c-41a9-997f-1c9bf6bab5f5`
 successfully installed custom user-agent files, but the runtime rejected their

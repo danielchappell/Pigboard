@@ -110,12 +110,17 @@ it. A manifest proves source matching, not provider access.
 This script installs files; it does not configure a Cursor account. It rejects an
 unmanaged destination and preserves the previous stable link on failed preparation
 or verification. Keep full sibling folders intact rather than copying a SKILL.md
-alone. Resolve referenced paths within the prepared bundle.
+alone. Resolve referenced paths within the prepared bundle. The writer includes full
+Epic/ticket YAML templates, both authoring guides, complete worked examples and
+the retained basic-worker prose guide. Its human-writing sibling and same-release
+work-validator are required; copying just the writer entrypoint loses the contract.
+These authoring additions do not migrate workers or activate delivery.
 
 ## Check work locally
 
 The preparation receipt's `skills` path also contains the validator. Substitute
-that actual path and your absolute input file; the stable example uses the default
+that actual versioned path when refresh can overlap a run, and your absolute
+input file; the stable example uses the default
 root (use `stableSkills` for another root):
 
 ```sh
@@ -126,7 +131,7 @@ node /opt/pigboard/skills/work-validator/scripts/validate-work.mjs --mode start 
 `draft` checks editable structure; `structure` checks complete structure without
 context. `start` additionally requires the separate approved local YAML/JSON facts
 snapshot shown above. Prepare it outside the ticket using the complete context
-example in [authoring](authoring.md); every field is required. Keep operation facts
+examples linked from [authoring](authoring.md); every field is required. Keep operation facts
 bound to the full current step prescriptions. Installation supplies the parser and
 schemas, not those caller facts or permission to execute tests.
 

@@ -1,21 +1,28 @@
 ---
 name: write-pr-sized-stories
-description: Write, split, or revise developer work items as concise, plain-language PR-sized Stories or non-code Tasks. Use when turning requirements, epics, product notes, technical proposals, or existing tracker items into work a developer can understand, implement, test, and review; when deciding whether work is implementation or research; or when auditing scope, acceptance criteria, technical constraints, manual QA steps, and automated regression coverage.
+description: Write, split, or revise developer work items as concise, plain-language Epics, PR-sized Stories and Bugs, or non-code Tasks. Use when turning requirements, epics, product notes, technical proposals, or existing tracker items into work a developer can understand, implement, test, and review; when deciding whether work is implementation or research; or when auditing scope, acceptance criteria, technical constraints, manual QA steps, and automated regression coverage.
 ---
 
 # Write PR-Sized Stories
 
 Produce work items that a developer can understand, implement, test, and review without translating product-management or AI-generated language. Use the simplest accurate language possible. Keep the writing brief.
 
-## Pigboard Jira delivery
+## Choose the output
 
-For Stories entering Pigboard's agent workflow, use the
-[structured ticket contract](references/pigboard-ticket.md) and its
-[filled examples](references/pigboard-example.md). Keep the four body sections below,
-but use that contract's fixed field labels, IDs, preparation slots and QA step table.
-The contract defines implementation readiness separately from QA readiness.
-Apply the generic writing, sizing and scope rules here as well. Tasks keep the
-plain structure; do not populate an execution contract for research/design work.
+For Pigboard, author an Epic as `pigboard-epic/v1` or a Story/Bug as
+`pigboard-ticket/v1`. Read the [Epic guide](references/pigboard-epic.md) or
+[ticket guide](references/pigboard-ticket.md), then use its full YAML template.
+Read the [complete examples and separate synthetic contexts](references/pigboard-example.md)
+when a worked case helps. Keep requirements as plain prose inside YAML, with the
+four familiar section comments. Return one authoritative work body, not a second
+prose copy. Native Jira owns the short title, type, key, project, parent, assignee,
+labels and status outside that body.
+
+Research, discovery, design-only and documentation-only work stays a Task using
+this skill's Markdown structure. For generic work outside Pigboard, use that
+same structure and the applicable testing guidance below. The old basic delivery
+workers still consume their [retained prose contract](references/basic-workflow-ticket.md);
+this change does not migrate or activate them.
 
 This adaptation starts from ai-working-kit main checked 13 November 2026, commit
 `5bef5cf140bd5ea92e6600f0ff2a0be726e4c7ac`, source Story blob
@@ -52,14 +59,14 @@ Treat plain, concise writing as a hard requirement.
 
 1. Inspect the supplied requirements and any available code or project context.
 2. Identify unresolved facts and decisions. Research discoverable facts; do not invent requirements.
-3. Classify each item as a Story or Task.
+3. Classify each item as an Epic, implementation Story/Bug, or non-code Task.
 4. Split implementation work until every Story fits the size and review boundaries.
 5. Write each item in the required structure. Use simple words and short sentences.
 6. Audit every item before finalizing it.
 
 ## Classify the work
 
-Use **Story** only when the item:
+Use **Story** (or **Bug** for a code fix) only when the item:
 
 - Produces a code, configuration, infrastructure-as-code, or automated-test change.
 - Can be completed by an average developer familiar with the codebase in less than two human working days, including tests, documentation and pull-request preparation.
@@ -115,7 +122,12 @@ Repository metadata describes scope, not credentials or access permission. If de
 - Identify unresolved decisions clearly.
 - Do not invent requirements or speculative implementation details.
 
-## Use the required structure
+## Generic work and Task structure
+
+For Pigboard Epics and Stories/Bugs, use the linked YAML guides instead of this
+Markdown template. Their schema fields carry the same readable sections and full
+case obligations. Never omit `testing_strategy` from a Pigboard ticket. Generic
+work and Tasks use the template below and its genuine applicability rules.
 
 Write the title above the body. Do not add other sections unless the user requests them.
 
@@ -182,7 +194,7 @@ For **Testing Strategy**:
 - State what QA should see after each important action. Visual checks are the priority for UI work.
 - State whether QA needs a test account, credentials, a feature flag, seeded data, a role, or a permission.
 - For permission-based work, name the role that should have access and the role that should not.
-- State whether Postman is needed for API checks. If it is, include the HTTP method, route, authentication, required input, and expected status or response. Name an existing Postman collection or environment when known.
+- For generic work, state whether Postman is needed for API checks. If it is, include the HTTP method, route, authentication, required input, and expected status or response. Name an existing Postman collection or environment when known.
 - If there is no UI, name the exact place QA can observe the result, such as an API response, email, log view, or admin tool.
 - Do not invent access details, credentials, routes, collections, or permissions. Mark missing details as unresolved.
 - Include the complete acceptance test-case set on the ticket, covering the requirements and relevant normal, boundary, failure and permission behavior. This is the QA execution contract, not a catalogue of internal unit tests.
@@ -196,7 +208,7 @@ For **Testing Strategy**:
 
 Confirm that:
 
-- Every item is correctly classified as Story or Task.
+- Every item is correctly classified as Epic, Story/Bug or Task.
 - Every Story fits in less than two human working days, one repository, one pull request and no more than 20 changed files total.
 - Every Story identifies its target repository and change boundary; related repositories are context or separately owned work, not implicit permission to change them.
 - Every Story produces a complete code change rather than research or a partial implementation.
@@ -211,9 +223,17 @@ Confirm that:
 - A QA person can tell how to access the work, where to test it, and what to look for.
 - The testing strategy names needed credentials, roles, permissions, test data, or feature flags when relevant.
 - UI work has clear visual verification steps.
-- API work says whether Postman is needed and gives usable request details when known.
+- Generic API work says whether Postman is needed and gives usable request details when known; Pigboard uses its exact approved QA skills.
 - Automated regression coverage is a separate, brief note.
 - The complete acceptance cases and their explicit QA skill mapping are on the ticket, with expected results, evidence and prerequisites; internal unit-test inventories remain separate.
 - No requirement is duplicated, contradictory, speculative, or outside the parent epic's scope.
 
 When editing an existing tracker item, preserve its parent, workflow status, completion state, and already-delivered scope unless the user explicitly asks to change them. Never mark work complete based only on rewritten wording.
+
+For Pigboard, save raw YAML and run the shared checker as the selected guide
+explains. Report its actual mode/result, unresolved field paths and owners, and
+checks not run. Never manufacture trusted facts or install missing dependencies
+during authoring. Deliver drafts for review; drafting does not authorize Jira
+publication, label/status/parent changes, Ready to Work, completion, worker launch
+or requesting rework. Rework is a separate capability with its own contract; do
+not assume an absent skill exists or simulate it.

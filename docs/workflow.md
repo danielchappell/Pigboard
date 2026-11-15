@@ -6,9 +6,12 @@ and pull request. The human employee remains accountable.
 
 ## Ticket contract
 
-The [structured Story reference](../skills/write-pr-sized-stories/references/pigboard-ticket.md)
-is canonical for field labels, case ordering and preparation ownership. Use the
-[Story-writing skill](../skills/write-pr-sized-stories/SKILL.md) to produce it. Native
+The [retained basic-worker Story reference](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
+is canonical for the current workers' prose field labels, case ordering and
+preparation ownership. The [writing skill](../skills/write-pr-sized-stories/SKILL.md)
+now prepares versioned YAML with [local validation](authoring.md); those drafts
+await later compatible worker migration and are not executable by these roles.
+No automatic prose conversion, activation or worker behavior changed. Native
 Jira metadata stays in Jira fields; accepted requirements stay in the description;
 implementation/review/QA outputs use versioned handoff comments. All acceptance
 cases and expectations remain on the ticket, with reviewed executable artifacts

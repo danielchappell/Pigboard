@@ -3,8 +3,47 @@
 This local command checks editable structure and, with separately supplied trusted
 facts, local start semantics. It never reads Jira, changes a file, starts a worker,
 computes a digest, executes tests or establishes live readiness. The
-existing writing skill still uses its installed contract; the structured writer
-and complete manager release are separate work.
+writing skill now authors versioned
+Epic and Story/Bug YAML with full templates and readable requirements. The basic
+workers still consume their retained prose contract; compatible delivery and the
+manager require later coordinated release.
+
+## Author a draft
+
+Read the writing skill and its human-writing sibling first. Supply agreed scope,
+native Jira context, exact repository/base and separately prepared trusted facts.
+Ask for an Epic, Story/Bug, or a plain-language discovery/design Task. Start from
+the full Epic or ticket template; the complete examples show two streams, mixed AI/human cases
+and a non-runtime human-only Bug.
+
+Choose the navigation column matching this guide's location. **Source checkout**
+means `<repository>/docs/authoring.md`; those links use that checkout's `skills/`.
+**Prepared installation** means `<skills>/work-validator/docs/authoring.md`; those
+links reach the writer beside `work-validator` in the **same receipt's** `skills`
+directory. Both routes work offline; use only the column matching your layout.
+
+| Open | Source checkout only | Prepared installation only |
+| --- | --- | --- |
+| Writer entrypoint | [Source writer](../skills/write-pr-sized-stories/SKILL.md) | [Installed writer](../../write-pr-sized-stories/SKILL.md) |
+| Epic template | [Source Epic](../skills/write-pr-sized-stories/references/epic.yaml) | [Installed Epic](../../write-pr-sized-stories/references/epic.yaml) |
+| Ticket template | [Source ticket](../skills/write-pr-sized-stories/references/ticket.yaml) | [Installed ticket](../../write-pr-sized-stories/references/ticket.yaml) |
+| Complete briefs, work and contexts | [Source examples](../skills/write-pr-sized-stories/references/pigboard-example.md) | [Installed examples](../../write-pr-sized-stories/references/pigboard-example.md) |
+
+For example, if the preparation receipt gives `/absolute/receipt/skills`, open
+`/absolute/receipt/skills/write-pr-sized-stories/SKILL.md`; its references and
+`/absolute/receipt/skills/human-writing/SKILL.md` stay together in that release.
+Use the versioned receipt path when refresh can overlap the run.
+
+Keep the short title/native fields outside the YAML. Drafting does not publish,
+change readiness/status/labels/parent, launch workers or request rework.
+
+Keep every field, optional null and explicit empty list. Use ordinary prose inside
+the four familiar sections; selected-skill alternatives become null when complete.
+A missing fact stays null with an owned question. Only declared mechanical details
+may be deferred to implementation. Unknown scope, access or unavailable QA skills
+need resolution, never invented context or silent human reassignment. Split known
+oversized work; use a Task for an unknown that determines the split. Each Story/Bug
+is one repository/PR, <=20 total files and <2 human working days, including docs.
 
 ## Prepare and run
 
@@ -37,11 +76,14 @@ binding.
 
 ## Modes and editable structure
 
-Start from the complete [Epic skeleton](architecture/examples/manager-epic.yaml)
-or [ticket skeleton](architecture/examples/manager-ticket.yaml). Their populated
-[Epic](architecture/examples/manager-epic-populated.yaml) and
-[ticket](architecture/examples/manager-ticket-populated.yaml) counterparts are
-synthetic shape examples, not authorized targets.
+Start from the writer templates in the matching navigation column above. Their
+complete examples include separate synthetic contexts; they are not authorized targets. Save raw YAML and
+validate that text, preserving numeric parser provenance rather than passing a
+reserialized object. Without trusted context, run draft/structure and report start
+not run. Report actual mode/result and exact missing paths/owners. If the checker
+is missing or corrupt, preserve the draft and report setup missing; do not repair
+or download dependencies during authoring. Use a versioned receipt path when a
+refresh could overlap your run.
 
 `draft` requires every declared key, including nested keys when an object is
 present. Use explicit `null` for unresolved values and `[]` for an empty list.
@@ -276,3 +318,24 @@ complete output and exit status. Copy a skeleton to a disposable directory, fill
 only `acceptance_criteria[0].requirement`, rerun draft/structure modes and compare that exact
 path with remaining failures. The validator writes nothing. Retain evidence, then
 remove disposable fixtures/build outputs without changing live records/resources.
+
+## Prepare the writer's R1-03 human acceptance
+
+R1-03-H01 and H02 remain human-owned and pending until their owners run them.
+Developer tests/agent exercises do not supply a human PASS. Use a disposable
+folder, save the actual prompt/conversation and first returned work, and record
+the tested revision. H01 invokes the writer plus human-writing for the example
+Epic with two streams, mixed Story and human-only Bug, using their supplied
+briefs and separate synthetic facts. Validate saved raw outputs in draft and
+start modes. A human edits one requirement value, reruns, and records whether
+the prose is clear and editing needed no structural redesign. Retain commands,
+outputs, original/edited bodies and readability observations.
+
+H02 separately omits repository, requests an unavailable QA engine, requires two
+repository changes, exceeds 20 files, or reaches two human working days. Save
+actual writer outputs and validate any work draft. Expect owned missing inputs,
+complete bounded splits when facts permit, or a discovery Task when an unknown
+determines scope. Start is not applicable to a non-executable Task; record why.
+Never fabricate authority, credentials, routes, skill replacements, state changes
+or rework actions. Preserve evidence before removing disposable assets; do not
+change live Jira, PRs, deployment or other resources for these exercises.

@@ -3,8 +3,9 @@
 The canonical [Epic](../../contracts/epic-v1.schema.json) and
 [ticket](../../contracts/ticket-v1.schema.json) schemas describe structure. The
 [local validator](../authoring.md) checks draft, complete structure and trusted-context local-start modes and ships
-with the prepared bundle. It does not change the story-writing skill or make a
-ticket ready by itself. The [work contract](manager-work-contract.md)
+with the prepared bundle. The writing skill now emits full editable versioned
+YAML using these same schemas; neither authoring nor validation makes a ticket
+ready by itself. The [work contract](manager-work-contract.md)
 owns readiness and authority; this document resolves field types and lists the
 checks that JSON Schema cannot perform.
 
@@ -20,11 +21,11 @@ permits explicit null placeholders and incomplete alternatives while retaining r
 
 ## Human editing
 
-The writing skill will produce the full skeleton. Humans edit values in familiar
+The writing skill produces the full skeleton. Humans edit values in familiar
 sections: problem, acceptance criteria, repository and testing strategy. They can
 use YAML multiline strings for prose. They need not write escaped JSON or invent
-field placement. The future writer must leave optional null fields visible and
-replace unused optional lists with `[]`.
+field placement. The writer leaves optional null fields visible and
+replaces unused optional lists with `[]`.
 
 One populated example is included as a synthetic illustration of field types. Its
 repository, branch, access and fixtures are placeholders, not verified resources
@@ -214,10 +215,12 @@ Local semantic behavior is covered by the Node semantic/graph suites described i
 [authoring](../authoring.md). Provider evidence, native/admission checks and actual
 publication remain separate; local schema tests cannot claim them passed.
 
-The authoring skill, validators, separate role handoffs, Story/Bug filters and
-worker environment must roll out together with manager writes and delivery
-automations disabled. Existing prose tickets are not silently accepted as this
-version. The complete Story set remains subject to owner review before building.
+Authoring templates and shared local validation are available for preparation.
+Separate role handoffs, compatible Story/Bug filters, worker environment and
+manager still require coordinated release with writes/automations disabled until
+authorized activation. Current workers retain their prose contract; existing
+tickets are not silently converted or accepted as this version. See
+[authoring](../authoring.md) for the usable writer route and its limits.
 
 ## Author assessment
 
