@@ -309,3 +309,39 @@ Sources: [Jira comments](https://developer.atlassian.com/cloud/jira/platform/res
 [issue properties](https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-properties/),
 [property limitations](https://developer.atlassian.com/cloud/jira/platform/jira-entity-properties/),
 [JSON canonicalization](https://www.rfc-editor.org/rfc/rfc8785).
+
+### Repeated-parent incorporation in the existing chain validator
+
+A current implementation, review or QA may consume distinct stack updates U1/A2
+and U2/A3 while incorporating A3 once. A3 must equal or explicitly succeed each
+requested parent completion through `admission.payload.previous_assignment`.
+Every contributing admission/completion retains this ticket's PR identity and
+configured site/project/full stream/repository. Exact old PR observations,
+requirements, actors, QA ledger, execution evidence and permitted resume lineage
+remain mandatory. A date or current pointer alone supplies no ancestry.
+
+Each stack update's roots equal the completed repair causes between the parent's
+completion actually incorporated by the child's prior implementation and that
+update's requested parent completion. For B1 at A1, A2 consuming R1 and A3 consuming
+R2, U1 requires R1 and U2 requires R1+R2. A B already at A2 requires only R2 for the
+next update. An arbitrary resolution pair cannot erase an unincorporated cause.
+Direct request lists remain exact and duplicate-free; convergent root paths may
+share one leaf without being a cycle.
+
+Only nested authenticated history receives this allowance. Every record relied on
+by it needs a matching exact retained server metadata tuple. The selected worker's
+actual incorporated successor is validated as current accepted completion; selecting
+old A2/U1 directly remains strict. A selected admission/queue publication receives
+no permission from a possible future implementation found in complete discovery.
+Only strict current accepted QA establishes completion. No schema, public option,
+manager history projection or role authority changes.
+
+Per-call completed structural root closures are private immutable data, separate
+from active traversal and purpose/anchor-bound authority proofs. A completed closure
+stores repair leaf identities only. It cannot prove current authority, retention,
+coverage or obligation discharge. It survives failed semantic speculation, while
+failed authority/null-PR proofs roll back. Successful closure expansion unions at
+most O(E×L) leaf entries and stores O(V×L), for supplied distinct nodes V, edges E
+and leaves L. This bound covers successful structural closures; the whole validator
+and retries of unfinished failing prefixes have additional bounded semantic work.
+Active frames unwind on failure; partial closures and exceptions are never cached.
