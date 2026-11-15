@@ -80,7 +80,12 @@ Before code or provider writes:
    replacement. Null PR repair is allowed **only** for documented pre-first-PR
    dependency wait: complete supplied publication inventory, no PR anywhere in prior
    lineage, matching previous assignment and unresolved request references. Unknown
-   history or a generally missing PR is not proof of this special case.
+   history or a generally missing PR is not proof of this special case. Retain the
+   genuinely supplied complete precreation snapshot and successful canonical result,
+   full assignment/predecessor chain, exact references/digests/server metadata and
+   requirements through High/Medium continuation. Repeated no-PR waits retain their
+   full real prefix. After creation this is historical precreation proof, never a
+   fresh assertion that the inventory is empty; retain actual PR creation/readback.
 5. Check actual predecessor PR, merge, completion and base/incorporation facts.
    Epic order alone is not lineage. Actual stack dependency needs exact parent
    ticket/PR, verified completion and incorporated revision, same site/project/full
@@ -114,7 +119,8 @@ another repository, >20 total files or >=2 human days is a human blocker.
 After exact-plan CLEAN, Medium retains assignment/requirements, accepted plan/review,
 checkout/PR and action receipts. Implement only that plan/confirmed in-scope fixes.
 On repair incorporate every assigned cause and required actual parent revision;
-record a root consumed only after incorporation. Preserve unrelated work, one PR
+retain evidence of every incorporated root; READY consumes only the exact assigned
+references under [record mapping](#record-mapping). Preserve unrelated work, one PR
 and source identity. Publish/update ready non-draft PR using authorized repository
 method after its gates. No self-approval, merge, deploy or human acceptance claims.
 
@@ -158,11 +164,34 @@ record each as NOT_RUN with reason in the linked report. Implementer `qa_report`
 is null; do not invent QA observations. Any actual retained report must satisfy
 the existing role-specific contract; shape-valid supplied facts are not authority.
 
+For READY, `payload.consumed_requests` contains every reference in the validated
+admission's `payload.requests` exactly once and no others. Compare all four fields:
+`ticket_id`, `comment_id`, `record_id`, `digest`; detect missing, duplicate, extra or
+different-digest references. Construct in admission order for determinism; canonical
+semantics are set membership. Ordinary `requests: []` produces `consumed_requests: []`.
+If assigned stack request U1 has root R1, consume U1 only, while verifying/reporting
+all R1 incorporation and required parent completion/revision through lineage,
+`stack_parent` and linked evidence. If assigned a `dependency_wait`, consume that
+exact wait reference, never its nested requests instead of or alongside it. Directly
+assigned repair requests remain direct entries. Never discard causes or evidence
+to satisfy equality. Partial wait/block records keep their own references/reports,
+no `consumed_requests` field and no claimed incorporation or passing CI.
+
+Before append, both job preparation and Jira publication compare this exact READY
+set against validated assignment references, separately from record/formatter shape
+success. A mechanical mapping error in an unpublished candidate may be regenerated
+from verified references and all gates rechecked; missing/uncertain assignment or
+incorporation facts stop readiness. After any append attempt there is no corrected
+replacement append or retry, including after chain rejection.
+
 Unpublished candidate: record-mode validation only, then compare actual evidence
 facts/references against reads. Do not fabricate a comment ID/server metadata to
 pass chain validation before publication. Semantic proof still matters even where
 the record validator only checks shape. Existing assignment/predecessor receipts
-must already pass their chain checks. Conflicting existing results for the same
+must pass their appropriate phase checks. In the first-PR-after-null-repair interval,
+use retained actual historical precreation proof plus the independently fresh checks
+below; a fresh admission-only chain with the new PR honestly in inventory must not
+be expected to pass. Conflicting existing results for the same
 slot hold work; a confirmed identical result is a retained publication receipt,
 not a reason to append again. Complete bounded reads are required to know this.
 
@@ -184,6 +213,22 @@ credentials. Summaries and linked reports stay outside the canonical block.
    write. Inspect complete existing slot results; stop conflicts or retain an
    already confirmed identical receipt. Validate predecessor receipts and candidate
    as described above. Missing semantic proof prevents publication.
+   For first PR after proved null-PR repair, label retained proof **historical
+   precreation proof**. It may be revalidated unchanged, never called current.
+   Independently reread exact current pointer, native site/project/type/full stream/
+   status, requirements and assignment operation; exact assignment/predecessor bytes,
+   digests and server author/update metadata must match retained proof. Read complete
+   fresh publication inventory, all result slots and requests, actual PR creation/
+   readback and current own PR identity/source/target. The sole PR created by this
+   assignment must honestly appear. Additional/unaccounted PRs, uncertain creation,
+   edited/missing proof or new unresolved obligations stop. Verify fresh CI,
+   verification/preparation and parent/root lineage appropriate to the actual kind:
+   READY requires passing checks/incorporation; wait/block retains unfinished checks.
+   Recheck directed access/transition gates and exact READY reference equality.
+   Historical PASS cannot substitute for these reads. Missing genuine precreation
+   snapshot/result after creation means local unavailable/incomplete handoff with
+   **no append or transition**: never reconstruct history, hide the PR, fabricate
+   prospective comment metadata or append a speculative blocker as fallback.
 2. Prepare immutable supported HTML with the same-release deterministic helper:
 
    ```text
@@ -199,7 +244,10 @@ credentials. Summaries and linked reports stay outside the canonical block.
 3. Publish **once**, retain exact returned issue/comment identity. Read back that
    exact receipt through complete bounded pagination; verify author/update metadata,
    parsed record ID/digest and unchanged canonical content. Append actual provider
-   observations to the supplied receipt envelope and chain-check this real target.
+   observations to the supplied receipt envelope and chain-check this real target
+   with complete current inventory. Only this actual post-append receipt can
+   discharge historical null admissions under the canonical contract; it never
+   retroactively proves missing preflight or authorizes the earlier append.
    Retain `validated_leaf`/`qa_report` and diagnostics. Never synthesize a success.
 4. After read-back and immediately before transition, reread native source stage,
    current pointer/assignment, requirements, PR/head/target and CI. Then send **one**
@@ -244,6 +292,9 @@ executable work schema:
   returned.” Setup observation is not per-run telemetry; no child self-attestation.
 - `prepared_inputs`/verification references, case IDs/expectations/order, commands,
   actual local results and separately current CI; human pending work and limitations.
+- Historical precreation snapshot/result and full chain/metadata/digests when
+  applicable, labelled historical, plus actual PR creation/readback and separately
+  fresh final authority/inventory/outcome reads; never replace one with the other.
 - `consumed_requests`, `stack_parent`, `unfinished_checks` with NOT_RUN reasons;
   `candidate_record` or null, exact prepared bytes/digest and confirmed/uncertain
   action receipts; observed `jira_status` or unknown and `recovery_reason`/human

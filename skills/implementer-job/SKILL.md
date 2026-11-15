@@ -50,6 +50,11 @@ second PR. No self-approval, merge or deployment.
 Return evidence and a complete canonical candidate as specified in the
 [record mapping](../implementer-entrypoint/references/handoff.md#record-mapping),
 plus the [durable phase result](../implementer-entrypoint/references/handoff.md#durable-result).
+For READY return exactly the admission's assigned references once, not flattened
+roots; retain every cause/parent incorporation evidence under that mapping. Partial
+wait/block claims no consumption. Preserve genuine precreation proof and actual PR
+creation/readback through continuation and return, following the shared
+[phase-specific publication checks](../implementer-entrypoint/references/handoff.md#publication-protocol).
 Keep unfinished checks explicit and actual action effects distinct from readiness.
 The composer/Jira skill publishes the candidate; the job does not invent provider
 receipts or report Jira advanced.

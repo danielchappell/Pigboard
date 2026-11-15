@@ -176,3 +176,66 @@ test('pre-first-PR dependency wait requires explicit request lineage and complet
   nativeChild.pr_history_complete=false;assert.equal(chain(e).valid,false);
   nativeChild.pr_history_complete=true;nativeChild.published_prs=[{provider:'github',repository:e.trusted.projects[0].repositories[0],number:'99'}];assert.equal(chain(e).valid,false);
 });
+
+// These are synthetic receipt regressions, not observed worker/publication runs.
+function rewriteTarget(e, x) {
+  x.c.body = JSON.stringify({ type: 'doc', version: 1, content: [{ type: 'codeBlock', attrs: { language: 'yaml' }, content: [{ type: 'text', text: stringify(x.r, { aliasDuplicateObjects: false }) }] }] });
+  x.c.format = 'adf';
+  e.target = reference(x); // Bind the changed bytes, avoiding incidental stale-digest failures.
+}
+
+test('READY consumes exact direct admission references while retaining transitive stack/wait evidence', () => {
+  for (const name of ['human', 'repair', 'stack', 'first_pr_after_wait']) {
+    const { e, x } = implementation(name);
+    const admission = entries(e).find(a => a.r.record_id === x.r.assignment.record_id);
+    assert.deepEqual(x.r.payload.consumed_requests, admission.r.payload.requests, name);
+    assert.equal(chain(e).valid, true, name + JSON.stringify(chain(e).diagnostics));
+    if (name === 'human') assert.deepEqual(x.r.payload.consumed_requests, []);
+    if (!['stack', 'first_pr_after_wait'].includes(name)) continue;
+    const root = reference(entries(e).find(a => a.r.kind === 'repair_request'));
+    const assigned = structuredClone(admission.r.payload.requests);
+    for (const consumed of [[...assigned, root], [root], [], [...assigned, assigned[0]], [{ ...assigned[0], digest: 'sha256:' + 'f'.repeat(64) }]]) {
+      const changed = structuredClone(e), target = entries(changed).find(a => a.c.id === x.c.id);
+      target.r.payload.consumed_requests = consumed;
+      rewriteTarget(changed, target);
+      const result = chain(changed);
+      assert.equal(result.valid, false, name + JSON.stringify(consumed));
+      const duplicate = consumed.length === 2 && consumed[0] === consumed[1];
+      assert(result.diagnostics.some(d => d.code === (duplicate ? 'STRUCTURE' : 'REPAIR') && d.path.includes('consumed_requests')), JSON.stringify(result.diagnostics));
+    }
+  }
+});
+
+test('first PR preserves historical precreation proof, rejects fresh admission-only proof and validates actual implementation', () => {
+  const { e: current, x } = implementation('first_pr_after_wait');
+  const precreation = structuredClone(current), child = precreation.issues.find(i => i.id === x.r.ticket_id);
+  const assignment = structuredClone(x.r.assignment);
+  const page = precreation.comment_pages.find(p => p.ticket_id === x.r.ticket_id);
+  page.comments = page.comments.slice(0, page.comments.findIndex(c => c.id === assignment.comment_id) + 1);
+  page.total = page.comments.length;
+  child.published_prs = [];
+  precreation.pr_receipts = precreation.pr_receipts.filter(p => p.number !== x.r.payload.pr.number);
+  precreation.target = assignment;
+  const historicalBytes = JSON.stringify(precreation), historicalResult = chain(precreation);
+  assert.equal(historicalResult.valid, true, JSON.stringify(historicalResult.diagnostics));
+  const fresh = structuredClone(precreation);
+  fresh.issues.find(i => i.id === child.id).published_prs = structuredClone(current.issues.find(i => i.id === child.id).published_prs);
+  fresh.pr_receipts = structuredClone(current.pr_receipts);
+  assert.equal(chain(fresh).valid, false);
+  assert.equal(chain(current).valid, true, JSON.stringify(chain(current).diagnostics));
+  assert.equal(JSON.stringify(precreation), historicalBytes);
+  assert.deepEqual(chain(precreation), historicalResult);
+  assert.deepEqual(current.issues.find(i => i.id === child.id).pointer.assignment, assignment);
+  assert.deepEqual(JSON.parse(JSON.stringify(x.r.payload.consumed_requests)), [reference(entries(current).find(a => a.r.kind === 'dependency_wait'))]);
+});
+
+test('formatter shape success cannot authorize a flattened transitive-root candidate', async t => {
+  const o = await temporary(t), { e, x } = implementation('stack');
+  x.r.payload.consumed_requests.push(reference(entries(e).find(a => a.r.kind === 'repair_request')));
+  await writeFile(o.input, stringify(x.r)); await writeFile(o.summary, 'Synthetic unpublished candidate');
+  success(o.run());
+  rewriteTarget(e, x);
+  const result = chain(e);
+  assert.equal(result.valid, false);
+  assert(result.diagnostics.some(d => d.code === 'REPAIR' && d.path.endsWith('/payload/consumed_requests')));
+});
