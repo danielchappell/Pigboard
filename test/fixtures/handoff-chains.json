@@ -3000,6 +3000,794 @@
       ],
       "retained": [],
       "request_resolutions": []
+    },
+    "first_pr_after_wait": {
+      "schema": "pigboard-receipt-input/v1",
+      "consumer": "worker",
+      "target": {
+        "ticket_id": "1001",
+        "comment_id": "9005",
+        "record_id": "10000000-0000-4000-8000-000000000005",
+        "digest": "sha256:c596dda11907f5b1a0d8534003d49ffbfd3b7ef2c8fad75985884bda9c544e3a"
+      },
+      "trusted": {
+        "site": "https://jira.example.invalid",
+        "projects": [
+          {
+            "id": "100",
+            "stages": {
+              "Ready to Work": "1",
+              "In Progress": "2",
+              "In Review": "3",
+              "QA": "4",
+              "Human Review": "5",
+              "Rework Queued": "6",
+              "Blocked": "7"
+            },
+            "accepted_later_stage_ids": [
+              "8"
+            ],
+            "actors": {
+              "manager": [
+                "manager"
+              ],
+              "implementer": [
+                "implementer"
+              ],
+              "reviewer": [
+                "reviewer"
+              ],
+              "qa": [
+                "qa"
+              ],
+              "human_request": [
+                "human"
+              ]
+            },
+            "repositories": [
+              "https://example.invalid/example/application"
+            ],
+            "evidence_uris": [
+              "https://evidence.example.invalid/1000-001-1-plan",
+              "https://evidence.example.invalid/1000-001-1-plan-review",
+              "https://evidence.example.invalid/1000-001-1-ci",
+              "https://evidence.example.invalid/1000-001-1-verification",
+              "https://evidence.example.invalid/1000-001-1-approval",
+              "https://evidence.example.invalid/1000-001-1-report",
+              "https://evidence.example.invalid/1001-028-1-plan",
+              "https://evidence.example.invalid/1001-028-1-plan-review",
+              "https://evidence.example.invalid/1001-028-1-ci",
+              "https://evidence.example.invalid/1001-028-1-verification",
+              "https://evidence.example.invalid/1001-028-1-approval",
+              "https://evidence.example.invalid/1001-028-1-report",
+              "https://evidence.example.invalid/stack-finding",
+              "https://evidence.example.invalid/1000-033-2-plan",
+              "https://evidence.example.invalid/1000-033-2-plan-review",
+              "https://evidence.example.invalid/1000-033-2-ci",
+              "https://evidence.example.invalid/1000-033-2-verification",
+              "https://evidence.example.invalid/1000-033-2-approval",
+              "https://evidence.example.invalid/1000-033-2-report",
+              "https://evidence.example.invalid/1001-038-2-plan",
+              "https://evidence.example.invalid/1001-038-2-plan-review",
+              "https://evidence.example.invalid/1001-038-2-ci",
+              "https://evidence.example.invalid/1001-038-2-verification",
+              "https://evidence.example.invalid/1001-038-2-approval",
+              "https://evidence.example.invalid/1001-038-2-report"
+            ],
+            "pipeline_actors": [
+              "pipeline"
+            ],
+            "configured_targets": [
+              "local-review"
+            ]
+          }
+        ],
+        "manager_assignments": []
+      },
+      "issues": [
+        {
+          "site": "https://jira.example.invalid",
+          "id": "1000",
+          "key": "EX-1",
+          "project_id": "100",
+          "stage_id": "5",
+          "stream": "stream-1",
+          "pointer": {
+            "schema": "pigboard-work-pointer/v1",
+            "assignment": {
+              "ticket_id": "1000",
+              "comment_id": "2033",
+              "record_id": "00000000-0000-4000-8000-000000000033",
+              "digest": "sha256:8ae2b62c1c68efb261f933a2024a2acf81b7917ee3f722faf0e691e7892223e6"
+            }
+          },
+          "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "required_requests": [],
+          "pr_history_complete": true,
+          "published_prs": [
+            {
+              "provider": "github",
+              "repository": "https://example.invalid/example/application",
+              "number": "10"
+            }
+          ]
+        },
+        {
+          "site": "https://jira.example.invalid",
+          "id": "1001",
+          "key": "EX-2",
+          "project_id": "100",
+          "stage_id": "5",
+          "stream": "stream-1",
+          "pointer": {
+            "schema": "pigboard-work-pointer/v1",
+            "assignment": {
+              "ticket_id": "1001",
+              "comment_id": "9002",
+              "record_id": "10000000-0000-4000-8000-000000000002",
+              "digest": "sha256:c8efda69045be3984fd429b19b86e75519984e52b1ef05d251c4ef302a2c9562"
+            }
+          },
+          "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "required_requests": [],
+          "pr_history_complete": true,
+          "published_prs": [
+            {
+              "provider": "github",
+              "repository": "https://example.invalid/example/application",
+              "number": "11"
+            }
+          ]
+        }
+      ],
+      "requirements": [
+        {
+          "ticket_id": "1000",
+          "digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "format": "yaml",
+          "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+          "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-1\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-1\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}"
+        },
+        {
+          "ticket_id": "1001",
+          "digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "format": "yaml",
+          "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+          "context_body": "{\"schema\":\"pigboard-work-validation-context/v1\",\"subject_key\":\"EX-2\",\"repositories\":[{\"url\":\"https://example.invalid/example/application\",\"base_branches\":[\"main\"]}],\"allowed_skills\":[],\"configured_targets\":[\"local-review\"],\"references\":[],\"prerequisite_graph\":[{\"ticket\":\"EX-2\",\"prerequisites\":[]}],\"related_changes\":[],\"operations\":[]}"
+        }
+      ],
+      "comment_pages": [
+        {
+          "site": "https://jira.example.invalid",
+          "ticket_id": "1000",
+          "start_at": 0,
+          "total": 9,
+          "is_last": true,
+          "comments": [
+            {
+              "id": "2001",
+              "author_id": "manager",
+              "update_author_id": "manager",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2002",
+              "author_id": "implementer",
+              "update_author_id": "implementer",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000002\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2001\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:6aa75635bcfcf298e4f43d67d72f2db0b3ecd496710621fe3101950d25c9f3fe\\\"},\\\"role\\\":\\\"implementer\\\",\\\"kind\\\":\\\"implementation\\\",\\\"from_stage\\\":\\\"In Progress\\\",\\\"to_stage\\\":\\\"In Review\\\",\\\"payload\\\":{\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"1111111111111111111111111111111111111111\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"stack_parent\\\":null,\\\"consumed_requests\\\":[],\\\"plan\\\":{\\\"label\\\":\\\"1000-001-1-plan\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-plan\\\",\\\"digest\\\":null},\\\"plan_review\\\":{\\\"label\\\":\\\"1000-001-1-plan-review\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-plan-review\\\",\\\"digest\\\":null},\\\"ci\\\":{\\\"label\\\":\\\"1000-001-1-ci\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-ci\\\",\\\"digest\\\":null},\\\"verification\\\":[{\\\"label\\\":\\\"1000-001-1-verification\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-verification\\\",\\\"digest\\\":null}],\\\"prepared_inputs\\\":[]},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2003",
+              "author_id": "reviewer",
+              "update_author_id": "reviewer",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000003\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2001\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:6aa75635bcfcf298e4f43d67d72f2db0b3ecd496710621fe3101950d25c9f3fe\\\"},\\\"role\\\":\\\"reviewer\\\",\\\"kind\\\":\\\"review\\\",\\\"from_stage\\\":\\\"In Review\\\",\\\"to_stage\\\":\\\"QA\\\",\\\"payload\\\":{\\\"implementation\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2002\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000002\\\",\\\"digest\\\":\\\"sha256:21249fadcd1781632aaabc77f8ffe3b5c2f4a946d2b4b45a33720c04fe608266\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"1111111111111111111111111111111111111111\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"approval\\\":{\\\"label\\\":\\\"1000-001-1-approval\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-approval\\\",\\\"digest\\\":null},\\\"report\\\":{\\\"label\\\":\\\"1000-001-1-report\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-001-1-report\\\",\\\"digest\\\":null}},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2004",
+              "author_id": "qa",
+              "update_author_id": "qa",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000004\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2001\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:6aa75635bcfcf298e4f43d67d72f2db0b3ecd496710621fe3101950d25c9f3fe\\\"},\\\"role\\\":\\\"qa\\\",\\\"kind\\\":\\\"qa\\\",\\\"from_stage\\\":\\\"QA\\\",\\\"to_stage\\\":\\\"Human Review\\\",\\\"payload\\\":{\\\"review\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2003\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000003\\\",\\\"digest\\\":\\\"sha256:f307a68214b9c956600f76451a94cc02a37ac828650614a8833137454ba9d948\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"1111111111111111111111111111111111111111\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"report\\\":{\\\"steps\\\":[],\\\"human_pending\\\":[\\\"HQA-01\\\"],\\\"no_ai_cases_reason\\\":\\\"Human review of local contract behavior.\\\"}},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2032",
+              "author_id": "human",
+              "update_author_id": "human",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000032\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2001\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:6aa75635bcfcf298e4f43d67d72f2db0b3ecd496710621fe3101950d25c9f3fe\\\"},\\\"role\\\":\\\"human_request\\\",\\\"kind\\\":\\\"repair_request\\\",\\\"from_stage\\\":\\\"Human Review\\\",\\\"to_stage\\\":\\\"Rework Queued\\\",\\\"payload\\\":{\\\"basis\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2004\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000004\\\",\\\"digest\\\":\\\"sha256:1a54a834994788f6a4c11e4b56284c795de99977669a129dce6cc14e0d05cb26\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"1111111111111111111111111111111111111111\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"findings\\\":[{\\\"id\\\":\\\"F1\\\",\\\"summary\\\":\\\"Parent correction.\\\",\\\"evidence\\\":[{\\\"label\\\":\\\"stack-finding\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/stack-finding\\\",\\\"digest\\\":null}]}],\\\"qa_report\\\":null},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2033",
+              "author_id": "manager",
+              "update_author_id": "manager",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Rework Queued\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"repair\\\",\\\"previous_assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2001\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:6aa75635bcfcf298e4f43d67d72f2db0b3ecd496710621fe3101950d25c9f3fe\\\"},\\\"requests\\\":[{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2032\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000032\\\",\\\"digest\\\":\\\"sha256:b9ec40fb912f4da6c7141dc8aeefaf8eeb399d09a76cb2669d18c87374079da1\\\"}],\\\"existing_pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"1111111111111111111111111111111111111111\\\",\\\"target_branch\\\":\\\"main\\\"}},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2034",
+              "author_id": "implementer",
+              "update_author_id": "implementer",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000034\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2033\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"digest\\\":\\\"sha256:8ae2b62c1c68efb261f933a2024a2acf81b7917ee3f722faf0e691e7892223e6\\\"},\\\"role\\\":\\\"implementer\\\",\\\"kind\\\":\\\"implementation\\\",\\\"from_stage\\\":\\\"In Progress\\\",\\\"to_stage\\\":\\\"In Review\\\",\\\"payload\\\":{\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"stack_parent\\\":null,\\\"consumed_requests\\\":[{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2032\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000032\\\",\\\"digest\\\":\\\"sha256:b9ec40fb912f4da6c7141dc8aeefaf8eeb399d09a76cb2669d18c87374079da1\\\"}],\\\"plan\\\":{\\\"label\\\":\\\"1000-033-2-plan\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-plan\\\",\\\"digest\\\":null},\\\"plan_review\\\":{\\\"label\\\":\\\"1000-033-2-plan-review\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-plan-review\\\",\\\"digest\\\":null},\\\"ci\\\":{\\\"label\\\":\\\"1000-033-2-ci\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-ci\\\",\\\"digest\\\":null},\\\"verification\\\":[{\\\"label\\\":\\\"1000-033-2-verification\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-verification\\\",\\\"digest\\\":null}],\\\"prepared_inputs\\\":[]},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2035",
+              "author_id": "reviewer",
+              "update_author_id": "reviewer",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000035\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2033\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"digest\\\":\\\"sha256:8ae2b62c1c68efb261f933a2024a2acf81b7917ee3f722faf0e691e7892223e6\\\"},\\\"role\\\":\\\"reviewer\\\",\\\"kind\\\":\\\"review\\\",\\\"from_stage\\\":\\\"In Review\\\",\\\"to_stage\\\":\\\"QA\\\",\\\"payload\\\":{\\\"implementation\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2034\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000034\\\",\\\"digest\\\":\\\"sha256:6b89783d7c4a12a2f4a2e5cc81807f0b1c595b211fa1050c356009d28dca2ac9\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"approval\\\":{\\\"label\\\":\\\"1000-033-2-approval\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-approval\\\",\\\"digest\\\":null},\\\"report\\\":{\\\"label\\\":\\\"1000-033-2-report\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1000-033-2-report\\\",\\\"digest\\\":null}},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "2036",
+              "author_id": "qa",
+              "update_author_id": "qa",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000036\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"ticket_id\\\":\\\"1000\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2033\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000033\\\",\\\"digest\\\":\\\"sha256:8ae2b62c1c68efb261f933a2024a2acf81b7917ee3f722faf0e691e7892223e6\\\"},\\\"role\\\":\\\"qa\\\",\\\"kind\\\":\\\"qa\\\",\\\"from_stage\\\":\\\"QA\\\",\\\"to_stage\\\":\\\"Human Review\\\",\\\"payload\\\":{\\\"review\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2035\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000035\\\",\\\"digest\\\":\\\"sha256:f552d95669adf3adb691d56ac962da9497586a6667e0b829061bc86dd36f0875\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"report\\\":{\\\"steps\\\":[],\\\"human_pending\\\":[\\\"HQA-01\\\"],\\\"no_ai_cases_reason\\\":\\\"Human review of local contract behavior.\\\"}},\\\"resume_authorization\\\":null}\"}]}]}"
+            }
+          ]
+        },
+        {
+          "site": "https://jira.example.invalid",
+          "ticket_id": "1001",
+          "start_at": 0,
+          "total": 6,
+          "is_last": true,
+          "comments": [
+            {
+              "id": "2028",
+              "author_id": "manager",
+              "update_author_id": "manager",
+              "created": "2026-11-15T10:00:00Z",
+              "updated": "2026-11-15T10:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000028\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000028\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "9001",
+              "author_id": "implementer",
+              "update_author_id": "implementer",
+              "created": "2026-11-15T12:00:00Z",
+              "updated": "2026-11-15T12:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000028\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"2028\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000028\\\",\\\"digest\\\":\\\"sha256:9b47f28a40a536cfdf6d50112f896f813da6ee447e54b6680c937e90dc69bd8a\\\"},\\\"role\\\":\\\"implementer\\\",\\\"kind\\\":\\\"dependency_wait\\\",\\\"from_stage\\\":\\\"In Progress\\\",\\\"to_stage\\\":\\\"Rework Queued\\\",\\\"payload\\\":{\\\"pr\\\":null,\\\"requests\\\":[{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2032\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000032\\\",\\\"digest\\\":\\\"sha256:b9ec40fb912f4da6c7141dc8aeefaf8eeb399d09a76cb2669d18c87374079da1\\\"}],\\\"reason\\\":\\\"Known upstream repair prevents first PR.\\\",\\\"qa_report\\\":null},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "9002",
+              "author_id": "manager",
+              "update_author_id": "manager",
+              "created": "2026-11-15T12:00:00Z",
+              "updated": "2026-11-15T12:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"operation_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Rework Queued\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"repair\\\",\\\"previous_assignment\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"2028\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000028\\\",\\\"digest\\\":\\\"sha256:9b47f28a40a536cfdf6d50112f896f813da6ee447e54b6680c937e90dc69bd8a\\\"},\\\"requests\\\":[{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9001\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:0bfb99939bc6edf5d536aeda17568c78fd9c656c9d017b4c3313945056b0bcd3\\\"}],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "9003",
+              "author_id": "implementer",
+              "update_author_id": "implementer",
+              "created": "2026-11-15T12:00:00Z",
+              "updated": "2026-11-15T12:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000003\\\",\\\"operation_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9002\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"digest\\\":\\\"sha256:c8efda69045be3984fd429b19b86e75519984e52b1ef05d251c4ef302a2c9562\\\"},\\\"role\\\":\\\"implementer\\\",\\\"kind\\\":\\\"implementation\\\",\\\"from_stage\\\":\\\"In Progress\\\",\\\"to_stage\\\":\\\"In Review\\\",\\\"payload\\\":{\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"11\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"parent\\\"},\\\"stack_parent\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"10\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"main\\\"},\\\"incorporated_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"completion\\\":{\\\"ticket_id\\\":\\\"1000\\\",\\\"comment_id\\\":\\\"2036\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000036\\\",\\\"digest\\\":\\\"sha256:f49e94141828ec4f4ac617c11363080daf7b051a0ec8aae25b85740721d07ae5\\\"}},\\\"consumed_requests\\\":[{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9001\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000001\\\",\\\"digest\\\":\\\"sha256:0bfb99939bc6edf5d536aeda17568c78fd9c656c9d017b4c3313945056b0bcd3\\\"}],\\\"plan\\\":{\\\"label\\\":\\\"1001-038-2-plan\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-plan\\\",\\\"digest\\\":null},\\\"plan_review\\\":{\\\"label\\\":\\\"1001-038-2-plan-review\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-plan-review\\\",\\\"digest\\\":null},\\\"ci\\\":{\\\"label\\\":\\\"1001-038-2-ci\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-ci\\\",\\\"digest\\\":null},\\\"verification\\\":[{\\\"label\\\":\\\"1001-038-2-verification\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-verification\\\",\\\"digest\\\":null}],\\\"prepared_inputs\\\":[]},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "9004",
+              "author_id": "reviewer",
+              "update_author_id": "reviewer",
+              "created": "2026-11-15T12:00:00Z",
+              "updated": "2026-11-15T12:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000004\\\",\\\"operation_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9002\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"digest\\\":\\\"sha256:c8efda69045be3984fd429b19b86e75519984e52b1ef05d251c4ef302a2c9562\\\"},\\\"role\\\":\\\"reviewer\\\",\\\"kind\\\":\\\"review\\\",\\\"from_stage\\\":\\\"In Review\\\",\\\"to_stage\\\":\\\"QA\\\",\\\"payload\\\":{\\\"implementation\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9003\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000003\\\",\\\"digest\\\":\\\"sha256:f507bfedde22d8eaf82d9db79158c37ff60ae82b6b5c9cc41034824e8e030eb3\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"11\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"parent\\\"},\\\"approval\\\":{\\\"label\\\":\\\"1001-038-2-approval\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-approval\\\",\\\"digest\\\":null},\\\"report\\\":{\\\"label\\\":\\\"1001-038-2-report\\\",\\\"uri\\\":\\\"https://evidence.example.invalid/1001-038-2-report\\\",\\\"digest\\\":null}},\\\"resume_authorization\\\":null}\"}]}]}"
+            },
+            {
+              "id": "9005",
+              "author_id": "qa",
+              "update_author_id": "qa",
+              "created": "2026-11-15T12:00:00Z",
+              "updated": "2026-11-15T12:00:00Z",
+              "format": "adf",
+              "body": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000005\\\",\\\"operation_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"ticket_id\\\":\\\"1001\\\",\\\"requirements_digest\\\":\\\"sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892\\\",\\\"assignment\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9002\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000002\\\",\\\"digest\\\":\\\"sha256:c8efda69045be3984fd429b19b86e75519984e52b1ef05d251c4ef302a2c9562\\\"},\\\"role\\\":\\\"qa\\\",\\\"kind\\\":\\\"qa\\\",\\\"from_stage\\\":\\\"QA\\\",\\\"to_stage\\\":\\\"Human Review\\\",\\\"payload\\\":{\\\"review\\\":{\\\"ticket_id\\\":\\\"1001\\\",\\\"comment_id\\\":\\\"9004\\\",\\\"record_id\\\":\\\"10000000-0000-4000-8000-000000000004\\\",\\\"digest\\\":\\\"sha256:c9b2da5fa713eaf1e6fd2c4977af3e804dfe54c0865a93beaa51339edd820188\\\"},\\\"pr\\\":{\\\"provider\\\":\\\"github\\\",\\\"repository\\\":\\\"https://example.invalid/example/application\\\",\\\"number\\\":\\\"11\\\",\\\"source_revision\\\":\\\"2222222222222222222222222222222222222222\\\",\\\"target_branch\\\":\\\"parent\\\"},\\\"report\\\":{\\\"steps\\\":[],\\\"human_pending\\\":[\\\"HQA-01\\\"],\\\"no_ai_cases_reason\\\":\\\"Human review of local contract behavior.\\\"}},\\\"resume_authorization\\\":null}\"}]}]}"
+            }
+          ]
+        }
+      ],
+      "pr_receipts": [
+        {
+          "provider": "github",
+          "repository": "https://example.invalid/example/application",
+          "number": "10",
+          "source_revision": "1111111111111111111111111111111111111111",
+          "target_branch": "main",
+          "state": "open",
+          "current": false
+        },
+        {
+          "provider": "github",
+          "repository": "https://example.invalid/example/application",
+          "number": "11",
+          "source_revision": "1111111111111111111111111111111111111111",
+          "target_branch": "parent",
+          "state": "open",
+          "current": false
+        },
+        {
+          "provider": "github",
+          "repository": "https://example.invalid/example/application",
+          "number": "10",
+          "source_revision": "2222222222222222222222222222222222222222",
+          "target_branch": "main",
+          "state": "open",
+          "current": true
+        },
+        {
+          "provider": "github",
+          "repository": "https://example.invalid/example/application",
+          "number": "11",
+          "source_revision": "2222222222222222222222222222222222222222",
+          "target_branch": "parent",
+          "state": "open",
+          "current": true
+        }
+      ],
+      "evidence_receipts": [
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-plan",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "plan",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "author_id": "plan-author"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-plan-review",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "plan_review",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "reviewer_id": "independent-reviewer",
+            "outcome": "CLEAN"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-ci",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "ci",
+          "details": {
+            "status": "passed"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-verification",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "artifact",
+          "details": {}
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-approval",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "approval",
+          "details": {
+            "state": "approved",
+            "reviewer_id": "reviewer"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-001-1-report",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "review_report",
+          "details": {
+            "criteria_complete": true,
+            "comments_handled": true
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-plan",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "plan",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "author_id": "plan-author"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-plan-review",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "plan_review",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "reviewer_id": "independent-reviewer",
+            "outcome": "CLEAN"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-ci",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "ci",
+          "details": {
+            "status": "passed"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-verification",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "artifact",
+          "details": {}
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-approval",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "approval",
+          "details": {
+            "state": "approved",
+            "reviewer_id": "reviewer"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-028-1-report",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "parent"
+          },
+          "kind": "review_report",
+          "details": {
+            "criteria_complete": true,
+            "comments_handled": true
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/stack-finding",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "1111111111111111111111111111111111111111",
+            "target_branch": "main"
+          },
+          "kind": "artifact",
+          "details": {}
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-plan",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "plan",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "author_id": "plan-author"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-plan-review",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "plan_review",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "reviewer_id": "independent-reviewer",
+            "outcome": "CLEAN"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-ci",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "ci",
+          "details": {
+            "status": "passed"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-verification",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "artifact",
+          "details": {}
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-approval",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "approval",
+          "details": {
+            "state": "approved",
+            "reviewer_id": "reviewer"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1000-033-2-report",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "10",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "main"
+          },
+          "kind": "review_report",
+          "details": {
+            "criteria_complete": true,
+            "comments_handled": true
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-plan",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "plan",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "author_id": "plan-author"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-plan-review",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "plan_review",
+          "details": {
+            "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+            "reviewer_id": "independent-reviewer",
+            "outcome": "CLEAN"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-ci",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "ci",
+          "details": {
+            "status": "passed"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-verification",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "observer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "artifact",
+          "details": {}
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-approval",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "approval",
+          "details": {
+            "state": "approved",
+            "reviewer_id": "reviewer"
+          }
+        },
+        {
+          "uri": "https://evidence.example.invalid/1001-038-2-report",
+          "observed_digest": null,
+          "available": true,
+          "actor_id": "reviewer",
+          "pr": {
+            "provider": "github",
+            "repository": "https://example.invalid/example/application",
+            "number": "11",
+            "source_revision": "2222222222222222222222222222222222222222",
+            "target_branch": "parent"
+          },
+          "kind": "review_report",
+          "details": {
+            "criteria_complete": true,
+            "comments_handled": true
+          }
+        }
+      ],
+      "retained": [],
+      "request_resolutions": []
     }
   },
   "mutations": [

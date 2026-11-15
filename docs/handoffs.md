@@ -143,6 +143,37 @@ Complete comment discovery also checks conflicting results and typed requests.
 An empty publication inventory proves no-PR history only when
 `pr_history_complete` is true and all prior lineage is supplied and has no PR.
 
+A selected null-PR repair admission still requires an empty complete current
+inventory and a valid assigned pre-PR `dependency_wait`. After publication, that
+unchanged admission can be historical evidence: the complete inventory must name
+one first PR, proved by a fully validated implementer `implementation`,
+`dependency_wait` or `blocked` result under that admission, or a later admission
+reached through explicit PR-free waits and null-PR repairs. Every intermediate
+assignment, request, actor, requirements digest and immutable reference must
+validate. A wait or blocker proves publication only; it does not prove consumed
+requests, passing checks or completed implementation. Successful implementation,
+review and QA retain all their normal evidence requirements.
+
+Earlier assignment lineage must contain no published PR. A later repair retains
+the same PR through nonnull `existing_pr`; legitimate later revisions of that PR
+remain possible. Missing or extra inventory identities, prior publication, orphan
+results, invalid worker evidence and skipped intermediate waits fail validation.
+Keep the original admission body, metadata and digest: recovery is to supply
+complete coherent evidence, never edit old comments or hide a published PR.
+
+Before the first worker result is appended, a fresh admission-only snapshot with
+the newly created PR intentionally fails. Retain the actual successful pre-creation
+snapshot as historical run evidence, clearly labelled historical. The producer
+must separately reread current assignment, native stage/requirements, immutable
+comment metadata, outstanding requests and complete inventory, plus actual PR,
+revision, target and outcome-appropriate evidence immediately before publication.
+Retain actual PR creation/readback proof; a wait or blocker needs no fabricated
+successful CI. Validate the candidate record before append, then validate the full
+chain only after real append/readback provides its exact comment reference.
+Historical validation alone never authorizes publication or replaces those current
+checks. These supplied-data checks do not establish live freshness.
+
+
 Each comment has exactly `id,author_id,update_author_id,created,updated,format,body`.
 `format` is `adf|html`; body is the original wrapper text. Dates use valid RFC 3339
 `date-time` strings. Every typed comment must have identical created/updated
