@@ -66,6 +66,19 @@ export function stateConformance(name, make) {
     assert.equal(provider.snapshot(), before); assert.equal(row(provider, 'stream', fixture.streamA).pending_attempt_id, nextId);
     assert.equal(provider.records().filter(r => r.kind === 'attempt').length, 2);
   });
+  test(name + ': begin checks existing assignment without changing it', async () => {
+    const { state, provider } = await make();
+    assert.equal((await state.retainMembers({ expected_installation_revision: 0, members: [fixture.memberA], now: fixture.now })).status, 'confirmed');
+    const before = provider.snapshot(), writes = provider.audit.filter(a => a.name === 'TransactWriteCommand').length;
+    const mismatch = await state.begin(beginInput({ expected_installation_revision: 1, required_members: [{ ...fixture.memberA, expected_revision: 0, assignment: fixture.evidence.references[0] }] }));
+    assert.equal(mismatch.status, 'conflict'); assert.equal(mismatch.code, 'REVISION_CONFLICT'); assert.equal(mismatch.data, null);
+    assert.equal(provider.snapshot(), before); assert.equal(provider.audit.filter(a => a.name === 'TransactWriteCommand').length, writes);
+    const matching = await state.begin(beginInput({ expected_installation_revision: 1, required_members: [{ ...fixture.memberA, expected_revision: 0 }] }));
+    assert.equal(matching.status, 'confirmed');
+    assert.equal(row(provider, 'member', fixture.memberA).assignment, null); assert.equal(row(provider, 'member', fixture.memberA).revision, 0);
+    assert.equal(row(provider, 'stream', fixture.streamA).pending_attempt_id, fixture.attemptA.attempt_id);
+    assert.equal(row(provider, 'attempt', fixture.attemptA).outcome, 'pending');
+  });
   test(name + ': original membership persists while assignment can advance', async () => {
     const { state, provider } = await make();
     assert.equal((await state.retainMembers({ expected_installation_revision: 0, members: [fixture.memberA], now: fixture.now })).status, 'confirmed');
@@ -73,6 +86,8 @@ export function stateConformance(name, make) {
     provider.seed({ ...original, extensions: { later_flag: true } });
     const advanced = { ...fixture.memberA, expected_revision: 0, assignment: fixture.evidence.references[0] };
     assert.equal((await state.retainMembers({ expected_installation_revision: 1, members: [advanced], now: fixture.now })).status, 'confirmed');
+    assert.deepEqual(row(provider, 'member', fixture.memberA).assignment, fixture.evidence.references[0]);
+    assert.equal(row(provider, 'member', fixture.memberA).revision, 1);
     assert.equal(row(provider, 'member', fixture.memberA).extensions.later_flag, true);
     const before = provider.snapshot();
     assert.equal((await state.retainMembers({ expected_installation_revision: 2, members: [{ ...advanced, expected_revision: 1, label: 'AI-Maria-2' }], now: fixture.now })).code, 'OWNERSHIP_CONFLICT');
