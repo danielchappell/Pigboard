@@ -86,6 +86,30 @@ test('review architecture and untouched companion contracts retain their origina
     assert.equal(text.split(addition).length, 2, 'Each reviewed addition occurs once');
     text = text.replace(addition, '');
    }
+   // PGB-134 permits only these report edits; reverse each exact block.
+   // All other original bytes, including criteria and verdicts, stay protected.
+   const reportEdits = [
+    [
+        "The human-facing report helps people understand the change and choose where to look. Include one verdict, a change summary, a short file map, eight category rows with concise evidence, and the findings, gaps or risks needed for action. Humans can use it to spot-check; the AI still reviews the complete required scope. Do not publish a second 20-row checklist, per-requirement table, raw file inventory, evidence catalogue or long mandatory appendix by default.",
+        "The human-facing report is the merge checklist: one verdict, eight category rows with concise evidence, and only the findings, gaps or risks needed for action. Do not publish a second 20-row checklist, per-requirement table, file inventory, evidence catalogue or long mandatory appendix by default."
+    ],
+    [
+        "Keep the change summary to a few sentences: explain the changed behavior, the main implementation choices and what verification supports. Separate intended behavior from confirmed results and mention important gaps. Do not impose a length cap that hides a material finding or evidence gap. Deduplicate underlying issues and omit empty detail sections. The eight rows always remain visible, including justified NOT APPLICABLE rows.\n\nUse the existing change inventory to make the **Where to look** table. Group related files by behavior or necessary supporting work, including substantive configuration or deletions. Name the few useful code, test and guidance entry points; one change may need only one row. Link files or symbols at the reviewed revision. Before a PR exists, exact repository paths and symbols with that revision suffice; never invent links. A test-file reference does not mean the test ran. On re-review, keep the summary and map accurate for the whole current PR under the existing evidence-reuse rules. This map requires no extra review pass.\n\nSee the [fictional report example](references/report-example.md) for the shape; use actual evidence in real reports.",
+        "Keep the summary to a few sentences. Do not impose a length cap that hides a material finding or evidence gap. Deduplicate underlying issues and omit empty detail sections. The eight rows always remain visible, including justified NOT APPLICABLE rows."
+    ],
+    [
+        "**Change summary:** [changed behavior, main choices and supported verification; important gaps when present].\n\n**PR / Jira:** [PR link, or pre-PR and prepared title/description reference; Jira link]",
+        "**PR / Jira:** [PR link, or pre-PR and prepared title/description reference; Jira link]"
+    ],
+    [
+        "**Where to look**\n\n| Change | Main files | Tests and guidance |\n| --- | --- | --- |\n| [behavior or supporting change] | [useful files/symbols and their role] | [relevant tests and guidance] |\n\n| Merge criterion                    | Result       | Evidence summary or required action                             |",
+        "| Merge criterion                    | Result       | Evidence summary or required action                             |"
+    ]
+];
+   for (const [current, original] of reportEdits) {
+    assert.equal(text.split(current).length, 2, 'Each approved report edit occurs once');
+    text = text.replace(current, original);
+   }
    bytes = Buffer.from(text);
   }
   assert.equal(createHash('sha256').update(bytes).digest('hex'),expected,file);
