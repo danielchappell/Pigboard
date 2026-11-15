@@ -50,12 +50,39 @@ test('H03 deterministic complete-ledger byte boundary and multi-evidence retenti
  const count=clone();const all=Array(101).fill(count.work.testing_strategy.cases[0].steps[0]);assert(sizeLedger(count.work,all).diagnostics.some(d=>d.code==='LEDGER_LIST'));assert(base>0);
 });
 test('H03 publication field bounds and earlier reachable parser/context limits stay distinct',()=>{reject(p=>p.work.testing_strategy.human_review.cases[0].id='h'.repeat(256),'LEDGER_FIELD','human');reject(p=>p.work.testing_strategy.human_review.no_ai_cases_reason='r'.repeat(2001),'LEDGER_FIELD','human');const p=clone();p.context.operations=Array(101).fill(p.context.operations[0]);const r=run(p);assert.equal(r.diagnostics[0].code,'LIST_LIMIT');assert.equal(r.ledger_budget,null);assert.equal(r.diagnostics[0].path,'/context/operations');});
+test('H03 copied repository handoff bounds retain the complete ledger with matching trusted context',()=>{
+ const prefix='https://example.invalid/';
+ const cases=[
+  {url:prefix+'a'.repeat(2048-prefix.length),valid:true},
+  {url:prefix+'a'.repeat(2049-prefix.length),valid:false,reason:/at most 2048 characters/},
+  {url:'ssh://example.invalid/repo',valid:false,reason:/HTTPS repository URL/},
+  {url:'http://example.invalid/repo',valid:false,reason:/HTTPS repository URL/},
+ ];
+ for(const name of ['mixed','human'])for(const {url,valid,reason}of cases){
+  const p=clone(name);p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;
+  const r=run(p);assert.equal(r.valid,valid);assert.equal(r.start_structure_valid,true);assert.equal(r.start_semantics_valid,valid);
+  assert.equal(r.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(r.ledger_budget.human_cases,1);assert.equal(r.ledger_budget.omitted_entries,0);
+  assert.equal(r.ledger_budget.actual_publication,'not_evaluated');
+  if(!valid){assert.equal(r.diagnostics.length,1);assert.equal(r.diagnostics[0].code,'LEDGER_FIELD');assert.equal(r.diagnostics[0].path,'/technical_acceptance_criteria/repository/url');assert.match(r.diagnostics[0].message,reason);}
+ }
+});
 test('H03 independent full-envelope oracle matches design schema and byte projection',()=>{
  const w=clone().work,uuid='00000000-0000-4000-8000-000000000000',digest='sha256:'+'0'.repeat(64),ref={ticket_id:'0',comment_id:'0',record_id:uuid,digest};
  const records=w.testing_strategy.cases.flatMap(c=>c.steps).map(s=>({id:s.id,skill:s.skill,result:'PASS',evidence:s.evidence.map((_,j)=>({label:`e${j+1}`,uri:`https://e.invalid/${j+1}`,digest:null})),finding_ids:[],not_run_reason:null,reused_from:null}));
  const oracle={schema:'pigboard-handoff/v1',record_id:uuid,operation_id:uuid,ticket_id:'0',requirements_digest:digest,assignment:ref,role:'qa',kind:'qa',from_stage:'QA',to_stage:'Human Review',payload:{review:ref,pr:{provider:'github',repository:w.technical_acceptance_criteria.repository.url,number:'0',source_revision:'0'.repeat(40),target_branch:'a'},report:{steps:records,human_pending:w.testing_strategy.human_review.cases.map(c=>c.id),no_ai_cases_reason:null}},resume_authorization:null};
  const schema=JSON.parse(readFileSync(new URL('../docs/architecture/contracts/pigboard-handoff-v1.schema.json',import.meta.url)));const ajv=new Ajv2020({strict:false,validateFormats:false}),validate=ajv.compile(schema);assert(validate(oracle),JSON.stringify(validate.errors));
  assert.equal(sizeLedger(w).ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(oracle)+'\n'));assert.equal(records.length,4);assert.equal(records[1].skill,'qa-bruno');
+ // Independently verify every carried repository boundary against the complete
+ // current handoff schema, rather than reproducing the product guard.
+ const prefix='https://example.invalid/';
+ for(const [repository,valid,keyword]of [[prefix+'a'.repeat(2048-prefix.length),true,null],[prefix+'a'.repeat(2049-prefix.length),false,'maxLength'],['ssh://example.invalid/repo',false,'pattern']]){
+  const envelope=structuredClone(oracle);envelope.payload.pr.repository=repository;
+  assert.equal(validate(envelope),valid,JSON.stringify(validate.errors));
+  if(!valid)assert(validate.errors.some(e=>e.keyword===keyword&&e.instancePath==='/payload/pr/repository'));
+  const work=structuredClone(w);work.technical_acceptance_criteria.repository.url=repository;
+  const sized=sizeLedger(work);assert.equal(sized.diagnostics.length===0,valid);assert.equal(sized.ledger_budget.projection_bytes,Buffer.byteLength(JSON.stringify(envelope)+'\n'));
+ }
+
 });
 test('H01/H02 actual CLI preserves local files and reports modes/context exits',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));const p=clone(),work=path.join(dir,'work.json'),context=path.join(dir,'facts.json');await writeFile(work,JSON.stringify(p.work));await writeFile(context,JSON.stringify(p.context));const before=await readdir(dir);const command=(args)=>{const c=spawnSync(process.execPath,[cli,...args,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});return {...c,result:JSON.parse(c.stdout)};};let c=command(['--mode','start','--input',work,'--context',context]);assert.equal(c.status,0);assert.equal(c.result.valid,true);for(const args of [['--mode','start','--input',work],['--mode','draft','--input',work,'--context',context],['--mode','start','--input',work,'--context',context,'--context',context]])assert.equal(command(args).status,2);await writeFile(context,'unknown: [');c=command(['--mode','start','--input',work,'--context',context]);assert.equal(c.status,2);assert(c.result.diagnostics[0].path.startsWith('/context'));assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(work,'utf8'),JSON.stringify(p.work));});
 
