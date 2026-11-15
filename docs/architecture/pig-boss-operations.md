@@ -6,6 +6,9 @@ supersedes label-only identity and ambiguous monitoring exclusions in earlier
 manager documents. The manager component is **Pig Boss**; the product is Pigboard.
 Existing technical filenames and schema identifiers keep their names.
 
+Pig Boss coordinates the [Pigboard crew](../product/branding.md): Hardhat Ham
+(implementer), Inspector Pork (PR reviewer) and Snout Scout (QA).
+
 The [local configuration checker](../configuration.md) now validates and resolves
 project scope and previews changes without provider calls or state writes. This
 local capability does not implement the proposed manager or health behavior below,
