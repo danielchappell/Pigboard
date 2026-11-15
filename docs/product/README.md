@@ -92,4 +92,7 @@ This consolidation has independent CLEAN product and technical design reviews in
 
 ## Approved company-scope addition
 
+See [the Pigboard crew](branding.md) for the approved names and roles: Pig Boss,
+Hardhat Ham, Inspector Pork and Snout Scout.
+
 The manager is named Pig Boss. One customer AWS installation manages several projects in one Jira site. Stream identity includes the immutable project ID. O13–O15 add multi-project acceptance and basic manager health. The [scope design](../architecture/pig-boss-operations.md) supersedes any label-global or all-monitoring-deferred wording above. The earlier 20-Story review remains historical; the updated delivery set has independent CLEAN delta reviews and awaits final owner review before implementation. Fifty-project capacity is a follow-on target, not a ten-project limit.
