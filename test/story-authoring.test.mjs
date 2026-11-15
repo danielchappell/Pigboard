@@ -172,11 +172,14 @@ test('PGB-138 mirrors the additive native prerequisite without changing release 
   const publication=JSON.parse(await source('docs/delivery/manager-r1/publication.json'));
   const story=id=>drafts.find(d=>d.id===id),plan=id=>metadata.find(d=>d.id===id),amendment=publication.qa_input_controls_amendment;
   const controls=story('R1-30').contract;
-  assert.equal(drafts.length,28);assert.equal(publication.story_count,drafts.length);
+  assert.equal(drafts.length,29);assert.equal(publication.story_count,drafts.length);
   const total=drafts.reduce((n,d)=>n+d.contract.testing_strategy.cases.length+d.contract.testing_strategy.human_review.cases.length,0);
-  assert.equal(total,122);assert.equal(publication.case_count,total);
+  assert.equal(total,128);assert.equal(publication.case_count,total);
   assert.equal(publication.requirement_count,53);assert.equal(publication.scenario_count,41);
-  assert.deepEqual(publication.current_source_scope.pending_source_amendments,['PGB-136','PGB-137']);
+  assert.deepEqual(publication.current_source_scope.pending_source_amendments,['PGB-137']);
+  const historical138=publication.history.find(h=>h.story_count===28&&h.case_count===122&&h.scope?.startsWith('PGB-138 source-mapping checkpoint'));
+  assert(historical138);assert.equal(historical138.current_source_scope.story_count,28);assert.equal(historical138.current_source_scope.case_count,122);
+  assert.deepEqual(historical138.current_source_scope.pending_source_amendments,['PGB-136','PGB-137']);
   assert.equal(publication.current_source_scope.native_snapshot.story_count,30);assert.equal(publication.current_source_scope.native_snapshot.case_count,130);
   assert.equal(publication.stories['R1-30'],'PGB-138');assert.equal(amendment.native_id,'10598');assert(amendment.native_publication_verified);
   assert.equal(amendment.plan_sha256,'54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593');

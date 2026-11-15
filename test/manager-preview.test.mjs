@@ -8,6 +8,7 @@ import canonicalize from 'canonicalize';
 import { createHash } from 'node:crypto';
 import { previewSnapshot } from '../lib/manager/decisions.mjs';
 import { SNAPSHOT_LIMITS } from '../lib/manager/snapshot.mjs';
+import { inspectManagerHistory } from '../lib/contracts/receipts.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).cases;
 const fresh=id=>structuredClone(fixtures.find(c=>c.id===id));
 const run=c=>previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),c.options);
@@ -313,4 +314,29 @@ for(const c of proofConflicts.cases)test(`fixed current completion observations 
 test('the original 66 candidate fixtures remain byte-identical',()=>{
  assert.equal(createHash('sha256').update(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).digest('hex'),proofConflicts.provenance.manager_candidates_sha256);
  assert.equal(fixtures.length,66);
+});
+
+const ownPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url)));
+test('private own history preserves exact target closure, inherited consumption and no current authority',()=>{
+ assert.equal(ownPacket.history_projections.length,7);
+ for(const c of ownPacket.history_projections){const before=c.input,result=JSON.parse(JSON.stringify(inspectManagerHistory(before)));assert.deepEqual(result,c.expected,c.id);assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);assert(!Object.hasOwn(result,'coverage_segments'));assert.deepEqual(JSON.parse(JSON.stringify(inspectManagerHistory(before))),result,c.id+' repeat');assert.equal(c.input,before);}
+});
+test('own-repair fixture preserves six complete human groups and the exact six consumption controls',()=>{
+ assert.deepEqual(ownPacket.native_cases.map(c=>c.id),Array.from({length:6},(_,i)=>'R1-28-OC0'+(i+1)));
+ assert.deepEqual(ownPacket.obligations.OC02,['OC02-V01-remaining-R2','OC02-V02-no-remaining-cause','OC02-V03-implementation-only','OC02-V04-review-only','OC02-V05-foreign-ticket','OC02-V06-unrelated-lineage']);
+ assert.equal(ownPacket.pending_preparation.length,0);assert.equal(new Set(ownPacket.cases.map(c=>c.id)).size,ownPacket.cases.length);
+ for(const c of ownPacket.native_cases){assert.equal(c.execution,'human');for(const k of ['prerequisites','steps','expected','evidence'])assert(c[k].length>0);assert(c.cleanup);}
+});
+test('bounded own-repair cases match independent complete old-shape reports without input mutations',()=>{
+ for(const c of ownPacket.cases){const before=JSON.stringify(c),r=JSON.parse(JSON.stringify(run(c)));assert.deepEqual(r,c.expected,c.id);assert.deepEqual(JSON.parse(JSON.stringify(run(c))),r,c.id+' repeat');assert.equal(JSON.stringify(c),before);assert.equal(r.writes,0);assert.equal(r.execution_authorized,false);for(const s of r.streams){assert(!Object.hasOwn(s,'proposal'));assert(!Object.hasOwn(s,'repair_order'));}}
+});
+test('own repair CLI preserves literal JSON, readable selection/reasons, exits and disposable inputs',()=>{
+ const dir=mkdtempSync(path.join(tmpdir(),'own-repair-cli-'));try{for(const c of ownPacket.cases){const config=path.join(dir,'config.json'),input=path.join(dir,'snapshot.json'),a=JSON.stringify(c.config),b=JSON.stringify(c.snapshot);writeFileSync(config,a);writeFileSync(input,b);const args=[new URL('../scripts/manager-preview.mjs',import.meta.url).pathname,'--config',config,'--input',input],exit=c.expected.status==='complete'?0:1;
+  const json=spawnSync(process.execPath,[...args,'--json'],{cwd:dir,encoding:'utf8',timeout:5000});assert.equal(json.status,exit,c.id+json.stderr);assert.equal(json.stderr,'');assert.deepEqual(JSON.parse(json.stdout),c.expected,c.id);
+  const human=spawnSync(process.execPath,args,{cwd:dir,encoding:'utf8',timeout:5000});assert.equal(human.status,exit,c.id+human.stderr);assert.equal(human.stderr,'');assert.match(human.stdout,/No execution authority; writes: 0/);for(const s of c.expected.streams){if(s.selected_key)assert(human.stdout.includes('selected '+s.selected_key+'.'));for(const r of s.reasons)assert(human.stdout.includes(r.code+' '+r.path+':'));}
+  assert.equal(readFileSync(config,'utf8'),a);assert.equal(readFileSync(input,'utf8'),b);assert.deepEqual(readdirSync(dir).sort(),['config.json','snapshot.json']);}}finally{rmSync(dir,{recursive:true,force:true});}
+});
+test('own selection and unsupported stack previews cannot access providers, processes or mutation APIs',()=>{
+ const script=`import fs from 'node:fs';import fsp from 'node:fs/promises';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';const F=JSON.parse(fs.readFileSync(process.argv[1]));let attempts=0;const stop=()=>{attempts++;throw Error('SIDE_EFFECT_ATTEMPT')};for(const k of ['writeFileSync','appendFileSync','renameSync','unlinkSync','mkdirSync','rmSync','createWriteStream'])fs[k]=stop;for(const k of ['writeFile','appendFile','rename','unlink','mkdir','rm'])fsp[k]=stop;for(const k of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[k]=stop;http.request=stop;http.get=stop;https.request=stop;https.get=stop;net.connect=stop;net.createConnection=stop;globalThis.fetch=stop;syncBuiltinESMExports();const {previewSnapshot}=await import(${JSON.stringify(new URL('../lib/manager/decisions.mjs',import.meta.url).href)});const results=F.installed_case_ids.map(id=>{const c=F.cases.find(c=>c.id===id);return previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),c.options)});if(attempts)throw Error('SIDE_EFFECT_ATTEMPT');console.log(JSON.stringify(results));`;
+ const p=spawnSync(process.execPath,['--input-type=module','-e',script,new URL('./fixtures/manager-repairs.json',import.meta.url).pathname],{encoding:'utf8',timeout:5000});assert.equal(p.status,0,p.stderr);assert.equal(p.stderr,'');assert.deepEqual(JSON.parse(p.stdout),ownPacket.installed_case_ids.map(id=>ownPacket.cases.find(c=>c.id===id).expected));
 });
