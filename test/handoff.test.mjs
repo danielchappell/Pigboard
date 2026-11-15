@@ -186,3 +186,24 @@ test('undeclared property diagnostics retain safe containers without reproducing
  for(const [i,[input,format,safePath]]of cases.entries()){const result=validateHandoff(input,{format});assert.equal(result.valid,false);assert(result.diagnostics.some(d=>d.path===safePath),JSON.stringify(result.diagnostics));assert(!JSON.stringify(result).includes('FICTITIOUS-SECRET'));assert(!JSON.stringify(result).includes('private-report'));const file=path.join(dir,'record-'+i);await writeFile(file,input);for(const json of [false,true]){const p=spawnSync(process.execPath,[cli,'--mode','record','--input',file,'--format',format,...(json?['--json']:[])],{encoding:'utf8'});assert.equal(p.status,1,p.stdout+p.stderr);assert(!p.stdout.includes('FICTITIOUS-SECRET'));assert(!p.stdout.includes('private-report'));assert(!p.stderr);}}
  const urls=checkURLs({payload:{[secret]:{uri:'https://user:FICTITIOUS-SECRET@example.invalid'}}});assert.equal(urls[0].path,'/payload');assert(!JSON.stringify(urls).includes('FICTITIOUS-SECRET'));
 });
+
+test('QA-only blocked/wait findings are optional, bounded and closed without changing old digests', () => {
+  for (const kind of ['blocked', 'dependency_wait']) {
+    const old = record(kind), before = raw(old), oldDigest = digestValue(old);
+    assert.equal(validateHandoff(before).record_digest, oldDigest);
+    assert(!Object.hasOwn(extractHandoff(before).value.payload, 'findings'));
+    const qa = structuredClone(old); qa.role = 'qa'; qa.from_stage = 'QA'; qa.payload.qa_report = report();
+    qa.payload.findings = record('repair_request').payload.findings;
+    assert.equal(validateHandoff(raw(qa)).valid, true);
+    for (const [role, stage] of [['implementer', 'In Progress'], ['reviewer', 'In Review']]) {
+      const other = structuredClone(qa); other.role = role; other.from_stage = stage; other.payload.qa_report = null;
+      rejects(raw(other), 'STRUCTURE');
+      delete other.payload.findings; assert.equal(validateHandoff(raw(other)).valid, true);
+    }
+    for (const mutate of [r => r.payload.findings = [], r => r.payload.findings = null, r => r.payload.findings[0].evidence = [], r => r.payload.findings[0].extra = true, r => r.payload.findings.push(structuredClone(r.payload.findings[0]))]) {
+      const bad = structuredClone(qa); mutate(bad); rejects(raw(bad), 'STRUCTURE');
+    }
+    const tooMany = structuredClone(qa); tooMany.payload.findings = Array(101).fill(qa.payload.findings[0]); rejects(raw(tooMany), 'LIST_LIMIT');
+    assert.equal(raw(old), before); assert.equal(validateHandoff(before).record_digest, oldDigest);
+  }
+});
