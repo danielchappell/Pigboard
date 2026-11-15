@@ -88,15 +88,17 @@ provide their detailed expression: [release boundary](../architecture/manager-re
 The existing [workflow](../workflow.md) describes the earlier basic bundle, including
 direct rework to In Progress; that behavior must change for this release.
 
-This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The [complete 20-Story delivery set](../delivery/manager-r1/README.md) also has two independent CLEAN plan reviews and awaits owner approval. This does not authorize implementation, further provider probes or activation.
+This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes both owner-approved amendments: 25 Stories/110 cases. This does not authorize implementation, further provider probes or activation.
 
 ## Approved company-scope addition
 
 See [the Pigboard crew](branding.md) for the approved names and roles: Pig Boss,
 Hardhat Ham, Inspector Pork and Snout Scout.
 
-The manager is named Pig Boss. One customer AWS installation manages several projects in one Jira site. Stream identity includes the immutable project ID. O13–O15 add multi-project acceptance and basic manager health. The [scope design](../architecture/pig-boss-operations.md) supersedes any label-global or all-monitoring-deferred wording above. The earlier 20-Story review remains historical; the updated delivery set has independent CLEAN delta reviews and awaits final owner review before implementation. Fifty-project capacity is a follow-on target, not a ten-project limit.
+The manager is named Pig Boss. One customer AWS installation manages several projects in one Jira site. Stream identity includes the immutable project ID. O13–O15 add multi-project acceptance and basic manager health. The [scope design](../architecture/pig-boss-operations.md) supersedes any label-global or all-monitoring-deferred wording above. The earlier 20-Story review remains historical; the historical 23-Story set has independent CLEAN delta reviews. The owner approved the same-scope 24-Story QA split on 15 November: R1-24/PGB-110 publishes prepared evidence immediately before R1-08/PGB-78 integrates the dispatcher. Each Story retains its exact-base plan, code and delivery gates; Jira owns current progress. Publication does not mean manager/release behavior has shipped. Fifty-project capacity is a follow-on target, not a ten-project limit.
 
 ## Current delivery amendment
 
-The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Source mirrors 24 Stories/107 cases; Jira has 25/110, with PGB-110/R1-24 source publication pending. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
+The [delivery plan](../delivery/manager-r1/README.md) places PGB-113/R1-25 before PGB-81/R1-11. The existing chain validator gains repeated-parent evidence checks; the complete offline repair preview remains PGB-81 with all 42 cases. Current source publication contains 25 Stories/110 cases and mirrors both approved publisher and repeated-parent amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. Dated 20/23-Story reviews and receipts remain historical. Publication does not establish acceptance or ship the planned manager.
+
+Current source publication composes both approved amendments: 25 Stories/110 cases, including R1-24/PGB-110 before R1-08 and R1-25/PGB-113 before R1-11. The original 23/104 publication and each earlier amendment remain dated history. Current publication is not human acceptance, compatible live delivery or activation.

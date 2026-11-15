@@ -169,26 +169,90 @@
     ]
   },
   {
-    "id": "R1-08",
-    "title": "Complete QA with an honest evidence ledger",
+    "id": "R1-24",
+    "title": "Publish prepared QA evidence safely",
     "dependencies": [
       "R1-04",
       "R1-06",
-      "R1-07"
+      "R1-07",
+      "PGB-108"
     ],
-    "days": 1.75,
+    "days": 4.5625,
+    "hours": {
+      "min": 26.75,
+      "max": 36.5
+    },
+    "forecast_note": "Previous forecast 26.5–36 familiar-human hours is historical. Add only 0.25–0.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
+    "files": [
+      "skills/qa-jira/SKILL.md",
+      "config/skill-bundle.json",
+      "test/qa-helper-contract.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/cursor-environment.test.mjs",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/workflow.md",
+      "docs/install.md",
+      "docs/using-pigboard.md",
+      "docs/handoffs.md",
+      "config/cursor/automations.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ],
+    "time_limit_exception": {
+      "ticket": "PGB-110",
+      "rule": "ordinary less-than-two-human-working-days limit",
+      "approved_by": "owner",
+      "approval_reference": "https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684",
+      "approved_at": "2026-11-15",
+      "scope": "Existing standalone prepared QA publisher; one PR; exact approved 20 files; all acceptance cases and review/QA/CI gates retained",
+      "reason": "Required integration with merged engineering methods and coherent fixed mock access preparation; estimate is a forecast, not a replacement hourly authorization cap",
+      "base_commit": "6595e645bd91cec263a5ee0eaf1a3db95e7b9109"
+    }
+  },
+  {
+    "id": "R1-08",
+    "title": "Execute prescribed QA and hand off complete evidence",
+    "dependencies": [
+      "R1-04",
+      "R1-06",
+      "R1-07",
+      "PGB-108",
+      "R1-24"
+    ],
+    "days": 1.875,
     "files": [
       "skills/qa-entrypoint/SKILL.md",
       "skills/qa-entrypoint/references/execution-record.md",
       "skills/qa-entrypoint/references/cursor.md",
-      "skills/qa-jira/SKILL.md",
-      "config/skill-bundle.json",
-      "test/qa-entrypoint-contract.test.mjs",
-      "test/qa-observation.test.mjs",
-      "test/fixtures/qa-transcripts.json",
-      "docs/qa-cases.md",
-      "docs/workflow.md"
-    ]
+      "test/qa-helper-contract.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/story-authoring.test.mjs",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/workflow.md",
+      "docs/install.md",
+      "docs/using-pigboard.md",
+      "docs/authoring.md",
+      "docs/handoffs.md",
+      "config/cursor/automations.md",
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "skills/qa-api/references/structured-steps.md"
+    ],
+    "hours": {
+      "min": 13,
+      "max": 15
+    }
   },
   {
     "id": "R1-09",

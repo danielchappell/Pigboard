@@ -1,12 +1,12 @@
 # Pig Boss release one: complete delivery plan
 
-**Independently reviewed updated set — ready for final owner review.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. The historical 23-Story baseline is preserved. Current source mirrors 24 Stories / 107 cases; native Jira has 25 / 110. PGB-110/R1-24 source publication is pending with its Skills owner. Jira remains the queue; this pack is its reviewable design/acceptance record.
+**Owner-approved combined 25-Story QA split.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69's reviewed baseline. These 25 Stories preserve the earlier 23-Story set and compose the approved standalone QA publisher and repeated-parent amendments. Jira remains the queue; this pack is its reviewable design/acceptance record.
 
 ## What this release delivers
 
 A company installs Pigboard in its own AWS account, previews the next eligible ticket and enables deterministic admission through the existing Jira-to-Cursor path. It includes the structured writer, validators, separate worker/job/Jira skills, human-requested rework, safe scheduling state and customer operating instructions needed for that journey.
 
-The owner approved the base scope and the Pig Boss company/health addition. The revised complete set still returns for final review before implementation. The original 20-Story design and plan reviews remain historical evidence in the manager-design and manager-delivery review records. The current design delta has [product](../../reviews/pigboss-design-product.md) and [technical](../../reviews/pigboss-design-technical.md) CLEAN reviews. The revised 23-Story plan has CLEAN [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews. Native publication is checked separately against the same contracts. [Structured contracts](ticket-drafts.json) are the current review input; [publication.json](publication.json) records the native keys and readback evidence. The earlier provider probe remains PARTIAL; installed acceptance has not run.
+The owner approved the base scope and the Pig Boss company/health addition. The owner approved the same-scope QA split on 15 November; each Story still requires its exact-base implementation plan and committed-code gates. The original 20-Story design and plan reviews remain historical evidence in the manager-design and manager-delivery review records. The current design delta has [product](../../reviews/pigboss-design-product.md) and [technical](../../reviews/pigboss-design-technical.md) CLEAN reviews. The historical 23-Story plan has CLEAN [product](../../reviews/pigboss-plan-product.md) and [technical](../../reviews/pigboss-plan-technical.md) reviews. Native publication is checked separately against the same contracts. [Structured contracts](ticket-drafts.json) are the current review input; [publication.json](publication.json) records the native keys and readback evidence. The earlier provider probe remains PARTIAL; installed acceptance has not run.
 
 In scope addition: [Pig Boss multi-project identity and basic health](../../architecture/pig-boss-operations.md). [Deferred work is tracked in Jira](../../product/follow-on-roadmap.md), including the 50-project capacity plan.
 
@@ -14,7 +14,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 
 ## Ordered Stories
 
-[Complete source Story bodies and 107 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current execution status is in Jira; publication and historical review status do not prove implementation or acceptance. All human acceptance remains NOT_RUN.
+[Complete Story bodies and 110 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current stages and assignments are native Jira facts; this source mirror makes no fresh all-ticket status claim.
 
 | ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
 | --- | --- | --- | ---: | ---: |
@@ -26,7 +26,8 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
 | R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
-| R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Complete QA with an honest evidence ledger | R1-04, R1-06, R1-07 | 1.75 | 10 |
+| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
+| R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.625–1.875 | 20 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
 | R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
@@ -43,7 +44,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **37.43 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. No Story reaches two days or 20 files in this forecast. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **40.64875–42.1175 human working days**, before separate installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -89,9 +90,13 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/qa-api/SKILL.md`, `skills/qa-bruno/SKILL.md`, `skills/qa-database/SKILL.md`, `skills/qa-ui/SKILL.md`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-cases.json`, `docs/qa-cases.md`.
 
-### R1-08 — 10 forecast files, 1.75 days
+### R1-24 — 20 forecast files, 26.75–36.5 hours
 
-`skills/qa-entrypoint/SKILL.md`, `skills/qa-entrypoint/references/execution-record.md`, `skills/qa-entrypoint/references/cursor.md`, `skills/qa-jira/SKILL.md`, `config/skill-bundle.json`, `test/qa-entrypoint-contract.test.mjs`, `test/qa-observation.test.mjs`, `test/fixtures/qa-transcripts.json`, `docs/qa-cases.md`, `docs/workflow.md`.
+`skills/qa-jira/SKILL.md`, `config/skill-bundle.json`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/cursor-environment.test.mjs`, `README.md`, `ARCHITECTURE.md`, `docs/workflow.md`, `docs/install.md`, `docs/using-pigboard.md`, `docs/handoffs.md`, `config/cursor/automations.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
+
+### R1-08 — 20 forecast files, 13–15 hours
+
+`skills/qa-entrypoint/SKILL.md`, `skills/qa-entrypoint/references/execution-record.md`, `skills/qa-entrypoint/references/cursor.md`, `test/qa-helper-contract.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/cursor-environment.test.mjs`, `test/story-authoring.test.mjs`, `README.md`, `ARCHITECTURE.md`, `docs/workflow.md`, `docs/install.md`, `docs/using-pigboard.md`, `docs/authoring.md`, `docs/handoffs.md`, `config/cursor/automations.md`, `skills/write-pr-sized-stories/SKILL.md`, `skills/write-pr-sized-stories/references/basic-workflow-ticket.md`, `skills/implementer-entrypoint/references/handoff.md`, `skills/pigboard-pr-review/references/jira-handoff.md`, `skills/qa-api/references/structured-steps.md`.
 
 ### R1-09 — 7 forecast files, 1.25 days
 
@@ -227,9 +232,35 @@ delays must be observed rather than marketed as an exact detection SLA.
 
 Configuration ownership: R1-21 creates the sole `contracts/config-v1.schema.json`, parser and `config/pigboss.example.yaml`; R1-12/13 and health Stories extend/consume those same files. There is no second manager configuration. `plan-metadata.json` holds only delivery order, sizing and forecast files; `ticket-drafts.json` owns the structured Story contracts.
 
+PGB-110 estimate refreshed after independent review and the first simulated instruction attempt: 14–15.5 hours includes the missing H03 variants and typed supplied/mock pipeline/database/UI evidence. The owner-approved original forecast was 12.5–15 hours; that dated approval and the unchanged publisher scope remain historical. PGB-78 stays 13–15 hours.
+
+### PGB-110 fixed-scope time exception — approved 15 November 2026
+
+The owner approved “Allow the fixed-scope time exception” on 15 November 2026,
+recorded in [PGB-110 comment 10684](https://scubapig.atlassian.net/browse/PGB-110?focusedCommentId=10684).
+This exception applies only to PGB-110's ordinary less-than-two-day rule. The current
+forecast is 26.75–36.5 familiar-human hours, including integration with merged main
+`6595e645bd91cec263a5ee0eaf1a3db95e7b9109` and the coherent mock actor/access correction.
+The earlier 12.5–15h and 14–15.5h forecasts remain dated history; the proposed 18h
+ceiling was superseded and was never approval. No replacement hourly cap applies.
+Report ordinary correction work and reforecast honestly. One PR, the exact 20-file
+scope, all acceptance cases, documentation and independent review/QA/CI gates remain.
+This decision grants no new product scope, release, deployment or activation, and
+transfers to neither PGB-78 nor another Story. PGB-80's separate historical exception
+remains unchanged. The combined current source contains 25 Stories/110 cases.
+
+The historical PGB-110 forecast after R2 evidence/cause correction and integration with main335
+is **20.5–25.5 familiar-human hours** (upper forecast3.1875days). The former16–18.75h
+forecast remains historical. The additional work completes saved-filter resume proof,
+six distinct H02 outcomes with independently frozen dependency/browser facts and
+coherent joined control, then reconciles the new preview payload/configuration and
+seven ordered installation checks. The actual10684 fixed-scope exception remains
+unchanged, without an hourly cap; one PR, exact20paths, all cases and gates remain.
+These preparation/validation changes do not claim successful instruction/human acceptance.
+
 ## Repeated-parent amendment, 15 November 2026
 
-PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source is 24 Stories/107 cases; native Jira is 25/110, with PGB-110 source publication pending. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
+PGB-113/R1-25 implements the existing chain validator only. PGB-81/R1-11 retains all four AC, two TAC and 42 cases; PGB-82 still follows PGB-81 and R1-21. Native links preserve PGB-80→PGB-81 and PGB-81→PGB-82, adding PGB-80→PGB-113→PGB-81. The historical split forecast was 15 files/1.95 days plus 19 files/1.70 days. Current source publication contains 25 Stories/110 cases and mirrors both approved publisher and repeated-parent amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. Historical publication receipts and 20/23-Story reviews remain dated evidence; no manager deployment or human acceptance is claimed.
 
 The independently reviewed F1 preservation repair carries the selected worker's
 existing proof through final authorized-resume checks and reuses only the exact
@@ -238,3 +269,7 @@ is 15 files/1.98 familiar-human days, with 0.23 days remaining from the frozen
 066f24c candidate. Prior 468-test and 100-case results remain evidence for their
 original inputs and revision; repaired-candidate checks and independent reviews
 are required separately. Human acceptance remains NOT_RUN.
+
+Current PGB-110 forecast is 26.75–36.5 hours (upper forecast 4.5625 days) under the actual comment 10684 fixed-scope exception, without an hourly cap. R3 completes causal histories and clocks with 63 preserved canonical specimens, 13 new counterparts and 76/19/57 packet usage accounting, integrated with merged main. Previous forecasts remain historical; all 20 paths, one PR and original gates remain. Current source scope is 25 Stories/110 cases and 53 requirements/41 scenarios; both amendments and PGB-81's 42 human cases remain distinct. Native 25/110 figures record the 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes.
+
+The prior 26.5–36 familiar-human-hour forecast remains historical. The current forecast adds only 0.25–0.5h for F2 operator wording, regression and review evidence. The 0.25–0.5h private alignment completes already-planned preparation and is not added again; no new hourly cap or approval applies.

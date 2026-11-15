@@ -1545,8 +1545,249 @@
     }
   },
   {
+    "id": "R1-24",
+    "title": "Publish prepared QA evidence safely",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "An authorized QA caller has no separate skill for delivering a complete prepared assessment to Jira. Evidence and pending human tests need a verified handoff even when execution cannot finish.",
+      "prerequisites": [
+        {
+          "ticket": "R1-04",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-06",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-07",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "PGB-108",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "An authorized caller can use qa-jira directly to check a configured native Story/Bug in QA and publish its complete prepared assessment for the current assignment, review and open PR; other native types are rejected before writes."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Complete passing AI evidence or explicit human-only work moves to Human Review only after verified publication; human cases remain pending."
+        },
+        {
+          "id": "AC3",
+          "requirement": "A confirmed in-scope defect or known upstream request queues rework; inability blocks; discussion stays QA without a terminal record."
+        },
+        {
+          "id": "AC4",
+          "requirement": "Full partial results, findings and pending human IDs survive failure; unknown writes stop without replay, replacement records or competing transitions."
+        },
+        {
+          "id": "AC5",
+          "requirement": "Installed guidance explains direct invocation, prerequisites, evidence ownership, success and recovery, and makes clear that prescribed dispatch remains a separate pending Story."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own the qa-jira read-only eligibility and canonical publication/transition skill, its installation, tests and guides, and the approved same-scope 24-Story delivery mapping; execute no tests or manager actions.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "qa-jira is the sole permanent publication/failure contract; use existing canonical records, validators, formatter and direct configured edges, with no new engine, schema, provider adapter or helper transition authority."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Verify current configured scope, actors, assignment/review/PR/requirements receipts and complete evidence before publication; append once, verify exact readback and freshness, transition once and verify status; retain full partial results and never replay completed mutations."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Human-only static work needs no invented deployment; successful runtime completion or any PASS/FAIL claim requires current trusted environment proof, while a complete all-NOT_RUN non-completing report may describe missing deployment under the corrected shared contract."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-24-H01",
+              "R1-24-H02",
+              "R1-24-H03"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "id": "R1-24-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC5",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Prepared native Story and Bug assessments with a complete mixed API-child/database/UI ledger, declared observed-value binding, inspectable supplied/mock screenshots, exact human IDs and current valid receipt chains.",
+                "Same-release installed qa-jira and private disposable fixtures with simulated provider cards and dummy credentials."
+              ],
+              "steps": [
+                "Follow the installed direct-invocation guide and call preflight, then final, for each native type.",
+                "Inspect the full ledger, evidence retrieval, human_pending and ordered tool audit.",
+                "Check predecessor validation, append, exact comment readback/chain, freshness, direct transition and independent native-status verification.",
+                "Inspect the approved 24-Story mapping, new R1-24 before unchanged R1-08, preserved downstream dependencies and current-versus-historical review statements."
+              ],
+              "expected": [
+                "Every prescribed nested row and pending human ID is retained; only verified current-revision completion reaches Human Review.",
+                "The caller can use the publisher without a dispatcher; the guide states dispatch remains pending and installation grants no authority or activation.",
+                "The delivery records retain all existing R1 IDs, 53 product requirements and 41 scenarios; the original three R1-08 human cases remain, and R1-24 adds three publication cases without claiming acceptance."
+              ],
+              "evidence": [
+                "Input/output hashes, exact installed path/revision/command, ordered tool audit, inspected screenshots, typed ledger, receipt chain and delivery-mapping diff."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-24-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC3",
+                "AC4",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Separate coherent prepared defect, known-upstream-wait, inability, earlier-FAIL-plus-later-inability, earlier-FAIL-plus-wait and discussion assessments; upstream requests include their exact typed lineage."
+              ],
+              "steps": [
+                "Call final on each fresh assessment without running helpers.",
+                "Inspect final/partial ledger, findings, unfinished NOT_RUN reasons, exact upstream references and publication/transition audit."
+              ],
+              "expected": [
+                "Confirmed defect and known outstanding wait select Rework Queued; inability selects Blocked while retaining earlier findings and evidence; discussion has no terminal write and stays QA.",
+                "A rumor cannot become a dependency request, omissions or unresolved finding IDs reject, and human cases never become PASS."
+              ],
+              "evidence": [
+                "Exact prepared and produced records, full receipt chain, selected destination, verified/unknown status, tested revision and exact command."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-24-H03",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "AC4",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Static human-only native Bug with empty AI graph/types, two pending human IDs and a nonempty no-AI reason.",
+                "Separate Task/Epic, changed source/requirements/stage, missing/stale deployment, untrusted approval, missing receipt page, oversized ledger, definite append failure, unknown append/readback, unknown transition and explicitly authorized resume variants with a known completed mutation."
+              ],
+              "steps": [
+                "Call preflight/final for the zero-AI Bug, then each separate invalid or failure variant.",
+                "For missing deployment, compare a complete all-NOT_RUN blocker with a report claiming PASS/FAIL.",
+                "Inspect call audit, retained evidence, receipt resolution, current/unknown status and any resume action."
+              ],
+              "expected": [
+                "Valid static work invokes no helper or environment request, keeps the exact pending human list and reaches Human Review only after verified publication.",
+                "Invalid native types stop before writes; complete all-NOT_RUN inability may publish a valid blocker, while execution claims without required proof reject.",
+                "Stale/unknown effects stop without mutation replay, fallback terminal writes or overwriting a changed stage; at most one resolving read follows each uncertain action, and only conclusive success permits the next distinct step.",
+                "Resume consumes existing explicit valid human authorization and retained case-specific evidence; it never creates authorization, repeats a completed mutation or auto-passes humans."
+              ],
+              "evidence": [
+                "Input/output hashes, ordered tool audit, human handoff, retained evidence/receipt reads, tested revision and exact command."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Canonical accepted/rejected publication records, full partial ledgers, human-only handoff, uncertain-write handling and source/installed skill-validator-formatter parity; no prose-only claim of runtime behavior."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-08",
-    "title": "Complete QA with an honest evidence ledger",
+    "title": "Execute prescribed QA and hand off complete evidence",
     "contract": {
       "schema": "pigboard-ticket/v1",
       "problem_to_solve": "QA needs to run the named cases in order and hand the open PR to humans. It must retain incomplete results and keep human tests visibly pending.",
@@ -1561,6 +1802,14 @@
         },
         {
           "ticket": "R1-07",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "PGB-108",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-24",
           "required_outcome": "ai_qa_complete"
         }
       ],
@@ -1586,7 +1835,7 @@
         "repository": {
           "url": "https://github.com/danielchappell/Pigboard",
           "base_branch": "main",
-          "change_boundary": "Own QA orchestration and separate qa-jira publication; helpers retain no transition authority.",
+          "change_boundary": "Own QA orchestration and compose the separately delivered qa-jira publisher; helpers retain no transition authority.",
           "out_of_scope": [
             "Plexus/customer code changes",
             "Archived runtime reuse",

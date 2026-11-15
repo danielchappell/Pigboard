@@ -30,7 +30,7 @@ remote writes. This Build contains the earlier prose authoring contract, not the
 later YAML writer. It predates the later model-control checks below. No PR-write acceptance, Jira run or delivery run
 is implied. Token rights, CLI policy and complete workflow readiness are distinct.
 
-The current bundle contains twenty-one skill folders, including `write-pr-sized-stories`,
+The current bundle contains twenty-two skill folders, including `write-pr-sized-stories`,
 `implementer-job` and `implementer-jira`. Dated Build counts below remain historical.
 The separate [request-rework](../../skills/request-rework/SKILL.md) capability is
 human invoked through an existing prepared assistant, not a fourth automation.
@@ -174,7 +174,17 @@ acceptance remain separate rollout checks in PGB-58/PGB-60.
 ## Refresh and recovery
 
 Publish reviewed changes, update the environment's skill pin, preserve the current
-CLI setup/secrets, and run a draft Build. Inspect the manifest, twenty-one entrypoints,
+CLI setup/secrets, and run a draft Build. Inspect the manifest, twenty-two entrypoints,
 canonical reference/example and helper probes before selecting it. Keep the prior
 Build on failure; do not enable an automation as part of selecting a Build. Record
 new Build/UI acceptance here after observation, including any remaining limitations.
+
+## Standalone prepared publisher availability
+
+The current bundle contains 22 skills, including qa-jira. A separately authorized
+QA caller may load qa-jira directly with a complete prepared ledger and current
+trusted native/review/PR/evidence/actor setup. Compose a publisher profile from its
+preflight/final contract; it does not execute helpers. The retained qa-entrypoint
+is incompatible until PGB-78 completes integration. Keep saved inactive automation
+settings/prompts and dated Build receipts at their original scope. This addition
+neither activates automation nor establishes compatible live release acceptance.
