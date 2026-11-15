@@ -10,8 +10,8 @@ The [writing skill](../skills/write-pr-sized-stories/SKILL.md) prepares versione
 with [local validation](authoring.md). The structured implementer accepts native
 Story/Bug current assignments through [its input contract](../skills/implementer-entrypoint/references/handoff.md#input-contract).
 The [retained basic-worker Story reference](../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
-remains canonical only for unmigrated reviewer/QA prose field labels, ordering
-and preparation ownership. They do not consume the new typed implementer result.
+remains canonical only for retained QA prose field labels, ordering
+and preparation ownership. The [reviewer](../skills/pigboard-pr-review/SKILL.md) consumes canonical implementation receipts through [reviewer-jira](../skills/reviewer-jira/SKILL.md). QA does not yet consume the typed result.
 This mixed bundle remains inactive; no automatic prose conversion is provided. Native
 Jira metadata stays in Jira fields; accepted requirements stay in the description;
 implementation/review/QA outputs use versioned handoff comments. All acceptance
@@ -37,7 +37,7 @@ prepared testing information for review and QA.
 | Trigger | Entry point | Required outcome |
 | --- | --- | --- |
 | In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, same or new PR, passing current CI/artifacts, typed append/read-back and recheck before direct In Review; known dependency wait to Rework Queued, human blocker to Blocked. |
-| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or confirm rework and move to In Progress. |
+| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or publish all confirmed in-scope findings as a same-PR repair_request and move to Rework Queued. |
 | QA | `qa-entrypoint` | Grok High; execute named QA skills and prescribed cases in order, collect outcomes and evidence; move to Human Review on pass, In Progress for confirmed implementation defects, or Blocked if unable to complete. |
 
 QA remains on the open PR. `qa-api` assesses prescribed API cases and calls the
@@ -45,7 +45,7 @@ named execution helper (such as `qa-bruno`). `qa-database` executes prepared
 read-only database observations. `qa-ui` uses computer use and captures screenshots.
 Exact inputs, stopping conditions and evidence formats live in each skill.
 
-Retained reviewer/QA fixes return to In Progress on the same PR. Their migration
+Reviewer fixes queue on the same PR; discussion stays In Review. Retained QA fixes return to In Progress on the same PR. QA migration
 to structured queued repair is later work; this is not an accepted compatible loop.
 The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
 [Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates

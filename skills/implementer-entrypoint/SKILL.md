@@ -37,5 +37,5 @@ assignment, human authorization, CI success or provider write. Current local
 validation is supplied-fact checking, not live authority. Read the shared
 [publication and uncertainty rules](references/handoff.md#publication-protocol)
 when a final handoff is needed. This structured implementer does not convert old
-prose tickets. Retained reviewer/QA workers still require their basic contract;
+prose tickets. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Retained QA still requires its basic contract;
 this mixed bundle is not an active compatible delivery loop.

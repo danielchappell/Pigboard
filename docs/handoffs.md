@@ -6,11 +6,17 @@ exact target against the provider observations and trusted configuration supplie
 in a local JSON file. Neither check fetches evidence or proves it is fresh or
 provider-authentic. A valid blocked, queued or partial result is not completion.
 
-These local checks and the composed implementer producer are available in this
-release. Reviewer/QA remain basic prose workers; their typed migration, manager
+These local checks and composed implementer and reviewer producers are available in this
+release. The reviewer contract below binds approval/repair to actual implementation receipts. Retained QA remains a basic prose worker; its typed migration, manager
 scheduling/provider adapters and human unblock automation are separate work. Installation does not activate automations or authorize a Jira/PR write.
 Workers need no database access; manager mode compares a separately supplied
 stored assignment and never contacts its operational store.
+
+Choose the link for the copy you are reading; installed payloads preserve the same guide bytes.
+
+| Contract | Source checkout | Installed work-validator/docs |
+| --- | --- | --- |
+| Reviewer handoff | [Source reviewer](../skills/pigboard-pr-review/references/jira-handoff.md) | [Installed reviewer](../../pigboard-pr-review/references/jira-handoff.md) |
 
 ## Prepare and run
 

@@ -1,7 +1,7 @@
 # Cursor review profile
 
 Verify this profile during setup; it is not a claim about enabled account features.
-Invoke `pigboard-pr-review` when an opted-in Story enters In Review. First workstream:
+Invoke `pigboard-pr-review` when an opted-in native Story or Bug enters In Review. First workstream:
 Safeguard INT board 1234, exact label `AI-Daniel-1`. Resolve real project/status IDs;
 a board label/number is not authorization or a transition identifier.
 
@@ -17,7 +17,7 @@ IDs or a lock is not a blocker. Duplicate prevention, cancellation and cross-run
 coordination are deferred; the operator takes care around repeated launches. A
 supported comment/new-commit wake must find the ticket currently In Review; a
 comment cannot start work in QA, Human Review or another stage. Discussion-only continuations stay in Review; confirmed fixes are handed to
-In Progress, and subsequent review requires its new eligible stage entry. Do not
+Rework Queued on the same PR, and subsequent review requires its new eligible stage entry. Do not
 install extra triggers as part of using this skill.
 
 Prepare these capabilities and permissions before activation:
@@ -28,11 +28,12 @@ Prepare these capabilities and permissions before activation:
   CLI route may be explicitly selected and verified in setup; it is never a fallback
   discovered after a failed tool call. For that configured route, read the
   [prepared CLI contract](rovito-cli.md). Do not use GitHub commands for Bitbucket.
+- Complete reviewer-jira sibling and its exact assignment/implementation receipt preflight and final publication contract.
 - Shared pr-review, its review-state reference, human-writing and pr-commenting at
   the reviewed versions. The wrapper preserves their criteria and writing behavior.
 - Permission to post/edit review comments, publish Jira reports, approve as an
   eligible configured actor, revoke only that actor's invalid approval, inspect
-  actual approval receipts/state, and transition to QA/In Progress/Blocked.
+  actual approval receipts/state, and transition to QA/Rework Queued/Blocked.
 - Snapshot/expected-head support or equivalent verified current-state controls;
   permissions and identity restrictions must be checked with the real provider.
   An approval response alone is insufficient. Do not assume approvals survive or

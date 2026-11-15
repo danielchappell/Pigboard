@@ -4,7 +4,7 @@ Read only the section required by the current phase. The composer dispatches; th
 job produces code/PR/evidence; the Jira skill owns preflight and publication.
 Generic “Story” in the existing plan-review prompt includes the assigned native
 Story or Bug. The retained [basic prose contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
-applies only to unmigrated reviewer/QA, not this implementer. Do not convert prose,
+applies only to retained QA. The [structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; implementer and reviewer use the structured contract. Do not convert prose,
 guess missing nulls or imply that the full mixed-version workflow is compatible.
 
 ## Input contract
