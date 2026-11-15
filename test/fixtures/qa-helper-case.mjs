@@ -555,7 +555,7 @@ const savedFilterPassResponse={status:200,body:{results:[{id:'fixture-1',name:'M
 const savedFilterFailResponse={status:200,body:{results:[]}};
 const savedFilterQuery='SELECT id, name, tenant_id\nFROM synthetic_saved_filters\nWHERE tenant_id = $1 AND id = $2\nLIMIT 1;\n';
 function qaOutcomeFacts(id,e,work,report){
-  const wait=['H02-wait','Q09-wait','H02-upstream-wait'].includes(id),inability=['H02-defect-inability','Q11-retained-findings','Q11-joined-inability'].includes(id);
+  const wait=['H02-wait','Q09-wait','H02-upstream-wait','H02-wait-instruction','Q13-wait-foreign-finding-instruction'].includes(id),inability=['H02-defect-inability','Q11-retained-findings','Q11-joined-inability','H02-defect-inability-instruction','Q11-three-inability','Q11-independent-inability','Q13-partial-pass-inability','Q13-null-pass-instruction','Q13-null-fail-instruction','Q13-null-foreign-artifacts-instruction','Q13-foreign-result-instruction','Q13-null-environment-instruction','Q11-missing-middle-instruction'].includes(id);
   const record=targetRecord(e),actor=work.testing_strategy.actors[0],facts={notice:qaNotice,category:'supplied/mock',audience:'private fixture operator and reviewer',dependency_observations:[],domain_inabilities:[]};
   const affected=report.steps.filter(x=>x.result==='NOT_RUN').map(x=>x.id);
   if(wait){const request=structuredClone(record.payload.requests[0]);facts.dependency_observations.push({
@@ -570,7 +570,9 @@ function qaOutcomeFacts(id,e,work,report){
     attempted_capability_check:'Inspect availability of the already prepared browser session before UI observation',
     original_response:{request:{capability:'prepared-browser-session',ticket_id:record.ticket_id,step_id:step.id,actor_id:actor.id,tenant:actor.tenant,surface:step.ui.surface,pr:record.payload.pr},status:503,body:{code:'SESSION_UNAVAILABLE',step_id:step.id,actor_id:actor.id,tenant:actor.tenant,surface:step.ui.surface,session_available:false,observation_started:false}},
     publisher_authority_affected:false,source:'Fixed original mock domain capability response after the retained API observation; not an actual UI execution.'
-  });}return facts;
+  });}
+  if(['Q11-independent-inability','Q13-partial-pass-inability','Q13-null-pass-instruction'].includes(id)){const step=work.testing_strategy.cases.flatMap(c=>c.steps).find(x=>x.skill==='qa-database');facts.domain_inabilities.push({observed_at:'2026-11-15T09:40:20Z',ticket_id:record.ticket_id,case_id:work.testing_strategy.cases.find(c=>c.steps.some(x=>x.id===step.id)).id,step_id:step.id,actor_id:actor.id,tenant:actor.tenant,identity_reference:actor.identity_reference,pr:record.payload.pr,capability:'prepared PostgreSQL session',original_response:{status:503,body:{code:'SESSION_UNAVAILABLE',session_available:false,observation_started:false}},publisher_authority_affected:false,source:'Fixed original mock database capability failure; no query executed.'});}
+  return facts;
 }
 
 function qaSavedBinding(work,report){
@@ -578,11 +580,11 @@ function qaSavedBinding(work,report){
   if(!db?.bindings.length)return null;
   const childRow=report.steps.find(x=>x.id===child?.id),parentRow=report.steps.find(x=>x.id===parent?.id);
   if(childRow?.result!=='PASS'||parentRow?.result!=='PASS')return null;
-  const observed=savedFilterPassResponse.body.results[0].id;
+  const observed=savedFilterPassResponse.body.results[0].id,pending=report.steps.find(x=>x.id===db.id)?.result==='NOT_RUN';
   return {notice:qaNotice,category:'supplied/mock',
     original_source:{step:child.id,artifact_uri:childRow.evidence[0].uri,json_pointer:'/response/body/results/0/id',value:observed},
     parent_exposure:{step:parent.id,output:'record_id',value:observed,source_step:child.id},
-    consumer:{step:db.id,input:'record_id',parameter_index:1,original_parameters:['example',null],bound_parameters:['example',observed]},
+    consumer:{step:db.id,input:'record_id',parameter_index:1,original_parameters:['example',null],bound_parameters:pending?null:['example',observed],...(pending?{pending:true}:{} )},
     provenance:'Fixed supplied selected child response has results[0].id fixture-1; parent exposes only that observed ID.'};
 }
 function qaSavedObservation(work,report,receipt,{canonicalOnly=false}={}){
@@ -617,6 +619,49 @@ function qaSavedObservation(work,report,receipt,{canonicalOnly=false}={}){
       checkpoints:[{id:'result',category:'supplied/mock',action:'Enter Monthly in the saved-filter search and inspect the visible result.',observed_at:'2026-11-15T09:40:04Z',visible_text:['SUPPLIED MOCK','Monthly','fixture-1','tenant example'],screenshot:{path:'evidence/filter-result.png',width:1280,height:800,digest:qaHash(mockQaPng('filter-result'))}}]};
   }
   throw Error('Unsupported fixed saved-filter claimed observation.');
+}
+
+// Explicit usage, not V/Q prefix inference. Old matrices retain their own bytes.
+const qaCanonicalUsage={
+ 'H02-defect':'H02-defect-instruction','Q08-defect':'H02-defect-instruction',
+ 'H02-defect-inability':'H02-defect-inability-instruction','Q11-retained-findings':'H02-defect-inability-instruction',
+ 'H02-wait':'H02-wait-instruction','Q09-wait':'H02-wait-instruction',
+ 'V03-three':'Q11-three-inability','V03-independent':'Q11-independent-inability','V03-join':'Q11-joined-inability','V03-missing-middle':'Q11-missing-middle-instruction',
+ 'V04-proof-blocked-exact-fail':'H02-defect-inability-instruction','V04-proof-blocked-exact-pass':'Q13-partial-pass-inability',
+ 'V04-proof-blocked-null-real-environment':'H02-defect-instruction',
+ 'V04-proof-blocked-null-pass':'Q13-null-pass-instruction','V04-proof-blocked-null-fail':'Q13-null-fail-instruction',
+ 'V04-proof-blocked-null-foreign-artifacts':'Q13-null-foreign-artifacts-instruction','V04-proof-blocked-foreign-result':'Q13-foreign-result-instruction',
+ 'V04-proof-blocked-real-null-environment':'Q13-null-environment-instruction','V04-proof-wait-foreign-finding':'Q13-wait-foreign-finding-instruction'
+};
+const qaInstructionClock={request:'2026-11-15T10:01:03Z',database:'2026-11-15T10:01:04Z',uiStart:'2026-11-15T10:01:05Z',uiInput:'2026-11-15T10:01:06Z',uiResult:'2026-11-15T10:01:07Z',dependency:'2026-11-15T10:01:10Z',inability:'2026-11-15T10:01:20Z'};
+function qaCompletePair(original,{pass=false}={}){
+ const e=structuredClone(original);
+ changeTarget(e,r=>{
+  const report=r.payload.report??r.payload.qa_report,parent=report.steps.find(x=>x.skill==='qa-api'),child=report.steps.find(x=>x.skill==='qa-bruno');
+  const evidence=e.evidence_receipts.find(x=>x.kind==='artifact'&&x.uri.includes('TC-01.S2-0'));
+  child.result=parent.result=pass?'PASS':'FAIL';child.not_run_reason=parent.not_run_reason=null;
+  child.evidence=[{label:'Original selected child response',uri:evidence.uri,digest:null}];
+  child.finding_ids=parent.finding_ids=pass?[]:['F1'];
+  if(pass){delete r.payload.findings;for(const row of report.steps.filter(x=>x.result==='NOT_RUN')){row.finding_ids=[];row.not_run_reason='Prepared domain capability became unavailable after the completed selected response; observation not started.';}}
+ });return e;
+}
+function qaApplyInstructionClock(artifacts,facts,reference,envelope,checkpoints){
+ for(const artifact of artifacts){const body=artifact.body;
+  if(body.kind==='api_parent_observation'||body.kind==='bruno_response')body.observed_at=qaInstructionClock.request;
+  if(body.kind==='postgresql_read_only_observation')body.observed_at=qaInstructionClock.database;
+  if(body.kind==='ui_observation'){
+   body.observed_at=qaInstructionClock.uiResult;
+   for(const point of body.checkpoints)point.observed_at=point.id==='start'?qaInstructionClock.uiStart:point.id==='input'?qaInstructionClock.uiInput:qaInstructionClock.uiResult;
+  }
+  artifact.body_sha256=qaHash(JSON.stringify(body));
+ }
+ for(const point of checkpoints)point.observed_at=point.id==='start'?qaInstructionClock.uiStart:point.id==='input'?qaInstructionClock.uiInput:qaInstructionClock.uiResult;
+ for(const fact of facts.dependency_observations)fact.observed_at=qaInstructionClock.dependency;
+ for(const fact of facts.domain_inabilities)fact.observed_at=qaInstructionClock.inability;
+ if(reference){
+  const artifact=artifacts.find(x=>x.uri===reference.uri);artifact.body=structuredClone(facts);artifact.body_sha256=reference.digest=qaHash(JSON.stringify(facts));
+  const receipt=envelope.evidence_receipts.find(x=>x.uri===reference.uri);receipt.observed_digest=reference.digest;artifact.original_receipt=structuredClone(receipt);
+ }
 }
 
 // Fixed mock identity facts for the two existing synthetic fixture families.
@@ -736,6 +781,33 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
   const other=structuredClone(authorization.c),otherRecord=structuredClone(authorization.r);
   other.id='9999';otherRecord.record_id='93000000-0000-4000-8000-000000000003';other.body=qaBody(otherRecord);
   resume.comment_pages[0].comments.push(other);resume.comment_pages[0].total++;
+  fixed['H02-defect-instruction']=qaCompletePair(fixed['H02-defect']);
+  fixed['H02-defect-inability-instruction']=qaCompletePair(fixed['H02-defect-inability']);
+  fixed['H02-wait-instruction']=qaCompletePair(fixed['H02-wait']);
+  fixed['Q11-three-inability']=qaCompletePair(fixed['V03-three']);
+  fixed['Q11-independent-inability']=qaCompletePair(fixed['V03-independent']);
+  fixed['Q13-partial-pass-inability']=qaCompletePair(fixed['V04-proof-blocked-exact-pass'],{pass:true});
+  fixed['Q11-missing-middle-instruction']=changeTarget(structuredClone(fixed['Q11-three-inability']),r=>r.payload.qa_report.steps[2].finding_ids=[]);
+  for(const [id,base,fault]of [
+   ['Q13-null-pass-instruction','Q13-partial-pass-inability','null'],
+   ['Q13-null-fail-instruction','H02-defect-inability-instruction','null'],
+   ['Q13-null-foreign-artifacts-instruction','H02-defect-inability-instruction','foreign-null'],
+   ['Q13-foreign-result-instruction','H02-defect-inability-instruction','result'],
+   ['Q13-null-environment-instruction','H02-defect-inability-instruction','environment'],
+   ['Q13-wait-foreign-finding-instruction','H02-wait-instruction','finding']
+  ]){
+   const e=structuredClone(fixed[base]),r=targetRecord(e),report=r.payload.qa_report;
+   if(fault==='finding'){
+    const previous=r.payload.findings[0].evidence[0],receipt=structuredClone(e.evidence_receipts.find(x=>x.uri===previous.uri));
+    receipt.uri+='-separate-finding';receipt.pr.source_revision='f'.repeat(40);e.evidence_receipts.push(receipt);e.trusted.projects[0].evidence_uris.push(receipt.uri);
+    changeTarget(e,x=>x.payload.findings[0].evidence[0].uri=receipt.uri);
+   }else for(const receipt of e.evidence_receipts){
+    const result=report.steps.some(row=>row.evidence.some(ref=>ref.uri===receipt.uri)),finding=r.payload.findings?.some(f=>f.evidence.some(ref=>ref.uri===receipt.uri));
+    if((fault==='null'&&(result||finding||receipt.kind==='environment'))||(fault==='environment'&&receipt.kind==='environment')||(fault==='foreign-null'&&receipt.kind==='environment'))receipt.pr=null;
+    if((fault==='foreign-null'&&(result||finding))||(fault==='result'&&receipt.uri===report.steps[0].evidence[0].uri))receipt.pr.source_revision='f'.repeat(40);
+   }
+   fixed[id]=e;
+  }
   for(const [id,e] of Object.entries(fixed))if(!e)throw Error('Missing fixed prerequisite input: '+id);
   const cases={};
   const put=async(name,value)=>{const file=join(root,name);await mkdir(resolve(file,'..'),{recursive:true,mode:0o700});await writeFile(file,Buffer.isBuffer(value)||typeof value==='string'?value:JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});return file;};
@@ -784,7 +856,7 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
       screenshot:{path:`evidence/ui-${checkpoint}.png`,width:440,height:130,digest:qaHash(mockQaPng(checkpoint))},
       visible_text:checkpoint==='start'?['SUPPLIED MOCK','RECORD ID','LOOKUP']:checkpoint==='input'?['SUPPLIED MOCK','RECORD ID RECORD-001','LOOKUP']:['SUPPLIED MOCK','RECORD-001','TENANT-A READY']
     }));
-    const outcomeFacts=qaOutcomeFacts(id,original,currentWork,report),savedBinding=qaSavedBinding(currentWork,report),canonicalOnly=id==='V03-join';
+    const outcomeFacts=qaOutcomeFacts(id,original,currentWork,report),savedBinding=qaSavedBinding(currentWork,report),canonicalOnly=Object.hasOwn(qaCanonicalUsage,id);
     const artifacts=e.evidence_receipts.map(receipt=>{
       const row=report.steps.find(step=>step.evidence.some(ref=>ref.uri===receipt.uri));
       const finding=assessment.findings.find(f=>f.evidence.some(ref=>ref.uri===receipt.uri));
@@ -819,7 +891,7 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
           source:'Fixed supplied/mock UI history with three separately inspectable checkpoint images; no browser was opened by preparation.'
         });
       }
-      if(!isMixed){const typed=qaSavedObservation(currentWork,report,receipt,{canonicalOnly});if(typed){Object.keys(body).forEach(key=>delete body[key]);Object.assign(body,typed);}}
+      if(!isMixed){const typed=qaSavedObservation(currentWork,report,receipt,{canonicalOnly:id==='V03-join'});if(typed){Object.keys(body).forEach(key=>delete body[key]);Object.assign(body,typed);}}
       return {uri:receipt.uri,available:receipt.available,audience:'private fixture operator and reviewer',category:'supplied/mock',body,body_sha256:qaHash(JSON.stringify(body)),original_receipt:receipt};
     });
     // Give independently authored cause observations a normal approved artifact
@@ -834,24 +906,30 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
       artifacts.push({uri,available:true,audience:'private fixture operator and reviewer',category:'supplied/mock',body,body_sha256:digest,original_receipt:receipt});
       outcomeReference={label:'Current-case dependency or scoped domain capability observation',uri,digest};
     }
+    const legacyContext={scope:'Historical canonical/shape specimen, not an instruction history',work:original.requirements.find(x=>x.ticket_id===terminal.ticket_id),artifacts:structuredClone(artifacts),outcome_facts:structuredClone(outcomeFacts),outcome_facts_reference:structuredClone(outcomeReference)};
+    if(!canonicalOnly)qaApplyInstructionClock(artifacts,outcomeFacts,outcomeReference,e,uiCheckpoints);
+    if(!Object.hasOwn(qaCanonicalUsage,id)&&id.endsWith('instruction')||['Q11-three-inability','Q11-independent-inability','Q13-partial-pass-inability'].includes(id)){
+      const parent=artifacts.find(x=>x.body.kind==='api_parent_observation'&&x.body.step===report.steps.find(r=>r.skill==='qa-api')?.id),child=artifacts.find(x=>x.body.kind==='bruno_response'&&x.body.step===report.steps.find(r=>r.skill==='qa-bruno')?.id);
+      if(parent&&child){parent.body.child_source={step:child.body.step,uri:child.uri,response_digest:qaHash(JSON.stringify(child.body.response)),observed_at:child.body.observed_at};parent.body_sha256=qaHash(JSON.stringify(parent.body));}
+    }
     const scenario=id.startsWith('Q')?id:'normal';
     if(id==='H02-discussion'||id==='Q12-discussion'){assessment.proposed_outcome='discussion';assessment.reason='Discuss the supplied observations only; no final publication or transition requested.';}
     const cards={notice:qaNotice,scenario,reads:{native,comments:e.comment_pages,pr:e.pr_receipts,evidence:e.evidence_receipts,artifacts,outcome_facts:outcomeFacts,outcome_facts_reference:outcomeReference,access:qaMockAccess(currentWork),pipeline:{author:'pipeline',origin:'supplied/mock PR comment',original_comments:pipelineComments,receipts:e.evidence_receipts.filter(x=>x.kind==='environment')},freshness:{native,pr:e.pr_receipts}},capabilities:{actor_id:project.actors.qa[0],append:true,read_exact:true,direct_transitions:true},transitions:['Human Review','Rework Queued','Blocked'].map((stage,i)=>({id:String(61+i),from:project.stages.QA,to:project.stages[stage],name:stage})),append:{storage:['Q14-append-absent','Q14-append-rejected'].includes(scenario)?'not_stored':scenario==='Q14-append-ambiguous'?'ambiguous':'stored',reply:scenario==='Q14-append-rejected'?{status:403,error:'Simulated append permission denied; request was definitely rejected before storage.',definite_failure:true}:scenario.startsWith('Q14-')?'timeout':{id:'9901'}},readback:{id:'9901',author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],update_author_id:scenario==='Q15-wrong-actor'?'stranger':project.actors.qa[0],created:'2026-11-15T14:00:00Z',updated:'2026-11-15T14:00:00Z',body:'MANUAL_ECHO_ACTUAL_SUBMITTED_TRANSPORT_ONLY',fault:scenario==='Q15-wrong-body'?'replace body with unrelated discussion':scenario==='Q15-wrong-uuid'?'replace observed record UUID with 99000000-0000-4000-8000-000000000099':scenario==='Q15-readback-failed'?'unavailable':scenario==='Q16-chain-pages'?'omit final comment page':null},after_publish:scenario==='Q17-source-drift'?'source revision becomes ffffffffffffffffffffffffffffffffffffffff':'same requirement bytes, assignment, source/target, approval/CI and access; issue updated timestamp may change',transition:{reply:scenario==='Q18-transition-failed'?'definite failure':scenario.includes('transition-')?'timeout':'accepted',resolving_status:scenario==='Q20-transition-stored-timeout'?'requested destination':scenario==='Q19-transition-ambiguous'?'unknown':scenario==='Q18-transition-failed'?'QA':'requested destination'},resume_fault:scenario==='Q21-resume-ambiguous'?'no unique explicit resume authorization':null};
     const rejected=new Set([...Object.keys(faults),'V03-missing-middle','V04-proof-blocked-null-pass','V04-proof-blocked-null-fail','V04-proof-blocked-null-foreign-artifacts','V04-proof-blocked-null-real-environment','V04-proof-blocked-real-null-environment','V04-proof-blocked-foreign-result','V04-proof-wait-foreign-finding','H03-task','H03-epic','H03-wrong-scope','H03-changed-stage','H03-changed-requirements','H03-oversized-ledger','Q21-resume-ambiguous']);
     const discussion=['H02-discussion','Q12-discussion'].includes(id);
-    const route=['H02-defect','Q08-defect'].includes(id)?'Rework Queued':
-      ['H02-wait','Q09-wait','H02-upstream-wait'].includes(id)?'Rework Queued':
-      id.startsWith('V03-')||id.startsWith('V04-')||['H02-inability','H02-defect-inability','Q10-inability','Q11-retained-findings','Q11-joined-inability'].includes(id)?'Blocked':'Human Review';
+    const route=['H02-defect','Q08-defect','H02-defect-instruction'].includes(id)?'Rework Queued':
+      ['H02-wait','Q09-wait','H02-upstream-wait','H02-wait-instruction','Q13-wait-foreign-finding-instruction'].includes(id)?'Rework Queued':
+      id.startsWith('V03-')||id.startsWith('V04-')||id.startsWith('Q11-')||id.startsWith('Q13-')&&id!=='Q13-wrong-approval'||['H02-inability','H02-defect-inability','Q10-inability','Q11-retained-findings','Q11-joined-inability','H02-defect-inability-instruction'].includes(id)?'Blocked':'Human Review';
     const stopAfterAppend=['Q14-append-rejected','Q14-append-absent','Q14-append-ambiguous','Q15-readback-failed','Q15-wrong-body','Q15-wrong-uuid','Q15-wrong-actor','Q16-chain-pages','Q17-source-drift'].includes(id);
     const expectation={
       notice:qaNotice,independent_operator_only:true,
       native_case:(id.startsWith('H02')||id==='Q11-joined-inability')?'R1-24-H02':id.startsWith('H01')?'R1-24-H01':'R1-24-H03',
-      destination:discussion?'QA':rejected.has(id)?null:route,
-      required_findings:id==='Q11-joined-inability'?['F1','F2']:['H02-defect','H02-wait','H02-defect-inability','Q08-defect','Q09-wait','Q11-retained-findings'].includes(id)?['F1']:[],
+      usage:canonicalOnly?'canonical-only':'instruction',counterpart:qaCanonicalUsage[id]??null,destination:canonicalOnly?null:discussion?'QA':rejected.has(id)?null:route,
+      required_findings:id==='Q11-joined-inability'?['F1','F2']:['H02-defect','H02-wait','H02-defect-inability','Q08-defect','Q09-wait','Q11-retained-findings','H02-defect-instruction','H02-defect-inability-instruction','H02-wait-instruction','Q11-three-inability','Q11-independent-inability','Q11-missing-middle-instruction','Q13-null-fail-instruction','Q13-null-foreign-artifacts-instruction','Q13-foreign-result-instruction','Q13-null-environment-instruction','Q13-wait-foreign-finding-instruction'].includes(id)?['F1']:[],
       human_pending:report.human_pending,preflight_writes:0,
-      append_attempts:discussion||rejected.has(id)?0:1,
-      transition_attempts:discussion||rejected.has(id)||stopAfterAppend?0:1,
-      order:['scope/work/pointer/complete pages','PR/review/CI/evidence','record and predecessor validation','format','freshness','append','exact readback','observed chain validation','freshness','direct transition','status'],
+      append_attempts:canonicalOnly||discussion||rejected.has(id)||id.startsWith('Q13-')&&id.endsWith('-instruction')||id==='Q11-missing-middle-instruction'?0:1,
+      transition_attempts:canonicalOnly||discussion||rejected.has(id)||stopAfterAppend||id.startsWith('Q13-')&&id.endsWith('-instruction')||id==='Q11-missing-middle-instruction'?0:1,
+      order:canonicalOnly?['record validation','supplied chain validation']:['scope/work/pointer/complete pages','PR/review/CI/evidence','record and predecessor validation','format','freshness','append','exact readback','observed chain validation','freshness','direct transition','status'],
       scenario,negative:rejected.has(id),
       instruction:'Independently validate actual output against accepted requirements and named boundary, retained IDs, route and ordered calls. Echo success is not a passing case. Expectations and validator candidates are withheld.'
     };
@@ -885,18 +963,34 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
       }
     }
     if(outcomeFacts.domain_inabilities.length){
-      for(const fault of ['missing-event','before-observation','wrong-tenant','wrong-step','success-response']){
+      for(const fault of ['missing-event','before-observation','wrong-actor','wrong-tenant','wrong-step','success-response']){
         const copy=structuredClone(outcomeFacts),fact=copy.domain_inabilities[0];
         if(fault==='missing-event')copy.domain_inabilities=[];
         if(fault==='before-observation')fact.observed_at='2026-11-15T09:00:00Z';
+        if(fault==='wrong-actor')fact.actor_id='OTHER';
         if(fault==='wrong-tenant')fact.tenant='tenant-a';
         if(fault==='wrong-step')fact.step_id='UNRELATED';
         if(fault==='success-response')fact.original_response={status:200,body:{session_available:true,observation_started:false}};
         causeControls.push({id:fault,outcome_facts:copy,expected_boundary:'No verified later domain inability; retained local defect remains repair evidence, not fabricated Blocked cause.'});
       }
     }
+    for(const control of causeControls){
+      const variantCards=structuredClone(cards),variantPredecessors=structuredClone(e),bytes=JSON.stringify(control.outcome_facts),digest=qaHash(bytes);
+      variantCards.reads.outcome_facts=structuredClone(control.outcome_facts);
+      if(outcomeReference){
+        variantCards.reads.outcome_facts_reference.digest=digest;
+        const artifact=variantCards.reads.artifacts.find(x=>x.uri===outcomeReference.uri);artifact.body=structuredClone(control.outcome_facts);artifact.body_sha256=digest;artifact.original_receipt.observed_digest=digest;
+        variantCards.reads.evidence.find(x=>x.uri===outcomeReference.uri).observed_digest=digest;
+        variantPredecessors.evidence_receipts.find(x=>x.uri===outcomeReference.uri).observed_digest=digest;
+      }
+      control.cards=variantCards;control.predecessors=variantPredecessors;control.outcome_file_bytes=bytes;
+      control.preparation='Materialize a fresh private variant before dispatch, replacing all cause file/card/receipt views with this fixed copy. Do not edit an observed episode or expose expected_boundary.';
+    }
     if(causeControls.length)await put(`${operator}/cause-controls.json`,causeControls);
+    if(id==='Q11-three-inability')await put(`${operator}/propagation-controls.json`,[2,3].map(index=>{const copy=structuredClone(assessment);copy.qa_report.steps[index].finding_ids=[];return {id:index===2?'missing-middle-F1':'missing-last-F1',assessment:copy,cards:structuredClone(cards),expected_boundary:'Declared failed/skipped prerequisite finding must be retained; cause and completed pair remain unchanged.'};}));
+
     await put(`${operator}/cards.json`,cards);await put(`${operator}/expectations.json`,expectation);
+    await put(`${operator}/validator-inputs/legacy-context.json`,legacyContext);
     await put(`${operator}/validator-inputs/record.yaml`,stringify(terminal));await put(`${operator}/validator-inputs/published.json`,original);
     if(['H03-changed-requirements','H03-stale-deployment','H03-ledger-within-limit','H03-oversized-ledger','Q14-append-rejected'].includes(id)){
       await put(`${base}/preparation-notes.txt`,({
@@ -910,12 +1004,12 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
     const claimedSavedUi=artifacts.some(x=>x.body.kind==='ui_observation'&&x.body.entry_route==='/filters'),claimedSavedDb=artifacts.some(x=>x.body.kind==='postgresql_read_only_observation'&&x.body.tenant==='example');
     const linkedFiles=isMixed?['ui-start.png','ui-input.png','ui-result.png','output-binding.json']:[...(claimedSavedDb?['saved-filter-query.sql']:[]),...(savedBinding?['output-binding.json']:[]),...(claimedSavedUi?['filter-result.png']:[])];
     await put(`${base}/evidence-guide.txt`,canonicalOnly?
-      'VALIDATOR-ONLY: V03-join is not an instruction-ready positive history. Preserve its canonical causal-union records; use Q11-joined-inability for coherent instruction coverage. Legacy mock.png is unused, not report evidence.\n':
+      'CANONICAL-ONLY: historical shape/record specimen is not a coherent instruction history or caller input. Use '+qaCanonicalUsage[id]+' for the corresponding instruction boundary. No append/transition is promised. Legacy context and terminals stay operator-only.\n':
       'Read inputs/evidence/observations.json and inputs/evidence/outcome-facts.json; cards.reads.artifacts exposes the same report-linked bodies. '+
       (linkedFiles.length?'Claimed evidence files: '+linkedFiles.map(file=>'inputs/evidence/'+file).join(', ')+'. ':'No query or UI checkpoint file is claimed by this report. ')+
       (isMixed?'The three named UI checkpoints are the prescribed evidence. ':'Legacy inputs/evidence/mock.png is an unused tenant-a helper sample, not report-linked evidence. ')+
       'Saved-filter DB bindings exist only where declared; its UI searches literal Monthly and never binds a child output. All observations are supplied/mock history, not live execution.\n');
-    await put(`${base}/invocation.txt`,(discussion?'Trusted caller request: discussion only, with no final delivery request. Do not publish or transition. ':'')+(canonicalOnly?'VALIDATOR-ONLY; do not run this as an instruction-ready positive history. ':'')+`Load the bound immutable qa-jira/SKILL.md. All tools in this exercise are supplied/mock. Use mode preflight, then separately final when appropriate. scope: inputs/scope.yaml plus operator-supplied native identity; capabilities: prepared same-release validator root, private output and simulated reads/append/direct transitions; work: original inputs/work.yaml and separately trusted inputs/facts.yaml; assignment: actual native pointer; prepared_assessment: inputs/assessment.json; known_requests: inputs/known-requests.json; retained_delivery: null unless explicit history is supplied. Inspect inputs/evidence/observations.json, inputs/evidence/outcome-facts.json and evidence-guide.txt; follow the linked query/binding/checkpoint files. Never inspect operator/expectations.json or operator/validator-inputs, run domain helpers, contact real providers, or infer actual outcomes from fixture names. Retain actual result, candidate, transport and ordered calls in output/. Operator must bind installed path/commit/hash before execution.\n`);
+    await put(`${base}/invocation.txt`,(discussion?'Trusted caller request: discussion only, with no final delivery request. Do not publish or transition. ':'')+(canonicalOnly?'CANONICAL-ONLY; use '+qaCanonicalUsage[id]+' instead; no actor publication/transition is prescribed. ':'')+`Load the bound immutable qa-jira/SKILL.md. All tools in this exercise are supplied/mock. Use mode preflight, then separately final when appropriate. scope: inputs/scope.yaml plus operator-supplied native identity; capabilities: prepared same-release validator root, private output and simulated reads/append/direct transitions; work: original inputs/work.yaml and separately trusted inputs/facts.yaml; assignment: actual native pointer; prepared_assessment: inputs/assessment.json; known_requests: inputs/known-requests.json; retained_delivery: null unless explicit history is supplied. Inspect inputs/evidence/observations.json, inputs/evidence/outcome-facts.json and evidence-guide.txt; follow the linked query/binding/checkpoint files. Never inspect operator/expectations.json or operator/validator-inputs, run domain helpers, contact real providers, or infer actual outcomes from fixture names. Retain actual result, candidate, transport and ordered calls in output/. Operator must bind installed path/commit/hash before execution.\n`);
     await mkdir(join(root,base,'output'),{mode:0o700});cases[id]=join(root,base);
   }
   const manual=`# Manual actual-request transport echo\n\nEvery card is simulated. Freeze source/installed/input hashes and scenario before execution. Keep operator expectations and validator candidates away from the skill.\n\n1. Capture the actual requested append identity, issue, body format, exact HTML bytes or ADF value and original tool-argument serialization. Use the existing extractor to record its actual UUID/digest; retain extraction failure without repair.\n2. Use the preselected stored/not_stored/ambiguous outcome. For stored requests, combine ONLY that unchanged submitted body/format with cards.json's fixed ID, author/editor/timestamps. Append may return only the ID; exact readback returns the echoed body. Do not inject a fixed expected candidate or UUID.\n3. Stored-timeout exposes that exact echo through at most one resolving read. Not-stored returns absence; ambiguous returns insufficient/conflicting facts. Never choose storage after the decision or append again.\n4. Apply only the card's fixed observed-body/UUID/metadata/page corruption; preserve the submitted original separately.\n5. Save an audit linking request ID/path/hash, submitted format/body/UUID/digest, preselected scenario and fixed metadata to derived response bytes/value and observed extracted UUID/digest or extraction error. Build the observed leaf from that actual simulated comment, never validator-inputs.\n6. Independently validate produced record and observed chain, ledger/findings/destination, freshness, ordered calls, mutation counts and actual/unknown status. Echo alone proves no correct decision. Keep actual model/profile, commands, hashes, timestamps, cleanup and human action. No fixture output is live or human acceptance.\n`;

@@ -264,15 +264,15 @@ function assertDeliverySizing(entries) {
 
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,24);assert.equal(new Set(drafts.map(x=>x.id)).size,24);assert.equal(new Set(Object.values(publication.stories)).size,24);assert.equal(publication.stories['R1-24'],'PGB-110');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24'].includes(x.id))),'32dfca8539691420f84e55d5346063429a14c9e16ccbb76a6c311c284b816e27');
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-25','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,25);assert.equal(new Set(drafts.map(x=>x.id)).size,25);assert.equal(new Set(Object.values(publication.stories)).size,25);assert.equal(publication.stories['R1-24'],'PGB-110');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
  const b=drafts.find(x=>x.id==='R1-08').contract;
  assert.equal(hash([b.acceptance_criteria,b.technical_acceptance_criteria.constraints,b.testing_strategy.human_review.cases]),'1146a6dcd1340d1c9ecbff1c13249e937a2268a364e3e83da6a63898f1bb1c9d');
  for(const id of ['R1-24','R1-08']){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,20);assert.equal(new Set(entry.files).size,20);assert(entry.dependencies.includes('PGB-108'));}
  assertDeliverySizing(plan);
  assert(plan.find(x=>x.id==='R1-08').dependencies.includes('R1-24'));
- const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,107);assert.equal(publication.case_count,107);assert.equal(publication.story_count,24);
+ const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,110);assert.equal(publication.case_count,110);assert.equal(publication.story_count,25);
  for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
  const coverage=await read('docs/delivery/manager-r1/coverage.md');const requirements=new Set(coverage.split('\n').filter(line=>/^\| [AWMO]\d/.test(line)).flatMap(line=>[...line.split('|')[1].matchAll(/[AWMO]\d\d/g)].map(x=>x[0])));assert.equal(requirements.size,53);
  for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(cases.has(id[0]),id[0]);
@@ -389,12 +389,12 @@ test('only the actual fixed-scope PGB-110 owner decision exempts the ordinary ti
   entries=>{entries.find(x=>x.id==='R1-24').time_limit_exception.maximum_hours=18;},
   entries=>{entries.find(x=>x.id==='R1-08').hours.max=16;}
  ]){const mutated=structuredClone(plan);change(mutated);assert.throws(()=>assertDeliverySizing(mutated));}
- const reforecast=structuredClone(plan),a=reforecast.find(x=>x.id==='R1-24');a.hours.max=26;a.days=26/8;
+ const reforecast=structuredClone(plan),a=reforecast.find(x=>x.id==='R1-24');a.hours.max=37;a.days=37/8;
  assertDeliverySizing(reforecast); // Forecast update is not a substitute permission cap.
 });
 
-test('all63 fixed packets bind complete mock actor/access facts and preserve canonical negatives and expectations',async t=>{
- const p=await publisher(t),ids=Object.keys(p.cases).sort(),preserved=[];assert.equal(ids.length,63);
+test('all76 fixed packets bind complete mock actor/access facts and preserve canonical negatives and expectations',async t=>{
+ const p=await publisher(t),ids=Object.keys(p.cases).sort(),preserved=[];assert.equal(ids.length,76);
  const fixed={
   'fixture://pgb77/tenant-a':{id:'ACTOR-01',role:'reader',tenant:'tenant-a',identity_reference:'fixture://pgb77/tenant-a',access_owner:'Fixture operator'},
   'fixture://example/reader':{id:'ACTOR-01',role:'reader',tenant:'example',identity_reference:'fixture://example/reader',access_owner:'Fixture operator'}
@@ -427,10 +427,10 @@ test('all63 fixed packets bind complete mock actor/access facts and preserve can
    assert.equal(access.available,true,id+' supplied identity remains truthful');
    assert(!JSON.stringify(access).includes('deployment_ready'));assert(access.proof_scope.includes('no deployment availability'));
   }
-  if(!['H02-wait','Q09-wait','H02-defect-inability','Q11-retained-findings','H02-upstream-wait','Q11-joined-inability'].includes(id))preserved.push([id,...await Promise.all(['operator/validator-inputs/record.yaml','operator/validator-inputs/published.json','operator/expectations.json'].map(async file=>hash(await readFile(path.join(p.cases[id],file)))))]);
+
  }
  // Independent frozen70c68b preparation hashes, not newly generated expectations.
- assert.equal(hash(preserved),'d38cb10d30789f94011bfd6e83207aaa6a33d2134c045a4c063becded9e298aa');
+ // All63 legacy record/envelope/work/context specimens are checked independently in R3 below; nineteen explicitly revised usage expectations are not old instruction oracles.
  for(const id of ['H02-defect','H02-wait','H02-defect-inability','H03-resume']){
   const cards=await p.input(id,'operator/cards.json');assert.equal(cards.reads.access.tenant,'example');assert.equal(chain(await p.input(id,'operator/validator-inputs/published.json')).valid,true,id);
  }
@@ -479,7 +479,7 @@ function assertDependencyFact(facts,work,report,requests){
  assert(work.testing_strategy.cases[0].preconditions.some(x=>x.includes('fixture://example/filter')&&x.includes('1002/2032')));
 }
 function assertDomainFact(facts,work,report,artifacts){
- assert.equal(facts.domain_inabilities.length,1);const fact=facts.domain_inabilities[0],step=work.testing_strategy.cases.flatMap(c=>c.steps).find(x=>x.id===fact.step_id);
+ assert(facts.domain_inabilities.length>=1);const fact=facts.domain_inabilities.find(x=>x.surface),step=work.testing_strategy.cases.flatMap(c=>c.steps).find(x=>x.id===fact.step_id);
  assert(step?.ui);assert.equal(report.steps.find(x=>x.id===step.id).result,'NOT_RUN');assert.equal(fact.surface,step.ui.surface);assert.equal(fact.tenant,'example');assert.equal(fact.actor_id,'ACTOR-01');
  assert.equal(fact.identity_reference,'fixture://example/reader');assert.equal(fact.publisher_authority_affected,false);
  assert.equal(fact.original_response.status,503);assert.equal(fact.original_response.body.code,'SESSION_UNAVAILABLE');assert.equal(fact.original_response.body.session_available,false);assert.equal(fact.original_response.body.observation_started,false);
@@ -495,8 +495,8 @@ test('R2 all63 scopes retain optional19/20 and instruction-ready claimed rows ha
   assert.deepEqual(checked.resolved_scope.projects[0].preparation_stage_ids,['19']);assert.deepEqual(checked.resolved_scope.projects[0].cancelled_stage_ids,['20']);
   assert.equal(checked.resolved_scope.projects[0].stages.QA,'4');assert.equal(checked.resolved_scope.projects[0].id,'100');
   const work=JSON.parse(await readFile(path.join(dir,'inputs/work.yaml'),'utf8')),assessment=await p.input(id,'inputs/assessment.json'),cards=await p.input(id,'operator/cards.json');
-  if(id==='V03-join'){assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('VALIDATOR-ONLY'));assert((await readFile(path.join(dir,'evidence-guide.txt'),'utf8')).includes('not an instruction-ready'));continue;}
-  assert(!(await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('VALIDATOR-ONLY'),id);
+  if((await p.input(id,'operator/expectations.json')).usage==='canonical-only'){assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('CANONICAL-ONLY'));continue;}
+  assert(!(await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('CANONICAL-ONLY'),id);
   const steps=work.testing_strategy.cases.flatMap(c=>c.steps),observations=await p.input(id,'inputs/evidence/observations.json');
   const savedUi=cards.reads.artifacts.find(x=>x.body.kind==='ui_observation'&&x.body.entry_route==='/filters');
   if(savedUi){assert.deepEqual(observations.ui_checkpoints,savedUi.body.checkpoints);assert.deepEqual(observations.screenshot,savedUi.body.checkpoints[0].screenshot);assert((await readFile(path.join(dir,'evidence-guide.txt'),'utf8')).includes('inputs/evidence/filter-result.png'));}
@@ -513,7 +513,7 @@ test('R2 all63 scopes retain optional19/20 and instruction-ready claimed rows ha
    }
   }
  }
- assert(claimed>171);assert(saved>26);
+ assert.equal(claimed,180);assert.equal(saved,37); // 154 retained instruction claims plus26 new paired claims; canonical-only20 excluded.
 });
 
 test('R2 saved-filter resume proof catches missing query/rollback/image and corrupt provenance/UI contracts with valid controls',async t=>{
@@ -532,7 +532,7 @@ test('R2 saved-filter resume proof catches missing query/rollback/image and corr
 
 test('R2 six distinct H02 families and joined control have independently inspectable causes without changing publisher authority',async t=>{
  const p=await publisher(t);
- const cases=[['H02-defect','repair_request','Rework Queued'],['H02-upstream-wait','dependency_wait','Rework Queued'],['H02-inability','blocked','Blocked'],['H02-defect-inability','blocked','Blocked'],['H02-wait','dependency_wait','Rework Queued'],['H02-discussion','discussion','QA']];
+ const cases=[['H02-defect-instruction','repair_request','Rework Queued'],['H02-upstream-wait','dependency_wait','Rework Queued'],['H02-inability','blocked','Blocked'],['H02-defect-inability-instruction','blocked','Blocked'],['H02-wait-instruction','dependency_wait','Rework Queued'],['H02-discussion','discussion','QA']];
  for(const [id,kind,destination]of cases){
   const dir=p.cases[id],work=JSON.parse(await readFile(path.join(dir,'inputs/work.yaml'),'utf8')),assessment=await p.input(id,'inputs/assessment.json'),cards=await p.input(id,'operator/cards.json'),facts=await p.input(id,'inputs/evidence/outcome-facts.json'),expected=await p.input(id,'operator/expectations.json');
   assert.deepEqual(cards.reads.outcome_facts,facts);
@@ -540,13 +540,13 @@ test('R2 six distinct H02 families and joined control have independently inspect
   assert.equal(assessment.proposed_outcome,kind);assert.equal(expected.destination,destination);
   assert.equal(cards.capabilities.append,true);assert.equal(cards.capabilities.direct_transitions,true);assert.equal(cards.reads.access.available,true);
   const observed=assessment.qa_report.steps.filter(x=>x.result==='FAIL');if(id==='H02-upstream-wait'){assert.equal(observed.length,0);assert.deepEqual(assessment.findings,[]);assert(assessment.qa_report.steps.every(x=>x.result==='NOT_RUN'));}
-  if(id==='H02-wait'||id==='H02-upstream-wait'){
+  if(id==='H02-wait-instruction'||id==='H02-upstream-wait'){
    const requests=await p.input(id,'inputs/known-requests.json');assertDependencyFact(facts,work,assessment.qa_report,requests);
    assert.equal(requests[0].comment_id,'2032');assert.equal(requests[0].digest,'sha256:f26f93bf42ad628b6040631dd5728ab339a1d54584ac292cf131dc6fde539f28');
    for(const control of await p.input(id,'operator/cause-controls.json'))assert.throws(()=>assertDependencyFact(control.outcome_facts,work,assessment.qa_report,requests),control.id);
    const original=await p.input(id,'operator/validator-inputs/published.json');assert.equal(hash({issues:original.issues.filter(x=>x.id!=='1000'),requirements:original.requirements.filter(x=>x.ticket_id!=='1000'),pages:original.comment_pages.filter(x=>x.ticket_id!=='1000')}),'7f303182bcb6643d3ac7ca7e142a79f14eeea97186deee812ff56f11dc2a106e');
   }else assert.deepEqual(facts.dependency_observations,[]);
-  if(id==='H02-defect-inability'){
+  if(id==='H02-defect-inability-instruction'){
    assertDomainFact(facts,work,assessment.qa_report,cards.reads.artifacts);
    for(const control of await p.input(id,'operator/cause-controls.json'))assert.throws(()=>assertDomainFact(control.outcome_facts,work,assessment.qa_report,cards.reads.artifacts),control.id);
   }else assert.deepEqual(facts.domain_inabilities,[]);
@@ -565,5 +565,115 @@ test('R2 six distinct H02 families and joined control have independently inspect
  for(const id of ['H02-wait','Q09-wait','H02-defect-inability','Q11-retained-findings']){
   const assessment=await p.input(id,'inputs/assessment.json');assert.deepEqual(assessment.qa_report.steps[0],defect.qa_report.steps[0]);assert.deepEqual(assessment.findings,defect.findings);
   for(const row of assessment.qa_report.steps.slice(1))assert(row.not_run_reason.startsWith('The first finding prevents continuing.'));
+ }
+
+});
+
+test('PGB-113 source amendment preserves native contracts, full preview and pending other-owner publication',async()=>{
+ const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-25','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,25);
+ const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
+ // Fixed original335036 object hashes, frozen before source publication edits.
+ assert.equal(hash(preview.acceptance_criteria),'1ee61a851ab66f31145a483f68c8bc1bb83dfd9e3422d3caaf4cb7e11e059639');
+ assert.equal(hash(preview.technical_acceptance_criteria),'4929e0feaf998f0a0bca191409dff3dd0c902350e8e4efea59a10e99a87cbdce');
+ assert.equal(hash(preview.testing_strategy),'efacc7e0fe916c48cb664d75748883054e694a60de119a7c5783aefdd3ea09db');
+ assert.equal(preview.testing_strategy.human_review.cases.length,42);
+ assert.equal(hash(contract('R1-12')),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
+ assert.equal(hash(metadata.filter(x=>!['R1-08','R1-24','R1-11','R1-25'].includes(x.id))),'0f95ad054e6ebf772addea9b8a55edea1f5c24ca2947cb17739800a5a463d128');
+ const native113=structuredClone(contract('R1-25'));native113.prerequisites[0].ticket='PGB-80';assert.equal(hash(native113),'36bdc9fc15aa1dfc69db7e8f9d81e1ff3d089fb43d876aa9df37734ab0b9052a');
+ assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.7,19]);
+ assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),110);
+ for(const id of ['R1-25','R1-11']){const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');}
+ const baseline=structuredClone(publication.baseline_before_amendments);assert.equal(hash(baseline),'aeeaa43078df97c68c580211cdc9bb8bca05d0f06161d004626c87c55b93d20a');
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[25,110,53,41]);
+ const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count,current.native_story_count,current.native_case_count],[25,110,25,110]);assert.deepEqual(current.pending_source_amendments,[]);
+ const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,25);assert.equal(new Set(Object.values(mapping)).size,25);assert.equal(mapping['R1-24'],'PGB-110');
+ assert.deepEqual(amendment.dependency_links,[{id:'10685',from:'PGB-80',to:'PGB-113'},{id:'10686',from:'PGB-113',to:'PGB-81'}]);assert.deepEqual(amendment.preserved_links,[{id:'10637',from:'PGB-80',to:'PGB-81'},{id:'10638',from:'PGB-81',to:'PGB-82'}]);assert.equal(amendment.human_acceptance,'NOT_RUN');assert.equal(amendment.activation_authorized,false);
+ assert.deepEqual(amendment.description_sha256,{original:'edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497',validator:'c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8',final_preview:'8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe'});
+ for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){const text=await read(file),requirements=text.split('\n').filter(line=>/^\| [AWMO]\d\d/.test(line)),covered=new Set(requirements.flatMap(line=>line.split('|')[1].match(/[AWMO]\d\d/g)??[]));assert.deepEqual([...covered].sort(),['A','W','M','O'].flatMap((prefix,i)=>Array.from({length:[12,12,14,15][i]},(_,j)=>prefix+String(j+1).padStart(2,'0'))).sort());for(const id of ['W04','W12','M10']){const row=requirements.find(line=>line.startsWith('| '+id+' |'));for(const caseId of ['R1-25-C01','R1-25-C02','R1-25-C03'])assert(row.includes(caseId));}assert(text.includes('R1-11-H02'));}
+ const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-25:')<stories.indexOf('## R1-11:'));for(const c of contract('R1-25').testing_strategy.human_review.cases){assert(stories.includes(c.id));for(const key of ['prerequisites','steps','expected','evidence'])for(const value of c[key])assert(stories.includes(value));}
+ const bundle=JSON.parse(await read('config/skill-bundle.json'));for(const name of ['qa-entrypoint','qa-api','qa-bruno','qa-database','qa-ui','human-writing','write-pr-sized-stories'])assert(bundle.skills.includes(name));assert(!JSON.stringify(bundle).includes('qa-helper-case'));assert(!JSON.stringify(bundle).includes('handoff-chains'));
+});
+
+const R3_NEW=['H02-defect-instruction','H02-defect-inability-instruction','H02-wait-instruction','Q11-three-inability','Q11-independent-inability','Q13-partial-pass-inability','Q11-missing-middle-instruction','Q13-null-pass-instruction','Q13-null-fail-instruction','Q13-null-foreign-artifacts-instruction','Q13-foreign-result-instruction','Q13-null-environment-instruction','Q13-wait-foreign-finding-instruction'];
+const R3_CANONICAL=['H02-defect','Q08-defect','H02-defect-inability','Q11-retained-findings','H02-wait','Q09-wait','V03-three','V03-independent','V03-join','V03-missing-middle','V04-proof-blocked-exact-fail','V04-proof-blocked-exact-pass','V04-proof-blocked-null-real-environment','V04-proof-blocked-null-pass','V04-proof-blocked-null-fail','V04-proof-blocked-null-foreign-artifacts','V04-proof-blocked-foreign-result','V04-proof-blocked-real-null-environment','V04-proof-wait-foreign-finding'];
+const R3_MIXED=['H01-bug','H01-story','H02-discussion','H03-changed-requirements','H03-changed-stage','H03-epic','H03-ledger-within-limit','H03-oversized-ledger','H03-stale-deployment','H03-task','H03-wrong-scope','Q03-site','Q03-stream','Q04-duplicate-row','Q04-missing-row','Q04-reordered-child','Q05-helper-pass-only','Q05-unavailable-artifact','Q06-source','Q07-missing-environment','Q07-wrong-pipeline','Q12-discussion','Q13-wrong-approval','Q14-append-absent','Q14-append-ambiguous','Q14-append-rejected','Q14-stored-timeout','Q15-readback-failed','Q15-wrong-actor','Q15-wrong-body','Q15-wrong-uuid','Q16-chain-pages','Q17-source-drift','Q18-transition-failed','Q19-transition-ambiguous','Q20-transition-stored-timeout'];
+function assertR3Clock(cards,assessment,{missingChild=false}={}){
+ const bodies=cards.reads.artifacts.map(x=>x.body),parent=bodies.find(x=>x.kind==='api_parent_observation'),child=bodies.find(x=>x.kind==='bruno_response');
+ if(parent&&child){assert(child.observed_at<=parent.observed_at);assert.deepEqual(parent.response,child.response);}
+ const ui=bodies.find(x=>x.kind==='ui_observation');
+ if(ui){
+  const points=ui.checkpoints;
+  assert(points.every(x=>x.observed_at<=ui.observed_at));
+  for(let i=1;i<points.length;i++)assert(points[i-1].observed_at<=points[i].observed_at);
+  if(ui.entry_route==='/ui'&&!missingChild){assert(child);assert(child.observed_at<=points.find(x=>x.id==='input').observed_at);assert(child.observed_at<=points.find(x=>x.id==='result').observed_at);}
+ }
+ const db=bodies.find(x=>x.kind==='postgresql_read_only_observation');
+ if(db?.output_binding&&!missingChild){assert(child);assert(child.observed_at<=db.observed_at);}
+ for(const fact of cards.reads.outcome_facts.dependency_observations){const ref=fact.upstream.request,page=cards.reads.comments.find(x=>x.ticket_id===ref.ticket_id&&x.comments.some(c=>c.id===ref.comment_id)),comment=page?.comments.find(c=>c.id===ref.comment_id);assert(comment);assert(comment.created<=fact.observed_at);assert(fact.affected_steps.every(id=>assessment.qa_report.steps.find(x=>x.id===id)?.result==='NOT_RUN'));}
+ for(const fact of cards.reads.outcome_facts.domain_inabilities){assert(assessment.qa_report.steps.find(x=>x.id===fact.step_id)?.result==='NOT_RUN');if(child)assert(child.observed_at<fact.observed_at);}
+ const authorizations=cards.reads.comments.flatMap(p=>p.comments).filter(c=>{try{return extractHandoff(c.body,{format:c.format}).value.kind==='resume_authorization';}catch{return false;}});
+ if(authorizations.length)for(const body of bodies.filter(x=>x.observed_at))assert(authorizations.every(c=>c.created<body.observed_at));
+}
+
+test('R3 preserves all63 legacy specimens/work/context and accounts76/19/57 with explicit replacement guidance',async t=>{
+ const p=await publisher(t),ids=Object.keys(p.cases).sort(),legacy=[];assert.equal(ids.length,76);let canonical=0,instruction=0;
+ assert.deepEqual(ids.filter(id=>R3_NEW.includes(id)),[...R3_NEW].sort());
+ for(const id of ids){const expected=await p.input(id,'operator/expectations.json'),dir=p.cases[id];
+  if(R3_CANONICAL.includes(id)){canonical++;assert.equal(expected.usage,'canonical-only');assert(expected.counterpart);assert.equal(expected.append_attempts,0);assert.equal(expected.transition_attempts,0);assert.equal(expected.destination,null);assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes(expected.counterpart));}
+  else{instruction++;assert.equal(expected.usage,'instruction');}
+  const specimen=await p.input(id,'operator/validator-inputs/published.json'),context=await p.input(id,'operator/validator-inputs/legacy-context.json');
+  assert.deepEqual(context.work,specimen.requirements.find(x=>x.ticket_id===specimen.target.ticket_id));
+  for(const artifact of context.artifacts)assert.equal(artifact.body_sha256,'sha256:'+hash(JSON.stringify(artifact.body)));
+  if(context.outcome_facts_reference){const ref=context.outcome_facts_reference;assert.equal(ref.digest,'sha256:'+hash(JSON.stringify(context.outcome_facts)));assert(specimen.evidence_receipts.some(x=>x.uri===ref.uri&&x.observed_digest===ref.digest));}
+  if(!R3_NEW.includes(id))legacy.push([id,...await Promise.all(['operator/validator-inputs/record.yaml','operator/validator-inputs/published.json','inputs/work.yaml','inputs/facts.yaml'].map(async file=>hash(await readFile(path.join(dir,file)))))]);
+ }
+ assert.equal(canonical,19);assert.equal(instruction,57);assert.equal(legacy.length,63);
+ assert.equal(hash(legacy),'2556819df99194b08522cd7f59f8e878deb3511cb6cf26af32047bf01b562305');
+});
+
+test('R3 complete saved-filter pairs, causes and seven negative counterparts preserve the actual fault boundary',async t=>{
+ const p=await publisher(t),positives=R3_NEW.slice(0,6);
+ for(const id of R3_NEW){const cards=await p.input(id,'operator/cards.json'),assessment=await p.input(id,'inputs/assessment.json'),parent=cards.reads.artifacts.find(x=>x.body.kind==='api_parent_observation'),child=cards.reads.artifacts.find(x=>x.body.kind==='bruno_response');
+  assert(parent&&child,id);assert.deepEqual(parent.body.response,child.body.response);assert.equal(parent.body.child_source.uri,child.uri);assert.equal(parent.body.child_source.response_digest,'sha256:'+hash(JSON.stringify(child.body.response)));assert.equal(parent.body.selected_request_count,1);assert.equal(child.body.selected_request_count,1);
+  const pair=assessment.qa_report.steps.slice(0,2);assert(pair.every(x=>x.result===(id.includes('partial-pass')||id.includes('null-pass')?'PASS':'FAIL')));assert(pair.every(x=>x.not_run_reason===null&&x.evidence.length>0));
+  assert.equal(parent.body.observed_at,'2026-11-15T10:01:03Z');assert.equal(child.body.observed_at,parent.body.observed_at);assertR3Clock(cards,assessment);
+  if(pair[0].result==='FAIL'){assert.deepEqual(parent.body.response.body.results,[]);assert.deepEqual(parent.body.exposed_output,{});assert(assessment.findings.some(x=>x.id==='F1'));}
+  else{assert.deepEqual(parent.body.response.body.results,[{id:'fixture-1',name:'Monthly',tenant_id:'example'}]);assert.deepEqual(assessment.findings,[]);assert(assessment.qa_report.steps.slice(2).every(x=>x.result==='NOT_RUN'&&x.finding_ids.length===0));assert(!cards.reads.artifacts.some(x=>['postgresql_read_only_observation','ui_observation'].includes(x.body.kind)));}
+  const result=chain(await p.input(id,'operator/validator-inputs/published.json'));assert.equal(result.valid,positives.includes(id),id+JSON.stringify(result.diagnostics));
+  if(id==='H02-wait-instruction'||id==='Q13-wait-foreign-finding-instruction')assert.deepEqual(cards.reads.outcome_facts.dependency_observations[0].affected_steps,['TC-01.S3','TC-01.S4']);
+  if(id==='Q11-independent-inability'){assert(assessment.qa_report.steps.slice(2).every(x=>x.finding_ids.length===0));assert.deepEqual(cards.reads.outcome_facts.domain_inabilities.map(x=>x.step_id).sort(),['TC-01.S3','TC-01.S4']);}
+ }
+ const cards=await p.input('H02-defect-inability-instruction','operator/cards.json'),assessment=await p.input('H02-defect-inability-instruction','inputs/assessment.json');
+ for(const change of [a=>a.qa_report.steps[1].result='NOT_RUN',a=>a.qa_report.steps[1].evidence=[]]){const bad=structuredClone(assessment);change(bad);assert.throws(()=>{assert(bad.qa_report.steps.slice(0,2).every(x=>x.result==='FAIL'&&x.evidence.length>0));});}
+ const before=structuredClone(cards);before.reads.outcome_facts.domain_inabilities[0].observed_at='2026-11-15T09:00:00Z';assert.throws(()=>assertR3Clock(before,assessment));
+ const three=await p.input('Q11-three-inability','operator/validator-inputs/published.json');for(const index of [2,3]){const bad=structuredClone(three);changeTarget(bad,r=>r.payload.qa_report.steps[index].finding_ids=[]);const result=chain(bad);assert.equal(result.valid,false);assert(result.diagnostics.some(x=>x.code==='LEDGER'&&x.path.endsWith('/finding_ids')));}
+});
+
+test('R3 finite clock mirrors, child-bound consumption, request existence and resume authorization are independently coherent',async t=>{
+ const p=await publisher(t);let mixed=0,children=0,uis=0,both=0;
+ for(const [id,dir]of Object.entries(p.cases)){
+  const expected=await p.input(id,'operator/expectations.json');if(expected.usage==='canonical-only')continue;
+  const cards=await p.input(id,'operator/cards.json'),assessment=await p.input(id,'inputs/assessment.json'),summary=await p.input(id,'inputs/evidence/observations.json');
+  assert.deepEqual(summary.artifacts,cards.reads.artifacts);assert.deepEqual(summary.observations,cards.reads.evidence);assert.deepEqual(summary.outcome_facts,cards.reads.outcome_facts);assert.deepEqual(summary.outcome_facts_reference,cards.reads.outcome_facts_reference);
+  const predecessor=await p.input(id,'inputs/predecessors.json');assert.deepEqual(predecessor.evidence_receipts,cards.reads.evidence);
+  for(const a of cards.reads.artifacts)assert.equal(a.body_sha256,'sha256:'+hash(JSON.stringify(a.body)));
+  if(cards.reads.outcome_facts_reference){const ref=cards.reads.outcome_facts_reference;assert.equal(ref.digest,'sha256:'+hash(await readFile(path.join(dir,'inputs/evidence/outcome-facts.json'))));assert(cards.reads.evidence.some(x=>x.uri===ref.uri&&x.observed_digest===ref.digest));}
+  assertR3Clock(cards,assessment,{missingChild:id==='Q04-duplicate-row'});
+  if(R3_MIXED.includes(id)){mixed++;const child=cards.reads.artifacts.find(x=>x.body.step==='E01.S2'),ui=cards.reads.artifacts.find(x=>x.body.kind==='ui_observation');if(child)children++;if(ui)uis++;if(child&&ui)both++;
+   if(ui){assert.deepEqual(ui.body.checkpoints.map(x=>x.observed_at),['2026-11-15T10:01:05Z','2026-11-15T10:01:06Z','2026-11-15T10:01:07Z']);assert.deepEqual(summary.ui_checkpoints,ui.body.checkpoints);assert.equal(ui.body.observed_at,'2026-11-15T10:01:07Z');}
+  }
+ }
+ assert.deepEqual([mixed,children,uis,both],[36,35,35,34]);
+ for(const id of ['H01-story','H02-upstream-wait','H03-resume']){
+  const cards=await p.input(id,'operator/cards.json'),assessment=await p.input(id,'inputs/assessment.json');assertR3Clock(cards,assessment);
+  const bad=structuredClone(cards);
+  if(id==='H01-story'){const ui=bad.reads.artifacts.find(x=>x.body.kind==='ui_observation');ui.body.checkpoints[1].observed_at='2026-11-15T09:40:01Z';}
+  if(id==='H02-upstream-wait')bad.reads.outcome_facts.dependency_observations[0].observed_at='2026-11-15T09:40:10Z';
+  if(id==='H03-resume')bad.reads.artifacts.find(x=>x.body.kind==='bruno_response').body.observed_at='2026-11-15T09:40:03Z';
+  assert.throws(()=>assertR3Clock(bad,assessment),id);
  }
 });

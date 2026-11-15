@@ -2,7 +2,7 @@
   "date": "2026-11-15",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Owner-approved 24-Story QA split; Jira owns current stages. Source publication is not installed/live acceptance or activation.",
+  "status": "Owner-approved combined25-Story/110-case source amendments; Jira owns progress; human/live acceptance and activation remain separate.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -27,15 +27,16 @@
     "R1-20": "PGB-90",
     "R1-21": "PGB-99",
     "R1-22": "PGB-100",
-    "R1-23": "PGB-101"
+    "R1-23": "PGB-101",
+    "R1-25": "PGB-113"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 24,
-  "case_count": 107,
+  "story_count": 25,
+  "case_count": 110,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -661,5 +662,668 @@
     "current_all_story_status_verification": false,
     "review_state": "Final publisher implementation plan plus PGB-111 base addendum independently CLEAN; implementation/code/installed/live acceptance gates separate.",
     "prerequisite": "PGB-108 is external to the 24-Story set. Its delivered contract is consumed, not reimplemented."
+  },
+  "repeated_parent_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-25": "PGB-113"
+    },
+    "amended_story": "PGB-81",
+    "native_publication_verified": true,
+    "readback_scope": "PGB-113 and PGB-81 full bodies; all original PGB-80/PGB-81/PGB-82 links and PGB-82 body preserved; complete native Story/case count readback. Dated publication status is historical.",
+    "native_publication_status": "PGB-113 To Do when published; later work status is owned by Jira.",
+    "description_sha256": {
+      "original": "edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497",
+      "validator": "c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8",
+      "final_preview": "8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe"
+    },
+    "dependency_links": [
+      {
+        "id": "10685",
+        "from": "PGB-80",
+        "to": "PGB-113"
+      },
+      {
+        "id": "10686",
+        "from": "PGB-113",
+        "to": "PGB-81"
+      }
+    ],
+    "preserved_links": [
+      {
+        "id": "10637",
+        "from": "PGB-80",
+        "to": "PGB-81"
+      },
+      {
+        "id": "10638",
+        "from": "PGB-81",
+        "to": "PGB-82"
+      }
+    ],
+    "publication_comment": {
+      "id": "10679",
+      "url": "https://scubapig.atlassian.net/browse/PGB-66?focusedCommentId=10679"
+    },
+    "original_preview_cases": 42,
+    "additive_cases": 3,
+    "criteria_preserved": true,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false
+  },
+  "current_source_scope": {
+    "story_count": 25,
+    "case_count": 110,
+    "native_story_count": 25,
+    "native_case_count": 110,
+    "pending_source_amendments": [],
+    "source_order": "R1-24 immediately before R1-08 and R1-25 immediately before R1-11; all other relative order preserved.",
+    "status": "Both approved source amendments mirrored; publication does not establish delivery completion."
+  },
+  "baseline_before_amendments": {
+    "date": "2026-11-14",
+    "epic": "PGB-66",
+    "grooming": "PGB-93",
+    "status": "independent design and plan CLEAN; final owner review required; no implementation or activation",
+    "stories": {
+      "R1-01": "PGB-71",
+      "R1-02": "PGB-72",
+      "R1-03": "PGB-73",
+      "R1-04": "PGB-74",
+      "R1-05": "PGB-75",
+      "R1-06": "PGB-76",
+      "R1-07": "PGB-77",
+      "R1-08": "PGB-78",
+      "R1-09": "PGB-79",
+      "R1-10": "PGB-80",
+      "R1-11": "PGB-81",
+      "R1-12": "PGB-82",
+      "R1-13": "PGB-83",
+      "R1-14": "PGB-84",
+      "R1-15": "PGB-85",
+      "R1-16": "PGB-86",
+      "R1-17": "PGB-87",
+      "R1-18": "PGB-88",
+      "R1-19": "PGB-89",
+      "R1-20": "PGB-90",
+      "R1-21": "PGB-99",
+      "R1-22": "PGB-100",
+      "R1-23": "PGB-101"
+    },
+    "operational_tasks": {
+      "AT-01": "PGB-91",
+      "AT-02": "PGB-58",
+      "AT-03": "PGB-92"
+    },
+    "story_count": 23,
+    "case_count": 104,
+    "requirement_count": 53,
+    "scenario_count": 41,
+    "dependency_links": [
+      {
+        "from": "PGB-71",
+        "to": "PGB-72"
+      },
+      {
+        "from": "PGB-71",
+        "to": "PGB-73"
+      },
+      {
+        "from": "PGB-72",
+        "to": "PGB-73"
+      },
+      {
+        "from": "PGB-71",
+        "to": "PGB-74"
+      },
+      {
+        "from": "PGB-72",
+        "to": "PGB-74"
+      },
+      {
+        "from": "PGB-73",
+        "to": "PGB-75"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-75"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-76"
+      },
+      {
+        "from": "PGB-75",
+        "to": "PGB-76"
+      },
+      {
+        "from": "PGB-72",
+        "to": "PGB-77"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-77"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-78"
+      },
+      {
+        "from": "PGB-76",
+        "to": "PGB-78"
+      },
+      {
+        "from": "PGB-77",
+        "to": "PGB-78"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-79"
+      },
+      {
+        "from": "PGB-72",
+        "to": "PGB-80"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-80"
+      },
+      {
+        "from": "PGB-80",
+        "to": "PGB-81"
+      },
+      {
+        "from": "PGB-81",
+        "to": "PGB-82"
+      },
+      {
+        "from": "PGB-82",
+        "to": "PGB-83"
+      },
+      {
+        "from": "PGB-83",
+        "to": "PGB-84"
+      },
+      {
+        "from": "PGB-82",
+        "to": "PGB-85"
+      },
+      {
+        "from": "PGB-84",
+        "to": "PGB-85"
+      },
+      {
+        "from": "PGB-84",
+        "to": "PGB-86"
+      },
+      {
+        "from": "PGB-85",
+        "to": "PGB-86"
+      },
+      {
+        "from": "PGB-75",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-76",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-78",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-82",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-84",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-85",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-86",
+        "to": "PGB-87"
+      },
+      {
+        "from": "PGB-79",
+        "to": "PGB-88"
+      },
+      {
+        "from": "PGB-87",
+        "to": "PGB-88"
+      },
+      {
+        "from": "PGB-88",
+        "to": "PGB-89"
+      },
+      {
+        "from": "PGB-73",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-75",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-76",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-77",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-78",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-79",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-89",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-90",
+        "to": "PGB-91"
+      },
+      {
+        "from": "PGB-91",
+        "to": "PGB-92"
+      },
+      {
+        "from": "PGB-58",
+        "to": "PGB-92"
+      },
+      {
+        "from": "PGB-100",
+        "to": "PGB-101"
+      },
+      {
+        "from": "PGB-101",
+        "to": "PGB-90"
+      },
+      {
+        "from": "PGB-74",
+        "to": "PGB-99"
+      },
+      {
+        "from": "PGB-83",
+        "to": "PGB-100"
+      },
+      {
+        "from": "PGB-84",
+        "to": "PGB-100"
+      },
+      {
+        "from": "PGB-86",
+        "to": "PGB-101"
+      },
+      {
+        "from": "PGB-99",
+        "to": "PGB-100"
+      },
+      {
+        "from": "PGB-99",
+        "to": "PGB-80"
+      },
+      {
+        "from": "PGB-99",
+        "to": "PGB-82"
+      }
+    ],
+    "published_body_check": "23/23 exact YAML comparison after native prerequisite substitution; original parent/status and absence of AI labels verified.",
+    "reviewed_draft_sha256": "34c8b44a09a1355c0a9ff827b67f02ee82e92fffc0607e382e26aed8265c7fc8",
+    "fresh_readback_verification": {
+      "stories": [
+        {
+          "id": "R1-01",
+          "key": "PGB-71",
+          "status": "To Do",
+          "contract_sha256": "3ebd1d790cf7b3592a361a7deff1861b5d814205e5fdb4346ce14056502bceac",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-02",
+          "key": "PGB-72",
+          "status": "To Do",
+          "contract_sha256": "e95e972c554c8a936f1f1d9d0f084de34a382fcc90f2a68534346efb371f26de",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-03",
+          "key": "PGB-73",
+          "status": "To Do",
+          "contract_sha256": "b9386c93363ddc9ba4a3cfffdeeb8a4bcdcb55d0fdd3e04b82cfaf2260a14bae",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-04",
+          "key": "PGB-74",
+          "status": "To Do",
+          "contract_sha256": "10e1817b5293f1979e46df99436975dd1655702127456e115b3671c6f960e8f4",
+          "human_cases": 4
+        },
+        {
+          "id": "R1-21",
+          "key": "PGB-99",
+          "status": "To Do",
+          "contract_sha256": "58b48b457308957ece4fb5e42bda897515d71f57bd29245fbe23dbee21a91382",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-05",
+          "key": "PGB-75",
+          "status": "To Do",
+          "contract_sha256": "e45cf55c613e6768cd4e7fe46c58cbc07d91a55a4fe990285285478284a1a4bd",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-06",
+          "key": "PGB-76",
+          "status": "To Do",
+          "contract_sha256": "9d0a960614ee194c5934b306f78327657ac22925df3c5b6d7881069473b24865",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-07",
+          "key": "PGB-77",
+          "status": "To Do",
+          "contract_sha256": "31936a711eaaf089d607d027e6ad9a2be2290925e38295a0793b88331f7851ed",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-08",
+          "key": "PGB-78",
+          "status": "To Do",
+          "contract_sha256": "0c590f7bddc46690516026370d8c3040d8e8c54cbf5488632e8a9f9846a83f2c",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-09",
+          "key": "PGB-79",
+          "status": "To Do",
+          "contract_sha256": "b246e180446a35b4cb09506672186a366f6c6d8e754a27293cfb47eea07d138c",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-10",
+          "key": "PGB-80",
+          "status": "To Do",
+          "contract_sha256": "eebfca385a1d433558f2bcedfb2b3b060a760bcbd78c335925188ebe92fd2286",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-11",
+          "key": "PGB-81",
+          "status": "To Do",
+          "contract_sha256": "8c88974feab4662e62d667ef24bf673ae4b25c5f7400ab2b766001f7ddc52596",
+          "human_cases": 42
+        },
+        {
+          "id": "R1-12",
+          "key": "PGB-82",
+          "status": "To Do",
+          "contract_sha256": "d0d69fa0077e926886935372126e2c2588cea1eef877436a660c9374af9fe4da",
+          "human_cases": 4
+        },
+        {
+          "id": "R1-13",
+          "key": "PGB-83",
+          "status": "To Do",
+          "contract_sha256": "01637cf1b062d15eb3639defb3b34497a1abe8648a3cc7c5fcd156f86d3649fd",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-14",
+          "key": "PGB-84",
+          "status": "To Do",
+          "contract_sha256": "7a435ff4d26d04d3e70346042afc8b0404ee11e599f62044974385deae6b8a49",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-15",
+          "key": "PGB-85",
+          "status": "To Do",
+          "contract_sha256": "292888ddea6bdcbe74de5a4698ec437f0c240366aaa0a669b854dcb19c1cae98",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-16",
+          "key": "PGB-86",
+          "status": "To Do",
+          "contract_sha256": "8340e9ee4d517279c3cca56e4268dc4f6c69b9ef364d58b48b0d102d7f6aeff2",
+          "human_cases": 2
+        },
+        {
+          "id": "R1-22",
+          "key": "PGB-100",
+          "status": "To Do",
+          "contract_sha256": "0579673b96f56950766a2ca0d45dc3391cd4c6ea30a5f99b3e792ec3e1913564",
+          "human_cases": 4
+        },
+        {
+          "id": "R1-23",
+          "key": "PGB-101",
+          "status": "To Do",
+          "contract_sha256": "e8215572817ec7c4fe8e8ff52dcbbd31843ac85145f382eb092e066f0226b2d6",
+          "human_cases": 4
+        },
+        {
+          "id": "R1-17",
+          "key": "PGB-87",
+          "status": "To Do",
+          "contract_sha256": "771dac02dacd888a2fd251daff78886c6237ee7bf1631ee76ccf143e4b17fd9b",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-18",
+          "key": "PGB-88",
+          "status": "To Do",
+          "contract_sha256": "de11b22c01a523e942c6425123bc523718e67f2eaa5633cb3957cadf9e8d57bd",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-19",
+          "key": "PGB-89",
+          "status": "To Do",
+          "contract_sha256": "28737657e280ae7eeff73c1f56b61433d0258d0d7ae1393052176999ad80cc1c",
+          "human_cases": 3
+        },
+        {
+          "id": "R1-20",
+          "key": "PGB-90",
+          "status": "To Do",
+          "contract_sha256": "a616f32504e158bec7562ad1c0ea809db8cbbf5d78ed828ab63755865d03a9f9",
+          "human_cases": 4
+        }
+      ],
+      "dependency_links_verified": 54,
+      "original_cases_preserved": 88
+    },
+    "baseline_publication": {
+      "date": "2026-11-14",
+      "grooming": "PGB-69",
+      "story_count": 20,
+      "case_count": 88,
+      "requirement_count": 50,
+      "reviewed_draft_sha256": "b98b667a883e09967dd67fd3518fc082a89351d7cb19db3d0510e9766667faa0",
+      "fresh_readback_verification": {
+        "stories": [
+          {
+            "id": "R1-01",
+            "key": "PGB-71",
+            "status": "To Do",
+            "contract_sha256": "c5c8f41f8b8e2077c58053718da9950507dcc4eede5e3bce2b9c6e8cdb0cea89",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-02",
+            "key": "PGB-72",
+            "status": "To Do",
+            "contract_sha256": "289d50ba9878938f16a5748653513e67a3411f50ad24c867e12d23b3071836ea",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-03",
+            "key": "PGB-73",
+            "status": "To Do",
+            "contract_sha256": "7b5d6a49c90cde7406fe0667efeec457694f881624bd75b39f60c958c949f9d1",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-04",
+            "key": "PGB-74",
+            "status": "To Do",
+            "contract_sha256": "d405651d33a8bb34f8a4475e5696cc7c308793282bc2178c19df4c30183666c4",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-05",
+            "key": "PGB-75",
+            "status": "To Do",
+            "contract_sha256": "33bb9fa6f7ee77206bc66d030fe75375387b1e3cd2d2f00b37ec92e88a68283e",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-06",
+            "key": "PGB-76",
+            "status": "To Do",
+            "contract_sha256": "a7b6f2d9d327d80c20d005cd91420f83ae3eb8d5d1173d10540a7726a2855faa",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-07",
+            "key": "PGB-77",
+            "status": "To Do",
+            "contract_sha256": "ea527e0119334d91800c2d59626579b7ca52d61ff312162107a7e74c2b5812dc",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-08",
+            "key": "PGB-78",
+            "status": "To Do",
+            "contract_sha256": "f7ef8eb585c72c720316e8014afb5aa30af57e3fe7045fb16455b9f2db4e10a9",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-09",
+            "key": "PGB-79",
+            "status": "To Do",
+            "contract_sha256": "978b6722957f180b42d5ed60d029625b139e3ffd421cc06aa7903828462df91a",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-10",
+            "key": "PGB-80",
+            "status": "To Do",
+            "contract_sha256": "3aaf3462ab58c6d295517e04eb87dc1f0cd86dc1c1ec8464a83d78832fd7ccbd",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-11",
+            "key": "PGB-81",
+            "status": "To Do",
+            "contract_sha256": "e7131c3a3c254838c7ac7d9d88fc3b9ee337da1cbc48c94629c5439e424316ca",
+            "human_cases": 42
+          },
+          {
+            "id": "R1-12",
+            "key": "PGB-82",
+            "status": "To Do",
+            "contract_sha256": "44da51d1b5f24517c590bf1ae571b717da710a913d6fa41e356cd9357dd12ca0",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-13",
+            "key": "PGB-83",
+            "status": "To Do",
+            "contract_sha256": "ce1c727f21d48e38a0a4e2f8e3c2ad4dc77d9d13628151bcf2dae23cd7197280",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-14",
+            "key": "PGB-84",
+            "status": "To Do",
+            "contract_sha256": "1539bf29782d420b143226c1e7dd2f9c4bdbb2ae20ae9dd1be90a970eebe1d62",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-15",
+            "key": "PGB-85",
+            "status": "To Do",
+            "contract_sha256": "1b2e14a5cee133f92323ff8414e4e2c3697c1160b5ad00fa0a9150fedf85fe7c",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-16",
+            "key": "PGB-86",
+            "status": "To Do",
+            "contract_sha256": "4028e687b27556fa582cfed4d9687efccc33e507ad0eccaceeb04d55e2012e83",
+            "human_cases": 2
+          },
+          {
+            "id": "R1-17",
+            "key": "PGB-87",
+            "status": "To Do",
+            "contract_sha256": "2a121d3ecf3ed01f20b7516a110342c1e9dbe66afdddb0b3aeb281b7197657d2",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-18",
+            "key": "PGB-88",
+            "status": "To Do",
+            "contract_sha256": "a3ae9a1a334b2d7dcaefa193efa4c61e02ab69008fceb40132e0dca44ccf17f8",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-19",
+            "key": "PGB-89",
+            "status": "To Do",
+            "contract_sha256": "4f04ab9012d127eeb4a0bbb1da79ef3ee9db4e58159765ad2edb167be351139c",
+            "human_cases": 3
+          },
+          {
+            "id": "R1-20",
+            "key": "PGB-90",
+            "status": "To Do",
+            "contract_sha256": "d75ff871cae1d3e51910dff04c70e7ccb5b244f3baa7dae3d491f96ff266097c",
+            "human_cases": 3
+          }
+        ],
+        "verified_links": 45,
+        "total_human_cases": 88,
+        "checks": "Each live YAML parsed and schema-validated; exact data match to independent-review draft after native key substitution; parent PGB-66, To Do, no AI labels; all45 directed dependency links confirmed."
+      }
+    },
+    "follow_on_tasks": {
+      "capacity_50": "PGB-94",
+      "unified_provisioning": "PGB-95",
+      "additional_qa": "PGB-96",
+      "cloud_wrappers": "PGB-97",
+      "teams_alerts": "PGB-98",
+      "worker_visibility": "PGB-70",
+      "dispatcher": [
+        "PGB-63",
+        "PGB-64",
+        "PGB-65"
+      ],
+      "human_unblock": "PGB-62",
+      "pr_environments": "PGB-60"
+    },
+    "health_precedence_correction": "Codex review correction: ordered six-state evaluation and overlapping-condition assertions in existing R1-22-H02; PGB-100 exact YAML freshly verified. No additional cases or scope.",
+    "baseline_design_commit": "ba9cb49def75147b37fb822a4e0166c1429c3c3d",
+    "reviewed_design_artifacts": {
+      "docs/architecture/pig-boss-operations.md": "a1442dbd4c04669e4564e0d170bf05cc9b12e2c00ea76efafc6d740a3aa9aa03",
+      "docs/product/manager.md": "c06a42067e351de808cf33d9ea07a3e0f521eac6de84d46f5f733bbb90db7c34",
+      "docs/product/installation.md": "f811278447abb57df71b08aa55235f2d05a3a743c209d322a0a0fd48cfe4af56"
+    },
+    "startup_alarm_correction": "Existing R1-23-H02 covers no false missing-scan alert during startup/revision grace and eventual external detection if the scan never runs. PGB-101 exact YAML freshly verified. The current design uses content-addressed artifact bindings; the old design commit is explicitly historical.",
+    "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged."
   }
 }

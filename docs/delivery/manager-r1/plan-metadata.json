@@ -177,10 +177,10 @@
       "R1-07",
       "PGB-108"
     ],
-    "days": 3.1875,
+    "days": 4.5,
     "hours": {
-      "min": 20.5,
-      "max": 25.5
+      "min": 26.5,
+      "max": 36
     },
     "files": [
       "skills/qa-jira/SKILL.md",
@@ -290,20 +290,58 @@
     ]
   },
   {
-    "id": "R1-11",
-    "title": "Preview the complete repair order",
+    "id": "R1-25",
+    "title": "Validate repeated-parent repairs",
     "dependencies": [
       "R1-10"
     ],
-    "days": 1.5,
+    "days": 1.98,
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "test/cursor-environment.test.mjs",
+      "docs/handoffs.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-11",
+    "title": "Preview the complete repair order",
+    "dependencies": [
+      "R1-10",
+      "R1-25"
+    ],
+    "days": 1.7,
     "files": [
       "lib/manager/repair-policy.mjs",
       "lib/manager/availability.mjs",
       "lib/manager/decisions.mjs",
+      "lib/manager/snapshot.mjs",
+      "lib/contracts/receipts.mjs",
       "scripts/manager-preview.mjs",
       "test/repair-policy.test.mjs",
       "test/fixtures/manager-repairs.json",
-      "docs/manager-preview.md"
+      "test/receipt-chain.test.mjs",
+      "test/manager-preview.test.mjs",
+      "docs/manager-preview.md",
+      "docs/handoffs.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "config/skill-bundle.json",
+      "scripts/install-cursor-skills.mjs",
+      "test/cursor-environment.test.mjs",
+      "docs/install.md",
+      "README.md",
+      "ARCHITECTURE.md"
     ]
   },
   {

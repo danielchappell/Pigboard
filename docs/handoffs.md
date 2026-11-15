@@ -682,3 +682,74 @@ by selecting a null-PR blocker. Publication once attempted is immutable history;
 correction guidance never authorizes replacement append/replay. The retained
 dispatcher integration is PGB-78. See the source direct-use guide for preparation;
 installed callers follow the complete skill and these copied canonical contracts.
+
+## Repeated-parent repairs
+
+The existing chain command accepts a current child repair that consumes two distinct
+updates from the same parent. If U1 requires A2 and U2 requires its successor A3,
+the child can incorporate A3 once. Admission and implementation must each name
+U1 and U2 exactly once. Their shared repair R1 counts once in the effective leaf
+set; R2 must also remain covered. Repeating U1 cannot substitute for U2.
+
+Successor proof follows actual `previous_assignment` admission references, with
+the same parent ticket and PR, configured site/project/full stream and repository.
+A later date, revision string or unrelated prerequisite cannot prove succession.
+For each update, required roots are the completed repairs after the parent
+completion actually incorporated by the child's prior implementation, through
+the requested parent completion. If the child already incorporated R1, that root
+is outside the next update's required segment.
+
+An older A2/U1 can be authentic nested evidence while failing as a current target.
+The new historical allowance requires exact retained server metadata for its whole
+proof closure and a validated current accepted successor incorporated by the
+selected implementation/review/QA. It cannot authorize a selected admission or
+stack publication. Selected targets still require current assignment, requirements,
+PR and native stage; only current accepted QA establishes completion. Implementation
+at In Review and review at QA validate without establishing completion. Selecting
+those earlier results from the unchanged Human Review snapshot fails the stage check.
+
+For a reproducible local example, use the source fixture from this exact revision.
+It contains dummy, synthetic observations copied from the immutable 28-record H02
+checkpoint. Fixture files are source test data; they are not installed runtime files.
+With Node 20+ and the exact source/installed dependencies already prepared, extract
+one named input to a disposable absolute path:
+
+```sh
+# Run from the source checkout; choose an existing writable absolute directory.
+node --input-type=module - "$PWD" /absolute/repeated-qa.json <<'JS'
+import { readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+const [source, output] = process.argv.slice(2);
+const fixtures = JSON.parse(readFileSync(path.join(source, 'test/fixtures/handoff-chains.json')));
+const input = fixtures.repeated_parent.inputs['c01-b2-qa-in-human-review'];
+writeFileSync(output, JSON.stringify(input), { flag: 'wx' });
+JS
+node scripts/validate-handoff.mjs --mode chain --input /absolute/repeated-qa.json --json
+# From any unrelated working directory, use the same-release installed runtime:
+node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode chain --input /absolute/repeated-qa.json --json
+```
+
+Both commands return valid QA with `completion_established:true` and pending human
+case HQA-01. Drop `--json` for readable output. The separately named
+`c01-b2-implementation-in-review` and `c01-b2-review-in-qa` inputs validate with
+completion false. Their only changes from the complete QA envelope are selected
+target and B's outer native stage. Synthetic observations do not claim that the
+later complete chronology was available at an earlier real time. Local validation
+and installed parity do not establish live freshness, human acceptance, manager
+deployment or permission to execute a delivery stage.
+
+If validation reports missing retained metadata or a predecessor, obtain the actual
+unchanged server metadata and complete referenced evidence. For unrelated ancestry
+or missing/extra causes, prepare a separately identified correct receipt through
+the existing publication authority. Preserve published history. If an old target
+is selected, choose the actual current result with matching observations. Rewriting
+an old comment or changing its stage/PR facts to force success cannot repair proof.
+No validation run fetches, installs dependencies or writes to a provider.
+
+A configured human can explicitly authorize continuation of a blocked repair on
+the same assignment and exact PR revision. Validation follows the unique authorized
+current leaf and preserves its complete QA report and pending human cases. An
+explicit resolution may cite that same validated current QA only when it actually
+consumes the request. An older or unrelated completion cannot waive a cause. If
+authorization or consumption proof is missing, supply the authentic matching
+evidence; preserve published history rather than rewriting a blocker or result.
