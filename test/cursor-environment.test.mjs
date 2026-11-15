@@ -579,3 +579,84 @@ function assertParentResult(result,{c,valid,invalidWork,alternative,otherStream,
  const serialized=JSON.stringify(result);for(const i of c.snapshot.issues)for(const raw of [i.body,i.context_body])if(raw)assert.ok(!serialized.includes(JSON.stringify(raw)),c.id+' raw document');
 }
 function assertParentText(text){assert.ok(text.includes(`MEMBERSHIP_MISMATCH /issues/1/parent_id: ${parentMessage}`));}
+
+// Real copied validator and manifest, simulated unrelated QA-helper packages.
+// This checks release closure/parity, not default installer or provider acceptance.
+test('installed receipt validator preserves incomplete QA outcomes and old input bytes from unrelated cwd', async t => {
+ const o = await fixture(t), installed = await installCursorSkills(o, fakeInstall);
+ const { preparePartialFixtures } = await import('./fixtures/qa-partial-results.mjs');
+ const { createHash } = await import('node:crypto');
+ const inputRoot = path.join(o.app, 'partial-inputs'), hashes = await preparePartialFixtures(inputRoot);
+ const validator = path.join(installed.skills, 'work-validator'), manifest = JSON.parse(await readFile(installed.manifest));
+ assert.equal(manifest.commit, installed.commit);
+ for (const relative of ['contracts/handoff-v1.schema.json', 'lib/contracts/receipts.mjs', 'docs/handoffs.md']) {
+  const key = 'work-validator/' + relative;
+  assert.equal(manifest.sourceFiles[key], createHash('sha256').update(await readFile(new URL('../' + relative, import.meta.url))).digest('hex'));
+  assert.deepEqual(await readFile(path.join(validator, relative)), await readFile(new URL('../' + relative, import.meta.url)));
+ }
+ assert(!Object.keys(manifest.sourceFiles).some(k => k.includes('qa-partial-results')));
+ const { spawnSync } = await import('node:child_process');
+ const { targetRecord } = await import('./fixtures/qa-partial-results.mjs');
+ const validTransitive = new Set(['three', 'four', 'join', 'independent', 'ownership', 'binding', 'pass']);
+ const invalidTransitive = { 'missing-middle': '/steps/2/finding_ids', 'missing-last': '/steps/3/finding_ids', 'unknown-last': '/steps/3/finding_ids', 'four-missing-last': '/steps/4/finding_ids', 'join-missing-F1': '/steps/4/finding_ids', 'join-missing-F2': '/steps/4/finding_ids' };
+ let transitiveChains = 0, transitiveValid = 0, transitiveRecords = 0, proofChains = 0, proofValid = 0, proofRecords = 0;
+ for (const [file, hash] of Object.entries(hashes)) {
+  const mode = file.endsWith('.json') ? 'chain' : 'record', input = path.join(inputRoot, file);
+  const args = ['--mode', mode, '--input', input, ...(mode === 'record' ? ['--format', 'yaml'] : []), '--json'];
+  const run = cli => spawnSync(process.execPath, [cli, ...args], { cwd: o.app, encoding: 'utf8', timeout: 30000 });
+  const source = run(new URL('../scripts/validate-handoff.mjs', import.meta.url).pathname), actual = run(path.join(validator, 'scripts/validate-handoff.mjs'));
+  assert.equal(actual.status, source.status, file + actual.stderr); assert.equal(actual.stdout, source.stdout, file); assert.equal(actual.stderr, '', file);
+  const result = JSON.parse(actual.stdout);
+  const transitive = /^transitive-(repair|blocked|wait)-(.+)\.(json|yaml)$/.exec(file);
+  const proof = file.startsWith('proof-') || file === 'human-static.json';
+  if (proof) {
+   const name = file.replace(/\.(json|yaml)$/, '');
+   const expectedValid = mode === 'record' || /-exact-(pass|fail)$|-not-run$/.test(name) || name === 'human-static';
+   assert.equal(source.status, expectedValid ? 0 : 1, file + source.stdout);
+   assert.equal(actual.status, expectedValid ? 0 : 1, file + actual.stdout);
+   assert.equal(result.valid, expectedValid, file + actual.stdout);
+   assert.equal(result.completion_established, mode === 'chain' && name === 'human-static', file);
+   if (mode === 'chain') {
+    proofChains++;
+    if (expectedValid) {
+     proofValid++;
+     const target = targetRecord(JSON.parse(await readFile(input, 'utf8')));
+     assert.deepEqual(result.qa_report, target.payload.qa_report ?? target.payload.report, file);
+     assert.deepEqual(result.human_pending, ['HQA-01'], file);
+     if (name === 'human-static') { assert.equal(result.ai_steps, 0); assert.deepEqual(result.qa_report.steps, []); }
+    } else {
+     const base = '/comment_pages/0/comments/3/body/payload/';
+     const [code, field] = name.endsWith('-real-null-environment') ? ['EVIDENCE', 'qa_report/environment'] : name.endsWith('-foreign-result') ? ['EVIDENCE', 'qa_report/steps/0/evidence/0'] : name.endsWith('-foreign-finding') ? ['EVIDENCE', 'findings/0/evidence/0'] : ['PR', 'pr'];
+     assert(result.diagnostics.some(x => x.code === code && x.path === base + field), file + actual.stdout);
+    }
+    t.diagnostic(JSON.stringify({ file, input_sha256: hash, source: { status: source.status, output: JSON.parse(source.stdout) }, installed: { status: actual.status, output: result } }));
+   } else proofRecords++;
+  } else if (transitive) {
+   const [, kind, variant] = transitive;
+   const shapeInvalid = kind === 'repair' && ['empty', 'empty-array'].includes(variant);
+   const expectedValid = mode === 'record' ? !shapeInvalid : validTransitive.has(variant) || (variant === 'empty' && kind !== 'repair');
+   assert.equal(result.valid, expectedValid, file + actual.stdout);
+   assert.equal(result.completion_established, false, file);
+   if (mode === 'chain') {
+    transitiveChains++;
+    if (expectedValid) {
+     transitiveValid++;
+     const envelope = JSON.parse(await readFile(input, 'utf8')), target = targetRecord(envelope);
+     assert.deepEqual(result.qa_report, target.payload.qa_report, file);
+     assert.deepEqual(result.human_pending, target.payload.qa_report.human_pending, file);
+     assert.deepEqual(result.human_pending, ['HQA-01'], file);
+    } else {
+     const suffix = invalidTransitive[variant], code = shapeInvalid ? 'STRUCTURE' : 'LEDGER';
+     const expectedPath = '/comment_pages/0/comments/3/body/payload/' + (shapeInvalid ? 'findings' : 'qa_report' + suffix);
+     assert(result.diagnostics.some(x => x.code === code && x.path === expectedPath), file + actual.stdout);
+    }
+   } else transitiveRecords++;
+  } else if (['blocked-no-environment.json', 'blocked-retained-fail.json', 'wait-retained-fail.json', 'old-blocked.json', 'old-wait.json', 'human-static.json'].includes(file)) {
+   assert.equal(result.valid, true, file); assert.equal(result.completion_established, file === 'human-static.json');
+  } else if (mode === 'chain') { assert.equal(result.valid, false, file); assert.equal(result.completion_established, false); }
+  assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'), hash, file);
+ }
+ assert.equal(transitiveChains, 43); assert.equal(transitiveValid, 23); assert.equal(transitiveRecords, 43);
+ assert.equal(proofChains, 19); assert.equal(proofValid, 7); assert.equal(proofRecords, 18);
+ assert.equal(await realpath(installed.stableSkills), installed.skills);
+});

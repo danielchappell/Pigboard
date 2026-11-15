@@ -256,6 +256,75 @@ observations remain failed/unknown; they are not relabeled successful. Runtime Q
 needs exact pipeline environment evidence. A human-only non-runtime configured
 target with no required capabilities does not need an invented deployment.
 
+## Incomplete QA results
+
+A QA `blocked` or `dependency_wait` payload may include `findings`: 1–100
+existing finding objects, each with a distinct nonblank `id`, nonblank `summary`
+and at least one approved retrievable evidence reference. Omit the property when
+there are no findings; do not supply an empty array or add it to another role.
+Retain each earlier FAIL, its evidence and finding IDs, every remaining NOT_RUN
+step with its reason, and the exact prescribed human-pending list. A
+defect-dependent skip retains the defect's finding ID. On this reviewed validator,
+NOT_RUN rows retain the distinct finding IDs of FAIL or NOT_RUN prerequisite rows
+named by their case's `depends_on`. This carries the cause through declared
+skipped prerequisites: A FAIL/F1 → B NOT_RUN/F1 → C NOT_RUN/F1. One copy of each
+required ID suffices when paths join. A skipped prerequisite with no finding IDs
+contributes none. Ownership, bindings, same-case membership, earlier rows and
+PASS metadata create no such requirement; an independent access/evidence blocker
+can retain its own reason without inheriting an unrelated failure. These findings preserve
+observations; they do not queue a new repair request, prove a repair or authorize
+resume. A wait still references a real typed upstream request.
+
+A non-completing report whose steps are all NOT_RUN can report missing deployment
+without an environment receipt. Supplied finding and step evidence is still
+validated. Any PASS or FAIL, including a reused observation, requires nonnull
+`payload.pr` naming the tested revision, matching result evidence and the trusted
+pipeline PR-comment environment for that exact PR revision. Successful runtime QA
+keeps the same requirement; the human-only static exception remains. Validation
+of a blocker gives no permission to run tests or publish/transition anything.
+
+A `PR` error at `payload.pr` means the executed observation lacks its tested
+revision. Preserve the observations, obtain the actual tested revision and matching
+proof, then prepare a new corrected receipt through canonical publication. If that
+proof is unavailable, report the inability honestly; never invent a revision, erase
+a PASS/FAIL or edit an already published signed receipt.
+
+Existing `pigboard-handoff/v1` records without findings keep their original bytes
+and digests. The optional extension requires the matching reviewed validator
+release. If an older installation rejects `findings`, install the approved matching
+release and validate the original input again. Never strip findings, change a FAIL
+or retry against an older validator to obtain acceptance. Keep the immutable
+release/manifest binding; publication of this change does not activate delivery.
+
+If validation reports missing prerequisite finding IDs at a consumer's
+`finding_ids` field, preserve the original evidence and prepare a new corrected
+receipt with those IDs and the complete original ledger. Use the existing
+canonical publication process. Never mutate an already published signed receipt,
+strip a finding, rewrite a FAIL to PASS/NOT_RUN or downgrade validation to force
+acceptance. Validation reports the error; it never repairs inputs or authorizes
+execution or resume.
+
+For a source checkout with its locked dependencies already prepared, generate
+fixed synthetic examples in a **new, absolute directory** whose parent exists:
+
+```sh
+node --input-type=module -e 'import {preparePartialFixtures} from "./test/fixtures/qa-partial-results.mjs"; await preparePartialFixtures(process.argv[1]);' /absolute/private/partial-qa
+node scripts/validate-handoff.mjs --mode chain --input /absolute/private/partial-qa/blocked-no-environment.json --json
+node scripts/validate-handoff.mjs --mode chain --input /absolute/private/partial-qa/blocked-retained-fail.json --json
+node scripts/validate-handoff.mjs --mode chain --input /absolute/private/partial-qa/wait-retained-fail.json --json
+node scripts/validate-handoff.mjs --mode record --format yaml --input /absolute/private/partial-qa/blocked-retained-fail.yaml --json
+```
+
+The three chains are valid with `completion_established:false`. Inspect `qa_report`
+for the full ledger and pending human cases; record-mode success checks shape only.
+The directory also includes old-record controls, negative inputs, corresponding
+YAML records and `sha256.json`. The preparation module is source-only and refuses
+to overwrite an existing directory. From outside the checkout, use the exact
+installed `work-validator/scripts/validate-handoff.mjs` on the same files; compare
+outputs, exit codes, input hashes and the release manifest. Retain the evidence,
+then remove only the owned example directory. These are local supplied-receipt
+checks, not real helper execution, provider acceptance or proof of live freshness.
+
 ## Outcomes and recovery
 
 Both modes return `schema: pigboard-handoff-validation/v1`, `mode`, `valid`,

@@ -49,7 +49,7 @@ test('documented pre-first-PR dependency wait permits null-PR repair only with c
 test('a second explicit blocker authorization retains one current leaf on the same assignment',()=>{const e=clone('resume'),q=target(e),oldReport=structuredClone(q.r.payload.report);for(const s of oldReport.steps){s.result='NOT_RUN';s.evidence=[];s.not_run_reason='A later access blocker prevents remaining execution.';}q.r.kind='blocked';q.r.to_stage='Blocked';q.r.payload={pr:q.r.payload.pr,basis:q.r.payload.review,reason:'access',detail:'Prepared access failed again.',human_action:'Restore prepared access.',evidence:[],qa_report:oldReport};q.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(q.r)}]}]});seal(e);const blocker={...e.target},authTemplate=entries(e).find(x=>x.r.kind==='resume_authorization').r,auth={...authTemplate,record_id:'10000000-0000-4000-8000-000000000003',payload:{...authTemplate.payload,blocked_result:blocker}},a=append(e,auth,'human'),original=target(clone('resume')).r,final={...original,record_id:'10000000-0000-4000-8000-000000000004',resume_authorization:a};e.target=append(e,final,'qa');const r=run(e);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.deepEqual(JSON.parse(JSON.stringify(r.validated_leaf)),e.target);});
 test('declared preparation requires exact hashed artifacts and consumers without changing requirements',()=>{const e=clone('human'),work=JSON.parse(e.requirements[0].body);work.testing_strategy.preparation=[{id:'PREP-1',owner:'implementer',supplies:'Prepared review evidence for the unchanged human case.',used_by:['HQA-01'],preserves:['AC-01']}];e.requirements[0].body=JSON.stringify(work);const req=digestValue(work);e.requirements[0].digest=req;e.issues[0].requirements_digest=req;for(const x of entries(e))mutateRecord(e,x.r.record_id,r=>r.requirements_digest=req);for(const o of e.evidence_receipts)if(o.details.requirements_digest)o.details.requirements_digest=req;const imp=entries(e).find(x=>x.r.kind==='implementation'),uri='https://evidence.example.invalid/prepared',hash='sha256:'+'f'.repeat(64);e.trusted.projects[0].evidence_uris.push(uri);e.evidence_receipts.push({uri,observed_digest:hash,available:true,actor_id:'observer',pr:imp.r.payload.pr,kind:'preparation',details:{preparation_id:'PREP-1',requirements_digest:req,consumers:['HQA-01']}});mutateRecord(e,imp.r.record_id,r=>r.payload.prepared_inputs=[{id:'PREP-1',artifacts:[{label:'Prepared human review input',uri,digest:hash}]}]);assert.equal(run(e).valid,true,JSON.stringify(run(e).diagnostics));e.evidence_receipts.at(-1).observed_digest='sha256:'+'e'.repeat(64);assert.equal(run(e).valid,false);});
 
-test('case-specific reuse retains the exact previously completed step and requires its linked report',()=>{const e=clone('resume'),q=target(e),b=entries(e).find(x=>x.r.kind==='blocked'),first=q.r.payload.report.steps[0];mutateRecord(e,b.r.record_id,r=>r.payload.qa_report.steps[0]=structuredClone(first));const blocker=entries(e).find(x=>x.r.kind==='blocked'),source={ticket_id:blocker.r.ticket_id,comment_id:blocker.c.id,record_id:blocker.r.record_id,digest:digestValue(blocker.r)},uri='https://evidence.example.invalid/case-reuse',work=JSON.parse(e.requirements[0].body),caseId=work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id===first.id)).id;e.trusted.projects[0].evidence_uris.push(uri);e.evidence_receipts.push({uri,observed_digest:null,available:true,actor_id:'observer',pr:q.r.payload.pr,kind:'reuse',details:{case_id:caseId,step_id:first.id,basis:'This exact completed observation remains applicable at the unchanged source revision; no completed action is replayed.',source}});mutateRecord(e,e.target.record_id,r=>r.payload.report.steps[0].reused_from={label:'Case-specific reuse report',uri,digest:null});assert.equal(run(e).valid,true,JSON.stringify(run(e).diagnostics));e.evidence_receipts.at(-1).details.step_id='unknown';assert.equal(run(e).valid,false);});
+test('case-specific reuse retains the exact previously completed step and requires its linked report',()=>{const e=clone('resume'),q=target(e),b=entries(e).find(x=>x.r.kind==='blocked'),first=q.r.payload.report.steps[0];mutateRecord(e,b.r.record_id,r=>r.payload.qa_report.steps[0]=structuredClone(first));const blocker=entries(e).find(x=>x.r.kind==='blocked'),source={ticket_id:blocker.r.ticket_id,comment_id:blocker.c.id,record_id:blocker.r.record_id,digest:digestValue(blocker.r)},uri='https://evidence.example.invalid/case-reuse',work=JSON.parse(e.requirements[0].body),caseId=work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id===first.id)).id;e.trusted.projects[0].evidence_uris.push(uri);e.evidence_receipts.push({uri,observed_digest:null,available:true,actor_id:'observer',pr:q.r.payload.pr,kind:'reuse',details:{case_id:caseId,step_id:first.id,basis:'This exact completed observation remains applicable at the unchanged source revision; no completed action is replayed.',source}});mutateRecord(e,e.target.record_id,r=>r.payload.report.steps[0].reused_from={label:'Case-specific reuse report',uri,digest:null});assert.equal(run(e).valid,true,JSON.stringify(run(e).diagnostics));const missingEnvironment=structuredClone(e);missingEnvironment.evidence_receipts=missingEnvironment.evidence_receipts.filter(x=>x.kind!=='environment');assert.equal(run(missingEnvironment).valid,false);assert(run(missingEnvironment).diagnostics.some(x=>x.code==='EVIDENCE'));e.evidence_receipts.at(-1).details.step_id='unknown';assert.equal(run(e).valid,false);});
 rejects('parent completion with a newer unresolved root cannot queue its child',e=>{const parentQA=entries(e).filter(x=>x.r.ticket_id==='1000'&&x.r.kind==='qa').at(-1),basis={ticket_id:'1000',comment_id:parentQA.c.id,record_id:parentQA.r.record_id,digest:digestValue(parentQA.r)},old=entries(e).find(x=>x.r.kind==='repair_request').r,newRequest={...old,record_id:'10000000-0000-4000-8000-000000000005',assignment:parentQA.r.assignment,operation_id:parentQA.r.operation_id,payload:{...old.payload,basis,pr:parentQA.r.payload.pr}};append(e,newRequest,'human');},'REPAIR','stack');
 test('an explicit verified resolution cannot waive an unrelated outstanding root',()=>{const e=clone('repair'),request=entries(e).find(x=>x.r.kind==='repair_request'),r={ticket_id:request.r.ticket_id,comment_id:request.c.id,record_id:request.r.record_id,digest:digestValue(request.r)};e.request_resolutions=[{request:r,completion:e.target}];assert.equal(run(e).valid,true,JSON.stringify(run(e).diagnostics));const old=entries(e).find(x=>x.r.kind==='qa');e.request_resolutions[0].completion={ticket_id:old.r.ticket_id,comment_id:old.c.id,record_id:old.r.record_id,digest:digestValue(old.r)};assert.equal(run(e).valid,false);});
 
@@ -103,3 +103,158 @@ for(const [label,change,code]of[
  ['mismatched intermediate assigned wait',e=>mutateRecord(e,e.issues.find(i=>i.id==='1001').pointer.assignment.record_id,r=>r.payload.requests=[entries(e).find(x=>x.r.ticket_id==='1001'&&x.r.kind==='admission'&&x.r.payload.mode==='repair').r.payload.requests[0]]),'REPAIR']
 ])test('historical first PR rejects '+label,()=>{const e=firstPRSnapshot('implementation',true);change(e);const raw=JSON.stringify(e),r=run(e);assert.equal(r.valid,false,JSON.stringify(r));assert(r.diagnostics.some(d=>d.code===code),JSON.stringify(r.diagnostics));assert.equal(r.completion_established,false);assert.equal(JSON.stringify(e),raw);});
 test('first publication CLI snapshots preserve immutable inputs and readable boundaries',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'first-pr-chain-'));t.after(()=>rm(dir,{recursive:true,force:true}));for(const kind of ['admission','implementation','review','qa','dependency_wait','blocked']){const e=['dependency_wait','blocked'].includes(kind)?firstPRPartial(kind,true):firstPRSnapshot(kind,true),file=path.join(dir,kind+'.json'),raw=JSON.stringify(e);await writeFile(file,raw);for(const json of [true,false]){const p=spawnSync(process.execPath,[cli,'--mode','chain','--input',file,...(json?['--json']:[])],{cwd:dir,encoding:'utf8'});assert.equal(p.status,0,p.stdout+p.stderr);}assert.equal(await readFile(file,'utf8'),raw);}});
+
+// These inputs represent canonical observations only; no helper execution occurs.
+test('incomplete QA can report missing deployment and retain defects on block or real upstream wait', async () => {
+  const { partialFixtures, targetRecord, records } = await import('./fixtures/qa-partial-results.mjs');
+  const cases = partialFixtures();
+  for (const name of ['blocked-no-environment', 'blocked-retained-fail', 'wait-retained-fail', 'old-blocked', 'old-wait', 'human-static']) {
+    const e = cases[name], before = JSON.stringify(e), r = run(e), target = targetRecord(e);
+    assert.equal(r.valid, true, name + JSON.stringify(r.diagnostics));
+    assert.equal(r.completion_established, name === 'human-static');
+    assert.deepEqual(JSON.parse(JSON.stringify(r.qa_report)), target.payload.qa_report ?? target.payload.report ?? null);
+    assert.deepEqual(r.human_pending, name === 'old-wait' ? null : ['HQA-01']); assert.equal(JSON.stringify(e), before);
+    if (name.includes('retained-fail')) {
+      assert.equal(r.qa_report.steps[0].result, 'FAIL'); assert.deepEqual(r.qa_report.steps[0].finding_ids, ['F1']);
+      assert.equal(target.payload.findings[0].id, 'F1'); assert(target.payload.findings[0].evidence.length);
+      assert(r.qa_report.steps.slice(1).every(s => s.result === 'NOT_RUN' && s.finding_ids.includes('F1')));
+    }
+  }
+  assert(cases['blocked-no-environment'].evidence_receipts.every(x => x.kind !== 'environment'));
+  assert(run(cases['blocked-no-environment']).qa_report.steps.every(x => x.result === 'NOT_RUN'));
+  const wait = targetRecord(cases['wait-retained-fail']), upstream = records(cases['wait-retained-fail']).find(x => x.r.record_id === wait.payload.requests[0].record_id).r;
+  assert.equal(upstream.kind, 'repair_request'); assert.notEqual(upstream.ticket_id, wait.ticket_id);
+});
+test('partial results retain environment, evidence, finding, ledger and authority boundaries', async () => {
+  const { partialFixtures, targetRecord, changeTarget } = await import('./fixtures/qa-partial-results.mjs');
+  const cases = partialFixtures();
+  for (const [name, code] of [['success-no-environment', 'EVIDENCE'], ['blocked-fail-no-environment', 'EVIDENCE'], ['wait-fail-no-environment', 'EVIDENCE'], ['blocked-pass-no-environment', 'EVIDENCE'], ['wait-pass-no-environment', 'EVIDENCE'], ['blank-finding-id', 'REPAIR'], ['malformed-finding', 'STRUCTURE'], ['non-qa-findings', 'STRUCTURE'], ['missing-finding-evidence', 'STRUCTURE'], ['duplicate-finding-id', 'REPAIR'], ['unknown-finding-id', 'LEDGER'], ['blank-finding', 'REPAIR'], ['missing-result-evidence', 'STRUCTURE'], ['altered-human-list', 'LEDGER'], ['missing-findings', 'LEDGER']]) {
+    const e = cases[name], before = JSON.stringify(e), r = run(e);
+    assert.equal(r.valid, false, name); assert.equal(r.completion_established, false);
+    assert(r.diagnostics.some(x => x.code === code), name + JSON.stringify(r.diagnostics)); assert.equal(JSON.stringify(e), before);
+  }
+  for (const name of ['blocked-retained-fail', 'wait-retained-fail']) {
+    for (const mutate of [e => e.evidence_receipts.find(x => x.uri.endsWith('/finding')).available = false, e => e.evidence_receipts.find(x => x.kind === 'environment').actor_id = 'stranger', e => e.pr_receipts[0].source_revision = 'f'.repeat(40), e => target(e).c.author_id = 'stranger']) {
+      const e = structuredClone(cases[name]); mutate(e); assert.equal(run(e).valid, false, name);
+    }
+    const pass = structuredClone(cases[name]); changeTarget(pass, r => { r.payload.qa_report.steps[0].result = 'PASS'; r.payload.qa_report.steps[0].finding_ids = []; });
+    assert.equal(run(pass).valid, true, JSON.stringify(run(pass).diagnostics)); pass.evidence_receipts = pass.evidence_receipts.filter(x => x.kind !== 'environment'); assert.equal(run(pass).valid, false);
+    const skipped = structuredClone(cases[name]); changeTarget(skipped, r => { for (const s of r.payload.qa_report.steps) { s.result = 'NOT_RUN'; s.not_run_reason = 'No further work was run.'; } });
+    assert.equal(run(skipped).valid, true); skipped.evidence_receipts.find(x => x.uri.endsWith('/finding')).available = false; assert.equal(run(skipped).valid, false);
+  }
+});
+test('fixture preparation preserves every input hash and refuses to overwrite evidence', async t => {
+  const { preparePartialFixtures, partialFixtures, targetRecord } = await import('./fixtures/qa-partial-results.mjs');
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'partial-preparation-')); t.after(() => rm(dir, { recursive: true, force: true }));
+  const out = path.join(dir, 'inputs'), hashes = await preparePartialFixtures(out);
+  for (const [name, e] of Object.entries(partialFixtures())) {
+    const raw = await readFile(path.join(out, name + '.json')), yaml = await readFile(path.join(out, name + '.yaml'));
+    assert.equal(createHash('sha256').update(raw).digest('hex'), hashes[name + '.json']);
+    assert.equal(createHash('sha256').update(yaml).digest('hex'), hashes[name + '.yaml']);
+    assert.deepEqual(JSON.parse(raw), e);
+    const { validateHandoff } = await import('../lib/contracts/handoff.mjs');
+    const record = validateHandoff(yaml); if (record.valid) assert.equal(record.record_digest, digestValue(targetRecord(e)));
+  }
+  await assert.rejects(preparePartialFixtures(out), { code: 'EEXIST' });
+});
+
+// An intermediate skipped prerequisite must not sever the declared finding chain.
+test('transitive skipped prerequisites retain the original finding at the final consumer', async () => {
+  const { transitiveFixtures } = await import('./fixtures/qa-partial-results.mjs');
+  const inputs = transitiveFixtures();
+  for (const kind of ['repair', 'blocked', 'wait']) {
+    const complete = run(inputs['transitive-' + kind + '-three']);
+    assert.equal(complete.valid, true, JSON.stringify(complete.diagnostics));
+    const omitted = run(inputs['transitive-' + kind + '-missing-last']);
+    assert.equal(omitted.valid, false, kind + ': omitted final finding must reject');
+    assert(omitted.diagnostics.some(x => x.code === 'LEDGER' && x.path.endsWith('/qa_report/steps/3/finding_ids')), JSON.stringify(omitted));
+  }
+});
+
+// Expectations are independent of fixture preparation and validator decisions.
+test('declared prerequisite matrix preserves complete partial evidence without inferring other edges', async () => {
+  const { transitiveFixtures, targetRecord, records, partialFixtures } = await import('./fixtures/qa-partial-results.mjs');
+  const inputs = transitiveFixtures();
+  const validVariants = ['three', 'four', 'join', 'independent', 'ownership', 'binding', 'pass'];
+  const invalidVariants = { 'missing-middle': ['LEDGER', '/steps/2/finding_ids'], 'missing-last': ['LEDGER', '/steps/3/finding_ids'], 'unknown-last': ['LEDGER', '/steps/3/finding_ids'], 'four-missing-last': ['LEDGER', '/steps/4/finding_ids'], 'join-missing-F1': ['LEDGER', '/steps/4/finding_ids'], 'join-missing-F2': ['LEDGER', '/steps/4/finding_ids'] };
+  let examined = 0, valid = 0;
+  for (const kind of ['repair', 'blocked', 'wait']) {
+    const variants = [...validVariants, ...Object.keys(invalidVariants), 'empty', ...(kind === 'repair' ? ['empty-array'] : [])];
+    for (const variant of variants) {
+      const name = 'transitive-' + kind + '-' + variant, e = inputs[name], before = JSON.stringify(e), hash = createHash('sha256').update(before).digest('hex'), target = targetRecord(e), r = run(e);
+      const expectedValid = validVariants.includes(variant) || (variant === 'empty' && kind !== 'repair');
+      assert.equal(r.valid, expectedValid, name + JSON.stringify(r.diagnostics));
+      assert.equal(r.completion_established, false, name);
+      assert.equal(JSON.stringify(e), before, name);
+      assert.equal(createHash('sha256').update(JSON.stringify(e)).digest('hex'), hash, name);
+      if (expectedValid) {
+        valid++;
+        assert.deepEqual(JSON.parse(JSON.stringify(r.qa_report)), target.payload.qa_report, name);
+        assert.deepEqual(r.human_pending, target.payload.qa_report.human_pending, name);
+        assert.deepEqual(r.human_pending, ['HQA-01'], name);
+        if (!['empty', 'pass'].includes(variant)) {
+          assert.equal(r.qa_report.steps[0].result, 'FAIL', name);
+          assert.deepEqual(r.qa_report.steps[0].finding_ids, ['F1'], name);
+          assert(target.payload.findings[0].evidence.length, name);
+        }
+        if (variant === 'join') assert.deepEqual(r.qa_report.steps[4].finding_ids, ['F1', 'F2'], name);
+        if (['independent', 'ownership', 'binding', 'pass', 'empty'].includes(variant)) assert(r.qa_report.steps.slice(1).every(x => x.finding_ids.length === 0), name);
+        if (variant === 'empty') { assert(!Object.hasOwn(target.payload, 'findings')); assert(e.evidence_receipts.every(x => x.kind !== 'environment')); }
+        if (kind === 'wait') {
+          const reference = target.payload.requests[0], upstream = records(e).find(x => x.r.record_id === reference.record_id).r;
+          assert.equal(upstream.kind, 'repair_request'); assert.notEqual(upstream.ticket_id, target.ticket_id);
+          assert.equal(reference.digest, digestValue(upstream));
+          const original = partialFixtures()['wait-retained-fail'];
+          assert.deepEqual(e.requirements.find(x => x.ticket_id === upstream.ticket_id), original.requirements.find(x => x.ticket_id === upstream.ticket_id));
+          assert.deepEqual(records(e).filter(x => x.r.ticket_id === upstream.ticket_id), records(original).filter(x => x.r.ticket_id === upstream.ticket_id));
+          assert.equal(records(e).find(x => x.r.record_id === upstream.payload.basis.record_id).r.kind, 'qa');
+        }
+      } else {
+        const [code, suffix] = invalidVariants[variant] ?? ['STRUCTURE', null];
+        const expectedPath = suffix ? '/comment_pages/0/comments/3/body/payload/qa_report' + suffix : '/comment_pages/0/comments/3/body/payload/findings';
+        assert(r.diagnostics.some(x => x.code === code && x.path === expectedPath), name + JSON.stringify(r.diagnostics));
+      }
+      examined++;
+    }
+  }
+  assert.equal(examined, 43); assert.equal(valid, 23); assert.equal(Object.keys(inputs).length, examined);
+});
+
+// Explicit expectations for the missing execution identity, independent of parity.
+test('executed QA requires a tested PR while exact proof and unexecuted exceptions remain usable', async () => {
+  const { executionProofFixtures, partialFixtures, targetRecord, records } = await import('./fixtures/qa-partial-results.mjs');
+  const { validateHandoff } = await import('../lib/contracts/handoff.mjs');
+  const { stringify } = await import('yaml');
+  const inputs = { ...executionProofFixtures(), 'human-static': partialFixtures()['human-static'] };
+  let valid = 0, invalid = 0;
+  for (const [name, e] of Object.entries(inputs)) {
+    const before = JSON.stringify(e), hash = createHash('sha256').update(before).digest('hex'), target = targetRecord(e), r = run(e);
+    const expectedValid = /-exact-(pass|fail)$|-not-run$/.test(name) || name === 'human-static';
+    assert.equal(validateHandoff(stringify(target)).valid, true, name + ': partial null PR remains structurally valid');
+    assert.equal(r.valid, expectedValid, name + JSON.stringify(r.diagnostics));
+    assert.equal(r.completion_established, name === 'human-static', name);
+    assert.equal(JSON.stringify(e), before, name);
+    assert.equal(createHash('sha256').update(JSON.stringify(e)).digest('hex'), hash, name);
+    if (expectedValid) {
+      valid++;
+      assert.deepEqual(JSON.parse(JSON.stringify(r.qa_report)), target.payload.qa_report ?? target.payload.report, name);
+      assert.deepEqual(r.human_pending, ['HQA-01'], name);
+      if (name === 'human-static') { assert.equal(r.ai_steps, 0); assert.deepEqual(r.qa_report.steps, []); assert(e.evidence_receipts.every(x => x.kind !== 'environment')); }
+      if (name.endsWith('-not-run')) { assert.equal(target.payload.pr, null); assert(r.qa_report.steps.every(s => s.result === 'NOT_RUN')); assert(!e.evidence_receipts.some(x => x.kind === 'environment' && x.pr.number === '10')); }
+    } else {
+      invalid++;
+      const base = '/comment_pages/0/comments/3/body/payload/';
+      const [code, field] = name.endsWith('-real-null-environment') ? ['EVIDENCE', 'qa_report/environment'] : name.endsWith('-foreign-result') ? ['EVIDENCE', 'qa_report/steps/0/evidence/0'] : name.endsWith('-foreign-finding') ? ['EVIDENCE', 'findings/0/evidence/0'] : ['PR', 'pr'];
+      assert(r.diagnostics.some(x => x.code === code && x.path === base + field), name + JSON.stringify(r.diagnostics));
+    }
+    if (name.startsWith('proof-wait-')) {
+      const original = partialFixtures()['wait-retained-fail'], request = target.payload.requests[0], upstream = records(e).find(x => x.r.record_id === request.record_id).r;
+      assert.equal(upstream.kind, 'repair_request'); assert.notEqual(upstream.ticket_id, target.ticket_id); assert.equal(request.digest, digestValue(upstream));
+      assert.deepEqual(e.requirements.filter(x => x.ticket_id === upstream.ticket_id), original.requirements.filter(x => x.ticket_id === upstream.ticket_id));
+      assert.deepEqual(e.comment_pages.filter(x => x.ticket_id === upstream.ticket_id), original.comment_pages.filter(x => x.ticket_id === upstream.ticket_id));
+      assert.deepEqual(e.evidence_receipts.filter(x => x.pr?.number === '12'), original.evidence_receipts.filter(x => x.pr?.number === '12'));
+      assert.equal(records(e).find(x => x.r.record_id === upstream.payload.basis.record_id).r.kind, 'qa');
+    }
+  }
+  assert.equal(Object.keys(inputs).length, 19); assert.equal(valid, 7); assert.equal(invalid, 12);
+});
