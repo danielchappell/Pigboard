@@ -30,7 +30,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
 | R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
 | R1-30 / [PGB-138](https://scubapig.atlassian.net/browse/PGB-138) | Prepare mixed QA inputs and two boundary controls | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.0625–1.5625 | 18 |
-| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Complete the prescribed QA input suite | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 0.84375–1.21875 | 12 |
+| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Complete the prescribed QA input suite | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 0.9375–1.40625 | 12 |
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27 | 1.3125–1.8125 | 17 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
@@ -104,11 +104,11 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/write-pr-sized-stories/SKILL.md`, `skills/write-pr-sized-stories/references/basic-workflow-ticket.md`, `skills/implementer-entrypoint/references/handoff.md`, `skills/pigboard-pr-review/references/jira-handoff.md`, `docs/authoring.md`, `test/story-authoring.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/qa-helper-contract.test.mjs`, `docs/using-pigboard.md`, `skills/qa-api/references/structured-steps.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
-### R1-27 — 12 residual forecast files, 6.75–9.75 hours
+### R1-27 — 12 residual forecast files, 7.5–11.25 hours
 
 `test/story-authoring.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/qa-helper-contract.test.mjs`, `docs/using-pigboard.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
-The split allocates the earlier 12–17h familiar-human envelope once across the two complete outcomes, then adds split overhead once: A 6.65–9.525h plus 1.75–2.75h, B 5.35–7.475h plus 1.25–2h. Unrounded totals are A 8.4–12.275h/B 6.6–9.475h; conservative working forecasts are 8.5–12.5h/6.75–9.75h. They include prior allocated work, repairs, tests, guides, publication, independent reviews, installation binding, ordinary corrections and PR preparation. The former 18-path/10.75–15h PGB-132 forecast is historical, superseded by this reviewed split. No supporting file is hidden. Neither Story receives a time exception.
+The historical split allocated the earlier 12–17h familiar-human envelope once across the two complete outcomes, then added split overhead once: A 6.65–9.525h plus 1.75–2.75h, B 5.35–7.475h plus 1.25–2h. Unrounded totals are A 8.4–12.275h/B 6.6–9.475h; the historical conservative forecasts were 8.5–12.5h/6.75–9.75h. The current PGB-132 forecast below includes the bounded consumer-control correction. They include prior allocated work, repairs, tests, guides, publication, independent reviews, installation binding, ordinary corrections and PR preparation. The former 18-path/10.75–15h PGB-132 forecast is historical, superseded by this reviewed split. No supporting file is hidden. Neither Story receives a time exception.
 
 R1-30 implements only I01-story, I02-parameters and I11-stale-environment. The residual R1-27 candidate adds the remaining 48 through that same producer, ending with 51 inputs in 14 families; its full native body and H01/H02/H03 are preserved, with only R1-30 added as prerequisite. General guides route to the selected source catalogue, so those six guide files need no second change. The split plan SHA is `54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593` with two independent CLEAN plan reviews. Those verdicts do not cover committed code. PGB-132's owner decision 10765 helper/publisher evidence exception stays historical and specific to PGB-132. PGB-138's three human cases and PGB-132's original three remain NOT_RUN. No helper experiment or accepted-gap rerun is part of this slice.
 
@@ -372,6 +372,13 @@ accepts only its specific actual-helper/dependent-publisher evidence gap. No
 helper, Bruno, model or provider acceptance was rerun here. R1-27-H01/H02/H03
 and R1-30-H01/H02/H03 remain NOT_RUN. Developer source checks, installed
 evidence reuse, hosted CI/Codex, merge/release and activation are distinct.
-The reviewed residual forecast remains 12 maximum authored paths and
-6.75–9.75 familiar-human hours including prior allocated work and ordinary
-corrections; unchanged publication bodies are not edited merely to fill that list.
+The current reviewed residual forecast is 12 maximum authored paths, with nine
+authored paths, and 7.5–11.25 familiar-human hours: the prior 6.75–9.75h plus
+0.75–1.5h for actual-consumer proof/size control repair, affected checks, docs,
+ordinary correction and review/PR evidence. Prior allocations remain counted;
+unchanged publication bodies are not edited merely to fill that list. Only
+PGB-132 changes: the current aggregate upper forecast is 48.05375 days
+(47.86625 + 1.5/8); other Story forecasts and source ownership stay unchanged.
+Both I11 partial controls remove actual environment proof and preserve current
+PR/response facts. I14 now refuses the complete projected ledger before dispatch;
+the separate actual-canonical publication overflow control remains unchanged.

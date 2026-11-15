@@ -458,6 +458,27 @@ needs no invented environment. Preserve prior findings when a later unit cannot
 run. I12 contains only the existing publisher's unknown-write seam; it does not
 repeat the publication matrix or permit replay.
 
+The two `I11-partial-*-null-proof` controls remove actual environment receipts
+from the predecessor envelope, card evidence and original pipeline comments.
+Current reviewed PR identity and ready/pending response facts remain present;
+there is no supplied assessment or result. If a helper/composer discovers this
+missing prerequisite before execution, it must stop with all-NOT_RUN. That
+truthful startup response does not demonstrate rejection of a partial PASS/FAIL
+claim. The developer contract test separately feeds the emitted proof slices
+into test-only canonical partial PASS/FAIL probes: positive proof validates and
+missing proof rejects at the environment boundary. These probes are never actor
+inputs. Keep genuine earlier observations local when they cannot be truthfully
+published; do not invent execution or a late loss of proof. The independent
+null-PR regression tests a different predicate.
+
+`I14-oversized-ledger` declares 100 evidence requirements for each of its four
+original steps, retaining each first requirement, IDs, ownership and order.
+Existing start validation refuses its complete projected ledger with
+`LEDGER_BYTES` before dispatch, with zero omitted entries. It is an input-budget
+control, not evidence of post-execution publication overflow. The separate
+publication `H03-oversized-ledger` fixture still checks actual canonical overflow.
+No large label sidecar or generated ledger is supplied to an actor.
+
 When a required fact is missing, retain the original inputs, exact missing
 field/artifact/consumer, parser or preflight diagnostics and actual partial results.
 Ask the named preparation/access owner for that fact through the authorized

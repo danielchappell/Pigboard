@@ -128,7 +128,7 @@ import { readdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { parse, stringify } from 'yaml';
 import { prepareQaFixture } from './fixtures/qa-helper-case.mjs';
-import { records, targetRecord, changeTarget } from './fixtures/qa-partial-results.mjs';
+import { records, targetRecord, changeTarget, executionProofFixtures } from './fixtures/qa-partial-results.mjs';
 import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
 import { validateHandoff, extractHandoff, digestValue } from '../lib/contracts/handoff.mjs';
 import { parseConfig } from '../lib/config/parse.mjs';
@@ -764,16 +764,17 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
   const work=JSON.parse(await raw(id,'work.yaml')),facts=await raw(id,'facts.yaml');
   assert.deepEqual(index.consumers,work.testing_strategy.cases.flatMap(c=>c.steps.map(s=>s.id)));
   const result=validateWork(await raw(id,'work.yaml'),{mode:'start',contextInput:facts});
-  assert.equal(result.valid,!['I02-parameters','I05-missing-bound'].includes(id),id+JSON.stringify(result.diagnostics));
+  assert.equal(result.valid,!['I02-parameters','I05-missing-bound','I14-oversized-ledger'].includes(id),id+JSON.stringify(result.diagnostics));
   if(id==='I02-parameters')assert(result.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
   if(id==='I05-missing-bound')assert(result.diagnostics.some(d=>d.code==='OBSERVATION'));
+  if(id==='I14-oversized-ledger')assert.deepEqual(result.diagnostics.map(d=>[d.code,d.path]),[['LEDGER_BYTES','/testing_strategy']]);
   assert.equal(parseConfig(await raw(id,'scope.yaml')).valid,true,id);
   const e=await input(id,'predecessors.json'),target=targetRecord(e);assert.equal(target.kind,'review',id);
   assert.equal(validateHandoff(JSON.stringify(target),{mode:'record'}).valid,true);
-  const expectedChain=!['I02-parameters','I05-missing-bound','I10-incomplete-pages','I13-untrusted-approval'].includes(id);
+  const expectedChain=!['I02-parameters','I05-missing-bound','I10-incomplete-pages','I13-untrusted-approval','I14-oversized-ledger'].includes(id);
   const receipt=chain(e);assert.equal(receipt.valid,expectedChain,id+JSON.stringify(receipt.diagnostics));
   if(id==='I02-parameters')assert(receipt.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
-  const diagnostic={ 'I05-missing-bound':'OBSERVATION','I10-incomplete-pages':'INCOMPLETE_READ','I13-untrusted-approval':'ACTOR' }[id];
+  const diagnostic={ 'I05-missing-bound':'OBSERVATION','I10-incomplete-pages':'INCOMPLETE_READ','I13-untrusted-approval':'ACTOR','I14-oversized-ledger':'LEDGER_BYTES' }[id];
   if(diagnostic)assert(receipt.diagnostics.some(d=>d.code===diagnostic),id+JSON.stringify(receipt.diagnostics));
   for(const {r}of records(e).filter(x=>x.r.ticket_id===target.ticket_id)){
    assert(!['qa','repair_request','dependency_wait'].includes(r.kind),id+' current terminal leak');
@@ -844,9 +845,64 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
   assert.equal((await input('I01-story','cards.json')).tool_inputs.database.rows.length,1);
   const staticWork=JSON.parse(await raw('I09-static-bug','work.yaml'));assert.deepEqual(staticWork.testing_strategy.cases,[]);assert.deepEqual(staticWork.testing_strategy.human_review.cases.map(c=>c.id),['HQA-01','HQA-02']);
   assert.deepEqual((await input('I11-missing-environment','cards.json')).reads.pipeline.original_comments,[]);
-  assert.equal((await input('I11-partial-pass-null-proof','cards.json')).proof_inputs.tested_pr,null);
   assert.equal((await input('I12-append-unknown','cards.json')).append.storage,'ambiguous');
   assert.equal((await input('I12-transition-unknown','cards.json')).transition.resolving_status,'unknown');
+ });
+ await t.test('emitted missing environment proof rejects test-only partial claims while preserving actual input facts',async()=>{
+  const positive=await input('I01-story','predecessors.json'),positiveCards=await input('I01-story','cards.json');
+  const proof=positive.evidence_receipts.filter(r=>r.kind==='environment');assert.equal(proof.length,1);
+  assert.deepEqual(positiveCards.reads.evidence,positive.evidence_receipts);
+  assert.equal(JSON.parse(positiveCards.reads.pipeline.original_comments[0].body).source_revision,proof[0].pr.source_revision);
+  const specimens=executionProofFixtures();
+  for(const [id,result]of [['I11-partial-pass-null-proof','PASS'],['I11-partial-fail-null-proof','FAIL']]){
+   const emitted=await input(id,'predecessors.json'),cards=await input(id,'cards.json');
+   const withoutProof=structuredClone(positive);withoutProof.evidence_receipts=withoutProof.evidence_receipts.filter(r=>r.kind!=='environment');
+   assert.deepEqual(emitted,withoutProof,id+' actual envelope changes only environment proof');
+   assert.deepEqual(cards.reads.evidence,emitted.evidence_receipts);assert.deepEqual(cards.reads.pipeline.original_comments,[]);
+   assert(!Object.hasOwn(cards,'proof_inputs'));assert(!emitted.evidence_receipts.some(r=>r.kind==='environment'));
+   assert.deepEqual(targetRecord(emitted).payload.pr,targetRecord(positive).payload.pr);assert.notEqual(targetRecord(emitted).payload.pr,null);
+   const expectedCards=structuredClone(positiveCards);expectedCards.reads.evidence=withoutProof.evidence_receipts;expectedCards.reads.pipeline.original_comments=[];
+   if(result==='FAIL')expectedCards.tool_inputs.api.responses[0].body.state='pending';
+   assert.deepEqual(cards,expectedCards,id+' observations/current reads retained');
+   for(const file of ['work.yaml','facts.yaml','clock.json','capabilities.json','known-requests.json'])assert.equal(await raw(id,file),await raw('I01-story',file),id+' '+file);
+   // Only actual emitted environment slices vary. This canonical candidate is
+   // test-local, never an actor input or a claim of earlier helper execution.
+   const original=specimens['proof-blocked-exact-'+result.toLowerCase()],before=JSON.stringify(original);
+   for(const [source,valid]of [[positive,true],[emitted,false]]){
+    const probe=structuredClone(original),environment=source.evidence_receipts.filter(r=>r.kind==='environment');
+    probe.evidence_receipts=[...probe.evidence_receipts.filter(r=>r.kind!=='environment'),...structuredClone(environment)];
+    for(const project of probe.trusted.projects)project.evidence_uris=[...new Set([...project.evidence_uris,...environment.map(r=>r.uri)])];
+    assert.notEqual(targetRecord(probe).payload.pr,null);assert.equal(targetRecord(probe).payload.qa_report.steps[0].result,result);
+    const checked=chain(probe);assert.equal(checked.valid,valid,id+JSON.stringify(checked.diagnostics));
+    if(!valid)assert.deepEqual(checked.diagnostics.map(d=>[d.code,d.path]),[['EVIDENCE','/comment_pages/0/comments/3/body/payload/qa_report/environment']]);
+   }
+   assert.equal(JSON.stringify(original),before,'canonical specimen remains unchanged');
+  }
+ });
+ await t.test('emitted oversized declared evidence binds all mirrors and refuses only complete pre-dispatch projection',async()=>{
+  const id='I14-oversized-ledger',work=JSON.parse(await raw(id,'work.yaml')),facts=await input(id,'facts.yaml');
+  const positiveWork=JSON.parse(await raw('I01-story','work.yaml')),positiveFacts=await raw('I01-story','facts.yaml');
+  const steps=work.testing_strategy.cases.flatMap(c=>c.steps),positiveSteps=positiveWork.testing_strategy.cases.flatMap(c=>c.steps);
+  assert.deepEqual(steps.map(s=>s.id),positiveSteps.map(s=>s.id));assert.equal(steps.length,4);
+  for(let i=0;i<steps.length;i++){
+   assert.equal(steps[i].evidence.length,100);assert.equal(new Set(steps[i].evidence).size,100);assert.equal(steps[i].evidence[0],positiveSteps[i].evidence[0]);
+   assert.deepEqual(facts.operations.find(o=>o.step===steps[i].id).contract,steps[i]);
+   steps[i].evidence=positiveSteps[i].evidence;
+  }
+  assert.deepEqual(work,positiveWork,'IDs/order/children/outputs/expectations/human cases unchanged');
+  const emitted=await input(id,'predecessors.json'),cards=await input(id,'cards.json'),bound=emitted.requirements.find(r=>r.ticket_id===emitted.target.ticket_id);
+  const actual=JSON.parse(await raw(id,'work.yaml')),digest=digestValue(actual);
+  assert.equal(bound.body,await raw(id,'work.yaml'));assert.equal(bound.context_body,await raw(id,'facts.yaml'));assert.equal(bound.digest,digest);
+  assert.equal(cards.reads.native.description,bound.body);assert.deepEqual(cards.reads.comments,emitted.comment_pages);assert.deepEqual(cards.reads.evidence,emitted.evidence_receipts);
+  assert.equal(emitted.issues.find(i=>i.id===emitted.target.ticket_id).requirements_digest,digest);
+  for(const {r}of records(emitted).filter(x=>x.r.ticket_id===emitted.target.ticket_id))assert.equal(r.requirements_digest,digest);
+  for(const receipt of emitted.evidence_receipts.filter(r=>Object.hasOwn(r.details,'requirements_digest')))assert.equal(receipt.details.requirements_digest,digest);
+  assert.equal(emitted.target.digest,digestValue(targetRecord(emitted)));assert(!Object.hasOwn(cards,'evidence_label_inputs'));
+  const checked=validateWork(bound.body,{mode:'start',contextInput:bound.context_body});
+  assert.equal(checked.valid,false);assert.equal(checked.draft_valid,true);assert.equal(checked.start_structure_valid,true);assert.equal(checked.start_semantics_valid,false);
+  assert.deepEqual(checked.diagnostics.map(d=>[d.code,d.path]),[['LEDGER_BYTES','/testing_strategy']]);
+  assert.deepEqual(checked.ledger_budget,{encoding:'json-yaml-1.2',projection_bytes:25003,limit_bytes:16384,ai_steps:4,human_cases:2,omitted_entries:0,actual_publication:'not_evaluated'});
+  assert.equal(validateWork(await raw('I01-story','work.yaml'),{mode:'start',contextInput:positiveFacts}).valid,true);
  });
  await t.test('designated historical reuse closes the review/blocker/auth proofs and separates earlier observations from current output',async()=>{
   const e=await input('I13-valid','predecessors.json'),history=await input('I13-valid','historical.json'),rows=records(e);
@@ -929,8 +985,8 @@ test('PGB-132 source publication preserves Core history and binds the preparatio
  assert.deepEqual(dispatcher.prerequisites,[...upstream,'R1-27'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
  assert.equal(hash([...plan('R1-27').files].sort()),'b9236d7417b1d57b9bbf8954a82b1ecfe24a314464733faa446571a2ce801af6');
  assert.equal(hash([...plan('R1-08').files].sort()),'5a066e773dae845a29b4df278fb01d129f6c6ba0a23f0c2585e1f66c540cfaad');
- assert.deepEqual(plan('R1-27').hours,{min:6.75,max:9.75});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
- assert.equal(plan('R1-27').days,1.21875);assert.equal(plan('R1-08').days,1.8125);
+ assert.deepEqual(plan('R1-27').hours,{min:7.5,max:11.25});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
+ assert.equal(plan('R1-27').days,1.40625);assert.equal(plan('R1-08').days,1.8125);
  const prepFiles=new Set(plan('R1-27').files),dispatchFiles=new Set(plan('R1-08').files);assert.equal(new Set([...prepFiles,...dispatchFiles]).size,23);assert.equal([...prepFiles].filter(f=>dispatchFiles.has(f)).length,6);
  for(const id of ['R1-27','R1-08']){assert(!plan(id).time_limit_exception);assert(plan(id).hours.max<16);const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));}
  assert.deepEqual(a.stories,{'R1-27':'PGB-132'});assert.equal(a.native_id,'10592');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
@@ -975,7 +1031,7 @@ test('PGB-136 partial source publication binds the exact own-selection split and
  for(const [id,days]of [['R1-28',1.92],['R1-11',1.53]]){assert.equal(plan(id).days,days);assert.equal(plan(id).files.length,20);assert.equal(new Set(plan(id).files).size,20);assert(!plan(id).time_limit_exception);}
  const publicationFiles=['docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/ticket-drafts.json','docs/delivery/manager-r1/publication.json','docs/delivery/manager-r1/stories.md','docs/delivery/manager-r1/coverage.md','docs/product/README.md','docs/product/coverage.md','test/qa-helper-contract.test.mjs'];
  for(const file of publicationFiles)assert(plan('R1-28').files.includes(file),file);for(const file of ['test/story-authoring.test.mjs','test/manager-preview.test.mjs'])assert(plan('R1-28').files.includes(file),file);assert(!plan('R1-28').files.includes('test/receipt-chain.test.mjs'));assert(plan('R1-28').files.includes('README.md'));assert(!plan('R1-28').files.includes('lib/manager/availability.mjs'));
- assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),47.86625);
+ assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),48.05375);
  assert.equal(publication.stories['R1-28'],'PGB-136');assert.equal(a.native_id,'10596');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);
  assert.deepEqual(a.dependency_links,[{id:'10715',type_id:'10000',from:'PGB-129',to:'PGB-136'},{id:'10716',type_id:'10000',from:'PGB-136',to:'PGB-81'}]);for(const edge of a.dependency_links)assert(publication.dependency_links.some(x=>x.id===edge.id&&x.from===edge.from&&x.to===edge.to));
  assert.deepEqual(a.preserved_link_ids,['10637','10638','10686','10705']);assert.equal(a.description_sha256.prerequisite,'905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7');assert.equal(a.description_sha256.preview_after,'7506971ef565beb236c1006ade1104ad83762e748526dedc45c28420ffdadfb4');

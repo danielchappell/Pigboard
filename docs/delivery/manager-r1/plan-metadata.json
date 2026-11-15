@@ -265,7 +265,7 @@
       "R1-24",
       "R1-30"
     ],
-    "days": 1.21875,
+    "days": 1.40625,
     "files": [
       "test/story-authoring.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
@@ -281,8 +281,8 @@
       "docs/product/README.md"
     ],
     "hours": {
-      "min": 6.75,
-      "max": 9.75
+      "min": 7.5,
+      "max": 11.25
     },
     "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
@@ -311,7 +311,8 @@
         "docs/product/coverage.md",
         "docs/product/README.md"
       ]
-    }
+    },
+    "estimate_basis": "Prior residual 6.75–9.75h plus 0.75–1.5h for the bounded actual-consumer proof/size control repair, affected tests, docs, ordinary correction and independent review/PR evidence; current whole residual 7.5–11.25h. Prior allocations remain counted. No other Story forecast or source ownership changes."
   },
   {
     "id": "R1-08",
