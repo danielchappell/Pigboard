@@ -366,3 +366,91 @@ human cases. Retain sanitized commands/results, hashes, ordered calls, mutations
 actual model/profile, native status or unknown, cleanup and human action before
 removing only the owned disposable root. R1-24-H01/H02/H03 remain human-owned until
 the designated developer and QA reviewer execute them.
+
+## Prepare prescribed QA inputs
+
+The source-only PREP-01 command currently supplies three complete inputs:
+`I01-story`, `I02-parameters` and `I11-stale-environment`. These support
+PGB-138's human-owned R1-30-H01/H02/H03 inspection cases. PGB-132's wider suite
+and its separate human acceptance remain pending. Use the already prepared
+same-release source checkout; the preparer runs no helper, timer, model, provider
+transport or publisher:
+
+```sh
+node --input-type=module -e 'import {prepareQaFixture} from "./test/fixtures/qa-helper-case.mjs"; await prepareQaFixture(process.argv[1], {suite:"dispatch-inputs"});' /absolute/private/fresh-run
+```
+
+Use a new absolute path. An occupied path is refused without overwriting retained
+evidence. Default publication preparation and older helper `prepare`/`serve`
+commands are unchanged. This source preparer is not installed into customer bundles.
+
+`preparation.json` lists the exact available variants. Each
+`cases/<variant>/input/` contains:
+
+- Full original `work.yaml`, separately trusted mock `facts.yaml`, customer
+  `scope.yaml`, current-review `predecessors.json` and `known-requests.json`.
+- `access.json` and original pipeline/server metadata in `cards.json`. Mock access
+  and deployment facts grant no live permission.
+- Selected Bruno request/assertions, `extraction.json`, SQL, parameter array and
+  layout, database context, UI route/browser/viewport and three screenshot cards.
+- Supplied `clock.json`, operation bounds, capabilities, reference mapping and a
+  hashed `index.json`. Preparation executes no schedule.
+
+`output/` starts empty. Keep `operator/` outside each consumer's view. No current
+terminal, assessment, verdict or final ledger is supplied; human cases remain
+NOT RUN. Supplied response/image cards are mock inputs, never observed results.
+
+For R1-30-H01, record `git rev-parse HEAD`, the SHA256 of
+`test/fixtures/qa-helper-case.mjs`, all emitted input hashes and the index hash.
+Compare actual input hashes with `input/index.json`; inspect I01's raw work,
+context, current review, selected request, child ownership, extraction pointer,
+SQL layout and the three PNG checkpoint bindings. Using the existing source
+validators, check the raw work and review chain without invoking helpers:
+
+```sh
+node scripts/validate-work.mjs --input /absolute/private/fresh-run/cases/I01-story/input/work.yaml --mode start --context /absolute/private/fresh-run/cases/I01-story/input/facts.yaml
+node scripts/validate-handoff.mjs --input /absolute/private/fresh-run/cases/I01-story/input/predecessors.json --mode chain
+```
+
+Confirm empty output and NOT_READY. Retain before/after hashes when repeating the
+preparation command once against that occupied path to inspect refusal.
+
+For R1-30-H02, compare I02 with I01. Raw work, SQL, parameter declarations,
+bindings and expectations are identical. Only the matching trusted database
+operation's `parameter_count` is null in both `facts.yaml` and the predecessor's
+requirement context. Run the same two validators with I02 paths: both expose
+`DATABASE_PARAMETERS`. The separate null `parameters.json` sidecar is not the
+refusal cause. Do not infer the required trusted count from SQL or array length,
+fill the extraction's null value with an expected ID, or change expectations.
+
+For R1-30-H03, inspect I11's environment receipt and its original mock pipeline
+comment by URI, comment ID, repository and PR number. Parse the original comment
+body: source/deployed revision must equal the stale receipt revision and differ
+from current review/PR. Actor, target, readiness and remaining proof identities
+stay consistent with I01. This isolates stale deployment; inspection does not
+assert a runtime publisher result or live deployment readiness.
+
+Preparation remains `NOT_READY` until an independent operator supplies the actual
+reviewed source, immutable installed skills/manifest/payload hashes, input hashes,
+caller/action/actor/tenant authority and selected exercise capabilities. A mutable
+installed link is not revision proof. Fixed `.invalid` targets and simulated
+DB/TLS facts are mock inputs, not live credentials.
+
+Optional downstream exercises use the existing immutable installed helper
+contracts and an independently authorized caller. Top-level logical caller is
+`qa-entrypoint`; the API parent alone owns its named Bruno child. Supply exact
+case/step/caller, raw work/context, assignment/current review, scope, access and
+capabilities. Return fixed cards only for actual requested actions; retain actual
+helper output in `output/`. Bind only actual child output with original
+revision/actor/tenant provenance through the declared extraction and DB/UI inputs.
+After independent assessment, standalone `qa-jira` owns preflight/final publication
+and uncertain-write recovery. Echo only the actual submitted transport when using
+mock publisher cards. The retained full `qa-entrypoint` remains incompatible until
+PGB-78. None of these optional exercises is PGB-138 acceptance.
+
+For a missing fact, retain original inputs, exact field/artifact/consumer and
+read-only diagnostics. Ask the named preparation/access owner through the
+authorized workflow; stop after the bounded attempt and leave the case unverified
+for a human decision. PGB-132's owner evidence exception does not cover PGB-138.
+Retain sanitized evidence first, then remove only the owned disposable root.
+Preparation creates no services or live resources.

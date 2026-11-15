@@ -20,7 +20,9 @@ Task/Epic/wrong stage/project reject before writes. Use original YAML/ADF and tr
 start context with shipped work validation, not parsed finite floats through the
 stricter direct-JS route. No inferred requirements or automatic prose conversion.
 The [structured authoring contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
-is current; retained basic prose applies only to QA, whose migration remains pending.
+is current. Use retained basic prose only when the selected installed QA entrypoint
+declares it; consult that entrypoint's current compatibility and publication
+instructions.
 
 Read exact `pigboard.work-context` pointer, assignment and implementation via exact
 issue/comment/record/digest references and complete bounded pages. Verify server
@@ -142,3 +144,18 @@ not extra canonical schema keys. Preserve successful review/approval/publication
 when a later step fails. Missing Jira access keeps output locally without claiming
 an alert/transition. Blocked ends work pending human resolution and deliberate
 eligible re-entry; no polling, direct In Progress, manager admission or DynamoDB.
+
+## Inspect prepared inputs
+
+For every declared preparation slot, inspect the implementation's existing
+`prepared_inputs` entry and its original artifact bytes. Verify the exact slot ID,
+ordered consumers, requirements/current PR binding, SHA256, accessible URI and
+audience against the `preparation` receipts. Inspect the selected request and
+assertions, query/parameter layout, UI route/viewport/checkpoints and declared
+child extraction mapping; do not accept an aggregate helper PASS as the artifact.
+Check source/immutable installed hashes and separate identity/tenant/access and
+deployment facts. Expected values cannot complete missing facts or grant caller
+authority. Preserve all original case IDs, order and expectations. Missing
+preparation returns the exact slot/consumer/owner for repair; an evidence gap
+alone is not a demonstrated product defect. Actual results, assessments and
+verdicts belong to their later stages. Human cases remain pending.

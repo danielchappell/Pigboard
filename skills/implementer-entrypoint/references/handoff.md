@@ -4,7 +4,7 @@ Read only the section required by the current phase. The composer dispatches; th
 job produces code/PR/evidence; the Jira skill owns preflight and publication.
 Generic “Story” in the existing plan-review prompt includes the assigned native
 Story or Bug. The retained [basic prose contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
-applies only to retained QA. The [structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; implementer and reviewer use the structured contract. Do not convert prose,
+applies only when the selected installed QA entrypoint declares it. The [structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; implementer and reviewer use the structured contract. Do not convert prose,
 guess missing nulls or imply that the full mixed-version workflow is compatible.
 
 ## Input contract
@@ -308,3 +308,27 @@ NEEDS_HIGH_PLAN is a phase control return with preserved state, not a new canoni
 record kind or permission to execute the changed approach. A human-authorized
 delivery-only resume first checks retained receipts/current gates and never repeats
 code, PR creation or confirmed mutations just to recreate output.
+
+## Prepared inputs recipe
+
+For each declared preparation slot, retain its exact `id` and `used_by` order.
+Publish one existing `prepared_inputs` entry with artifacts shaped as
+`{label, uri, digest}`. Each artifact's observed `preparation` receipt must bind
+the same PR and requirements, `details.preparation_id` and exact
+`details.consumers`; `digest` is the SHA256 of the retrievable artifact bytes.
+Check retrieval from the reviewer's intended environment and audience. A private
+local path alone is insufficient for remote QA.
+
+Include the selected request and assertions, full query and parameter positions,
+UI route/browser/viewport/checkpoints, and declared child-response extraction
+pointer with parent exposure and downstream consumers. Leave output values
+unbound until actual helper evidence exists. Supply identity/tenant/access and
+current PR/deployment proof independently; a request's expected value is no proof.
+Record actual source commit and immutable installed skills/manifest/payload hashes
+alongside input hashes. Missing facts stop the affected handoff with the exact
+slot, consumer and owner needed to recover; preserve inputs and completed results
+instead of changing expectations or replaying actions.
+
+For source-only PREP-01 fixture exercises, follow the source checkout's
+`docs/using-pigboard.md#prepare-prescribed-qa-inputs` guide. It is not installed.
+The new output is empty and designated human cases remain pending.

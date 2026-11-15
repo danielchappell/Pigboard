@@ -2,7 +2,7 @@
   "date": "2026-11-15",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Owner-approved combined25-Story/110-case source amendments; Jira owns progress; human/live acceptance and activation remain separate.",
+  "status": "Owner-approved same-scope 28-Story/122-case source composition at main275, including pending PGB-132 and actual PGB-138; Jira owns progress. Human/live acceptance and activation remain separate.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -12,6 +12,7 @@
     "R1-06": "PGB-76",
     "R1-07": "PGB-77",
     "R1-24": "PGB-110",
+    "R1-27": "PGB-132",
     "R1-08": "PGB-78",
     "R1-09": "PGB-79",
     "R1-10": "PGB-80",
@@ -29,15 +30,16 @@
     "R1-22": "PGB-100",
     "R1-23": "PGB-101",
     "R1-25": "PGB-113",
-    "R1-26": "PGB-129"
+    "R1-26": "PGB-129",
+    "R1-30": "PGB-138"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 26,
-  "case_count": 116,
+  "story_count": 28,
+  "case_count": 122,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -288,6 +290,54 @@
     {
       "from": "PGB-129",
       "to": "PGB-81"
+    },
+    {
+      "from": "PGB-74",
+      "to": "PGB-132"
+    },
+    {
+      "from": "PGB-76",
+      "to": "PGB-132"
+    },
+    {
+      "from": "PGB-77",
+      "to": "PGB-132"
+    },
+    {
+      "from": "PGB-108",
+      "to": "PGB-132"
+    },
+    {
+      "from": "PGB-110",
+      "to": "PGB-132"
+    },
+    {
+      "from": "PGB-132",
+      "to": "PGB-78"
+    },
+    {
+      "from": "PGB-74",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-76",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-77",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-108",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-110",
+      "to": "PGB-138"
+    },
+    {
+      "from": "PGB-138",
+      "to": "PGB-132"
     }
   ],
   "baseline_publication": {
@@ -645,6 +695,39 @@
         "original_cases_preserved": 88
       },
       "preparation_binding_correction": "All 104 human cases across 23 Stories are explicitly linked through implementer-owned PREP-01.used_by and DATA-01. Eight affected Jira contracts republished and read back; case inputs, expected results and scope unchanged."
+    },
+    {
+      "date": "2026-11-15",
+      "scope": "Core source-publication checkpoint before PGB-132/R1-27; historical, not a fresh global Jira status check",
+      "source_commit": "261a3856c9710a62be3c2c8ac4424778cb1ca0a0",
+      "source_tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "story_count": 26,
+      "case_count": 116,
+      "status": "Owner-approved combined25-Story/110-case source amendments; Jira owns progress; human/live acceptance and activation remain separate.",
+      "current_source_scope": {
+        "story_count": 26,
+        "case_count": 116,
+        "native_story_count": 26,
+        "native_case_count": 116,
+        "pending_source_amendments": [],
+        "source_order": "R1-24 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
+        "status": "Actual PGB-110-first source composition includes PGB-113 and PGB-129:26 Stories/116 cases. Native counts retain the separately recorded amendment snapshots, not a fresh all-ticket readback or status claim. Jira owns subsequent queue changes; publication is not delivery completion."
+      }
+    },
+    {
+      "date": "2026-11-15",
+      "story_count": 27,
+      "case_count": 119,
+      "status": "PGB-132 native amendment and candidate source composition before R1-30; acceptance remained pending.",
+      "current_source_scope": {
+        "story_count": 27,
+        "case_count": 119,
+        "native_story_count": 27,
+        "native_case_count": 119,
+        "pending_source_amendments": [],
+        "source_order": "R1-24 then R1-27 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
+        "status": "15 November PGB-132 amendment composes Core's independently reviewed stacked source checkpoint at 261a3856c9710a62be3c2c8ac4424778cb1ca0a0: source/native 27 Stories/119 cases. Director verified the full native enumeration and Epic introduction. This is a dated publication count, not an all-ticket status claim or delivery completion. The PGB-129 source stack is not a product dependency of PGB-132."
+      }
     }
   ],
   "qa_split": {
@@ -721,13 +804,21 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 26,
-    "case_count": 116,
-    "native_story_count": 26,
-    "native_case_count": 116,
-    "pending_source_amendments": [],
-    "source_order": "R1-24 immediately before R1-08; R1-25 then R1-26 immediately before R1-11; all other relative order preserved.",
-    "status": "Actual PGB-110-first source composition includes PGB-113 and PGB-129:26 Stories/116 cases. Native counts retain the separately recorded amendment snapshots, not a fresh all-ticket readback or status claim. Jira owns subsequent queue changes; publication is not delivery completion."
+    "story_count": 28,
+    "case_count": 122,
+    "source_base": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+    "source_order": "R1-24 then R1-30 then R1-27 before R1-08; all other relative order preserved.",
+    "native_snapshot": {
+      "date": "2026-11-15",
+      "story_count": 30,
+      "case_count": 130,
+      "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
+    },
+    "pending_source_amendments": [
+      "PGB-136",
+      "PGB-137"
+    ],
+    "status": "Actual serialized source is28/122. PGB-136/137 are native-only and not present on this source base. PGB-132 remains pending; no live or human completion follows from publication."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1397,5 +1488,241 @@
       }
     },
     "publication_variant": "Actual PGB-110-first composition: source/native26 Stories/116 cases. Original PGB-129-first25/113 source snapshot and1.20 publication forecast remain historical evidence; current forecast1.28 is in metadata/README."
+  },
+  "qa_input_preparation_amendment": {
+    "date": "2026-11-15",
+    "owner_approved": true,
+    "stories": {
+      "R1-27": "PGB-132"
+    },
+    "native_id": "10592",
+    "amended_story": "PGB-78",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "42b2b5e0334cc2c520e802b83bb4f6dcf1afa58a59f1650ad13b60fddfbc3ca5",
+      "dispatcher_after": "6a553206c0768143f0b478fc787c98140a233cc937189b6818cb83a5db02c97a"
+    },
+    "readback_scope": "Exact PGB-132/PGB-78 contracts, parent PGB-66, owner-approved/pgb-manager-r1 labels and six new directed Blocks links read back. PGB-78 retains every original body field except its appended PGB-132/ai_qa_complete prerequisite. Native creation readbacks record To Do; Director subsequently bound PGB-132 In Progress and PGB-78 To Do. These are dated observations, not current all-ticket status verification.",
+    "dependency_links": [
+      {
+        "id": "10709",
+        "type_id": "10000",
+        "from": "PGB-74",
+        "to": "PGB-132"
+      },
+      {
+        "id": "10710",
+        "type_id": "10000",
+        "from": "PGB-76",
+        "to": "PGB-132"
+      },
+      {
+        "id": "10711",
+        "type_id": "10000",
+        "from": "PGB-77",
+        "to": "PGB-132"
+      },
+      {
+        "id": "10712",
+        "type_id": "10000",
+        "from": "PGB-108",
+        "to": "PGB-132"
+      },
+      {
+        "id": "10713",
+        "type_id": "10000",
+        "from": "PGB-110",
+        "to": "PGB-132"
+      },
+      {
+        "id": "10714",
+        "type_id": "10000",
+        "from": "PGB-132",
+        "to": "PGB-78"
+      }
+    ],
+    "preserved_links": [
+      {
+        "id": "10631",
+        "from": "PGB-74",
+        "to": "PGB-78"
+      },
+      {
+        "id": "10632",
+        "from": "PGB-76",
+        "to": "PGB-78"
+      },
+      {
+        "id": "10633",
+        "from": "PGB-77",
+        "to": "PGB-78"
+      },
+      {
+        "id": "10647",
+        "from": "PGB-78",
+        "to": "PGB-87"
+      },
+      {
+        "id": "10659",
+        "from": "PGB-78",
+        "to": "PGB-90"
+      },
+      {
+        "id": "10683",
+        "from": "PGB-108",
+        "to": "PGB-78"
+      },
+      {
+        "id": "10684",
+        "from": "PGB-110",
+        "to": "PGB-78"
+      }
+    ],
+    "rank": "PGB-132 immediately before PGB-78; all other relative order preserved.",
+    "publication_comment": "https://scubapig.atlassian.net/browse/PGB-132?focusedCommentId=10750",
+    "original_dispatcher_criteria_and_cases_preserved": true,
+    "original_dispatcher_cases": 3,
+    "additive_cases": 3,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "plan_sha256": "d5cf649c727ee3c83edc016ce7fc02ad0524c6c2f83f59d31c1c3e56cb070a5a",
+    "plan_reviews": {
+      "product": {
+        "verdict": "CLEAN for the exact provisional packet",
+        "artifact_sha256": "62c8e043933ceb049e61daf1843d501d9d2b91b9bde08bc2902099458c8155f9"
+      },
+      "technical": {
+        "verdict": "CLEAN for the exact provisional packet",
+        "artifact_sha256": "0821eeb76482850c94f7f7a45db0ddd3f7b1918de40ba027ce7c614f40987ea0"
+      }
+    },
+    "actual_base_binding": {
+      "main": "19649b701646af065b583c8c603dca648d7413ca",
+      "tree": "c1732f35c206037a8632a7337739ba272e5db9c8",
+      "pgb110_merged": true
+    },
+    "source_composition_base": {
+      "commit": "261a3856c9710a62be3c2c8ac4424778cb1ca0a0",
+      "tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "status": "Core checkpoint merged through PR #98 at 275aebf86affcd1ac974c8e6222d66679ac1cbd7; the merge tree exactly equals the independently reviewed source tree. PGB-129 is no product dependency. Initial same-scope layering authority is retained in the separate dated merge receipt."
+    },
+    "forecasts": {
+      "preparation": {
+        "files": 18,
+        "hours": {
+          "min": 10.75,
+          "max": 15
+        }
+      },
+      "remaining_dispatcher": {
+        "files": 17,
+        "hours": {
+          "min": 10.5,
+          "max": 14.5
+        }
+      }
+    },
+    "final_dispatcher_readiness": "Provisional — not ready for delivery. Rebind and independently review the concrete final PGB-78 plan after PGB-132 actually merges. No original R1-08 case is completed by preparation.",
+    "verification_limits": "Source/native semantic audit only; local tests, independent instruction exercise, designated human cases, hosted CI, merge, release and activation remain separate. PGB-110's fixed-scope time/evidence exceptions do not transfer.",
+    "source_composition_merge_receipt": {
+      "date": "2026-11-15",
+      "pull_request": "https://github.com/danielchappell/Pigboard/pull/98",
+      "merge_commit": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+      "merge_tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "parents": [
+        "19649b701646af065b583c8c603dca648d7413ca",
+        "261a3856c9710a62be3c2c8ac4424778cb1ca0a0"
+      ],
+      "reviewed_source_commit": "261a3856c9710a62be3c2c8ac4424778cb1ca0a0",
+      "reviewed_source_tree": "e1e16b1221473f1754661ca4a56925621c21f31d",
+      "merge_tree_equals_reviewed_source_tree": true,
+      "prior_source_composition_status": "Independently CLEAN and pushed Core checkpoint; stacked source base until its PR merges. Director authorizes same-scope source layering without waiting for PR98 merge; PGB-129 is no product dependency.",
+      "verification": "Director verified the actual merge; local read-only Git object inspection confirms merge/tree/parents. The prior26/116 checkpoint and all earlier readbacks remain historical. Source/native counts stay27/119; merge does not establish PGB-132 human acceptance, installed dispatch or activation."
+    }
+  },
+  "qa_input_controls_amendment": {
+    "date": "2026-11-15",
+    "stories": {
+      "R1-30": "PGB-138"
+    },
+    "native_id": "10598",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "prerequisite": "0a78de20124a8eecca08dc1a8c39f3434951f60a7b453822964f34b557b79cb0",
+      "preparation_before": "42b2b5e0334cc2c520e802b83bb4f6dcf1afa58a59f1650ad13b60fddfbc3ca5",
+      "preparation_after": "5284ae68d9f54e809409ed8dd966fa4494c813f57b70ef3c6038a84bdfcbb38a"
+    },
+    "dependency_links": [
+      {
+        "id": "10719",
+        "type_id": "10000",
+        "from": "PGB-74",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10720",
+        "type_id": "10000",
+        "from": "PGB-76",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10721",
+        "type_id": "10000",
+        "from": "PGB-77",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10722",
+        "type_id": "10000",
+        "from": "PGB-108",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10723",
+        "type_id": "10000",
+        "from": "PGB-110",
+        "to": "PGB-138"
+      },
+      {
+        "id": "10724",
+        "type_id": "10000",
+        "from": "PGB-138",
+        "to": "PGB-132"
+      }
+    ],
+    "rank": "edit response reported ranked before PGB-132",
+    "publication_comment": "https://scubapig.atlassian.net/browse/PGB-138?focusedCommentId=10779",
+    "dependent_comment": "https://scubapig.atlassian.net/browse/PGB-132?focusedCommentId=10780",
+    "original_preparation_body_preserved_except_prerequisite": true,
+    "original_preparation_cases": 3,
+    "additive_cases": 3,
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "plan_sha256": "54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593",
+    "plan_reviews": {
+      "product": "8f1a46790fb3f6c8100137749eef742ff646693082052d0fee775889926e2179",
+      "technical": "de4841dd3a6e11702bb6ca54120eb7962b6f763fc0d9fb9852e5058848b4fec5"
+    },
+    "source_base": {
+      "commit": "275aebf86affcd1ac974c8e6222d66679ac1cbd7",
+      "tree": "e1e16b1221473f1754661ca4a56925621c21f31d"
+    },
+    "forecasts": {
+      "controls": {
+        "files": 18,
+        "hours": {
+          "min": 8.5,
+          "max": 12.5
+        }
+      },
+      "remaining_preparation": {
+        "files": 12,
+        "hours": {
+          "min": 6.75,
+          "max": 9.75
+        }
+      }
+    },
+    "verification_limits": "Source preparation and read-only validation/inspection only. PGB-132 owner10765 exception remains specific to that historical helper/publisher gap; no reruns or transfer to PGB-138/PGB-78. R1-27 and R1-30 human cases remain NOT_RUN. Local tests, installed evidence, hosted CI, merge/release and activation are separate."
   }
 }

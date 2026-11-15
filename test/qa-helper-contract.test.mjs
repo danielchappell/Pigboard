@@ -264,15 +264,15 @@ function assertDeliverySizing(entries) {
 
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,26);assert.equal(new Set(drafts.map(x=>x.id)).size,26);assert.equal(new Set(Object.values(publication.stories)).size,26);assert.equal(publication.stories['R1-24'],'PGB-110');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,28);assert.equal(new Set(drafts.map(x=>x.id)).size,28);assert.equal(new Set(Object.values(publication.stories)).size,28);assert.equal(publication.stories['R1-24'],'PGB-110');assert.equal(publication.stories['R1-27'],'PGB-132');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
  const b=drafts.find(x=>x.id==='R1-08').contract;
  assert.equal(hash([b.acceptance_criteria,b.technical_acceptance_criteria.constraints,b.testing_strategy.human_review.cases]),'1146a6dcd1340d1c9ecbff1c13249e937a2268a364e3e83da6a63898f1bb1c9d');
- for(const id of ['R1-24','R1-08']){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,20);assert.equal(new Set(entry.files).size,20);assert(entry.dependencies.includes('PGB-108'));}
+ for(const [id,count]of [['R1-24',20],['R1-30',18],['R1-27',12],['R1-08',17]]){const entry=plan.find(x=>x.id===id);assert.equal(entry.files.length,count);assert.equal(new Set(entry.files).size,count);assert(entry.dependencies.includes('PGB-108'));}
  assertDeliverySizing(plan);
  assert(plan.find(x=>x.id==='R1-08').dependencies.includes('R1-24'));
- const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,116);assert.equal(publication.case_count,116);assert.equal(publication.story_count,26);
+ const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,122);assert.equal(publication.case_count,122);assert.equal(publication.story_count,28);
  for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
  const coverage=await read('docs/delivery/manager-r1/coverage.md');const requirements=new Set(coverage.split('\n').filter(line=>/^\| [AWMO]\d/.test(line)).flatMap(line=>[...line.split('|')[1].matchAll(/[AWMO]\d\d/g)].map(x=>x[0])));assert.equal(requirements.size,53);
  for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(cases.has(id[0]),id[0]);
@@ -572,8 +572,8 @@ test('R2 six distinct H02 families and joined control have independently inspect
 
 test('PGB-113 source amendment preserves native contracts and full preview in combined publication',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
- const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
- assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,26);
+ const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
+ assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,28);
  const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
  // Fixed original335036 object hashes, frozen before source publication edits.
  assert.equal(hash(preview.acceptance_criteria),'1ee61a851ab66f31145a483f68c8bc1bb83dfd9e3422d3caaf4cb7e11e059639');
@@ -581,17 +581,17 @@ test('PGB-113 source amendment preserves native contracts and full preview in co
  assert.equal(hash(preview.testing_strategy),'efacc7e0fe916c48cb664d75748883054e694a60de119a7c5783aefdd3ea09db');
  assert.equal(preview.testing_strategy.human_review.cases.length,42);
  assert.equal(hash(contract('R1-12')),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');
- assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
- assert.equal(hash(metadata.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26'].includes(x.id))),'0f95ad054e6ebf772addea9b8a55edea1f5c24ca2947cb17739800a5a463d128');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
+ assert.equal(hash(metadata.filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30'].includes(x.id))),'0f95ad054e6ebf772addea9b8a55edea1f5c24ca2947cb17739800a5a463d128');
  const native113=structuredClone(contract('R1-25'));native113.prerequisites[0].ticket='PGB-80';assert.equal(hash(native113),'36bdc9fc15aa1dfc69db7e8f9d81e1ff3d089fb43d876aa9df37734ab0b9052a');
  assert.deepEqual(contract('R1-25').prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'}]);assert.deepEqual(preview.prerequisites,[{ticket:'R1-10',required_outcome:'ai_qa_complete'},{ticket:'R1-25',required_outcome:'ai_qa_complete'},{ticket:'R1-26',required_outcome:'ai_qa_complete'}]);
  assert.deepEqual(plan('R1-25').dependencies,['R1-10']);assert.deepEqual(plan('R1-11').dependencies,['R1-10','R1-25','R1-26']);assert.deepEqual(plan('R1-12').dependencies,['R1-11','R1-21']);assert.deepEqual([plan('R1-25').days,plan('R1-25').files.length,plan('R1-11').days,plan('R1-11').files.length],[1.98,15,1.89,20]);
- assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),116);
+ assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),122);
  for(const id of ['R1-25','R1-11']){const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');}
  const baseline=structuredClone(publication.baseline_before_amendments);assert.equal(hash(baseline),'aeeaa43078df97c68c580211cdc9bb8bca05d0f06161d004626c87c55b93d20a');
- assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[26,116,53,41]);
- const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count,current.native_story_count,current.native_case_count],[26,116,26,116]);assert.deepEqual(current.pending_source_amendments,[]);
- const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,26);assert.equal(new Set(Object.values(mapping)).size,26);assert.equal(mapping['R1-24'],'PGB-110');
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[28,122,53,41]);
+ const current=publication.current_source_scope;assert.deepEqual([current.story_count,current.case_count],[28,122]);assert.deepEqual([current.native_snapshot.story_count,current.native_snapshot.case_count],[30,130]);assert.deepEqual(current.pending_source_amendments,['PGB-136','PGB-137']);
+ const amendment=publication.repeated_parent_amendment,mapping={...publication.stories,...amendment.stories};assert.equal(mapping['R1-25'],'PGB-113');assert.equal(Object.keys(mapping).length,28);assert.equal(new Set(Object.values(mapping)).size,28);assert.equal(mapping['R1-24'],'PGB-110');
  assert.deepEqual(amendment.dependency_links,[{id:'10685',from:'PGB-80',to:'PGB-113'},{id:'10686',from:'PGB-113',to:'PGB-81'}]);assert.deepEqual(amendment.preserved_links,[{id:'10637',from:'PGB-80',to:'PGB-81'},{id:'10638',from:'PGB-81',to:'PGB-82'}]);assert.equal(amendment.human_acceptance,'NOT_RUN');assert.equal(amendment.activation_authorized,false);
  assert.deepEqual(amendment.description_sha256,{original:'edf424525be88eba96d937ae88605d031b012f412b9155787470b6086aa9c497',validator:'c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8',final_preview:'8b2f146d4bfec454d297c8cd9cec1aa5c42bba7cd1d2cbf2b41294d527113dfe'});
  for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){const text=await read(file),requirements=text.split('\n').filter(line=>/^\| [AWMO]\d\d/.test(line)),covered=new Set(requirements.flatMap(line=>line.split('|')[1].match(/[AWMO]\d\d/g)??[]));assert.deepEqual([...covered].sort(),['A','W','M','O'].flatMap((prefix,i)=>Array.from({length:[12,12,14,15][i]},(_,j)=>prefix+String(j+1).padStart(2,'0'))).sort());for(const id of ['W04','W12','M10']){const row=requirements.find(line=>line.startsWith('| '+id+' |'));for(const caseId of ['R1-25-C01','R1-25-C02','R1-25-C03'])assert(row.includes(caseId));}assert(text.includes('R1-11-H02'));}
@@ -723,6 +723,101 @@ test('scoped UI cause controls preserve independent DB inability, completed obse
  assert.equal(corrected,17);
 });
 
+// PGB-132 checks emitted raw inputs independently of helper/dispatcher decisions.
+// These checks do not execute designated human acceptance or infer a QA verdict.
+test('dispatch-inputs supplies the finite prescribed handoff without producing an assessment',async t=>{
+ const temp=await mkdtemp(path.join(tmpdir(),'pgb-dispatch-inputs-'));t.after(()=>rm(temp,{recursive:true,force:true}));
+ const p=await prepareQaFixture(path.join(temp,'private'),{suite:'dispatch-inputs'});
+ const input=async(id,file)=>JSON.parse(await readFile(path.join(p.cases[id],'input',file),'utf8'));
+ const raw=async(id,file)=>readFile(path.join(p.cases[id],'input',file),'utf8');
+ assert.equal(p.ready,false);assert.equal((await stat(p.runDir)).mode&0o777,0o700);
+ await assert.rejects(prepareQaFixture(p.runDir,{suite:'dispatch-inputs'}),/exist/i);
+ await assert.rejects(prepareQaFixture('relative',{suite:'dispatch-inputs'}),/absolute/);
+ assert.deepEqual(Object.keys(p.cases),['I01-story','I02-parameters','I11-stale-environment']);
+ const summary=JSON.parse(await readFile(p.preparation,'utf8'));assert.equal(summary.cases.length,3);
+ assert.equal(summary.human_acceptance,'R1-30-H01/H02/H03 NOT RUN');
+ assert.equal(summary.source_module_sha256,'sha256:'+hash(await readFile(new URL('./fixtures/qa-helper-case.mjs',import.meta.url))));
+ for(const [id,dir]of Object.entries(p.cases)){
+  assert.deepEqual(await readdir(path.join(dir,'output')),[],id);
+  const files=await readdir(path.join(dir,'input'));for(const forbidden of ['assessment.json','record.yaml','verdict.json','expectations.json','candidate.json'])assert(!files.includes(forbidden),id);
+  const index=await input(id,'index.json');assert.equal(index.preparation_id,'PREP-01');
+  for(const a of index.artifacts){const bytes=await readFile(path.join(p.runDir,a.path));assert.equal(a.digest,'sha256:'+hash(bytes));assert.equal((await stat(path.join(p.runDir,a.path))).mode&0o777,0o600);}
+  const work=JSON.parse(await raw(id,'work.yaml')),facts=await raw(id,'facts.yaml');
+  assert.deepEqual(index.consumers,work.testing_strategy.cases.flatMap(c=>c.steps.map(s=>s.id)));
+  const result=validateWork(await raw(id,'work.yaml'),{mode:'start',contextInput:facts});
+  assert.equal(result.valid,id!=='I02-parameters',id+JSON.stringify(result.diagnostics));
+  if(id==='I02-parameters')assert(result.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
+  assert.equal(parseConfig(await raw(id,'scope.yaml')).valid,true,id);
+  const e=await input(id,'predecessors.json'),target=targetRecord(e);assert.equal(target.kind,'review',id);
+  assert.equal(validateHandoff(JSON.stringify(target),{mode:'record'}).valid,true);
+  const expectedChain=id!=='I02-parameters';
+  const receipt=chain(e);assert.equal(receipt.valid,expectedChain,id+JSON.stringify(receipt.diagnostics));
+  if(id==='I02-parameters')assert(receipt.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
+  for(const {r}of records(e).filter(x=>x.r.ticket_id===target.ticket_id)){
+   assert(!['qa','repair_request','dependency_wait'].includes(r.kind),id+' current terminal leak');
+   assert(!['blocked','resume_authorization'].includes(r.kind),id+' unexpected historical terminal');
+  }
+  const cards=await input(id,'cards.json');assert.equal(cards.category,'supplied/mock');
+  assert.deepEqual(cards.reads.evidence,e.evidence_receipts,id+' receipt mirrors');
+  for(const {r}of records(e).filter(x=>x.r.kind==='implementation'))for(const ref of r.payload.verification){assert(e.evidence_receipts.some(receipt=>receipt.uri===ref.uri),id+' retained verification');assert(e.trusted.projects.some(project=>project.evidence_uris.includes(ref.uri)));}
+  const currentOnly=e.evidence_receipts.filter(receipt=>/^https:\/\/evidence\.example\.invalid\/1000-(?:005|009|013)-1-TC-01\.S[1-4]-0$/.test(receipt.uri));
+  assert.deepEqual(currentOnly.map(r=>r.uri).sort(),[],id+' no unused current-step receipt');
+  for(const uri of ['https://evidence.example.invalid/1000-009-1-TC-01.S2-0','https://evidence.example.invalid/1000-009-1-TC-01.S3-0','https://evidence.example.invalid/1000-009-1-TC-01.S4-0']){assert(!cards.reads.evidence.some(r=>r.uri===uri),id);assert(!e.trusted.projects.some(project=>project.evidence_uris.includes(uri)),id);}
+  assert(!e.evidence_receipts.some(r=>r.uri==='https://evidence.example.invalid/finding'),id+' no unused current finding');
+  for(const forbidden of ['assessment','qa_report','findings','proposed_outcome','destination','candidate'])assert(!Object.hasOwn(cards,forbidden),id);
+  assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('independently authorize caller qa-entrypoint'));
+ }
+ await t.test('mixed Story preserves exact types, consumers, request/assertions, two-hop extraction and three actual image inputs',async()=>{
+  for(const id of ['I01-story']){
+   const work=JSON.parse(await raw(id,'work.yaml')),cards=await input(id,'cards.json'),[api,child,db,ui]=work.testing_strategy.cases[0].steps;
+   assert.deepEqual(work.testing_strategy.dispatch_order,[api.id,db.id,ui.id]);assert.deepEqual(api.children,[child.id]);assert.equal(child.caller,api.id);
+   assert.equal(cards.reads.native.type_id,'22');
+   const request=await raw(id,'collection/selected.bru');for(const text of ['/api/record','res.status: 200','res.body.tenant_id: tenant-a','res.body.state: ready','res.getBody().record_id'])assert(request.includes(text));
+   assert(!request.includes('REQUIRED_PORT'));assert.equal(await raw(id,'query.sql'),query);
+   assert.deepEqual(await input(id,'parameters.json'),['tenant-a',null]);assert.deepEqual(db.database.parameter_bindings,[{input:'record_id',index:1}]);
+   const extraction=await input(id,'extraction.json');assert.equal(extraction.json_pointer,'/response/body/record_id');assert.equal(extraction.value,null);assert.equal(extraction.parent_exposes,api.id+'.record_id');
+   assert.deepEqual(ui.bindings,[{from_step:api.id,output:'record_id',to_input:'record_id'}]);
+   assert.equal(cards.tool_inputs.ui.checkpoints.length,3);
+   for(const point of cards.tool_inputs.ui.checkpoints){const png=await readFile(path.join(p.cases[id],'input',point.screenshot));assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.equal(png.readUInt32BE(16),point.width);assert.equal(png.readUInt32BE(20),point.height);assert.equal(point.digest,'sha256:'+hash(png));}
+   assert.equal(cards.reads.pipeline.original_comments[0].author_id,'pipeline');
+   assert.equal(cards.reads.access.actor_id,'ACTOR-01');assert.equal(cards.reads.access.tenant,'tenant-a');
+   assert.deepEqual(cards.tool_inputs.api.responses,[{status:200,body:{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}}]);
+  }
+ });
+ await t.test('missing trusted parameter count is the sole context difference and rejects at the named boundary',async()=>{
+  const base='I01-story',negative='I02-parameters';
+  for(const file of ['work.yaml','query.sql','extraction.json','reference-map.json','database-context.json'])assert.equal(await raw(negative,file),await raw(base,file),file);
+  const work=JSON.parse(await raw(base,'work.yaml')),db=work.testing_strategy.cases[0].steps.find(s=>s.skill==='qa-database');
+  assert.deepEqual(db.database.parameters,['tenant-a',null]);assert.deepEqual(db.database.parameter_bindings,[{input:'record_id',index:1}]);
+  const positive=await input(base,'facts.yaml'),missing=await input(negative,'facts.yaml');
+  const operation=missing.operations.find(o=>o.step===db.id);assert.equal(operation.parameter_count,null);
+  operation.parameter_count=positive.operations.find(o=>o.step===db.id).parameter_count;assert.deepEqual(missing,positive);
+  const predecessors=await input(negative,'predecessors.json');assert.equal(JSON.parse(predecessors.requirements[0].context_body).operations.find(o=>o.step===db.id).parameter_count,null);
+  assert.equal(await input(negative,'parameters.json'),null); // Sidecar is not the validator's refusal cause.
+  assert.deepEqual(await input(base,'parameters.json'),db.database.parameters);
+ });
+ await t.test('stale deployment receipt and original pipeline body agree without changing current review or PR',async()=>{
+  const positive=await input('I01-story','cards.json'),stale=await input('I11-stale-environment','cards.json');
+  const e=await input('I11-stale-environment','predecessors.json'),current=targetRecord(e).payload.pr;
+  assert.deepEqual(stale.reads.pr,positive.reads.pr);assert.equal(await raw('I11-stale-environment','work.yaml'),await raw('I01-story','work.yaml'));
+  const old=stale.reads.evidence.filter(r=>r.kind==='environment'),fresh=positive.reads.evidence.filter(r=>r.kind==='environment');assert(old.length>0);
+  for(let i=0;i<old.length;i++){
+   const receipt=old[i],original=stale.reads.pipeline.original_comments.find(c=>c.uri===receipt.uri),body=JSON.parse(original.body);
+   assert.equal(receipt.pr.source_revision,'f'.repeat(40));assert.notEqual(receipt.pr.source_revision,current.source_revision);
+   assert.equal(body.source_revision,receipt.pr.source_revision);assert.equal(body.deployed_revision,receipt.pr.source_revision);
+   assert.equal(original.id,receipt.details.comment_id);assert.equal(original.author_id,receipt.details.pipeline_actor_id);assert.equal(original.update_author_id,receipt.details.pipeline_actor_id);
+   assert.equal(original.repository,receipt.pr.repository);assert.equal(original.pr_number,receipt.pr.number);
+   assert.equal(body.repository,receipt.pr.repository);assert.equal(body.pr_number,receipt.pr.number);assert.equal(body.target_branch,receipt.pr.target_branch);
+   assert.equal(body.target_reference,receipt.details.target_reference);assert.equal(body.readiness,'ready');
+   const restored=structuredClone(receipt);restored.pr.source_revision=fresh[i].pr.source_revision;assert.deepEqual(restored,fresh[i]);
+   const freshComment=positive.reads.pipeline.original_comments.find(c=>c.uri===receipt.uri),freshBody=JSON.parse(freshComment.body);
+   assert.equal(freshBody.source_revision,current.source_revision);assert.equal(freshBody.deployed_revision,current.source_revision);
+   body.source_revision=freshBody.source_revision;body.deployed_revision=freshBody.deployed_revision;assert.deepEqual(body,freshBody);
+   const copy={...original,body:freshComment.body};assert.deepEqual(copy,freshComment);
+  }
+ });
+});
+
 test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
  const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
@@ -736,4 +831,37 @@ test('PGB-129 source publication binds the actual native prerequisite and preser
  const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-25:')<stories.indexOf('## R1-26:'));assert(stories.indexOf('## R1-26:')<stories.indexOf('## R1-11:'));assert(stories.includes(JSON.stringify(draft.contract,null,2)));
  for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md'])for(const id of ['W04','W12','M10'])assert((await read(file)).split('\n').find(l=>l.startsWith('| '+id+' |')).includes('R1-26-PC01–PC06'));
  const r=validateWork(JSON.stringify(draft.contract),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.readiness,'not_evaluated');
+});
+
+test('PGB-132 source publication preserves Core history and binds the preparation-only slice',async()=>{
+ const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),a=publication.qa_input_preparation_amendment,prepared=contract('R1-27'),dispatcher=contract('R1-08');
+ assert.equal(hash(drafts.filter(x=>!['R1-08','R1-27','R1-30'].includes(x.id))),'7a152baf7eeb37385f7560fc430d50a2ed7cfdd26de05df75c202695420ab4ad');
+ const upstream=['R1-04','R1-06','R1-07','PGB-108','R1-24'];
+ assert.deepEqual(plan('R1-27').dependencies,[...upstream,'R1-30']);assert.deepEqual(plan('R1-08').dependencies,[...upstream,'R1-27']);
+ assert.deepEqual(prepared.prerequisites,[...upstream,'R1-30'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
+ const preserved=structuredClone(prepared);preserved.prerequisites=preserved.prerequisites.filter(p=>p.ticket!=='R1-30');assert.equal(hash(preserved),'4abbf7e64a417adf166848d1a7675fb9a5d7c61e06add6609091f50607a5ef6f');
+ assert.deepEqual(dispatcher.prerequisites,[...upstream,'R1-27'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
+ assert.equal(hash([...plan('R1-27').files].sort()),'b9236d7417b1d57b9bbf8954a82b1ecfe24a314464733faa446571a2ce801af6');
+ assert.equal(hash([...plan('R1-08').files].sort()),'5a066e773dae845a29b4df278fb01d129f6c6ba0a23f0c2585e1f66c540cfaad');
+ assert.deepEqual(plan('R1-27').hours,{min:6.75,max:9.75});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
+ assert.equal(plan('R1-27').days,1.21875);assert.equal(plan('R1-08').days,1.8125);
+ const prepFiles=new Set(plan('R1-27').files),dispatchFiles=new Set(plan('R1-08').files);assert.equal(new Set([...prepFiles,...dispatchFiles]).size,23);assert.equal([...prepFiles].filter(f=>dispatchFiles.has(f)).length,6);
+ for(const id of ['R1-27','R1-08']){assert(!plan(id).time_limit_exception);assert(plan(id).hours.max<16);const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));}
+ assert.deepEqual(a.stories,{'R1-27':'PGB-132'});assert.equal(a.native_id,'10592');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
+ assert.deepEqual(a.description_sha256,{prerequisite:'42b2b5e0334cc2c520e802b83bb4f6dcf1afa58a59f1650ad13b60fddfbc3ca5',dispatcher_after:'6a553206c0768143f0b478fc787c98140a233cc937189b6818cb83a5db02c97a'});
+ assert.equal(a.plan_sha256,'d5cf649c727ee3c83edc016ce7fc02ad0524c6c2f83f59d31c1c3e56cb070a5a');assert.equal(a.actual_base_binding.main,'19649b701646af065b583c8c603dca648d7413ca');assert.equal(a.source_composition_base.commit,'261a3856c9710a62be3c2c8ac4424778cb1ca0a0');
+ assert.equal(a.original_dispatcher_criteria_and_cases_preserved,true);assert.equal(a.original_dispatcher_cases,3);assert.equal(a.additive_cases,3);
+ const newEdges=[['PGB-74','PGB-132'],['PGB-76','PGB-132'],['PGB-77','PGB-132'],['PGB-108','PGB-132'],['PGB-110','PGB-132'],['PGB-132','PGB-78']];
+ assert.deepEqual(a.dependency_links,newEdges.map(([from,to],i)=>({id:String(10709+i),type_id:'10000',from,to})));for(const [from,to]of newEdges)assert(publication.dependency_links.some(x=>x.from===from&&x.to===to));
+ for(const from of ['PGB-74','PGB-76','PGB-77','PGB-108','PGB-110'])assert(a.preserved_links.some(x=>x.from===from&&x.to==='PGB-78'));
+ for(const to of ['PGB-87','PGB-90'])assert(a.preserved_links.some(x=>x.from==='PGB-78'&&x.to===to));
+ assert.equal(prepared.acceptance_criteria.length,4);assert.equal(prepared.technical_acceptance_criteria.constraints.length,3);
+ assert.deepEqual(prepared.testing_strategy.human_review.cases.map(c=>c.id),['R1-27-H01','R1-27-H02','R1-27-H03']);
+ for(const field of ['cases','testing_types','dispatch_order'])assert.deepEqual(prepared.testing_strategy[field],[]);assert(prepared.testing_strategy.human_review.no_ai_cases_reason);
+ assert.equal(prepared.testing_strategy.preparation[0].id,'PREP-01');assert.deepEqual(prepared.testing_strategy.preparation[0].used_by,['DATA-01','R1-27-H01','R1-27-H02','R1-27-H03']);
+ assert(publication.history.some(x=>x.story_count===26&&x.case_count===116));
+ const support={H01:['A06','A07','W03','W06','W07'],H02:['A06','A07','W03','W07','W08'],H03:['A08','W06','W08','W09','W11','W12']};
+ for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const rows=(await read(file)).split('\n');for(const [human,ids]of Object.entries(support))for(const id of ids)assert(rows.find(row=>row.startsWith('| '+id+' |')).includes('R1-27-'+human),file+': '+id+' '+human);}
+ const stories=await read('docs/delivery/manager-r1/stories.md');assert(stories.indexOf('## R1-24:')<stories.indexOf('## R1-27:'));assert(stories.indexOf('## R1-27:')<stories.indexOf('## R1-08:'));assert(stories.includes(JSON.stringify(prepared,null,2)));
 });

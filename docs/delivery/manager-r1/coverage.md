@@ -9,25 +9,25 @@
 | A03 | R1-01-H01, R1-03-H01 |
 | A04 | R1-03-H01 |
 | A05 | R1-02-H02, R1-03-H01, R1-03-H02 |
-| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; R1-24-H01, R1-24-H02, R1-24-H03 |
-| A07 | R1-02-H01, R1-07-H01, R1-08-H01 |
-| A08 | R1-02-H01, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
+| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
+| A07 | R1-02-H01, R1-07-H01, R1-08-H01; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
+| A08 | R1-02-H01, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03 |
 | A09 | R1-02-H02, R1-05-H01, R1-07-H02 |
 | A10 | R1-01-H02, R1-02-H02 |
 | A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02 |
 | A12 | R1-02-H01, R1-03-H02, R1-12-H03 |
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01 |
 | W02 | R1-05-H01 |
-| W03 | R1-05-H01, R1-05-H02 |
+| W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
 | W04 | R1-05-H01, R1-05-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03 |
 | W05 | R1-06-H01, R1-06-H02 |
-| W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
-| W07 | R1-07-H01, R1-07-H02 |
-| W08 | R1-07-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
-| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03 |
+| W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H03; R1-30-H01, R1-30-H03 |
+| W07 | R1-07-H01, R1-07-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
+| W08 | R1-07-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H02, R1-27-H03; R1-30-H02, R1-30-H03 |
+| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03 |
 | W10 | R1-09-H01, R1-09-H02, R1-20-H03 |
-| W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03 |
+| W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03 |
 | M01 | R1-11-S01, R1-11-S02, R1-17-H01 |
 | M02 | R1-11-S18, R1-11-S30 |
 | M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09 |
@@ -116,6 +116,16 @@ project identity and health without renumbering them. Capacity/worker monitoring
 follow-ons are not missing MVP coverage: see the Jira-linked follow-on roadmap.
 
 The owner-approved QA split adds publisher coverage only. All 53 requirements and 41 scenarios, including R1-08 execution coverage, remain. Earlier 20/23-Story review records retain their historical scope; mapping is not passing acceptance.
-PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. Current source publication contains 26 Stories/116 cases and composes the publisher, repeated-parent and current-proof consistency amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. These mappings do not record acceptance execution.
+PGB-113/R1-25 adds three human cases for current repeated-parent proof, retained history and exact causes. All 53 requirement IDs, 41 scenarios and R1-11-H02 remain. The preceding source checkpoint contains 26 Stories/116 cases and composes the publisher, repeated-parent and current-proof consistency amendments. Native 25/110 figures in this receipt describe the recorded 15 November 2026 PGB-110/PGB-113 amendment-publication snapshot; Jira owns subsequent queue changes. These mappings do not record acceptance execution.
 
-PGB-129/R1-26 adds six current-proof consistency cases PC01–PC06 before PGB-81. All 53 requirement mappings, 41 scenario mappings and PGB-81's 42 full cases remain. Actual PGB-110-first composition is 26 Stories/116 cases; dated earlier publication snapshots remain historical. No human acceptance is recorded by this composition.
+PGB-129/R1-26 adds six current-proof consistency cases PC01–PC06 before PGB-81. All 53 requirement mappings, 41 scenario mappings and PGB-81's 42 full cases remain. The preceding PGB-110-first composition was 26 Stories/116 cases; dated earlier publication snapshots remain historical. No human acceptance is recorded by this composition.
+
+## QA input-preparation amendment, 15 November 2026
+
+PGB-132/R1-27 adds three supporting preparation cases immediately before PGB-78/R1-08. The preceding source/native amendment snapshot contained 27 Stories/119 cases. Core's 26/116 source checkpoint and prior native readbacks above remain historical. All original 53 requirement rows, 41 scenarios and R1-08 cases remain; preparation does not prove model selection, final dispatch, live publication or human acceptance. That source layering used Core's reviewed commit `261a3856c9710a62be3c2c8ac4424778cb1ca0a0`, subsequently merged through PR #98; PGB-129 is not a preparation dependency. Final PGB-78 remains **Provisional — not ready for delivery** until PGB-132 actually merges and its concrete plan is rebound/reviewed.
+
+## Three-input controls amendment, 15 November 2026
+
+PGB-138/R1-30 adds three preparation/inspection cases before the unchanged full PGB-132 outcome. Source at main275 composes 28 Stories/122 human cases, preserving all 53 requirement rows, 41 scenarios and prior case IDs. R1-30-H01 inspects the complete mixed Story handoff, hashes and occupied-root refusal; H02 isolates missing trusted parameter_count with DATABASE_PARAMETERS; H03 isolates coherent stale deployment proof. These are supporting input checks, not helper execution, publisher acceptance or runtime delivery. All three remain NOT_RUN; PGB-132's original three also remain NOT_RUN.
+
+The separate Director native inventory on 15 November is30 Stories/130 cases, including native-only PGB-136/137. It is not this source count. PGB-132 adds the remaining 48 inputs after the three available here; full-suite coverage is pending. Owner10765 is specific to PGB-132's historical helper/publisher evidence gap and does not waive PGB-138 acceptance. Final PGB-78 still requires actual prerequisite completion and a rebound/reviewed concrete plan.

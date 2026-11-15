@@ -217,8 +217,8 @@
     }
   },
   {
-    "id": "R1-08",
-    "title": "Execute prescribed QA and hand off complete evidence",
+    "id": "R1-30",
+    "title": "Prepare mixed QA inputs and two boundary controls",
     "dependencies": [
       "R1-04",
       "R1-06",
@@ -226,13 +226,111 @@
       "PGB-108",
       "R1-24"
     ],
-    "days": 1.875,
+    "days": 1.5625,
+    "hours": {
+      "min": 8.5,
+      "max": 12.5
+    },
+    "files": [
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "docs/authoring.md",
+      "test/story-authoring.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "skills/qa-api/references/structured-steps.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ],
+    "delivery_state": "Three-input source implementation; independent committed-code review, installed binding, human acceptance and merge remain separate.",
+    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4–12.275h, B6.6–9.475h; conservative forecasts A8.5–12.5h/B6.75–9.75h."
+  },
+  {
+    "id": "R1-27",
+    "title": "Prepare the prescribed QA inputs",
+    "dependencies": [
+      "R1-04",
+      "R1-06",
+      "R1-07",
+      "PGB-108",
+      "R1-24",
+      "R1-30"
+    ],
+    "days": 1.21875,
+    "files": [
+      "test/story-authoring.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ],
+    "hours": {
+      "min": 6.75,
+      "max": 9.75
+    },
+    "delivery_state": "Pending residual implementation: extend the existing three-input command to the full prescribed suite; human cases NOT_RUN.",
+    "historical_forecast": {
+      "days": 1.875,
+      "hours": {
+        "min": 10.75,
+        "max": 15
+      },
+      "files": [
+        "skills/write-pr-sized-stories/SKILL.md",
+        "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
+        "skills/implementer-entrypoint/references/handoff.md",
+        "skills/pigboard-pr-review/references/jira-handoff.md",
+        "docs/authoring.md",
+        "test/story-authoring.test.mjs",
+        "test/fixtures/qa-helper-case.mjs",
+        "test/qa-helper-contract.test.mjs",
+        "docs/using-pigboard.md",
+        "skills/qa-api/references/structured-steps.md",
+        "docs/delivery/manager-r1/README.md",
+        "docs/delivery/manager-r1/plan-metadata.json",
+        "docs/delivery/manager-r1/ticket-drafts.json",
+        "docs/delivery/manager-r1/publication.json",
+        "docs/delivery/manager-r1/stories.md",
+        "docs/delivery/manager-r1/coverage.md",
+        "docs/product/coverage.md",
+        "docs/product/README.md"
+      ]
+    }
+  },
+  {
+    "id": "R1-08",
+    "title": "Execute prescribed QA and hand off complete evidence",
+    "dependencies": [
+      "R1-04",
+      "R1-06",
+      "R1-07",
+      "PGB-108",
+      "R1-24",
+      "R1-27"
+    ],
+    "days": 1.8125,
     "files": [
       "skills/qa-entrypoint/SKILL.md",
       "skills/qa-entrypoint/references/execution-record.md",
       "skills/qa-entrypoint/references/cursor.md",
-      "test/qa-helper-contract.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
       "test/cursor-environment.test.mjs",
       "test/story-authoring.test.mjs",
       "README.md",
@@ -240,18 +338,15 @@
       "docs/workflow.md",
       "docs/install.md",
       "docs/using-pigboard.md",
-      "docs/authoring.md",
       "docs/handoffs.md",
       "config/cursor/automations.md",
-      "skills/write-pr-sized-stories/SKILL.md",
-      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
-      "skills/implementer-entrypoint/references/handoff.md",
-      "skills/pigboard-pr-review/references/jira-handoff.md",
-      "skills/qa-api/references/structured-steps.md"
+      "skills/qa-jira/SKILL.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json"
     ],
     "hours": {
-      "min": 13,
-      "max": 15
+      "min": 10.5,
+      "max": 14.5
     }
   },
   {
