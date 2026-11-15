@@ -229,8 +229,12 @@ from the intended base branch. No-PR repair is limited to complete documented de
 before publication. Implementation/review/QA must agree on one revision. Stack
 updates use the child's recorded immediate parent, its stale incorporated revision,
 the parent's new current accepted coherent QA and all incorporated repair roots.
-An independent child or ordinary retarget does not qualify. Queue records preserve
-the old pointer; only later admission changes it. Identical record republication
+An independent child or ordinary retarget does not qualify. A selected queue
+request must still match the child's current observed PR source and target; a
+historical request consumed by later repaired QA keeps its recorded child head.
+This queue check does not establish that the PR is open: later admission owns that
+separate check. Queue records preserve the old pointer; only later admission
+changes it. Identical record republication
 is one logical result with every server comment independently valid; distinct final
 records in one role/assignment/resume slot hold rather than picking the newest.
 
