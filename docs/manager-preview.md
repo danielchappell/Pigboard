@@ -329,6 +329,16 @@ assignment's ancestry accounts for exact direct requests. The supplied request
 arrays remain unchanged. A required ready prerequisite is selected first; history
 alone never proves that prerequisite complete.
 
+Across supplied envelopes, each represented assignment in that current lineage
+must have one coherent logical QA completion: the same ticket, record UUID and
+digest. Identical publications with different comment IDs are one result.
+Competing completions keep the stream's existing `REPAIR_POLICY_PENDING` wait,
+regardless of envelope order. Private history validity authenticates one envelope;
+it does not establish current completion or coherence across envelopes. Reconcile
+the supplied history through its owner and supply one coherent observation while
+preserving all retained causes. Agents receive the same structured wait and
+unchanged authority fields.
+
 The result keeps its existing fields. `REPAIR_READY` identifies a selected queued
 ticket; `REPAIR_PREREQUISITE` identifies the necessary ready prerequisite. To inspect
 a repair's existing PR, find its native issue by `selected_ticket_id`, read its

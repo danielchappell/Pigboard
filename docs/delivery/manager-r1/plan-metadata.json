@@ -443,7 +443,7 @@
     "dependencies": [
       "R1-26"
     ],
-    "days": 1.54,
+    "days": 1.92,
     "files": [
       "lib/contracts/receipts.mjs",
       "lib/manager/snapshot.mjs",
