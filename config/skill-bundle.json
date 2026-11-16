@@ -64,6 +64,7 @@
       "lib/manager/snapshot.mjs",
       "lib/manager/availability.mjs",
       "lib/manager/decisions.mjs",
+      "lib/manager/repair-policy.mjs",
       "scripts/manager-preview.mjs",
       "docs/manager-preview.md",
       "test/fixtures/manager-candidates.json"

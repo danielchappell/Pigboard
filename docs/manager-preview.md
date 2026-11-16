@@ -1,4 +1,4 @@
-# Preview ready work and own-ticket repairs locally
+# Preview ready work and repairs locally
 
 The offline manager preview answers which ticket could start in each exact Jira
 site, immutable project ID and full numbered label. It is available in source and
@@ -8,10 +8,8 @@ A selection is a proposal with **no execution authority**. Live freshness and
 permissions are not evaluated. Complete supplied facts are an assertion by the
 caller, not proof that hidden Jira issues or inaccessible pages do not exist.
 
-Own-ticket repairs on an existing open PR can take the next free slot before
-unrelated new work. They require authenticated requests and completed history.
-Unproved repairs and full stack repair ordering still wait with
-`REPAIR_POLICY_PENDING`; a ready Bug cannot bypass them. A
+Repair ordering uses authenticated lineage and current QA. An unproved repair
+waits with `LINEAGE_REQUIRED`; unrelated ready work cannot bypass it. A
 current, exactly bound canonical QA envelope may account for a member's retained
 request obligations. Keep those request lists and historical references intact;
 preview does not clear or rewrite them. Human acceptance is separate from these
@@ -98,7 +96,10 @@ or label disagrees with native facts. A repair row whose claimed scope contradic
 established membership holds those scopes with `MEMBERSHIP_MISMATCH` at
 `/required_repairs/<index>`. Correctly scoped unproved repairs still wait; exact
 native request binding and strict current proof are required before reporting
-`REPAIR_ACCOUNTED_FOR`. Unrelated complete streams can continue.
+`REPAIR_ACCOUNTED_FOR`. Missing obligation diagnostics retain both the native
+request location and any relevant `/required_repairs/<index>` declaration.
+Assigned native-bound proof gaps keep their native location. Unrelated complete
+streams can continue.
 
 An unlisted preparation/Ready/cancelled ticket is not safely removable while it
 has a pending intent, advertised repair or native request obligation, even before
@@ -177,14 +178,14 @@ The fixed `pigboard-manager-preview/v1` result contains `valid`, `status`,
 `validation_scope: supplied_snapshot`, `live_freshness: not_evaluated`,
 `permission: not_evaluated`, `destination_authority`, `execution_authorized: false`,
 `writes: 0`, `configuration_digest`, `snapshot_digest`, `scope_diagnostics` and
-`streams`. Status is `invalid`, `held`, `partial` (independent selections coexist
+`streams`. Status is `invalid`, `held`, `partial` (independent selections or queues coexist
 with holds) or `complete` (including ordinary waits). Invalid input has null
 digests and no streams. Diagnostics contain stable code/path/scope/message; raw
 bodies, unknown keys, secrets and file paths are never echoed.
 
-Each stream contains exact `scope`, `epic_id`, `decision: select|wait|hold`,
+Each stream contains exact `scope`, `epic_id`, `decision: select|queue|wait|hold`,
 `selected_ticket_id`, `selected_key`, `occupied_ids`, `blocked_ids`,
-`human_review_ids`, `counts_complete`, `return_count`, `reasons` and `candidates`.
+`human_review_ids`, `counts_complete`, `return_count`, `reasons`, `candidates`, `proposal` and `repair_order`.
 When several active opted-in Epics claim one stream, it holds with `epic_id: null`
 and an empty `candidates` list. There is no chosen owner. Each claimant has its own
 `OWNERSHIP_CONFLICT` reason and scoped diagnostic identifying its native Epic ID
@@ -194,7 +195,7 @@ the competing Epic ownership with the human owner; do not remove active work or
 assume the first Epic in the input has authority. Other streams retain their own
 ownership, counts and decisions.
 
-Selection fields are null except on `select`; return count is known Human Review
+Selection fields name the target on `select` or `queue` and are otherwise null; return count is known Human Review
 count+1 or null when unknown. Candidates contain native ticket ID/key, `kind`,
 `eligible` and reasons. Streams and diagnostics have deterministic ordering; no
 clock/timestamp enters the decision. The pure API is
@@ -219,7 +220,9 @@ fixture bounds, not AWS, production throughput or whole-install capacity claims.
 | `PENDING_INTENT`, `BLOCKED`, `INCONSISTENT_OCCUPANCY` | Use owner handling; preview cannot unblock, clear, expire or stop workers. |
 | `NO_OPT_IN`, `EPIC_PAUSED`, `OCCUPIED`, `HUMAN_REVIEW_CAP` | Wait for authorized native workflow changes; existing cycles continue. |
 | `INVALID_WORK`, `NO_READY_CANDIDATE`, `PREREQUISITE_UNSATISFIED` | Correct reviewed requirements/context or supply coherent current completion; cancellation alone cannot satisfy prerequisites. |
-| `REPAIR_POLICY_PENDING` | Preserve all requests; obtain exact current member QA if already completed, otherwise supply authentic own history or wait for PGB-81 stack/first-PR support. |
+| `LINEAGE_REQUIRED`, `REPAIR_PROOF_INVALID` | Preserve all causes; obtain authentic missing receipts or reconcile supplied evidence through its owner. Historical proof never replaces current parent QA. |
+| `PARENT_REPAIR_PENDING`, `STACK_REQUEST_PUBLICATION_REQUIRED` | Wait for current full parent QA or obtain the missing publication through its authorized writer. Never guess references or replay an uncertain publication. |
+| `PR_HUMAN_HANDLING` | Ask the owner to resolve the terminal PR or scoped-fix limitation; preview cannot create a replacement PR. |
 | `REPAIR_ACCOUNTED_FOR` | Informational canonical proof only; requests, assignments and state remain unchanged. |
 | `CHANGED_INPUT` | Review a new actual preview; never repeat an old proposal automatically. |
 | `SETUP`, `INPUT` | Prepare the approved runtime outside preview or supply readable regular files; failed installation preserves the previous stable release. |
@@ -249,7 +252,7 @@ NODE
 
 **R1-10-H01:** run all29 named scenarios S01–18/S30–40. Inspect exact scope,
 selection, reason and return count against each `expected.json`. S09/S10/S14/S15
-explicitly wait for PGB-81. S38 intentionally holds with a different digest.
+wait for authenticated repair history. S38 intentionally holds with a different digest.
 
 ```sh
 for id in S{01..18} S{30..40}; do
@@ -311,72 +314,153 @@ then preview the new snapshot. Preview cannot authorize a replay or repair.
 
 A valid current completion still works with an empty retained-history list.
 Malformed or unbound receipts grant no completion authority and keep their
-existing handling. The same fingerprint index checks bound private history before own selection;
-complete typed stack repair ordering remains PGB-81 work.
+existing handling. The same canonical observation index also checks authenticated
+historical envelopes before accepting repair facts; history alone grants no current
+completion.
 
-## Select an own-ticket repair
+## Offline repair proposals
 
-Supply optional `repair_receipts`: raw manager receipt-envelope JSON strings with
-complete current outer facts and exact retained metadata. They share the existing
-100-envelope limit with `completion_receipts`; all existing byte/depth/list limits
-remain. Add separate envelopes for required subjects outside a target's validated
-closure. Complete comment pages alone do not authenticate every historical row.
+PGB-149/R1-35 supplies the complete source API and JSON CLI result. Readable output
+is available but does not yet identify every retained cause. Use `--json` to inspect
+all exact causes until PGB-146 completes readable parity. Full installed repair
+fixture packaging and final publication reconciliation remain PGB-81.
 
-A queued repair can be selected when its current assignment has coherent completed
-own history, its own requests are authentic, its existing PR is currently observed
-open, and it has no actual stack parent. Completed same-ticket consumption on that
-assignment's ancestry accounts for exact direct requests. The supplied request
-arrays remain unchanged. A required ready prerequisite is selected first; history
-alone never proves that prerequisite complete.
+The preview accepts optional `repair_receipts`, an array of existing raw
+`pigboard-receipt-input/v1` JSON strings. It shares the 100-envelope limit with
+`completion_receipts`. Supply complete current outer native/configuration facts
+and exact retained server metadata for each historical closure. Historicity never
+establishes current completion: only a separately valid, exactly bound current QA
+envelope satisfies a prerequisite or covering parent.
 
-Across supplied envelopes, each represented assignment in that current lineage
-must have one coherent logical QA completion: the same ticket, record UUID and
-digest. Identical publications with different comment IDs are one result.
-Competing completions keep the stream's existing `REPAIR_POLICY_PENDING` wait,
-regardless of envelope order. Private history validity authenticates one envelope;
-it does not establish current completion or coherence across envelopes. Reconcile
-the supplied history through its owner and supply one coherent observation while
-preserving all retained causes. Agents receive the same structured wait and
-unchanged authority fields.
+Each stream returns `proposal` (or null) and `repair_order`. The three possible
+proposal kinds are `admit_new` (Ready to Work → In Progress), `admit_repair`
+(Rework Queued → In Progress), and `queue_stack_update` (Human Review → Rework
+Queued). All retain `execution_authorized:false`. Queueing does not admit work,
+change an assignment pointer or launch a worker. One coherent unrelated active
+member or five Human Review observations may still permit a queue-only proposal;
+the admission-capacity explanation may remain visible without blocking that queue.
+Blocked work, pause, pending intents and incomplete/contradictory scope suppress it.
 
-The result keeps its existing fields. `REPAIR_READY` identifies a selected queued
-ticket; `REPAIR_PREREQUISITE` identifies the necessary ready prerequisite. To inspect
-a repair's existing PR, find its native issue by `selected_ticket_id`, read its
-current `pointer.assignment`, and inspect the supplied receipt's current PR
-observation and authenticated same-ticket completion. The selection does not
-provide an admission payload or authorize a transition.
+Proposals preserve `existing_assignment`, observed `existing_pr`, actual direct
+`request_refs`, deduplicated immutable `roots`, `required_parent` and
+`child_completion`. `required_stack_updates` contains existing-schema payload
+inputs for missing publications. `publication_required:true` means the authorized
+writer must publish that payload before execution; it supplies no prospective
+UUID, actor, timestamp, operation or reference. The proposal does not publish it.
+Observed Human Review IDs/counts remain unchanged; a queue edge projects one fewer
+Human Review ticket without granting admission capacity to another proposal.
 
-All existing safety gates still apply: pause, no opt-in, occupancy, Blocked work,
-intent, conflicting ownership, incomplete facts and five Human Review items prevent
-selection. Every pending repair in the stream must be understood before one can be
-selected. A supported own repair cannot bypass an unsupported sibling.
+Each represented assignment in a ticket's authenticated current lineage must have
+one coherent logical QA result (ticket ID, record UUID and digest). Identical
+publications with different comment IDs are one logical result; current assignment
+and authority binding still use exact references. Competing completions yield
+`REPAIR_PROOF_INVALID` and cannot be chosen by envelope order. Reconcile the
+observations through their owner while preserving retained causes.
 
-Stack-update requests, actual stack parents, first-PR repairs and null/closed/merged
-or unknown current PRs remain a safe wait or evidence hold. Obtain authentic missing
-receipts or reconcile conflicting observations through their owner. Do not drop
-retained causes, clear an intent or replay a transition to obtain a selection.
+Retained native requests remain evidence. The next own admission includes only
+direct requests not consumed by completed same-ticket history on the exact current
+assignment lineage. Implementation or review alone cannot account for a request.
+Descendants still require every root consumed after their actual incorporated
+parent cutoff, even when the latest parent directly consumed only a newer cause.
 
-The source fixture is a preparation aid and is not installed. From a source checkout,
-export its own-selection example to disposable absolute files; set `validator` to
-the source root or the actual installed work-validator directory from its receipt:
+Ordinary Ready to Work candidate flags describe local readiness. A queued repair
+is eligible for admission only when the stream's existing safety, occupancy and
+capacity gates also permit it. A `ready` repair-order explanation can remain visible
+while that queued candidate waits for a gate to clear; it does not authorize action.
+Priority still chooses among eligible work. Neither eligibility nor a proposal
+grants execution authority. A queued B can be eligible while its nonexecuting
+proposal still requires a missing stack publication. A Human Review child selected
+for a queue-only edge (B at checkpoint02 or C at08) remains ineligible for admission.
+Required publication, current proof and availability keep their separate meanings.
+An already queued repair still reports required publication while a gate prevents
+its proposal; the warning does not permit publication or bypass that gate.
+
+Necessary ready prerequisites precede required repairs, followed by eligible Bugs
+and Stories. Actual recorded immediate-parent lineage determines stack repair;
+Repair-order explanations use that authenticated dependency depth; only unrelated
+ties use Epic order. Shared labels and ordinary prerequisites do not create
+code-parent edges. Old findings remain applicable until verified incorporation at the actual
+child cutoff. A newer parent's direct request list cannot erase older causes that
+the child has not incorporated.
+
+`LINEAGE_REQUIRED` means supply authenticated repair history;
+`REPAIR_PROOF_INVALID` means replace incoherent/unbound supplied evidence.
+An authenticated unfinished child dependency wait leaves that child queued while
+its proven upstream repair can progress. This does not imply successful child QA
+or grant permission to admit the child.
+
+`PARENT_REPAIR_PENDING` waits for current full parent QA, and
+`STACK_REQUEST_PUBLICATION_REQUIRED` reports the missing publication payload.
+Known merged/closed child PRs require human handling. These are local supplied
+observations; live PR preflight, freshness, permissions, actual writes and worker
+execution belong to later integrations.
+
+The exported legacy `manager-candidates.json` includes 66 preserved inputs. Its
+five incomplete repair seeds now wait for authentic lineage, rather than future
+implementation. Their revised `expected.json` values are exported directly.
+Complete synthetic native repair scenarios and all nine H02 checkpoints live in
+`manager-repairs.json`; all 42 designated human cases remain NOT_RUN.
+
+### Reproduce a repair queue and admission
+
+The source fixture contains complete synthetic receipt envelopes and fixed reports
+for all prescribed checkpoints, scenarios and normalization cases. Full installed
+fixture export and its additional semantic smoke remain PGB-81; existing installed
+scripts can consume source-exported inputs for compatibility. Set `bundle` to this
+source checkout. Export writes only disposable files; preview writes nothing:
 
 ```sh
-validator="$PWD" # Or the receipt's absolute installed work-validator directory.
-export PGB_OWN_REPAIR_DIR="$(mktemp -d /tmp/pigboard-own-repair.XXXXXX)"
-node --input-type=module - "$PWD/test/fixtures/manager-repairs.json" "$PGB_OWN_REPAIR_DIR" <<'NODE'
+bundle="$PWD" # Source checkout for PGB-149/R1-35.
+export PGB_REPAIR_FIXTURE_DIR="$(mktemp -d /tmp/pigboard-repairs.XXXXXX)"
+node --input-type=module - "$bundle/test/fixtures/manager-repairs.json" "$PGB_REPAIR_FIXTURE_DIR" <<'NODE'
 import fs from 'node:fs';
 import path from 'node:path';
-const [file,directory]=process.argv.slice(2);
-const c=JSON.parse(fs.readFileSync(file)).cases.find(c=>c.id==='OC01-selection');
-for(const [name,value]of Object.entries({config:c.config,snapshot:c.snapshot,expected:c.expected}))
- fs.writeFileSync(path.join(directory,name+'.json'),JSON.stringify(value));
+const [file,destination]=process.argv.slice(2);
+const fixture=JSON.parse(fs.readFileSync(file));
+for(const c of [...fixture.cases,...fixture.scenarios,...fixture.normalization.cases]){
+ const dir=path.join(destination,c.id);
+ fs.mkdirSync(dir);
+ for(const [name,value]of Object.entries({config:c.config,snapshot:c.snapshot,options:c.options??{},expected:c.expected}))
+  fs.writeFileSync(path.join(dir,name+'.json'),JSON.stringify(value));
+}
 NODE
-node "$validator/scripts/manager-preview.mjs" --config "$PGB_OWN_REPAIR_DIR/config.json" --input "$PGB_OWN_REPAIR_DIR/snapshot.json" --json
-node "$validator/scripts/manager-preview.mjs" --config "$PGB_OWN_REPAIR_DIR/config.json" --input "$PGB_OWN_REPAIR_DIR/snapshot.json"
+# Pick any exported checkpoint/scenario ID; options retain drift/site guards.
+id="S06-second-configured-accepted-stage"
+node --input-type=module - "$bundle" "$PGB_REPAIR_FIXTURE_DIR/$id" <<'NODE'
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+const [root,dir]=process.argv.slice(2),options=JSON.parse(fs.readFileSync(path.join(dir,'options.json'))),expected=JSON.parse(fs.readFileSync(path.join(dir,'expected.json')));
+const args=[path.join(root,'scripts/manager-preview.mjs'),'--config',path.join(dir,'config.json'),'--input',path.join(dir,'snapshot.json')];
+for(const [key,flag]of [['expectedSite','--expected-site'],['expectedSnapshotDigest','--expected-snapshot-digest']])if(Object.hasOwn(options,key))args.push(flag,options[key]);
+for(const json of [true,false]){const p=spawnSync(process.execPath,[...args,...(json?['--json']:[])],{encoding:'utf8'});process.stdout.write(p.stdout);process.stderr.write(p.stderr);assert.equal(p.status,expected.status==='complete'?0:1);if(json)assert.deepEqual(JSON.parse(p.stdout),expected);}
+NODE
 ```
 
-Compare the complete JSON with `expected.json`, inspect the readable selected ticket
-and reasons, and retain before/after input hashes. Only fixture export writes files.
-These local examples do not mark the six designated human groups or any of PGB-81's
-42 original cases passed. Full typed admission, queue proposals and stack ordering
-remain later PGB-81 work.
+At checkpoint 02, B's old assignment remains intact. Its `queue_stack_update`
+proposal names A's actual repaired completion and R1, with missing publication
+payload inputs and `publication_required:true`. At checkpoint 07, B is already
+queued and both U1 and U2 exist. Its `admit_repair` proposal retains both request
+references, R1 and R2, and A's actual A3 completion; `publication_required:false`
+does not grant execution authority. C still waits for B's own repaired QA.
+
+Compare each complete JSON result with the exported `expected.json`, record input
+hashes and inspect the readable explanation. Keep the native case instructions in
+`native_cases` for the prescribed human acceptance; these local examples do not
+mark any human case passed. Missing lineage requires authentic retained receipts;
+a missing publication requires its authorized writer. Replacing a snapshot or
+getting a successful preview does not authorize a transition or replay.
+
+For direct source API use, read the same exported files and options:
+
+```js
+import fs from 'node:fs';
+import {previewSnapshot} from './lib/manager/decisions.mjs';
+const result=previewSnapshot(fs.readFileSync(configFile,'utf8'),fs.readFileSync(snapshotFile,'utf8'),JSON.parse(fs.readFileSync(optionsFile,'utf8')));
+```
+
+`configFile`, `snapshotFile` and `optionsFile` are the absolute exported paths.
+The API returns the same complete structured value as JSON CLI output. Preserve
+input hashes and full fixed comparisons; successful local checks do not mark any
+of the original42 human cases, or R1-32's and R1-35's two human routes each, as passed.

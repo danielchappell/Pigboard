@@ -1451,8 +1451,14 @@
             "label": "stream-1",
             "decision": "wait",
             "selected_ticket_id": null,
-            "reason": "REPAIR_POLICY_PENDING",
-            "return_count": 1
+            "reason": "LINEAGE_REQUIRED",
+            "return_count": 1,
+            "reason_details": [
+              {
+                "code": "LINEAGE_REQUIRED",
+                "path": "/issues/2"
+              }
+            ]
           }
         ]
       }
@@ -1614,8 +1620,14 @@
             "label": "stream-1",
             "decision": "wait",
             "selected_ticket_id": null,
-            "reason": "REPAIR_POLICY_PENDING",
-            "return_count": 1
+            "reason": "LINEAGE_REQUIRED",
+            "return_count": 1,
+            "reason_details": [
+              {
+                "code": "LINEAGE_REQUIRED",
+                "path": "/issues/2"
+              }
+            ]
           }
         ]
       }
@@ -2426,8 +2438,14 @@
             "label": "stream-1",
             "decision": "wait",
             "selected_ticket_id": null,
-            "reason": "REPAIR_POLICY_PENDING",
-            "return_count": 5
+            "reason": "LINEAGE_REQUIRED",
+            "return_count": 5,
+            "reason_details": [
+              {
+                "code": "LINEAGE_REQUIRED",
+                "path": "/issues/1"
+              }
+            ]
           }
         ]
       }
@@ -2653,8 +2671,14 @@
             "label": "stream-1",
             "decision": "wait",
             "selected_ticket_id": null,
-            "reason": "REPAIR_POLICY_PENDING",
-            "return_count": 6
+            "reason": "LINEAGE_REQUIRED",
+            "return_count": 6,
+            "reason_details": [
+              {
+                "code": "LINEAGE_REQUIRED",
+                "path": "/issues/1"
+              }
+            ]
           }
         ]
       }
@@ -11188,7 +11212,13 @@
             "occupied_ids": [],
             "mismatch_path": "/issues/2",
             "reasons": [
-              "REPAIR_POLICY_PENDING"
+              "LINEAGE_REQUIRED"
+            ],
+            "reason_details": [
+              {
+                "code": "LINEAGE_REQUIRED",
+                "path": "/issues/2"
+              }
             ]
           }
         ]
@@ -12651,5 +12681,121 @@
   "oracle_corrections": "Only S35 return_count amended from accidental default1 to null: the only member has unmapped native status999, so whether it is Human Review is unknown. Original frozen oracles and first failing output preserved outside repository. Ownership-only holds S30/S31/S32 retain known Human Review0 / return1. S18/S32 assert both scopes; H03 variants assert entire scope set.",
   "fixture_input_corrections": "Author-found graph-binding correction: Epic graph child edges now match actual prerequisite documents in S05,S06,S34,repair-prerequisite-complete. Expected decisions/selections/reasons/counts unchanged. The initial positive input helper had flattened child edges. Original frozen inputs remain preserved outside repository.",
   "qa_fixture_input_corrections": "Confirmed QA fidelity corrections: S09 ready member now native Bug23; S10 contains queued repair EX-3 -> Ready prerequisite EX-2 with coherent raw contexts/Epic graph; H03-B-full Human Review contexts now bind each actual B-EX-30..34 subject. Original oracles remain unchanged. Added independently canonical-prechecked two-root completion fixture with literal expected select1100.",
-  "native_schema_regressions": "Added generic-canonical-valid Epic bodies on native Story/Bug, alone and with an independent valid later Story, plus inverse native Epic carrying a valid ticket body. Native type/schema binding is required by existing contracts; prior literal oracles unchanged."
+  "native_schema_regressions": "Added generic-canonical-valid Epic bodies on native Story/Bug, alone and with an independent valid later Story, plus inverse native Epic carrying a valid ticket body. Native type/schema binding is required by existing contracts; prior literal oracles unchanged.",
+  "repair_reason_amendment": {
+    "base": "7559d482e9fbcbcbfc45a2a3b82c26a1357dd8d8",
+    "source_sha256": "1ba22cc933524ccec51cbd81349c41847c121846697d1dbb88af6afe01901193",
+    "changes": [
+      {
+        "id": "S09",
+        "original_expected": {
+          "streams": [
+            {
+              "project_id": "100",
+              "label": "stream-1",
+              "decision": "wait",
+              "selected_ticket_id": null,
+              "reason": "REPAIR_POLICY_PENDING",
+              "return_count": 1
+            }
+          ]
+        },
+        "old_code": "REPAIR_POLICY_PENDING",
+        "revised_code": "LINEAGE_REQUIRED",
+        "path": "/issues/2",
+        "rationale": "The queued ticket has no authenticated repair lineage; preserve safe wait or existing membership hold and no bypass."
+      },
+      {
+        "id": "S10",
+        "original_expected": {
+          "streams": [
+            {
+              "project_id": "100",
+              "label": "stream-1",
+              "decision": "wait",
+              "selected_ticket_id": null,
+              "reason": "REPAIR_POLICY_PENDING",
+              "return_count": 1
+            }
+          ]
+        },
+        "old_code": "REPAIR_POLICY_PENDING",
+        "revised_code": "LINEAGE_REQUIRED",
+        "path": "/issues/2",
+        "rationale": "The queued ticket has no authenticated repair lineage; preserve safe wait or existing membership hold and no bypass."
+      },
+      {
+        "id": "S14",
+        "original_expected": {
+          "streams": [
+            {
+              "project_id": "100",
+              "label": "stream-1",
+              "decision": "wait",
+              "selected_ticket_id": null,
+              "reason": "REPAIR_POLICY_PENDING",
+              "return_count": 5
+            }
+          ]
+        },
+        "old_code": "REPAIR_POLICY_PENDING",
+        "revised_code": "LINEAGE_REQUIRED",
+        "path": "/issues/1",
+        "rationale": "The queued ticket has no authenticated repair lineage; preserve safe wait or existing membership hold and no bypass."
+      },
+      {
+        "id": "S15",
+        "original_expected": {
+          "streams": [
+            {
+              "project_id": "100",
+              "label": "stream-1",
+              "decision": "wait",
+              "selected_ticket_id": null,
+              "reason": "REPAIR_POLICY_PENDING",
+              "return_count": 6
+            }
+          ]
+        },
+        "old_code": "REPAIR_POLICY_PENDING",
+        "revised_code": "LINEAGE_REQUIRED",
+        "path": "/issues/1",
+        "rationale": "The queued ticket has no authenticated repair lineage; preserve safe wait or existing membership hold and no bypass."
+      },
+      {
+        "id": "membership-other-stage-6",
+        "original_expected": {
+          "streams": [
+            {
+              "project_id": "100",
+              "label": "stream-1",
+              "decision": "hold",
+              "selected_ticket_id": null,
+              "reason": "MEMBERSHIP_MISMATCH",
+              "return_count": 1,
+              "occupied_ids": [],
+              "mismatch_path": "/issues/2"
+            },
+            {
+              "project_id": "100",
+              "label": "stream-2",
+              "decision": "hold",
+              "selected_ticket_id": null,
+              "reason": "MEMBERSHIP_MISMATCH",
+              "return_count": 1,
+              "occupied_ids": [],
+              "mismatch_path": "/issues/2",
+              "reasons": [
+                "REPAIR_POLICY_PENDING"
+              ]
+            }
+          ]
+        },
+        "old_code": "REPAIR_POLICY_PENDING",
+        "revised_code": "LINEAGE_REQUIRED",
+        "path": "/issues/2",
+        "rationale": "The queued ticket has no authenticated repair lineage; preserve safe wait or existing membership hold and no bypass."
+      }
+    ]
+  }
 }
