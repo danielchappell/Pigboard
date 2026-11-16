@@ -178,7 +178,7 @@
       "test/story-authoring.test.mjs",
       "test/qa-helper-contract.test.mjs"
     ],
-    "delivery_state": "PGB-150 In Progress; source implementation and checks pending. Human acceptance NOT_RUN (0/4). Independent committed-code review, hosted CI, PR, merge and activation are separate.",
+    "delivery_state": "PGB-150 In Progress; source implementation is complete at 58210517dde6fc75c92b98b2647ae7f8a0b219d6. The owning local suite passed 592/592 on that implementation tree. Independent source QA supported 9/9 criteria with two direct source cases; remaining execution is attributed to that suite. Human acceptance NOT_RUN (0/4). At this documentation-correction checkpoint, affected committed-code re-review, hosted CI/Codex bot, PR and Director merge remain pending; no activation is authorized.",
     "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
     "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47"
   },
