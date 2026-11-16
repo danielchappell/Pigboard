@@ -482,6 +482,41 @@ test('ordinary composition preserves original native bodies and recorded prerequ
  for(const [field,value]of [['author_id','other'],['update_author_id','other'],['created','2020-01-01T00:00:00Z'],['updated','2020-01-01T00:00:00Z'],['record_id','40000000-0000-4000-8000-000000000003'],['digest','sha256:'+'0'.repeat(64)],['comment_id','9999']]){const held=check(inspection,[{...retained,[field]:value}]);assert.equal(held.valid,true,JSON.stringify(held));assert.deepEqual(held.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:false,repair_inventory_complete:false},{project_id:'100',label:'stream-2',known_ids_complete:true,repair_inventory_complete:true}]);assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(held.snapshot),{mode:'ordinary'})),['1002']);}
  const missing=structuredClone(inspection);missing.observations.comment_pages=missing.observations.comment_pages.filter(p=>p.ticket_id!=='1001');const unavailable=check(missing,[retained]);assert.equal(unavailable.valid,true);assert.equal(unavailable.snapshot.stream_checks[0].known_ids_complete,false);
  const outside=check(inspection,[{...retained,ticket_id:'9999'}]);assert.equal(outside.snapshot,null);assert.equal(outside.diagnostics[0].code,'INCOMPLETE_SNAPSHOT');
+ // The already-demonstrated four-issue witness: closure Epic facts cannot
+ // declare another stream or deprive independent ready work of its owner.
+ {
+  const rootCase=ordinaryFresh('S01'),[root,first]=rootCase.snapshot.issues;
+  root.id='100';root.key='EX-100';first.id='101';first.key='EX-101';first.parent_id='100';
+  const independent={...structuredClone(first),id:'102',key:'EX-102'},rootWork=JSON.parse(root.body);rootWork.workstreams[0].story_order=['EX-101','EX-102'];root.body=JSON.stringify(rootWork);
+  const firstWork=JSON.parse(first.body);firstWork.prerequisites=[{ticket:'EX-300',required_outcome:'ai_qa_complete'}];first.body=JSON.stringify(firstWork);
+  const closure={...structuredClone(root),id:'300',key:'EX-300',labels:[],status_id:'9'},closureWork=JSON.parse(closure.body);closureWork.workstreams=[{label:'stream-2',story_order:['EX-101']}];closure.body=JSON.stringify(closureWork);rootCase.snapshot.issues.push(independent,closure);
+  const {inspection:input,state:supplied}=acquired(rootCase);input.observations.provenance=[
+   {ticket_id:'100',source:'seed',source_ticket_id:null,project_id:null,label:null},
+   ...['101','102'].map(id=>({ticket_id:'EX-'+id,source:'declared',source_ticket_id:'100',project_id:'100',label:'stream-1'})),
+   {ticket_id:'EX-300',source:'prerequisite',source_ticket_id:'101',project_id:null,label:null},
+   ...['101','102'].map(id=>({ticket_id:id,source:'label',source_ticket_id:null,project_id:'100',label:'stream-1'}))
+  ];
+  const before=JSON.stringify({rootCase,input,supplied}),composed=composeOrdinarySnapshot(JSON.stringify(rootCase.config),input,supplied);assert.equal(composed.valid,true,JSON.stringify(composed));
+  assert.deepEqual(composed.snapshot.issues.map(i=>i.body),input.observations.issues.map(i=>i.body));assert.equal(composed.snapshot.issues.length,4);
+  const result=previewSnapshot(JSON.stringify(rootCase.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(result.streams.map(s=>s.scope.label),['stream-1']);assert.deepEqual(selected(result),['102']);assert(result.streams[0].candidates.find(i=>i.ticket_id==='101').reasons.some(r=>r.code==='PREREQUISITE_UNSATISFIED'));assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);assert.equal(JSON.stringify({rootCase,input,supplied}),before);
+ }
+ // A real retained mismatch on one nonmember prerequisite holds both reached
+ // consumer scopes, while the independent ready scope remains usable.
+ {
+  const reach=ordinaryFresh('S18'),second=reach.snapshot.issues.find(i=>i.id==='1002');second.status_id='1';
+  const third={...structuredClone(second),id:'1003',key:'EX-4',parent_id:'902',labels:['stream-3']},thirdRoot={...structuredClone(reach.snapshot.issues.find(i=>i.id==='901')),id:'902',key:'EX-92'},thirdWork=JSON.parse(thirdRoot.body);thirdWork.workstreams=[{label:'stream-3',story_order:['EX-4']}];thirdRoot.body=JSON.stringify(thirdWork);
+  const prerequisite=structuredClone(ordinaryFresh('S06').snapshot.issues.find(i=>i.id==='1000'));prerequisite.labels=[];prerequisite.parent_id=null;prerequisite.pointer=null;
+  for(const member of [second,third]){const work=JSON.parse(member.body);work.prerequisites=[{ticket:prerequisite.key,required_outcome:'ai_qa_complete'}];member.body=JSON.stringify(work);}
+  reach.snapshot.issues.push(thirdRoot,third,prerequisite);reach.snapshot.stream_checks.push({project_id:'100',label:'stream-3',known_ids_complete:true,repair_inventory_complete:true});
+  const {inspection:input,state:supplied}=acquired(reach),original=acquired(ordinaryFresh('S06')).inspection.observations.comment_pages.find(p=>p.ticket_id==='1000');
+  input.observations.comment_pages[input.observations.comment_pages.findIndex(p=>p.ticket_id==='1000')]=structuredClone(original);for(const comment of original.comments)input.observations.exact_comments.push({ticket_id:'1000',...structuredClone(comment)});
+  input.observations.provenance=['1002','1003'].map(source_ticket_id=>({ticket_id:prerequisite.key,source:'prerequisite',source_ticket_id,project_id:null,label:null}));
+  const admission=original.comments[0],record=JSON.parse(JSON.parse(admission.body).content[0].content[0].text),prior={site:reach.snapshot.site,ticket_id:'1000',comment_id:admission.id,record_id:record.record_id,digest:'sha256:'+createHash('sha256').update(canonicalize(record)).digest('hex'),...Object.fromEntries(['author_id','update_author_id','created','updated'].map(k=>[k,admission[k]]))};
+  supplied.retained=[prior];const before=JSON.stringify({reach,input,supplied}),matching=composeOrdinarySnapshot(JSON.stringify(reach.config),input,supplied);assert.equal(matching.valid,true,JSON.stringify(matching));assert(matching.snapshot.stream_checks.every(c=>c.known_ids_complete&&c.repair_inventory_complete));
+  const changed={...supplied,retained:[{...prior,updated:'2020-01-01T00:00:00Z'}]},changedBefore=JSON.stringify(changed),held=composeOrdinarySnapshot(JSON.stringify(reach.config),input,changed);assert.equal(held.valid,true,JSON.stringify(held));assert.deepEqual(held.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:true,repair_inventory_complete:true},...['stream-2','stream-3'].map(label=>({project_id:'100',label,known_ids_complete:false,repair_inventory_complete:false}))]);
+  for(const composed of [matching,held]){assert.deepEqual(composed.snapshot.issues.map(i=>i.body),input.observations.issues.map(i=>i.body));assert.deepEqual(composed.snapshot.retained_members,[]);assert.deepEqual(composed.snapshot.completion_receipts,[]);assert.deepEqual(composed.snapshot.repair_receipts,[]);assert(composed.snapshot.issues.find(i=>i.id==='1000').pointer===null);const result=previewSnapshot(JSON.stringify(reach.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(selected(result),['1001']);for(const stream of result.streams){for(const field of ['occupied_ids','human_review_ids','blocked_ids'])assert(!stream[field].includes('1000'));assert(!stream.candidates.some(i=>i.ticket_id==='1000'));if(composed===held&&stream.scope.label!=='stream-1')assert.equal(stream.decision,'hold');}assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);}
+  assert(input.report.scopes.every(s=>!s.old_issue_ids.includes('1000')&&!s.current_issue_ids.includes('1000')));assert.deepEqual(input.report.diagnostics,[]);assert.equal(JSON.stringify({reach,input,supplied}),before);assert.equal(JSON.stringify(changed),changedBefore);
+ }
 });
 test('ordinary composition keeps isolated unknowns and refuses shared or mismatched completeness',()=>{
  const c=ordinaryFresh('S18'),prerequisite=structuredClone(ordinaryFresh('S06').snapshot.issues.at(-1));
