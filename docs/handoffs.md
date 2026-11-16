@@ -1,10 +1,21 @@
 # Validate local handoff evidence
 
-The prepared `work-validator` contains two read-only handoff checks. **Record**
-checks one complete handoff's encoding, structure and digest. **Chain** checks an
-exact target against the provider observations and trusted configuration supplied
-in a local JSON file. Neither check fetches evidence or proves it is fresh or
-provider-authentic. A valid blocked, queued or partial result is not completion.
+The prepared `work-validator` contains four read-only handoff checks:
+
+| Purpose | What it proves |
+| --- | --- |
+| `record` | One complete handoff's encoding, structure and digest. |
+| `chain` | The existing strict proof against supplied work/context, native and external observations. |
+| `recorded-history` | Authentication of one exact recorded target and its required ancestry, including manager admission and stack requests. It does not establish current completion. |
+| `recorded-completion` | A coherent exact current recorded QA leaf, current declarations/digest/assignment, accepted native stage and outstanding recorded obligations. |
+
+No check fetches evidence or proves live provider origin. The recorded purposes
+explicitly report `external_freshness: not_evaluated` and
+`execution_authorized: false`. Hidden pushes, retargeting or PR closure may remain
+undetected; workers still check actual current facts before acting. A valid
+blocked, queued or partial strict result is not completion. Existing worker and
+manager consumers keep their strict routes until their own migration; adding
+these two purposes does not change callers or activate automation.
 
 These local checks, composed implementer/reviewer producers and the standalone prepared QA publisher are available in this
 release. The reviewer contract below binds approval/repair to actual implementation receipts. Retained QA remains a basic prose worker; its typed migration, manager
@@ -39,7 +50,7 @@ node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --mode cha
 node /opt/pigboard/skills/work-validator/scripts/validate-handoff.mjs --help
 ```
 
-Omit `--json` for readable output. Chain mode accepts JSON only and has no
+Omit `--json` for readable output. Chain and both recorded modes accept JSON only and have no
 `--format` option. Required and explicit null fields are significant. Duplicate or
 unknown command options reject. Exit 0 means the selected local check passed;
 exit 1 means the record/evidence was rejected; exit 2 means usage, regular-file
@@ -769,3 +780,102 @@ establishes current completion. `validateReceiptChain` retains its strict curren
 pointer, requirements, PR, role/resume, evidence and complete QA-ledger checks.
 Only independently accepted current QA enters the manager's prerequisite proofs.
 No CLI flag or editable validated-history summary can waive those checks.
+
+
+## Recorded manager input and results
+
+Use `pigboard-manager-handoff-input/v1` with `consumer: manager`. The closed
+[manager schema exported by the receipts module](../lib/contracts/receipts.mjs)
+requires exactly these top-level fields:
+
+| Field | Supplied facts |
+| --- | --- |
+| `target` | Exact ticket ID, comment ID, record UUID and digest; never a latest-by-time selector. |
+| `trusted` | Jira origin and configured project IDs, native stages/accepted-later stages, role actors, repositories and stored manager assignments. |
+| `issues` | Current immutable identity/key/project/stream, stage, pointer, digest, outstanding requests and PR-publication inventory. |
+| `requirements` | Current-only ticket/digest/format/original raw body. No old work version or execution context. |
+| `comment_pages` | Complete contiguous discovery, including exact original ADF/HTML bytes and immutable server actor/time metadata. |
+| `retained` | Previously retained exact reference/server-metadata tuples for historical ancestry. Current comments cannot replace missing prior proof. |
+| `request_resolutions` | Exact recorded request/completion pairs whose coherent consumption is checked. |
+
+`context_body`, external `pr_receipts`/`evidence_receipts`, execution allowlists and
+caller-authored validation summaries reject. History can use an empty current
+`requirements` array; any supplied row must still safely parse and match its
+native current digest. Completion requires the current raw work for its target
+and current obligations. Its declaration graph, coverage, dispatch, preparation,
+installed skills, configured repository scope and complete ledger are checked
+without inventing an execution context. This is internal declaration consistency,
+not proof of external obligation completeness, target access, CI or operation
+validity. Old publishers' coverage/operation facts remain authenticated
+assertions; they are not reconstructed from unavailable old definitions.
+
+Both purposes retain exact UUID/role/assignment/resume slots, immutable metadata,
+all direct/nested repair roots, parent segments/cutoffs and incorporated revisions.
+An older assignment is historical even when its digest equals the current one.
+Genuine pre-first-PR waits require complete typed publication inventory and no
+contradictory prior PR; they do not prove absence of a hidden external PR.
+
+`inspectRecordedHistory(rawJson)` returns a direct purpose-bound object with
+`valid`, exact `target`, `records`, `coverage_segments`, `bindings` and diagnostics.
+A historical row's `completed` means an authenticated QA assertion, not current
+completion. `recorded_completion_established` remains false.
+`inspectRecordedCompletion(rawJson)` returns `{validation, bindings}`. Successful
+validation names the exact `validated_leaf`, QA ledger/human pending and
+`recorded_completion_established: true`; only a current QA leaf in Human Review
+or a configured accepted-later stage succeeds. Non-QA, unpublished, stale or
+incomplete proof rejects. Invalid proof returns no bindings; invalid completion
+has a null leaf. Both use `schema: pigboard-recorded-handoff-validation/v1`,
+`basis: authenticated_jira_handoff` and the explicit unchecked-freshness/no-action
+fields. They never return the old strict `completion_established` flag.
+
+Bindings cover exact raw comment/server facts, UUID identities, current raw
+requirements/canonical work, native issues/stored assignments, project scope and
+retained tuples. They contain no context or external PR/evidence observations.
+Their stable identities permit a later consumer to compare shared supplied facts;
+a binding is not provider-origin authentication or execution permission.
+
+### Complete prepared example in source and installed copies
+
+Prerequisites: the approved source revision and its prepared runtime, an installed
+validator from that same release if using the installed command, and an approved
+disposable preparation directory. The source-only
+`test/fixtures/handoff-chains.json` supplies complete synthetic envelopes. It and
+the architecture guide are **not** installed payload files. Preparation below
+materializes external absolute input files; installed checks need those prepared
+files, not a source fixture path inside `work-validator`.
+
+```sh
+export PIGBOARD_SOURCE=/absolute/approved/pigboard
+export PIGBOARD_PREPARED=/absolute/disposable/pgb160
+export PIGBOARD_VALIDATOR=/absolute/receipt/skills/work-validator
+node --input-type=module <<'JS'
+import fs from 'node:fs';
+import path from 'node:path';
+const packet=JSON.parse(fs.readFileSync(path.join(process.env.PIGBOARD_SOURCE,'test/fixtures/handoff-chains.json'))).recorded;
+fs.mkdirSync(process.env.PIGBOARD_PREPARED,{recursive:true,mode:0o700});
+for(const id of ['P01','P03']) {
+  const input=packet.rows.find(row=>row.id===id).input;
+  fs.writeFileSync(path.join(process.env.PIGBOARD_PREPARED,id+'.json'),JSON.stringify(input),{flag:'wx'});
+}
+JS
+node "$PIGBOARD_SOURCE/scripts/validate-handoff.mjs" --mode recorded-completion --input "$PIGBOARD_PREPARED/P01.json" --json
+node "$PIGBOARD_VALIDATOR/scripts/validate-handoff.mjs" --mode recorded-completion --input "$PIGBOARD_PREPARED/P01.json" --json
+node "$PIGBOARD_SOURCE/scripts/validate-handoff.mjs" --mode recorded-history --input "$PIGBOARD_PREPARED/P03.json" --json
+node "$PIGBOARD_VALIDATOR/scripts/validate-handoff.mjs" --mode recorded-history --input "$PIGBOARD_PREPARED/P03.json" --json
+```
+
+P01 exits 0 with a recorded current QA leaf, four AI steps, pending `HQA-01` and
+its hashed `PREP-1` preparation assertion. P03 exits 0 for the exact manager
+admission target and reports no current completion. Both source and installed
+outputs agree and deny execution authority. These are synthetic developer
+checks; designated PGB-160-H01/H02 remain **NOT_RUN** until humans execute them.
+Omit `--json` for the readable purpose, exact target, outcome and bindings count.
+
+If preparation reports an existing file, preserve it and its evidence; do not
+silently overwrite it. Missing current declarations, a changed pointer/digest,
+missing historical tuple/ancestor or incomplete root/cutoff must be corrected in
+the supplied prepared evidence by its owner. Never copy a current comment into a
+missing retained slot or retry a strict failure through a recorded purpose.
+Retain the exact revision, input hashes, command/output and result before removing
+only the disposable P01/P03 files created above. There is no provider call,
+customer write, setup repair, worker launch, merge or activation in these checks.

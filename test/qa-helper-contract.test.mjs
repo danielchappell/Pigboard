@@ -4924,7 +4924,6 @@ test('PGB-171 current coverage and actual159 payload retain dated evidence',asyn
  for(const file of old.payload.sources){
   const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.payload.artifacts_sha256[file];
   assert.equal(a.payload.artifacts_sha256[file],expected,file+' R payload map');
-  assert.equal(hash(await read(file)),expected,file+' actual source bytes');
  }
  for(const file of old.runtime.paths){
   const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.runtime.artifacts_sha256[file];
@@ -4932,6 +4931,36 @@ test('PGB-171 current coverage and actual159 payload retain dated evidence',asyn
  }
  assert.equal(a.payload.only_changed_path,'lib/jira/read.mjs');
  assert.equal(a.runtime.only_changed_path,'lib/jira/read.mjs');
+ const parentFiles={'docs/architecture/manager-handoff-contract.md':'e1ad3802988275d124c38ee592063fae81aa3de91601931e7ee2596561f7f972','docs/handoffs.md':'72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915','lib/contracts/receipts.mjs':'918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b','scripts/validate-handoff.mjs':'109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe','test/cursor-environment.test.mjs':'ddc994ad97549f1b9a94585851e32ab05f941d1dac48d467146759b6d8e794d3','test/fixtures/handoff-chains.json':'f2077a69dadb16da0d9d7b7556611d7d128f57cdd507f722cb218f187dd717bc','test/handoff.test.mjs':'014ca334466bde44b3bd4836d3a8d3450e2c6ebf8f48846feca43a76970f2dbe','test/receipt-chain.test.mjs':'8986730b40ee3282b512c1a74204e0db7027db042a1af61c62be45db79211612'};
+ const payloadChanges=['lib/contracts/receipts.mjs','scripts/validate-handoff.mjs','docs/handoffs.md'];
+ const runtimeChanges=payloadChanges.filter(file=>file!=='docs/handoffs.md');
+ const integration=a.parent_integration;
+ const assertComposed=record=>{
+  assert.equal(record.kind,'ordinary_actual_pgb160_merge');
+  assert.deepEqual(record.original_r,{commit:'e7c9f022f9ada9799b26e85364b991e2d42947f8',tree:'13580b59308ccb67852ce3260bd8e6325d244f83',amendment_json_sha256:'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a',amendment_canonical_sha256:'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844',publication_raw_sha256:'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541'});
+  assert.deepEqual(record.actual_160,{reviewed_commit:'44f148f1f445a9490f314c9b2213ec3e087a855c',reviewed_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',delivered_main_commit:'da92a4e1d7839f815e661ffe7709f1891038b454',delivered_main_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',original_parent_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',changed_path_sha256:parentFiles});
+  assert.deepEqual(record.same_tree_base159,{candidate_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',delivered_commit:'52718e641ad7360e9fbb03b74bced05412fd5160',tree:'46aa208fe2c963dbe4360ccbd99049aef0310aac'});
+  assert.equal(record.reader_sha256,rRead);
+  assert.deepEqual(Object.keys(record.current_payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
+  assert.deepEqual(Object.keys(record.current_runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
+  assert.deepEqual([record.current_payload.count,record.current_runtime.count],[41,27]);
+  assert.deepEqual(Object.keys(record.authorized_payload_substitutions).sort(),payloadChanges.slice().sort());
+  assert.deepEqual(Object.keys(record.authorized_runtime_substitutions).sort(),runtimeChanges.slice().sort());
+  for(const file of old.payload.sources){const expected=payloadChanges.includes(file)?parentFiles[file]:a.payload.artifacts_sha256[file];assert.equal(record.current_payload.artifacts_sha256[file],expected,file+' composed payload');}
+  for(const file of old.runtime.paths){const expected=runtimeChanges.includes(file)?parentFiles[file]:a.runtime.artifacts_sha256[file];assert.equal(record.current_runtime.artifacts_sha256[file],expected,file+' composed runtime');assert.equal(record.current_runtime.artifacts_sha256[file],record.current_payload.artifacts_sha256[file],file+' runtime/payload agreement');}
+  for(const file of payloadChanges)assert.deepEqual(record.authorized_payload_substitutions[file],{before:a.payload.artifacts_sha256[file],after:parentFiles[file]});
+  for(const file of runtimeChanges)assert.deepEqual(record.authorized_runtime_substitutions[file],{before:a.runtime.artifacts_sha256[file],after:parentFiles[file]});
+ };
+ assertComposed(integration);
+ const originalR=structuredClone(a);delete originalR.parent_integration;
+ assert.equal(hash(JSON.stringify(originalR)),'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a');
+ assert.equal(hash(canonicalize(originalR)),'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844');
+ const originalPublication=structuredClone(p);delete originalPublication.named_issue_acquisition_amendment.parent_integration;
+ assert.equal(hash(JSON.stringify(originalPublication,null,2)+'\n'),'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541');
+ for(const [file,digest]of Object.entries(parentFiles))assert.equal(hash(await read(file)),digest,file+' reviewed160 source bytes');
+ for(const file of old.payload.sources)assert.equal(hash(await read(file)),integration.current_payload.artifacts_sha256[file],file+' current composed source bytes');
+ const changedParent=structuredClone(integration);changedParent.current_payload.artifacts_sha256['lib/contracts/receipts.mjs']='0';assert.throws(()=>assertComposed(changedParent),/composed payload/);
+ const changedSibling=structuredClone(integration);changedSibling.current_payload.artifacts_sha256['lib/config/parse.mjs']='0';assert.throws(()=>assertComposed(changedSibling),/composed payload/);
  for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){
   const current=await read(file),prior=a.prior_catalogue_text[file].utf8;
   const rows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));
@@ -4941,7 +4970,6 @@ test('PGB-171 current coverage and actual159 payload retain dated evidence',asyn
  }
  assert.deepEqual(a.case_dispositions.map(c=>[c.case_id,c.requirements]),[['R1-43-H01',['M13','M14']],['R1-43-H02',['A12','O09']]]);
  assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
- const changed=structuredClone(a);changed.payload.artifacts_sha256['lib/jira/read.mjs']='0';assert.notDeepEqual(changed.payload.artifacts_sha256,a.payload.artifacts_sha256);
 });
 
 // Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.

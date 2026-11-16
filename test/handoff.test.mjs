@@ -207,3 +207,16 @@ test('QA-only blocked/wait findings are optional, bounded and closed without cha
     assert.equal(raw(old), before); assert.equal(validateHandoff(before).record_digest, oldDigest);
   }
 });
+
+test('recorded CLI rejects mixed purposes and unsafe setup before reading input',async t=>{
+ const {mkdir,copyFile}=await import('node:fs/promises'),dir=await mkdtemp(path.join(os.tmpdir(),'recorded-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname,run=(script,args)=>spawnSync(process.execPath,[script,...args,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});
+ const helper=path.join(dir,'isolated','scripts');await mkdir(helper,{recursive:true});await copyFile(cli,path.join(helper,'validate-handoff.mjs'));
+ for(const mode of ['recorded-history','recorded-completion'])for(const [script,args,code]of [
+  [cli,['--mode',mode,'--input',path.join(dir,'MISSING_SECRET_CANARY'),'--format','yaml'],'USAGE'],
+  [cli,['--mode',mode,'--input',path.join(dir,'MISSING_SECRET_CANARY')],'INPUT'],
+  [cli,['--mode',mode,'--input',dir],'INPUT'],
+  [path.join(helper,'validate-handoff.mjs'),['--mode',mode,'--input',path.join(dir,'MISSING_SECRET_CANARY')],'SETUP'],
+ ]){const child=run(script,args);assert.equal(child.status,2,child.stdout+child.stderr);assert.equal(child.stderr,'');assert(!child.stdout.includes('SECRET_CANARY'));const result=JSON.parse(child.stdout),v=result.validation??result;assert.equal(v.schema,'pigboard-recorded-handoff-validation/v1');assert.equal(v.purpose,mode);assert.equal(v.valid,false);assert.equal(v.recorded_completion_established,false);assert.equal(v.execution_authorized,false);assert.equal(v.external_freshness,'not_evaluated');assert.equal(v.diagnostics[0].code,code);assert.deepEqual(result.bindings,[]);if(mode==='recorded-completion')assert.equal(v.validated_leaf,null);}
+ const help=run(cli,['--help']);assert.equal(help.status,0);const message=JSON.parse(help.stdout).help;for(const mode of ['record','chain','recorded-history','recorded-completion'])assert(message.includes('--mode '+mode));assert.match(message,/pigboard-manager-handoff-input\/v1/);
+});

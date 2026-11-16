@@ -165416,6 +165416,142 @@
       "activation_authorized": false,
       "implementation_commit": "recorded_after_commit_in_handoff",
       "hosted_checks": "not_run_for_R"
+    },
+    "parent_integration": {
+      "kind": "ordinary_actual_pgb160_merge",
+      "original_r": {
+        "commit": "e7c9f022f9ada9799b26e85364b991e2d42947f8",
+        "tree": "13580b59308ccb67852ce3260bd8e6325d244f83",
+        "amendment_json_sha256": "402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a",
+        "amendment_canonical_sha256": "956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844",
+        "publication_raw_sha256": "37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541"
+      },
+      "actual_160": {
+        "reviewed_commit": "44f148f1f445a9490f314c9b2213ec3e087a855c",
+        "reviewed_tree": "5cd564baa4e78480dc0c433a4ac15465918635f3",
+        "delivered_main_commit": "da92a4e1d7839f815e661ffe7709f1891038b454",
+        "delivered_main_tree": "5cd564baa4e78480dc0c433a4ac15465918635f3",
+        "original_parent_commit": "e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48",
+        "changed_path_sha256": {
+          "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
+          "scripts/validate-handoff.mjs": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe",
+          "test/receipt-chain.test.mjs": "8986730b40ee3282b512c1a74204e0db7027db042a1af61c62be45db79211612",
+          "test/handoff.test.mjs": "014ca334466bde44b3bd4836d3a8d3450e2c6ebf8f48846feca43a76970f2dbe",
+          "test/fixtures/handoff-chains.json": "f2077a69dadb16da0d9d7b7556611d7d128f57cdd507f722cb218f187dd717bc",
+          "docs/handoffs.md": "72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915",
+          "docs/architecture/manager-handoff-contract.md": "e1ad3802988275d124c38ee592063fae81aa3de91601931e7ee2596561f7f972",
+          "test/cursor-environment.test.mjs": "ddc994ad97549f1b9a94585851e32ab05f941d1dac48d467146759b6d8e794d3"
+        }
+      },
+      "same_tree_base159": {
+        "candidate_commit": "e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48",
+        "delivered_commit": "52718e641ad7360e9fbb03b74bced05412fd5160",
+        "tree": "46aa208fe2c963dbe4360ccbd99049aef0310aac"
+      },
+      "current_payload": {
+        "count": 41,
+        "artifacts_sha256": {
+          "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+          "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+          "scripts/validate-work.mjs": "794a5c19d8cf39da3e547d9ea9e4d04249b8838073cefbeef43fe10dd4a0e51f",
+          "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
+          "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+          "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+          "docs/authoring.md": "26836a1971faf4d39705133bdf1b57283427c980af67dd47886963c9b313784b",
+          "docs/architecture/examples/manager-epic.yaml": "47da131cf06ddb68d042ec09113ab0132125a4454c46c7e72062219d3bbc4936",
+          "docs/architecture/examples/manager-epic-populated.yaml": "015d8a1f97ef24a8eb78d8832256ba3d711f15675cacc005f40a8a315eccd62c",
+          "docs/architecture/examples/manager-ticket.yaml": "ce9a6532bee4a6a561957d62a0198de61e7da0342ef8128853cc11dba3200ff0",
+          "docs/architecture/examples/manager-ticket-populated.yaml": "67684c400a6ebf50b2bb3b2db509d7b3c989dd2a89a713d56b3d91c088635338",
+          "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
+          "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+          "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+          "config/skill-bundle.json": "3063c9117d1e1724fb0341c7b610cf1b9518c77f585161ae95c4a1ab86efec99",
+          "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+          "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+          "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+          "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
+          "scripts/validate-handoff.mjs": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe",
+          "docs/handoffs.md": "72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915",
+          "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+          "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+          "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+          "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+          "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+          "config/pigboss.example.yaml": "21e38dc635fcc894fb3882731d458bc8e5d67b3cccc396953dfb57ea6baaa949",
+          "docs/configuration.md": "4daf03b46702cf35b9e7f64c5f45cb94b6c26703796171c5cb0f7481af23ccb9",
+          "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+          "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+          "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+          "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+          "lib/manager/repair-policy.mjs": "349f197f563794d3f9722605047f472f31aa1f16a8b97f1701d5aa9760b3b766",
+          "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+          "docs/manager-preview.md": "2dd6b2738ba3758337d23733128997a3fe6959462ca222ceb00b728577e8d339",
+          "test/fixtures/manager-candidates.json": "83d9fee49345eb078f9c9cb8ea1d2ddd962dd655e921bf9ae74f0e54042d71ca",
+          "test/fixtures/manager-repairs.json": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7",
+          "lib/jira/read.mjs": "5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7",
+          "test/fixtures/jira-preview-harness.mjs": "c81b81789f3ecdcc801f7cdf8efde31d3d168e93d703fe2bbb3c57ceb5d0ab22",
+          "test/fixtures/jira-preview-cases.json": "dc88760cd897cfb997d6def8e50c59598ff133a5c19fe3fdd4a55dbcc1ff341e",
+          "test/fixtures/jira-preview-tls.json": "264fa815a82ab6c8b9ff2433b9113070130460c8ace7bfd8f6429116a4f33762"
+        }
+      },
+      "current_runtime": {
+        "count": 27,
+        "artifacts_sha256": {
+          "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+          "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+          "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+          "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+          "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+          "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+          "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+          "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+          "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+          "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+          "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+          "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
+          "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
+          "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
+          "lib/jira/read.mjs": "5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7",
+          "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+          "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+          "lib/manager/repair-policy.mjs": "349f197f563794d3f9722605047f472f31aa1f16a8b97f1701d5aa9760b3b766",
+          "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+          "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+          "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+          "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+          "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+          "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+          "scripts/validate-handoff.mjs": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe",
+          "scripts/validate-work.mjs": "794a5c19d8cf39da3e547d9ea9e4d04249b8838073cefbeef43fe10dd4a0e51f",
+          "test/fixtures/jira-preview-harness.mjs": "c81b81789f3ecdcc801f7cdf8efde31d3d168e93d703fe2bbb3c57ceb5d0ab22"
+        }
+      },
+      "authorized_payload_substitutions": {
+        "lib/contracts/receipts.mjs": {
+          "before": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+          "after": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b"
+        },
+        "scripts/validate-handoff.mjs": {
+          "before": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+          "after": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe"
+        },
+        "docs/handoffs.md": {
+          "before": "08157ffd354999c44554040d44a73fccf31c86e1e37626131bc82e97562c17e4",
+          "after": "72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915"
+        }
+      },
+      "authorized_runtime_substitutions": {
+        "lib/contracts/receipts.mjs": {
+          "before": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+          "after": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b"
+        },
+        "scripts/validate-handoff.mjs": {
+          "before": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+          "after": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe"
+        }
+      },
+      "reader_sha256": "5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7",
+      "status": "Composed source after actual PGB-160 merge; original R and dated 159/169 evidence remains intact. Affected checks, independent code review, hosted CI, human acceptance, merge and activation are recorded separately."
     }
   }
 }
