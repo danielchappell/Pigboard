@@ -449,6 +449,24 @@ missing artifact facts belong to instruction preflight rather than the raw work
 schema; start-valid declarations alone do not mean execution-ready. Do not fix a
 negative by guessing a fact, inferring permission or changing case expectations.
 
+For `I02-child-receipt`, the trusted operator must independently bind and supply
+`input/cards.json#/reads/child_operation_history` **before invoking qa-api**.
+This supplied/mock past input records an earlier submitted child operation whose
+original response/report is unavailable and execution/effects remain unknown.
+It is distinct from losing a reply after a new call. No fresh API response or
+selected-request-count observation is available in this packet; the downstream
+SQL/UI cards remain prescribed inputs, not executed observations. The existing
+qa-api unresolved-operation rule governs the handoff. Canonical
+`known-requests.json` remains the publisher's upstream repair-request list and
+must not contain this child history.
+
+The named access/preparation operator must resolve the original uncertainty and
+retain its evidence before a later authorized handoff. Do not replace the
+request, infer success or treat the fixture as new authorization or completion.
+Developer source checks verify the history's identity, chronology and pre-action
+binding; they do not demonstrate an actual helper refusal or zero calls. The
+specific accepted helper/publisher evidence gap10765 remains separate.
+
 For R1-27-H03, inspect static human-only work, all-NOT_RUN missing-environment,
 partial observations without proof, earlier mismatch then inability, pure wait,
 mismatch plus wait and retained-evidence controls. A typed unresolved request

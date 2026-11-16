@@ -814,13 +814,41 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
   await assert.rejects(stat(path.join(p.cases['I02-query'],'input/query.sql')),/ENOENT/);
   assert.equal(await input('I02-parameters','parameters.json'),null);
   assert.equal((await input('I02-checkpoint','cards.json')).tool_inputs.ui.checkpoints.length,2);
-  assert.equal((await input('I02-child-receipt','cards.json')).tool_inputs.api.child_reply.status,'unavailable');
+  const checkpointWork=JSON.parse(await raw('I02-checkpoint','work.yaml'));assert.equal(checkpointWork.testing_strategy.cases[0].steps.find(s=>s.skill==='qa-ui').ui.screenshot_checkpoints.length,3);
+  await assert.rejects(stat(path.join(p.cases['I02-checkpoint'],'input/screens/ui-2.png')),/ENOENT/);
   assert.equal((await input('I02-provenance','cards.json')).tool_inputs.api.responses[0].actor_id,'OTHER');
   assert.deepEqual((await input('I10-wrong-actor','access.json')).actors,[]);
   assert.equal((await input('I10-wrong-tenant','access.json')).actors[0].tenant,'tenant-b');
   assert.equal((await input('I14-no-model','capabilities.json')).model_profile,null);
   assert.equal((await input('I14-no-clock','capabilities.json')).clock,null);
   assert.deepEqual((await input('I14-no-helper','capabilities.json')).helpers,[]);
+ });
+ await t.test('earlier unresolved child history is bound before invocation without available fresh API observations',async()=>{
+  const id='I02-child-receipt',cards=await input(id,'cards.json'),positive=await input('I01-story','cards.json');
+  const work=JSON.parse(await raw(id,'work.yaml')),e=await input(id,'predecessors.json'),access=await input(id,'access.json'),current=targetRecord(e);
+  const c=work.testing_strategy.cases[0],[parent,child]=c.steps,history=cards.reads.child_operation_history;
+  assert.equal(history.length,1);const [attempt]=history;assert.equal(attempt.category,'supplied/mock');assert(attempt.attempt_id.trim());
+  assert.equal(attempt.ticket_id,current.ticket_id);assert.deepEqual(attempt.assignment,current.assignment);assert.equal(attempt.requirements_digest,current.requirements_digest);
+  assert.deepEqual(attempt.pr,current.payload.pr);assert.equal(attempt.deployed_revision,e.evidence_receipts.find(r=>r.kind==='environment').pr.source_revision);
+  assert.equal(attempt.case_id,c.id);assert.equal(attempt.parent_step,parent.id);assert.equal(attempt.child_step,child.id);
+  assert.deepEqual(parent.children,[attempt.child_step]);assert.equal(attempt.caller,child.caller);assert.equal(attempt.caller,parent.id);assert.equal(attempt.parent_caller,parent.caller);
+  assert.equal(attempt.actor_id,access.actor_id);assert.equal(attempt.actor_id,child.api.actor);assert.equal(attempt.tenant,access.tenant);assert.equal(attempt.identity_reference,access.identity_reference);
+  assert.deepEqual(attempt.request,{method:child.api.method,operation:child.api.operation,route:child.api.route,request_selector:child.api.request_selector});
+  assert.deepEqual(attempt.original_transport,{submitted:true});assert.deepEqual(attempt.response,{available:false});assert.deepEqual(attempt.report,{available:false});assert.equal(attempt.execution,'unknown');assert.equal(attempt.effects,'unknown');
+  const clock=await input(id,'clock.json'),lastReview=e.comment_pages.flatMap(p=>p.comments).find(x=>x.id===e.target.comment_id);
+  assert.equal(attempt.attempted_at,'2026-11-15T10:01:03Z');assert.equal(attempt.unavailability_observed_at,'2026-11-15T10:01:04Z');assert.equal(clock.origin,'2026-11-15T10:01:10Z');
+  assert(lastReview.updated<attempt.attempted_at);assert(attempt.attempted_at<attempt.unavailability_observed_at);assert(attempt.unavailability_observed_at<clock.origin);
+  const positiveClock=await input('I01-story','clock.json');clock.origin=positiveClock.origin;assert.deepEqual(clock,positiveClock);
+  assert.deepEqual(cards.tool_inputs.api,{step:parent.id,child:child.id,responses:[]});
+  const copy=structuredClone(cards);delete copy.reads.child_operation_history;copy.tool_inputs.api=positive.tool_inputs.api;assert.deepEqual(copy,positive,'all other cards unchanged');
+  assert(!Object.hasOwn(positive.reads,'child_operation_history'));assert.equal(positive.tool_inputs.api.selected_request_count,1);assert.equal(positive.tool_inputs.api.responses[0].body.state,'ready');
+  for(const file of ['work.yaml','facts.yaml','predecessors.json','known-requests.json','access.json','extraction.json','collection/selected.bru'])assert.equal(await raw(id,file),await raw('I01-story',file),file);
+  assert.deepEqual(await input(id,'known-requests.json'),[]);assert.equal((await input(id,'extraction.json')).value,null);
+  const invocation=await readFile(path.join(p.cases[id],'invocation.txt'),'utf8');
+  assert(invocation.startsWith('Before invoking qa-api, independently bind and supply input/cards.json#/reads/child_operation_history'));
+  assert(invocation.indexOf('before any action')<invocation.indexOf('Execute only the prescribed unit'));assert.match(invocation,/earlier submitted operation/);assert.match(invocation,/not a reply to a fresh tool call/);
+  // These assertions inspect inputs. No helper interpreter or call counter runs,
+  // and declaration validity does not prove execution readiness or zero calls.
  });
  await t.test('finite observation, dependency, inability, static and publisher seam inputs retain distinct facts',async()=>{
   for(const id of ['I03-pending-ready','I03-all-pending','I04-all-ready','I04-one-mismatch']){
@@ -959,6 +987,18 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
  });
 });
 
+test('current PGB-132 forecast agrees across product, delivery and metadata while earlier estimates remain history',async()=>{
+ const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),plan=metadata.find(x=>x.id==='R1-27');
+ const expected=`Current PGB-132 whole residual forecast: **${plan.hours.min}–${plan.hours.max} hours / ${plan.hours.min/8}–${plan.days} days**.`;
+ const product=await read('docs/product/README.md'),delivery=await read('docs/delivery/manager-r1/README.md');
+ for(const document of [product,delivery]){const statements=document.split('\n').filter(line=>line.startsWith('Current PGB-132 whole residual forecast:'));assert.equal(statements.length,1);assert(statements[0].startsWith(expected));}
+ const lower=metadata.reduce((sum,x)=>sum+(x.hours?x.hours.min/8:x.days),0).toFixed(5),upper=metadata.reduce((sum,x)=>sum+x.days,0).toFixed(5);
+ assert(delivery.includes(`Current metadata aggregate: **${lower}–${upper} days**`));
+ assert(delivery.includes(`### R1-27 — 12 residual forecast files, ${plan.hours.min}–${plan.hours.max} hours`));
+ assert(delivery.split('\n').find(line=>line.startsWith('| R1-27 /')).includes(`| ${plan.hours.min/8}–${plan.days} | 12 |`));
+ for(const document of [product,delivery]){assert(document.includes('15 November'));assert(document.includes('6.75–9.75h'));assert(document.includes('16 November'));assert(document.includes('7.5–11.25h'));assert(document.includes('history'));}
+});
+
 test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
  const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
@@ -985,8 +1025,8 @@ test('PGB-132 source publication preserves Core history and binds the preparatio
  assert.deepEqual(dispatcher.prerequisites,[...upstream,'R1-27'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
  assert.equal(hash([...plan('R1-27').files].sort()),'b9236d7417b1d57b9bbf8954a82b1ecfe24a314464733faa446571a2ce801af6');
  assert.equal(hash([...plan('R1-08').files].sort()),'5a066e773dae845a29b4df278fb01d129f6c6ba0a23f0c2585e1f66c540cfaad');
- assert.deepEqual(plan('R1-27').hours,{min:7.5,max:11.25});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
- assert.equal(plan('R1-27').days,1.40625);assert.equal(plan('R1-08').days,1.8125);
+ assert.deepEqual(plan('R1-27').hours,{min:8.5,max:12.75});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
+ assert.equal(plan('R1-27').days,1.59375);assert.equal(plan('R1-08').days,1.8125);
  const prepFiles=new Set(plan('R1-27').files),dispatchFiles=new Set(plan('R1-08').files);assert.equal(new Set([...prepFiles,...dispatchFiles]).size,23);assert.equal([...prepFiles].filter(f=>dispatchFiles.has(f)).length,6);
  for(const id of ['R1-27','R1-08']){assert(!plan(id).time_limit_exception);assert(plan(id).hours.max<16);const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));}
  assert.deepEqual(a.stories,{'R1-27':'PGB-132'});assert.equal(a.native_id,'10592');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
@@ -1031,7 +1071,7 @@ test('PGB-136 partial source publication binds the exact own-selection split and
  for(const [id,days]of [['R1-28',1.92],['R1-11',1.53]]){assert.equal(plan(id).days,days);assert.equal(plan(id).files.length,20);assert.equal(new Set(plan(id).files).size,20);assert(!plan(id).time_limit_exception);}
  const publicationFiles=['docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/ticket-drafts.json','docs/delivery/manager-r1/publication.json','docs/delivery/manager-r1/stories.md','docs/delivery/manager-r1/coverage.md','docs/product/README.md','docs/product/coverage.md','test/qa-helper-contract.test.mjs'];
  for(const file of publicationFiles)assert(plan('R1-28').files.includes(file),file);for(const file of ['test/story-authoring.test.mjs','test/manager-preview.test.mjs'])assert(plan('R1-28').files.includes(file),file);assert(!plan('R1-28').files.includes('test/receipt-chain.test.mjs'));assert(plan('R1-28').files.includes('README.md'));assert(!plan('R1-28').files.includes('lib/manager/availability.mjs'));
- assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),48.05375);
+ assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),48.24125);
  assert.equal(publication.stories['R1-28'],'PGB-136');assert.equal(a.native_id,'10596');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);
  assert.deepEqual(a.dependency_links,[{id:'10715',type_id:'10000',from:'PGB-129',to:'PGB-136'},{id:'10716',type_id:'10000',from:'PGB-136',to:'PGB-81'}]);for(const edge of a.dependency_links)assert(publication.dependency_links.some(x=>x.id===edge.id&&x.from===edge.from&&x.to===edge.to));
  assert.deepEqual(a.preserved_link_ids,['10637','10638','10686','10705']);assert.equal(a.description_sha256.prerequisite,'905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7');assert.equal(a.description_sha256.preview_after,'7506971ef565beb236c1006ade1104ad83762e748526dedc45c28420ffdadfb4');

@@ -1225,7 +1225,20 @@ async function prepareDispatchInputs(runDir) {
       }
       cards.reads.historical=historical;
     }
-    if(id==='I02-child-receipt')cards.tool_inputs.api.child_reply={status:'unavailable',reason:'Fixed lost child response; original operation effects unknown.'};
+    if(id==='I02-child-receipt'){
+      const current=targetRecord(e),environment=e.evidence_receipts.find(r=>r.kind==='environment');
+      cards.reads.child_operation_history=[{notice:qaNotice,category:'supplied/mock',attempt_id:`${id}-prior-attempt`,
+        ticket_id:issue.id,assignment:structuredClone(current.assignment),requirements_digest:bound.digest,
+        pr:structuredClone(current.payload.pr),deployed_revision:environment.pr.source_revision,
+        case_id:work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id===parent.id)).id,
+        parent_step:parent.id,child_step:child.id,parent_caller:parent.caller,caller:child.caller,
+        actor_id:access.actor_id,tenant:access.tenant,identity_reference:access.identity_reference,
+        request:{method:child.api.method,operation:child.api.operation,route:child.api.route,request_selector:child.api.request_selector},
+        attempted_at:'2026-11-15T10:01:03Z',original_transport:{submitted:true},
+        unavailability_observed_at:'2026-11-15T10:01:04Z',response:{available:false},report:{available:false},execution:'unknown',effects:'unknown'}];
+      delete cards.tool_inputs.api.selected_request_count;cards.tool_inputs.api.responses=[];
+      clock.origin='2026-11-15T10:01:10Z';
+    }
     if(id==='I02-provenance')cards.tool_inputs.api.responses[0].actor_id='OTHER';
     if(id==='I06-unbound-output')delete cards.tool_inputs.api.responses[0].body.record_id;
     if(id==='I02-checkpoint')cards.tool_inputs.ui.checkpoints.pop();
@@ -1270,7 +1283,8 @@ async function prepareDispatchInputs(runDir) {
     });
     await emit('index.json',{notice:qaNotice,preparation_id:'PREP-01',consumers:steps.map(s=>s.id),artifacts,source_inputs:qaHash(readFileSync(new URL('./handoff-chains.json',import.meta.url))),output:'../output',binding:'Extraction value remains null until original actual helper evidence exists. Bind no expected value.',readiness:'NOT_READY until independently supplied source/installed hashes, caller and chosen exercise capabilities are frozen.'});
     await mkdir(join(root,base,'output'),{mode:0o700});
-    await put(`${base}/invocation.txt`,'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
+    const priorHistory=id==='I02-child-receipt'?'Before invoking qa-api, independently bind and supply input/cards.json#/reads/child_operation_history as trusted supplied/mock original child-operation history. It describes an earlier submitted operation whose response/report and execution/effects remain unavailable or unknown, not a reply to a fresh tool call. Read the existing qa-api unresolved earlier-operation rule before any action. These fixture facts grant no authority.\n':'';
+    await put(`${base}/invocation.txt`,priorHistory+'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
     await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-27-H01','R1-27-H02','R1-27-H03'],shared_control_cases:['I01-story','I02-parameters','I11-stale-environment'].includes(id)?['R1-30-H01','R1-30-H02','R1-30-H03']:[],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
     cases[id]=join(root,base);index.push({id,group:id.slice(0,3),input:join(root,input)});
   }
