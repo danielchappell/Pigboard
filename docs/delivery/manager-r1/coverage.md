@@ -15,7 +15,7 @@
 | A09 | R1-02-H02, R1-05-H01, R1-07-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-164-H01; PGB-166-H02 |
 | A10 | R1-01-H02, R1-02-H02; PGB-159-H02 |
 | A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H02 |
-| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03; PGB-159-H01; PGB-159-H02; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02 |
+| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03; PGB-159-H01; PGB-159-H02; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; R1-43-H02 |
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01; PGB-164-H01; PGB-165-H01 |
 | W02 | R1-05-H01 |
 | W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-161-H01; PGB-164-H01; PGB-165-H01 |
@@ -40,8 +40,8 @@
 | M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05; R1-32-H01, R1-35-H01, R1-37-D4, R1-39-H01, R1-39-H02; PGB-160-H01; PGB-160-H02; PGB-162-H01; PGB-162-H02 |
 | M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03; R1-32-H01, R1-35-H01, R1-39-H01; PGB-160-H01; PGB-160-H02; PGB-162-H01 |
 | M12 | R1-11-S02, R1-11-S40, R1-19-H03; PGB-162-H02 |
-| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01; R1-33-H01, R1-33-H02, R1-34-H01, R1-34-H02, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05; PGB-162-H02; PGB-163-H01; PGB-163-H02 |
-| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02; R1-32-H01, R1-32-H02, R1-33-H04, R1-34-H04, R1-35-H01, R1-35-H02, R1-37-D1, R1-37-D2, R1-37-D3, R1-37-D4, R1-37-D5, R1-39-H02, R1-12-H05; PGB-162-H01; PGB-162-H02; PGB-163-H01 |
+| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01; R1-33-H01, R1-33-H02, R1-34-H01, R1-34-H02, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05; PGB-162-H02; PGB-163-H01; PGB-163-H02; R1-43-H01 |
+| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02; R1-32-H01, R1-32-H02, R1-33-H04, R1-34-H04, R1-35-H01, R1-35-H02, R1-37-D1, R1-37-D2, R1-37-D3, R1-37-D4, R1-37-D5, R1-39-H02, R1-12-H05; PGB-162-H01; PGB-162-H02; PGB-163-H01; R1-43-H01 |
 | O01 | R1-13-H01, R1-13-H02 |
 | O02 | R1-10-H01, R1-13-H01 |
 | O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04; R1-33-H03, R1-34-H03, R1-12-H05; PGB-163-H01 |
@@ -50,7 +50,7 @@
 | O06 | R1-14-H02, R1-17-H01, R1-17-H02, R1-19-H01 |
 | O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03; PGB-161-H02; PGB-162-H02; PGB-163-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; PGB-166-H03 |
 | O08 | R1-15-H01, R1-15-H02; R1-29-H01, R1-29-H02; PGB-163-H01 |
-| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05; PGB-163-H02 |
+| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05; PGB-163-H02; R1-43-H02 |
 | O10 | R1-13-H02, R1-15-H02, R1-16-H02, R1-17-H03 |
 | O11 | R1-14-H01, R1-15-H02, R1-16-H01, R1-16-H02 |
 | O12 | R1-20-H01, R1-20-H02, R1-20-H03 |
@@ -193,3 +193,12 @@ Original scenario rows and their exact ticket/live-apply columns above remain re
 The current source remains51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its current integrated row allocation is **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The current operational169 whole-work forecast is **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.
 
 Installed named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.
+
+## Current R1-43 source support — 16 November 2026
+
+Current source: **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured links**; 53 requirements and 41 scenarios are unchanged. The two R1-43 groups support existing requirements and remain NOT_RUN (0/2). PGB-172, PGB-173 and final PGB-148 are pending; this is not full inventory or live manager acceptance. Current source rows total **68.15875–78.72125 days**; with pending P/S, the full split forecast is **69.92750–81.22125 days**. Prior 51/185 and 169/147 numbers above are dated.
+
+| R case | Requirements | Scenario support | Disposition | Scope |
+| --- | --- | --- | --- | --- |
+| R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |
+| R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |

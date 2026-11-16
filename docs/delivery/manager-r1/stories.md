@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Complete approved source catalogue: 51 Stories, 185 full human cases and zero AI cases, in dependency order. The original frozen observation remains 50 Stories and7 Tasks; only PGB-169 and the bounded PGB-159 amendment are later readbacks. Publication is not implementation, human acceptance, merge or activation. See [delivery and checks](README.md) and [provenance](publication.json).
+Complete approved source catalogue: 52 Stories, 187 full human cases and zero AI cases, in dependency order. The original frozen observation remains 50 Stories and 7 Tasks; the PGB-169/PGB-159 readbacks and R1-43/PGB-171 native contract are later, separately bound additions. This is not a refreshed Jira inventory. Publication is not implementation, human acceptance, merge or activation. See [delivery and checks](README.md) and [provenance](publication.json).
 
 ## R1-01: Validate an editable work document
 
@@ -11459,6 +11459,257 @@ Human acceptance remains NOT_RUN. AI cases: zero.
 }
 ```
 
+## R1-43: Preserve named-issue reads in one acquisition session
+
+[PGB-171](https://scubapig.atlassian.net/browse/PGB-171)
+
+### Problem to solve
+
+Named-issue inspection owns its acquisition loop inside one public call. Reusing that work for scoped inventory must not create another session or change existing callers’ results.
+
+### Acceptance Criteria
+
+- **AC1.** Existing inspectJiraIssues callers receive the same requested-issue results, partial observations, diagnostics and counters through one shared acquisition owner.
+- **AC2.** Each invocation still resolves one credential and enforces one set of request, response, private-retention and deadline limits; a stopped session performs no later request.
+- **AC3.** The existing source and prepared copied inspection routes remain usable, including invalid input, changed comments and bounded partial failures.
+
+### Technical Acceptance Criteria
+
+- **TAC1.** In danielchappell/Pigboard, extract and immediately use createJiraIssueAcquirer(session) from inspectJiraIssues; do not add unused search, key or reference-discovery scaffolding.
+- **TAC2.** Keep the public input snapshot, semantic target uniqueness, ID-only caller contract, exact-comment semantic comparison and current API/report fields unchanged; only the public owner resolves and finishes the session.
+- **TAC3.** Preserve verified TLS, fixed read operations, credential fencing, safe diagnostics and cleanup reporting; architecture and full current catalogue records must describe the delivered refactor without claiming inventory or admission.
+
+### Testing Strategy
+
+Human acceptance remains NOT_RUN. AI cases: zero.
+
+#### R1-43-H01
+
+- R1-43-H01
+- human
+- designated human reviewer
+- AC1
+- AC3
+- TAC1
+- TAC2
+- PREP-01 supplies existing R1-33-H01 complete and exact-mismatch inputs, literal expected reports/traces and exact source/copied commands.
+- Prepared Node/dependencies and disposable verified local HTTPS fixtures; dummy credentials only. No UI, Postman, live Jira or AWS.
+- Run complete and exact-mismatch once each through the existing source fixture route, then the same two through the prepared copied route from an unrelated working directory.
+- Compare IDs, native metadata, safe reports, counters and permitted request traces with the unchanged literal packet.
+- complete retains the existing complete requested-issue report; exact-mismatch reports CHANGED_INPUT and preserves completed discovery.
+- Each invocation resolves once, retains requested_issues scope and does not establish domain completeness, receipt proof or admission.
+- Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.
+- Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.
+- Before/after source/input hashes and cleanup; developer results do not count as human acceptance.
+- prescribed
+- designated human reviewer
+- Keep evidence; close only prescribed test servers, sockets and timers.
+- Remove only disposable test copies and directories; preserve the prepared release and all real resources.
+
+#### R1-43-H02
+
+- R1-43-H02
+- human
+- designated human reviewer
+- AC1
+- AC2
+- AC3
+- TAC2
+- TAC3
+- PREP-01 supplies existing R1-33-H03 invalid-request and total-byte-limit, including that variant’s existing positive control and private-retention subvariant.
+- Use their existing valid cross-field bounds, literal byte counts and verified HTTPS preparation; no new fixture variants.
+- Run invalid-request once in source and copied roots.
+- Run total-byte-limit’s main, positive control and private-retention observation once each in source and copied roots.
+- Inspect the safe counter/trace, stop and cleanup evidence; compare current source/input hashes.
+- Invalid input performs zero resolver calls and zero requests.
+- The existing aggregate-byte and separate private-retention failures remain incomplete with no later request; the existing at-limit control succeeds.
+- Credentials, provider content and unknown cleanup are not invented or exposed; there are no Jira or operational-state writes.
+- Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.
+- Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.
+- Before/after source/input hashes and cleanup; developer results do not count as human acceptance.
+- prescribed
+- designated human reviewer
+- Keep evidence; close only prescribed test servers, sockets and timers.
+- Remove only disposable test copies and directories; preserve the prepared release and all real resources.
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Named-issue inspection owns its acquisition loop inside one public call. Reusing that work for scoped inventory must not create another session or change existing callers’ results.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-147",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "Existing inspectJiraIssues callers receive the same requested-issue results, partial observations, diagnostics and counters through one shared acquisition owner."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Each invocation still resolves one credential and enforces one set of request, response, private-retention and deadline limits; a stopped session performs no later request."
+    },
+    {
+      "id": "AC3",
+      "requirement": "The existing source and prepared copied inspection routes remain usable, including invalid input, changed comments and bounded partial failures."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Own the immediately-used named-issue acquisition refactor, its existing-reader regressions, architecture and complete source catalogue.",
+      "out_of_scope": [
+        "Plexus/customer repository changes, AWS resolver/wrapper, State adapter and operational-state writes.",
+        "Receipt acceptance, policy selection/admission, external PR/evidence fetching, a new input producer or a PGB-144 proof-policy decision.",
+        "Production live CLI, provider probes, deployment, activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines."
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "In danielchappell/Pigboard, extract and immediately use createJiraIssueAcquirer(session) from inspectJiraIssues; do not add unused search, key or reference-discovery scaffolding."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Keep the public input snapshot, semantic target uniqueness, ID-only caller contract, exact-comment semantic comparison and current API/report fields unchanged; only the public owner resolves and finishes the session."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve verified TLS, fixed read operations, credential fencing, safe diagnostics and cleanup reporting; architecture and full current catalogue records must describe the delivered refactor without claiming inventory or admission."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Reviewed Pigboard source and the explicitly prescribed prepared copied root, with disposable local HTTPS fixtures and dummy credentials.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Only the fixed inputs named by the cases below.",
+        "initial_state": "Fresh isolated inputs per prescribed observation; no live data.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Exact reviewed commands and roots for the four existing named variants, including total-byte-limit’s existing control/private observation, with unchanged literal reports/traces and prepared verified HTTPS. These are twelve API observations across source and copied routes, not new fixture variants.",
+        "used_by": [
+          "DATA-01",
+          "R1-43-H01",
+          "R1-43-H02"
+        ],
+        "preserves": [
+          "Acceptance, technical constraints, literal expected outcomes, fixed inputs and finite counts; never derive expected answers from the implementation.",
+          "No new cases, provider access, dependency fetch, raised bounds or changed security settings."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.",
+      "cases": [
+        {
+          "id": "R1-43-H01",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC1",
+            "AC3",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "PREP-01 supplies existing R1-33-H01 complete and exact-mismatch inputs, literal expected reports/traces and exact source/copied commands.",
+            "Prepared Node/dependencies and disposable verified local HTTPS fixtures; dummy credentials only. No UI, Postman, live Jira or AWS."
+          ],
+          "steps": [
+            "Run complete and exact-mismatch once each through the existing source fixture route, then the same two through the prepared copied route from an unrelated working directory.",
+            "Compare IDs, native metadata, safe reports, counters and permitted request traces with the unchanged literal packet."
+          ],
+          "expected": [
+            "complete retains the existing complete requested-issue report; exact-mismatch reports CHANGED_INPUT and preserves completed discovery.",
+            "Each invocation resolves once, retains requested_issues scope and does not establish domain completeness, receipt proof or admission."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        },
+        {
+          "id": "R1-43-H02",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC3",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "PREP-01 supplies existing R1-33-H03 invalid-request and total-byte-limit, including that variant’s existing positive control and private-retention subvariant.",
+            "Use their existing valid cross-field bounds, literal byte counts and verified HTTPS preparation; no new fixture variants."
+          ],
+          "steps": [
+            "Run invalid-request once in source and copied roots.",
+            "Run total-byte-limit’s main, positive control and private-retention observation once each in source and copied roots.",
+            "Inspect the safe counter/trace, stop and cleanup evidence; compare current source/input hashes."
+          ],
+          "expected": [
+            "Invalid input performs zero resolver calls and zero requests.",
+            "The existing aggregate-byte and separate private-retention failures remain incomplete with no later request; the existing at-limit control succeeds.",
+            "Credentials, provider content and unknown cleanup are not invented or exposed; there are no Jira or operational-state writes."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Existing named-reader acquisition, target identity, response bounds, cancellation/TLS and source/copied compatibility regressions, plus current and historical catalogue guards."
+  },
+  "open_questions": []
+}
+```
+
 ## R1-34: Inspect complete scoped Jira inventory
 
 [PGB-148](https://scubapig.atlassian.net/browse/PGB-148)
@@ -11619,6 +11870,10 @@ Human acceptance remains NOT_RUN. AI cases: zero.
   "prerequisites": [
     {
       "ticket": "R1-33",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-173",
       "required_outcome": "ai_qa_complete"
     }
   ],

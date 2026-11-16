@@ -5,7 +5,7 @@ import {promisify} from 'node:util';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {fixtureCases,runFixture} from './fixtures/jira-preview-harness.mjs';
-import {inspectJiraIssues} from '../lib/jira/read.mjs';
+import {createJiraIssueAcquirer,inspectJiraIssues} from '../lib/jira/read.mjs';
 import {snapshotSchema} from '../lib/manager/snapshot.mjs';
 import {validateWork} from '../lib/contracts/work.mjs';
 const runtime=fileURLToPath(new URL('..',import.meta.url));
@@ -21,6 +21,38 @@ const pageBody='{"type":"doc","version":1,"content":[{"type":"paragraph","conten
 const exactBody='{"content":[{"content":[{"text":"A","type":"text"},{"text":"B","type":"text"}],"type":"paragraph"}],"version":1,"type":"doc"}';
 assert.equal(JSON.stringify(pageADF),pageBody);
 assert.equal(JSON.stringify(exactADF),exactBody);
+
+test('R1-43 acquirer reuses completed discovery without resolving or finishing',async()=>{
+ const fixture=fixtureCases.variants.find(v=>v.case==='R1-33-H01'&&v.variant==='complete');
+ const script=fixture.script.slice(0,5).map(step=>structuredClone(step.body));
+ const trace=[],observations={issues:[],comment_pages:[],exact_comments:[],references:[],provenance:[]};
+ const report={issues:[],diagnostics:[],limits:{max_total_response_bytes:100000,max_comments:10},counters:{known_issues:0,comments:0,observation_bytes:0}};
+ let resolves=0,finishes=0;
+ const next=(name)=>{trace.push(name);return script[trace.length-1];};
+ const session={report,observations,config:{project_ids:['10001'],site:'https://jira.example.invalid'},
+  checkTime(){},reserve(counter){report.counters[counter]++;},
+  retain(field,value){observations[field].push(value);report.counters.observation_bytes=Buffer.byteLength(JSON.stringify(observations));},
+  issue(){return next('issue');},pointer(){return next('pointer');},
+  comments(){return next('comments');},comment(){return next('comment');},
+  resolve(){resolves++;},finish(){finishes++;}};
+ const acquirer=createJiraIssueAcquirer(session);
+ const provenance={ticket_id:'1000',source:'requested',source_ticket_id:null,project_id:null,label:null};
+ const first=await acquirer.acquire('1000',provenance);
+ const countersAfterAcquire=structuredClone(report.counters);
+ const second=await acquirer.acquire('1000',provenance);
+ assert.strictEqual(second.issue,first.issue);assert.strictEqual(second.row,first.row);
+ assert.deepEqual(report.counters,countersAfterAcquire);
+ const exact=await acquirer.exact('1000','2001');
+ const countersAfterExact=structuredClone(report.counters);
+ assert.strictEqual(await acquirer.exact('1000','2001'),exact);
+ assert.deepEqual(report.counters,countersAfterExact);
+ assert.deepEqual(trace,['issue','pointer','comments','comments','comment']);
+ assert.equal(report.issues.length,1);assert.equal(observations.issues.length,1);
+ assert.equal(observations.provenance.length,1);assert.equal(observations.exact_comments.length,1);
+ assert.strictEqual(observations.issues[0],first.issue);
+ assert.strictEqual(observations.exact_comments[0],exact);
+ assert.equal(resolves,0);assert.equal(finishes,0);
+});
 
 const regressionDesign=[
  {case:'R1-38-H01',variant:'null-description',status:'complete',code:null,calls:4,lengths:[146,265,258,206],responseBytes:875,observationBytes:1109},

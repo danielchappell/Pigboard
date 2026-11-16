@@ -1686,7 +1686,22 @@ async function historical81File(name, publication) {
 }
 async function read169Catalogue() {
  const base='../docs/delivery/manager-r1/';
- return {drafts:JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8')),metadata:JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8')),publication:JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8')),stories:await readFile(new URL(base+'stories.md',import.meta.url),'utf8')};
+ const publication=JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8'));
+ const a=publication.named_issue_acquisition_amendment;
+ assert(a,'R dated checkpoint requires its exact predecessor');
+ const drafts=JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8'));
+ const metadata=JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8'));
+ drafts.splice(drafts.findIndex(r=>r.id==='R1-43'),1);
+ metadata.splice(metadata.findIndex(r=>r.id==='R1-43'),1);
+ drafts[drafts.findIndex(r=>r.id==='R1-34')]=structuredClone(a.prior_148.draft);
+ metadata[metadata.findIndex(r=>r.id==='R1-34')]=structuredClone(a.prior_148.metadata);
+ for(const [key,value]of Object.entries(a.prior_publication.values))publication[key]=structuredClone(value);
+ delete publication.named_issue_acquisition_amendment;
+ assert.equal(sha169(JSON.stringify(publication,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb','exact dated169 publication bytes');
+ assert.equal(canonical169(publication),a.prior_publication.canonical_sha256,'whole dated169 publication');
+ const stories=a.prior_catalogue_text['docs/delivery/manager-r1/stories.md'];
+ assert.equal(sha169(stories.utf8),stories.sha256);
+ return {drafts,metadata,publication,stories:stories.utf8};
 }
 function approvedContractEvidence(publication) {
  const a=publication.installed_repair_preview_amendment;
@@ -1776,6 +1791,51 @@ test('PGB-169 current catalogue matches approved native contracts and complete r
  assert.throws(()=>assertCurrentCatalogue(absentContract,evidence,approved169Expected),/complete ordered contract set/);
  const absentCase=structuredClone(current);absentCase.drafts.find(r=>r.id==='PGB-169').contract.testing_strategy.human_review.cases.pop();
  assert.throws(()=>assertCurrentCatalogue(absentCase,evidence,approved169Expected),/complete current contract/);
+});
+
+function assertRCurrent({drafts,metadata,publication,stories}){
+ const a=publication.named_issue_acquisition_amendment;
+ assert(a,'R amendment present');
+ assert.deepEqual([drafts.length,metadata.length,publication.story_count,publication.case_count],[52,52,52,187]);
+ assert.equal(publication.status,'52-Story/187-human-case source catalogue with preserved named-issue inspection and one acquisition owner; scoped inventory prerequisites remain planned. Human acceptance, reviewed revisions, hosted checks and authorized delivery are recorded separately.');
+ assert.equal(publication.current_source_scope.status,publication.status);
+ assert.deepEqual(publication.current_source_scope.forecast_days,{min:68.15875,max:78.72125});
+ assert.deepEqual(drafts.map(r=>r.id),metadata.map(r=>r.id));
+ assert.deepEqual(drafts.map(r=>r.id),a.current_source_order);
+ assert.equal(drafts.findIndex(r=>r.id==='R1-43'),drafts.findIndex(r=>r.id==='R1-33')+1);
+ assert.equal(drafts.findIndex(r=>r.id==='R1-34'),drafts.findIndex(r=>r.id==='R1-43')+1);
+ assert.deepEqual([...stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),a.current_source_order);
+ assert.equal(drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),125);
+ assert.equal(drafts.reduce((n,r)=>n+r.contract.testing_strategy.human_review.cases.length,0),187);
+ const ids=drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases.map(c=>c.id));assert.equal(new Set(ids).size,187);
+ const r=drafts.find(x=>x.id==='R1-43'),m=metadata.find(x=>x.id==='R1-43'),i=drafts.find(x=>x.id==='R1-34'),im=metadata.find(x=>x.id==='R1-34');
+ assert.deepEqual(r.contract.prerequisites,[{ticket:'PGB-147',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(i.contract.prerequisites,[...a.prior_148.draft.contract.prerequisites,{ticket:'PGB-173',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(m.dependencies,['R1-33']);assert.deepEqual(im.dependencies,['R1-33','PGB-173']);
+ assert.equal(m.files.length,13);assert.equal(im.files.length,12);
+ assert.deepEqual([m.forecast_provenance.min_days,m.forecast_provenance.max_days,im.forecast_provenance.min_days,im.forecast_provenance.max_days],['0.43750','0.66250','0.53750','0.73750']);
+ assert.equal(canonical169(r.contract),'d2ea9ef10f70442c481c3a01d1d140633f9f219cc8670804496aba534dd94773');
+ assert.equal(a.native_description_sha256,'2ebd117e71c9ca03d8fd381dc8af122c6b0a91f2106a16b1a0932f607461cb5c');
+ assert.deepEqual(r.contract.testing_strategy.human_review.cases.map(c=>[c.id,canonical169(c)]),[['R1-43-H01','133bda915817f5e42ff70644652aaeded555b2090921b9fd1ff0d0e26ac3784c'],['R1-43-H02','98979984ba7ae8e202637aad968c28ff2bf46988275e6f5dcafcc2014a79cf8d']]);
+ assert(stories.includes(JSON.stringify(r.contract,null,2)));
+ assert(stories.includes(JSON.stringify(i.contract,null,2)));
+ assert.deepEqual(publication.dependency_links.slice(-4),a.directed_links);
+ assert.deepEqual(a.directed_links.map(l=>[l.id,l.from,l.to]),[['10774','PGB-147','PGB-171'],['10775','PGB-171','PGB-173'],['10776','PGB-172','PGB-173'],['10777','PGB-173','PGB-148']]);
+ assert.equal(publication.dependency_links.length,133);
+ assert.deepEqual([publication.requirement_count,publication.scenario_count],[53,41]);
+ assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
+ const units=v=>BigInt(Math.round(Number(v)*100000));
+ assert.deepEqual([String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.min_days),0n)),String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.max_days),0n))],['6815875','7872125']);
+ assert.deepEqual(a.forecast.whole_split_accounted_days,[69.9275,81.22125]);
+ assert.equal(a.prior_publication.raw_sha256,'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb');
+ assert.equal(a.prior_publication.canonical_sha256,canonical169((()=>{const old=structuredClone(publication);for(const [k,v]of Object.entries(a.prior_publication.values))old[k]=v;delete old.named_issue_acquisition_amendment;return old;})()));
+}
+test('PGB-171 current catalogue binds native R, residual I and exact predecessor',async()=>{
+ const base='../docs/delivery/manager-r1/';
+ const current={drafts:JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8')),metadata:JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8')),publication:JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8')),stories:await readFile(new URL(base+'stories.md',import.meta.url),'utf8')};
+ assertRCurrent(current);
+ const missing=structuredClone(current);missing.drafts.find(r=>r.id==='R1-43').contract.testing_strategy.human_review.cases.pop();assert.throws(()=>assertRCurrent(missing));
+ const history=structuredClone(current);history.publication.named_issue_acquisition_amendment.prior_publication.values.status='changed';assert.throws(()=>assertRCurrent(history));
 });
 
 // Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
