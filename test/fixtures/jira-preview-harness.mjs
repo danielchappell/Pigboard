@@ -17,15 +17,15 @@ const tls=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-tls.json'),'ut
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const fixedPrefix='/ex/jira/00000000-0000-0000-0000-000000000001';
 const jiraSourcePaths=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];
-function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.inspection_scope,'requested_issues');assert.equal(report.domain_complete,false);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
+function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.inspection_scope,oracle.inspection_scope??'requested_issues');assert.equal(report.domain_complete,oracle.domain_complete??false);if(oracle.scopes)assert.deepEqual(report.scopes,oracle.scopes);if(Object.hasOwn(oracle,'retained_complete'))assert.equal(report.retained_complete,oracle.retained_complete);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
 
-async function runtimeSources(root){
+async function runtimeSources(root, inventory=false){
  const manifest=JSON.parse(await fsp.readFile(path.join(root,'config/skill-bundle.json'),'utf8'));
- return [...new Set([...manifest.validatorPayload.sources,...jiraSourcePaths])];
+ return [...new Set([...manifest.validatorPayload.sources,...jiraSourcePaths,...(inventory?['lib/jira/inventory.mjs','test/fixtures/jira-inventory-cases.json']:[])])];
 }
-async function runtimeSnapshot(root, missing = []) {
+async function runtimeSnapshot(root, missing = [], inventory=false) {
  const entries=[];
- for(const relative of await runtimeSources(root)){
+ for(const relative of await runtimeSources(root,inventory)){
   try{assert((await fsp.lstat(path.join(root,relative))).isFile());entries.push([relative,digest(await fsp.readFile(path.join(root,relative)))]);}
   catch(error){if(!missing.includes(relative)||error.code!=='ENOENT')throw error;entries.push([relative,null]);}
  }
@@ -34,13 +34,14 @@ async function runtimeSnapshot(root, missing = []) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
-export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false}={}) {
- const authored=fixtureCases.variants.find(v=>v.case===caseId&&v.variant===variant);if(!authored)throw Error('Use a prescribed case and variant.');
+export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null}={}) {
+ const inventory=caseId.startsWith('R1-45-');const selectedCases=inventory?JSON.parse(fs.readFileSync(path.join(here,'jira-inventory-cases.json'),'utf8')):fixtureCases;
+ const authored=authoredFixture??selectedCases.variants.find(v=>v.case===caseId&&v.variant===variant);if(authoredFixture)assert(authoredFixture.case===caseId&&authoredFixture.variant===variant);if(!authored)throw Error('Use a prescribed case and variant.');
  const v=structuredClone(authored),root=path.resolve(runtime),trace=[],serverTrace=[];let disposable=null;
- if(control){assert(v.control);if(v.control.bound)v.config.jira.read_bounds[v.control.bound]=v.control.value;if(v.control.immediate){delete v.resolver_delay_ms;for(const step of v.script){delete step.header_delay_ms;delete step.body_delay_ms;}}v.oracle=v.control.oracle;}
+ if(control){assert(v.control);if(v.control.bound)v.config.jira.read_bounds[v.control.bound]=v.control.value;if(v.control.immediate){delete v.resolver_delay_ms;for(const step of v.script){delete step.header_delay_ms;delete step.body_delay_ms;}}v.oracle=v.control.oracle;if(v.control.script)v.script=v.control.script;}
  for(const entry of fixtureCases.variants)for(const [i,step]of entry.script.entries())if(Object.hasOwn(step,'wire_prefix')){if(entry.variant==='total-byte-limit'){assert.equal(i,0);assert.equal(step.wire_prefix,' '.repeat(256));}else{assert.equal(entry.case,'R1-42-H02');assert(['exact-wire-stop','exact-two-issue-control'].includes(entry.variant));assert.equal(i,3);assert.equal(step.wire_prefix,' '.repeat(600));}}
  if(privateProjection){assert(v.private_projection);if(v.private_projection.omit_wire_prefix)delete v.script[0].wire_prefix;v.config.jira.read_bounds.max_total_response_bytes=v.private_projection.bound;v.oracle=v.private_projection.oracle;}
- const before={cases:digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),tls:digest(fs.readFileSync(path.join(here,'jira-preview-tls.json')))};
+ const before={cases:digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),tls:digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),...(inventory?{inventory:digest(fs.readFileSync(path.join(here,'jira-inventory-cases.json')))}:{})};
  const inputBefore=inputSnapshot(v);let moduleRoot=root,missing=[];
  if(variant==='damaged-copy'){
   const original=await runtimeSnapshot(root),sources=await runtimeSources(root);
@@ -49,11 +50,11 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
   await fsp.cp(path.join(root,'node_modules'),path.join(disposable,'node_modules'),{recursive:true});assert.deepEqual(await runtimeSnapshot(disposable),original);
   await fsp.rm(path.join(disposable,'lib/config/projects.mjs'));moduleRoot=disposable;missing=['lib/config/projects.mjs'];
  }
- const runtimeBefore=await runtimeSnapshot(moduleRoot,missing);
+ const runtimeBefore=await runtimeSnapshot(moduleRoot,missing,inventory);
  let inspect;
- try{({inspectJiraIssues:inspect}=await import(pathToFileURL(path.join(moduleRoot,'lib/jira/read.mjs')).href));}
+ try{if(inventory)({inspectJiraInventory:inspect}=await import(pathToFileURL(path.join(moduleRoot,'lib/jira/inventory.mjs')).href));else({inspectJiraIssues:inspect}=await import(pathToFileURL(path.join(moduleRoot,'lib/jira/read.mjs')).href));}
  catch{
-  const runtimeAfter=await runtimeSnapshot(moduleRoot,missing),inputAfter=inputSnapshot(v);assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
+  const runtimeAfter=await runtimeSnapshot(moduleRoot,missing,inventory),inputAfter=inputSnapshot(v);assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
   if(disposable)await fsp.rm(disposable,{recursive:true,force:true});
   const report={status:'setup_failed',inspection_scope:'requested_issues',diagnostics:[{code:'SETUP_MISSING',message:'Prepare the complete copied validator; no source fallback or dependency repair was attempted.'}],counters:{requests_attempted:0},domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'};oracleCheck(report,v.oracle,trace);
   return {report,trace,server_trace:[],fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},effects:0,resolver_calls:0,cleanup_complete:true,oracle_matched:true};
@@ -62,9 +63,10 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
  const sockets=new Set(),timers=new Set();let scriptIndex=0,serverError=null,redirectRequests=0;
  const redirect=https.createServer({key:tls.key,cert:tls.cert},(req,res)=>{redirectRequests++;res.end('{}');});
  await new Promise(resolve=>redirect.listen(0,'127.0.0.1',resolve));
- const server=https.createServer({key:v.tls==='future-certificate'?tls.future.key:tls.key,cert:v.tls==='future-certificate'?tls.future.cert:tls.cert},(req,res)=>{
+ const server=https.createServer({key:v.tls==='future-certificate'?tls.future.key:tls.key,cert:v.tls==='future-certificate'?tls.future.cert:tls.cert},async(req,res)=>{
+  let requestBody='';for await(const chunk of req)requestBody+=chunk.toString('utf8');
   serverTrace.push({method:req.method,path:req.url});const step=v.script[scriptIndex++];
-  if(!step||step.path!==req.url||req.method!=='GET'||req.headers.authorization!=='Bearer '+fixtureCases.token){serverError='Unexpected fixture operation.';res.writeHead(500);res.end('{}');return;}
+  if(!step||step.path!==req.url||req.method!==(step.method??'GET')||(step.request_body&&requestBody!==JSON.stringify(step.request_body))||req.headers.authorization!=='Bearer '+fixtureCases.token){serverError='Unexpected fixture operation.';res.writeHead(500);res.end('{}');return;}
   const later=(fn,delay)=>{if(delay){const t=setTimeout(()=>{timers.delete(t);fn();},delay);timers.add(t);}else fn();};
   later(()=>{if(res.destroyed)return;res.writeHead(step.status,{'content-type':'application/json',...(step.encoding?{'content-encoding':step.encoding}:{}),...(step.status===302?{location:`https://localhost:${redirect.address().port}/leak`}:{})});if(step.body_delay_ms)res.flushHeaders();later(()=>{if(!res.destroyed)res.end((step.wire_prefix??'')+JSON.stringify(step.body));},step.body_delay_ms);},step.header_delay_ms);
  });server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));if(v.tls==='connection-reset-control')socket.destroy();});
@@ -76,7 +78,7 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
  for(const k of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork']){const old=cp[k];restore.push(()=>{cp[k]=old;});cp[k]=deny;}
  http.request=deny;http.get=deny;globalThis.fetch=deny;
  https.request=(url,options,callback)=>{
-  assert.equal(url.origin,'https://api.atlassian.com');assert(url.pathname.startsWith(fixedPrefix+'/rest/api/3/issue/'));assert.equal(options.method,'GET');assert.equal(options.agent,false);assert.equal(options.rejectUnauthorized,true);assert.equal(options.headers['Accept-Encoding'],'identity');assert.equal(options.headers.Authorization,'Bearer '+fixtureCases.token);
+  assert.equal(url.origin,'https://api.atlassian.com');assert(url.pathname.startsWith(fixedPrefix+'/rest/api/3/issue/')||(inventory&&url.pathname===fixedPrefix+'/rest/api/3/search/jql'));assert.equal(options.method,v.script[trace.length]?.method??'GET');assert.equal(options.agent,false);assert.equal(options.rejectUnauthorized,true);assert.equal(options.headers['Accept-Encoding'],'identity');assert.equal(options.headers.Authorization,'Bearer '+fixtureCases.token);
   const operation=url.pathname.slice(fixedPrefix.length)+url.search;
   // Audit before redirecting; fixture scripts alone determine permitted paths.
   assert.equal(operation,v.script[trace.length]?.path??operation);trace.push({method:options.method,path:operation});
@@ -108,10 +110,11 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
   clearTimeout(resolverTimer);for(const timer of timers)clearTimeout(timer);const closing=[...sockets].map(socket=>new Promise(resolve=>socket.once('close',resolve)));for(const socket of sockets)socket.destroy();await Promise.all([...closing,new Promise(resolve=>server.close(resolve)),new Promise(resolve=>redirect.close(resolve))]);
   }
  }
- assert.equal(sockets.size,0);const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
+ assert.equal(sockets.size,0);const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.issue_ids)assert.deepEqual(acquired.observations.issues.map(v=>v.id).sort(),v.oracle.issue_ids);if(v.oracle.pointers)for(const [id,pointer]of Object.entries(v.oracle.pointers))assert.deepEqual(acquired.observations.issues.find(v=>v.id===id)?.pointer,pointer);if(v.oracle.reference_count!==undefined)assert.equal(acquired.observations.references.length,v.oracle.reference_count);if(v.oracle.raw_bodies)for(const [id,body]of Object.entries(v.oracle.raw_bodies))assert.equal(acquired.observations.issues.find(v=>v.id===id)?.body,body);if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
  for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference])assert(!JSON.stringify(acquired).includes(canary));
  assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),before.cases);assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),before.tls);
- const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
+ if(inventory)assert.equal(digest(fs.readFileSync(path.join(here,'jira-inventory-cases.json'))),before.inventory);
+ const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing,inventory);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
  return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},private_comparison:privateComparison,tls_observation:tlsObservation,...(lateEvidence?{late_resolver:lateEvidence}:{}),effects,resolver_calls:resolverCalls,mutations,getter_calls:getterCalls,cleanup_complete:sockets.size===0,oracle_matched:true};
 }
 
@@ -132,7 +135,7 @@ if(isMain){
    values[args[i]]=args[++i];
   }
   if(Object.keys(values).length!==3)throw Error('Invalid fixture selection.');
-  selected=fixtureCases.variants.find(v=>v.case===values['--case']&&v.variant===values['--variant']);
+  const selectedCases=values['--case']?.startsWith('R1-45-')?JSON.parse(fs.readFileSync(path.join(here,'jira-inventory-cases.json'),'utf8')):fixtureCases;selected=selectedCases.variants.find(v=>v.case===values['--case']&&v.variant===values['--variant']);
   if(!selected)throw Error('Invalid fixture selection.');
   for(const [role,options]of [['main',{}],...(selected.control?[['control',{control:true}]]:[]),...(selected.private_projection?[['private_projection',{privateProjection:true}]]:[])]){
    failedRole=role;

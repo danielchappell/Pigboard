@@ -1,5 +1,15 @@
 # Pigboard product requirements
 
+> Current reduced release boundary (16 November 2026): the dated catalogue,
+> allocations and publication records below remain historical evidence. Current
+> delivery scope and status live in [Jira PGB](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70).
+> The remaining journey uses PGB-173, 162, 175, 84, 137, 87, 83, 100 and 90.
+> Automatic repair/stack admission, reconciliation automation, general upgrades
+> and removal, rich monitoring and standalone inspection packaging are deferred.
+> Historical row counts and forecasts are not a current delivery queue or a
+> release-readiness claim. Runtime/install integrity and review gates still apply.
+
+
 Reviewed product baseline, 14 November 2026. These specifications consolidate the owner's
 decisions for the first manager release and its required skill changes. They do
 not announce shipped behavior, authorize implementation, or enable delivery.

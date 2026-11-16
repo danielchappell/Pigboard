@@ -816,3 +816,120 @@ Each root prints P01 null, P03 the complete literal value and digest `sha256:87b
 Ordinary ADF has a 262144-byte, 32-container, 1000-list-item and 1000-typed-node bound. A selected candidate rechecks the original whole wrapper at 65536 bytes, 32 containers and 100 children; its record remains limited to 16384 bytes, 16 containers and 100 list items. Code language does not hide an attempted record: selected blocks must be yaml/yml and text-only. Root `schema` values alone identify the family; unrelated fields, comments and keys do not. Aliases use the latest prior anchor, never a later declaration. Cycles and missing targets terminate without expansion.
 
 For a diagnostic, retain its safe code/path and correct the supplied comment. Do not select one block from an ambiguous comment, truncate content, retry with looser limits or treat failure as ordinary. A missing copied module or dependency is a setup failure: stop and ask the operator for a complete prepared release; never fall back to source or fetch dependencies. Record actual commands, roots, input hashes and results; developer evidence does not replace designated human acceptance R1-44-H01/H02, both NOT_RUN.
+
+## Complete ordinary Jira inventory library
+
+A prepared source caller can collect the configured ordinary Jira facts with
+`inspectJiraInventory` from `lib/jira/inventory.mjs`. This is a library capability;
+there is no inventory CLI or separately installed inspection package. Customer
+Lambda packaging belongs to PGB-83 and installed acceptance belongs to PGB-90.
+The source fixture results do not establish either outcome.
+
+Prepare the canonical configuration, Node dependencies, a trusted credential
+resolver and operator-confirmed Jira visibility before calling. The credential
+needs the existing Jira issue/comment/property read permissions. State's
+`readInventory`/`projectRetainedInventory` owner supplies the retained members,
+pending intents and explicit completeness; a missing or false completeness flag
+never means an empty complete State.
+
+```js
+import { inspectJiraInventory } from './lib/jira/inventory.mjs';
+
+const result = await inspectJiraInventory(configText, {
+  retained_members: [],
+  pending_intents: [],
+  retained_complete: true, // Only after State confirms the empty initial inventory.
+}, { resolveSecret });
+console.log(JSON.stringify(result.report));
+```
+
+`resolveSecret(reference, signal)` is the prepared in-process resolver; it returns
+the credential and cooperates with cancellation. The library makes fixed verified
+HTTPS reads, including fixed search POSTs, without Jira or State mutations. It
+unions opted-in and paused Epics, children, exact full-label occupants, declared
+members, prerequisites, retained ownership, pending subjects and typed references.
+A complete result has `status: "complete"`, `domain_complete: true` and complete
+project/label rows. Each row preserves old retained IDs and positively established
+current IDs separately. A fully observed move preserves both scopes. An incomplete
+row's empty ID set does not prove absence.
+
+Trusted callers access `result.observations` in memory. Its issue descriptions and
+comment pages retain bounded original ADF strings and native author/time metadata;
+exact references retain immutable ticket/comment/record IDs and matched digests.
+The property is read-only and non-enumerable: serializing the result emits only
+its safe report. Keep private observations within the customer process. Raw bodies
+and digest consistency authenticate neither an author nor a receipt. Pass these
+facts to the Core owner (PGB-162) for normalization, recorded-proof composition
+and policy evaluation. The collector constructs no semantic snapshot or admission
+decision; `admission` and `receipt_proof` remain `not_evaluated`.
+
+Repeated issue observations ignore label order and ADF object-key order when
+checking for changes. Label contents, native fields, ADF text, attributes and
+array order still matter; a null description differs from a document. Private
+label arrays and body strings stay exactly as acquired. Embedded work text and
+reference digests are not normalized. A real difference retains the existing
+`CHANGED_INPUT` hold; inspect the changed source before a new bounded invocation.
+
+Reference identity compares the exact `ticket_id`, `comment_id`, `record_id` and
+`digest` strings regardless of object member order. For one ticket/comment target,
+a different record ID or digest remains a conflict. Original pointer, comment and
+reference objects stay unchanged, as do exact body and digest validation.
+
+An authenticated complete property-key enumeration for a verified issue can
+confirm `pointer: {state: "absent", value: null}` at that observation. A listed
+work-context property requires a validated value. A raw property 404 remains
+unknown, with `POINTER_UNKNOWN`; it never proves absence.
+
+Retained ownership or pending intents can name a label outside the current
+configured worker prefixes and numbered suffixes. Those historical tuples stay
+visible with their old IDs and a shared `SCOPE_UNKNOWN` hold. The collector can
+still read their exact known identities and references within configured projects;
+it does not search the unsupported label or infer complete occupancy. Reconcile
+the intended configuration and retained ownership with their actual owner. Keep
+uncertain attempts; do not clear State or broaden queries automatically.
+
+An Epic's children and declared streams are enumerated only when that Epic is
+observed through a configured opt-in search, named as the Epic of a supported
+retained project/label tuple, or found by a configured full-label search. These
+facts are bound to the Epic's immutable project and issue IDs. An Epic reached
+only through a parent, prerequisite, pending subject, declared member or typed
+reference still gets its exact issue, pointer and comments; its declarations do
+not authorize more child or stream searches. Its actual configured native labels
+can independently establish a relevant full-label query. If that query later
+finds the Epic, collection promotes the cached observation and enumerates it once
+without another issue read. Original bodies remain private facts in either case.
+
+The `max_known_issues` ceiling counts admitted identities throughout the invocation,
+including failed and unresolved lookups. A failed lookup does not free room for
+later discovery. Proven key/ID aliases share one identity; unknown older keys
+remain separate. The public `known_issues` counter counts successfully acquired
+rows, so it can be below the ceiling when a new identity hits that bound. Inspect
+the named root, bound and original lookup failure before a new authorized bounded
+invocation. Do not erase retained history or raise a ceiling automatically.
+
+A missing resolver capability returns `status: "setup_failed"` with `SETUP_MISSING`
+and no provider requests. Prepare the trusted resolver, then start a fresh bounded
+invocation. Known retained tuples remain visible; missing setup does not turn them
+into an empty inventory. A resolver failure keeps its own diagnostic and
+incomplete status.
+
+For example, `status: "incomplete"` with `RETAINED_INCOMPLETE` holds every reported
+scope even when native observations succeeded. An isolated comment/reference
+failure holds all proved dependent scopes; unknown reach and exhausted resources
+hold the whole observation. Successful private facts and known old/current IDs
+remain available. Correct the named configuration, visibility, changed input or
+bound before starting a fresh bounded invocation. Do not retry automatically or
+clear retained attempts to obtain a complete report. If resolver cleanup is
+`cancel_unconfirmed`, the caller must confirm its cleanup before trying again.
+The library has no effects to undo; State retains any prior uncertain attempt.
+
+Developer verification uses the existing HTTPS fixture harness, for example:
+
+```sh
+node test/fixtures/jira-preview-harness.mjs --case R1-45-H01 --variant complete-domain --runtime /absolute/pigboard/source --json
+node --test test/jira-inventory.test.mjs
+```
+
+The fixed packet has 28 variants and four paired controls. These developer
+observations remain separate from designated-human acceptance (NOT_RUN, 0/4),
+live Jira visibility, hosted CI, release and activation.
