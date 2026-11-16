@@ -1,6 +1,7 @@
 > Local implementation boundary: [the authoring validator](../authoring.md) provides
-> safe YAML/ADF extraction, draft/structure checks and local start semantics with
-> a separate trusted YAML/JSON context. It checks explicit graphs, coverage,
+> safe YAML/ADF extraction, draft/structure checks, complete scheduling declarations
+> against canonical config and separate scheduling facts, and local start semantics
+> with a separate trusted YAML/JSON execution context. It checks explicit graphs, coverage,
 > preparation, scope, operation facts and complete-ledger sizing without provider
 > actions or test execution. Native/admission checks and actual handoff publication
 > remain separate; live readiness stays `not_evaluated`. Work/context limits:
@@ -57,7 +58,9 @@ Reject duplicate mapping keys, aliases, custom tags, multiple YAML documents,
 unsupported schema versions, unknown fields and excessive depth/size. Error output
 names the ticket and field path without dumping its content or secrets. Draft
 validation permits explicit unresolved values; structure validation rejects unresolved
-required values. Local start additionally requires independently prepared facts. Optional fields stay visible as null; explicitly empty lists mean none.
+required values. Scheduling adds complete declaration semantics with canonical
+configuration and a closed `pigboard-work-scheduling/v1` envelope. Local start
+requires independently prepared execution facts. Optional fields stay visible as null; explicitly empty lists mean none.
 Final numeric parser/request limits must fit the tested installation budget.
 
 Cross-reference checks are part of the contract, not AI interpretation:
@@ -75,6 +78,29 @@ Cross-reference checks are part of the contract, not AI interpretation:
 - Named skills are the installed approved set. Required test expectations, action
   scope and evidence must exist before start; implementation may fill only declared
   mechanical preparation slots without changing expectations or scope.
+
+Scheduling selects an exact site and immutable project ID from canonical
+configuration; inherited project repository URLs constrain primary/related
+repositories. Its separate facts name the subject key, complete reachable
+prerequisite graph and minimum related-change obligations. The actual installed
+manifest constrains supported skills. Work text and these facts grant no authority.
+There is no new configuration, native acquisition service or default project.
+
+The shared declaration checks retain all AC/TAC coverage, dispatch, child ownership,
+binding order, typed preparation consumers, prerequisite cycles, SQL input/index/
+placeholder declarations, asynchronous observation selection/order/windows and
+complete-ledger bounds. A database unit needs its known 20-second window. Valid
+mechanical preparation may remain unfilled without inventing operations or array
+lengths. Scheduling does not check actual SQL layout, reviewed read-only/duration
+facts, references/access, configured targets or authorized base branches. Those
+remain start-owned; native eligibility and admission stay manager-owned.
+
+Scheduling results identify `purpose: scheduling` and
+`validation_scope: scheduling_declarations`, keep `start_semantics_valid: null`,
+`readiness: not_evaluated` and `execution_authorized: false`. They make no human
+Ready to Work decision. Auxiliary/setup failures and inconsistent declarations
+remain distinct. See [authoring](../authoring.md#check-complete-scheduling-declarations)
+for exact inputs, APIs, source/receipt commands, limits and recovery.
 
 Local start facts use the closed
 [context schema](../../contracts/work-validation-context-v1.schema.json); every

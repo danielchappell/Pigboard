@@ -149,3 +149,124 @@ test('H01 actual local-start CLI has no filesystem writes, network or subprocess
  const before=await readdir(dir),command=spawnSync(process.execPath,['--import',guard,cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(command.status,0,command.stdout+command.stderr);assert.equal(JSON.parse(command.stdout).valid,true);assert.equal(command.stderr,'AUDIT attempts=0\n');assert.deepEqual(await readdir(dir),before);assert.equal(await readFile(work,'utf8'),inputs[0]);assert.equal(await readFile(context,'utf8'),inputs[1]);});
 
 test('H03 actual source CLI checks original repository URI syntax and leaves both inputs unchanged',async t=>{const dir=await mkdtemp(path.join(os.tmpdir(),'pgb72-uri-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));const work=path.join(dir,'work.json'),context=path.join(dir,'facts.json');for(const url of ['https://example.invalid/a%20b','https://example.invalid/raw space']){const p=clone();p.work.technical_acceptance_criteria.repository.url=url;p.context.repositories[0].url=url;const before=[JSON.stringify(p.work),JSON.stringify(p.context)];await writeFile(work,before[0]);await writeFile(context,before[1]);const command=spawnSync(process.execPath,[cli,'--mode','start','--input',work,'--context',context,'--json'],{cwd:dir,encoding:'utf8',timeout:30000}),result=JSON.parse(command.stdout);assert.equal(command.status,url.includes('%20')?0:1);assert.equal(result.valid,url.includes('%20'));assert.equal(result.ledger_budget.ai_steps,4);assert.equal(result.ledger_budget.human_cases,1);assert.equal(result.ledger_budget.omitted_entries,0);if(!result.valid)assert(result.diagnostics.some(d=>d.code==='LEDGER_FIELD'&&d.path==='/technical_acceptance_criteria/repository/url'));assert.equal(await readFile(work,'utf8'),before[0]);assert.equal(await readFile(context,'utf8'),before[1]);}});
+
+const schedulingFixture=()=>structuredClone(fixtures.scheduling);
+const schedule=(work,inputs=schedulingFixture())=>validateValue(work,{mode:'scheduling',config:inputs.config,scheduling:inputs.facts});
+test('PGB-159 first scheduling slice accepts declared mixed preparation without execution facts and preserves strict start',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants.mixed,before=JSON.stringify(inputs);
+ const result=schedule(work,inputs);
+ assert.equal(result.valid,true,JSON.stringify(result.diagnostics));
+ assert.equal(result.mode,'scheduling');assert.equal(result.purpose,'scheduling');
+ assert.equal(result.validation_scope,'scheduling_declarations');assert.equal(result.scheduling_semantics_valid,true);
+ assert.equal(result.start_semantics_valid,null);assert.equal(result.readiness,'not_evaluated');assert.equal(result.execution_authorized,false);
+ assert.equal(result.ledger_budget.ai_steps,4);assert.equal(result.ledger_budget.human_cases,1);assert.equal(result.ledger_budget.omitted_entries,0);
+ const refused=validateValue(work,{mode:'start'});assert.equal(refused.valid,false);assert.equal(refused.diagnostics[0].path,'/context');
+ assert.equal(run(clone()).valid,true);assert.equal(JSON.stringify(inputs),before);
+});
+function schedulingControl(control){
+ const inputs=schedulingFixture(),sample={work:inputs.variants[control.variant],config:inputs.config,facts:inputs.facts};
+ for(const [pointer,value]of control.patches){const keys=pointer.split('/');let target=sample;for(const key of keys.slice(0,-1))target=target[key];target[keys.at(-1)]=structuredClone(value);}
+ if(control.ledger_bytes){
+  const t=sample.work.testing_strategy,template=t.human_review.cases[0];
+  t.human_review.cases=Array.from({length:65},(_,i)=>({...structuredClone(template),id:i===0?template.id:'H'+i+'x'.repeat(200)}));
+  while(sizeLedger(sample.work).ledger_budget.projection_bytes>16384)t.human_review.cases.pop();
+  let remaining=control.ledger_bytes-sizeLedger(sample.work).ledger_budget.projection_bytes;
+  for(const c of t.human_review.cases.slice(1)){const n=Math.min(255-c.id.length,remaining);c.id+='x'.repeat(n);remaining-=n;}
+  t.human_review.no_ai_cases_reason+='x'.repeat(remaining);
+ }
+ return sample;
+}
+const schedulingADF=work=>JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:stringify(work)}]}]});
+for(const name of ['mixed','human'])test('PGB-159 accepts '+name+' scheduling through value, raw and ADF without context',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants[name],before=JSON.stringify(inputs);
+ const results=[schedule(work,inputs),validateWork(stringify(work),{mode:'scheduling',configInput:stringify(inputs.config),schedulingInput:stringify(inputs.facts)}),validateWork(schedulingADF(work),{mode:'scheduling',format:'adf',configInput:JSON.stringify(inputs.config),schedulingInput:JSON.stringify(inputs.facts)})];
+ for(const result of results){assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.scheduling_semantics_valid,true);assert.equal(result.execution_authorized,false);assert.equal(result.start_semantics_valid,null);assert.equal(result.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(result.ledger_budget.human_cases,1);assert.equal(result.ledger_budget.omitted_entries,0);assert.equal(result.ledger_budget.actual_publication,'not_evaluated');assert.deepEqual(result.start_diagnostics,[]);assert.equal(result.readiness,'not_evaluated');}
+ assert.equal(validateValue(work,{mode:'start'}).valid,false);
+ const complete=clone(name);complete.work=work;refresh(complete);assert.equal(run(complete).valid,true,JSON.stringify(run(complete).diagnostics));
+ assert.equal(JSON.stringify(inputs),before);
+});
+for(const control of fixtures.scheduling.negatives)test('PGB-159 H02 declaration rejects '+control.name,()=>{
+ const sample=schedulingControl(control),before=JSON.stringify(sample);
+ for(const result of [schedule(sample.work,sample),validateWork(JSON.stringify(sample.work),{mode:'scheduling',configInput:JSON.stringify(sample.config),schedulingInput:JSON.stringify(sample.facts)})]){
+  assert.equal(result.valid,false);assert(result.diagnostics.some(d=>d.code===control.code&&(d.path===control.path||d.path.startsWith(control.path+'/'))),JSON.stringify(result.diagnostics));
+  if(control.code==='VALUE'){assert.equal(result.scheduling_semantics_valid,null);assert.equal(result.start_structure_valid,false);}else{assert.equal(result.scheduling_semantics_valid,false);assert.equal(result.start_structure_valid,true);}
+  if(control.ledger_bytes){assert.equal(result.ledger_budget.projection_bytes,16385);assert.equal(result.ledger_budget.omitted_entries,0);}
+ }
+ assert.equal(JSON.stringify(sample),before);
+});
+test('PGB-159 keeps legacy result shapes and rejects mixed-purpose inputs',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants.mixed;
+ const expected=['schema','mode','format','document_schema','valid','draft_valid','start_structure_valid','start_semantics_valid','validation_scope','ledger_budget','readiness','diagnostics','start_diagnostics'].sort();
+ for(const mode of ['draft','structure','start']){
+  const old=validateValue(fixtures.mixed.work,{mode,...(mode==='start'?{context:fixtures.mixed.context}:{})});assert.equal(old.valid,true);assert.deepEqual(Object.keys(old).sort(),expected);
+  for(const extra of [{config:inputs.config},{scheduling:inputs.facts},{configInput:'{}'},{schedulingInput:'{}'}])assert.equal(validateValue(work,{mode,...extra}).diagnostics[0].code,'USAGE');
+ }
+ for(const extra of [{context:{}},{contextInput:'{}'},{configInput:'{}'},{schedulingInput:'{}'}]){const result=validateValue(work,{mode:'scheduling',config:inputs.config,scheduling:inputs.facts,...extra});assert.equal(result.valid,false);assert.equal(result.diagnostics[0].code,'USAGE');assert.equal(result.execution_authorized,false);}
+ for(const extra of [{config:inputs.config},{scheduling:inputs.facts}])assert.equal(validateWork(stringify(work),{mode:'scheduling',configInput:stringify(inputs.config),schedulingInput:stringify(inputs.facts),...extra}).diagnostics[0].code,'USAGE');
+});
+test('PGB-159 canonical selection, related obligations and closed auxiliary failures are distinct',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants.mixed;
+ for(const change of [s=>s.facts.subject.site='https://elsewhere.example.invalid',s=>s.facts.subject.project_id='999']){const s=schedulingFixture();change(s);const result=schedule(s.variants.mixed,s);assert.equal(result.scheduling_semantics_valid,false);assert.equal(result.diagnostics[0].path,'/scheduling/subject');}
+ for(const change of [s=>s.facts.extra='sensitive',s=>delete s.facts.related_changes,s=>s.facts.subject.project_id='APP',s=>s.facts.subject.project_id='1'.repeat(256),s=>s.facts.schema='wrong']){const s=schedulingFixture();change(s);const result=schedule(s.variants.mixed,s);assert.equal(result.valid,false);assert.equal(result.scheduling_semantics_valid,null);assert.equal(result.ledger_budget,null);assert(result.diagnostics.every(d=>d.path.startsWith('/scheduling')));}
+ const bad=schedulingFixture();bad.config.defaults['secret-key']='secret-value';const result=schedule(work,bad);assert.equal(result.scheduling_semantics_valid,null);assert(!JSON.stringify(result).includes('secret-key'));assert(!JSON.stringify(result).includes('secret-value'));assert(!JSON.stringify(schedule(work,inputs)).includes('resolved_scope'));
+ const obligation=schedulingFixture();obligation.facts.related_changes=[{repository:inputs.config.defaults.repositories[0],change_story:'EX-2'}];assert(schedule(work,obligation).diagnostics.some(d=>d.path==='/technical_acceptance_criteria/repository/related_repositories'));
+ const local=schedulingFixture();local.config.projects[0].inherit=local.config.projects[0].inherit.filter(s=>s!=='repositories');local.config.projects[0].mappings.repositories=['https://example.invalid/local'];assert.equal(schedule(work,local).scheduling_semantics_valid,false);
+});
+test('PGB-159 SQL declaration and observation bounds do not fabricate execution proof',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants.mixed,db=work.testing_strategy.cases[0].steps[2].database;
+ for(const bindings of [[{input:'record_id',index:1},{input:'record_id',index:1}],[{input:'missing',index:1}]]){db.parameter_bindings=bindings;assert(schedule(work,inputs).diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));}
+ db.parameter_bindings=[{input:'record_id',index:1}];db.parameters=['tenant',null];db.parameters_preparation_id=null;assert.equal(schedule(work,inputs).valid,true);
+ for(const parameters of [['tenant'],['tenant','not-null']]){db.parameters=parameters;assert(schedule(work,inputs).diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));}
+ const asynchronous=schedulingFixture();assert.equal(schedule(asynchronous.variants.asynchronous_database,asynchronous).valid,true);
+ const offset=schedulingFixture();offset.variants.asynchronous_database.testing_strategy.cases[0].observation.schedule=[1,25];
+ const structural=schedule(offset.variants.asynchronous_database,offset);
+ assert.equal(structural.valid,false);
+ assert.equal(structural.start_structure_valid,false);
+ assert.equal(structural.scheduling_semantics_valid,null);
+ assert.equal(structural.ledger_budget,null);
+ assert(structural.diagnostics.some(d=>d.code==='VALUE'&&d.path==='/testing_strategy/cases/0/observation/schedule/0'));
+ for(const observation of [{schedule:[0,0]},{deadline_seconds:44},{step:'missing-step'}]){const s=schedulingFixture();Object.assign(s.variants.asynchronous_database.testing_strategy.cases[0].observation,observation);assert(schedule(s.variants.asynchronous_database,s).diagnostics.some(d=>d.code==='OBSERVATION'));}
+});
+test('PGB-159 raw and JS scheduling numeric provenance, bounds and ADF locations remain separate',()=>{
+ const inputs=schedulingFixture(),work=inputs.variants.mixed;work.testing_strategy.cases[0].steps[0].inputs.large=1e20;
+ const raw=stringify(work).replace('large: 100000000000000000000','large: 1e20');
+ assert.equal(validateWork(raw,{mode:'scheduling',configInput:stringify(inputs.config),schedulingInput:stringify(inputs.facts)}).valid,true);
+ assert.equal(schedule(work,inputs).diagnostics[0].code,'NUMBER');
+ for(const schedulingInput of ['broken: [',JSON.stringify(inputs.facts)+' '.repeat(65536),JSON.stringify({...inputs.facts,prerequisite_graph:Array(101).fill(inputs.facts.prerequisite_graph[0])})]){
+  const result=validateWork(schedulingADF(inputs.variants.human),{mode:'scheduling',format:'adf',configInput:stringify(inputs.config),schedulingInput});assert.equal(result.valid,false);assert.equal(result.scheduling_semantics_valid,null);assert(result.diagnostics.every(d=>d.path.startsWith('/scheduling')&&!Object.hasOwn(d,'block')));
+ }
+ const result=validateWork(schedulingADF(inputs.variants.human),{mode:'scheduling',format:'adf',configInput:'secret: value',schedulingInput:'broken: ['});assert.equal(result.diagnostics[0].path,'/config/schema');assert(!Object.hasOwn(result.diagnostics[0],'block'));
+ const invalid=structuredClone(inputs.variants.human);invalid.problem_to_solve=null;const structural=validateWork(schedulingADF(invalid),{mode:'scheduling',format:'adf',configInput:'broken: [',schedulingInput:'broken: ['});assert.equal(structural.diagnostics[0].block,0);assert.equal(structural.scheduling_semantics_valid,null);
+});
+test('PGB-159 source CLI handles two positives, twelve negatives and safe setup failures from unrelated cwd',async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'pgb159-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const work=path.join(dir,'work.json'),config=path.join(dir,'config.json'),facts=path.join(dir,'scheduling.json');
+ const command=(extra=[],readable=false)=>{const c=spawnSync(process.execPath,[cli,'--mode','scheduling','--input',work,'--config',config,'--scheduling',facts,...extra,...(readable?[]:['--json'])],{cwd:dir,encoding:'utf8',timeout:30000});return {...c,...(readable?{}:{result:JSON.parse(c.stdout)})};};
+ const save=async sample=>{await writeFile(work,JSON.stringify(sample.work));await writeFile(config,JSON.stringify(sample.config));await writeFile(facts,JSON.stringify(sample.facts));};
+ for(const name of ['mixed','human']){
+  const sample=schedulingFixture();await save({...sample,work:sample.variants[name]});const before=await Promise.all([work,config,facts].map(p=>readFile(p,'utf8')));
+  const c=command();assert.equal(c.status,0,c.stdout);assert.equal(c.result.purpose,'scheduling');assert.equal(c.result.execution_authorized,false);
+  const readable=command([],true);assert.equal(readable.status,0);assert.match(readable.stdout,/Scheduling declarations passed/);assert.match(readable.stdout,/human Ready to Work are not evaluated/);
+  assert.deepEqual(await Promise.all([work,config,facts].map(p=>readFile(p,'utf8'))),before);
+ }
+ for(const control of fixtures.scheduling.negatives){await save(schedulingControl(control));const c=command();assert.equal(c.status,1,c.stdout);assert(c.result.diagnostics.some(d=>d.code===control.code&&(d.path===control.path||d.path.startsWith(control.path+'/'))),c.stdout);const readable=command([],true);assert.equal(readable.status,1);assert.match(readable.stdout,/Scheduling declarations failed/);}
+ const sample=schedulingFixture();await save({...sample,work:sample.variants.human});
+ await writeFile(config,'secret-key: secret-value');let c=command();assert.equal(c.status,2);assert.equal(c.result.diagnostics[0].path,'/config/schema');assert(!c.stdout.includes('secret-key'));assert(!c.stdout.includes('secret-value'));
+ await writeFile(config,JSON.stringify(sample.config));await writeFile(facts,'broken: [');c=command();assert.equal(c.status,2);assert.equal(c.result.scheduling_semantics_valid,null);assert(c.result.diagnostics[0].path.startsWith('/scheduling'));
+ await rm(config);await rm(facts);await writeFile(work,JSON.stringify({...sample.variants.human,problem_to_solve:null}));c=command();assert.equal(c.status,1);assert.equal(c.result.start_structure_valid,false);assert.equal(c.result.scheduling_semantics_valid,null);assert.equal(c.result.execution_authorized,false);
+ await writeFile(work,JSON.stringify(sample.variants.human));c=command();assert.equal(c.status,2);assert.equal(c.result.diagnostics[0].path,'/config');assert.equal(c.result.execution_authorized,false);
+ for(const extra of [['--context','unreadable'],['--config',config],['--unknown']]){c=command(extra);assert.equal(c.status,2);assert.equal(c.result.diagnostics[0].code,'USAGE');assert.equal(c.result.mode,'scheduling');assert.equal(c.result.execution_authorized,false);}
+ await writeFile(config,JSON.stringify(sample.config));await writeFile(facts,JSON.stringify(sample.facts));c=command(['--scheduling',dir]);assert.equal(c.status,2); // duplicate option fails before reading
+ const directory=spawnSync(process.execPath,[cli,'--mode','scheduling','--input',work,'--config',config,'--scheduling',dir,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(directory.status,2);assert.equal(JSON.parse(directory.stdout).diagnostics[0].path,'/scheduling');
+ const help=spawnSync(process.execPath,[cli,'--help','--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(help.status,0);assert.deepEqual(JSON.parse(help.stdout).modes,['draft','structure','scheduling','start']);assert(JSON.parse(help.stdout).schemas.includes('pigboard-work-scheduling/v1'));
+});
+test('PGB-159 source config/work import orders and canonical config CLI remain usable',async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'pgb159-import-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const configURL=new URL('../lib/config/parse.mjs',import.meta.url).href,workURL=new URL('../lib/contracts/work.mjs',import.meta.url).href;
+ for(const order of [[configURL,workURL],[workURL,configURL]]){
+  const program=`await import(${JSON.stringify(order[0])});const second=await import(${JSON.stringify(order[1])});const runtime=await import(${JSON.stringify(workURL)});const fixture=JSON.parse((await import('node:fs')).readFileSync(${JSON.stringify(new URL('./fixtures/work-semantics.json',import.meta.url).pathname)},'utf8')).scheduling;const result=runtime.validateValue(fixture.variants.mixed,{mode:'scheduling',config:fixture.config,scheduling:fixture.facts});if(!result.valid)throw Error(JSON.stringify(result.diagnostics));`;
+  const c=spawnSync(process.execPath,['--input-type=module','--eval',program],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(c.status,0,c.stderr);
+ }
+ const config=path.join(dir,'config.json');await writeFile(config,JSON.stringify(fixtures.scheduling.config));
+ const c=spawnSync(process.execPath,[new URL('../scripts/check-config.mjs',import.meta.url).pathname,'--input',config,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(c.status,0,c.stdout+c.stderr);assert.equal(JSON.parse(c.stdout).valid,true);
+});

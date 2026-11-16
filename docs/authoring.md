@@ -1,8 +1,9 @@
 # Check an editable Epic or ticket
 
-This local command checks editable structure and, with separately supplied trusted
-facts, local start semantics. It never reads Jira, changes a file, starts a worker,
-computes a digest, executes tests or establishes live readiness. The
+This local command checks editable structure, complete scheduling declarations
+and, with separately supplied trusted execution facts, local start semantics.
+It never reads Jira, changes a file, starts a worker, executes tests or establishes
+live readiness. The
 writing skill now authors versioned
 Epic and Story/Bug YAML with full templates and readable requirements. The
 structured implementer and reviewer consume current versioned assignments and
@@ -82,8 +83,8 @@ binding.
 Start from the writer templates in the matching navigation column above. Their
 complete examples include separate synthetic contexts; they are not authorized targets. Save raw YAML and
 validate that text, preserving numeric parser provenance rather than passing a
-reserialized object. Without trusted context, run draft/structure and report start
-not run. Report actual mode/result and exact missing paths/owners. If the checker
+reserialized object. Without trusted execution context, use scheduling for complete declarations or
+draft/structure for shape, and report start not run. Report actual mode/result and exact missing paths/owners. If the checker
 is missing or corrupt, preserve the draft and report setup missing; do not repair
 or download dependencies during authoring. Use a versioned receipt path when a
 refresh could overlap your run.
@@ -96,8 +97,10 @@ Draft permits incomplete alternatives, empty lists and open questions; it does
 not certify a populated plan. `structure` enforces all canonical structural constraints,
 including required values, alternatives and no open questions. Optional nulls stay
 visible and pass where prescribed. `start` adds local semantic checks and requires
-`--context FILE`. All three modes enforce the same safe value domain. Context is
-rejected in draft/structure mode.
+`--context FILE`. `scheduling` adds complete declaration semantics without requiring future execution
+facts. It requires `--config CONFIG.yaml --scheduling FACTS.yaml`. All four modes
+enforce the same safe value domain. Context is accepted only in start;
+configuration/scheduling inputs are accepted only in scheduling.
 
 The canonical [Epic](../contracts/epic-v1.schema.json) and
 [ticket](../contracts/ticket-v1.schema.json) schemas are JSON Schema 2020-12.
@@ -111,7 +114,7 @@ publication remain separate gates.
 
 ## Input, limits and diagnostics
 
-Supply `--mode draft|structure|start --input FILE`; `--format yaml` is the default. Input must
+Supply `--mode draft|structure|scheduling|start --input FILE`; `--format yaml` is the default. Input must
 be one local regular file, never a URL or stdin. Options cannot repeat; unknown
 options and extra arguments fail. A filename beginning with `-` is accepted as an
 input option value. Values are never executed or interpolated.
@@ -151,16 +154,206 @@ Issue wrappers, HTML and Markdown-fence extraction are unsupported.
 JSON mode prints exactly one `pigboard-work-validation/v1` object. `valid` is the
 selected mode; `draft_valid` and `start_structure_valid` report both checks or null
 when unavailable. `start_semantics_valid` is boolean or null; `validation_scope` is `draft`,
-`structure` or `local_start`. `ledger_budget` is null or the sizing summary below.
+`structure`, `scheduling_declarations` or `local_start`. Scheduling additionally reports
+`purpose: scheduling`, `scheduling_semantics_valid` (null before auxiliary validation,
+otherwise boolean) and `execution_authorized: false`; its `start_semantics_valid`
+stays null. Those extra fields do not change legacy results. `ledger_budget` is null or the sizing summary below.
 `readiness` is always `not_evaluated`. `diagnostics` contains
 selected-mode failures. In draft mode, `start_diagnostics` lists remaining structure
-work; in structure/start modes that array is empty to avoid duplication. Each diagnostic has
+work; in structure/scheduling/start modes that array is empty to avoid duplication. Each diagnostic has
 a stable code, JSON Pointer path and safe reason, with line/column or zero-based
 ADF block index when known. Root is `""`; `~0` and `~1` escape key characters.
 Human output safely quotes paths. No values, source snippets or stack traces are
 printed. Fix the named field, then rerun; the input stays unchanged. Exit 0 means
-selected-mode validity/help, 1 invalid work, 2 usage/read/setup/invalid-context/internal failure. Context
+selected-mode validity/help, 1 invalid work, 2 usage/read/setup/invalid-auxiliary-input/internal failure. Scheduling declaration
+errors, including graph/scope failures under `/scheduling`, exit 1. Malformed or
+missing configuration/facts exit 2. Context
 diagnostics use `/context/...`; structural failures are reported before semantics.
+
+## Check complete scheduling declarations
+
+Use scheduling before execution details exist. For an installed checker, use a
+receipt prepared from a reviewed revision containing this mode. Supply the saved work, the
+canonical [customer configuration](configuration.md) and a separate closed facts
+object with exactly `schema`, `subject`, `prerequisite_graph` and `related_changes`.
+The schema is `pigboard-work-scheduling/v1`. `subject` contains nonempty `site`,
+`project_id` and `key` strings. `project_id` is the immutable decimal project ID,
+at most 255 characters, not its changeable display key. Select the exact site and
+project; no default project is chosen. Repository URLs come from its resolved
+configuration, including inherited defaults. A declared base branch is required
+but this check does not authorize that branch.
+
+`prerequisite_graph` contains `{ticket, prerequisites}` nodes for the subject and
+every reachable prerequisite; the subject edges must match work. `related_changes`
+contains minimum `{repository, change_story}` obligations to retain in the work.
+Use empty lists when none apply. Native acquisition and freshness remain the
+caller's responsibility. These declarations do not prove native status, access,
+parent/stream ownership, readiness or permission.
+
+The checker shares coverage, dispatch/child/binding order, reference resolution,
+preparation consumers, graph/cycle checks, complete-ledger sizing and installed
+supported-skill checks with start. SQL bindings name existing inputs and unique
+zero-based indices; a declared parameter array must contain null at bound slots.
+A valid preparation slot may leave the array unfilled. Asynchronous observations
+select one top-level unit, start at zero, increase strictly and leave positive
+windows; database units need the known 20-second helper window. Actual reviewed
+SQL layout, read-only behavior, operation durations, runtime references, configured
+targets, access and branch authority remain start inputs. Do not invent those
+facts to obtain a scheduling result.
+
+Scheduling facts use the work limits: 65,536 bytes, depth 32, lists of 100.
+Configuration keeps its own limits: 1 MiB, depth 16, lists of 1,000, plus its
+schema-specific bounds. `--format adf` changes only the work encoding; both
+auxiliary files remain raw YAML/JSON. Work structure is checked before auxiliary
+files. Auxiliary errors use `/config` or `/scheduling` paths without a work ADF
+block index. Output never includes configuration or secret references.
+
+Raw API:
+
+```js
+validateWork(rawWork, {mode: 'scheduling', format: 'yaml', configInput: rawConfig, schedulingInput: rawFacts});
+```
+
+Value API:
+
+```js
+validateValue(work, {mode: 'scheduling', config, scheduling: facts});
+```
+
+Do not mix raw and value auxiliary forms or pass execution context to scheduling.
+Direct JS values retain the strict numeric checks described above. Scheduling
+reads supplied data only. It does not run tests, acquire native facts, launch work,
+change Jira status or make the human Ready to Work decision.
+
+### Runnable synthetic example
+
+From a prepared contributor checkout, create these three complete disposable JSON
+inputs. All identities and destinations are synthetic. The human case consumes
+an unfilled implementer preparation slot; no execution context is invented.
+
+```sh
+pgb159_example_dir=$(mktemp -d)
+node --input-type=module - "$pgb159_example_dir" <<'JS'
+import {writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+const folder = process.argv[2];
+const config = {
+  schema: 'pigboard-config/v1', jira: {site: 'https://jira.example.invalid'},
+  defaults: {
+    stages: {'Ready to Work':'11', 'In Progress':'12', 'In Review':'13', QA:'14',
+      'Human Review':'15', 'Rework Queued':'16', Blocked:'17'},
+    accepted_later_stage_ids: ['18'], types: {epic:'21', story:'22', bug:'23'},
+    actors: {manager:['demo'], implementer:['demo'], reviewer:['demo'], qa:['demo'], human_request:['demo']},
+    repositories: ['https://example.invalid/example/application'],
+    worker_prefixes: ['AI-Demo-'], opt_in_label: 'pigboard'
+  },
+  projects: [{id:'10001', key:'EX', board_ids:[], mappings:{},
+    inherit:['stages','accepted_later_stage_ids','types','actors','repositories','worker_prefixes','opt_in_label']}]
+};
+const facts = {
+  schema: 'pigboard-work-scheduling/v1',
+  subject: {site:config.jira.site, project_id:'10001', key:'EX-1'},
+  prerequisite_graph: [{ticket:'EX-1', prerequisites:[]}], related_changes:[]
+};
+const work = {
+  schema:'pigboard-ticket/v1', problem_to_solve:'A new reader needs clear search wording.',
+  prerequisites:[], acceptance_criteria:[{id:'AC1', requirement:'A new reader understands the search label.'}],
+  technical_acceptance_criteria: {
+    repository: {url:config.defaults.repositories[0], base_branch:'main',
+      change_boundary:'Search wording only.', out_of_scope:['Changing search behavior.'], related_repositories:[]},
+    accepted_decisions:[], constraints:[]
+  },
+  testing_strategy: {
+    testing_types:[], environment:{source:'configured_target', target_reference:'local-review', required_capabilities:[]},
+    actors:[], fixtures:[], dispatch_order:[], cases:[],
+    preparation:[{id:'PREP-01', owner:'implementer', supplies:'Provide the saved proposed wording artifact for review.',
+      used_by:['H1'], preserves:['Keep the agreed search meaning and expected result.']}],
+    human_review: {no_ai_cases_reason:'The product reviewer assesses wording.', cases:[{
+      id:'H1', execution:'human', owner_role:'Product reviewer', requirements:['AC1'],
+      prerequisites:['The proposed wording is available.'], steps:['Read the search label as a new reader.'],
+      expected:['The reader understands how to search.'], evidence:['Review comment naming the tested revision.'],
+      cleanup:{mode:'none', reason:'Review changes no records.', owner:null, steps:null}
+    }]}, automated_regression:'Run the prescribed wording regression checks.'
+  }, open_questions:[]
+};
+for (const [name,value] of Object.entries({work,config,facts}))
+  writeFileSync(join(folder,name+'.json'), JSON.stringify(value)+'\n');
+JS
+node scripts/validate-work.mjs --mode scheduling --input "$pgb159_example_dir/work.json" --config "$pgb159_example_dir/config.json" --scheduling "$pgb159_example_dir/facts.json" --json
+node scripts/validate-work.mjs --mode scheduling --input "$pgb159_example_dir/work.json" --config "$pgb159_example_dir/config.json" --scheduling "$pgb159_example_dir/facts.json"
+```
+
+Both commands exit 0: scheduling declarations pass, human cases stay pending,
+readiness is `not_evaluated` and execution is unauthorized. Strict start with the
+same work and no `--context` exits 2; supply the full applicable independently
+prepared context to run start. An unfilled, valid mechanical slot can also pass
+start when that full context exists; scheduling does not relax start.
+
+For the prepared runtime, replace the checker path with the exact versioned
+receipt path and reuse the same three input files:
+
+```sh
+node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode scheduling --input "$pgb159_example_dir/work.json" --config "$pgb159_example_dir/config.json" --scheduling "$pgb159_example_dir/facts.json" --json
+```
+
+Fix declaration errors at the named field. Supply missing canonical inputs through
+their owner; missing runtime is setup work outside delivery. Rerun the affected
+check after repair, preserving prior valid evidence. Do not fetch dependencies
+inside the delivery run. After retaining evidence, remove only the disposable
+example directory, using `rm -r -- "$pgb159_example_dir"`.
+
+### Prepare PGB-159-H01 and H02
+
+PREP-01 uses `test/fixtures/work-semantics.json` at the reviewed PR revision. Its
+`scheduling` section holds canonical config, facts, preparation-bearing mixed and
+human plans, an asynchronous database variant and the fixed twelve negative
+controls. The unchanged `mixed` and `human` roots retain full-start oracles.
+`test/work-semantics.test.mjs` applies only this finite inventory and documents the
+reachable ledger-overflow construction. The implementer exports the resulting
+work, config and facts to a disposable directory before human acceptance. Use
+`mixed`, `human` and `negative-01` through `negative-12` in fixture inventory order
+as filenames: `<name>-work.json`, `<name>-config.json` and
+`<name>-scheduling.json`. Preserve the positive source fixtures unchanged.
+Set `pgb159_fixture_dir` to that prepared directory, and `pgb159_checker` first to
+the absolute source checker, then to the exact receipt checker. Run both output
+forms from an unrelated directory:
+
+```sh
+for pgb159_name in mixed human negative-01 negative-02 negative-03 negative-04 negative-05 negative-06 negative-07 negative-08 negative-09 negative-10 negative-11 negative-12; do
+  node "$pgb159_checker" --mode scheduling --input "$pgb159_fixture_dir/$pgb159_name-work.json" --config "$pgb159_fixture_dir/$pgb159_name-config.json" --scheduling "$pgb159_fixture_dir/$pgb159_name-scheduling.json" --json
+  node "$pgb159_checker" --mode scheduling --input "$pgb159_fixture_dir/$pgb159_name-work.json" --config "$pgb159_fixture_dir/$pgb159_name-config.json" --scheduling "$pgb159_fixture_dir/$pgb159_name-scheduling.json"
+done
+```
+
+For strict start, the same preparation-bearing work without `--context` must exit 2:
+
+```sh
+node "$pgb159_checker" --mode start --input "$pgb159_fixture_dir/mixed-work.json" --json
+node "$pgb159_checker" --mode start --input "$pgb159_fixture_dir/human-work.json" --json
+```
+
+Use the unchanged full-context controls or a separately reviewed context matching
+the complete current preparation-bearing work for a valid start comparison; never
+feed execution facts into scheduling.
+
+H01 expects both plans to pass scheduling, strict start to require its full
+context, complete ledgers with zero omissions, and truthful purpose/readiness/
+execution fields. H02 expects twelve separate exit-1 declaration controls: missing
+AC coverage, missing TAC coverage, duplicate dispatch, wrong API child, forward
+binding, unknown preparation consumer, unauthorized repository, unsupported skill,
+dependency cycle, missing SQL input, invalid observation schedule and exceeded
+ledger bound. Each fixture records its expected code/path. Preserve every case,
+expectation and evidence obligation; parser rejection cannot count as ledger
+coverage. Use the inherited catalogue/history/current-runtime checks for AC3/TAC3;
+do not rewrite immutable historical records to match current bytes.
+
+Developer regressions prepare evidence; designated human H01/H02 stay NOT_RUN
+until their owners execute them. Retain the revision/pin, exact commands, sanitized
+ordered results and observed outcome per control; distinguish simulated fixture
+results from actual runtime observations. After evidence is retained, remove only
+disposable fixtures/build output. Leave shared setup and live records unchanged.
+If a prescribed result remains unavailable after the bounded attempt, record the
+unknown and request the authorized human decision rather than retrying indefinitely.
 
 ## Prepare trusted local facts
 
