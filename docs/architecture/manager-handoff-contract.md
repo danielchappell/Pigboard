@@ -9,7 +9,7 @@ by this document.
 
 ## Available local validation
 
-The source and prepared bundle include a read-only record/receipt-chain validator;
+The source and prepared bundle include the strict record/receipt-chain validator and the two explicit recorded manager purposes;
 see [operator and agent usage](../handoffs.md). It checks bounded supplied evidence,
 not live freshness. This does not install the future provider adapters, role
 producers, manager or human-unblock automation described below, and activates no
@@ -434,3 +434,83 @@ delivered by PGB-149/R1-35. Readable output does not yet identify every retained
 cause; use `--json` for the complete result until PGB-146 finishes readable parity. Existing installed runtime compatibility remains supported with
 its required policy closure. The full installed repair fixture kit and semantic
 repair smoke remain PGB-81; neither preview grants live publication authority.
+
+
+## Implemented recorded manager purposes — PGB-160
+
+The approved role amendment's `inspectRecordedHistory` and
+`inspectRecordedCompletion` are implemented in the existing receipts module and
+`validate-handoff.mjs`. Strict record/chain v1 and the old manager inspectors keep
+their existing inputs, results and guarantees. Worker-current/assignment purposes,
+v2 preview and later caller migrations remain separate work; consumers do not
+fall back to recorded validation after a strict failure.
+
+The closed `pigboard-manager-handoff-input/v1` envelope contains only
+`schema`, `consumer: manager`, exact `target`, `trusted`, `issues`, current-only
+`requirements`, `comment_pages`, `retained` and `request_resolutions`.
+Trusted projects contain only `id`, `stages`, `accepted_later_stage_ids`, `actors`
+and `repositories`; trusted root also contains `site` and `manager_assignments`.
+Native issue/reference/page/retained shapes remain those of the strict receipt
+contract. Requirements rows contain only `ticket_id`, `digest`, `format: yaml|adf`
+and original `body`. The exported `managerHandoffInputSchema` composes those
+existing definitions without altering the strict schema. Whole input is JSON
+only, at most 8 MiB, depth40/list1000; individual handoff bounds remain unchanged.
+
+History may receive an empty current requirements array. Supplied bodies still use safe original-raw
+structure validation, exact current canonical digest/native identity and unique
+current ticket/key mapping. Completion additionally reuses PGB-159's complete
+pure scheduling semantics against current work, a graph derived from every
+reachable supplied current declaration, configured project repositories and the
+installed supported skill set. Related-change rows project declarations; they do
+not establish external change completeness or current action authority. Missing
+reachable bodies/keys hold rather than becoming fabricated empty graph leaves.
+No canonical full config or execution context is invented for that call.
+
+The shared engine preserves contiguous complete pages, immutable raw/server
+metadata, UUID/slot/resume coherence, exact assignment/predecessor/operation,
+publication inventory, own/parent PR identities, all roots, exact segment cutoffs
+and incorporated revisions, genuine pre-first-PR proof and request resolutions.
+Historical authentication applies to older assignment **or** digest, even an old
+assignment with the same digest. Historical records require the original retained
+closure. Current completion checks current pointer, stored assignment, raw digest,
+accepted native QA stage, complete declaration/ledger/preparation assertions and
+outstanding obligations. It cannot infer unseen PR/evidence freshness.
+
+Current QA compares every expanded step ID/skill/order, pending human case,
+human-only reason, PASS/evidence counts and declared preparation slots/hashes.
+Historical QA checks intrinsic ledger consistency while treating unavailable old
+coverage/operation definitions as publisher assertions. Embedded evidence/reuse
+claims are not external observations. No evidence receipt, pipeline actor,
+retrieval, approval state, CI success or current external PR is fabricated.
+
+Both new results use `pigboard-recorded-handoff-validation/v1`, explicit
+`mode`/`purpose`, `validation_scope: authenticated_recorded_handoffs`,
+`basis: authenticated_jira_handoff`, `external_freshness: not_evaluated` and
+`execution_authorized: false`. History returns a direct validity/target/records/
+coverage-segments/bindings object and never establishes recorded completion.
+Completion returns exactly `{validation, bindings}` with the exact current QA
+leaf/ledger and `recorded_completion_established`. Invalid results export no
+bindings and invalid completion has a null leaf. Bindings are sorted exact
+recorded/native facts only; raw current requirements include format/body/work,
+with no context, PR or evidence observation bindings. Common facts have common
+identity/digests across the two purposes. Supplied facts are not cryptographic
+proof of live provider origin, and role accounts may overlap.
+
+The CLI adds `recorded-history` and `recorded-completion`, with regular absolute
+input files and no `--format`. JSON matches the API's direct/wrapped result;
+readable output names purpose, exact target, validity/recorded completion,
+unchecked freshness and binding count. Exit0 succeeds only for the selected
+purpose,1 rejects proof and2 is usage/read/setup/internal failure; usage precedes
+file reads. The [operator guide](../handoffs.md#recorded-manager-input-and-results)
+contains a complete fixture preparation/source/copied example. The handoff-chain
+fixture and this architecture guide are source-only; copied execution receives
+external absolute prepared JSON files. No bundle extension is required.
+
+Developer verification uses exactly30 named rows/31 ordered states/46 purpose
+invocations plus the explicitly named B04 command/sanitization controls and strict
+external companions. N15–N17 are coherent authenticated current ledger,
+preparation and dispatch failures with independent expected boundary paths, not
+unrelated digest failures. Original strict fixtures, complete public results,
+paired history oracles and fixed module-entry budgets remain preserved.
+Designated human H01/H02 remain NOT_RUN; local checks do not establish hosted CI,
+merge, compatible caller adoption or activation.
