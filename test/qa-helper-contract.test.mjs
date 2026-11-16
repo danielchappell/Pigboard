@@ -1114,9 +1114,59 @@ test('PGB-136 partial source publication binds the exact own-selection split and
 
 const readConfigHash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 
+// Assert and reverse only the verified native-only R1-40 repair before the unchanged R1-38 and source-history guards.
+function beforeNativeTargetIdentityRepair(value,kind) {
+ const prior=structuredClone(value);
+ if(kind==='drafts') {
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  assert(!prior.some(x=>x.id==='R1-40'));return prior;
+ }
+ if(kind==='metadata') {
+  assert.equal(readConfigHash(prior),'163c5a517dfa878043db4db2e209e7e69e7da37a0015d87574bf06a45e14e54c');
+  const rows=prior.filter(x=>x.id==='R1-36');assert.equal(rows.length,1);const story=rows[0],a=story.native_target_identity_repair;assert(a);
+  assert.equal(readConfigHash(a),'7bbac5ed143e0e846c9d607736298754bd3632385902eb35b63a1eebbf2a9f22');
+  assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent,a.source_composed],['R1-40','PGB-154','10614','PGB-66',false]);
+  assert.equal(a.reviewed_plan_sha256,'a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b');
+  assert.equal(a.receipt_sha256,'be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a');
+  assert.deepEqual([a.native_prerequisite.link_id,a.native_child_to_feature.link_id],['10750','10751']);
+  assert.deepEqual(a.verified_parent_body_sha256,{before:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9',after:'758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b'});
+  assert.deepEqual([a.pinned_feature_revision,a.pinned_feature_tree],['1524127c6d9ffbad8481cf7ce86bcc19cb712f52','b35fa3cb57dbdd133d61f76f6b6d1ba19ebb43a2']);
+  assert.deepEqual(a.changed_files,['lib/jira/read.mjs','test/jira-read.test.mjs','docs/manager-preview.md','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','test/story-authoring.test.mjs','test/qa-helper-contract.test.mjs']);
+  assert.equal(a.changed_file_count,8);assert.equal(new Set(a.changed_files).size,8);assert.deepEqual(a.child_hours,{min:3,max:5.1});assert.deepEqual(a.child_days,{min:0.375,max:0.6375});
+  assert.deepEqual(a.child_human_groups,{count:1,status:'NOT_RUN'});assert.deepEqual(a.source_counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+  assert.deepEqual(a.source_forecast_days,{min:48.42875,max:52.11});assert.deepEqual(a.historical152_delivery_forecast_days,{min:48.86625,max:52.86});assert.deepEqual(a.current_delivery_forecast_days,{min:49.24125,max:53.4975});
+  assert.equal(readConfigHash(story.delivery_state),'814d9fe0a1b515e87a978ef16d3ae80c443baff732d85f5738e4c065e67eec9c');
+  assert.equal(readConfigHash(a.historical_parent.delivery_state),'ae47ae3d15c37da54fc083efac4df17e72dd26b06ffb3231a8717d87dcc32e6e');
+  assert.equal(readConfigHash(story.native_observation_repair),'683a1a5ff5cdcd8f5ac3eef9ace2f61ed080496b3b213f27708cdd7b8fb62012');
+  story.delivery_state=a.historical_parent.delivery_state;delete story.native_target_identity_repair;
+  assert.equal(readConfigHash(prior),'349721b5858c1fbb3494371c3c41ac8a464e3a463c435245558f7636759c9c67');return prior;
+ }
+ assert.equal(kind,'publication');assert.equal(readConfigHash(prior),'5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116');
+ assert.equal(readConfigHash(prior.status),'958477720aa43c0814539a4158e6e207673c698280cada83296e260fb36e0487');
+ assert.equal(readConfigHash(prior.current_source_scope.status),'958477720aa43c0814539a4158e6e207673c698280cada83296e260fb36e0487');
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);assert(!Object.hasOwn(prior.stories,'R1-40'));
+ const a=prior.native_target_identity_repair_amendment;assert(a);assert.equal(readConfigHash(a),'841ed253700348ceb1a572ec7a5a379f9ded8e15a04ebcdc238af421e8dfdb48');
+ assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent],['R1-40','PGB-154','10614','PGB-66']);assert.deepEqual(a.source_composed,[]);assert.deepEqual(a.source_counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+ assert.equal(a.reviewed_plan_sha256,'a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b');assert.equal(a.receipt_sha256,'be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a');
+ assert.deepEqual(a.parent_body_sha256,{before:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9',after:'758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b'});assert.equal(a.parent_contract_preserved_except_child_prerequisite,true);
+ assert.deepEqual(a.native_links.map(x=>[x.from,x.to,x.id]),[['PGB-145','PGB-150','10744'],['PGB-150','PGB-147','10745'],['PGB-152','PGB-150','10748'],['PGB-145','PGB-154','10750'],['PGB-154','PGB-150','10751']]);
+ assert.deepEqual(a.child_hours,{min:3,max:5.1});assert.deepEqual(a.child_days,{min:0.375,max:0.6375});assert.equal(a.child_changed_files.length,8);assert.deepEqual(a.child_human_groups,{count:1,status:'NOT_RUN'});
+ const pending={source_id:'R1-36',native_key:'PGB-150',prerequisite_source_id:'R1-40',prerequisite_native_key:'PGB-154',required_outcome:'ai_qa_complete',native_link_id:'10751',status:'native_verified_source_pending'};
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments,['PGB-137','PGB-146','PGB-147','PGB-148','PGB-149','PGB-152','PGB-154']);
+ assert.deepEqual(prior.current_source_scope.pending_source_dependencies.at(-1),pending);assert.equal(prior.current_source_scope.pending_source_dependencies.length,4);assert.deepEqual(a.pending_source_dependency,pending);
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.42875,max:52.11});assert.deepEqual(a.source_forecast_days,prior.current_source_scope.forecast_days);
+ assert.deepEqual(a.historical152_delivery_forecast_days,{min:48.86625,max:52.86});assert.deepEqual(a.current_delivery_forecast_days,{min:49.24125,max:53.4975});
+ assert.equal(Number((48.42875+3.5/8+3/8).toFixed(5)),49.24125);assert.equal(Number((52.11+6/8+5.1/8).toFixed(5)),53.4975);
+ assert.equal(readConfigHash(a.historical_parent.status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.equal(readConfigHash(a.historical_parent.current_source_scope_status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.equal(readConfigHash(prior.native_observation_repair_amendment),'de763f9470c3feb256bfb07acbe89395b83b81b2c8c731b2807937b7c7803cd9');
+ prior.current_source_scope.pending_source_amendments.pop();prior.current_source_scope.pending_source_dependencies.pop();prior.status=a.historical_parent.status;prior.current_source_scope.status=a.historical_parent.current_source_scope_status;delete prior.native_target_identity_repair_amendment;
+ assert.equal(readConfigHash(prior),'803a89019366f32951d2be2e34fb237c5977a3526f6101daeb6a1f4bc7584081');return prior;
+}
+
 // Assert and reverse the verified native-only R1-38 repair before the unchanged source/history guards.
 function beforeNativeObservationRepair(value,kind) {
- const prior=structuredClone(value);
+ const prior=beforeNativeTargetIdentityRepair(value,kind);
  if(kind==='drafts') {
   assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
   assert(!prior.some(x=>x.id==='R1-38'));return prior;

@@ -78,3 +78,49 @@ for(const group of ['R1-38-H01','R1-38-H02']){
   }
  });
 }
+
+test('R1-40-H01 target pair identity rejects duplicates and accepts one reversed-order target',async t=>{
+ const original=fixtureCases.variants.find(v=>v.case==='R1-33-H04'&&v.variant==='guide-and-install');
+ const originalCount=fixtureCases.variants.length;
+ for(const variant of ['duplicate-target-member-order','unique-target-member-order']){
+  await t.test(variant,async()=>{
+   const v=structuredClone(original);v.case='R1-40-H01';v.variant=variant;
+   const reversed={comment_id:'2001',ticket_id:'1000'};
+   if(variant==='duplicate-target-member-order'){
+    v.request.comment_targets.push(reversed);
+    v.script.push(structuredClone(v.script[3]));
+    v.oracle={status:'invalid',code:'INPUT_INVALID',calls:0,trace:[],issue_rows:[],acquisition:{issues:[],comment_pages:[],exact_comments:[],references:[],provenance:[]},diagnostic:{operation:null,issue_id:null,scope:null},cleanup_resolver:'settled',counters:{requests_completed:0,requests_failed:0,search_pages:0,comment_pages:0,epics:0,streams:0,known_issues:0,comments:0,response_bytes:0,observation_bytes:0,elapsed_ms:0}};
+   }else{
+    v.request.comment_targets=[reversed];
+    v.oracle.trace=v.script.map(step=>({method:'GET',path:step.path}));
+    v.oracle.counters={requests_completed:4,requests_failed:0,known_issues:1,comments:1,response_bytes:910,observation_bytes:1154,search_pages:0,epics:0,streams:0};
+    assert.deepEqual(v.script.map(step=>Buffer.byteLength(JSON.stringify(step.body))),[181,265,258,206]);
+   }
+   fixtureCases.variants.push(v);
+   try{
+    const r=await runFixture(v.case,v.variant,runtime);
+    assert.equal(r.oracle_matched,true);
+    assert.deepEqual(r.trace,v.oracle.trace);
+    assert.deepEqual(r.server_trace,v.oracle.trace);
+    assert.deepEqual(r.input_hashes.before,r.input_hashes.after);
+    assert.deepEqual(r.runtime_hashes.before,r.runtime_hashes.after);
+    assert.equal(r.effects,0);
+    assert.equal(r.resolver_calls,variant==='duplicate-target-member-order'?0:1);
+    assert.equal(r.cleanup_complete,true);
+    assert.equal(Object.hasOwn(r.report,'observations'),false);
+    if(variant==='duplicate-target-member-order'){
+     assert.equal(r.report.limits,null);
+     assert.deepEqual(r.report.counters,{requests_attempted:0,...v.oracle.counters});
+     assert.deepEqual(r.report.diagnostics,[{code:'INPUT_INVALID',message:'Supply unique immutable issue IDs and matching exact comment targets.',operation:null,issue_id:null,scope:null}]);
+    }else{
+     assert.equal(r.report.counters.requests_attempted,4);
+     assert.equal(r.report.counters.response_bytes,910);
+     assert.equal(r.report.counters.observation_bytes,1154);
+    }
+   }finally{
+    assert.equal(fixtureCases.variants.pop(),v);
+   }
+  });
+ }
+ assert.equal(fixtureCases.variants.length,originalCount);
+});
