@@ -192,7 +192,7 @@
                         "content": [
                           {
                             "type": "text",
-                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                           }
                         ]
                       }
@@ -257,7 +257,7 @@
                     "content": [
                       {
                         "type": "text",
-                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                       }
                     ]
                   }
@@ -883,7 +883,7 @@
           }
         },
         "raw_bodies": {
-          "100": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-epic/v1\\\",\\\"problem_to_solve\\\":null,\\\"outcome\\\":null,\\\"scope\\\":null,\\\"workstreams\\\":[{\\\"label\\\":\\\"AI-Daniel-1\\\",\\\"story_order\\\":[\\\"101\\\"]}],\\\"accepted_decisions\\\":null,\\\"open_questions\\\":null}\"}]}]}",
+          "100": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-epic/v1\\\",\\\"problem_to_solve\\\":null,\\\"outcome\\\":null,\\\"scope\\\":null,\\\"workstreams\\\":[{\\\"label\\\":\\\"AI-Daniel-1\\\",\\\"story_order\\\":[\\\"103\\\"]}],\\\"accepted_decisions\\\":null,\\\"open_questions\\\":null}\"}]}]}",
           "101": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-ticket/v1\\\",\\\"problem_to_solve\\\":null,\\\"prerequisites\\\":[{\\\"ticket\\\":\\\"104\\\",\\\"required_outcome\\\":\\\"ai_qa_complete\\\"}],\\\"acceptance_criteria\\\":null,\\\"technical_acceptance_criteria\\\":null,\\\"testing_strategy\\\":null,\\\"open_questions\\\":null}\"}]}]}"
         },
         "counters": {
@@ -1187,7 +1187,7 @@
                         "content": [
                           {
                             "type": "text",
-                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                           }
                         ]
                       }
@@ -1252,7 +1252,7 @@
                     "content": [
                       {
                         "type": "text",
-                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                       }
                     ]
                   }
@@ -1878,7 +1878,7 @@
           }
         },
         "raw_bodies": {
-          "100": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-epic/v1\\\",\\\"problem_to_solve\\\":null,\\\"outcome\\\":null,\\\"scope\\\":null,\\\"workstreams\\\":[{\\\"label\\\":\\\"AI-Daniel-1\\\",\\\"story_order\\\":[\\\"101\\\"]}],\\\"accepted_decisions\\\":null,\\\"open_questions\\\":null}\"}]}]}",
+          "100": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-epic/v1\\\",\\\"problem_to_solve\\\":null,\\\"outcome\\\":null,\\\"scope\\\":null,\\\"workstreams\\\":[{\\\"label\\\":\\\"AI-Daniel-1\\\",\\\"story_order\\\":[\\\"103\\\"]}],\\\"accepted_decisions\\\":null,\\\"open_questions\\\":null}\"}]}]}",
           "101": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-ticket/v1\\\",\\\"problem_to_solve\\\":null,\\\"prerequisites\\\":[{\\\"ticket\\\":\\\"104\\\",\\\"required_outcome\\\":\\\"ai_qa_complete\\\"}],\\\"acceptance_criteria\\\":null,\\\"technical_acceptance_criteria\\\":null,\\\"testing_strategy\\\":null,\\\"open_questions\\\":null}\"}]}]}"
         },
         "counters": {
@@ -17578,7 +17578,7 @@
                         "content": [
                           {
                             "type": "text",
-                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                            "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                           }
                         ]
                       }
@@ -17643,7 +17643,7 @@
                     "content": [
                       {
                         "type": "text",
-                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"101\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
+                        "text": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":null,\"outcome\":null,\"scope\":null,\"workstreams\":[{\"label\":\"AI-Daniel-1\",\"story_order\":[\"103\"]}],\"accepted_decisions\":null,\"open_questions\":null}"
                       }
                     ]
                   }
@@ -27250,31 +27250,7 @@
                       ]
                     }
                   }
-                }
-              ],
-              "isLast": false,
-              "nextPageToken": "next"
-            }
-          },
-          {
-            "method": "POST",
-            "path": "/rest/api/3/search/jql",
-            "request_body": {
-              "jql": "project = \"10001\" AND labels = \"pigboard\" ORDER BY id ASC",
-              "maxResults": 2,
-              "fields": [
-                "project",
-                "issuetype",
-                "status",
-                "parent",
-                "labels",
-                "description"
-              ],
-              "nextPageToken": "next"
-            },
-            "status": 200,
-            "body": {
-              "issues": [
+                },
                 {
                   "id": "106",
                   "key": "APP-106",
@@ -27480,17 +27456,13 @@
           "inspection_scope": "configured_inventory",
           "domain_complete": true,
           "retained_complete": true,
-          "calls": 10,
+          "calls": 9,
           "scopes": [],
           "issue_ids": [
             "100",
             "106"
           ],
           "trace": [
-            {
-              "method": "POST",
-              "path": "/rest/api/3/search/jql"
-            },
             {
               "method": "POST",
               "path": "/rest/api/3/search/jql"
@@ -27529,7 +27501,7 @@
             }
           ],
           "counters": {
-            "response_bytes": 2046
+            "response_bytes": 1996
           }
         }
       }
