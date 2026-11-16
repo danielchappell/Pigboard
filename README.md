@@ -42,6 +42,7 @@ for what Pigboard supports today.
 | Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
 | Preview ready work and repairs from complete local facts | [Offline manager preview, examples and recovery](docs/manager-preview.md) |
 | Inspect requested Jira issues from a reviewed source or prepared installed validator | [Named-issue library and finite HTTPS packet](docs/manager-preview.md#inspect-named-jira-issues) |
+| Use the production conditional State API from a prepared Node caller | [State API, prerequisites and recovery](docs/manager-state.md) |
 | Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
@@ -52,6 +53,8 @@ and coverage links. Specification review does not establish shipped behavior or
 complete implementation Story coverage.
 
 ## What is available
+
+The source State API and DynamoDB adapter are callable by prepared Node callers. Customer installation, CLI binding and live admission remain later integration work; see the [State guide](docs/manager-state.md).
 
 | Capability | State |
 | --- | --- |

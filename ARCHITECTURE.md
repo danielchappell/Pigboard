@@ -259,3 +259,19 @@ PGB-84/137 retains durable attempt and outcome evidence. PGB-83 packages the
 disabled customer runtime and PGB-90 verifies the actual installed journey.
 The source acquisition library does not add an installer payload, CLI, evaluator
 or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
+
+## Conditional State API
+
+The [State guide](docs/manager-state.md) documents the callable production API in
+`lib/state/contract.mjs` and `lib/aws/dynamodb.mjs`. It retains installation, stream,
+member and original-attempt identity; performs bounded coherent inventory and
+conditional reservation/finalization; and keeps unknown effects held. Prepared
+Node callers use the actual pinned SDK with customer credentials. State success
+does not establish Jira authority or live readiness.
+
+PGB-83 owns actual installation/configuration/resource resolution and CLI binding;
+PGB-137 adds original transition capture and PGB-87 owns verified Jira effects.
+The local three-group API packet preserves installed and human acceptance as
+pending. No historical worker-metadata collector, recovery automation or runtime
+activation is introduced. Existing state evidence and original installed checks
+remain distinct; PGB-83/90 owns the retained installed release journey.
