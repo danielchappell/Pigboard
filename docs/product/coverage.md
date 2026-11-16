@@ -1,5 +1,30 @@
 # Release coverage and gaps
 
+## Approved role amendment — 16 November 2026
+
+**The tables, counts and review records below are retained baseline records.**
+Their dated “current” statements do not provide an exhaustive current inventory
+or define the new role guarantee. The [approved role amendment](../delivery/manager-r1/role-amendment.md)
+separates complete scheduling declarations, authenticated recorded proof and
+actual current worker checks, including the manager's unchecked external freshness.
+Jira owns current delivery status.
+
+| Affected requirement groups | Approved target responsibility / native owner |
+| --- | --- |
+| A03–A12 | Complete declarations without future execution facts: PGB-159. Current worker checks: PGB-161; implementer preparation: PGB-164. |
+| M03, M07, M11, M14 | Recorded completion/history: PGB-160. One v2 preview: PGB-162. Native target/history facts: PGB-163; bounded live composition: PGB-82. |
+| W01, W03–W09, W12 | Current/assignment checks: PGB-161. Existing implementer, reviewer, QA and human-rework callers: PGB-164, PGB-165 and PGB-166. |
+| O03–O12 | Retain package/state/transition/control ownership; the amendment's delivery map records the affected boundaries and remaining gates. |
+
+PGB-167 publishes this five-file documentation amendment only. PGB-159 owns the
+later complete machine/source catalogue, guards and new case mappings after the
+actual PGB-81 freeze. PGB-81 finishes independently; it is not a completion
+prerequisite for PGB-167. Director coordinates serial coverage integration so
+intervening State rows, counts and receipts survive. No acceptance case, source
+count or historical result below is replaced by this requirement/Story-level map.
+
+## Retained coverage baseline
+
 This is the requirements audit for the [scoped delivery set](../delivery/manager-r1/README.md). 42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. Jira owns delivery progress.
 There are 53 requirements: A01–A12, W01–W12, M01–M14 and O01–O15. Every row below
 now map to implementation Stories and acceptance cases. PGB-91 is installed manager acceptance, PGB-58 is actual worker acceptance, and PGB-92 records the later activation decision. No test is claimed passed by this mapping.
