@@ -1,11 +1,16 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {fixtureCases,runFixture} from './fixtures/jira-preview-harness.mjs';
 import {inspectJiraIssues} from '../lib/jira/read.mjs';
 import {snapshotSchema} from '../lib/manager/snapshot.mjs';
 import {validateWork} from '../lib/contracts/work.mjs';
 const runtime=fileURLToPath(new URL('..',import.meta.url));
+const execFileAsync=promisify(execFile);
+const sha256=value=>createHash('sha256').update(value).digest('hex');
 for(const v of fixtureCases.variants){test(v.case+' '+v.variant,async()=>{const r=await runFixture(v.case,v.variant,runtime);assert(r.oracle_matched);if(v.control)assert((await runFixture(v.case,v.variant,runtime,{control:true})).oracle_matched);if(v.private_projection)assert((await runFixture(v.case,v.variant,runtime,{privateProjection:true})).oracle_matched);});}
 test('accessors and non-JSON inputs are rejected without invoking either accessor or resolver',async()=>{let effects=0;const request={get issue_ids(){effects++;return ['1000'];},comment_targets:[]};const r=await inspectJiraIssues('{}',request,{resolveSecret(){effects++;}});assert.equal(r.report.status,'invalid');assert.equal(effects,0);assert.equal(Object.keys(r).join(','),'report');assert.equal(Object.getOwnPropertyDescriptor(r,'observations').writable,false);});
 
@@ -204,10 +209,11 @@ const boundaryGroups={
 };
 for(const [group,variants] of Object.entries(boundaryGroups))test(group+' fixed boundary regressions',async t=>{
  const originalCount=fixtureCases.variants.length;
- for(const variant of variants)await t.test(variant,async()=>{
+ for(const variant of variants)await t.test(variant,async child=>{
   const v=boundaryVariant(group,variant);fixtureCases.variants.push(v);
+  let r;
   try{
-   const r=await runFixture(group,variant,runtime);
+   r=await runFixture(group,variant,runtime);
    assert.equal(r.oracle_matched,true);assert.deepEqual(r.trace,v.oracle.trace);
    assert.deepEqual(r.input_hashes.before,r.input_hashes.after);
    assert.deepEqual(r.runtime_hashes.before,r.runtime_hashes.after);
@@ -217,7 +223,63 @@ for(const [group,variants] of Object.entries(boundaryGroups))test(group+' fixed 
    assert.equal(r.getter_calls,0);
    assert.equal(Object.hasOwn(r.report,'observations'),false);
    if(v.oracle.acquisition)assert.equal(r.report.counters.observation_bytes,v.oracle.counters.observation_bytes);
+   assert.equal(r.private_comparison?.matched,true);
+   if(group==='R1-42-H01'||group==='R1-42-H04'){
+    const expectedHash=group==='R1-42-H01'?'eab641004d637aa2a07bafc0469a9ef00270f18253943cd947d029b3ed08ea00':'63b30133b8207a64443c41ccc51c61e9444b1a4fc543c946772714039f95c1ab';
+    assert.equal(r.private_comparison.actual_sha256,expectedHash);
+    assert.equal(r.private_comparison.expected_sha256,expectedHash);
+   }
+   if(group==='R1-42-H04')assert.deepEqual(r.tls_observation,{socket_observed:true,request_error_observed:true,secure_connect_observed:false,authorized:false,authorization_error_present:variant==='future-certificate'});
+   else assert.equal(r.tls_observation,null);
   }finally{assert.equal(fixtureCases.variants.pop(),v);}
+  const runtimeBefore=sha256(JSON.stringify(r.runtime_hashes.before)),runtimeAfter=sha256(JSON.stringify(r.runtime_hashes.after));
+  assert.equal(runtimeBefore,runtimeAfter);
+  child.diagnostic('PGB156_OBSERVATION '+JSON.stringify({schema:'pigboard-fixture-observation/v1',case:group,variant,report:r.report,trace:r.trace,server_trace:r.server_trace,private_comparison:r.private_comparison,tls_observation:r.tls_observation??null,fixture_hashes:r.fixture_hashes,fixture_unchanged:true,input_hashes:r.input_hashes,runtime_preservation:{paths:Object.keys(r.runtime_hashes.before).length,before_sha256:runtimeBefore,after_sha256:runtimeAfter,matched:true},effects:r.effects,resolver_calls:r.resolver_calls,mutations:r.mutations,getter_calls:r.getter_calls,cleanup_complete:r.cleanup_complete,oracle_matched:r.oracle_matched}));
  });
  assert.equal(fixtureCases.variants.length,originalCount);
+});
+
+test('boundary human TAP evidence is inspectable',async t=>{
+ const parentTestContext=process.env.NODE_TEST_CONTEXT;
+ const env={...process.env};delete env.NODE_PATH;delete env.NODE_TEST_CONTEXT;
+ const {stdout,stderr}=await execFileAsync(process.execPath,['--test','--test-reporter=tap','--test-name-pattern=R1-42-H0[14]','test/jira-read.test.mjs'],{cwd:runtime,env,encoding:'utf8',maxBuffer:1024*1024});
+ assert.equal(process.env.NODE_TEST_CONTEXT,parentTestContext);
+ assert.equal(stderr,'');
+ const marker='PGB156_OBSERVATION ';
+ const observations=stdout.split('\n').filter(line=>line.includes(marker)).map(line=>JSON.parse(line.slice(line.indexOf(marker)+marker.length)));
+ assert.equal(observations.length,4);
+ assert.deepEqual(observations.map(o=>[o.case,o.variant]),[['R1-42-H01','mutate-values'],['R1-42-H01','replace-accessors'],['R1-42-H04','future-certificate'],['R1-42-H04','connection-reset-control']]);
+ const allowed=['schema','case','variant','report','trace','server_trace','private_comparison','tls_observation','fixture_hashes','fixture_unchanged','input_hashes','runtime_preservation','effects','resolver_calls','mutations','getter_calls','cleanup_complete','oracle_matched'].sort();
+ for(const o of observations){
+  assert.deepEqual(Object.keys(o).sort(),allowed);
+  assert.equal(o.schema,'pigboard-fixture-observation/v1');
+  assert.deepEqual(Object.keys(o.private_comparison).sort(),['algorithm','actual_sha256','expected_sha256','matched'].sort());
+  assert.equal(o.private_comparison.algorithm,'sha256');assert.equal(o.private_comparison.matched,true);
+  assert.equal(o.private_comparison.actual_sha256,o.private_comparison.expected_sha256);
+  assert.deepEqual(Object.keys(o.runtime_preservation).sort(),['paths','before_sha256','after_sha256','matched'].sort());
+  assert(o.runtime_preservation.paths>0);assert.equal(o.runtime_preservation.matched,true);
+  assert.equal(o.runtime_preservation.before_sha256,o.runtime_preservation.after_sha256);
+  assert.deepEqual(o.input_hashes.before,o.input_hashes.after);
+  assert.equal(o.fixture_unchanged,true);assert.equal(o.effects,0);assert.equal(o.resolver_calls,1);
+  assert.equal(o.getter_calls,0);assert.equal(o.cleanup_complete,true);assert.equal(o.oracle_matched,true);
+  const serialized=JSON.stringify(o);
+  for(const forbidden of ['"body":','"observations":',fixtureCases.token,guide.config.jira.connection.secret_reference,'ERROR-CANARY','CERT_NOT_YET_VALID','ECONNRESET','-----BEGIN CERTIFICATE-----','-----BEGIN PRIVATE KEY-----'])assert(!serialized.includes(forbidden));
+  if(o.case==='R1-42-H01'){
+   assert.equal(o.tls_observation,null);assert.equal(o.report.status,'complete');assert.deepEqual(o.report.diagnostics,[]);
+   assert.deepEqual(o.trace,traceOf(guide));assert.deepEqual(o.server_trace,traceOf(guide));
+   assert.equal(o.report.counters.requests_attempted,4);assert.equal(o.report.counters.requests_completed,4);assert.equal(o.report.counters.requests_failed,0);
+   assert.equal(o.report.counters.response_bytes,910);assert.equal(o.report.counters.observation_bytes,1154);assert.equal(o.mutations,1);
+   assert.equal(o.private_comparison.actual_sha256,'eab641004d637aa2a07bafc0469a9ef00270f18253943cd947d029b3ed08ea00');
+  }else{
+   assert.deepEqual(o.trace,[{method:'GET',path:guide.script[0].path}]);assert.deepEqual(o.server_trace,[]);
+   assert.equal(o.report.status,'incomplete');assert.equal(o.report.diagnostics.length,1);
+   assert.equal(o.report.diagnostics[0].code,o.variant==='future-certificate'?'TLS_FAILED':'READ_DENIED_OR_MISSING');
+   assert.equal(o.report.counters.requests_attempted,1);assert.equal(o.report.counters.requests_completed,0);assert.equal(o.report.counters.requests_failed,1);
+   assert.equal(o.report.counters.response_bytes,0);assert.equal(o.report.counters.observation_bytes,0);assert.equal(o.report.counters.known_issues,0);
+   assert.equal(o.mutations,0);
+   assert.deepEqual(o.tls_observation,{socket_observed:true,request_error_observed:true,secure_connect_observed:false,authorized:false,authorization_error_present:o.variant==='future-certificate'});
+   assert.equal(o.private_comparison.actual_sha256,'63b30133b8207a64443c41ccc51c61e9444b1a4fc543c946772714039f95c1ab');
+  }
+ }
+ for(const observation of observations)t.diagnostic(marker+JSON.stringify(observation));
 });

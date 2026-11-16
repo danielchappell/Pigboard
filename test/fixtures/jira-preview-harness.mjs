@@ -69,7 +69,7 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
   later(()=>{if(res.destroyed)return;res.writeHead(step.status,{'content-type':'application/json',...(step.encoding?{'content-encoding':step.encoding}:{}),...(step.status===302?{location:`https://localhost:${redirect.address().port}/leak`}:{})});if(step.body_delay_ms)res.flushHeaders();later(()=>{if(!res.destroyed)res.end((step.wire_prefix??'')+JSON.stringify(step.body));},step.body_delay_ms);},step.header_delay_ms);
  });server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));if(v.tls==='connection-reset-control')socket.destroy();});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const originals={request:https.request,httpRequest:http.request,httpGet:http.get,fetch:globalThis.fetch};const restore=[];let effects=0,resolverCalls=0,resolverTimer=null,lateResolve=null,lateAck=null,lateSignal=null,lateDelivered=0,lateSettled=0,lateEvidence=null,mutations=0,getterCalls=0;
+ const originals={request:https.request,httpRequest:http.request,httpGet:http.get,fetch:globalThis.fetch};const restore=[];let effects=0,resolverCalls=0,resolverTimer=null,lateResolve=null,lateAck=null,lateSignal=null,lateDelivered=0,lateSettled=0,lateEvidence=null,mutations=0,getterCalls=0,tlsObservation=null;
  const callerRequest=structuredClone(v.request);
  const deny=()=>{effects++;throw Error('Disallowed fixture effect.');};
  for(const api of [fs,fsp])for(const name of ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'])for(const k of [name,name+'Sync'])if(typeof api[k]==='function'){const old=api[k];restore.push(()=>{api[k]=old;});api[k]=deny;}
@@ -81,7 +81,14 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
   // Audit before redirecting; fixture scripts alone determine permitted paths.
   assert.equal(operation,v.script[trace.length]?.path??operation);trace.push({method:options.method,path:operation});
   const local=new URL('https://localhost:'+server.address().port+operation);
-  return originals.request(local,{...options,hostname:'127.0.0.1',servername:v.tls==='wrong-host'?'wrong.example.invalid':'localhost',...(v.tls==='untrusted-ca'?{}:{ca:v.tls==='future-certificate'?tls.future.ca:tls.ca})},callback);
+  const client=originals.request(local,{...options,hostname:'127.0.0.1',servername:v.tls==='wrong-host'?'wrong.example.invalid':'localhost',...(v.tls==='untrusted-ca'?{}:{ca:v.tls==='future-certificate'?tls.future.ca:tls.ca})},callback);
+  if(v.case==='R1-42-H04'){
+   assert.equal(tlsObservation,null);
+   tlsObservation={socket_observed:false,request_error_observed:false,secure_connect_observed:false,authorized:null,authorization_error_present:null};
+   client.on('socket',socket=>{tlsObservation.socket_observed=true;socket.on('secureConnect',()=>{tlsObservation.secure_connect_observed=true;});});
+   client.on('error',()=>{tlsObservation.request_error_observed=true;const socket=client.socket;if(socket){tlsObservation.authorized=typeof socket.authorized==='boolean'?socket.authorized:null;tlsObservation.authorization_error_present=typeof socket.authorizationError==='string'&&socket.authorizationError.length>0;}});
+  }
+  return client;
  };
  syncBuiltinESMExports();
  let acquired;
@@ -101,9 +108,9 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
   clearTimeout(resolverTimer);for(const timer of timers)clearTimeout(timer);const closing=[...sockets].map(socket=>new Promise(resolve=>socket.once('close',resolve)));for(const socket of sockets)socket.destroy();await Promise.all([...closing,new Promise(resolve=>server.close(resolve)),new Promise(resolve=>redirect.close(resolve))]);
   }
  }
- assert.equal(sockets.size,0);const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);if(v.oracle.acquisition)assert.deepEqual(acquired.observations,v.oracle.acquisition);assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
+ assert.equal(sockets.size,0);const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
  for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference])assert(!JSON.stringify(acquired).includes(canary));
  assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),before.cases);assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),before.tls);
  const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
- return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},...(lateEvidence?{late_resolver:lateEvidence}:{}),effects,resolver_calls:resolverCalls,mutations,getter_calls:getterCalls,cleanup_complete:sockets.size===0,oracle_matched:true};
+ return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},private_comparison:privateComparison,tls_observation:tlsObservation,...(lateEvidence?{late_resolver:lateEvidence}:{}),effects,resolver_calls:resolverCalls,mutations,getter_calls:getterCalls,cleanup_complete:sockets.size===0,oracle_matched:true};
 }

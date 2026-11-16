@@ -672,3 +672,35 @@ disposable fixtures. The harness leaves authored fixture files unchanged. Develo
 tests and fixture oracle matches are separate evidence; human acceptance remains
 NOT_RUN until that human review is recorded. These fixtures prove no live tenant,
 AWS deployment, activation or whole-PGB-82 policy acceptance.
+
+### PGB-156 source evidence groups
+
+PGB-156/R1-42 adds four checked-in `node:test` groups. They are separate from
+the R1-33 JSON packet and its importable `runFixture` example above. From the
+exact reviewed source root with its prepared dependencies, run the group needed
+for the designated human check:
+
+```sh
+SOURCE=/absolute/reviewed-source
+cd "$SOURCE"
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H01' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H02' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H03' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H04' test/jira-read.test.mjs
+```
+
+H01 has two request-snapshot subcases, H02 three exact-limit subcases, H03 two
+provider-ADF subcases and H04 two TLS subcases. Each successful case prints one
+`PGB156_OBSERVATION` JSON diagnostic after fixture cleanup and restoration. It
+contains the safe report, actual dummy request/server traces and counters,
+input and fixture hashes, a hash-only actual/expected private comparison,
+runtime/dependency preservation summary, effects and cleanup. H04 also reports
+whether the socket and request error were observed, whether a secure connection
+completed, and whether certificate authorization failed; it never prints the
+raw TLS reason. Compare these actual fields with the literal case expectations
+and retain the command, reviewed revision, TAP, exit code and safe diagnostics.
+The full runtime/dependency file binding belongs in the external PREP receipt.
+If a case fails or its diagnostic is missing, record that gap; a green parent
+summary alone is not the human observation receipt. Do not retry, fetch
+dependencies or infer live Jira, installed-runtime or human acceptance from this
+source-only packet.
