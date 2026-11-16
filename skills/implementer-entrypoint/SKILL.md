@@ -14,8 +14,9 @@ publication are deferred. Preserve local findings, partial ledgers and original
 receipts; return precise inability and hold with no mutation. Required repair
 still holds. Do not fall back to strict chain or manager recorded proof.
 
-Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+Follow the [shared ordinary worker boundary](references/handoff.md#ordinary-worker-release-boundary).
+Full proof/publication help is `<receipt.skills>/work-validator/docs/handoffs.md`
+in the installed bundle; source help is repository `docs/handoffs.md`.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
