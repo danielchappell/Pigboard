@@ -111,6 +111,43 @@
     ]
   },
   {
+    "id": "R1-31",
+    "title": "Check Jira read configuration before use",
+    "dependencies": [
+      "R1-21"
+    ],
+    "days": 1.90625,
+    "hours": {
+      "min": 12.25,
+      "max": 15.25
+    },
+    "files": [
+      "contracts/config-v1.schema.json",
+      "lib/config/parse.mjs",
+      "lib/config/projects.mjs",
+      "lib/config/diff.mjs",
+      "config/pigboss.example.yaml",
+      "scripts/check-config.mjs",
+      "test/config-projects.test.mjs",
+      "test/config-diff.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/configuration.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/coverage.md"
+    ],
+    "delivery_state": "PGB-145 In Progress; two exact-base plan reviews CLEAN. Local implementation/checks are separate from independent committed-code reviews, human acceptance, hosted checks, merge and activation. Human cases NOT_RUN (0/4).",
+    "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+    "plan_sha256": "6ee1739214d48e5a1d58a74c8a882513bd694c7cfa8188487aee2dc4aa60bcee"
+  },
+  {
     "id": "R1-05",
     "title": "Hand an implemented PR to review",
     "dependencies": [
@@ -182,7 +219,7 @@
       "min": 26.75,
       "max": 36.5
     },
-    "forecast_note": "Previous forecast 26.5\u201336 familiar-human hours is historical. Add only 0.25\u20130.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
+    "forecast_note": "Previous forecast 26.5–36 familiar-human hours is historical. Add only 0.25–0.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
     "files": [
       "skills/qa-jira/SKILL.md",
       "config/skill-bundle.json",
@@ -252,7 +289,7 @@
       "docs/product/README.md"
     ],
     "delivery_state": "Three-input source implementation; independent committed-code review, installed binding, human acceptance and merge remain separate.",
-    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4\u201312.275h, B6.6\u20139.475h; conservative forecasts A8.5\u201312.5h/B6.75\u20139.75h."
+    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4–12.275h, B6.6–9.475h; conservative forecasts A8.5–12.5h/B6.75–9.75h."
   },
   {
     "id": "R1-27",
@@ -424,10 +461,9 @@
       "evidence_boundary": "Case-only original history prefix precedes unchanged78 composer invocation; raw prior unknown effects are supplied input, not actual refusal/zero-call evidence. Rebind existing bf10 installation only on final81/config/dependency equality; no new installation/waiver/activation."
     }
   },
-
   {
     "id": "R1-09",
-    "title": "Request rework through the human\u2019s assistant",
+    "title": "Request rework through the human’s assistant",
     "dependencies": [
       "R1-04"
     ],
@@ -581,7 +617,8 @@
     "title": "Preview current Jira work with bounded reads",
     "dependencies": [
       "R1-11",
-      "R1-21"
+      "R1-21",
+      "R1-31"
     ],
     "days": 1.75,
     "files": [

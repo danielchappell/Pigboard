@@ -67,3 +67,35 @@ test('optional preparation/cancelled mappings preserve old configs, explicit inh
  for(const change of [c=>c.projects[0].mappings.preparation_stage_ids=[],c=>delete c.defaults.preparation_stage_ids,c=>c.projects[0].mappings.cancelled_stage_ids=['90'],c=>c.projects[0].mappings.cancelled_stage_ids=[c.defaults.stages.QA],c=>c.projects[0].mappings.cancelled_stage_ids=[c.defaults.accepted_later_stage_ids[0]],c=>c.defaults.preparation_stage_ids=['90','90']]){const c=structuredClone(v);change(c);assert.equal(check(c).valid,false);}
  const {diffConfig}=await import('../lib/config/diff.mjs');const diff=diffConfig(base,v);assert.ok(diff.mappings_changed.length);assert.ok(diff.checks_required.length);assert.deepEqual(diff.state_actions,[]);
 });
+
+const live=()=>{const v=fresh();v.jira.connection={credential_kind:'atlassian_scoped_service_account_token',cloud_id:'00000000-0000-0000-0000-000000000001',secret_reference:'REFERENCE-CANARY'};v.jira.read_bounds={max_epics:4,max_streams:8,max_known_issues:32,max_comments:256,max_pages:64,max_requests:256,page_size:25,max_response_bytes:1048576,max_total_response_bytes:8388608,request_timeout_ms:5000,scan_timeout_ms:60000};return v;};
+const ceilings={max_epics:100,max_streams:1000,max_known_issues:1000,max_comments:1000,max_pages:9007199254740991,max_requests:9007199254740991,page_size:100,max_response_bytes:8388608,max_total_response_bytes:16777216,request_timeout_ms:2147483647,scan_timeout_ms:2147483647};
+test('optional live settings preserve exact pure scope and independently validated in-process projection',async()=>{
+ const {resolveJiraReadConfig}=await import('../lib/config/projects.mjs');const v=live(),before=JSON.stringify(v),r=check(v);
+ assert.deepEqual(r.resolved_scope,check(base).resolved_scope);assert.equal(r.live_readiness,'not_evaluated');assert.equal(r.live_configuration.status,'complete');assert.deepEqual(r.live_configuration.effective_bounds,v.jira.read_bounds);
+ assert.deepEqual(r.live_configuration.checks_required,['SITE_CLOUD_BINDING','CREDENTIAL_ACCESS','INITIAL_VISIBILITY','OWNERSHIP_INVENTORY','RELEASE_READINESS'].map(code=>({code,scope:null,status:'pending'})));
+ assert(!JSON.stringify(r).includes('REFERENCE-CANARY'));assert(!JSON.stringify(r).includes(v.jira.connection.cloud_id));
+ const projected=resolveJiraReadConfig(v);assert.deepEqual(projected,{site:base.jira.site,project_ids:['10001','10002'],connection:{...v.jira.connection,api_base:'https://api.atlassian.com/ex/jira/00000000-0000-0000-0000-000000000001'},read_bounds:{...v.jira.read_bounds}});
+ projected.connection.secret_reference='changed';projected.read_bounds.max_epics=1;projected.project_ids.pop();assert.equal(JSON.stringify(v),before);
+ assert.equal(resolveJiraReadConfig(base),null);assert.deepEqual(check(base).live_configuration.required_settings,['/jira/connection','/jira/read_bounds']);assert.equal(check(base).live_configuration.status,'missing_settings');
+ assert.equal(parseConfig('# formatting\n'+JSON.stringify(v,null,2)).configuration_digest,r.configuration_digest);v.jira.connection.secret_reference='another-reference';assert.notEqual(check(v).configuration_digest,r.configuration_digest);
+ for(const present of [false,true]){const x=present?live():fresh();x.projects=Array.from({length:101},(_,i)=>({...structuredClone(base.projects[i%2]),id:String(i)}));const result=check(x);assert.equal(result.valid,true);assert.equal(result.live_configuration.status,'incompatible_scope');assert.equal(result.live_configuration.diagnostics[0].code,'LIVE_SCOPE_LIMIT');assert.equal(result.live_configuration.required_settings.length,present?0:2);if(present)assert.throws(()=>resolveJiraReadConfig(x),e=>e.diagnostic.code==='LIVE_SCOPE_LIMIT');else assert.equal(resolveJiraReadConfig(x),null);}
+ const invalid=live();delete invalid.jira.connection.cloud_id;assert.throws(()=>resolveJiraReadConfig(invalid));assert.equal(check(invalid).live_configuration,null);
+});
+test('closed live settings reject unsupported, missing and malformed text without echoing input',()=>{
+ const changes=[v=>delete v.jira.connection,v=>delete v.jira.read_bounds,v=>v.jira.connection=null,v=>v.jira.read_bounds={},v=>v.jira.connection={},v=>v.jira.connection.credential_kind='basic-ERROR-CANARY',v=>v.jira.connection.cloud_id='UPPERCASE-ERROR-CANARY',v=>v.jira.connection.secret_reference='',v=>v.jira.connection.secret_reference='bad space ERROR-CANARY',v=>v.jira.connection.secret_reference='x'.repeat(2049),v=>v.jira.connection.secret_reference='\nERROR-CANARY',v=>v.jira.connection['token-ERROR-CANARY']='ERROR-CANARY',v=>v.jira.connection.api_origin='https://ERROR-CANARY.invalid',v=>v.jira.read_bounds.max_projects=2];
+ for(const mutate of changes){const v=live();mutate(v);const r=check(v);assert.equal(r.valid,false);assert.equal(r.live_configuration,null);assert(!JSON.stringify(r).includes('ERROR-CANARY'));}
+ for(const block of ['connection','read_bounds']){const v=live();delete v.jira[block];assert.equal(check(v).diagnostics[0].code,'LIVE_SETTINGS');assert.equal(check(v).diagnostics[0].path,'/jira/'+block);}
+ for(const ref of ['!', '~','x'.repeat(2048)]){const v=live();v.jira.connection.secret_reference=ref;assert.equal(check(v).valid,true);}
+ for(const site of ['https://enterprise.example.invalid:8443','https://jira.example.invalid']){const v=live();v.jira.site=site;assert.equal(check(v).valid,true);}
+});
+test('all eleven finite integer bounds and six deterministic cross-field relationships are enforced',()=>{
+ for(const [key,max]of Object.entries(ceilings)){
+  for(const bad of [0,-1,0.5,max+1]){const v=live();v.jira.read_bounds[key]=bad;const r=check(v);assert.equal(r.valid,false,key+' '+bad);assert(['LIMIT','STRUCTURE','PARSE'].includes(r.diagnostics[0].code));}
+  const v=live();v.jira.read_bounds={...ceilings};v.jira.read_bounds[key]=max;assert.equal(check(v).valid,true,key+' ceiling');
+  const missing=live();delete missing.jira.read_bounds[key];assert.equal(check(missing).valid,false,key+' missing');
+ }
+ const relations=[['max_epics','max_known_issues'],['max_pages','max_requests'],['max_response_bytes','max_total_response_bytes'],['request_timeout_ms','scan_timeout_ms'],['page_size','max_known_issues'],['page_size','max_comments']];
+ for(const [a,b]of relations){const v=live();v.jira.read_bounds={...ceilings};v.jira.read_bounds[b]=1;if(a==='page_size')v.jira.read_bounds.max_epics=1;const r=check(v);assert.equal(r.diagnostics[0].code,'READ_BOUNDS',a);assert.equal(r.diagnostics[0].path,'/jira/read_bounds/'+a);}
+ const v=live();v.jira.read_bounds.max_known_issues=1;v.jira.read_bounds.max_requests=1;assert.equal(check(v).diagnostics[0].path,'/jira/read_bounds/max_epics');
+});

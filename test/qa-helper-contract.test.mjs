@@ -297,7 +297,7 @@ function beforeOwnSelection(drafts) {
 }
 
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),plan=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
  const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
  assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,29);assert.equal(new Set(drafts.map(x=>x.id)).size,29);assert.equal(new Set(Object.values(publication.stories)).size,29);assert.equal(publication.stories['R1-24'],'PGB-110');assert.equal(publication.stories['R1-27'],'PGB-132');
  assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30','R1-28'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
@@ -309,7 +309,7 @@ test('approved delivery mirrors preserve original contracts/order, counts and al
  const cases=new Set(drafts.flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));assert.equal(cases.size,128);assert.equal(publication.case_count,128);assert.equal(publication.story_count,29);
  for(const [from,to]of [['PGB-74','PGB-110'],['PGB-76','PGB-110'],['PGB-77','PGB-110'],['PGB-108','PGB-110'],['PGB-110','PGB-78'],['PGB-108','PGB-78'],['PGB-78','PGB-87'],['PGB-78','PGB-90']])assert(publication.dependency_links.some(x=>x.from===from&&x.to===to),from+'->'+to);
  const coverage=await read('docs/delivery/manager-r1/coverage.md');const requirements=new Set(coverage.split('\n').filter(line=>/^\| [AWMO]\d/.test(line)).flatMap(line=>[...line.split('|')[1].matchAll(/[AWMO]\d\d/g)].map(x=>x[0])));assert.equal(requirements.size,53);
- for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(cases.has(id[0]),id[0]);
+ const currentCases=new Set(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')).flatMap(x=>x.contract.testing_strategy.human_review.cases.map(c=>c.id)));for(const id of coverage.matchAll(/R1-\d\d-(?:H\d\d|S\d\d)/g))assert(currentCases.has(id[0]),id[0]);
  assert.equal(new Set([...coverage.matchAll(/R1-11-S\d\d/g)].map(x=>x[0])).size,41);
  const expectedBoundaries=['A06','A08','W06','W08','W09','W11','W12'];for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md'])for(const id of expectedBoundaries)assert((await read(file)).split('\n').find(line=>line.startsWith('| '+id+' |')).includes('R1-24-H'));
  assert.equal(publication.qa_split.verified_body_count,2);assert.equal(publication.qa_split.current_all_story_status_verification,false);assert.equal(publication.history[0].story_count,23);
@@ -409,7 +409,7 @@ test('H01 prepared original mock deployment and typed bound API/database/UI arti
 
 
 test('only the actual fixed-scope PGB-110 owner decision exempts the ordinary time limit without a replacement hourly cap',async()=>{
- const plan=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json'));
+ const plan=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata');
  assertDeliverySizing(plan);
  assert.deepEqual(plan.find(x=>x.id==='R1-24').hours,{min:26.75,max:36.5});
  for(const change of [
@@ -605,7 +605,7 @@ test('R2 six distinct H02 families and joined control have independently inspect
 });
 
 test('PGB-113 source amendment preserves native contracts and full preview in combined publication',async()=>{
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
  const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
  assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,29);
  const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
@@ -1014,7 +1014,7 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
 });
 
 test('current PGB-132 forecast agrees across product, delivery and metadata while earlier estimates remain history',async()=>{
- const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),plan=metadata.find(x=>x.id==='R1-27');
+ const metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),plan=metadata.find(x=>x.id==='R1-27');
  const expected=`Current PGB-132 whole residual forecast: **${plan.hours.min}–${plan.hours.max} hours / ${plan.hours.min/8}–${plan.days} days**.`;
  const product=await read('docs/product/README.md'),delivery=await read('docs/delivery/manager-r1/README.md');
  for(const document of [product,delivery]){const statements=document.split('\n').filter(line=>line.startsWith('Current PGB-132 whole residual forecast:'));assert.equal(statements.length,1);assert(statements[0].startsWith(expected));}
@@ -1026,7 +1026,7 @@ test('current PGB-132 forecast agrees across product, delivery and metadata whil
 });
 
 test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
  const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
  assert.equal(draft.title,'Reject conflicting completion receipts');assert.deepEqual(draft.contract.prerequisites,[{ticket:'R1-25',required_outcome:'ai_qa_complete'}]);
  assert.deepEqual(plan.dependencies,['R1-25']);assert.equal(plan.days,1.28);assert.equal(plan.files.length,17);assert.equal(new Set(plan.files).size,17);
@@ -1041,7 +1041,7 @@ test('PGB-129 source publication binds the actual native prerequisite and preser
 });
 
 test('PGB-132 source publication preserves Core history and binds the preparation-only slice',async()=>{
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
  const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),a=publication.qa_input_preparation_amendment,prepared=contract('R1-27'),dispatcher=contract('R1-08');
  assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-27','R1-30','R1-28'].includes(x.id))),'7a152baf7eeb37385f7560fc430d50a2ed7cfdd26de05df75c202695420ab4ad');
  const upstream=['R1-04','R1-06','R1-07','PGB-108','R1-24'];
@@ -1083,7 +1083,7 @@ function beforeThreeInputControls(drafts) {
 }
 
 test('PGB-136 partial source publication binds the exact own-selection split and preserves all earlier contracts',async()=>{
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
+ const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
  const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),own=contract('R1-28'),preview=contract('R1-11'),a=publication.own_ticket_selection_amendment;
  assert.equal(hash(beforeThreeInputControls(beforeOwnSelection(drafts)).filter(x=>x.id!=='R1-11')),'9e9e6274f7677f1150650cef8dd44233bec0e17769624af4646082f02cc28a81');
  assert.equal(hash(beforeOwnSelection(drafts).find(x=>x.id==='R1-11').contract),'a913b1a7e2f8efe4a129d35d8c15d29f3474a647851dfacdaea8f4a3fe32b403');
@@ -1110,4 +1110,43 @@ test('PGB-136 partial source publication binds the exact own-selection split and
  const support={W04:['OC02','OC05'],W12:['OC02','OC05','OC06'],M01:['OC04'],M02:['OC04'],M03:['OC01','OC05'],M04:['OC04'],M05:['OC04'],M06:['OC01','OC03','OC06'],M07:['OC03'],M10:['OC02','OC05']};
  for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const rows=(await read(file)).split('\n');for(const [id,cases]of Object.entries(support))for(const caseId of cases)assert(rows.find(row=>row.startsWith('| '+id+' |')).includes('R1-28-'+caseId),file+': '+id+' '+caseId);}
  const result=validateWork(JSON.stringify(own),{mode:'structure'});assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.readiness,'not_evaluated');
+});
+
+const readConfigHash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
+
+// Reverse only the asserted PGB-145 additive amendment for dated historical guards.
+function beforeReadConfiguration(value,kind) {
+ const prior=structuredClone(value);
+ if(kind==='drafts') {
+  const added=prior.filter(x=>x.id==='R1-31');assert.equal(added.length,1);
+  assert.equal(readConfigHash(added[0]),'c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81');
+  const dependent=prior.find(x=>x.id==='R1-12').contract;
+  assert.deepEqual(dependent.prerequisites,[{ticket:'R1-11',required_outcome:'ai_qa_complete'},{ticket:'R1-21',required_outcome:'ai_qa_complete'},{ticket:'R1-31',required_outcome:'ai_qa_complete'}]);
+  dependent.prerequisites.pop();return prior.filter(x=>x.id!=='R1-31');
+ }
+ if(kind==='metadata') {
+  assert.equal(prior.filter(x=>x.id==='R1-31').length,1);
+  const dependent=prior.find(x=>x.id==='R1-12');assert.deepEqual(dependent.dependencies,['R1-11','R1-21','R1-31']);dependent.dependencies.pop();return prior.filter(x=>x.id!=='R1-31');
+ }
+ assert.equal(prior.stories['R1-31'],'PGB-145');assert.deepEqual([prior.story_count,prior.case_count],[30,132]);
+ const dated=prior.history.find(x=>x.scope==='Pre-PGB-145 e54 dated partial source checkpoint');assert(dated);assert.deepEqual([dated.story_count,dated.case_count],[29,128]);
+ delete prior.stories['R1-31'];prior.story_count=dated.story_count;prior.case_count=dated.case_count;prior.current_source_scope=dated.current_source_scope;return prior;
+}
+
+test('PGB-145 current source independently binds the complete published amendment and retained original82 contract',async()=>{
+ const load=async name=>JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/'+name,import.meta.url),'utf8'));
+ const drafts=await load('ticket-drafts.json'),metadata=await load('plan-metadata.json'),p=await load('publication.json'),a=p.read_configuration_amendment;
+ assert.equal(drafts.length,30);assert.equal(new Set(drafts.map(x=>x.id)).size,30);assert.deepEqual(drafts.map(x=>x.id),metadata.map(x=>x.id));assert.equal(drafts[drafts.findIndex(x=>x.id==='R1-21')+1].id,'R1-31');
+ assert.equal(readConfigHash(drafts),'2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62');assert.equal(a.current_drafts_sha256,readConfigHash(drafts));
+ const story=drafts.find(x=>x.id==='R1-31'),plan=metadata.find(x=>x.id==='R1-31'),contract=story.contract;
+ assert.equal(readConfigHash(story),'c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81');assert.equal(a.source_contract_sha256,readConfigHash(story));assert.deepEqual(contract.prerequisites,[{ticket:'R1-21',required_outcome:'ai_qa_complete'}]);assert.deepEqual(plan.dependencies,['R1-21']);
+ assert.equal(contract.acceptance_criteria.length,6);assert.equal(contract.technical_acceptance_criteria.constraints.length,7);assert.equal(contract.testing_strategy.human_review.cases.length,4);assert.deepEqual(contract.testing_strategy.cases,[]);assert.deepEqual(plan.hours,{min:12.25,max:15.25});assert.equal(plan.files.length,20);assert.equal(new Set(plan.files).size,20);assert.equal(plan.days,1.90625);assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),50.1475);
+ assert.deepEqual([p.story_count,p.case_count,p.requirement_count,p.scenario_count],[30,132,53,41]);assert.equal(drafts.reduce((n,x)=>n+x.contract.testing_strategy.cases.length+x.contract.testing_strategy.human_review.cases.length,0),132);assert.equal(Object.keys(p.stories).length,30);assert.equal(new Set(Object.values(p.stories)).size,30);assert.equal(p.stories['R1-31'],'PGB-145');assert(!drafts.some(x=>['R1-29','R1-32'].includes(x.id)));assert.deepEqual(p.current_source_scope.pending_source_amendments,['PGB-137']);assert.deepEqual([p.current_source_scope.native_snapshot.story_count,p.current_source_scope.native_snapshot.case_count],[31,134]);
+ assert.equal(a.native_id,'10605');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);assert.equal(a.original82_body_preserved_except_prerequisite,true);assert.equal(a.original82_cases,4);
+ assert.deepEqual(a.dependency_links,[{id:'10728',type_id:'10000',from:'PGB-99',to:'PGB-145'},{id:'10729',type_id:'10000',from:'PGB-145',to:'PGB-82'}]);for(const edge of a.dependency_links)assert(p.dependency_links.some(x=>JSON.stringify(x)===JSON.stringify(edge)));
+ assert.equal(a.description_sha256.body,'365029d6439052f74217db9f4b56bfdb535234cb20901fc785a55891027fe483');assert.equal(a.description_sha256.original82_before,'d5357e7018361264d0d730b56b8dedf419efcba0c42202463ba035aef399c1de');assert.equal(a.description_sha256.original82_after,'682017a9f3efa4c70bdc4f903edcd5c77c3587c65b72bd1f18ff891e57003c7b');
+ const old=beforeReadConfiguration(drafts,'drafts').find(x=>x.id==='R1-12').contract;assert.equal(readConfigHash(old),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');assert.equal(old.acceptance_criteria.length,5);assert.equal(old.technical_acceptance_criteria.constraints.length,3);assert.equal(old.testing_strategy.human_review.cases.length,4);
+ const result=validateWork(JSON.stringify(contract),{mode:'structure'});assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.readiness,'not_evaluated');
+ for(const f of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const text=await readFile(new URL('../'+f,import.meta.url),'utf8');for(const [id,cases]of Object.entries({O03:['H01','H02','H03'],O09:['H02','H04'],A12:['H02','H04'],O13:['H01'],M14:['H04']}))for(const c of cases)assert(text.split('\n').find(l=>l.startsWith('| '+id+' |')).includes('R1-31-'+c));}
+ const stories=await readFile(new URL('../docs/delivery/manager-r1/stories.md',import.meta.url),'utf8');assert(stories.indexOf('## R1-21:')<stories.indexOf('## R1-31:'));assert(stories.indexOf('## R1-31:')<stories.indexOf('## R1-05:'));assert(stories.includes(JSON.stringify(contract,null,2)));
 });
