@@ -1,14 +1,15 @@
 {
-  "date": "2026-11-15",
+  "date": "2026-11-16",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Dated partial 29-Story/128-case source mapping after PGB-138 and PGB-136; PGB-137/R1-29 source composition pending. Jira owns progress; acceptance and activation remain separate.",
+  "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
     "R1-03": "PGB-73",
     "R1-04": "PGB-74",
     "R1-21": "PGB-99",
+    "R1-31": "PGB-145",
     "R1-05": "PGB-75",
     "R1-06": "PGB-76",
     "R1-07": "PGB-77",
@@ -39,8 +40,8 @@
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 29,
-  "case_count": 128,
+  "story_count": 30,
+  "case_count": 132,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -351,6 +352,18 @@
       "type_id": "10000",
       "from": "PGB-136",
       "to": "PGB-81"
+    },
+    {
+      "id": "10728",
+      "type_id": "10000",
+      "from": "PGB-99",
+      "to": "PGB-145"
+    },
+    {
+      "id": "10729",
+      "type_id": "10000",
+      "from": "PGB-145",
+      "to": "PGB-82"
     }
   ],
   "baseline_publication": {
@@ -765,6 +778,28 @@
         "status": "Actual serialized source is28/122. PGB-136/137 are native-only and not present on this source base. PGB-132 remains pending; no live or human completion follows from publication."
       },
       "source_base": "b6b863476d9f07eee2702991f336def7ff38cd36"
+    },
+    {
+      "date": "2026-11-16",
+      "scope": "Pre-PGB-145 e54 dated partial source checkpoint",
+      "story_count": 29,
+      "case_count": 128,
+      "current_source_scope": {
+        "story_count": 29,
+        "case_count": 128,
+        "source_base": "b6b863476d9f07eee2702991f336def7ff38cd36",
+        "source_order": "R1-24 then R1-30 then R1-27 immediately before R1-08; R1-25 then R1-26 then R1-28 immediately before R1-11; all other relative order preserved.",
+        "native_snapshot": {
+          "date": "2026-11-15",
+          "story_count": 30,
+          "case_count": 130,
+          "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
+        },
+        "pending_source_amendments": [
+          "PGB-137"
+        ],
+        "status": "PGB-136 own-ticket source changes composed onto verified merged PGB-138 main. Source29/128 remains partial against the separately dated native30/130 inventory; PGB-137 source composition is pending. No fresh all-ticket status audit or delivery/acceptance claim."
+      }
     }
   ],
   "qa_split": {
@@ -841,20 +876,21 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 29,
-    "case_count": 128,
-    "source_base": "b6b863476d9f07eee2702991f336def7ff38cd36",
-    "source_order": "R1-24 then R1-30 then R1-27 immediately before R1-08; R1-25 then R1-26 then R1-28 immediately before R1-11; all other relative order preserved.",
+    "story_count": 30,
+    "case_count": 132,
+    "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+    "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
     "native_snapshot": {
-      "date": "2026-11-15",
-      "story_count": 30,
-      "case_count": 130,
-      "source": "Director independently verified complete Epic PGB-66 inventory after PGB-138;13 Done/merged,17 remaining. This is a dated native count, separate from source composition."
+      "date": "2026-11-16",
+      "story_count": 31,
+      "case_count": 134,
+      "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
+      "captured_at": "2026-11-16 02:24:40 UTC"
     },
     "pending_source_amendments": [
       "PGB-137"
     ],
-    "status": "PGB-136 own-ticket source changes composed onto verified merged PGB-138 main. Source29/128 remains partial against the separately dated native30/130 inventory; PGB-137 source composition is pending. No fresh all-ticket status audit or delivery/acceptance claim."
+    "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1871,5 +1907,47 @@
       "tree": "ebbfca1688f0aa954e29913dc72ceb6e74055fe0",
       "status": "Verified merged PGB-138 main; only the owned20-path PGB-136 change is composed. The earlier29ba development receipt remains historical."
     }
+  },
+  "read_configuration_amendment": {
+    "stories": {
+      "R1-31": "PGB-145"
+    },
+    "native_id": "10605",
+    "parent": "PGB-66",
+    "native_publication_verified": true,
+    "description_sha256": {
+      "body": "365029d6439052f74217db9f4b56bfdb535234cb20901fc785a55891027fe483",
+      "original82_before": "d5357e7018361264d0d730b56b8dedf419efcba0c42202463ba035aef399c1de",
+      "original82_after": "682017a9f3efa4c70bdc4f903edcd5c77c3587c65b72bd1f18ff891e57003c7b"
+    },
+    "dependency_links": [
+      {
+        "id": "10728",
+        "type_id": "10000",
+        "from": "PGB-99",
+        "to": "PGB-145"
+      },
+      {
+        "id": "10729",
+        "type_id": "10000",
+        "from": "PGB-145",
+        "to": "PGB-82"
+      }
+    ],
+    "original82_body_preserved_except_prerequisite": true,
+    "original82_cases": 4,
+    "additive_cases": 4,
+    "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+    "plan_sha256": "6ee1739214d48e5a1d58a74c8a882513bd694c7cfa8188487aee2dc4aa60bcee",
+    "receipt_sha256": "8accd67aa8eaedfe06eac5d59557b80b21c94279a83cc1832f75565758ccb769",
+    "stage_receipt": {
+      "status": "In Progress",
+      "comment_id": "10844"
+    },
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "current_drafts_sha256": "2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62",
+    "source_contract_sha256": "c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81",
+    "captured_at": "2026-11-16 02:24:40 UTC"
   }
 }

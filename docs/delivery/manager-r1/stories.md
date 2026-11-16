@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Dated partial 29-Story source set with 128 prescribed cases after PGB-138 and PGB-136; PGB-137 source composition remains pending. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA amendments place R1-24 then R1-30 then R1-27 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
+Dated partial 30-Story source set with 132 prescribed cases after PGB-138 and PGB-136; PGB-137 source composition remains pending. Stable IDs, the original R1-08 criteria/human cases and unrelated bodies are preserved. The 20/23-Story reviews remain historical; the approved QA amendments place R1-24 then R1-30 then R1-27 immediately before R1-08. Jira owns current delivery stages. Publication does not establish installed acceptance or authorize activation.
 
 The [company/health contract](../../architecture/pig-boss-operations.md) applies to all Stories: project-scoped identity, customer-owned multi-project configuration and basic Pig Boss health. Worker monitoring stays deferred. All acceptance cases remain explicitly human-owned because the approved QA helpers do not execute these CLI/IaC/instruction checks. Developer CI and PR review still run; installed acceptance is separate.
 
@@ -334,6 +334,331 @@ A company needs one installation and one editable configuration for several Jira
 
 - **Automated regression:** Add CLI/application and provider-adapter contract coverage for the prescribed normal, failure, identity and permission outcomes; keep local fixtures separate from installed AWS/Jira acceptance.
 
+
+## R1-31: Check Jira read configuration before use
+
+### Problem to solve
+
+The existing configuration checker validates project mappings but cannot check the connection and explicit limits needed for Jira reads. Operators and agents cannot safely inspect whether a proposed change to these settings needs review before live access is prepared.
+
+### Acceptance Criteria
+
+- **AC1.** The existing source and copied-installed checker accepts old offline configurations and distinguishes missing live settings, complete locally valid live settings and scope exceeding the live100-project ceiling without claiming readiness.
+- **AC2.** It validates the complete supported credential-reference/cloud-ID connection and explicit finite read bounds; partial, unsupported or contradictory settings produce safe named-field diagnostics.
+- **AC3.** Its change preview reports each connection, secret-reference and read-bound edit without old/new sensitive values, while preserving existing project, site, actor, repository and retained-state checks.
+- **AC4.** Human and JSON output show the same effective bounds and pending site/cloud-binding, access, visibility, ownership and release checks; live_readiness remains not_evaluated.
+- **AC5.** The checker resolves no secrets, calls no provider and writes no configuration or state; rejected content, cloud IDs and secret-reference values are absent from its new summaries, diagnostics and diff fields.
+- **AC6.** The shipped source/copied guide and example explain preparation, checks, changes and recovery, with synthetic explicit budgets labelled unmeasured and final PGB-82 supported-default acceptance still required.
+
+### Technical Acceptance Criteria
+
+The complete contract below retains the repository, boundaries and all seven technical criteria.
+
+### Testing Strategy
+
+Four prescribed human cases remain NOT_RUN (0/4). PREP-01 supplies exact finite commands and dummy inputs at the reviewed implementation revision. Developer regressions do not complete human acceptance or original PGB-82 acceptance.
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The existing configuration checker validates project mappings but cannot check the connection and explicit limits needed for Jira reads. Operators and agents cannot safely inspect whether a proposed change to these settings needs review before live access is prepared.",
+  "prerequisites": [
+    {
+      "ticket": "R1-21",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing source and copied-installed checker accepts old offline configurations and distinguishes missing live settings, complete locally valid live settings and scope exceeding the live100-project ceiling without claiming readiness."
+    },
+    {
+      "id": "AC2",
+      "requirement": "It validates the complete supported credential-reference/cloud-ID connection and explicit finite read bounds; partial, unsupported or contradictory settings produce safe named-field diagnostics."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Its change preview reports each connection, secret-reference and read-bound edit without old/new sensitive values, while preserving existing project, site, actor, repository and retained-state checks."
+    },
+    {
+      "id": "AC4",
+      "requirement": "Human and JSON output show the same effective bounds and pending site/cloud-binding, access, visibility, ownership and release checks; live_readiness remains not_evaluated."
+    },
+    {
+      "id": "AC5",
+      "requirement": "The checker resolves no secrets, calls no provider and writes no configuration or state; rejected content, cloud IDs and secret-reference values are absent from its new summaries, diagnostics and diff fields."
+    },
+    {
+      "id": "AC6",
+      "requirement": "The shipped source/copied guide and example explain preparation, checks, changes and recovery, with synthetic explicit budgets labelled unmeasured and final PGB-82 supported-default acceptance still required."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Own the existing local configuration schema, parser/projection, checker/change preview, source/copied regressions and affected user/delivery documentation; one PR, at most20 changed files, less than16 familiar-human hours including normal fixes and PR preparation.",
+      "out_of_scope": [
+        "Plexus/customer code changes",
+        "Jira/provider calls, secret resolution, AWS integration, activation or deployment",
+        "Manager policy or receipt-proof changes; PGB-144 trust/producer decisions; new receipt-trust fields",
+        "PGB-137 or other parallel unpublished source amendments"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D04",
+        "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+        "reference": "docs/architecture/pig-boss-operations.md"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Extend only pigboard-config/v1 with optional closed jira.connection and jira.read_bounds: both absent preserves offline use, otherwise both are complete; existing whole-section inheritance and pure resolved_scope stay unchanged."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Connection supports only credential_kind atlassian_scoped_service_account_token, a canonical lowercase UUID cloud_id and opaque printable-ASCII secret_reference; derive only https://api.atlassian.com/ex/jira/{cloud_id}, with no arbitrary API origin or credential-value field."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "All11 read bounds are positive safe integers with the documented consumer/timer ceilings and six cross-field relations; no implicit defaults, environment overrides, tuning or zero-as-unlimited semantics are added."
+      },
+      {
+        "id": "TAC4",
+        "requirement": "Keep offline project capacity1000 within existing parser bounds; more than100 projects remains valid offline but live-incompatible; local validity and expected-site matching do not prove cloud binding, permissions or readiness."
+      },
+      {
+        "id": "TAC5",
+        "requirement": "Preserve CLI flags, schema names and exits0/1/2; add a safe live_configuration summary and separate validated in-process read-config projection, never injecting connection settings into the closed policy scope."
+      },
+      {
+        "id": "TAC6",
+        "requirement": "Connection/bounds changes cannot be reported unchanged; retain site identity holds, all existing retained-member/unresolved-attempt checks and empty state_actions, emitting only declared changed-field names for new settings."
+      },
+      {
+        "id": "TAC7",
+        "requirement": "Reuse the already allowlisted source/copied payload and prepared validator dependencies without provider access or dependency repair; preserve original PGB-82 all5 AC,3 TAC and4 human cases and every dated publication hash while adding this prerequisite through verified publication."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Exact Pigboard PR revision with Node20+ and already prepared root validator dependencies; actual copied work-validator payload in a disposable local installation; unrelated working directory; no deployed customer target or live account.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite dummy local configuration packet H01-H04 with literal expected result fields, recorded hashes, commands, no-effects guard and a separate disposable damaged-runtime copy; no live credentials.",
+        "initial_state": "Fresh files per variant; only the explicit previous/next pairs share inputs. Legacy two-project mappings come from the unchanged existing fixture.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "At the exact PR revision, prepare every finite variant below, its literal expected fields/exits and exact source/copied commands; include a test-owned zero-effect guard and a real copied validator dependency closure without network install or source symlinks.",
+        "used_by": [
+          "DATA-01",
+          "R1-31-H01",
+          "R1-31-H02",
+          "R1-31-H03",
+          "R1-31-H04"
+        ],
+        "preserves": [
+          "All specified inputs, ordering, outcomes, evidence and cleanup; old offline fixtures and original final82 cases stay unchanged.",
+          "Synthetic budgets do not become supported defaults or runtime enforcement evidence.",
+          "No tests or provider calls during plan drafting; human acceptance remains NOT_RUN until a human executes this packet."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "QA skills: []. These local CLI/library contracts are outside the currently approved automated QA skill execution types. Human reviewers run the four prescribed groups; developer regressions, independent review and hosted CI remain separate.",
+      "cases": [
+        {
+          "id": "R1-31-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC4",
+            "AC6",
+            "TAC1",
+            "TAC4",
+            "TAC5"
+          ],
+          "prerequisites": [
+            "Exact PR revision and PREP-01/DATA-01 available; Node20+ and prepared source/copied validator dependencies; no credentials, Postman or live account required.",
+            "For every listed variant run node scripts/check-config.mjs --input FILE --json and the same command without --json; use --previous BEFORE for pairs. Repeat with the actual copied work-validator/scripts/check-config.mjs from an unrelated cwd.",
+            "Five fixed inputs: legacy two-project offline config; complete two-project synthetic profile; complete profile with distinct project-specific mappings/equal full labels; legacy101-project config; complete101-project config. All fit the1MiB bound."
+          ],
+          "steps": [
+            "Run each input in both output modes through source and copied commands; add --label AI-Daniel-1 for the distinct-mapping input.",
+            "Run a prepared in-process projection check without printing its connection: confirm missing settings return null; valid settings return independent copies with exact sorted project_ids and fixed derived gateway; mutating the projection leaves input unchanged; complete101-project projection throws LIVE_SCOPE_LIMIT.",
+            "Compare the legacy and complete configurations' resolved_scope and stream identity fields, and inspect live status/effective bounds/pending checks."
+          ],
+          "expected": [
+            "All five local checks exit0 with valid:true and live_readiness:not_evaluated. Legacy two-project input reports missing_settings and null effective_bounds; complete two-project inputs report complete with all11 explicit values; both101-project inputs report incompatible_scope with LIVE_SCOPE_LIMIT at /projects.",
+            "Legacy101-project input also lists both required settings with null effective_bounds and remains valid offline; complete101-project operational projection is rejected, never truncated.",
+            "Pure scope/mappings and full-label identities remain unchanged; equal labels in distinct immutable projects remain distinct. No reference/cloud ID is printed in the live summary; every listed future check remains pending."
+          ],
+          "evidence": [
+            "Record tested revision, source/copied payload identity, exact commands, stdout/stderr and exit codes, literal expected-field comparison, fixture before/after hashes and zero-effect counter.",
+            "Keep output canary checks and all failed/partial results; developer tests do not stand in for human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain evidence, then remove only disposable packet/build/damaged-copy files. Preserve the working prepared installation and all original source/configuration files; no live records or resources change."
+            ]
+          }
+        },
+        {
+          "id": "R1-31-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "AC5",
+            "TAC1",
+            "TAC2",
+            "TAC3",
+            "TAC4"
+          ],
+          "prerequisites": [
+            "Exact PR revision and PREP-01/DATA-01 available; Node20+ and prepared source/copied validator dependencies; no credentials, Postman or live account required.",
+            "For every listed variant run node scripts/check-config.mjs --input FILE --json and the same command without --json; use --previous BEFORE for pairs. Repeat with the actual copied work-validator/scripts/check-config.mjs from an unrelated cwd.",
+            "Use the complete passing profile as control. Prepare exactly: connection-only; bounds-only; each of3 connection fields absent; each of11 bound fields absent; unsupported credential kind; uppercase/invalid cloud UUID; blank/space/control-character reference; extra token field; extra api_origin field; site with userinfo/path/query/fragment (four variants); expected-site mismatch.",
+            "For each of11 bounds independently prepare0,-1,1.5 and one-above-ceiling. Also prepare raw nonfinite numeric JSON. Prepare six isolated relation failures: Epics>known issues, pages>requests, response bytes>total bytes, request timeout>scan timeout, page size>known issues and page size>comments; other fields remain valid.",
+            "Prepare independent positive boundary controls at each of11 ceilings with compatible companion values; keep project count2. Use dummy canaries in rejected values and secret_reference."
+          ],
+          "steps": [
+            "Run all finite variants once with source and copied commands under the prepared no-effects guard; inspect the safe named-field result and exit status.",
+            "For expected-site mismatch add --expected-site with the independently prepared different valid origin. Run the passing base control again after the negative variants.",
+            "Search human/JSON/stderr outputs for the dummy reference, cloud ID in new summaries, rejected value canaries and unknown-field canaries."
+          ],
+          "expected": [
+            "Negative variants exit1 with valid:false, null digest/resolved_scope/live_configuration, no preview and static schema-known diagnostics. Unsupported/numeric/parser failures are classified by their rejecting layer; no raw parser/Ajv text or rejected values escape.",
+            "Every positive boundary control remains locally valid and exit0; it proves only accepted structure, not throughput, access or supported capacity. The unchanged passing control still succeeds.",
+            "Expected-site mismatch retains destination_authority:mismatch and EXPECTED_SITE; no secret resolution, provider request, child execution or file mutation occurs."
+          ],
+          "evidence": [
+            "Record tested revision, source/copied payload identity, exact commands, stdout/stderr and exit codes, literal expected-field comparison, fixture before/after hashes and zero-effect counter.",
+            "Keep output canary checks and all failed/partial results; developer tests do not stand in for human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain evidence, then remove only disposable packet/build/damaged-copy files. Preserve the working prepared installation and all original source/configuration files; no live records or resources change."
+            ]
+          }
+        },
+        {
+          "id": "R1-31-H03",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC3",
+            "AC5",
+            "TAC5",
+            "TAC6",
+            "TAC7"
+          ],
+          "prerequisites": [
+            "Exact PR revision and PREP-01/DATA-01 available; Node20+ and prepared source/copied validator dependencies; no credentials, Postman or live account required.",
+            "For every listed variant run node scripts/check-config.mjs --input FILE --json and the same command without --json; use --previous BEFORE for pairs. Repeat with the actual copied work-validator/scripts/check-config.mjs from an unrelated cwd.",
+            "Finite previous/next pairs: unchanged profile;2 independent valid connection-field changes (cloud_id and secret_reference; credential_kind is constant and its invalid alternative is H02);11 independent bound changes with valid relations; absent-to-complete and complete-to-absent pair; effective actor change; effective repository change; unused-default change; display-only edit; project removal; site change. All pairs locally valid.",
+            "Add two failure pairs: invalid previous/valid next and valid previous/invalid next. Use unique dummy secret_reference values and output canaries."
+          ],
+          "steps": [
+            "Run each pair using --previous in both output modes through source/copied commands.",
+            "For the site change also pass --expected-site matching the next site; inspect retained-member, unresolved-attempt and identity checks.",
+            "Inspect changed-name arrays and pending checks, compare reference-only digest change, and search all output for new/old references; verify inputs and state_actions."
+          ],
+          "expected": [
+            "Each connection/bound edit is review_required with only exact changed names and declared pending installation checks; add/remove blocks list all their fields. No old/new reference value is disclosed.",
+            "Unchanged and unused-default-only effective settings remain unchanged; effective actors/repositories preserve existing mapping checks; display/project changes preserve their existing distinct outcomes.",
+            "Site change remains identity_change_held with valid:true and exit1, even with matched_expected_site. Other valid review-required pairs exit0. No state action is emitted.",
+            "Either invalid input yields exit1 with preview/digest/resolved_scope/live_configuration null; previous diagnostics alone carry /previous. No valid-next live summary leaks from a failed comparison."
+          ],
+          "evidence": [
+            "Record tested revision, source/copied payload identity, exact commands, stdout/stderr and exit codes, literal expected-field comparison, fixture before/after hashes and zero-effect counter.",
+            "Keep output canary checks and all failed/partial results; developer tests do not stand in for human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain evidence, then remove only disposable packet/build/damaged-copy files. Preserve the working prepared installation and all original source/configuration files; no live records or resources change."
+            ]
+          }
+        },
+        {
+          "id": "R1-31-H04",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC4",
+            "AC5",
+            "AC6",
+            "TAC2",
+            "TAC5",
+            "TAC7"
+          ],
+          "prerequisites": [
+            "Exact PR revision and PREP-01/DATA-01 available; Node20+ and prepared source/copied validator dependencies; no credentials, Postman or live account required.",
+            "For every listed variant run node scripts/check-config.mjs --input FILE --json and the same command without --json; use --previous BEFORE for pairs. Repeat with the actual copied work-validator/scripts/check-config.mjs from an unrelated cwd.",
+            "The shipped guide/example, source and actual copied runtime, unrelated cwd, disposable damaged copy with one config module missing, and no-effects guard. Retain a working release for recovery."
+          ],
+          "steps": [
+            "Follow the documented source/copied examples and --help/--help --json without hidden setup or credentials; inspect the synthetic-budget warning, pending access checks and exit meanings.",
+            "Run complete and legacy checks, a changed-reference pair and an invalid-pair check under the no-effects guard for source and copied entrypoints; inspect attempted-effect count before/after and unchanged file hashes.",
+            "Run the copied script from unrelated cwd with NODE_PATH unset; confirm modules/dependencies are physical copied files and no source symlink/fallback is used.",
+            "Run the damaged copy; inspect sanitized SETUP/exit2 with null live summary and no automatic repair. Rerun the untouched working release to show recovery without repeating installation.",
+            "Inspect all outputs for dummy credential/reference/rejected-content canaries and confirm docs do not claim provider access, operational readiness or supported defaults."
+          ],
+          "expected": [
+            "Source/copied commands expose equivalent local statuses and bounds in human/JSON forms, with live_readiness:not_evaluated; every attempted network/process/file-write counter is0.",
+            "The real copied payload executes from unrelated cwd using prepared copied dependencies. Damaged setup fails honestly without fallback or dependency fetch; the working release still succeeds.",
+            "Help/guide provide prerequisites, exact commands, successful local result, upgrade ordering and common recovery. Synthetic values remain unmeasured, and final82 runtime/default/human acceptance remains pending."
+          ],
+          "evidence": [
+            "Record tested revision, source/copied payload identity, exact commands, stdout/stderr and exit codes, literal expected-field comparison, fixture before/after hashes and zero-effect counter.",
+            "Keep output canary checks and all failed/partial results; developer tests do not stand in for human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain evidence, then remove only disposable packet/build/damaged-copy files. Preserve the working prepared installation and all original source/configuration files; no live records or resources change."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Meaningful configuration/checker/diff and actual copied-runtime integration regressions cover the four local groups, including legacy compatibility, safe diagnostics, zero effects and immutable source-publication history; run affected suites and required npm test without provider calls."
+  },
+  "open_questions": []
+}
+```
 
 ## R1-05: Hand an implemented PR to review
 
@@ -2730,6 +3055,8 @@ The manager must finish active work and repair actual dependencies oldest first.
 
 
 ## R1-12: Preview current Jira work with bounded reads
+
+PGB-145/R1-31 is appended after the existing R1-11/R1-21 prerequisites. All original criteria, preparation and four human cases below remain unchanged.
 
 ### Problem to solve
 

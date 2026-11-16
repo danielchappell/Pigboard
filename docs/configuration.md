@@ -9,10 +9,7 @@ configuration or operational state. Native Jira metadata remains authoritative.
 Start with the complete synthetic [example](../config/pigboss.example.yaml), copy
 it to your chosen configuration path and replace the synthetic IDs and mappings.
 The example uses JSON syntax, which is valid YAML 1.2. Keep secrets out of this file.
-The closed [canonical schema](../contracts/config-v1.schema.json) currently covers
-project scope only. Schedule budgets, health settings, deployment and secret-store
-references belong to later Stories in this same configuration; they are not
-accepted namespaces yet. No second editable cloud binding file is needed.
+The closed [canonical schema](../contracts/config-v1.schema.json) covers project scope and optional local Jira connection/read bounds. Schedule budgets, health settings and deployment remain later namespaces. No second editable cloud binding file is needed.
 
 ## Run a check
 
@@ -101,6 +98,7 @@ digest, optional stream inspection and preview checks. JSON returns one object:
 | `configuration_digest` | `sha256:` plus JCS/SHA-256 of the complete validated authored configuration, or `null` on invalid input; not a live revision |
 | `destination_authority` | `not_evaluated`, `matched_expected_site`, or `mismatch` |
 | `live_readiness` | Always `not_evaluated` |
+| `live_configuration` | Safe local completeness/bounds/pending summary below, or `null` if either input is invalid |
 | `resolved_scope` | `{site,projects}` or `null`; projects sorted by exact ID using UTF-16 order |
 | `streams` | `[]` without `--label`; otherwise one mapped/unmapped result for every project |
 | `preview` | Change report, or `null` without two valid configurations |
@@ -133,11 +131,11 @@ receipt input; runtime evidence and assignments remain separate inputs.
 
 `--previous` compares the historical configuration with the next file. Preview
 contains `status`, `site_changed`, `added`, `removed`, `retained`, `display_changed`,
-`mappings_changed`, `checks_required`, and `state_actions`. Identity lists use exact
+`mappings_changed`, `connection_changed`, `read_bounds_changed`, `checks_required`, and `state_actions`. Identity lists use exact
 `{site,project_id}`. Changed-field entries add only `fields`, without old/new values.
 Effective sections are compared, so an unused default does not falsely change a
 project. Key/board edits appear only as display changes. The same key with a new ID
-is removal/addition. An unchanged effective scope reports `unchanged`; other edits
+is removal/addition. An unchanged effective scope and unchanged connection/bounds report `unchanged`; other edits
 report `review_required` except a site change, which is `identity_change_held`.
 
 | Change | Pending checks |
@@ -195,3 +193,60 @@ fails. The example shows explicit inheritance and a local override/empty section
 The version remains v1 with optional declarations; older revisions reject these
 new fields. Upgrade the reviewed source and configuration together before using
 them. No native discovery, automatic provisioning or second customer file is added.
+
+## Check optional Jira connection and explicit read budgets
+
+Old v1 files may omit both `jira.connection` and `jira.read_bounds` and remain valid for offline use. If either is present, supply both complete blocks. Null, empty, partial or unknown fields fail. There is no coercion, environment override, implicit budget or secret lookup. Older Pigboard revisions reject these fields: upgrade the reviewed source and configuration together through normal preparation.
+
+The example declares **Synthetic explicit budgets; not supported live defaults. No credentials or live readiness.** Never paste a token into `secret_reference`; arbitrary text cannot prove it is a reference. Keep the credential in the customer's store. The checker accepts only the declared reference syntax and never resolves it.
+
+| `jira.connection` field | Required value |
+| --- | --- |
+| `credential_kind` | Exactly `atlassian_scoped_service_account_token` |
+| `cloud_id` | Lowercase canonical UUID text: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`, with lowercase hexadecimal digits; no imposed version or case repair |
+| `secret_reference` | Opaque printable ASCII identifier, 1–2,048 characters, with no spaces or control characters; no decoding, interpolation or ARN parsing |
+
+No token/email/password field, direct-site/basic/OAuth class, `api_origin`, URL override or transport/trust flag is accepted. `jira.site` remains the exact tenant identity, including existing enterprise/nondefault-port support. It is not the HTTP target. Local checks cannot establish that the site and cloud ID belong together. `--expected-site` binds only the exact next site.
+
+Every `jira.read_bounds` field below is a required positive JSON safe integer. Ceilings prevent structurally invalid values; they are **not defaults or supported capacity**.
+
+| Field | Upper ceiling | Synthetic example | Later consumer counts |
+| --- | ---: | ---: | --- |
+| `max_epics` | 100 | 4 | Relevant unique Epics |
+| `max_streams` | 1,000 | 8 | Distinct site/project/full-label tuples |
+| `max_known_issues` | 1,000 | 32 | Deduplicated relevant union, including Epics/retained/referenced IDs |
+| `max_comments` | 1,000 | 256 | All comments on required issues, including ordinary comments |
+| `max_pages` | 9,007,199,254,740,991 | 64 | Combined search/comment pages |
+| `max_requests` | 9,007,199,254,740,991 | 256 | All attempted requests, including failed/aborted reads |
+| `page_size` | 100 | 25 | Requested page size; continuation determines completeness |
+| `max_response_bytes` | 8,388,608 | 1,048,576 | Received bytes per response |
+| `max_total_response_bytes` | 16,777,216 | 8,388,608 | All received response bytes, not only retained bodies |
+| `request_timeout_ms` | 2,147,483,647 | 5,000 | Per-request timeout, below Node timer overflow |
+| `scan_timeout_ms` | 2,147,483,647 | 60,000 | Total invocation deadline, including later resolution/parsing/composition |
+
+Relations are checked in this order after shape validation: `max_epics <= max_known_issues`, `max_pages <= max_requests`, `max_response_bytes <= max_total_response_bytes`, `request_timeout_ms <= scan_timeout_ms`, `page_size <= max_known_issues`, `page_size <= max_comments`. `READ_BOUNDS` names the first inconsistent left-hand field. Smaller pages do not bound total inventory. Very large page/request counts are not usable service envelopes; later consumers must enforce the finite deadline and independent content ceilings. This checker introduces no runtime enforcement or retries.
+
+The project count comes only from `projects`. Offline validity still allows up to 1,000 projects within input bytes. Live compatibility has a 100-project ceiling; a complete pair with 101 projects stays valid offline and reports `incompatible_scope`. Never silently truncate, split the installation or discard retained work to satisfy this ceiling. A changed managed domain needs normal operator review.
+
+Response bytes are not serialized snapshot bytes. The existing 16 MiB snapshot, 8 MiB receipt, aggregate 1,000 comments, combined 100 receipts, record/body/ADF/depth/list limits and envelope duplication still apply downstream. The limits cannot necessarily be reached simultaneously. Final PGB-82 must supply supported initial defaults and measured small-domain source/copied acceptance; these synthetic values do not satisfy it. Later acquisition measures relevant closure, bytes and time rather than unrelated project history.
+
+`live_configuration` always contains these fields on valid inputs:
+
+| Field | Meaning |
+| --- | --- |
+| `status` | `incompatible_scope` above 100 projects; otherwise `missing_settings` when both blocks are absent; otherwise `complete` |
+| `project_count` | Actual configured count |
+| `required_settings` | Exactly `[/jira/connection,/jira/read_bounds]` when absent, otherwise `[]`; retained even with incompatible scope |
+| `effective_bounds` | All11 declared integers, or `null` when absent |
+| `checks_required` | Installation-scoped pending checks listed below, including when settings are absent |
+| `diagnostics` | One safe `LIVE_SCOPE_LIMIT` at `/projects` when incompatible; otherwise `[]` |
+
+The pending checks are `SITE_CLOUD_BINDING` (site belongs to cloud ID), `CREDENTIAL_ACCESS` (credential can access the domain), `INITIAL_VISIBILITY` (operator verifies whole-domain visibility), `OWNERSHIP_INVENTORY` (existing work and ownership), and `RELEASE_READINESS` (remaining installation/release checks). Each is `{code,scope:null,status:"pending"}`. Search results cannot prove invisible issues do not exist. Local completeness never passes any check; `live_readiness` remains `not_evaluated`.
+
+Human and JSON output show the same summary. Neither prints cloud IDs, references or the operational projection. The digest includes the complete authored accepted configuration, so a reference edit changes it; the digest is no access or authority proof. There is no separate reference hash.
+
+Trusted in-process consumers may call `resolveJiraReadConfig(config)`. It validates the full input every time, returns `null` with both blocks absent, and throws sanitized `LIVE_SCOPE_LIMIT` for a complete pair above 100 projects. Otherwise it returns fresh `{site,project_ids,connection,read_bounds}` with IDs sorted like resolved scope and a connection containing the three authored fields plus derived `api_base` of `https://api.atlassian.com/ex/jira/<cloud_id>` without a trailing slash. The reference remains inert. This object is intentionally not public checker output and establishes neither access nor site/cloud binding. `resolveProjects`, `resolveProject` and `inspectStreams` retain their closed pure scope.
+
+Preview reports only changed declared names in `connection_changed` and `read_bounds_changed`, ordered as the tables above. Adding/removing the pair reports every field. Any connection change adds the five installation checks above; any bounds change adds `READ_BOUNDS` and `RELEASE_READINESS`. Identical code/scope checks are deduplicated after existing checks. Cloud-ID edits at the same site require review; site changes retain the identity hold. Mapping/actor/repository/removal checks and `state_actions:[]` remain unchanged. No old/new connection values appear.
+
+Missing/incompatible live settings alone retain exit 0 for a valid offline file. Either invalid input clears `live_configuration`, digest and resolved scope, leaves preview null and returns exit 1. Correct the named field for `LIVE_SETTINGS`, `READ_BOUNDS`, `STRUCTURE`, `FORMAT` or `LIMIT`, then rerun. For absent settings, preserve offline use or supply the whole pair. For `LIVE_SCOPE_LIMIT`, preserve the valid offline scope while arranging an explicitly reviewed compatible domain. For SETUP/exit 2, use the same-revision normal preparation flow; a damaged disposable copy must not cause repair or replacement of a usable release. There is no force flag, auto-write, dependency repair, secret lookup or implicit live probe.

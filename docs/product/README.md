@@ -88,7 +88,7 @@ provide their detailed expression: [release boundary](../architecture/manager-re
 The existing [workflow](../workflow.md) describes the earlier basic bundle, including
 direct rework to In Progress; that behavior must change for this release.
 
-This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes the owner-approved amendments at a partial 29-Story/128-case source checkpoint; PGB-137/R1-29 source composition remains pending. This does not authorize implementation, further provider probes or activation.
+This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes the owner-approved amendments at a partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 source composition remains pending. This does not authorize implementation, further provider probes or activation.
 
 ## Approved company-scope addition
 
@@ -124,3 +124,7 @@ The Director separately verified native Epic inventory at 30 Stories/130 cases o
 The [delivery set](../delivery/manager-r1/README.md) composes **29 Stories/128 cases** after PGB-138/R1-30 and PGB-136/R1-28. PGB-137/R1-29 remains a separate pending source amendment against the Director’s dated 30-Story/130-case native inventory. All 53 requirements and 41 original scenarios remain.
 
 PGB-136 adds bounded own-ticket selection in the existing offline preview before PGB-81 completes typed/stack repair ordering. All 42 original PGB-81 cases and all six new human cases remain NOT_RUN. Its owned 20-path source change is composed onto verified merged PGB-138 main `b6b863476d9f07eee2702991f336def7ff38cd36`, tree `ebbfca1688f0aa954e29913dc72ceb6e74055fe0`. The earlier `29ba86017ec8ce5c27392f699a9a387cc8902260` development composition remains historical. Source publication, local checks, independent review, hosted CI, merge, human acceptance and activation remain distinct.
+
+## Local Jira read-configuration increment — 16 November 2026
+
+The current partial source checkpoint is **30 Stories/132 cases** after PGB-145/R1-31, based on merged e54. The dated PGB-145 native publication snapshot is separately **31 Stories/134 cases**; PGB-137/R1-29 source composition remains pending. Earlier29/128 and native30/130 figures remain dated history. The local checker gains optional complete connection/reference and explicit budget checks plus safe change previews. This does not read Jira or prove credentials, visibility, supported live capacity or readiness. Four new human cases remain NOT_RUN; every original PGB-82 criterion and case remains. Final live-read defaults, measured acceptance, independent code review, hosted checks and owner merge/release gates remain separate.

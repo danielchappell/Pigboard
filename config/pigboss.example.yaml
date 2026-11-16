@@ -1,8 +1,26 @@
-# Synthetic local scope example. No credentials or live readiness.
+# Synthetic explicit budgets; not supported live defaults. No credentials or live readiness.
 {
   "schema": "pigboard-config/v1",
   "jira": {
-    "site": "https://jira.example.invalid"
+    "site": "https://jira.example.invalid",
+    "connection": {
+      "credential_kind": "atlassian_scoped_service_account_token",
+      "cloud_id": "00000000-0000-0000-0000-000000000001",
+      "secret_reference": "example/jira/service-account"
+    },
+    "read_bounds": {
+      "max_epics": 4,
+      "max_streams": 8,
+      "max_known_issues": 32,
+      "max_comments": 256,
+      "max_pages": 64,
+      "max_requests": 256,
+      "page_size": 25,
+      "max_response_bytes": 1048576,
+      "max_total_response_bytes": 8388608,
+      "request_timeout_ms": 5000,
+      "scan_timeout_ms": 60000
+    }
   },
   "defaults": {
     "stages": {
