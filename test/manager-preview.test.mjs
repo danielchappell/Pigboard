@@ -464,11 +464,28 @@ test('ordinary composition preserves original native bodies and recorded prerequ
  for(const id of ['S01','S06']){const c=ordinaryFresh(id),{inspection,state}=acquired(c),before=JSON.stringify({inspection,state}),composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);assert.equal(composed.valid,true,JSON.stringify(composed));const r=previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(r.valid,true,JSON.stringify(r));assert.deepEqual(selected(r),c.expected.streams.map(s=>s.selected_ticket_id));assert.equal(JSON.stringify({inspection,state}),before);assert.equal(composed.snapshot.issues[0].body,inspection.observations.issues[0].body);}
 });
 test('ordinary composition keeps isolated unknowns and refuses shared or mismatched completeness',()=>{
- const c=ordinaryFresh('S18'),{inspection,state}=acquired(c);inspection.report.status='incomplete';inspection.report.domain_complete=false;inspection.report.scopes[1].complete=false;inspection.report.diagnostics=[{scope:{project_id:'100',label:'stream-2'}}];inspection.observations.issues.find(i=>i.id==='1002').pointer={state:'unknown',value:null};
- const composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);assert.equal(composed.valid,true,JSON.stringify(composed));assert.deepEqual(composed.snapshot.issues.find(i=>i.id==='1002').pointer,{state:'unknown',value:null});assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'})),['1001']);
+ const c=ordinaryFresh('S18'),prerequisite=structuredClone(ordinaryFresh('S06').snapshot.issues.at(-1));
+ // Dependency reach does not make this native issue a capacity member.
+ prerequisite.labels=[];prerequisite.parent_id=null;prerequisite.pointer=null;c.snapshot.issues.push(prerequisite);
+ const member=c.snapshot.issues.find(i=>i.id==='1002'),work=JSON.parse(member.body);work.prerequisites=[{ticket:prerequisite.key,required_outcome:'ai_qa_complete'}];member.body=JSON.stringify(work);
+ c.snapshot.stream_checks.push({project_id:'100',label:'stream-3',known_ids_complete:true,repair_inventory_complete:true});
+ const {inspection,state}=acquired(c);inspection.report.status='incomplete';inspection.report.domain_complete=false;
+ for(const row of inspection.report.scopes)if(row.label!=='stream-1')row.complete=false;
+ inspection.report.diagnostics=[{scope:{project_id:'100',label:'stream-2'}},...['stream-2','stream-3'].map(label=>({issue_id:prerequisite.id,scope:{project_id:'100',label}}))];
+ for(const id of ['1002',prerequisite.id])inspection.observations.issues.find(i=>i.id===id).pointer={state:'unknown',value:null};
+ const before=JSON.stringify({inspection,state}),members=inspection.report.scopes.map(row=>({old:row.old_issue_ids,current:row.current_issue_ids}));
+ assert(members.every(row=>!row.old.includes(prerequisite.id)&&!row.current.includes(prerequisite.id)));
+ const composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);assert.equal(composed.valid,true,JSON.stringify(composed));
+ for(const id of ['1002',prerequisite.id]){const observed=inspection.observations.issues.find(i=>i.id===id),issue=composed.snapshot.issues.find(i=>i.id===id);assert.deepEqual(issue,{...observed,required_requests:[]});}
+ assert.deepEqual(composed.snapshot.retained_members,state.retained_members);
+ assert.deepEqual(composed.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:true,repair_inventory_complete:true},...['stream-2','stream-3'].map(label=>({project_id:'100',label,known_ids_complete:false,repair_inventory_complete:false}))]);
+ assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'})),['1001']);
  const shared=structuredClone(inspection);shared.report.diagnostics.push({scope:null});assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),shared,state).snapshot,null);
+ const unknown=structuredClone(inspection);unknown.report.diagnostics[1].scope.label='stream-99';assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),unknown,state).snapshot,null);
+ const unlocated=structuredClone(inspection);for(const d of unlocated.report.diagnostics)if(d.issue_id===prerequisite.id)d.issue_id=prerequisite.key;assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),unlocated,state).snapshot,null);
  assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),inspection,{...state,retained_complete:false}).snapshot,null);
  const mismatch=structuredClone(inspection);mismatch.report.scopes[0].current_issue_ids=[];assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),mismatch,state).snapshot,null);
+ assert.equal(JSON.stringify({inspection,state}),before);assert.deepEqual(inspection.report.scopes.map(row=>({old:row.old_issue_ids,current:row.current_issue_ids})),members);
 });
 test('ordinary rejects old and mixed inputs and preserves uncertain attempt identity',()=>{
  let getterCalls=0;const unsafe=Object.defineProperty({},'mode',{enumerable:true,get(){getterCalls++;throw Error('MODE_GETTER_CALLED');}});let invalid;assert.doesNotThrow(()=>{invalid=previewSnapshot('{}','{}',unsafe);});assert.equal(getterCalls,0);assert.equal(invalid.valid,false);assert.equal(invalid.scope_diagnostics[0].code,'VALUE_DOMAIN');assert.deepEqual(invalid.streams,[]);assert.equal(invalid.writes,0);
