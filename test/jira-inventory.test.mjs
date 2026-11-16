@@ -1,10 +1,12 @@
 import { test } from 'node:test';
 import { performance } from 'node:perf_hooks';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { runFixture } from './fixtures/jira-preview-harness.mjs';
 import { inspectJiraInventory } from '../lib/jira/inventory.mjs';
+import { validateHandoff } from '../lib/contracts/handoff.mjs';
 
 const packet=JSON.parse(readFileSync(new URL('./fixtures/jira-inventory-cases.json',import.meta.url),'utf8'));
 const runtime=fileURLToPath(new URL('../',import.meta.url));
@@ -231,5 +233,55 @@ test('inventory preserves real label and ADF array changes as incomplete',async 
   assert(changes.length>0,issue_id+' must retain its actual changed-input hold.');
   for(const change of changes)assert.deepEqual(change.scope,{project_id:'10001',label:'AI-Daniel-1'});
  }
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});
+
+test('inventory accepts reordered equivalent references without rewriting raw facts',async t=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ const R={ticket_id:'105',comment_id:'501',record_id:'00000000-0000-4000-8000-000000000001',digest:'sha256:2827bfc88e7af13ef6376278628895a6cd618a89c527eff0c00cc06c753fc52f'};
+ const S={digest:'sha256:2827bfc88e7af13ef6376278628895a6cd618a89c527eff0c00cc06c753fc52f',record_id:'00000000-0000-4000-8000-000000000001',comment_id:'501',ticket_id:'105'};
+ authored.request.retained_members[0].assignment=R;
+ authored.script[11].body.value.assignment=S;
+ const native501=authored.script[18].body.comments[0];
+ const native502=structuredClone(native501);native502.id='502';
+ const node=native502.body.content[0].content[0],record=JSON.parse(node.text);
+ record.record_id='00000000-0000-4000-8000-000000000002';
+ record.operation_id='00000000-0000-4000-8000-000000000002';record.ticket_id='101';
+ record.from_stage='Rework Queued';record.payload.mode='repair';
+ record.payload.previous_assignment=R;record.payload.requests=[S];node.text=JSON.stringify(record);
+ const prepared=validateHandoff(JSON.stringify(record));
+ assert.equal(prepared.valid,true,JSON.stringify(prepared.diagnostics));
+ authored.script[8].body.total=1;authored.script[8].body.comments=[native502];
+ const acquired=[2,6,9,13,16,20].map(index=>authored.script[index].body);
+ const p=closureProvenance,provenance=[
+  p('103','retained',null,'10001','AI-Daniel-1'),p('100','retained','103','10001','AI-Daniel-1'),p('105','typed_reference','103','10001','AI-Daniel-1'),
+  p('100','seed'),p('100','retained','103','10001','AI-Daniel-1'),p('101','child','100'),p('103','declared','100','10001','AI-Daniel-1'),
+  p('101','child','100','10001'),p('100','prerequisite','101'),p('104','prerequisite','101'),p('105','typed_reference','101'),
+  p('103','retained',null,'10001','AI-Daniel-1'),p('105','typed_reference','103'),
+  p('104','prerequisite','101','10002'),p('105','typed_reference','103','10001','AI-Daniel-1'),
+  p('101','label',null,'10001','AI-Daniel-1'),p('102','label',null,'10001','AI-Daniel-1'),p('103','label',null,'10001','AI-Daniel-1'),p('102','label',null,'10001','AI-Daniel-1'),
+ ];
+ authored.oracle=closureOracle(acquired,provenance,authored.script,{requests_attempted:24,requests_completed:24,requests_failed:0,search_pages:4,comment_pages:6,known_issues:6,epics:1,streams:1,comments:2},{project_id:'10001',label:'AI-Daniel-1',complete:true,old_issue_ids:['103'],current_issue_ids:['101','102','103']});
+ authored.oracle.reference_count=3;
+ const expected=authored.oracle.acquisition;
+ expected.issues.find(issue=>issue.id==='104').project_id='10002';
+ expected.issues.find(issue=>issue.id==='103').pointer={state:'present',value:{schema:'pigboard-work-pointer/v1',assignment:S}};
+ const comment501={id:'501',author_id:native501.author.accountId,update_author_id:native501.updateAuthor.accountId,created:native501.created,updated:native501.updated,body:JSON.stringify(native501.body)};
+ const comment502={id:'502',author_id:native502.author.accountId,update_author_id:native502.updateAuthor.accountId,created:native502.created,updated:native502.updated,body:JSON.stringify(native502.body)};
+ Object.assign(expected.comment_pages.find(page=>page.ticket_id==='101'),{total:1,comments:[comment502]});
+ Object.assign(expected.comment_pages.find(page=>page.ticket_id==='105'),{total:1,comments:[comment501]});
+ expected.exact_comments=[{ticket_id:'105',...comment501}];
+ expected.references=[{...R,source_ticket_id:'103',source_comment_id:null},{...S,source_ticket_id:'101',source_comment_id:'502'},{...S,source_ticket_id:'103',source_comment_id:null}];
+ authored.oracle.issue_rows.find(issue=>issue.id==='104').project_id='10002';
+ Object.assign(authored.oracle.issue_rows.find(issue=>issue.id==='101'),{comment_ids:['502'],comment_count:1});
+ Object.assign(authored.oracle.issue_rows.find(issue=>issue.id==='105'),{comment_ids:['501'],comment_count:1,exact_comments_read:'complete'});
+ assert.equal(authored.script.length,24);assert.equal(provenance.length,19);
+ const expectedHash=createHash('sha256').update(JSON.stringify(expected)).digest('hex');
+ t.diagnostic('Prebound reference wire:24 calls, '+authored.oracle.counters.response_bytes+' response bytes; full private SHA256 '+expectedHash+';19 provenance rows.');
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ assert.equal(run.private_comparison.expected_sha256,expectedHash);
+ assert.equal(run.private_comparison.actual_sha256,expectedHash);
+ assert.equal(run.trace.filter(request=>request.path==='/rest/api/3/issue/105/comment/501').length,1);
+ assert(!run.trace.some(request=>request.path==='/rest/api/3/issue/101/comment/502'));
  assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
 });

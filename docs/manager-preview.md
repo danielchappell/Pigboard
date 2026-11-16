@@ -870,6 +870,11 @@ label arrays and body strings stay exactly as acquired. Embedded work text and
 reference digests are not normalized. A real difference retains the existing
 `CHANGED_INPUT` hold; inspect the changed source before a new bounded invocation.
 
+Reference identity compares the exact `ticket_id`, `comment_id`, `record_id` and
+`digest` strings regardless of object member order. For one ticket/comment target,
+a different record ID or digest remains a conflict. Original pointer, comment and
+reference objects stay unchanged, as do exact body and digest validation.
+
 An authenticated complete property-key enumeration for a verified issue can
 confirm `pointer: {state: "absent", value: null}` at that observation. A listed
 work-context property requires a validated value. A raw property 404 remains
