@@ -4,6 +4,30 @@ The human decides scope and readiness. The writing skill makes that decision cle
 and complete for both humans and workers. A worker must not spend a run inventing
 the requirements or testing strategy that should have been prepared first.
 
+## Approved role amendment — 16 November 2026
+
+The [role amendment](../delivery/manager-r1/role-amendment.md) replaces the input
+coupling described in the retained baseline below. It is an approved target,
+not installed behavior: PGB-159 adds scheduling validation; PGB-161/PGB-164 add
+the compatible worker checks and preparation.
+
+For A03–A12, admission checks the entire structured declaration: required values,
+repository/scope, supported installed skills, AC/TAC coverage, all cases and child
+steps, dispatch/dependency order, references, declared preparation, finite
+observations and ledgers. It does not require future execution-context facts.
+Scheduling success neither establishes full current `start` nor proves a test
+passed. The existing strict `draft`, `structure` and `start` meanings remain.
+The human still decides when a complete ticket enters Ready to Work.
+
+A09 permits the implementer to fill only declared mechanical slots, including a
+route or request artifact that needs code to exist first. Scope, expectations,
+permissions and facts required for the next action must already be established;
+they cannot be deferred or guessed. Full current start and completed prepared
+coverage remain required before READY publication and applicable review/QA work.
+Ticket text and validator results never grant action rights.
+
+## Retained requirement baseline
+
 | ID | Required behavior |
 | --- | --- |
 | A01 | Evolve Pigboard's existing `write-pr-sized-stories`, retaining its source/provenance, plain-language structure, one-repository/one-PR rule, 20-file maximum and under-two-day limit. Split larger work; discovery/design-only work is a Task. |

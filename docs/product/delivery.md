@@ -4,6 +4,41 @@ Entry points compose separate job skills and role-specific Jira handoff skills.
 The employee remains responsible for the outcome. Skills are source-controlled;
 automation prompts only identify the assigned ticket and entry point.
 
+## Approved role amendment — 16 November 2026
+
+The [role amendment](../delivery/manager-r1/role-amendment.md) changes current-fact
+preparation and historical-proof consumption for W01/W03–W09/W12. It is an approved
+target for PGB-161/PGB-164–166, not a claim that the existing entrypoints already
+prepare these inputs. The roles, requirement rows and transition table below
+remain the retained baseline.
+
+Keep High planning → independent High review → Medium implementation. The
+implementer obtains current facts from canonical setup and permitted reads and
+fills only declared mechanical preparation slots. Code-dependent artifacts may
+follow code; actual permissions and facts needed for each next action may not.
+Reviewer and QA consume completed prepared inputs, reread current work and check
+their applicable PR/CI/evidence and configured action facts. They do not invent
+queries, expectations, artifacts or environments. Actual parent incorporation
+uses current required-parent facts, without reconstructing the parent's old
+execution context.
+
+Full current `start`, complete prepared-input coverage and applicable current
+PR/CI/evidence checks remain mandatory before implementation READY and at the
+reviewer/QA action boundaries. An assignment/inability check grants no execution
+authority. Missing proof stops the affected action: unsupported or unauthenticated
+inability stays local, and only an authorized existing blocker shape may be
+published. Missing inputs alone are not a demonstrated product defect.
+
+Ordered helpers/children, complete partial ledgers and pending human cases stay
+intact. Human request-rework still needs explicit record-and-queue authorization,
+current QA basis and the same open PR/current revision/evidence. It has no Blocked
+producer. Every publisher validates its candidate, appends and reads back the
+actual immutable record, then checks freshness before its allowed transition.
+Unknown publication or transition outcomes retain the original identity and
+completed work without replay.
+
+## Retained requirement baseline
+
 | ID | Required behavior |
 | --- | --- |
 | W01 | Implementer plans at Grok High, obtains one independent adversarial plan review at High, and implements at Grok Medium. Reviewer and QA use Grok High. Harness configuration supplies supported model selections; business skills do not clone/install themselves. |
