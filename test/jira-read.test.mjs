@@ -172,10 +172,10 @@ function boundaryVariant(group,variant){
   v.config.jira.read_bounds.max_response_bytes=300000;
   v.config.jira.read_bounds.max_total_response_bytes=400000;
   v.request.comment_targets=[];
+  v.script.length=3;
   if(variant==='provider-adf-over'){
    v.oracle={status:'incomplete',code:'RESPONSE_INVALID',calls:1,trace:traceOf(v).slice(0,1),diagnostic:{code:'RESPONSE_INVALID',operation:'issue',issue_id:'1000'},issue_rows:[{id:'1000',key:null,project_id:null,issue_read:'incomplete',pointer_read:'not_requested',comments_read:'not_requested',exact_comments_read:'not_requested',comment_ids:[],comment_count:0}],acquisition:{issues:[],comment_pages:[],exact_comments:[],references:[],provenance:[]},counters:{requests_completed:1,requests_failed:0,response_bytes:262287,observation_bytes:0,known_issues:0,comments:0}};
   }else{
-   v.script.length=3;
    v.oracle={status:'complete',code:null,calls:3,trace:traceOf(v),issue_rows:structuredClone(guide.oracle.issue_rows),acquisition:structuredClone(guide.oracle.acquisition),counters:{requests_completed:3,requests_failed:0,comment_pages:1,response_bytes:262809,observation_bytes:263059,known_issues:1,comments:1}};
    v.oracle.issue_rows[0].exact_comments_read='not_requested';
    v.oracle.acquisition.issues[0].body=JSON.stringify(adf);
@@ -189,7 +189,7 @@ function boundaryVariant(group,variant){
  if(group==='R1-42-H02'||group==='R1-42-H03'){
   const lengths=v.script.map(step=>Buffer.byteLength((step.wire_prefix??'')+JSON.stringify(step.body)));
   const expected=group==='R1-42-H03'
-   ?variant==='provider-adf-over'?[262287,265,258,206]:[262286,265,258]
+   ?variant==='provider-adf-over'?[262287,265,258]:[262286,265,258]
    :variant==='exact-private-stop'?[181,265,258,206,181,265,52]:[181,265,258,806,181,265,52];
   assert.deepEqual(lengths,expected);
   assert(v.config.jira.read_bounds.max_response_bytes<=v.config.jira.read_bounds.max_total_response_bytes);
