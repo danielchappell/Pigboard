@@ -177,3 +177,59 @@ test('inventory promotes independently discovered Epic roots without refetch',as
  assert(!run.report.scopes.some(scope=>scope.label==='AI-Daniel-2'));
  assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
 });
+
+// Object key insertion and unique-label order are immaterial; ADF array order is not.
+const equalityADF_A={type:'doc',version:1,content:[{type:'paragraph',attrs:{alignment:'start',indent:0},content:[{type:'text',text:'A'},{type:'text',text:'B'}]}]};
+const equalityADF_B={content:[{content:[{text:'A',type:'text'},{text:'B',type:'text'}],attrs:{indent:0,alignment:'start'},type:'paragraph'}],version:1,type:'doc'};
+
+test('inventory accepts reordered equivalent native observations without rewriting raw facts',async t=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ authored.request={retained_members:[],pending_intents:[],retained_complete:true};
+ const epic=closureEpic(authored.script[0].body.issues[0],'100','AI-Daniel-1','101',['pigboard']);
+ const node=epic.fields.description.content[0].content[0],work=JSON.parse(node.text);
+ work.workstreams[0].story_order=['101','OLD-101'];node.text=JSON.stringify(work);
+ const first=closureStory('101',{parent:'100',labels:['AI-Daniel-1','z-note'],description:equalityADF_A});
+ const fresh=closureStory('101',{parent:'100',labels:['z-note','AI-Daniel-1'],description:equalityADF_B});
+ const later=closureStory('101',{parent:'100',labels:['AI-Daniel-1','z-note'],description:equalityADF_B});
+ authored.script=[closureSearch('10001','labels = "pigboard"',[epic]),closureSearch('10002','labels = "pigboard"',[]),...closureReads(epic),closureSearch('10001','parent = "100"',[first]),...closureReads(fresh),{path:'/rest/api/3/issue/OLD-101?fields=project,issuetype,status,parent,labels,description',status:200,body:structuredClone(first)},closureSearch('10001','labels = "AI-Daniel-1"',[later])];
+ const p=closureProvenance,provenance=[p('100','seed'),p('100','seed',null,'10001'),p('101','child','100'),p('101','declared','100','10001','AI-Daniel-1'),p('OLD-101','declared','100','10001','AI-Daniel-1'),p('101','child','100','10001'),p('100','prerequisite','101'),p('101','label',null,'10001','AI-Daniel-1')];
+ authored.oracle=closureOracle([epic,fresh],provenance,authored.script,{requests_attempted:11,requests_completed:11,requests_failed:0,search_pages:4,comment_pages:2,known_issues:2,epics:1,streams:1,comments:0},{project_id:'10001',label:'AI-Daniel-1',complete:true,old_issue_ids:[],current_issue_ids:['101']});
+ assert.equal(authored.script.length,11);
+ assert.deepEqual(authored.oracle.acquisition.issues[1].labels,['z-note','AI-Daniel-1']);
+ assert.equal(authored.oracle.acquisition.issues[1].body,JSON.stringify(equalityADF_B));
+ t.diagnostic('Prebound equality wire:11 calls, '+authored.oracle.counters.response_bytes+' response bytes; full raw/provenance oracle authored before collection.');
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ assert.equal(run.trace.filter(r=>r.path.includes('/issue/101?')).length,1);
+ assert.equal(run.trace.filter(r=>r.path.includes('/issue/OLD-101?')).length,1);
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});
+
+test('inventory preserves real label and ADF array changes as incomplete',async t=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ authored.request={retained_members:[],pending_intents:[],retained_complete:true};
+ const epic=closureEpic(authored.script[0].body.issues[0],'100','AI-Daniel-1','101',['pigboard']);
+ const node=epic.fields.description.content[0].content[0],work=JSON.parse(node.text);
+ work.workstreams[0].story_order=['101','102','OLD-101'];node.text=JSON.stringify(work);
+ const first101=closureStory('101',{parent:'100',labels:['AI-Daniel-1','z-note'],description:equalityADF_A});
+ const first102=closureStory('102',{parent:'100',labels:['AI-Daniel-1','z-note'],description:equalityADF_A});
+ const fresh101=closureStory('101',{parent:'100',labels:['y-note','AI-Daniel-1'],description:equalityADF_B});
+ const reversed={content:[{content:[{text:'B',type:'text'},{text:'A',type:'text'}],attrs:{indent:0,alignment:'start'},type:'paragraph'}],version:1,type:'doc'};
+ const fresh102=closureStory('102',{parent:'100',labels:['z-note','AI-Daniel-1'],description:reversed});
+ authored.script=[closureSearch('10001','labels = "pigboard"',[epic]),closureSearch('10002','labels = "pigboard"',[]),...closureReads(epic),closureSearch('10001','parent = "100"',[first101,first102]),...closureReads(fresh101),...closureReads(fresh102),{path:'/rest/api/3/issue/OLD-101?fields=project,issuetype,status,parent,labels,description',status:200,body:structuredClone(fresh101)},closureSearch('10001','labels = "AI-Daniel-1"',[fresh101,fresh102])];
+ const p=closureProvenance,provenance=[p('100','seed'),p('100','seed',null,'10001'),p('101','child','100'),p('102','child','100'),p('101','declared','100','10001','AI-Daniel-1'),p('102','declared','100','10001','AI-Daniel-1'),p('OLD-101','declared','100','10001','AI-Daniel-1'),p('101','child','100','10001'),p('100','prerequisite','101'),p('102','child','100','10001'),p('100','prerequisite','102'),p('101','label',null,'10001','AI-Daniel-1'),p('102','label',null,'10001','AI-Daniel-1')];
+ authored.oracle=closureOracle([epic,fresh101,fresh102],provenance,authored.script,{requests_attempted:14,requests_completed:14,requests_failed:0,search_pages:4,comment_pages:3,known_issues:3,epics:1,streams:1,comments:0},{project_id:'10001',label:'AI-Daniel-1',complete:false,old_issue_ids:[],current_issue_ids:['101','102']},{complete:false,code:'CHANGED_INPUT'});
+ // F1 is prebound: existing helper shorthand cannot represent nested scoped diagnostics.
+ delete authored.oracle.diagnostic;
+ assert.equal(authored.script.length,14);
+ assert.deepEqual(authored.oracle.acquisition.issues[1].labels,['y-note','AI-Daniel-1']);
+ assert.equal(authored.oracle.acquisition.issues[1].body,JSON.stringify(equalityADF_B));
+ assert.equal(authored.oracle.acquisition.issues[2].body,JSON.stringify(reversed));
+ t.diagnostic('Prebound equality control:14 calls, '+authored.oracle.counters.response_bytes+' response bytes; both scoped changes and full raw/provenance oracle authored before collection.');
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ for(const issue_id of ['101','102']){
+  const changes=run.report.diagnostics.filter(d=>d.code==='CHANGED_INPUT'&&d.operation==='issue'&&d.issue_id===issue_id);
+  assert(changes.length>0,issue_id+' must retain its actual changed-input hold.');
+  for(const change of changes)assert.deepEqual(change.scope,{project_id:'10001',label:'AI-Daniel-1'});
+ }
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});

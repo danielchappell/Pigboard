@@ -863,6 +863,13 @@ facts to the Core owner (PGB-162) for normalization, recorded-proof composition
 and policy evaluation. The collector constructs no semantic snapshot or admission
 decision; `admission` and `receipt_proof` remain `not_evaluated`.
 
+Repeated issue observations ignore label order and ADF object-key order when
+checking for changes. Label contents, native fields, ADF text, attributes and
+array order still matter; a null description differs from a document. Private
+label arrays and body strings stay exactly as acquired. Embedded work text and
+reference digests are not normalized. A real difference retains the existing
+`CHANGED_INPUT` hold; inspect the changed source before a new bounded invocation.
+
 An authenticated complete property-key enumeration for a verified issue can
 confirm `pointer: {state: "absent", value: null}` at that observation. A listed
 work-context property requires a validated value. A raw property 404 remains
