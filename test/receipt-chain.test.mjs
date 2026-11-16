@@ -437,6 +437,17 @@ test('ordinary recorded missing capture cut still rejects a genuinely supplied m
 
 // PGB-175: finite original H01/H02 supplied-proof inputs, prepared before production changes.
 const workerCases=fixtures.worker_current;
+test('ordinary worker final readback binds the configured publisher actor',()=>{
+ const original=workerCases.artifacts.find(r=>r.id==='mixed-implementer-readback').input,input=structuredClone(original),source=JSON.stringify(original);
+ const issue=input.issues.find(i=>i.id===input.target.ticket_id),project=input.trusted.projects.find(p=>p.id===issue.project_id),actor='second-configured-implementer';
+ assert(!project.actors.implementer.includes(actor));project.actors.implementer.push(actor);input.publisher.account_id=actor;input.action_receipt.actor_id=actor;
+ const before=JSON.stringify(input),r=validateWorkerCurrent(before);
+ assert.equal(r.valid,false);assert.deepEqual(r.diagnostics,[{code:'AUTHORITY',path:'/publisher/account_id',message:'Match the final target author and update author to the configured current publisher account.',reference:input.target}]);
+ for(const [key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(r[key],value,key);
+ for(const [key,value]of Object.entries(workerCases.common_result))assert.deepEqual(r[key],value,key);
+ for(const key of workerCases.omitted_result_fields)assert.equal(Object.hasOwn(r,key),false,key);
+ assert.equal(JSON.stringify(input),before);assert.equal(JSON.stringify(original),source);
+});
 for(const row of workerCases.artifacts.filter(r=>r.group<=7))test('ordinary worker supplied proof: '+row.id,()=>{
  const before=JSON.stringify(row.input),mode=row.id==='mixed-version-worker-in-chain'?'chain':row.id==='mixed-version-worker-in-recorded-history'?'recorded-history':'worker-current';
  const r=mode==='chain'?validateReceiptChain(before):mode==='recorded-history'?inspectRecordedHistory(before):validateWorkerCurrent(before);
