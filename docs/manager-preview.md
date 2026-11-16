@@ -443,7 +443,9 @@ A non-enumerable, read-only `result.observations` property exposes private
 in-memory acquisition to a trusted caller: `issues`, `comment_pages`,
 `exact_comments`, `references` and `provenance`. Serializing the whole result emits
 only the safe report. Issue rows retain current immutable identity, native status,
-type, parent, labels, ADF description and pointer state; pages/exact comments keep
+type, parent, labels, ADF description and pointer state. An explicit empty Jira
+description is retained as `body: null`; a missing or malformed description is a
+response error. Null is an inventory observation, not valid work to start. Pages/exact comments keep
 server author/update-author/time metadata and bounded ADF strings. References are
 empty in this slice and provenance is `requested`. These are observations, not
 trusted work context or accepted receipt envelopes. Do not log private bodies.
@@ -452,8 +454,11 @@ A present pointer must match the existing pointer schema. **Pointer404 remains
 unknown**, even after an accessible issue read: it never establishes absence.
 Comments require contiguous offsets, stable totals, unique IDs and explicit final
 counts; empty lists need a complete zero-total page. Exact targets must occur in
-that enumeration and match body and server metadata. Changed input is retained
-as a failure; the library does not choose a newer version or restart the scan.
+that enumeration and match server metadata and ADF content. JSON object member
+order does not change an ADF value; content-array order and all metadata still
+matter. Each endpoint's original bounded ADF string remains in private
+observations. Changed input is retained as a failure; the library does not choose
+a newer version or restart the scan.
 
 Counters cover attempted/completed/failed requests, comment/search pages, relevant
 identities, comments, every received byte, private serialized observations and
