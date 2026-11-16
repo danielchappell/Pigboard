@@ -1128,3 +1128,138 @@ test('PGB-169 every current source payload byte matches its installed copy and m
  await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
  verificationComplete(o,'PGB-169-current-payload');
 });
+
+test('PGB-159 copied scheduling preserves source contracts from unrelated cwd',async t=>{
+ const o=await fixture(t),expectedCommit=git(o.source,'rev-parse','HEAD');
+ const installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
+ await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ const fixtures=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8'));
+ const {sizeLedger}=await import('../lib/contracts/work-semantics.mjs');
+ const fresh=()=>structuredClone(fixtures.scheduling);
+ const sourceCLI=new URL('../scripts/validate-work.mjs',import.meta.url).pathname;
+ const copiedCLI=path.join(validator,'scripts/validate-work.mjs');
+ const files={work:path.join(o.app,'work.json'),config:path.join(o.app,'config.json'),facts:path.join(o.app,'scheduling.json'),context:path.join(o.app,'context.json')};
+ const controlSample=control=>{
+  const inputs=fresh(),sample={work:inputs.variants[control.variant],config:inputs.config,facts:inputs.facts};
+  for(const [pointer,value]of control.patches){
+   const keys=pointer.split('/');let target=sample;
+   for(const key of keys.slice(0,-1))target=target[key];
+   target[keys.at(-1)]=structuredClone(value);
+  }
+  if(control.ledger_bytes){
+   const strategy=sample.work.testing_strategy,template=strategy.human_review.cases[0];
+   strategy.human_review.cases=Array.from({length:65},(_,i)=>({...structuredClone(template),id:i===0?template.id:'H'+i+'x'.repeat(200)}));
+   while(sizeLedger(sample.work).ledger_budget.projection_bytes>16384)strategy.human_review.cases.pop();
+   let remaining=control.ledger_bytes-sizeLedger(sample.work).ledger_budget.projection_bytes;
+   for(const human of strategy.human_review.cases.slice(1)){
+    const length=Math.min(255-human.id.length,remaining);human.id+='x'.repeat(length);remaining-=length;
+   }
+   strategy.human_review.no_ai_cases_reason+='x'.repeat(remaining);
+  }
+  return sample;
+ };
+ const run=(checker,args,json=true)=>{
+  const child=spawnSync(process.execPath,[checker,...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:30000});
+  assert.equal(child.error,undefined);assert.equal(child.signal,null);assert.equal(child.stderr,'');
+  return {...child,...(json?{result:JSON.parse(child.stdout)}:{})};
+ };
+ const save=async sample=>{
+  const raw={work:JSON.stringify(sample.work),config:JSON.stringify(sample.config),facts:JSON.stringify(sample.facts)};
+  for(const key of Object.keys(raw))await writeFile(files[key],raw[key]);
+  return raw;
+ };
+ const unchanged=async raw=>{for(const key of Object.keys(raw))assert.equal(await readFile(files[key],'utf8'),raw[key],key+' input bytes unchanged');};
+ const schedulingArgs=['--mode','scheduling','--input',files.work,'--config',files.config,'--scheduling',files.facts];
+ const assertScheduling=(child,sample,control)=>{
+  const result=child.result,valid=control===undefined;
+  assert.equal(child.status,valid?0:1,control?.name??'positive');
+  assert.equal(result.schema,'pigboard-work-validation/v1');assert.equal(result.mode,'scheduling');
+  assert.equal(result.purpose,'scheduling');assert.equal(result.validation_scope,'scheduling_declarations');
+  assert.equal(result.valid,valid);assert.equal(result.start_semantics_valid,null);
+  assert.equal(result.readiness,'not_evaluated');assert.equal(result.execution_authorized,false);
+  assert.deepEqual(result.start_diagnostics,[]);
+  if(control){
+   assert(result.diagnostics.some(d=>d.code===control.code&&(d.path===control.path||d.path.startsWith(control.path+'/'))),JSON.stringify(result.diagnostics));
+   assert.equal(result.start_structure_valid,control.code!=='VALUE');
+   assert.equal(result.scheduling_semantics_valid,control.code==='VALUE'?null:false);
+  }else{
+   assert.equal(result.start_structure_valid,true);assert.equal(result.scheduling_semantics_valid,true);assert.deepEqual(result.diagnostics,[]);
+  }
+  if(control?.code==='VALUE')assert.equal(result.ledger_budget,null);
+  else{
+   const budget=result.ledger_budget;
+   assert(budget);assert.equal(budget.omitted_entries,0);assert.equal(budget.actual_publication,'not_evaluated');
+   assert.equal(budget.human_cases,sample.work.testing_strategy.human_review.cases.length);
+   const expectedSteps=control?.name==='duplicate dispatch'?6:sample.work.testing_strategy.cases.flatMap(c=>c.steps).length;
+   assert.equal(budget.ai_steps,expectedSteps);assert.equal(budget.limit_bytes,16384);
+   if(control?.ledger_bytes)assert.equal(budget.projection_bytes,16385);
+   else assert(budget.projection_bytes>0&&budget.projection_bytes<=16384);
+  }
+ };
+ const assertReadable=(child,valid)=>{
+  assert.equal(child.status,valid?0:1);
+  assert.match(child.stdout,valid?/Scheduling declarations passed/:/Scheduling declarations failed/);
+  assert.match(child.stdout,/execution readiness and human Ready to Work are not evaluated; execution is not authorized/);
+ };
+ const matrix=async(sample,control)=>{
+  const before=JSON.stringify(sample),raw=await save(sample),outcomes=[];
+  for(const checker of [sourceCLI,copiedCLI]){
+   const json=run(checker,schedulingArgs);assertScheduling(json,sample,control);await unchanged(raw);
+   const readable=run(checker,schedulingArgs,false);assertReadable(readable,!control);
+   if(control)assert(readable.stdout.includes(JSON.stringify(control.path)),control.name+' readable field');
+   await unchanged(raw);outcomes.push({json:json.result,readable:readable.stdout});
+  }
+  assert.deepEqual(outcomes[1],outcomes[0],'source/copied scheduling parity after independent expectations');
+  assert.equal(JSON.stringify(sample),before);
+ };
+ for(const name of ['mixed','human']){
+  const inputs=fresh(),sample={work:inputs.variants[name],config:inputs.config,facts:inputs.facts};
+  await matrix(sample);
+  const raw=await save(sample),context=structuredClone(fixtures[name].context);
+  for(const operation of context.operations){
+   const step=sample.work.testing_strategy.cases.flatMap(c=>c.steps).find(s=>s.id===operation.step);
+   operation.contract=structuredClone(step);
+  }
+  const rawContext=JSON.stringify(context);await writeFile(files.context,rawContext);
+  const starts=[];
+  for(const checker of [sourceCLI,copiedCLI]){
+   const refused=run(checker,['--mode','start','--input',files.work]);
+   assert.equal(refused.status,2);assert.equal(refused.result.valid,false);
+   assert.equal(refused.result.diagnostics[0].code,'USAGE');assert.equal(refused.result.readiness,'not_evaluated');
+   const complete=run(checker,['--mode','start','--input',files.work,'--context',files.context]);
+   assert.equal(complete.status,0,complete.stdout);assert.equal(complete.result.valid,true);
+   assert.equal(complete.result.start_semantics_valid,true);assert.equal(complete.result.validation_scope,'local_start');
+   assert.equal(complete.result.readiness,'not_evaluated');assert.equal(complete.result.ledger_budget.omitted_entries,0);
+   assert.equal(complete.result.ledger_budget.ai_steps,name==='mixed'?4:0);assert.equal(complete.result.ledger_budget.human_cases,1);
+   starts.push({refused:refused.result,complete:complete.result});await unchanged(raw);
+   assert.equal(await readFile(files.context,'utf8'),rawContext);
+  }
+  assert.deepEqual(starts[1],starts[0],'source/copied strict-start parity after independent expectations');
+  await rm(files.context);
+ }
+ assert.equal(fixtures.scheduling.negatives.length,12);
+ for(const control of fixtures.scheduling.negatives)await matrix(controlSample(control),control);
+ const inputs=fresh(),sample={work:inputs.variants.mixed,config:inputs.config,facts:inputs.facts},raw=await save(sample);
+ const configURL=new URL('file://'+path.join(validator,'lib/config/parse.mjs')).href;
+ const workURL=new URL('file://'+path.join(validator,'lib/contracts/work.mjs')).href;
+ for(const order of [[configURL,workURL],[workURL,configURL]]){
+  const program=`await import(${JSON.stringify(order[0])});await import(${JSON.stringify(order[1])});const fs=await import('node:fs');const runtime=await import(${JSON.stringify(workURL)});const result=runtime.validateWork(fs.readFileSync(${JSON.stringify(files.work)}),{mode:'scheduling',configInput:fs.readFileSync(${JSON.stringify(files.config)}),schedulingInput:fs.readFileSync(${JSON.stringify(files.facts)})});console.log(JSON.stringify(result));`;
+  const child=spawnSync(process.execPath,['--input-type=module','--eval',program],{cwd:o.app,encoding:'utf8',timeout:30000});
+  assert.equal(child.stderr,'');assert.equal(child.status,0);
+  assertScheduling({...child,result:JSON.parse(child.stdout)},sample);await unchanged(raw);
+ }
+ const configResult=run(path.join(validator,'scripts/check-config.mjs'),['--input',files.config]);
+ assert.equal(configResult.status,0);assert.equal(configResult.result.valid,true);
+ assert.equal(configResult.result.live_readiness,'not_evaluated');await unchanged(raw);
+ const help=[];
+ for(const checker of [sourceCLI,copiedCLI]){
+  const child=run(checker,['--help']);assert.equal(child.status,0);
+  assert.deepEqual(child.result.modes,['draft','structure','scheduling','start']);
+  assert.deepEqual(child.result.schemas,['pigboard-epic/v1','pigboard-ticket/v1','pigboard-work-validation-context/v1','pigboard-config/v1','pigboard-work-scheduling/v1']);
+  assert.equal(child.result.readiness,'not_evaluated');assert.match(child.result.help,/--config CONFIG.yaml --scheduling FACTS.yaml/);
+  help.push(child.result);
+ }
+ assert.deepEqual(help[1],help[0],'source/copied help capability parity');
+ assert.deepEqual((await readdir(o.app)).sort(),['config.json','scheduling.json','work.json']);await unchanged(raw);
+ t.diagnostic('One installation; all41 actual payload entries;2 preparation-bearing forms;12 declaration controls; strict start;2 copied import orders; config CLI/help; unchanged inputs. Real work-validator dependencies; other QA-helper installs simulated. Human H01/H02 not run.');
+});
