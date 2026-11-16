@@ -2,7 +2,7 @@
   "date": "2026-11-16",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation.",
+  "status": "Partial 31-Story/136-group source-contract checkpoint including R1-36 on the reviewed PGB-156 runtime repair merge. The State runtime and Jira source inspection coexist; source entries for listed later native deliveries remain uncomposed. Dated source/native inventories and nested amendment forecasts remain historical. This is not an exhaustive current native inventory or human, current-head hosted, main-merge or activation claim.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -33,15 +33,16 @@
     "R1-17": "PGB-87",
     "R1-18": "PGB-88",
     "R1-19": "PGB-89",
-    "R1-20": "PGB-90"
+    "R1-20": "PGB-90",
+    "R1-36": "PGB-150"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 30,
-  "case_count": 132,
+  "story_count": 31,
+  "case_count": 136,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -364,6 +365,12 @@
       "type_id": "10000",
       "from": "PGB-145",
       "to": "PGB-82"
+    },
+    {
+      "id": "10744",
+      "type_id": "10000",
+      "from": "PGB-145",
+      "to": "PGB-150"
     }
   ],
   "baseline_publication": {
@@ -876,21 +883,101 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 30,
-    "case_count": 132,
-    "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
-    "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
-    "native_snapshot": {
-      "date": "2026-11-16",
-      "story_count": 31,
-      "case_count": 134,
-      "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
-      "captured_at": "2026-11-16 02:24:40 UTC"
+    "story_count": 31,
+    "case_count": 136,
+    "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+    "source_order": "R1-36 immediately after R1-31; all other relative order preserved.",
+    "prior_source_scope": {
+      "story_count": 30,
+      "case_count": 132,
+      "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+      "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
+      "native_snapshot": {
+        "date": "2026-11-16",
+        "story_count": 31,
+        "case_count": 134,
+        "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
+        "captured_at": "2026-11-16 02:24:40 UTC"
+      },
+      "pending_source_amendments": [
+        "PGB-137"
+      ],
+      "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
     },
     "pending_source_amendments": [
-      "PGB-137"
+      "PGB-137",
+      "PGB-146",
+      "PGB-147",
+      "PGB-148",
+      "PGB-149",
+      "PGB-152",
+      "PGB-154",
+      "PGB-151",
+      "PGB-153",
+      "PGB-155",
+      "PGB-156"
     ],
-    "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
+    "pending_source_dependencies": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147",
+        "prerequisite_source_id": "R1-36",
+        "prerequisite_native_key": "PGB-150",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10745",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-12",
+        "native_key": "PGB-82",
+        "prerequisite_source_id": "R1-34",
+        "prerequisite_native_key": "PGB-148",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10737",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-38",
+        "prerequisite_native_key": "PGB-152",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10748",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-40",
+        "prerequisite_native_key": "PGB-154",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10751",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-41",
+        "prerequisite_native_key": "PGB-155",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10753",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-42",
+        "prerequisite_native_key": "PGB-156",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10755",
+        "status": "native_verified_source_pending"
+      }
+    ],
+    "forecast_days": {
+      "min": 48.26625,
+      "max": 51.935
+    },
+    "status": "Partial 31-Story/136-group source-contract checkpoint including R1-36 on the reviewed PGB-156 runtime repair merge. The State runtime and Jira source inspection coexist; source entries for listed later native deliveries remain uncomposed. Dated source/native inventories and nested amendment forecasts remain historical. This is not an exhaustive current native inventory or human, current-head hosted, main-merge or activation claim."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1949,6 +2036,419 @@
     "current_drafts_sha256": "2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62",
     "source_contract_sha256": "c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81",
     "captured_at": "2026-11-16 02:24:40 UTC"
+  },
+  "native_source_issue_inspection_amendment": {
+    "date": "2026-11-16",
+    "stories": {
+      "R1-36": "PGB-150"
+    },
+    "source_composed": [
+      "R1-36"
+    ],
+    "native_only": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147"
+      },
+      {
+        "source_id": "R1-34",
+        "native_key": "PGB-148"
+      },
+      {
+        "native_key": "PGB-137"
+      },
+      {
+        "native_key": "PGB-146"
+      },
+      {
+        "native_key": "PGB-149"
+      }
+    ],
+    "native_id": "10610",
+    "parent": "PGB-66",
+    "native_publication_verified": true,
+    "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+    "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47",
+    "binding_sha256": "57e89536744d82b81e26627d96b3d886ddf76172498789e548d33f2fe171aec6",
+    "receipt_sha256": "93029aad4c561c70072d96eb542780a72540bd69ba172650325885149f0b226a",
+    "description_sha256": {
+      "source": "afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94",
+      "amended147": "1b1f744f9ba73466a814315896bcb68d64bf10495edfc4d623408828ea0e8ee6"
+    },
+    "native_stories": [
+      {
+        "source_id": "R1-36",
+        "key": "PGB-150",
+        "id": "10610",
+        "url": "https://scubapig.atlassian.net/browse/PGB-150",
+        "status_at_publication": "To Do",
+        "stage_after_publication": {
+          "status": "In Progress",
+          "comment_id": "10857"
+        },
+        "parent": "PGB-66",
+        "body_sha256": "afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94",
+        "prerequisites": [
+          {
+            "ticket": "PGB-145",
+            "required_outcome": "ai_qa_complete"
+          }
+        ],
+        "acceptance_criteria": 5,
+        "technical_constraints": 4,
+        "human_groups": 4,
+        "human_execution": "NOT_RUN",
+        "ai_cases": 0
+      },
+      {
+        "source_id": "R1-33",
+        "key": "PGB-147",
+        "id": "10607",
+        "status_at_readback": "In Progress",
+        "parent": "PGB-66",
+        "body_sha256": "1b1f744f9ba73466a814315896bcb68d64bf10495edfc4d623408828ea0e8ee6",
+        "original_contract_preserved": true,
+        "prerequisites": [
+          {
+            "ticket": "PGB-145",
+            "required_outcome": "ai_qa_complete"
+          },
+          {
+            "ticket": "PGB-150",
+            "required_outcome": "ai_qa_complete"
+          }
+        ],
+        "acceptance_criteria": 5,
+        "technical_constraints": 4,
+        "human_groups": 4,
+        "human_execution": "NOT_RUN"
+      }
+    ],
+    "dependency_links": [
+      {
+        "id": "10735",
+        "type_id": "10000",
+        "from": "PGB-145",
+        "to": "PGB-147",
+        "preserved": true
+      },
+      {
+        "id": "10736",
+        "type_id": "10000",
+        "from": "PGB-147",
+        "to": "PGB-148",
+        "preserved": true
+      },
+      {
+        "id": "10737",
+        "type_id": "10000",
+        "from": "PGB-148",
+        "to": "PGB-82",
+        "preserved": true
+      },
+      {
+        "id": "10744",
+        "type_id": "10000",
+        "from": "PGB-145",
+        "to": "PGB-150",
+        "preserved": false
+      },
+      {
+        "id": "10745",
+        "type_id": "10000",
+        "from": "PGB-150",
+        "to": "PGB-147",
+        "preserved": false
+      }
+    ],
+    "pending_source_dependencies": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147",
+        "prerequisite_source_id": "R1-36",
+        "prerequisite_native_key": "PGB-150",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10745",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-12",
+        "native_key": "PGB-82",
+        "prerequisite_source_id": "R1-34",
+        "prerequisite_native_key": "PGB-148",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10737",
+        "status": "native_verified_source_pending"
+      }
+    ],
+    "native148": {
+      "source_id": "R1-34",
+      "native_key": "PGB-148",
+      "native_id": "10608",
+      "prerequisite_native_key": "PGB-147",
+      "native_link_id": "10736",
+      "status": "native_verified_source_pending"
+    },
+    "original82_source_unchanged": true,
+    "original82_cases": 4,
+    "source_contract_sha256": "edd0ee2f2be6bcee256fddff8b8f39de729115a88684c69990fa42ec643c94ed",
+    "current_drafts_sha256": "eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653",
+    "receipt_readback_sha256": {
+      "source": "cb20bdae49a5ed84f00e8790414a53e1a445739f080a55ca2cee2237e3691272",
+      "amended147": "4ab12490d9385c5d336b9aa1e2f3a09f6d37ef74dd0f6624291734967860cbc0"
+    },
+    "historical_native_snapshots": [
+      {
+        "story_count": 31,
+        "case_count": 134,
+        "source": "PGB-145 dated readback"
+      },
+      {
+        "story_count": 34,
+        "case_count": 144,
+        "source": "Director dated later readback; not a current inventory"
+      }
+    ],
+    "known_later_native_omission": "PGB-149 is native but its source change is separately owned and not composed here.",
+    "forecast_days": {
+      "base_min": 47.0225,
+      "base_max": 50.1475,
+      "added_min": 1.40625,
+      "added_max": 1.9625,
+      "current_min": 48.42875,
+      "current_max": 52.11
+    },
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "verification_limits": "Source composition only; local tests, designated human acceptance, independent committed-code reviews, hosted CI/bot, merge and activation remain separate."
+  },
+  "native_observation_repair_amendment": {
+    "date": "2026-11-16",
+    "source_id": "R1-38",
+    "native_key": "PGB-152",
+    "native_id": "10612",
+    "parent": "PGB-66",
+    "source_composed": [],
+    "source_counts": {
+      "stories": 31,
+      "human_groups": 136,
+      "requirements": 53,
+      "scenarios": 41
+    },
+    "pinned_feature_revision": "95c711999b90b20842dfd172f7966f73c8cfde34",
+    "pinned_feature_tree": "63632cbb9b184c0cc7af3b833d35ce043190b185",
+    "reviewed_plan_sha256": "53ed8317173824d822e2c55f3030837f1ac1e02785228d4470e0bff4b26a789c",
+    "receipt_sha256": "4879f236fe516d8d5fe31e93da48d7be6f3ea1f522301bd3b26e6cd6b4a2b8ae",
+    "child_body_sha256": "910a0d4cb508902c789d1209251402d5853cfbde43d5717efe38e76f57e79917",
+    "child_contract_sha256": "220a524474c4dcddfce257c31784be07b32b4b7a386b6a731751348f7be3fbb4",
+    "parent_body_sha256": {
+      "before": "afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94",
+      "after": "5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9"
+    },
+    "parent_contract_preserved_except_child_prerequisite": true,
+    "native_links": [
+      {
+        "from": "PGB-145",
+        "to": "PGB-150",
+        "id": "10744",
+        "preserved": true
+      },
+      {
+        "from": "PGB-150",
+        "to": "PGB-147",
+        "id": "10745",
+        "preserved": true
+      },
+      {
+        "from": "PGB-145",
+        "to": "PGB-152",
+        "id": "10747",
+        "preserved": false
+      },
+      {
+        "from": "PGB-152",
+        "to": "PGB-150",
+        "id": "10748",
+        "preserved": false
+      }
+    ],
+    "child_hours": {
+      "min": 3.5,
+      "max": 6
+    },
+    "child_days": {
+      "min": 0.4375,
+      "max": 0.75
+    },
+    "child_changed_files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "child_human_groups": {
+      "count": 2,
+      "status": "NOT_RUN"
+    },
+    "child_status_at_publication": "To Do",
+    "child_status_after_publication": {
+      "status": "In Progress",
+      "comment_id": "10868"
+    },
+    "parent_status_at_publication": "In Review",
+    "pending_source_dependency": {
+      "source_id": "R1-36",
+      "native_key": "PGB-150",
+      "prerequisite_source_id": "R1-38",
+      "prerequisite_native_key": "PGB-152",
+      "required_outcome": "ai_qa_complete",
+      "native_link_id": "10748",
+      "status": "native_verified_source_pending"
+    },
+    "source_forecast_days": {
+      "min": 48.42875,
+      "max": 52.11
+    },
+    "current_delivery_forecast_days": {
+      "min": 48.86625,
+      "max": 52.86
+    },
+    "historical95": {
+      "metadata": {
+        "hours": {
+          "min": 10.85,
+          "max": 15
+        },
+        "days": 1.875,
+        "delivery_state": "PGB-150 In Progress; source implementation is complete at 58210517dde6fc75c92b98b2647ae7f8a0b219d6. The owning local suite passed 592/592 on that implementation tree. Independent source QA supported 9/9 criteria with two direct source cases; remaining execution is attributed to that suite. Human acceptance NOT_RUN (0/4). At this documentation-correction checkpoint, affected committed-code re-review, hosted CI/Codex bot, PR and Director merge remain pending; no activation is authorized."
+      },
+      "source_forecast_days": {
+        "min": 48.37875,
+        "max": 52.0225
+      },
+      "native_source_forecast_days": {
+        "base_min": 47.0225,
+        "base_max": 50.1475,
+        "added_min": 1.35625,
+        "added_max": 1.875,
+        "current_min": 48.37875,
+        "current_max": 52.0225
+      },
+      "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+      "current_source_scope_status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+    },
+    "verification_limits": "Evidence checkpoint 2026-11-16: source repair is implemented at eb978e8df8ee0fee40c034984db76693e03820dc, with owning 17/17 affected source checks, 48/48 publication guards and independent local source QA PASS (two direct positive observations; two controls attributed to the owning suite). Parent source contract and counts remain unchanged; PGB-152 remains native-only in this source composition. Child human acceptance remains NOT_RUN (0/2), and original PGB-150 acceptance NOT_RUN (0/4). Claims-correction re-review, child PR, current-head hosted CI/Codex, parent integration and combined main merge require separate evidence after this checkpoint. No live Jira, installed-runtime, release or activation acceptance is claimed."
+  },
+  "native_target_identity_repair_amendment": {
+    "date": "2026-11-16",
+    "source_id": "R1-40",
+    "native_key": "PGB-154",
+    "native_id": "10614",
+    "parent": "PGB-66",
+    "source_composed": [],
+    "source_counts": {
+      "stories": 31,
+      "human_groups": 136,
+      "requirements": 53,
+      "scenarios": 41
+    },
+    "pinned_feature_revision": "1524127c6d9ffbad8481cf7ce86bcc19cb712f52",
+    "pinned_feature_tree": "b35fa3cb57dbdd133d61f76f6b6d1ba19ebb43a2",
+    "reviewed_plan_sha256": "a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b",
+    "receipt_sha256": "be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a",
+    "child_body_sha256": "38d5dc2eab7d775218c94e07e72d86b8645ecaceac9301456c8a783c2d217612",
+    "child_contract_sha256": "fb17e66615d918d607bc09cc0e509053a2e8191ff844d96eb47f2e0809975e8f",
+    "parent_body_sha256": {
+      "before": "5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9",
+      "after": "758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b"
+    },
+    "parent_contract_preserved_except_child_prerequisite": true,
+    "native_links": [
+      {
+        "from": "PGB-145",
+        "to": "PGB-150",
+        "id": "10744",
+        "preserved": true
+      },
+      {
+        "from": "PGB-150",
+        "to": "PGB-147",
+        "id": "10745",
+        "preserved": true
+      },
+      {
+        "from": "PGB-152",
+        "to": "PGB-150",
+        "id": "10748",
+        "preserved": true
+      },
+      {
+        "from": "PGB-145",
+        "to": "PGB-154",
+        "id": "10750",
+        "preserved": false
+      },
+      {
+        "from": "PGB-154",
+        "to": "PGB-150",
+        "id": "10751",
+        "preserved": false
+      }
+    ],
+    "child_hours": {
+      "min": 3,
+      "max": 5.1
+    },
+    "child_days": {
+      "min": 0.375,
+      "max": 0.6375
+    },
+    "child_changed_files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "child_human_groups": {
+      "count": 1,
+      "status": "NOT_RUN"
+    },
+    "child_status_at_publication": "To Do",
+    "parent_status_at_publication": "In Review",
+    "pending_source_dependency": {
+      "source_id": "R1-36",
+      "native_key": "PGB-150",
+      "prerequisite_source_id": "R1-40",
+      "prerequisite_native_key": "PGB-154",
+      "required_outcome": "ai_qa_complete",
+      "native_link_id": "10751",
+      "status": "native_verified_source_pending"
+    },
+    "source_forecast_days": {
+      "min": 48.42875,
+      "max": 52.11
+    },
+    "historical152_delivery_forecast_days": {
+      "min": 48.86625,
+      "max": 52.86
+    },
+    "current_delivery_forecast_days": {
+      "min": 49.24125,
+      "max": 53.4975
+    },
+    "historical_parent": {
+      "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+      "current_source_scope_status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+    },
+    "verification_limits": "Native PGB-154 publication is verified at this 2026-11-16 checkpoint; source contract/counts remain 31/136, and the child is not a source Story. This publication does not prove the reader repair, developer checks, independent QA, human acceptance, current-head hosted CI/Codex, parent integration, main merge or activation. PGB-154 human 0/1, PGB-152 human 0/2 and PGB-150 original human 0/4 remain NOT_RUN. The prior PGB-152 amendment and its internally named current forecast/status are dated predecessor facts; this newest amendment carries the authoritative known-repair total 49.24125–53.49750 days without claiming an exhaustive native Epic inventory."
   },
   "source_repair_preview_amendment": {
     "date": "2026-11-16",
@@ -10828,5 +11328,537 @@
     "merge": "NOT_CLAIMED",
     "release": "NOT_CLAIMED",
     "activation_authorized": false
+  },
+  "source_inspection_catalog_integration_amendment": {
+    "date": "2026-11-16",
+    "source_id": "R1-36",
+    "native_key": "PGB-150",
+    "catalog": {
+      "source_id": "R1-41",
+      "native_key": "PGB-155",
+      "native_id": "10615",
+      "receipt_sha256": "bb881eb154977a84b49b758fe6d4b42d109831dc153a14bc6bdd416e6cda2dd2",
+      "body_sha256": "0833c522f975fd5732908589e4391195e53e340fc3234f15a64381185942cf9b",
+      "contract_sha256": "3ed80930dc3fbf0276456afaa5318d51ebb36375df68be1d72a5c694877435b0",
+      "links": [
+        {
+          "from": "PGB-145",
+          "to": "PGB-150",
+          "id": "10744",
+          "preserved": true
+        },
+        {
+          "from": "PGB-150",
+          "to": "PGB-147",
+          "id": "10745",
+          "preserved": true
+        },
+        {
+          "from": "PGB-152",
+          "to": "PGB-150",
+          "id": "10748",
+          "preserved": true
+        },
+        {
+          "from": "PGB-154",
+          "to": "PGB-150",
+          "id": "10751",
+          "preserved": true
+        },
+        {
+          "from": "PGB-145",
+          "to": "PGB-155",
+          "id": "10752",
+          "preserved": false
+        },
+        {
+          "from": "PGB-155",
+          "to": "PGB-150",
+          "id": "10753",
+          "preserved": false
+        }
+      ],
+      "source_composed": false,
+      "human_acceptance": "NOT_RUN (0/1)",
+      "parent_body_sha256": {
+        "before": "758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b",
+        "after": "45723894ac91271200ee31627af48564a1ea9045d9de3eeb84b7109c2e7213ce"
+      },
+      "parent_contract_preserved_except_prerequisite": true
+    },
+    "plan_sha256": "64089b7feb21d36a4ed2fce8d2923c98d2475c6b27d433d92833dc1ee5ccd9e1",
+    "runtime": {
+      "commit": "fd5b04eaa2cd7265f4528a8be37beb75ff463254",
+      "tree": "879a3382edafc52989446a67d93508a16e44bec5",
+      "parents": [
+        "23bb352b4d9f945f65e34d3d15d28dced51d9b80",
+        "0c61e80151ffcc7cb4d319f6048d46357dc650dd"
+      ],
+      "source_parent": "7a06f7b25bbf79315f0a1e0763f1863d4b1f57f4",
+      "actual_state_main": "a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9",
+      "actual_state_main_parents": [
+        "4e9f98d94d06480614b36cd45d1e522ee39a671b",
+        "b7933e33e53ab088fed08794ee6bce66db6c4d1a"
+      ],
+      "actual_state_main_tree": "de9fbb160b016fefcac70424761fa9905520cb58",
+      "reviewed_conditional_state": "b7933e33e53ab088fed08794ee6bce66db6c4d1a",
+      "same_tree": true,
+      "reviewed_child_commit": "0c61e80151ffcc7cb4d319f6048d46357dc650dd",
+      "previous_runtime_commit": "23bb352b4d9f945f65e34d3d15d28dced51d9b80",
+      "previous_runtime_tree": "8ba753f6ab12405e87d03ce5eda30bcd4876535f"
+    },
+    "predecessor_publications": {
+      "source449": {
+        "commit": "44927cc3ff02431cdd8d58e1c19cf07890cc25b5",
+        "json_sha256": "5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116",
+        "raw_sha256": "71b2dc34074009d1ba2673d98d221d597a0b749882958bafe626af3d7f8ec238"
+      },
+      "state_main": {
+        "commit": "a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9",
+        "json_sha256": "549c5f4913e4be75a72c16e0f985dcc534b01c7b1cc40901d744f61f9af8c8a6",
+        "canonical_sha256": "7e999933eba22d8c7109df7a23aaae4715a60a97fc9abb6ea96ef6f53f887a7b",
+        "raw_sha256": "7f8053650b42ca413c0af1e1bcfb19be3f8528f82a2807abcb2c877db68ae39d"
+      }
+    },
+    "amendment_hashes": {
+      "source": {
+        "native_source_issue_inspection_amendment": "9cfd6c084a59471bf943d2946be34d2033f38b7101b70e066ff1849b4f24e820",
+        "native_observation_repair_amendment": "de763f9470c3feb256bfb07acbe89395b83b81b2c8c731b2807937b7c7803cd9",
+        "native_target_identity_repair_amendment": "841ed253700348ceb1a572ec7a5a379f9ded8e15a04ebcdc238af421e8dfdb48"
+      },
+      "state": {
+        "source_repair_preview_amendment": {
+          "json_sha256": "8efd0c844d9bcfbaf7f7ee99e0c272b29f32e8c9e60fb8e19b0c394d1873c10e",
+          "canonical_sha256": "03026e5fa6c3443556bee62262311d5ebd88cdf78c6629c8388c187d200e7425"
+        },
+        "machine_repair_preview_amendment": {
+          "json_sha256": "9dccea4120ef740ed1b59dc2a4d72bb5fa2c7ecc432154fb245a4c5c657de013",
+          "canonical_sha256": "0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3"
+        },
+        "current_pr_repair_amendment": {
+          "json_sha256": "105a64ed1f40ffcff8fc7f8e30c96e46c4a4f5e7c12c40cf33557f02609e27f9",
+          "canonical_sha256": "4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d"
+        },
+        "duplicate_qa_repair_amendment": {
+          "json_sha256": "d28dbafa51c9c01c53834c63d996435f3d279aa66b0ce691518abedfd102945f",
+          "canonical_sha256": "e54c5650f1b2ec7cf6b9702128f65baf94f118d2bbf5fb91c072c07785ff2f1c"
+        },
+        "readable_repair_preview_amendment": {
+          "json_sha256": "682b66c197768aff239206bc9c4eaeee3cb44d07ec2fb98a5fa8cd5392480157",
+          "canonical_sha256": "1a786ec14e05fa05d6cb74f49cbaa0116b6e829b6b4fc804a45825e600527254"
+        },
+        "readable_repair_integration_amendment": {
+          "json_sha256": "72a082607d22575185ec1bc99b885b2b8e1da46a02de1cbcab06d972c3ac43ba",
+          "canonical_sha256": "76d16ffb7e040fcc86a234ef4eb47889d547d5cc6845aecca50e6e89571d3285"
+        }
+      }
+    },
+    "counts": {
+      "stories": 31,
+      "human_groups": 136,
+      "requirements": 53,
+      "scenarios": 41
+    },
+    "current_source_status": "Partial 31-Story/136-group source-contract checkpoint including R1-36 on the reviewed PGB-156 runtime repair merge. The State runtime and Jira source inspection coexist; source entries for listed later native deliveries remain uncomposed. Dated source/native inventories and nested amendment forecasts remain historical. This is not an exhaustive current native inventory or human, current-head hosted, main-merge or activation claim.",
+    "source_forecast_days": {
+      "min": 48.26625,
+      "max": 51.935
+    },
+    "source_plus_catalog_days": {
+      "min": 48.9475,
+      "max": 53.01625
+    },
+    "known_repair_total_days": {
+      "min": 49.76,
+      "max": 54.40375
+    },
+    "whole_hours": {
+      "runtime": {
+        "min": 9.95,
+        "max": 14.3
+      },
+      "catalog": {
+        "min": 5.45,
+        "max": 8.65
+      },
+      "boundary_repair": {
+        "min": 5.55,
+        "max": 9.4
+      }
+    },
+    "paths": {
+      "runtime": [
+        "lib/jira/read.mjs",
+        "test/jira-read.test.mjs",
+        "test/fixtures/jira-preview-harness.mjs",
+        "test/fixtures/jira-preview-cases.json",
+        "test/fixtures/jira-preview-tls.json",
+        "README.md",
+        "ARCHITECTURE.md",
+        "docs/manager-preview.md"
+      ],
+      "catalog": [
+        "docs/delivery/manager-r1/stories.md",
+        "docs/delivery/manager-r1/README.md",
+        "docs/delivery/manager-r1/coverage.md",
+        "docs/delivery/manager-r1/plan-metadata.json",
+        "docs/delivery/manager-r1/publication.json",
+        "docs/delivery/manager-r1/ticket-drafts.json",
+        "docs/product/README.md",
+        "docs/product/coverage.md",
+        "test/story-authoring.test.mjs",
+        "test/qa-helper-contract.test.mjs"
+      ],
+      "final_parent_union": [
+        "lib/jira/read.mjs",
+        "test/jira-read.test.mjs",
+        "test/fixtures/jira-preview-harness.mjs",
+        "test/fixtures/jira-preview-cases.json",
+        "test/fixtures/jira-preview-tls.json",
+        "docs/manager-preview.md",
+        "README.md",
+        "ARCHITECTURE.md",
+        "docs/delivery/manager-r1/stories.md",
+        "docs/delivery/manager-r1/README.md",
+        "docs/delivery/manager-r1/coverage.md",
+        "docs/delivery/manager-r1/plan-metadata.json",
+        "docs/delivery/manager-r1/publication.json",
+        "docs/delivery/manager-r1/ticket-drafts.json",
+        "docs/product/README.md",
+        "docs/product/coverage.md",
+        "test/story-authoring.test.mjs",
+        "test/qa-helper-contract.test.mjs"
+      ]
+    },
+    "packet": {
+      "variants": 35,
+      "controls": 8,
+      "private_projection": 1
+    },
+    "pending_source_dependencies": [
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-41",
+        "prerequisite_native_key": "PGB-155",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10753",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-42",
+        "prerequisite_native_key": "PGB-156",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10755",
+        "status": "native_verified_source_pending"
+      }
+    ],
+    "human": {
+      "p150": "NOT_RUN (0/4)",
+      "p152": "NOT_RUN (0/2)",
+      "p154": "NOT_RUN (0/1)",
+      "p155": "NOT_RUN (0/1)",
+      "p156": "NOT_RUN (0/4)"
+    },
+    "verification": {
+      "runtime_source_selected": "four fixture invocations; TAP 5/5 at reviewed runtime commit",
+      "catalog_local": "separate finite guards",
+      "hosted_ci_codex": "separate current-head gate",
+      "main_merge": "Director-owned pending",
+      "activation_authorized": false
+    },
+    "historical449": {
+      "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152/154 source-contract composition remains separate; PGB-152 and PGB-154 native repairs add no source Story entries here. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+      "story_count": 31,
+      "case_count": 136,
+      "current_source_scope": {
+        "story_count": 31,
+        "case_count": 136,
+        "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+        "source_order": "R1-36 immediately after R1-31; all other relative order preserved.",
+        "prior_source_scope": {
+          "story_count": 30,
+          "case_count": 132,
+          "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+          "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
+          "native_snapshot": {
+            "date": "2026-11-16",
+            "story_count": 31,
+            "case_count": 134,
+            "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
+            "captured_at": "2026-11-16 02:24:40 UTC"
+          },
+          "pending_source_amendments": [
+            "PGB-137"
+          ],
+          "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
+        },
+        "pending_source_amendments": [
+          "PGB-137",
+          "PGB-146",
+          "PGB-147",
+          "PGB-148",
+          "PGB-149",
+          "PGB-152",
+          "PGB-154"
+        ],
+        "pending_source_dependencies": [
+          {
+            "source_id": "R1-33",
+            "native_key": "PGB-147",
+            "prerequisite_source_id": "R1-36",
+            "prerequisite_native_key": "PGB-150",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10745",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-12",
+            "native_key": "PGB-82",
+            "prerequisite_source_id": "R1-34",
+            "prerequisite_native_key": "PGB-148",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10737",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-36",
+            "native_key": "PGB-150",
+            "prerequisite_source_id": "R1-38",
+            "prerequisite_native_key": "PGB-152",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10748",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-36",
+            "native_key": "PGB-150",
+            "prerequisite_source_id": "R1-40",
+            "prerequisite_native_key": "PGB-154",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10751",
+            "status": "native_verified_source_pending"
+          }
+        ],
+        "forecast_days": {
+          "min": 48.42875,
+          "max": 52.11
+        },
+        "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152/154 source-contract composition remains separate; PGB-152 and PGB-154 native repairs add no source Story entries here. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+      }
+    },
+    "meaning": "The source449 and State publications are complete dated predecessor objects. Their nine amendments remain unchanged; only this outer composition owns the current partial source catalog. The nested old current forecasts/statuses stay dated history, not current native inventory.",
+    "including_boundary_repair_days": {
+      "min": 50.45375,
+      "max": 55.57875
+    },
+    "native_boundary_repair": {
+      "source_id": "R1-42",
+      "native_key": "PGB-156",
+      "native_id": "10616",
+      "source_composed": false,
+      "receipt_sha256": "05c33a85cbc7f4e3d381fbc354df15b4f4c2324105de863a0a51ec8e4cf1e908",
+      "body_sha256": "bb65b27b2e2d7a1172135a9846654e4533c39c1b882cb509faf4c96f9c96d23a",
+      "contract_sha256": "7a84786504789cf96725284b8c4a622bc206272d7d1943da7cff1444171942aa",
+      "parent_body_sha256": {
+        "before": "45723894ac91271200ee31627af48564a1ea9045d9de3eeb84b7109c2e7213ce",
+        "after": "8fe2512a12fbbaf8f1a9ded99d1529c1d3dc01d460ba9dbf73e68e91388f0324"
+      },
+      "parent_contract_preserved_except_prerequisite": true,
+      "links": [
+        {
+          "id": "10754",
+          "from": "PGB-145",
+          "to": "PGB-156",
+          "type_id": "10000"
+        },
+        {
+          "id": "10755",
+          "from": "PGB-156",
+          "to": "PGB-150",
+          "type_id": "10000"
+        }
+      ],
+      "paths": [
+        "lib/jira/read.mjs",
+        "test/jira-read.test.mjs",
+        "test/fixtures/jira-preview-harness.mjs",
+        "test/fixtures/jira-preview-tls.json",
+        "docs/manager-preview.md"
+      ],
+      "changed_artifacts_sha256": {
+        "lib/jira/read.mjs": "13e35c3e319f1a29f7b664a4503693dfd48590961435909f718efbcec37ab0a5",
+        "test/jira-read.test.mjs": "73640d7c741dfdedb209e604f6b8296652a9d4f2f032d44f15e4275d9c057a94",
+        "test/fixtures/jira-preview-harness.mjs": "387becd67b09cae4273d9edbd8df278a2fc13bc482e747135eee6433f54e07a1",
+        "test/fixtures/jira-preview-tls.json": "264fa815a82ab6c8b9ff2433b9113070130460c8ace7bfd8f6429116a4f33762",
+        "docs/manager-preview.md": "c9eac53c1e3f165f2df0388aa9882f8d57fc55ec2b8cec76cf4a17184c26ace3"
+      },
+      "reviewed_child_commit": "0c61e80151ffcc7cb4d319f6048d46357dc650dd",
+      "reviewed_parent_merge_commit": "fd5b04eaa2cd7265f4528a8be37beb75ff463254",
+      "reviewed_parent_merge_tree": "879a3382edafc52989446a67d93508a16e44bec5",
+      "whole_hours": {
+        "min": 5.55,
+        "max": 9.4
+      },
+      "historical_publication_hours": {
+        "min": 4.3,
+        "max": 7.1
+      },
+      "human_groups": {
+        "count": 4,
+        "status": "NOT_RUN"
+      },
+      "native_creation_status": "To Do (dated receipt; current status not asserted)",
+      "plan_sha256": "a675a0addb7d4acb639ea237096d0d3a2d63ea68ac69344cd5a6425d51651f3e",
+      "human_evidence_plan_sha256": "945499139a2568366d80dc965b9cbc8afb26f0dd6d9724799da2e772db02a5f9"
+    },
+    "historical23bb": {
+      "status": "Partial 31-Story/136-group source-contract checkpoint including R1-36. The recorded State runtime and Jira source inspection coexist; source entries for listed later native deliveries remain uncomposed. Dated source/native inventories and nested amendment forecasts remain historical. This is not an exhaustive current native inventory or human, hosted, merge or activation claim.",
+      "current_source_scope": {
+        "story_count": 31,
+        "case_count": 136,
+        "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+        "source_order": "R1-36 immediately after R1-31; all other relative order preserved.",
+        "prior_source_scope": {
+          "story_count": 30,
+          "case_count": 132,
+          "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+          "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
+          "native_snapshot": {
+            "date": "2026-11-16",
+            "story_count": 31,
+            "case_count": 134,
+            "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
+            "captured_at": "2026-11-16 02:24:40 UTC"
+          },
+          "pending_source_amendments": [
+            "PGB-137"
+          ],
+          "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
+        },
+        "pending_source_amendments": [
+          "PGB-137",
+          "PGB-146",
+          "PGB-147",
+          "PGB-148",
+          "PGB-149",
+          "PGB-152",
+          "PGB-154",
+          "PGB-151",
+          "PGB-153",
+          "PGB-155"
+        ],
+        "pending_source_dependencies": [
+          {
+            "source_id": "R1-33",
+            "native_key": "PGB-147",
+            "prerequisite_source_id": "R1-36",
+            "prerequisite_native_key": "PGB-150",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10745",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-12",
+            "native_key": "PGB-82",
+            "prerequisite_source_id": "R1-34",
+            "prerequisite_native_key": "PGB-148",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10737",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-36",
+            "native_key": "PGB-150",
+            "prerequisite_source_id": "R1-38",
+            "prerequisite_native_key": "PGB-152",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10748",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-36",
+            "native_key": "PGB-150",
+            "prerequisite_source_id": "R1-40",
+            "prerequisite_native_key": "PGB-154",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10751",
+            "status": "native_verified_source_pending"
+          },
+          {
+            "source_id": "R1-36",
+            "native_key": "PGB-150",
+            "prerequisite_source_id": "R1-41",
+            "prerequisite_native_key": "PGB-155",
+            "required_outcome": "ai_qa_complete",
+            "native_link_id": "10753",
+            "status": "native_verified_source_pending"
+          }
+        ],
+        "forecast_days": {
+          "min": 48.235,
+          "max": 51.87875
+        },
+        "status": "Partial 31-Story/136-group source-contract checkpoint including R1-36. The recorded State runtime and Jira source inspection coexist; source entries for listed later native deliveries remain uncomposed. Dated source/native inventories and nested amendment forecasts remain historical. This is not an exhaustive current native inventory or human, hosted, merge or activation claim."
+      },
+      "runtime": {
+        "commit": "23bb352b4d9f945f65e34d3d15d28dced51d9b80",
+        "tree": "8ba753f6ab12405e87d03ce5eda30bcd4876535f",
+        "parents": [
+          "7a06f7b25bbf79315f0a1e0763f1863d4b1f57f4",
+          "a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9"
+        ],
+        "source_parent": "7a06f7b25bbf79315f0a1e0763f1863d4b1f57f4",
+        "actual_state_main": "a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9",
+        "actual_state_main_parents": [
+          "4e9f98d94d06480614b36cd45d1e522ee39a671b",
+          "b7933e33e53ab088fed08794ee6bce66db6c4d1a"
+        ],
+        "actual_state_main_tree": "de9fbb160b016fefcac70424761fa9905520cb58",
+        "reviewed_conditional_state": "b7933e33e53ab088fed08794ee6bce66db6c4d1a",
+        "same_tree": true
+      },
+      "source_forecast_days": {
+        "min": 48.235,
+        "max": 51.87875
+      },
+      "source_plus_catalog_days": {
+        "min": 48.86,
+        "max": 52.86
+      },
+      "known_repair_total_days": {
+        "min": 49.6725,
+        "max": 54.2475
+      },
+      "whole_hours": {
+        "runtime": {
+          "min": 9.7,
+          "max": 13.85
+        },
+        "catalog": {
+          "min": 5,
+          "max": 7.85
+        }
+      },
+      "human": {
+        "p150": "NOT_RUN (0/4)",
+        "p152": "NOT_RUN (0/2)",
+        "p154": "NOT_RUN (0/1)",
+        "p155": "NOT_RUN (0/1)"
+      },
+      "pending_source_dependencies": [
+        {
+          "source_id": "R1-36",
+          "native_key": "PGB-150",
+          "prerequisite_source_id": "R1-41",
+          "prerequisite_native_key": "PGB-155",
+          "required_outcome": "ai_qa_complete",
+          "native_link_id": "10753",
+          "status": "native_verified_source_pending"
+        }
+      ]
+    }
   }
 }
