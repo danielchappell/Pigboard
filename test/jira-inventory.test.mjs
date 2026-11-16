@@ -117,3 +117,63 @@ test('inventory reports setup failure for missing resolver capability',async()=>
   ]});
  }
 });
+
+// These two small wire literals bind root authority and persistent admission capacity.
+// They are separate from, and do not modify, the prescribed32-observation packet.
+const closureFields=['project','issuetype','status','parent','labels','description'];
+const closureSearch=(project,predicate,issues,pageSize=10)=>({method:'POST',path:'/rest/api/3/search/jql',request_body:{jql:`project = "${project}" AND ${predicate} ORDER BY id ASC`,maxResults:pageSize,fields:[...closureFields]},status:200,body:{issues:structuredClone(issues),isLast:true}});
+const closureReads=(issue,pageSize=10)=>[
+ {path:`/rest/api/3/issue/${issue.id}?fields=project,issuetype,status,parent,labels,description`,status:200,body:structuredClone(issue)},
+ {path:`/rest/api/3/issue/${issue.id}/properties`,status:200,body:{keys:[]}},
+ {path:`/rest/api/3/issue/${issue.id}/comment?startAt=0&maxResults=${pageSize}&orderBy=created`,status:200,body:{startAt:0,maxResults:pageSize,total:0,comments:[]}},
+];
+const closureEpic=(template,id,label,member,labels)=>{
+ const issue=structuredClone(template);issue.id=id;issue.key='APP-'+id;issue.fields.labels=labels;
+ const node=issue.fields.description.content[0].content[0],work=JSON.parse(node.text);
+ work.workstreams=[{label,story_order:[member]}];node.text=JSON.stringify(work);return issue;
+};
+const closureStory=(id,{parent=null,labels=[],description=null}={})=>({id,key:'APP-'+id,fields:{project:{id:'10001'},issuetype:{id:'22'},status:{id:'11'},parent:parent?{id:parent}:null,labels,description}});
+const closureProvenance=(ticket_id,source,source_ticket_id=null,project_id=null,label=null)=>({ticket_id,source,source_ticket_id,project_id,label});
+function closureOracle(issues,provenance,script,counters,scope,{complete=true,code=null,bound=null}={}){
+ const normalized=issues.map(issue=>({id:issue.id,key:issue.key,project_id:'10001',type_id:issue.fields.issuetype.id,status_id:issue.fields.status.id,parent_id:issue.fields.parent?.id??null,labels:[...issue.fields.labels],format:'adf',body:issue.fields.description===null?null:JSON.stringify(issue.fields.description),pointer:{state:'absent',value:null}}));
+ return {status:complete?'complete':'incomplete',inspection_scope:'configured_inventory',domain_complete:complete,retained_complete:true,calls:script.length,scopes:[scope],...(code?{code,diagnostic:{code,...(bound?{bound}:{}),scope:null}}:{}),counters:{...counters,response_bytes:script.reduce((sum,step)=>sum+Buffer.byteLength(JSON.stringify(step.body)),0)},trace:script.map(step=>({method:step.method??'GET',path:step.path})),issue_rows:issues.map(issue=>({id:issue.id,key:issue.key,project_id:'10001',issue_read:'complete',pointer_read:'complete',comments_read:'complete',exact_comments_read:'not_requested',comment_ids:[],comment_count:0})),acquisition:{issues:normalized,comment_pages:issues.map(issue=>({site:'https://jira.example.invalid',ticket_id:issue.id,start_at:0,total:0,is_last:true,comments:[]})),exact_comments:[],references:[],provenance}};
+}
+
+test('inventory retains failed identity reservations across discovery waves',async t=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ authored.request={retained_members:[],pending_intents:[],retained_complete:true};
+ Object.assign(authored.config.jira.read_bounds,{max_known_issues:2,max_epics:1,page_size:2});
+ const epic=closureEpic(authored.script[0].body.issues[0],'100','AI-Daniel-1','101',['pigboard']);
+ const found=closureStory('102',{labels:['AI-Daniel-1']});
+ authored.script=[closureSearch('10001','labels = "pigboard"',[epic],2),closureSearch('10002','labels = "pigboard"',[],2),...closureReads(epic,2),closureSearch('10001','parent = "100"',[],2),{path:'/rest/api/3/issue/101?fields=project,issuetype,status,parent,labels,description',status:403,body:{}},closureSearch('10001','labels = "AI-Daniel-1"',[found],2)];
+ const provenance=[closureProvenance('100','seed'),closureProvenance('100','seed',null,'10001'),closureProvenance('101','declared','100','10001','AI-Daniel-1')];
+ authored.oracle=closureOracle([epic],provenance,authored.script,{requests_attempted:8,requests_completed:7,requests_failed:1,search_pages:4,comment_pages:1,known_issues:1,epics:1,streams:1,comments:0},{project_id:'10001',label:'AI-Daniel-1',complete:false,old_issue_ids:[],current_issue_ids:['102']},{complete:false,code:'LIMIT_REACHED',bound:'max_known_issues'});
+ assert.equal(authored.script.length,8);t.diagnostic('Prebound wire:8 calls, '+authored.oracle.counters.response_bytes+' response bytes; private/row oracles authored before collection.');
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ assert(run.report.diagnostics.some(d=>d.code==='READ_DENIED_OR_MISSING'&&d.issue_id==='101'));
+ assert.equal(run.trace.filter(r=>r.path.includes('/issue/101?')).length,1);
+ assert(!run.trace.some(r=>r.path.includes('/issue/102')));
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});
+
+test('inventory promotes independently discovered Epic roots without refetch',async t=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ authored.request={retained_members:[],pending_intents:[],retained_complete:true};
+ const template=authored.script[0].body.issues[0];
+ const first=closureEpic(template,'100','AI-Daniel-1','101',['pigboard']);
+ const promoted=closureEpic(template,'200','AI-Daniel-1','201',['AI-Daniel-1']);
+ const closureOnly=closureEpic(template,'300','AI-Daniel-2','999',[]);
+ const description=structuredClone(authored.script[6].body.fields.description),node=description.content[0].content[0],work=JSON.parse(node.text);
+ work.prerequisites=[{ticket:'200',required_outcome:'ai_qa_complete'},{ticket:'300',required_outcome:'ai_qa_complete'}];node.text=JSON.stringify(work);
+ const member=closureStory('101',{parent:'100',labels:['AI-Daniel-1'],description});
+ const declared=closureStory('201'),child=closureStory('202',{parent:'200'});
+ authored.script=[closureSearch('10001','labels = "pigboard"',[first]),closureSearch('10002','labels = "pigboard"',[]),...closureReads(first),closureSearch('10001','parent = "100"',[member]),...closureReads(member),...closureReads(promoted),...closureReads(closureOnly),closureSearch('10001','labels = "AI-Daniel-1"',[member,promoted]),closureSearch('10001','parent = "200"',[child]),...closureReads(declared),...closureReads(child)];
+ const p=closureProvenance,provenance=[p('100','seed'),p('100','seed',null,'10001'),p('101','child','100'),p('101','declared','100','10001','AI-Daniel-1'),p('101','child','100','10001'),p('100','prerequisite','101'),p('200','prerequisite','101'),p('300','prerequisite','101'),p('200','prerequisite','101','10001'),p('300','prerequisite','101','10001'),p('101','label',null,'10001','AI-Daniel-1'),p('200','label',null,'10001','AI-Daniel-1'),p('202','child','200'),p('201','declared','200','10001','AI-Daniel-1'),p('201','declared','200','10001','AI-Daniel-1'),p('202','child','200','10001'),p('200','prerequisite','202')];
+ authored.oracle=closureOracle([first,member,promoted,closureOnly,declared,child],provenance,authored.script,{requests_attempted:23,requests_completed:23,requests_failed:0,search_pages:5,comment_pages:6,known_issues:6,epics:2,streams:1,comments:0},{project_id:'10001',label:'AI-Daniel-1',complete:true,old_issue_ids:[],current_issue_ids:['101','200','201']});
+ assert.equal(authored.script.length,23);t.diagnostic('Prebound wire:23 calls, '+authored.oracle.counters.response_bytes+' response bytes; private/row oracles authored before collection.');
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ assert.equal(run.trace.filter(r=>r.path.includes('/issue/200?')).length,1);
+ assert(!run.trace.some(r=>r.path.includes('/issue/999')));
+ assert(!run.report.scopes.some(scope=>scope.label==='AI-Daniel-2'));
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});

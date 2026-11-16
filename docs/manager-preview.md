@@ -876,6 +876,25 @@ it does not search the unsupported label or infer complete occupancy. Reconcile
 the intended configuration and retained ownership with their actual owner. Keep
 uncertain attempts; do not clear State or broaden queries automatically.
 
+An Epic's children and declared streams are enumerated only when that Epic is
+observed through a configured opt-in search, named as the Epic of a supported
+retained project/label tuple, or found by a configured full-label search. These
+facts are bound to the Epic's immutable project and issue IDs. An Epic reached
+only through a parent, prerequisite, pending subject, declared member or typed
+reference still gets its exact issue, pointer and comments; its declarations do
+not authorize more child or stream searches. Its actual configured native labels
+can independently establish a relevant full-label query. If that query later
+finds the Epic, collection promotes the cached observation and enumerates it once
+without another issue read. Original bodies remain private facts in either case.
+
+The `max_known_issues` ceiling counts admitted identities throughout the invocation,
+including failed and unresolved lookups. A failed lookup does not free room for
+later discovery. Proven key/ID aliases share one identity; unknown older keys
+remain separate. The public `known_issues` counter counts successfully acquired
+rows, so it can be below the ceiling when a new identity hits that bound. Inspect
+the named root, bound and original lookup failure before a new authorized bounded
+invocation. Do not erase retained history or raise a ceiling automatically.
+
 A missing resolver capability returns `status: "setup_failed"` with `SETUP_MISSING`
 and no provider requests. Prepare the trusted resolver, then start a fresh bounded
 invocation. Known retained tuples remain visible; missing setup does not turn them
