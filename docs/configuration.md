@@ -250,3 +250,43 @@ Trusted in-process consumers may call `resolveJiraReadConfig(config)`. It valida
 Preview reports only changed declared names in `connection_changed` and `read_bounds_changed`, ordered as the tables above. Adding/removing the pair reports every field. Any connection change adds the five installation checks above; any bounds change adds `READ_BOUNDS` and `RELEASE_READINESS`. Identical code/scope checks are deduplicated after existing checks. Cloud-ID edits at the same site require review; site changes retain the identity hold. Mapping/actor/repository/removal checks and `state_actions:[]` remain unchanged. No old/new connection values appear.
 
 Missing/incompatible live settings alone retain exit 0 for a valid offline file. Either invalid input clears `live_configuration`, digest and resolved scope, leaves preview null and returns exit 1. Correct the named field for `LIVE_SETTINGS`, `READ_BOUNDS`, `STRUCTURE`, `FORMAT` or `LIMIT`, then rerun. For absent settings, preserve offline use or supply the whole pair. For `LIVE_SCOPE_LIMIT`, preserve the valid offline scope while arranging an explicitly reviewed compatible domain. For SETUP/exit 2, use the same-revision normal preparation flow; a damaged disposable copy must not cause repair or replacement of a usable release. There is no force flag, auto-write, dependency repair, secret lookup or implicit live probe.
+
+## Optional customer manager host
+
+The optional complete `manager` section is the single authored host configuration.
+Existing offline configurations remain valid without it. Packaging requires full
+Jira connection/read settings and an exact same-account/region Secrets Manager ARN.
+Keep the project mappings in `config/pigboss.example.yaml` and add the complete
+disabled manager example in the [installation guide](manager-installation.md).
+
+`installation_id` and `domain_id` are stable bounded tokens. `aws` supplies the
+12-digit account, region, stack name and distinct same-account operator/deployer
+role ARNs. Profiles select credentials for those roles, never substitute resource
+IDs. Generated stack/table/function/schedule IDs and installation receipts are
+outputs, not another configuration file to author.
+
+`controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,
+`writes_enabled` and `maintenance`. This package supports preview with writes false;
+initial packaging requires scheduling and maintenance false. Apply is refused.
+`schedule_minutes` is 1–1440, `invocation_timeout_seconds` is 30–900, and schedule
+interval must exceed timeout. The function budget must cover the 30-second State
+read bound, Jira scan bound and ten seconds of headroom. Excessive read budgets
+fail packaging without clipping. `log_retention_days` uses the declared finite
+CloudWatch values (for example 14), never unlimited retention.
+
+All three `activation` confirmations are explicit operator assertions:
+`full_visibility_confirmed`, `sole_admitting_installation_confirmed`, and
+`inventory_reviewed`. They may remain false for preview. They do not infer
+permissions or another installation's absence from search results. Reconfirm when
+scope, credentials or workflow changes. The digest covers the whole canonical
+file, including manager controls; rebuild the pinned package for control updates.
+
+`transition_edges` may be empty for preview. Each closed row has numeric
+`project_id`, `transition_id`, explicit unique nonempty `source_status_ids`,
+`target_status_id` and boolean `global`. Project/transition pairs are unique and
+refer to configured projects. Future ordinary apply requires the configured Ready
+to Work source and In Progress target with `global: false`; an available transition
+ID alone proves no source condition. Multiple source entries are retained facts,
+not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
+authorize apply. These trusted settings are exposed through the host projection;
+this preview package never turns them into execution authority.

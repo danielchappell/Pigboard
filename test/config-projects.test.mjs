@@ -99,3 +99,9 @@ test('all eleven finite integer bounds and six deterministic cross-field relatio
  for(const [a,b]of relations){const v=live();v.jira.read_bounds={...ceilings};v.jira.read_bounds[b]=1;if(a==='page_size')v.jira.read_bounds.max_epics=1;const r=check(v);assert.equal(r.diagnostics[0].code,'READ_BOUNDS',a);assert.equal(r.diagnostics[0].path,'/jira/read_bounds/'+a);}
  const v=live();v.jira.read_bounds.max_known_issues=1;v.jira.read_bounds.max_requests=1;assert.equal(check(v).diagnostics[0].path,'/jira/read_bounds/max_epics');
 });
+
+test('manager host settings remain optional and enforce canonical role, cadence and mapping bounds',()=>{
+ const v=JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config;assert.equal(check(base).valid,true);assert.equal(check(v).valid,true);
+ for(const mutate of [x=>x.manager.aws.operator_role_arn=x.manager.aws.deployer_role_arn,x=>x.manager.aws.account_id='000000000000',x=>x.manager.schedule_minutes=2,x=>x.manager.invocation_timeout_seconds=901,x=>x.manager.log_retention_days=2,x=>x.manager.transition_edges=[{project_id:'999',transition_id:'1',source_status_ids:['10'],target_status_id:'11',global:false}],x=>x.manager.controls.unknown=true]){const c=structuredClone(v);mutate(c);assert.equal(check(c).valid,false);}
+ const edge={project_id:v.projects[0].id,transition_id:'1',source_status_ids:['10'],target_status_id:'11',global:false};v.manager.transition_edges=[edge];assert.equal(check(v).valid,true);v.manager.transition_edges.push(structuredClone(edge));assert.equal(check(v).valid,false);
+});

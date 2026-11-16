@@ -5,10 +5,10 @@ caller can inspect retained ownership, reserve an original attempt and finalize
 that same attempt conditionally. This source API does not install AWS resources,
 resolve customer configuration, publish to Jira or enable delivery.
 
-PGB-83 owns the actual installation, generated resource binding and operator CLI.
-Those commands are not part of this API release. PGB-137 owns original transition
-capture; PGB-87 owns Jira effects. Installed AWS/Jira and human acceptance remain
-separate from local API tests.
+PGB-83 adds the source installation package, generated resource binding and bound
+operator CLI described below. PGB-137 owns original transition capture; PGB-87
+owns Jira effects. Installed AWS/Jira and human acceptance remain separate from
+local API and package tests.
 
 ## Prepare dependencies and trusted inputs
 
@@ -22,7 +22,8 @@ npm ci --prefix runtime/aws --ignore-scripts --no-audit --no-fund
 The API never fetches or repairs dependencies. The nested runtime pins
 `@aws-sdk/client-dynamodb` and `@aws-sdk/lib-dynamodb` to `3.1169.0`; missing or
 mismatched nested packages produce `SETUP`, even if another copy is installed.
-AWS uses the standard SDK credential chain. Never put credential values in the
+Direct API callers may use the standard SDK credential chain; the bound operator
+CLI instead verifies and injects its explicitly selected profile. Never put credential values in the
 binding, configuration, records or logs. The prepared caller must have access to
 only the intended installation's table.
 
@@ -41,8 +42,8 @@ resource or bootstrap a replacement table:
 
 The table uses string keys `PK` and `SK`, with no indexes, TTL or streams. The
 adapter uses an installation partition and `I#`, `S#`, `M#`, `A#` record prefixes.
-PGB-83 must generate and verify this layout, retain the table on stack deletion or
-replacement and refuse an empty replacement as authority. This API provisions
+The PGB-83 host generates and verifies this layout, retains the table on stack
+deletion or replacement and refuses an empty replacement as authority. This API provisions
 nothing. It rechecks the table ARN, active state and emptiness before a conditional
 initialization, only while scheduling/writes are disabled and maintenance is off.
 An existing installation returns `ALREADY_INITIALIZED`; inspect it instead.
@@ -179,3 +180,33 @@ native-change-to-policy checks inside its existing installation cases. The sourc
 packet deliberately does not claim to run that collector, Lambda or real DynamoDB.
 Actual SDK serialization/copy/no-retry tests complement the simulated transaction
 provider; installed AWS behavior remains separately verified under PGB-83/90.
+
+## Bound customer CLI
+
+The [installation guide](manager-installation.md) supplies package, bind and fresh
+initialization prerequisites. The actual resolver verifies the selected operator's
+canonical AWS role and the original generated resources on each command. Prepare
+locked dependencies first; no command fetches source or packages.
+
+```sh
+node scripts/manager-state.mjs init --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --json
+node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind member --limit 50 --json
+```
+
+Use `installation`, `stream`, `attempt` or `member` for `--kind`. Omit `--json` for
+readable output. Use `--record-id ID` for one retained record or `--cursor CURSOR`
+for the next page with the same installation and kind; these selectors cannot be
+combined. Inspection remains read-only when canonical/applied controls differ.
+Exit zero confirms the observation, one reports conflict/incomplete inventory,
+and two reports invalid, unavailable or uncertain results. No resource, credential,
+freshness, force, purge or unlock override exists.
+
+Initialize only the original fresh disabled stack. Missing original creation
+proof, an updated stack, an empty replacement or uncertain prior initialization
+requires diagnosis and inspection of the same retained resources. Never generate
+another installation to bypass it. Actual init/inspect use the explicitly verified
+operator's injected State client, which the command closes even after failure;
+ambient credentials cannot replace it. Operator IAM includes exact-table fresh
+emptiness Scan and transactional Put/Update privileges for initialization/control
+fencing. Those are real operator privileges, not runtime admission authority.
+The preview runtime receives only exact-table reads and never Scan or mutations.
