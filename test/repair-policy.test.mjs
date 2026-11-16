@@ -29,6 +29,46 @@ const load=()=>JSON.parse(readFileSync(fixtureURL));
 const allCases=f=>[...f.cases,...f.scenarios,...f.normalization.cases];
 const run=c=>{const config=JSON.stringify(c.config),snapshot=JSON.stringify(c.snapshot),actual=JSON.parse(JSON.stringify(previewSnapshot(config,snapshot,c.options)));verificationAPI(c,config,snapshot,actual);return actual;};
 
+test('identical authenticated QA publications preserve nine full fixed reports',()=>{
+ const fixtureBytes=readFileSync(fixtureURL,'utf8'),f=JSON.parse(fixtureBytes),checks=[];
+ const checkpoint=id=>{const c=f.cases.find(c=>c.id===id);assert(c,id);return structuredClone(c);};
+ function duplicate(envelope,ticket,oldID,newID){
+  const e=structuredClone(envelope),pages=e.comment_pages.filter(p=>p.ticket_id===ticket);assert.equal(pages.length,1);
+  const page=pages[0],comments=page.comments.filter(c=>c.id===oldID),retained=e.retained.filter(r=>r.ticket_id===ticket&&r.comment_id===oldID);
+  assert.equal(page.start_at,0);assert.equal(page.total,page.comments.length);assert.equal(comments.length,1);assert.equal(retained.length,1);
+  assert(!e.comment_pages.some(p=>p.comments.some(c=>c.id===newID)));assert(!e.retained.some(r=>r.ticket_id===ticket&&r.comment_id===newID));
+  page.comments.push({...structuredClone(comments[0]),id:newID});page.total++;
+  e.retained.push({...structuredClone(retained[0]),comment_id:newID});e.target={...e.target,comment_id:newID};
+  const restored=structuredClone(e);restored.target=structuredClone(envelope.target);restored.comment_pages.find(p=>p.ticket_id===ticket).comments.pop();restored.comment_pages.find(p=>p.ticket_id===ticket).total--;restored.retained.pop();assert.deepEqual(restored,envelope,'duplicate preparation is exactly reversible');
+  return e;
+ }
+ function childCopy(control,first){
+  const c=structuredClone(control),sources=c.snapshot.repair_receipts.map(raw=>JSON.parse(raw)).filter(e=>e.target.ticket_id==='1001'&&e.target.comment_id==='81008');assert.equal(sources.length,1);
+  assert(!c.snapshot.completion_receipts.map(raw=>JSON.parse(raw)).some(e=>e.target.ticket_id==='1001'));
+  const encoded=JSON.stringify(duplicate(sources[0],'1001','81008','99008'));
+  c.snapshot.completion_receipts=first?[encoded,...c.snapshot.completion_receipts]:[...c.snapshot.completion_receipts,encoded];return c;
+ }
+ function add(id,c,changed=false){
+  c.id=id;
+  if(changed){c.expected.snapshot_digest='sha256:'+createHash('sha256').update(canonicalize({configuration_digest:c.expected.configuration_digest,snapshot:c.snapshot})).digest('hex');if(Object.hasOwn(c.options??{},'expectedSnapshotDigest'))c.options.expectedSnapshotDigest=c.expected.snapshot_digest;}
+  checks.push(c);
+ }
+ const published=checkpoint('H02-07-u2-published-b-not-admitted'),missing=checkpoint('H02-06-a3-full-qa-u2-unpublished');
+ add('C1',structuredClone(published));add('C2',childCopy(published,true),true);add('C3',childCopy(published,false),true);
+ add('C4',structuredClone(missing));add('C5',childCopy(missing,true),true);add('C6',childCopy(missing,false),true);
+ const parent=structuredClone(published),parentIndexes=parent.snapshot.completion_receipts.flatMap((raw,index)=>{const e=JSON.parse(raw);return e.target.ticket_id==='1000'&&e.target.comment_id==='81023'?[index]:[];});assert.equal(parentIndexes.length,1);
+ const index=parentIndexes[0],originalParent=JSON.parse(parent.snapshot.completion_receipts[index]);parent.snapshot.completion_receipts[index]=JSON.stringify(duplicate(originalParent,'1000','81023','99023'));
+ parent.expected.streams[0].proposal.required_parent.completion.comment_id='99023';add('C7',parent,true);
+ for(const [id,fixtureID]of [['C8','OC05-competing-completions-no-parent-first'],['C9','OC05-competing-completions-stack-parent-first']]){const input=f.inherited_own_preview.original.cases.find(c=>c.id===fixtureID),oracle=f.inherited_own_preview.cases.find(c=>c.id===fixtureID);assert(input&&oracle?.expected,fixtureID);add(id,{...structuredClone(input),expected:structuredClone(oracle.expected)});}
+ // All nine complete expectations come from fixed control reports plus the
+ // input-derived digest and prescribed exact parent alias, before any preview.
+ assert.equal(checks.length,9);
+ assert.equal(createHash('sha256').update(canonicalize(checks.map(({id,config,snapshot,options,expected})=>({id,config,snapshot,options:options??{},expected})))).digest('hex'),'06bc2d43227c0dc541ec15f49559f37d543391d2dcfd7b1c2c66f24eda2768e4','complete independently crosschecked QA-copy preparation');
+ verificationRecord('qa-publication-fixed-expectations',checks);
+ for(const c of checks){const before=JSON.stringify(c),actual=run(c);assert.deepEqual(actual,c.expected,c.id);assert.equal(JSON.stringify(c),before,c.id+' immutable input/oracle');assert.equal(actual.writes,0);assert.equal(actual.execution_authorized,false);for(const s of actual.streams)assert(s.proposal===null||s.proposal.execution_authorized===false);}
+ assert.equal(readFileSync(fixtureURL,'utf8'),fixtureBytes,'original fixture bytes');
+});
+
 test('current PR observations preserve four fixed controls and distinguish admission from new publication',()=>{
  const fixtureBytes=readFileSync(fixtureURL,'utf8'),f=JSON.parse(fixtureBytes);
  const routes=[['OC01-selection','10',false],['H02-02-a2-full-qa-before-u1','11',true],['H02-06-a3-full-qa-u2-unpublished','11',true],['H02-07-u2-published-b-not-admitted','11',false]];

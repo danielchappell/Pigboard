@@ -357,6 +357,14 @@ and authority binding still use exact references. Competing completions yield
 `REPAIR_PROOF_INVALID` and cannot be chosen by envelope order. Reconcile the
 observations through their owner while preserving retained causes.
 
+Identical authenticated copies of a QA result do not require another stack-update
+publication. Preview uses a stable authenticated child completion and preserves
+the exact published request references and bodies. Current-parent authority still
+uses its exact current QA proof; an equivalent historical parent endpoint may
+establish coverage only for the child's exact recorded incorporated cutoff. A
+genuinely missing request still requires publication, and different logical QA
+results still conflict.
+
 Retained native requests remain evidence. The next own admission includes only
 direct requests not consumed by completed same-ticket history on the exact current
 assignment lineage. Implementation or review alone cannot account for a request.
