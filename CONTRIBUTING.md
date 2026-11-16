@@ -228,5 +228,9 @@ repository permits it. Follow that repository's merge strategy; verify the teste
 file tree survives. Code changes/conflict resolutions need relevant tests and
 review; do not repeat identical checks merely for ceremony.
 
+Apply the [delivery checkpoints and escalation rule](AGENTS.md#delivery-checkpoints-and-escalation)
+before commissioning another affected repair cycle. Use the existing queue and
+handoff; do not add a parallel reporting or approval system.
+
 At handoff, record exact state and outstanding work. Historical evidence remains
 historical; do not mark implementation complete by rewriting a plan or ticket.
