@@ -178,7 +178,9 @@ and sets concurrency zero. It waits for the greater of the original and valid ob
 seconds (within the AWS 900-second timeout bound);
 it cannot revoke an already in-flight request. Retained pending/uncertain work
 remains. Output distinguishes stopped from partial/unavailable and reports whether
-canonical intent still asks for scheduling. If disabling or bounded quiescence
+canonical intent still asks for scheduling. In stop results, `observed_scope: before_stop`
+labels the host snapshot captured before the stop; `stopped` confirms the later
+disable/quiescence checks, while `partial` does not confirm completion. If disabling or bounded quiescence
 cannot be confirmed, the result remains partial and identifies the failed phase;
 an unknown timeout cannot become a stopped result. Stop never edits your file or
 changes retained digest/package, generation, extensions or pending work. To converge
