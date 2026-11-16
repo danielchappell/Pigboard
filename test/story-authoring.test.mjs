@@ -1684,25 +1684,13 @@ async function historical81File(name, publication) {
  if(prior)assert.equal(entry.sha256,prior,name+' original source artifact');
  return entry.utf8;
 }
+async function read172Catalogue() {return projection172();}
+
 async function read169Catalogue() {
- const base='../docs/delivery/manager-r1/';
- const publication=JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8'));
- const a=publication.named_issue_acquisition_amendment;
- assert(a,'R dated checkpoint requires its exact predecessor');
- const drafts=JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8'));
- const metadata=JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8'));
- drafts.splice(drafts.findIndex(r=>r.id==='R1-43'),1);
- metadata.splice(metadata.findIndex(r=>r.id==='R1-43'),1);
- drafts[drafts.findIndex(r=>r.id==='R1-34')]=structuredClone(a.prior_148.draft);
- metadata[metadata.findIndex(r=>r.id==='R1-34')]=structuredClone(a.prior_148.metadata);
- for(const [key,value]of Object.entries(a.prior_publication.values))publication[key]=structuredClone(value);
- delete publication.named_issue_acquisition_amendment;
- assert.equal(sha169(JSON.stringify(publication,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb','exact dated169 publication bytes');
- assert.equal(canonical169(publication),a.prior_publication.canonical_sha256,'whole dated169 publication');
- const stories=a.prior_catalogue_text['docs/delivery/manager-r1/stories.md'];
- assert.equal(sha169(stories.utf8),stories.sha256);
- return {drafts,metadata,publication,stories:stories.utf8};
+ const current=await read172Catalogue(),a=current.publication.candidate_inspection_amendment;
+ return {drafts:restore172Rows(current.drafts,a,'ticket-drafts.json'),metadata:restore172Rows(current.metadata,a,'plan-metadata.json'),publication:restore172Publication(current.publication),stories:restore172Text('docs/delivery/manager-r1/stories.md',current.stories,a)};
 }
+
 function approvedContractEvidence(publication) {
  const a=publication.installed_repair_preview_amendment;
  assert.equal(canonical169(a),'14f9022022778fdb23afe24f2fddd28f574f05768f8cd2027d70e53073e6c53e','complete immutable81 amendment');
@@ -1783,7 +1771,7 @@ function assertCurrentCatalogue({drafts,metadata,publication,stories},evidence,e
  assert.equal(a.verification.runtime_change,false);assert.equal(a.verification.activation_authorized,false);
  assert.deepEqual(a.verification.human_acceptance,{'PGB-169-H01':'NOT_RUN','PGB-169-H02':'NOT_RUN'});
 }
-test('PGB-169 current catalogue matches approved native contracts and complete rendered Stories',async()=>{
+test('PGB-169 dated catalogue matches approved native contracts and complete rendered Stories',async()=>{
  const current=await read169Catalogue(),evidence=approvedContractEvidence(current.publication);
  assertCurrentCatalogue(current,evidence,approved169Expected);
  const staleStatus=structuredClone(current);staleStatus.publication.status='42-Story scoped source checkpoint';assert.throws(()=>assertCurrentCatalogue(staleStatus,evidence,approved169Expected),/current status agrees with51\/185/);
@@ -1791,51 +1779,6 @@ test('PGB-169 current catalogue matches approved native contracts and complete r
  assert.throws(()=>assertCurrentCatalogue(absentContract,evidence,approved169Expected),/complete ordered contract set/);
  const absentCase=structuredClone(current);absentCase.drafts.find(r=>r.id==='PGB-169').contract.testing_strategy.human_review.cases.pop();
  assert.throws(()=>assertCurrentCatalogue(absentCase,evidence,approved169Expected),/complete current contract/);
-});
-
-function assertRCurrent({drafts,metadata,publication,stories}){
- const a=publication.named_issue_acquisition_amendment;
- assert(a,'R amendment present');
- assert.deepEqual([drafts.length,metadata.length,publication.story_count,publication.case_count],[52,52,52,187]);
- assert.equal(publication.status,'52-Story/187-human-case source catalogue with preserved named-issue inspection and one acquisition owner; scoped inventory prerequisites remain planned. Human acceptance, reviewed revisions, hosted checks and authorized delivery are recorded separately.');
- assert.equal(publication.current_source_scope.status,publication.status);
- assert.deepEqual(publication.current_source_scope.forecast_days,{min:68.15875,max:78.72125});
- assert.deepEqual(drafts.map(r=>r.id),metadata.map(r=>r.id));
- assert.deepEqual(drafts.map(r=>r.id),a.current_source_order);
- assert.equal(drafts.findIndex(r=>r.id==='R1-43'),drafts.findIndex(r=>r.id==='R1-33')+1);
- assert.equal(drafts.findIndex(r=>r.id==='R1-34'),drafts.findIndex(r=>r.id==='R1-43')+1);
- assert.deepEqual([...stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),a.current_source_order);
- assert.equal(drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),125);
- assert.equal(drafts.reduce((n,r)=>n+r.contract.testing_strategy.human_review.cases.length,0),187);
- const ids=drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases.map(c=>c.id));assert.equal(new Set(ids).size,187);
- const r=drafts.find(x=>x.id==='R1-43'),m=metadata.find(x=>x.id==='R1-43'),i=drafts.find(x=>x.id==='R1-34'),im=metadata.find(x=>x.id==='R1-34');
- assert.deepEqual(r.contract.prerequisites,[{ticket:'PGB-147',required_outcome:'ai_qa_complete'}]);
- assert.deepEqual(i.contract.prerequisites,[...a.prior_148.draft.contract.prerequisites,{ticket:'PGB-173',required_outcome:'ai_qa_complete'}]);
- assert.deepEqual(m.dependencies,['R1-33']);assert.deepEqual(im.dependencies,['R1-33','PGB-173']);
- assert.equal(m.files.length,13);assert.equal(im.files.length,12);
- assert.deepEqual([m.forecast_provenance.min_days,m.forecast_provenance.max_days,im.forecast_provenance.min_days,im.forecast_provenance.max_days],['0.43750','0.66250','0.53750','0.73750']);
- assert.equal(canonical169(r.contract),'d2ea9ef10f70442c481c3a01d1d140633f9f219cc8670804496aba534dd94773');
- assert.equal(a.native_description_sha256,'2ebd117e71c9ca03d8fd381dc8af122c6b0a91f2106a16b1a0932f607461cb5c');
- assert.deepEqual(r.contract.testing_strategy.human_review.cases.map(c=>[c.id,canonical169(c)]),[['R1-43-H01','133bda915817f5e42ff70644652aaeded555b2090921b9fd1ff0d0e26ac3784c'],['R1-43-H02','98979984ba7ae8e202637aad968c28ff2bf46988275e6f5dcafcc2014a79cf8d']]);
- assert(stories.includes(JSON.stringify(r.contract,null,2)));
- assert(stories.includes(JSON.stringify(i.contract,null,2)));
- assert.deepEqual(publication.dependency_links.slice(-4),a.directed_links);
- assert.deepEqual(a.directed_links.map(l=>[l.id,l.from,l.to]),[['10774','PGB-147','PGB-171'],['10775','PGB-171','PGB-173'],['10776','PGB-172','PGB-173'],['10777','PGB-173','PGB-148']]);
- assert.equal(publication.dependency_links.length,133);
- assert.deepEqual([publication.requirement_count,publication.scenario_count],[53,41]);
- assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
- const units=v=>BigInt(Math.round(Number(v)*100000));
- assert.deepEqual([String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.min_days),0n)),String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.max_days),0n))],['6815875','7872125']);
- assert.deepEqual(a.forecast.whole_split_accounted_days,[69.9275,81.22125]);
- assert.equal(a.prior_publication.raw_sha256,'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb');
- assert.equal(a.prior_publication.canonical_sha256,canonical169((()=>{const old=structuredClone(publication);for(const [k,v]of Object.entries(a.prior_publication.values))old[k]=v;delete old.named_issue_acquisition_amendment;return old;})()));
-}
-test('PGB-171 current catalogue binds native R, residual I and exact predecessor',async()=>{
- const base='../docs/delivery/manager-r1/';
- const current={drafts:JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8')),metadata:JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8')),publication:JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8')),stories:await readFile(new URL(base+'stories.md',import.meta.url),'utf8')};
- assertRCurrent(current);
- const missing=structuredClone(current);missing.drafts.find(r=>r.id==='R1-43').contract.testing_strategy.human_review.cases.pop();assert.throws(()=>assertRCurrent(missing));
- const history=structuredClone(current);history.publication.named_issue_acquisition_amendment.prior_publication.values.status='changed';assert.throws(()=>assertRCurrent(history));
 });
 
 // Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
@@ -2051,3 +1994,313 @@ test('PGB-147 installed inspection keeps the complete PGB-81 predecessor and cur
  assert.equal(a.verification.activation_authorized,false);assert.equal(a.verification.human_acceptance,'NOT_RUN (0/4)');
  await assertHistorical147PayloadClosure();
 });
+
+// Explicit inverse of the bounded PGB-172 publication additions. No archived
+// parent publication or global historical read substitution is used.
+function assert172Predecessor(a) {
+ assert.equal(sha172(canonicalize(a.predecessor)),'85075b2b2e0a69440949a40f0726bd3f5f40ee4e93abcb29d69f40e11a25bdd2','complete independently sealed PGB-172 predecessor');
+ return a.predecessor;
+}
+function restore172Publication(live) {
+ const result=structuredClone(live),a=result.candidate_inspection_amendment;
+ assert172Predecessor(a);
+ assert(a);assert.equal(result.stories['R1-44'],'PGB-172');
+ const links=result.dependency_links.filter(l=>l.id==='10776');
+ assert.deepEqual(links,[{id:'10776',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-172',to:'PGB-173'}]);
+ delete result.candidate_inspection_amendment;delete result.stories['R1-44'];result.dependency_links=result.dependency_links.filter(l=>l.id!=='10776');
+ Object.assign(result,a.prior_fields);
+ assert.equal(sha172(JSON.stringify(result,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb');
+ assert.equal(sha172(canonicalize(result)),'a9711f4ce6c6318f013deee5d96893ea4eb29ae3a6690b52e525d20f64cd20c1');return result;
+}
+const sha172=value=>createHash('sha256').update(value).digest('hex');
+function restore172Text(file,text,a) {
+ assert172Predecessor(a);
+ const e=a.text_edits;
+ if(e.appends[file]){assert(text.endsWith(e.appends[file]));text=text.slice(0,-e.appends[file].length);}
+ for(const insertion of e.insertions[file]??[]){assert.equal(text.split(insertion).length,2);text=text.replace(insertion,'');}
+ if(e.section_removal?.[file]){const {start,end}=e.section_removal[file],from=text.indexOf(start),to=text.indexOf(end,from+start.length);assert(from>=0&&to>from);text=text.slice(0,from)+text.slice(to);}
+ for(const item of [...(e.replacements[file]??[])].reverse()){assert.equal(text.split(item.new).length,2);text=text.replace(item.new,item.old);}
+ if(e.append_boundaries[file]!==undefined)text=Buffer.from(text).subarray(0,e.append_boundaries[file]).toString('utf8');
+ assert.equal(sha172(text),a.predecessor.paths[file].sha256,file+' full predecessor text');return text;
+}
+function restore172Rows(rows,a,file) {
+ assert172Predecessor(a);
+ assert.equal(rows.filter(r=>r.id==='R1-44').length,1);const restored=rows.filter(r=>r.id!=='R1-44');
+ assert.equal(sha172(JSON.stringify(restored,null,2)+'\n'),a.predecessor.paths['docs/delivery/manager-r1/'+file].sha256,file+' whole predecessor raw');
+ assert.equal(sha172(canonicalize(restored)),a.predecessor.paths['docs/delivery/manager-r1/'+file].canonical_sha256,file+' whole predecessor canonical');return restored;
+}
+
+const native172Contract = {
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Ordinary Jira comments can contain code that is not a Pigboard record. Callers need to distinguish these comments from valid handoff candidates and malformed Pigboard attempts without accepting receipt proof.",
+  "prerequisites": [],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "A caller can import extractHandoffCandidate(adfInput) from the source or prepared copied validator and receive null for ordinary content or a canonical value and record_digest for one valid candidate."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Malformed or ambiguous attempted Pigboard blocks return a safe diagnostic, including a non-scalar root schema containing the Pigboard family; unrelated code remains ordinary."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Candidate inspection has fixed input limits and linear bounded traversal, including alias chains, cycles and missing targets, without provider calls or writes."
+    },
+    {
+      "id": "AC4",
+      "requirement": "The guide provides source and copied examples and recovery; existing strict handoff validation, canonical digest and receipt authority remain unchanged."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Own pure handoff candidate inspection, existing-parser tests, direct source/copied use, guides and full current catalogue.",
+      "out_of_scope": [
+        "Plexus/customer repository changes, AWS resolver/wrapper, State adapter and operational-state writes.",
+        "Receipt acceptance, policy selection/admission, external PR/evidence fetching, a new input producer or a PGB-144 proof-policy decision.",
+        "Production live CLI, provider probes, deployment, activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines."
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "In danielchappell/Pigboard, add only the pure extractHandoffCandidate(adfInput) API to the existing installed handoff module; it has no deadline, resolver, provider or transport parameter."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Use one source-order YAML AST metadata pass to associate aliases with the latest prior anchor, then one visited traversal limited to root schema values; do not call Alias.resolve, toJS or conversion-context expansion, scan arbitrary fields, or bind forward targets later."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve existing whole-ADF and selected whole-wrapper limits and canonical record validation, including unsupported versions, duplicate keys, aliases, tags, depth, lists and bytes; candidate recognition is not proof acceptance."
+      },
+      {
+        "id": "TAC4",
+        "requirement": "Preserve the other 24 predecessor live contract/config modules and current reader/TLS/case packet; document the one handoff-module change and full source/catalogue history in the same PR."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Reviewed source and prepared copied work-validator root; supplied literal ADF only, no provider or network.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Only the fixed inputs named by the cases below.",
+        "initial_state": "Fresh isolated inputs per prescribed observation; no live data.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Literal three-input source/copied import commands and expected classifications/digest, plus the exact-commit twelve-assertion and inherited-limit evidence packet. Use only the fixed cases in the reviewed delivery plan; no timing or load campaign.",
+        "used_by": [
+          "DATA-01",
+          "R1-44-H01",
+          "R1-44-H02"
+        ],
+        "preserves": [
+          "Acceptance, technical constraints, literal expected outcomes, fixed inputs and finite counts; never derive expected answers from the implementation.",
+          "No new cases, provider access, dependency fetch, raised bounds or changed security settings."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.",
+      "cases": [
+        {
+          "id": "R1-44-H01",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC4",
+            "TAC1",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "PREP-01 supplies exactly three literal ADF bodies: ordinary code, mixed ordinary plus one valid candidate, and schema: {value: pigboard-handoff/v1} malformed attempt.",
+            "Prepared source and copied validator roots with recorded dependencies; no UI, Postman, account, secret, provider or network."
+          ],
+          "steps": [
+            "Import extractHandoffCandidate from each explicit source/copied root; run the three prepared inputs once per root, with the copied invocation from an unrelated working directory.",
+            "Compare actual classifications and canonical value/digest with the independently authored literals; inspect the guide’s recovery and no-fallback evidence."
+          ],
+          "expected": [
+            "Ordinary content returns null; mixed valid content returns the unchanged canonical value and digest; malformed root schema is diagnosed, not silently ignored.",
+            "Source and copied meanings match; the copied route does not import source files or fetch dependencies.",
+            "No result establishes receipt proof, permission, admission or live provider visibility."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        },
+        {
+          "id": "R1-44-H02",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "AC4",
+            "TAC2",
+            "TAC3",
+            "TAC4"
+          ],
+          "prerequisites": [
+            "PREP-01 provides exact-commit outputs and input hashes for the twelve fixed pure recognition assertions and inherited at/over-limit cases listed in the delivery plan."
+          ],
+          "steps": [
+            "Inspect the actual pure-regression results and corresponding fixed inputs for root-only recognition, direct prior-anchor lookup, cycles, missing targets and unchanged strict parsing.",
+            "Compare the live module map and guide to the reviewed source/copy evidence; record any missing evidence without substituting a human PASS."
+          ],
+          "expected": [
+            "The finite cases distinguish ordinary content from attempted records, terminate cycles and never resolve each alias by scanning the whole document.",
+            "Whole-wrapper and record limits still reject their prescribed over-limit inputs; canonical digest and strict receipt consumers are unchanged.",
+            "Only the declared handoff module changes in the old live25 map; the remaining 24 and reader/TLS/old packet are preserved."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Pure ordinary/candidate/malformed recognition, bounded alias traversal and unchanged strict-parser limits, plus the three-input prepared-copy import check and current/historical catalogue guards."
+  },
+  "open_questions": []
+};
+
+function assert172Catalogue(c) {
+ const a=c.publication.candidate_inspection_amendment,old=assert172Predecessor(a),order=[...old.old_order];order.splice(order.indexOf('R1-34'),0,'R1-44');
+ assert.deepEqual(c.drafts.map(r=>r.id),order);assert.deepEqual(c.metadata.map(r=>r.id),order);assert.deepEqual(a.source_order,order);
+ assert.deepEqual([c.publication.story_count,c.publication.case_count,c.publication.requirement_count,c.publication.scenario_count],[52,187,53,41]);
+ assert.deepEqual(c.drafts.find(r=>r.id==='R1-44').contract,native172Contract);
+ assert.deepEqual(a.contract,native172Contract);assert.equal(sha172(canonicalize(a.contract)),old.contract_canonical_sha256);
+ assert.equal(sha172(a.description_markdown),old.native_body_sha256);
+ assert(c.stories.includes(JSON.stringify(native172Contract,null,2)));
+ assert.deepEqual([...c.stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),order);
+ const cases=c.drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases);assert.equal(cases.length,187);assert.equal(new Set(cases.map(c=>c.id)).size,187);
+ assert(c.drafts.every(r=>r.contract.testing_strategy.cases.length===0));assert.equal(c.drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),123);
+ assert.equal(c.publication.dependency_links.length,130);assert.equal(new Set(c.publication.dependency_links.map(l=>l.id)).size,130);
+ assert.deepEqual(c.publication.current_source_scope.pending_source_amendments,['PGB-171','PGB-173']);
+ assert.deepEqual(c.metadata.find(r=>r.id==='R1-44').dependencies,[]);
+ for(const row of c.drafts.filter(r=>r.id!=='R1-44'))assert.equal(sha172(canonicalize(row)),old.old_contract_rows_canonical_sha256[row.id]);
+ for(const row of c.metadata.filter(r=>r.id!=='R1-44'))assert.equal(sha172(canonicalize(row)),old.old_metadata_rows_canonical_sha256[row.id]);
+ restore172Rows(c.drafts,a,'ticket-drafts.json');restore172Rows(c.metadata,a,'plan-metadata.json');restore172Text('docs/delivery/manager-r1/stories.md',c.stories,a);restore172Publication(c.publication);
+}
+test('PGB-172 current catalogue matches native candidate contract and preserves predecessor',async()=>{
+ await assertIntegrated172();const c=await read172Catalogue();assert172Catalogue(c);
+ const missing=structuredClone(c);missing.drafts=missing.drafts.filter(r=>r.id!=='R1-44');assert.throws(()=>assert172Catalogue(missing));
+ const missingCase=structuredClone(c);missingCase.drafts.find(r=>r.id==='R1-44').contract.testing_strategy.human_review.cases.pop();assert.throws(()=>assert172Catalogue(missingCase));
+ const stale=structuredClone(c);stale.publication.story_count=51;assert.throws(()=>assert172Catalogue(stale));
+ const history=structuredClone(c);history.publication.approved_delivery_catalogue_amendment.historical_file_bytes['lib/contracts/work.mjs'].utf8+='changed';assert.throws(()=>assert172Catalogue(history));
+});
+
+function assertRCurrent({drafts,metadata,publication,stories}){
+ const a=publication.named_issue_acquisition_amendment;
+ assert(a,'R amendment present');
+ assert.deepEqual([drafts.length,metadata.length,publication.story_count,publication.case_count],[52,52,52,187]);
+ assert.equal(publication.status,'52-Story/187-human-case source catalogue with preserved named-issue inspection and one acquisition owner; scoped inventory prerequisites remain planned. Human acceptance, reviewed revisions, hosted checks and authorized delivery are recorded separately.');
+ assert.equal(publication.current_source_scope.status,publication.status);
+ assert.deepEqual(publication.current_source_scope.forecast_days,{min:68.15875,max:78.72125});
+ assert.deepEqual(drafts.map(r=>r.id),metadata.map(r=>r.id));
+ assert.deepEqual(drafts.map(r=>r.id),a.current_source_order);
+ assert.equal(drafts.findIndex(r=>r.id==='R1-43'),drafts.findIndex(r=>r.id==='R1-33')+1);
+ assert.equal(drafts.findIndex(r=>r.id==='R1-34'),drafts.findIndex(r=>r.id==='R1-43')+1);
+ assert.deepEqual([...stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),a.current_source_order);
+ assert.equal(drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),125);
+ assert.equal(drafts.reduce((n,r)=>n+r.contract.testing_strategy.human_review.cases.length,0),187);
+ const ids=drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases.map(c=>c.id));assert.equal(new Set(ids).size,187);
+ const r=drafts.find(x=>x.id==='R1-43'),m=metadata.find(x=>x.id==='R1-43'),i=drafts.find(x=>x.id==='R1-34'),im=metadata.find(x=>x.id==='R1-34');
+ assert.deepEqual(r.contract.prerequisites,[{ticket:'PGB-147',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(i.contract.prerequisites,[...a.prior_148.draft.contract.prerequisites,{ticket:'PGB-173',required_outcome:'ai_qa_complete'}]);
+ assert.deepEqual(m.dependencies,['R1-33']);assert.deepEqual(im.dependencies,['R1-33','PGB-173']);
+ assert.equal(m.files.length,13);assert.equal(im.files.length,12);
+ assert.deepEqual([m.forecast_provenance.min_days,m.forecast_provenance.max_days,im.forecast_provenance.min_days,im.forecast_provenance.max_days],['0.43750','0.66250','0.53750','0.73750']);
+ assert.equal(canonical169(r.contract),'d2ea9ef10f70442c481c3a01d1d140633f9f219cc8670804496aba534dd94773');
+ assert.equal(a.native_description_sha256,'2ebd117e71c9ca03d8fd381dc8af122c6b0a91f2106a16b1a0932f607461cb5c');
+ assert.deepEqual(r.contract.testing_strategy.human_review.cases.map(c=>[c.id,canonical169(c)]),[['R1-43-H01','133bda915817f5e42ff70644652aaeded555b2090921b9fd1ff0d0e26ac3784c'],['R1-43-H02','98979984ba7ae8e202637aad968c28ff2bf46988275e6f5dcafcc2014a79cf8d']]);
+ assert(stories.includes(JSON.stringify(r.contract,null,2)));
+ assert(stories.includes(JSON.stringify(i.contract,null,2)));
+ assert.deepEqual(publication.dependency_links.slice(-4),a.directed_links);
+ assert.deepEqual(a.directed_links.map(l=>[l.id,l.from,l.to]),[['10774','PGB-147','PGB-171'],['10775','PGB-171','PGB-173'],['10776','PGB-172','PGB-173'],['10777','PGB-173','PGB-148']]);
+ assert.equal(publication.dependency_links.length,133);
+ assert.deepEqual([publication.requirement_count,publication.scenario_count],[53,41]);
+ assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
+ const units=v=>BigInt(Math.round(Number(v)*100000));
+ assert.deepEqual([String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.min_days),0n)),String(metadata.reduce((n,x)=>n+units(x.forecast_provenance.max_days),0n))],['6815875','7872125']);
+ assert.deepEqual(a.forecast.whole_split_accounted_days,[69.9275,81.22125]);
+ assert.equal(a.prior_publication.raw_sha256,'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb');
+ assert.equal(a.prior_publication.canonical_sha256,canonical169((()=>{const old=structuredClone(publication);for(const [k,v]of Object.entries(a.prior_publication.values))old[k]=v;delete old.named_issue_acquisition_amendment;return old;})()));
+}
+test('PGB-171 current catalogue binds native R, residual I and exact predecessor',async()=>{
+ const current=await projection171();
+ assertRCurrent(current);
+ const missing=structuredClone(current);missing.drafts.find(r=>r.id==='R1-43').contract.testing_strategy.human_review.cases.pop();assert.throws(()=>assertRCurrent(missing));
+ const history=structuredClone(current);history.publication.named_issue_acquisition_amendment.prior_publication.values.status='changed';assert.throws(()=>assertRCurrent(history));
+});
+
+
+// Bounded actual171 and isolated172 projections; live checks remain separate.
+const integrationSha172=value=>createHash('sha256').update(value).digest('hex');
+const integrationCanon172=value=>integrationSha172(canonicalize(value));
+const liveRead172=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
+let integrated172Promise;
+function integrated172(){return integrated172Promise??=loadintegrated172();}
+async function loadintegrated172(){const base='docs/delivery/manager-r1/';return{publication:JSON.parse(await liveRead172(base+'publication.json')),metadata:JSON.parse(await liveRead172(base+'plan-metadata.json')),drafts:JSON.parse(await liveRead172(base+'ticket-drafts.json')),stories:await liveRead172(base+'stories.md')};}
+function integration172(p){const a=p.candidate_inspection_amendment,i=a.parent_integration;assert.equal(integrationCanon172(i.binding),'a6a9f1804680c501d55c775026b705cd1ea4353576dcaa318dd7897ac6029603');assert.equal(i.review_correction.previous_binding_canonical_sha256,'ddcfd1acf24e2d2be6352bc9cf49b4d20486c5255154a4c70eae733b50750a12');const old=structuredClone(a);delete old.parent_integration;assert.equal(integrationCanon172(old),'68d98995904bf3f7b62ec6a9b6122586a5c8c706d510224e42596241fcee4bc0');assert.equal(integrationCanon172(p.named_issue_acquisition_amendment),'ef6cb42641631cca63641a6d3569b3bb951ee6f046ef93f80f1876564d4a068e');return i;}
+function rText172(file,text,i){if(file.endsWith('stories.md')){const start=text.indexOf('## R1-44:'),end=text.indexOf('## R1-34:',start);assert(start>=0&&end>start);text=text.slice(0,start)+text.slice(end);}for(const h of [...i.text_hunks[file]].reverse()){assert.equal(text.split(h.new).length,2);text=text.replace(h.new,h.old);}assert.equal(integrationSha172(text),i.binding.actual171.files[file]);return text;}
+let projection171Promise;
+function projection171(){return projection171Promise??=loadprojection171();}
+async function loadprojection171(){const c=await integrated172(),i=integration172(c.publication),p=structuredClone(c.publication);delete p.candidate_inspection_amendment;delete p.stories['R1-44'];Object.assign(p,structuredClone(i.actual171_top_fields));assert.equal(integrationSha172(JSON.stringify(p,null,2)+'\n'),'0c21f9f324c1c202c58ac03ea706048a18f26a5ac4491932fe357be14254ea83');assert.equal(integrationCanon172(p),'1666eb2e212aee24ef4f08e948231fdf49ede90b35067ce7c3b1508a29d234cb');const result={publication:p,metadata:c.metadata.filter(r=>r.id!=='R1-44'),drafts:c.drafts.filter(r=>r.id!=='R1-44'),stories:rText172('docs/delivery/manager-r1/stories.md',c.stories,i)};for(const [key,file]of [['metadata','plan-metadata.json'],['drafts','ticket-drafts.json']])assert.equal(integrationSha172(JSON.stringify(result[key],null,2)+'\n'),i.binding.actual171.files['docs/delivery/manager-r1/'+file]);return result;}
+function pForward172(file,text,a,section){for(const h of a.text_edits.replacements[file]??[]){assert(text.includes(h.old));text=text.replace(h.old,h.new);}for(const addition of a.text_edits.insertions[file]??[]){assert(file.endsWith('README.md'));const anchor='| R1-34 /';text=text.replace(anchor,addition+anchor);}if(file.endsWith('stories.md'))text=text.replace('## R1-34:',section+'## R1-34:');if(a.text_edits.appends[file])text+=a.text_edits.appends[file];return text;}
+let projection172Promise;
+function projection172(){return projection172Promise??=loadprojection172();}
+async function loadprojection172(){const live=await integrated172(),i=integration172(live.publication),r=await projection171(),ra=r.publication.named_issue_acquisition_amendment,a=structuredClone(live.publication.candidate_inspection_amendment);delete a.parent_integration;const p=structuredClone(r.publication);for(const [k,v]of Object.entries(ra.prior_publication.values))p[k]=structuredClone(v);delete p.named_issue_acquisition_amendment;Object.assign(p,structuredClone(i.binding.original172.top_fields));p.stories['R1-44']='PGB-172';p.dependency_links.push({id:'10776',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-172',to:'PGB-173'});p.candidate_inspection_amendment=a;assert.deepEqual(p.candidate_inspection_amendment.current_forecast.second_correction_support_hours,[0.6,1]);
+const serialized = JSON.stringify(p,null,2)+'\n';
+const serializedHunk = "      \"second_correction_support_hours\": [\n        0.6,\n        1\n      ],\n      \"current_repair_plan_sha256\": \"3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3\"";
+const originalHunk = "      \"second_correction_support_hours\": [\n        0.6,\n        1.0\n      ],\n      \"current_repair_plan_sha256\": \"3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3\"";
+assert.equal(serialized.split(serializedHunk).length,2);
+const originalRaw = serialized.replace(serializedHunk,originalHunk);
+assert.equal(integrationSha172(originalRaw),'0aea27d95d05d17e23ca2ab375364b0fc7339ea3e7b7cd672bc35161da22fa9b');assert.equal(integrationCanon172(p),'438e372c7d3ed4e049d525046a6758bfdcbd7876170fc5526b3f62006b3443bb');const result={publication:p};for(const [key,file]of [['metadata','plan-metadata.json'],['drafts','ticket-drafts.json']]){const rows=r[key].filter(x=>x.id!=='R1-43');rows[rows.findIndex(x=>x.id==='R1-34')]=structuredClone(ra.prior_148[key==='drafts'?'draft':'metadata']);const originalRow=key==='metadata'?i.review_correction.original172_metadata_row:live[key].find(x=>x.id==='R1-44');if(key==='metadata')assert.equal(integrationCanon172(originalRow),'957227c77a09998315fe6a0ff48eecdb60bb486c309e272bececb397465200ad');rows.splice(rows.findIndex(x=>x.id==='R1-34'),0,structuredClone(originalRow));result[key]=rows;assert.equal(integrationSha172(JSON.stringify(rows,null,2)+'\n'),i.binding.original172.files['docs/delivery/manager-r1/'+file]);}const section=live.stories.slice(live.stories.indexOf('## R1-44:'),live.stories.indexOf('## R1-34:'));result.stories=pForward172('docs/delivery/manager-r1/stories.md',ra.prior_catalogue_text['docs/delivery/manager-r1/stories.md'].utf8,a,section);assert.equal(integrationSha172(result.stories),i.binding.original172.files['docs/delivery/manager-r1/stories.md']);return result;}
+async function read172Dated(file){const c=await projection172(),a=c.publication.candidate_inspection_amendment;if(file==='docs/delivery/manager-r1/publication.json')return JSON.stringify(c.publication);if(file==='docs/delivery/manager-r1/plan-metadata.json')return JSON.stringify(c.metadata);if(file==='docs/delivery/manager-r1/ticket-drafts.json')return JSON.stringify(c.drafts);if(file.endsWith('/stories.md'))return c.stories;const live=await integrated172(),ra=live.publication.named_issue_acquisition_amendment;if(ra.prior_catalogue_text[file]){const text=pForward172(file,ra.prior_catalogue_text[file].utf8,a,'');assert.equal(integrationSha172(text),live.publication.candidate_inspection_amendment.parent_integration.binding.original172.files[file]);return text;}if(file==='lib/contracts/handoff.mjs'){const text=await liveRead172(file),newHunk="function blockText({ node, path }) {\n  const language = node.attrs?.language;\n  if (typeof language !== 'string' || !['yaml', 'yml'].includes(language.toLowerCase()) || !Array.isArray(node.content) || node.content.some(child => child.type !== 'text' || typeof child.text !== 'string' || child.content !== undefined)) fail('ADF_BLOCK', path, 'Use a YAML code block containing only text children.');\n  return node.content.map(child => child.text).join('');\n}",oldHunk="function blockText({ node, path }) {\n  if (!['yaml', 'yml'].includes(node.attrs?.language?.toLowerCase?.()) || !Array.isArray(node.content) || node.content.some(child => child.type !== 'text' || typeof child.text !== 'string' || child.content !== undefined)) fail('ADF_BLOCK', path, 'Use a YAML code block containing only text children.');\n  return node.content.map(child => child.text).join('');\n}";assert.equal(text.split(newHunk).length,2);const original=text.replace(newHunk,oldHunk);assert.equal(integrationSha172(original),'101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566');return original;}if(['lib/jira/read.mjs','lib/contracts/receipts.mjs','scripts/validate-handoff.mjs','docs/handoffs.md'].includes(file))return historical147File(file);return liveRead172(file);}
+async function read171Dated(file){const c=await projection171(),live=await integrated172(),i=integration172(live.publication);if(file==='docs/delivery/manager-r1/publication.json')return JSON.stringify(c.publication);if(file==='docs/delivery/manager-r1/plan-metadata.json')return JSON.stringify(c.metadata);if(file==='docs/delivery/manager-r1/ticket-drafts.json')return JSON.stringify(c.drafts);if(i.text_hunks[file])return rText172(file,await liveRead172(file),i);if(file==='lib/contracts/handoff.mjs')return historical147File(file);if(file==='docs/manager-preview.md'){const a=live.publication.candidate_inspection_amendment;return Buffer.from(await liveRead172(file)).subarray(0,a.text_edits.append_boundaries[file]).toString('utf8');}if(file==='test/handoff.test.mjs'){let text=await liveRead172(file);const start=text.indexOf('\nconst candidateCases ='),end=text.indexOf("test('recorded CLI rejects mixed purposes",start);text=text.slice(0,start)+'\n'+text.slice(end);for(const h of [...i.handoff_test_hunks].reverse()){assert.equal(text.split(h.new).length,2);text=text.replace(h.new,h.old);}assert.equal(integrationSha172(text),i.binding.actual171.files[file]);return text;}return liveRead172(file);}
+async function assertIntegrated172(){const c=await integrated172(),i=integration172(c.publication);assert.deepEqual([c.drafts.length,c.metadata.length,c.publication.story_count,c.publication.case_count,c.publication.dependency_links.length],[53,53,53,189,133]);assert.deepEqual(c.drafts.map(r=>r.id),i.current_order);assert.deepEqual(c.metadata.map(r=>r.id),i.current_order);assert.deepEqual([...c.stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),i.current_order);assert.equal(c.drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),125);const cases=c.drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases);assert.equal(cases.length,189);assert.equal(new Set(cases.map(x=>x.id)).size,189);assert.deepEqual(c.publication.current_source_scope.pending_source_amendments,['PGB-173']);assert.deepEqual(c.publication.current_source_scope.forecast_days,{min:68.79625,max:79.73375});let min=0,max=0;for(const row of c.metadata){min+=Math.round(Number(row.forecast_provenance.min_days)*100000);max+=Math.round(Number(row.forecast_provenance.max_days)*100000);}assert.deepEqual([min,max],[6879625,7973375]);for(const [map,values]of Object.entries(i.binding.expected_current).filter(([key])=>['live25','live27','payload41'].includes(key))){assert.deepEqual(i.current_maps[map],values);for(const [file,digest]of Object.entries(values))assert.equal(integrationSha172(await liveRead172(file)),digest,file+' live composed bytes');}await projection171();await projection172();}

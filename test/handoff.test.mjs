@@ -6,8 +6,8 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { stringify } from 'yaml';
-import { validateHandoff, extractHandoff, digestValue, checkURLs } from '../lib/contracts/handoff.mjs';
+import { stringify, Alias, Document, Scalar, YAMLMap, YAMLSeq, Pair } from 'yaml';
+import { extractHandoffCandidate, validateHandoff, extractHandoff, digestValue, checkURLs } from '../lib/contracts/handoff.mjs';
 import { parseContract } from '../lib/contracts/work.mjs';
 
 const hash = text => 'sha256:' + createHash('sha256').update(text, 'utf8').digest('hex');
@@ -120,7 +120,9 @@ test('ADF and HTML reject ambiguous, unsupported, malformed and truncated wrappe
   doc.content.push(structuredClone(doc.content[1])); rejects(JSON.stringify(doc), 'HANDOFF_BLOCK_COUNT', { format: 'adf' });
   const wrong = JSON.parse(adf(text)); wrong.version = 2; rejects(JSON.stringify(wrong), 'ADF_SHAPE', { format: 'adf' });
   wrong.version = 1; wrong.content[1].attrs.language = 'json'; rejects(JSON.stringify(wrong), 'ADF_BLOCK', { format: 'adf' });
+  assert.throws(() => extractHandoffCandidate(JSON.stringify(wrong)), error => error.diagnostic.code === 'ADF_BLOCK');
   wrong.content[1].attrs.language = 'yaml'; wrong.content[1].content[0].content = []; rejects(JSON.stringify(wrong), 'ADF_BLOCK', { format: 'adf' });
+  assert.throws(() => extractHandoffCandidate(JSON.stringify(wrong)), error => error.diagnostic.code === 'ADF_BLOCK');
   rejects(JSON.stringify({ type: 'doc', version: 1, content: [{ type: 'text', text: 'bad\0text' }] }), 'ADF_SHAPE', { format: 'adf' });
   rejects('{"type":"doc","type":"doc","version":1,"content":[]}', 'DUPLICATE_KEY', { format: 'adf' });
   for (const [input, code] of [[html(text) + html(text), 'HANDOFF_BLOCK_COUNT'], ['<p>```yaml\n' + escape(text) + '\n```</p>', 'HANDOFF_BLOCK_COUNT'], [html(text).replace('</code>', ''), 'HTML_BLOCK'], [html(text).replace('</pre>', ''), 'HTML_BLOCK'], [html(text).replace('schema:', '<em>schema:</em>'), 'HTML_BLOCK'], [html(text).replace('schema:', '&bogus;schema:'), 'HTML_PARSE'], [html(text).replace('schema:', '&#0;schema:'), 'HTML_PARSE'], [html(text).replace('schema:', '\0schema:'), 'PARSE']]) rejects(input, code, { format: 'html' });
@@ -129,24 +131,31 @@ test('ADF and HTML reject ambiguous, unsupported, malformed and truncated wrappe
 });
 test('byte, container, array and wrapper bounds reject at the boundary without truncation', () => {
   const text = raw(record()), padding = 16384 - Buffer.byteLength(text) - 2, exact = text + '#' + 'x'.repeat(padding) + '\n';
+  assert.equal(extractHandoffCandidate(adf(exact)).record_digest, validateHandoff(exact).record_digest);
+  assert.throws(() => extractHandoffCandidate(adf(exact + 'x')), error => error.diagnostic.code === 'BYTE_LIMIT');
   assert.equal(Buffer.byteLength(exact), 16384); assert(validateHandoff(exact).valid); rejects(exact + 'x', 'BYTE_LIMIT');
   const recordValue = record(); recordValue.from_stage = 'Rework Queued'; Object.assign(recordValue.payload, { mode: 'repair', previous_assignment: ref(1), requests: Array.from({ length: 100 }, (_, i) => ref(i + 2)) });
   const evidenceBound = record('blocked'); evidenceBound.payload.evidence = Array.from({ length: 100 }, (_, index) => ({ ...evidence(), label: String(index) }));
   assert(validateHandoff(raw(evidenceBound)).valid);
+  assert(extractHandoffCandidate(adf(raw(evidenceBound))));
   const duplicate = structuredClone(evidenceBound); duplicate.payload.evidence[99] = { digest: duplicate.payload.evidence[0].digest, uri: duplicate.payload.evidence[0].uri, label: duplicate.payload.evidence[0].label }; rejects(raw(duplicate), 'STRUCTURE');
   const maliciousKey = structuredClone(evidenceBound); maliciousKey.payload.evidence[0].valueOf = 'ordinary JSON data'; rejects(raw(maliciousKey), 'STRUCTURE');
   evidenceBound.payload.evidence.push({ ...evidence(), label: '101' }); rejects(raw(evidenceBound), 'LIST_LIMIT');
+  assert.throws(() => extractHandoffCandidate(adf(raw(evidenceBound))), error => error.diagnostic.code === 'LIST_LIMIT');
   // A full 100-reference handoff exceeds the 16 KiB record bound first. Exercise
   // the reachable array limit through the shared parser, never label it record-valid.
+  assert.throws(() => extractHandoffCandidate(adf(raw(recordValue))), error => error.diagnostic.code === 'BYTE_LIMIT');
   assert(Buffer.byteLength(raw(recordValue)) > 16384); rejects(raw(recordValue), 'BYTE_LIMIT');
   assert.equal(parseContract('{"items":[' + Array(100).fill('0').join(',') + ']}', { bytes: 16384, depth: 16, list: 100 }).items.length, 100);
   assert.throws(() => parseContract('{"items":[' + Array(101).fill('0').join(',') + ']}', { bytes: 16384, depth: 16, list: 100 }), error => error.diagnostic.code === 'LIST_LIMIT');
   const nested = n => '{"value":'.repeat(n) + 'null' + '}'.repeat(n);
   assert(parseContract(nested(16), { bytes: 16384, depth: 16, list: 100 }));
   assert.throws(() => parseContract(nested(17), { bytes: 16384, depth: 16, list: 100 }), error => error.diagnostic.code === 'DEPTH_LIMIT');
+  for (const n of [16, 17]) assert.throws(() => extractHandoffCandidate(adf(nested(n).replace('{', '{\"schema\":\"pigboard-handoff/v1\",'))), error => error.diagnostic.code === (n === 16 ? 'STRUCTURE' : 'DEPTH_LIMIT'));
   for (const format of ['adf', 'html']) {
     const base = format === 'adf' ? adf(text) : html(text);
     const exactWrapper = base + ' '.repeat(65536 - Buffer.byteLength(base));
+    if (format === 'adf') { assert(extractHandoffCandidate(exactWrapper)); assert.throws(() => extractHandoffCandidate(exactWrapper + ' '), error => error.diagnostic.code === 'BYTE_LIMIT'); }
     assert(validateHandoff(exactWrapper, { format }).valid); rejects(exactWrapper + ' ', 'BYTE_LIMIT', { format });
   }
   assert(validateHandoff('<div>'.repeat(28) + html(text) + '</div>'.repeat(28), { format: 'html' }).valid);
@@ -154,8 +163,26 @@ test('byte, container, array and wrapper bounds reject at the boundary without t
   rejects('<div>'.repeat(33) + html(text) + '</div>'.repeat(33), 'DEPTH_LIMIT', { format: 'html' });
   rejects('<p>' + '<span>x</span>'.repeat(101) + '</p>' + html(text), 'LIST_LIMIT', { format: 'html' });
   const wrapper = { type: 'doc', version: 1, content: [{ type: 'codeBlock', attrs: { language: 'yaml' }, content: [{ type: 'text', text }] }, ...Array.from({ length: 10 }, (_, index) => ({ type: 'paragraph', content: Array.from({ length: index === 9 ? 87 : 100 }, () => ({ type: 'text', text: 'x' })) }))] };
+  assert(extractHandoffCandidate(JSON.stringify(wrapper)));
   assert(validateHandoff(JSON.stringify(wrapper), { format: 'adf' }).valid);
   wrapper.content.at(-1).content.push({ type: 'text', text: 'x' }); rejects(JSON.stringify(wrapper), 'NODE_LIMIT', { format: 'adf' });
+  assert.throws(() => extractHandoffCandidate(JSON.stringify(wrapper)), error => error.diagnostic.code === 'NODE_LIMIT');
+  const ordinary = JSON.stringify({type:'doc',version:1,content:[{type:'paragraph',content:[{type:'text',text:'ordinary'}]}]});
+  const ordinaryExact = ordinary + ' '.repeat(262144 - Buffer.byteLength(ordinary));
+  assert.equal(extractHandoffCandidate(ordinaryExact), null);
+  assert.throws(() => extractHandoffCandidate(ordinaryExact + ' '), error => error.diagnostic.code === 'BYTE_LIMIT');
+  const hundred = JSON.parse(adf(text)); hundred.content.push(...Array.from({length:98}, () => ({type:'paragraph'})));
+  assert(extractHandoffCandidate(JSON.stringify(hundred))); hundred.content.push({type:'paragraph'});
+  assert.throws(() => extractHandoffCandidate(JSON.stringify(hundred)), error => error.diagnostic.code === 'LIST_LIMIT');
+  const deep = n => JSON.stringify({type:'doc',version:1,content:[],extra: JSON.parse(nested(n))});
+  assert.equal(extractHandoffCandidate(deep(31)), null);
+  assert.throws(() => extractHandoffCandidate(deep(32)), error => error.diagnostic.code === 'DEPTH_LIMIT');
+  const candidateDeep = n => { const value=JSON.parse(adf(text)); value.extra=JSON.parse(nested(n)); return JSON.stringify(value); };
+  assert(extractHandoffCandidate(candidateDeep(31)));
+  assert.throws(() => extractHandoffCandidate(candidateDeep(32)), error => error.diagnostic.code === 'DEPTH_LIMIT');
+  const ordinaryList = n => JSON.stringify({type:'doc',version:1,content:[],extra:Array(n).fill(null)});
+  assert.equal(extractHandoffCandidate(ordinaryList(1000)),null);
+  assert.throws(() => extractHandoffCandidate(ordinaryList(1001)), error => error.diagnostic.code === 'LIST_LIMIT');
   for (const bounds of [{ bytes: 0 }, { depth: Infinity }, { list: -1 }, { list: 1.5 }]) assert.throws(() => parseContract('{}', bounds), error => error.diagnostic.code === 'USAGE');
 });
 test('CLI exposes read-only record behavior and sanitized usage/input failures', async () => {
@@ -206,6 +233,171 @@ test('QA-only blocked/wait findings are optional, bounded and closed without cha
     const tooMany = structuredClone(qa); tooMany.payload.findings = Array(101).fill(qa.payload.findings[0]); rejects(raw(tooMany), 'LIST_LIMIT');
     assert.equal(raw(old), before); assert.equal(validateHandoff(before).record_digest, oldDigest);
   }
+});
+
+const candidateCases = [
+  {
+    "id": "P01",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"python\"},\"content\":[{\"type\":\"text\",\"text\":\"print(\\\"ordinary\\\")\\n\"}]}]}",
+    "input_sha256": "a0c8ab6a3a4af1e561be1745c30eb4fad8c88e0ac33a5e9eaa0c9d60cd462b08",
+    "expected": null
+  },
+  {
+    "id": "P02",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: unrelated/v1\\npayload: pigboard-handoff/v1\\n\"}]}]}",
+    "input_sha256": "b9dfb098b68c5f8956519b2f4a3e45941f53ae0db3a130569e904d2faba71871",
+    "expected": null
+  },
+  {
+    "id": "P03",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"python\"},\"content\":[{\"type\":\"text\",\"text\":\"print(\\\"ordinary\\\")\\n\"}]},{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}",
+    "input_sha256": "52de5621e4aab0f8f03a09c77a6c8790dfd083e7e7f84fca2e01aa1cb79eeeaa",
+    "expected": {
+      "value": {
+        "schema": "pigboard-handoff/v1",
+        "record_id": "00000000-0000-4000-8000-000000000001",
+        "operation_id": "00000000-0000-4000-8000-000000000001",
+        "ticket_id": "1",
+        "requirements_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "assignment": null,
+        "role": "manager",
+        "kind": "admission",
+        "from_stage": "Ready to Work",
+        "to_stage": "In Progress",
+        "payload": {
+          "project_id": "100",
+          "stream": "stream-1",
+          "mode": "new_work",
+          "previous_assignment": null,
+          "requests": [],
+          "existing_pr": null
+        },
+        "resume_authorization": null
+      },
+      "record_digest": "sha256:87b713f187502f9a81591171ab1252d8f8a614044ebcaa660598d42e7923fc11"
+    }
+  },
+  {
+    "id": "P04",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]},{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}",
+    "input_sha256": "3480c5cac3377ec71659f8d32065aab1692ad1d8d0b7857041ea192111f1fa57",
+    "expected": {
+      "diagnostic": "HANDOFF_BLOCK_COUNT"
+    }
+  },
+  {
+    "id": "P05",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null,\\\"schema\\\":\\\"pigboard-handoff/v1\\\"}\"}]}]}",
+    "input_sha256": "ea747828bca398188d6fb8dc1570bfa7b3e35cc7ccc9958064ec20c875e849b5",
+    "expected": {
+      "diagnostic": "DUPLICATE_KEY"
+    }
+  },
+  {
+    "id": "P06",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v2\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}",
+    "input_sha256": "dea4b95322193e4329267ce00404814f5d50fa6b6df1a39a7547a8bfa0f04029",
+    "expected": {
+      "diagnostic": "STRUCTURE"
+    }
+  },
+  {
+    "id": "P07",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: {value: pigboard-handoff/v1}\\n\"}]}]}",
+    "input_sha256": "e7ed1aceeb0234ffa0e4b17dc49ff12775692c2d855074829bd6040deabd63d9",
+    "expected": {
+      "diagnostic": "STRUCTURE"
+    }
+  },
+  {
+    "id": "P08",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"anchor: &ordinary ordinary/v1\\nschema: [*ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary, *ordinary]\\nunrelated: pigboard-handoff/v1\\n\"}]}]}",
+    "input_sha256": "6c611268c65357605e82f9247d1878fbff7ce9ff233616941506f78405af5178",
+    "expected": null
+  },
+  {
+    "id": "P09",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"old: &target ordinary/v1\\nmarker: &target pigboard-handoff/v1\\ncontainer: &container {value: *target}\\nchain: &chain [*container]\\nschema: *chain\\n\"}]}]}",
+    "input_sha256": "47ea2e4c6c77752cae1f209e08c37cfb3bcc829d51b34c4ef27ccab31e2f1894",
+    "expected": {
+      "diagnostic": "ALIAS"
+    }
+  },
+  {
+    "id": "P10",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: &self [*self, pigboard-handoff/v1]\\n\"}]}]}",
+    "input_sha256": "72c69938510b33d16f288a3df72a4aed99d2f5f1c190643a102c74199771a9fa",
+    "expected": {
+      "diagnostic": "ALIAS"
+    }
+  },
+  {
+    "id": "P11",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: [*missing, *later]\\nlater: &later pigboard-handoff/v1\\n\"}]}]}",
+    "input_sha256": "3c62db04191b64de3565326bf2abab3ad821e621eda3fbf7a93db6ac8aa4dafb",
+    "expected": null
+  },
+  {
+    "id": "P12",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: [*missing, pigboard-handoff/v1]\\n\"}]}]}",
+    "input_sha256": "5a098be39fd7d794c03ec77ec938ebdf59daa47391ca6d145247dd2259c9c8bd",
+    "expected": {
+      "diagnostic": "ALIAS"
+    }
+  }
+];
+test('PGB-172 candidate smoke', () => {
+  for (const id of ['P01', 'P03', 'P07']) {
+    const item = candidateCases.find(item => item.id === id);
+    if (item.expected?.diagnostic) assert.throws(() => extractHandoffCandidate(item.input), error => error.diagnostic?.code === item.expected.diagnostic, id);
+    else if (item.expected === null) {
+      assert.equal(extractHandoffCandidate(item.input), null, id);
+    } else {
+      const expectedValue = Object.assign(Object.create(null), item.expected.value);
+      expectedValue.payload = Object.assign(Object.create(null), item.expected.value.payload);
+      assert.deepEqual(extractHandoffCandidate(item.input), {
+        value: expectedValue,
+        record_digest: item.expected.record_digest,
+      }, id);
+    }
+  }
+});
+
+test('PGB-172 candidate recognition', () => {
+  assert.throws(() => extractHandoff(candidateCases.find(item => item.id === 'P03').input, {format:'adf'}), error => error.diagnostic.code === 'HANDOFF_BLOCK_COUNT');
+  const guards = [];
+  try {
+    // Recognition must not invoke document scans or conversion expansion.
+    for (const prototype of [Alias.prototype, Document.prototype, Scalar.prototype, YAMLMap.prototype, YAMLSeq.prototype, Pair.prototype]) {
+      for (const name of ['resolve', 'toJS', 'toJSON']) if (typeof prototype[name] === 'function' && Object.hasOwn(prototype, name)) {
+        guards.push([prototype, name, prototype[name]]);
+        prototype[name] = () => { throw Error('YAML conversion must not run during recognition'); };
+      }
+    }
+    const item = candidateCases.find(item => item.id === 'P08');
+    assert.equal(extractHandoffCandidate(item.input), null);
+  } finally { for (const [prototype, name, value] of guards) prototype[name] = value; }
+  for (const item of candidateCases.filter(item => !['P01', 'P03', 'P07', 'P08'].includes(item.id))) {
+    assert.equal(createHash('sha256').update(item.input).digest('hex'), item.input_sha256, item.id + ' literal input');
+    const before = item.input;
+    if (item.expected?.diagnostic) assert.throws(() => extractHandoffCandidate(item.input), error => error.diagnostic?.code === item.expected.diagnostic, item.id);
+    else assert.equal(extractHandoffCandidate(item.input), null, item.id);
+    assert.equal(item.input, before);
+  }
+});
+
+test("PGB-172 malformed selected-block language returns a safe diagnostic", () => {
+  const input = "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":{\"toLowerCase\":\"x\"}},\"content\":[{\"type\":\"text\",\"text\":\"schema: pigboard-handoff/v1\\n\"}]}]}";
+  const before = input;
+  const expected = {"code": "ADF_BLOCK", "path": "/content/0", "message": "Use a YAML code block containing only text children."};
+  for (const invoke of [() => extractHandoffCandidate(input), () => extractHandoff(input, {format:'adf'})]) {
+    assert.throws(invoke, error => {
+      assert(error instanceof Error); assert(!(error instanceof TypeError));
+      assert.deepEqual(error.diagnostic, expected); assert.deepEqual(error.diagnostics, [expected]);
+      return true;
+    });
+  }
+  assert.equal(input, before);
 });
 
 test('recorded CLI rejects mixed purposes and unsafe setup before reading input',async t=>{

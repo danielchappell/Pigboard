@@ -230,3 +230,7 @@ dependency closure and exercise disposable damage. The installed validator carri
 the reader, harness, literal cases and dummy TLS material as one payload. The CLI
 selects only prescribed local dummy-HTTPS cases; it adds no live Jira command or
 manager admission authority.
+
+### Supplied handoff candidate inspection
+
+`extractHandoffCandidate(adfInput)` in the existing handoff module classifies supplied ADF only. A source-order AST pass binds aliases to prior anchors; one visited root-schema graph identifies attempted records. The existing strict parser then validates the selected original whole wrapper and canonical record. Strict receipt consumers retain their existing contract. This pure synchronous API has fixed bounds and no provider, resolver or deadline parameter. A later inventory caller owns discovery and checks its own deadline before and after inspection; synchronous parsing cannot be timer-preempted. Source and prepared-copy use and recovery are in the [guide](docs/manager-preview.md#inspect-a-supplied-handoff-comment).

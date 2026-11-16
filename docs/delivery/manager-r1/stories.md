@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-Complete approved source catalogue: 52 Stories, 187 full human cases and zero AI cases, in dependency order. The original frozen observation remains 50 Stories and 7 Tasks; the PGB-169/PGB-159 readbacks and R1-43/PGB-171 native contract are later, separately bound additions. This is not a refreshed Jira inventory. Publication is not implementation, human acceptance, merge or activation. See [delivery and checks](README.md) and [provenance](publication.json).
+Current integrated source catalogue: 53 Stories, 189 full human cases and zero AI cases, including R1-43 acquisition and R1-44 candidate inspection. All125 prerequisite occurrences and133 unique links are retained; PGB-173 is the sole pending source amendment. Publication does not establish human acceptance, merge or activation. See [delivery and checks](README.md) and [provenance](publication.json).
 
 ## R1-01: Validate an editable work document
 
@@ -11705,6 +11705,285 @@ Human acceptance remains NOT_RUN. AI cases: zero.
       ]
     },
     "automated_regression": "Existing named-reader acquisition, target identity, response bounds, cancellation/TLS and source/copied compatibility regressions, plus current and historical catalogue guards."
+  },
+  "open_questions": []
+}
+```
+
+## R1-44: Inspect handoff candidates from ordinary comments
+
+[PGB-172](https://scubapig.atlassian.net/browse/PGB-172)
+
+### Problem to solve
+
+Ordinary Jira comments can contain code that is not a Pigboard record. Callers need to distinguish these comments from valid handoff candidates and malformed Pigboard attempts without accepting receipt proof.
+
+### Acceptance Criteria
+
+- **AC1.** A caller can import extractHandoffCandidate(adfInput) from the source or prepared copied validator and receive null for ordinary content or a canonical value and record_digest for one valid candidate.
+- **AC2.** Malformed or ambiguous attempted Pigboard blocks return a safe diagnostic, including a non-scalar root schema containing the Pigboard family; unrelated code remains ordinary.
+- **AC3.** Candidate inspection has fixed input limits and linear bounded traversal, including alias chains, cycles and missing targets, without provider calls or writes.
+- **AC4.** The guide provides source and copied examples and recovery; existing strict handoff validation, canonical digest and receipt authority remain unchanged.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Own pure handoff candidate inspection, existing-parser tests, direct source/copied use, guides and full current catalogue.
+- **TAC1.** In danielchappell/Pigboard, add only the pure extractHandoffCandidate(adfInput) API to the existing installed handoff module; it has no deadline, resolver, provider or transport parameter.
+- **TAC2.** Use one source-order YAML AST metadata pass to associate aliases with the latest prior anchor, then one visited traversal limited to root schema values; do not call Alias.resolve, toJS or conversion-context expansion, scan arbitrary fields, or bind forward targets later.
+- **TAC3.** Preserve existing whole-ADF and selected whole-wrapper limits and canonical record validation, including unsupported versions, duplicate keys, aliases, tags, depth, lists and bytes; candidate recognition is not proof acceptance.
+- **TAC4.** Preserve the other 24 predecessor live contract/config modules and current reader/TLS/case packet; document the one handoff-module change and full source/catalogue history in the same PR.
+
+### Testing Strategy
+
+- **QA skills:** `[]`. Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.
+- **Access and setup:** Reviewed source and prepared copied work-validator root; supplied literal ADF only, no provider or network. No account, secret, UI or Postman is required.
+- **Preparation:** Literal three-input source/copied import commands and expected classifications/digest, plus the exact-commit twelve-assertion and inherited-limit evidence packet. Use only the fixed cases in the reviewed delivery plan; no timing or load campaign.
+
+#### R1-44-H01
+
+- **Actor:** designated human reviewer; execution `human`.
+- **Requirements:** AC1, AC2, AC4, TAC1, TAC3.
+
+**Prerequisites**
+
+1. PREP-01 supplies exactly three literal ADF bodies: ordinary code, mixed ordinary plus one valid candidate, and schema: {value: pigboard-handoff/v1} malformed attempt.
+2. Prepared source and copied validator roots with recorded dependencies; no UI, Postman, account, secret, provider or network.
+
+**Steps**
+
+1. Import extractHandoffCandidate from each explicit source/copied root; run the three prepared inputs once per root, with the copied invocation from an unrelated working directory.
+2. Compare actual classifications and canonical value/digest with the independently authored literals; inspect the guide’s recovery and no-fallback evidence.
+
+**Expected**
+
+1. Ordinary content returns null; mixed valid content returns the unchanged canonical value and digest; malformed root schema is diagnosed, not silently ignored.
+2. Source and copied meanings match; the copied route does not import source files or fetch dependencies.
+3. No result establishes receipt proof, permission, admission or live provider visibility.
+
+**Evidence**
+
+1. Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.
+2. Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.
+3. Before/after source/input hashes and cleanup; developer results do not count as human acceptance.
+
+**Cleanup**
+
+Owner: designated human reviewer. Mode: prescribed.
+
+1. Keep evidence; close only prescribed test servers, sockets and timers.
+2. Remove only disposable test copies and directories; preserve the prepared release and all real resources.
+
+#### R1-44-H02
+
+- **Actor:** designated human reviewer; execution `human`.
+- **Requirements:** AC2, AC3, AC4, TAC2, TAC3, TAC4.
+
+**Prerequisites**
+
+1. PREP-01 provides exact-commit outputs and input hashes for the twelve fixed pure recognition assertions and inherited at/over-limit cases listed in the delivery plan.
+
+**Steps**
+
+1. Inspect the actual pure-regression results and corresponding fixed inputs for root-only recognition, direct prior-anchor lookup, cycles, missing targets and unchanged strict parsing.
+2. Compare the live module map and guide to the reviewed source/copy evidence; record any missing evidence without substituting a human PASS.
+
+**Expected**
+
+1. The finite cases distinguish ordinary content from attempted records, terminate cycles and never resolve each alias by scanning the whole document.
+2. Whole-wrapper and record limits still reject their prescribed over-limit inputs; canonical digest and strict receipt consumers are unchanged.
+3. Only the declared handoff module changes in the old live25 map; the remaining 24 and reader/TLS/old packet are preserved.
+
+**Evidence**
+
+1. Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.
+2. Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.
+3. Before/after source/input hashes and cleanup; developer results do not count as human acceptance.
+
+**Cleanup**
+
+Owner: designated human reviewer. Mode: prescribed.
+
+1. Keep evidence; close only prescribed test servers, sockets and timers.
+2. Remove only disposable test copies and directories; preserve the prepared release and all real resources.
+
+- **Automated regression:** Pure ordinary/candidate/malformed recognition, bounded alias traversal and unchanged strict-parser limits, plus the three-input prepared-copy import check and current/historical catalogue guards.
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Ordinary Jira comments can contain code that is not a Pigboard record. Callers need to distinguish these comments from valid handoff candidates and malformed Pigboard attempts without accepting receipt proof.",
+  "prerequisites": [],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "A caller can import extractHandoffCandidate(adfInput) from the source or prepared copied validator and receive null for ordinary content or a canonical value and record_digest for one valid candidate."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Malformed or ambiguous attempted Pigboard blocks return a safe diagnostic, including a non-scalar root schema containing the Pigboard family; unrelated code remains ordinary."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Candidate inspection has fixed input limits and linear bounded traversal, including alias chains, cycles and missing targets, without provider calls or writes."
+    },
+    {
+      "id": "AC4",
+      "requirement": "The guide provides source and copied examples and recovery; existing strict handoff validation, canonical digest and receipt authority remain unchanged."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Own pure handoff candidate inspection, existing-parser tests, direct source/copied use, guides and full current catalogue.",
+      "out_of_scope": [
+        "Plexus/customer repository changes, AWS resolver/wrapper, State adapter and operational-state writes.",
+        "Receipt acceptance, policy selection/admission, external PR/evidence fetching, a new input producer or a PGB-144 proof-policy decision.",
+        "Production live CLI, provider probes, deployment, activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines."
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "In danielchappell/Pigboard, add only the pure extractHandoffCandidate(adfInput) API to the existing installed handoff module; it has no deadline, resolver, provider or transport parameter."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Use one source-order YAML AST metadata pass to associate aliases with the latest prior anchor, then one visited traversal limited to root schema values; do not call Alias.resolve, toJS or conversion-context expansion, scan arbitrary fields, or bind forward targets later."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve existing whole-ADF and selected whole-wrapper limits and canonical record validation, including unsupported versions, duplicate keys, aliases, tags, depth, lists and bytes; candidate recognition is not proof acceptance."
+      },
+      {
+        "id": "TAC4",
+        "requirement": "Preserve the other 24 predecessor live contract/config modules and current reader/TLS/case packet; document the one handoff-module change and full source/catalogue history in the same PR."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Reviewed source and prepared copied work-validator root; supplied literal ADF only, no provider or network.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Only the fixed inputs named by the cases below.",
+        "initial_state": "Fresh isolated inputs per prescribed observation; no live data.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Literal three-input source/copied import commands and expected classifications/digest, plus the exact-commit twelve-assertion and inherited-limit evidence packet. Use only the fixed cases in the reviewed delivery plan; no timing or load campaign.",
+        "used_by": [
+          "DATA-01",
+          "R1-44-H01",
+          "R1-44-H02"
+        ],
+        "preserves": [
+          "Acceptance, technical constraints, literal expected outcomes, fixed inputs and finite counts; never derive expected answers from the implementation.",
+          "No new cases, provider access, dependency fetch, raised bounds or changed security settings."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.",
+      "cases": [
+        {
+          "id": "R1-44-H01",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "AC4",
+            "TAC1",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "PREP-01 supplies exactly three literal ADF bodies: ordinary code, mixed ordinary plus one valid candidate, and schema: {value: pigboard-handoff/v1} malformed attempt.",
+            "Prepared source and copied validator roots with recorded dependencies; no UI, Postman, account, secret, provider or network."
+          ],
+          "steps": [
+            "Import extractHandoffCandidate from each explicit source/copied root; run the three prepared inputs once per root, with the copied invocation from an unrelated working directory.",
+            "Compare actual classifications and canonical value/digest with the independently authored literals; inspect the guide’s recovery and no-fallback evidence."
+          ],
+          "expected": [
+            "Ordinary content returns null; mixed valid content returns the unchanged canonical value and digest; malformed root schema is diagnosed, not silently ignored.",
+            "Source and copied meanings match; the copied route does not import source files or fetch dependencies.",
+            "No result establishes receipt proof, permission, admission or live provider visibility."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        },
+        {
+          "id": "R1-44-H02",
+          "execution": "human",
+          "owner_role": "designated human reviewer",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "AC4",
+            "TAC2",
+            "TAC3",
+            "TAC4"
+          ],
+          "prerequisites": [
+            "PREP-01 provides exact-commit outputs and input hashes for the twelve fixed pure recognition assertions and inherited at/over-limit cases listed in the delivery plan."
+          ],
+          "steps": [
+            "Inspect the actual pure-regression results and corresponding fixed inputs for root-only recognition, direct prior-anchor lookup, cycles, missing targets and unchanged strict parsing.",
+            "Compare the live module map and guide to the reviewed source/copy evidence; record any missing evidence without substituting a human PASS."
+          ],
+          "expected": [
+            "The finite cases distinguish ordinary content from attempted records, terminate cycles and never resolve each alias by scanning the whole document.",
+            "Whole-wrapper and record limits still reject their prescribed over-limit inputs; canonical digest and strict receipt consumers are unchanged.",
+            "Only the declared handoff module changes in the old live25 map; the remaining 24 and reader/TLS/old packet are preserved."
+          ],
+          "evidence": [
+            "Exact reviewed commit, prepared source/copied identities where used, fixture/input hashes and commands.",
+            "Actual outputs, exit codes and independently prepared expected-result comparison; retain failures and unverified observations.",
+            "Before/after source/input hashes and cleanup; developer results do not count as human acceptance."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "designated human reviewer",
+            "steps": [
+              "Keep evidence; close only prescribed test servers, sockets and timers.",
+              "Remove only disposable test copies and directories; preserve the prepared release and all real resources."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Pure ordinary/candidate/malformed recognition, bounded alias traversal and unchanged strict-parser limits, plus the three-input prepared-copy import check and current/historical catalogue guards."
   },
   "open_questions": []
 }

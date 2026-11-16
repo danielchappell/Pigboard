@@ -1,8 +1,8 @@
 # Pig Boss release one: complete approved delivery catalogue
 
-Current source composition is **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured native links**. R1-43/PGB-171 gives the existing named-issue reader one acquisition owner; its two human groups remain NOT_RUN. PGB-172/R1-44 and PGB-173/R1-45 still require their own full source Stories, and final PGB-148 remains pending. This is source code/catalogue work, not a refreshed native inventory or activated manager.
+Current integrated source catalogue: **53 Stories, 189 full human cases, zero AI cases and125 prerequisite occurrences**. All133 unique typed links are retained, including existing172→173/10776; this integration adds zero links. The53 requirements and41 original scenarios are unchanged. PGB-173 is the sole pending source amendment.
 
-The current source now composes that R1-43 reader with the reviewed PGB-160 recorded-handoff changes delivered on main at `da92a4e1d7839f815e661ffe7709f1891038b454`. The R1-43 publication keeps its original 159-based 41-payload/27-runtime maps as dated evidence; its named parent-integration record owns the current maps, changing only PGB-160's three payload and two runtime hashes. The 52/187 catalogue and R's named-reader behavior are unchanged. R's 692/692 local suite and 12/12 independent QA observations, and PGB-160's 694/694 suite, belong to their original revisions. The composed candidate has separate affected checks; current-head review, CI, human acceptance, merge and activation remain separate.
+The current source composes53 Stories/189 designated human groups with inherited R1-43 acquisition, PGB-160 recorded-handoff behavior and the PGB-172 pure candidate API. PGB-173 alone is pending source composition; final148 delivery remains later. R's outer and nested160 maps remain dated171 evidence; P's nested parent_integration current25/27/41 maps bind this final source. Only handoff differs from actual171 runtime; handoff and the unchanged P guide differ in payload. Original R/160/P suite claims belong to their own revisions. The new shared-helper revision requires its own full result; local checks, human acceptance, current-head review/CI, merge and activation remain separate.
 
 At the dated PGB-169/147 checkpoint, the approved source catalogue contained **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combined the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.
 
@@ -46,6 +46,7 @@ Read [all complete Story bodies](stories.md), the [machine contracts](ticket-dra
 | PGB-161 / [PGB-161](https://scubapig.atlassian.net/browse/PGB-161) | Check current worker proof and truthful inability | PGB-160 | 1.3125–1.8125 | 9 |
 | R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |
 | R1-43 / [PGB-171](https://scubapig.atlassian.net/browse/PGB-171) | Preserve named-issue reads in one acquisition session | R1-33 | 0.43750–0.66250 | 13 |
+| R1-44 / [PGB-172](https://scubapig.atlassian.net/browse/PGB-172) | Inspect handoff candidates from ordinary comments | Reviewed design; no technical prerequisites | 0.63750–1.01250 | 16 |
 | R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33, pending PGB-173 | 0.53750–0.73750 | 12 |
 | PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |
 | PGB-163 / [PGB-163](https://scubapig.atlassian.net/browse/PGB-163) | Read exact handoffs and reconciliation facts | PGB-160, PGB-147, PGB-148, PGB-150 | 1.375–1.875 | 14 |
@@ -69,15 +70,15 @@ Dated actual147 integrated51-row allocation: **68.5275–79.13375 days**, intege
 
 At the approved 16 November allocation checkpoint, PGB-169 owned **11 paths / 6.75–10.5 human hours**, including its own planning, reviews, corrections, tests, documentation and PR preparation. Residual PGB-159 owns **9 paths / 11.5–15 human hours**. Combined: **18.25–25.5 hours**, 19 unique paths and 20 change incidences; the cursor test is counted in both PRs. These are dated approved allocations, not implementation-plan approval for the later Stories or a measured saving. Their exact-source plans remain provisional until their own gates pass.
 
-The pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-human hours**. The current combined actual147 integration/F1 correction forecast is **9.75–15.25 familiar-human hours**, adding2.5–4.0 hours for the exact-parent plan/reviews, bounded reconciliation, affected checks and final readbacks/PR support. Three mechanical test-expectation corrections and their affected reviews add 0.5–0.75 hours of support to the original allocation; the revised support line is 3–4.5 hours. This forecast includes the remaining checks, exact-commit reviews and PR preparation. The approved row values and aggregate above remain the historical allocation checkpoint, and are not silently rotated. Human forecasts, agent elapsed time, logged tokens and billed cost are distinct; token volume and billed cost are unknown here.
+Dated169 operational forecast: The pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-human hours**. The then-combined actual147 integration/F1 correction forecast is **9.75–15.25 familiar-human hours**, adding2.5–4.0 hours for the exact-parent plan/reviews, bounded reconciliation, affected checks and final readbacks/PR support. Three mechanical test-expectation corrections and their affected reviews add 0.5–0.75 hours of support to the original allocation; the revised support line is 3–4.5 hours. That forecast included the remaining checks, exact-commit reviews and PR preparation. The approved row values and aggregate above remain the historical allocation checkpoint, and are not silently rotated. Human forecasts, agent elapsed time, logged tokens and billed cost are distinct; token volume and billed cost are unknown here.
 
 ## Inspect and verify the catalogue
 
-Use the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command checks every complete native-bound contract/case, ordering and dependency before expensive installation checks:
+Use the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command must execute exactly six names: current R/P catalogue and coverage guards plus the two dated169 guards. The second command selects three additional historical81/146 guards. Exit0 with skipped or unselected intended tests is not verification. These general inspection commands do not change this repair's one-smoke/one-full-suite execution order:
 
 ```sh
-node --test --test-name-pattern='PGB-169 current catalogue matches approved native contracts and complete rendered Stories' test/story-authoring.test.mjs
-node --test --test-name-pattern='PGB-169 current catalogue coverage and forecast retain historical evidence|PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+node --test --test-name-pattern='PGB-171 current|PGB-172 current|PGB-169 dated catalogue' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+node --test --test-name-pattern='PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
 node --test --test-name-pattern='PGB-169 every current source payload byte matches its installed copy and manifest|real installed validator runs outside checkout and failed runtime variants preserve stable link|installed repair preview preserves complete checkpoint and historical contracts|repair closure and eighth semantic smoke preserve the previous stable link on failure' test/cursor-environment.test.mjs
 npm test
 ```
@@ -86,11 +87,11 @@ A passing command must select the intended tests. Keep each command, exact revis
 
 The publication preserves its original 43-entry historical byte closure: 37 payload sources, five other catalogue artifacts and the installer. Six additional147 bodies preserve only the four payload additions and two changed old sources; those six additional147 bodies plus35 unchanged original bodies reconstruct the dated41-file payload and27 runtime paths. The current installation guard compares all41 payload paths with actual source/fixture/copied/manifest bytes. Independent old hashes and a whole-capture digest bind those exact parent bytes. Those dated bytes do not stand in for current modules. Current semantic checks use actual source/copied code, and the fresh installation guard compares every independently expected payload path with the actual source, fixture, installed bytes and manifest. It records the real fixture commit. This introduces no rotating runtime hash map or future-change allowlist.
 
-All 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior are unchanged; no scheduling implementation or activation is authorized by publication.
+Dated169 catalogue publication: All 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior were unchanged at that checkpoint; no scheduling implementation or activation is authorized by publication.
 
-## Current R1-43 source and full split forecast
+## Dated R1-43 checkpoint before PGB-172 — 16 November 2026
 
-The current **52-row source allocation is 68.15875–78.72125 human days**. It replaces the old PGB-148 row once with its residual row and adds R1-43. Pending PGB-172 and PGB-173 add **14.15–20.00 hours (1.76875–2.50000 days)**, giving a **69.92750–81.22125 day full split-accounted forecast**. PGB-172 later preserves this residual and adds P only; PGB-173 adds S only and moves its external prerequisite into the source order. The source subtotal alone is not a whole-project saving.
+At that R-only checkpoint, the **52-row source allocation was 68.15875–78.72125 human days**. It replaced the old PGB-148 row once with its residual row and added R1-43. Then-pending PGB-172 and PGB-173 were estimated to add **14.15–20.00 hours (1.76875–2.50000 days)**, giving a **69.92750–81.22125 day full split-accounted forecast**. The planned PGB-172 addition would preserve this residual and add P only; PGB-173 would add S only and move its external prerequisite into the source order. That dated source subtotal alone was not a whole-project saving.
 
 R1-43 changes the existing source reader and its narrow ownership regression; the public ID-only API, prepared copied route and fixed fixture oracles stay the same. Developer checks, independent committed-code review, CI, designated human acceptance (0/2 NOT_RUN), merge and activation are separate. The original 51-row and historical paragraphs below remain dated evidence.
 
@@ -713,3 +714,17 @@ PGB-150 human acceptance remains NOT_RUN (0/4), PGB-152 NOT_RUN (0/2), PGB-154 N
 ## Actual147 installed-inspection checkpoint — dated history
 
 The actual14742-row checkpoint had a58.55875–65.13375 days allocation (5855875/6513375 units). Its exact12-path R1-33 row was9.35–13.2hours, replacing only the earlier16-path row. Installed named-issue inspection and the test-only HTTPS fixture CLI are inherited from that reviewed parent:35 variants,8 controls and1 private projection, human NOT_RUN (0/4). The source guide explains finite inputs, partial outcomes and recovery. Original81 human42 cases and169 human0/2 remain NOT_RUN; developer evidence is separate. This integration adds no runtime beyond inherited147 and authorizes no activation.
+
+<!-- PGB-172 integrated current start -->
+
+Current actual171 + PGB-172 source allocation (53 rows): **68.79625–79.73375 days**, integer units6879625/7973375 at scale100000. This preserves the one R171 residual148 replacement and adds P once. Pending S173 is excluded; this is a source allocation, not remaining project effort. PGB-172 current forecast is5.10–8.10h, including0.60–1.00h of this concrete review correction; previous4.50–7.10h and original3.90–6.10h remain dated history. All189 human groups, including R1-44-H01/H02, remain NOT_RUN.
+
+For the current composition plus dated preservation, this selector executes six named catalogue guards:
+
+```sh
+node --test --test-name-pattern='PGB-171 current|PGB-172 current|PGB-169 dated catalogue' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+```
+
+Verify all six names execute without skips; local checks, exact committed review, human acceptance, hosted CI/Codex, merge and activation remain separate. The pure [supplied-comment API guide](../../manager-preview.md#inspect-a-supplied-handoff-comment) remains complete.
+
+<!-- PGB-172 integrated current end -->
