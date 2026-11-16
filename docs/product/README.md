@@ -133,10 +133,11 @@ The current partial source checkpoint is **30 Stories/132 cases** after PGB-145/
 
 PGB-149/R1-35 supplies the complete offline source API/JSON repair preview and its
 required copied-runtime compatibility. The source guide exports all fixed inputs,
-options and complete independent reports. Readable output is available but does
-not yet name every retained cause; use `--json` for the complete result until
-PGB-146 finishes readable parity. The full installed fixture kit, eighth semantic
-smoke and complete source/native publication reconciliation remain PGB-81.
+options and complete independent reports. PGB-146 completes readable source
+parity: proposals name every canonical cause with its ticket, comment, record and
+full digest in the same order as the machine result. The full installed fixture
+kit, eighth semantic smoke and complete source/native publication reconciliation
+remain PGB-81.
 
 The current partial source inventory remains **30 Stories/132 cases**, including
 actual merged PGB-145. The preceding PGB-146 capture retains its earlier source
