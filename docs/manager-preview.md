@@ -863,10 +863,55 @@ facts to the Core owner (PGB-162) for normalization, recorded-proof composition
 and policy evaluation. The collector constructs no semantic snapshot or admission
 decision; `admission` and `receipt_proof` remain `not_evaluated`.
 
+Repeated issue observations ignore label order and ADF object-key order when
+checking for changes. Label contents, native fields, ADF text, attributes and
+array order still matter; a null description differs from a document. Private
+label arrays and body strings stay exactly as acquired. Embedded work text and
+reference digests are not normalized. A real difference retains the existing
+`CHANGED_INPUT` hold; inspect the changed source before a new bounded invocation.
+
+Reference identity compares the exact `ticket_id`, `comment_id`, `record_id` and
+`digest` strings regardless of object member order. For one ticket/comment target,
+a different record ID or digest remains a conflict. Original pointer, comment and
+reference objects stay unchanged, as do exact body and digest validation.
+
 An authenticated complete property-key enumeration for a verified issue can
 confirm `pointer: {state: "absent", value: null}` at that observation. A listed
 work-context property requires a validated value. A raw property 404 remains
 unknown, with `POINTER_UNKNOWN`; it never proves absence.
+
+Retained ownership or pending intents can name a label outside the current
+configured worker prefixes and numbered suffixes. Those historical tuples stay
+visible with their old IDs and a shared `SCOPE_UNKNOWN` hold. The collector can
+still read their exact known identities and references within configured projects;
+it does not search the unsupported label or infer complete occupancy. Reconcile
+the intended configuration and retained ownership with their actual owner. Keep
+uncertain attempts; do not clear State or broaden queries automatically.
+
+An Epic's children and declared streams are enumerated only when that Epic is
+observed through a configured opt-in search, named as the Epic of a supported
+retained project/label tuple, or found by a configured full-label search. These
+facts are bound to the Epic's immutable project and issue IDs. An Epic reached
+only through a parent, prerequisite, pending subject, declared member or typed
+reference still gets its exact issue, pointer and comments; its declarations do
+not authorize more child or stream searches. Its actual configured native labels
+can independently establish a relevant full-label query. If that query later
+finds the Epic, collection promotes the cached observation and enumerates it once
+without another issue read. Original bodies remain private facts in either case.
+
+The `max_known_issues` ceiling counts admitted identities throughout the invocation,
+including failed and unresolved lookups. A failed lookup does not free room for
+later discovery. Proven key/ID aliases share one identity; unknown older keys
+remain separate. The public `known_issues` counter counts successfully acquired
+rows, so it can be below the ceiling when a new identity hits that bound. Inspect
+the named root, bound and original lookup failure before a new authorized bounded
+invocation. Do not erase retained history or raise a ceiling automatically.
+
+A missing resolver capability returns `status: "setup_failed"` with `SETUP_MISSING`
+and no provider requests. Prepare the trusted resolver, then start a fresh bounded
+invocation. Known retained tuples remain visible; missing setup does not turn them
+into an empty inventory. A resolver failure keeps its own diagnostic and
+incomplete status.
 
 For example, `status: "incomplete"` with `RETAINED_INCOMPLETE` holds every reported
 scope even when native observations succeeded. An isolated comment/reference
