@@ -552,6 +552,9 @@ known-issue/comment bounds apply too. An issue outside configured project IDs ha
 no pointer/comment follow-up. Only fixed gateway HTTPS GETs are used; certificate
 and hostname verification remain enabled. There are no redirects, retries,
 caller-selected URLs, JQL, transport modules or environment credential overrides.
+Validated issue IDs and exact target pairs are copied before credential resolution.
+Changing the caller's arrays or pairs while the resolver is pending cannot change
+the work selected for that invocation; make a new invocation for new identities.
 
 `result.report` contains schema, status, requested scope, safe issue ID/project/key
 rows and read states, diagnostics, all eleven limits, counters and cleanup.
@@ -601,18 +604,21 @@ bound, not an exact heap measurement. Request deadlines include headers and body
 the total deadline also includes resolution and parsing. Time checks surround
 bounded synchronous parsing; timers cannot preempt JavaScript mid-parse.
 Non-identity compression is rejected. Nothing is silently truncated.
+When an exact target reaches a request, time, wire or private retention limit,
+the scan stops across all requested issues. Earlier observations remain available,
+the current issue is incomplete and no later issue is fetched.
 
 Fixed diagnostics tell the caller what to inspect next:
 
 | Code | Recovery |
 | --- | --- |
-| `CONFIG_INVALID`, `INPUT_INVALID` | Correct the authored configuration or closed request before retrying. |
+| `CONFIG_INVALID`, `INPUT_INVALID` | Correct the authored configuration or closed caller request before retrying. |
 | `SETUP_MISSING`, `SECRET_UNAVAILABLE` | Restore the approved complete source checkout or prepared resolver; do not fetch/repair inside a run. |
 | `RESOLVER_CANCEL_UNCONFIRMED` | Confirm caller-owned resolver cleanup before a new invocation. |
 | `SCOPE_UNKNOWN`, `READ_DENIED_OR_MISSING`, `POINTER_UNKNOWN` | Confirm project scope and visibility; do not infer absence. |
-| `PAGE_INCOMPLETE`, `CHANGED_INPUT`, `RESPONSE_INVALID` | Investigate the incomplete or changed native data outside the safe report. |
+| `PAGE_INCOMPLETE`, `CHANGED_INPUT`, `RESPONSE_INVALID` | Investigate the incomplete, changed or oversized provider data outside the safe report. A provider ADF error is not a caller input error. |
 | `RATE_LIMITED`, `LIMIT_REACHED` | Retain partial results; review the named bound and required scope before an operator-approved later attempt. No automatic retry. |
-| `TLS_FAILED`, `REDIRECT_REJECTED` | Correct prepared trust/destination setup; do not disable TLS or follow the redirect. |
+| `TLS_FAILED`, `REDIRECT_REJECTED` | Check prepared trust, hostname, certificate validity and local clock or the fixed destination; do not disable TLS or follow the redirect. |
 
 ### Finite human acceptance packet
 
