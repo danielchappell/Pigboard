@@ -415,6 +415,9 @@ appear in reports. B-owned streams and timers are closed before return.
 
 The request has exactly `issue_ids` and `comment_targets`, with decimal-string IDs
 of 1–255 characters, unique entries and targets belonging to supplied issues.
+Comment targets are unique by the pair of `ticket_id` and `comment_id`; member
+order does not change that identity. Duplicate pairs fail before credential
+resolution or requests.
 Empty issue lists, accessors, extra keys, non-JSON values and requests over
 1 MiB/depth16/list1000 fail before credential resolution. The canonical configured
 known-issue/comment bounds apply too. An issue outside configured project IDs has

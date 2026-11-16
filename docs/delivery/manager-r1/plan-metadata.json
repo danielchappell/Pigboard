@@ -178,7 +178,7 @@
       "test/story-authoring.test.mjs",
       "test/qa-helper-contract.test.mjs"
     ],
-    "delivery_state": "Evidence checkpoint 2026-11-16: PGB-152/R1-38 source repair is implemented at eb978e8df8ee0fee40c034984db76693e03820dc (tree 77528fda578f71ac1cb1ce590be8134d79c9f246). Owning affected source checks passed 17/17 and publication guards 48/48 on that tree. Independent local source QA passed with two direct positive observations; the two controls use attributed owning-suite evidence. Earlier PGB-150 results remain attributed: 592/592 to implementation 58210517 and 48/48 prior guards to 95c7119. Original human acceptance remains NOT_RUN (0/4), and child acceptance NOT_RUN (0/2). At this checkpoint, claims-correction re-review, child PR, current-head hosted CI/Codex, parent integration, PR112 gates and Director main merge remain outstanding; no activation is authorized.",
+    "delivery_state": "Evidence checkpoint 2026-11-16: PGB-154/R1-40 corrects duplicate exact-comment target identity in the PGB-150 source reader. The fixed validated ticket_id/comment_id pair rejects duplicates before credential resolution or Jira requests while a unique reversed-member-order target remains valid; PGB-152 null/ADF behavior and all existing bounds remain. PGB-154 is native-only and does not add a source Story; PGB-150 retains 31 source Stories/136 groups. Native publication verified PGB-154 ID 10614, links 10750 and 10751, and PGB-150's full contract with only the new prerequisite added. PGB-154 human acceptance is NOT_RUN (0/1), PGB-152 NOT_RUN (0/2), and PGB-150 originals NOT_RUN (0/4). Local execution, independent exact-commit review, current-head hosted CI/Codex, child/parent integration, Director main merge and activation require separate evidence; publication alone proves none of them.",
     "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
     "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47",
     "native_observation_repair": {
@@ -262,6 +262,80 @@
           "current_min": 48.37875,
           "current_max": 52.0225
         }
+      }
+    },
+    "native_target_identity_repair": {
+      "date": "2026-11-16",
+      "source_id": "R1-40",
+      "native_key": "PGB-154",
+      "native_id": "10614",
+      "parent": "PGB-66",
+      "source_composed": false,
+      "reviewed_plan_sha256": "a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b",
+      "receipt_sha256": "be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a",
+      "child_body_sha256": "38d5dc2eab7d775218c94e07e72d86b8645ecaceac9301456c8a783c2d217612",
+      "child_contract_sha256": "fb17e66615d918d607bc09cc0e509053a2e8191ff844d96eb47f2e0809975e8f",
+      "verified_parent_body_sha256": {
+        "before": "5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9",
+        "after": "758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b"
+      },
+      "native_prerequisite": {
+        "from": "PGB-145",
+        "to": "PGB-154",
+        "link_id": "10750",
+        "required_outcome": "ai_qa_complete"
+      },
+      "native_child_to_feature": {
+        "from": "PGB-154",
+        "to": "PGB-150",
+        "link_id": "10751",
+        "required_outcome": "ai_qa_complete"
+      },
+      "pinned_feature_revision": "1524127c6d9ffbad8481cf7ce86bcc19cb712f52",
+      "pinned_feature_tree": "b35fa3cb57dbdd133d61f76f6b6d1ba19ebb43a2",
+      "changed_files": [
+        "lib/jira/read.mjs",
+        "test/jira-read.test.mjs",
+        "docs/manager-preview.md",
+        "docs/delivery/manager-r1/README.md",
+        "docs/delivery/manager-r1/plan-metadata.json",
+        "docs/delivery/manager-r1/publication.json",
+        "test/story-authoring.test.mjs",
+        "test/qa-helper-contract.test.mjs"
+      ],
+      "changed_file_count": 8,
+      "child_hours": {
+        "min": 3,
+        "max": 5.1
+      },
+      "child_days": {
+        "min": 0.375,
+        "max": 0.6375
+      },
+      "child_human_groups": {
+        "count": 1,
+        "status": "NOT_RUN"
+      },
+      "source_counts": {
+        "stories": 31,
+        "human_groups": 136,
+        "requirements": 53,
+        "scenarios": 41
+      },
+      "source_forecast_days": {
+        "min": 48.42875,
+        "max": 52.11
+      },
+      "historical152_delivery_forecast_days": {
+        "min": 48.86625,
+        "max": 52.86
+      },
+      "current_delivery_forecast_days": {
+        "min": 49.24125,
+        "max": 53.4975
+      },
+      "historical_parent": {
+        "delivery_state": "Evidence checkpoint 2026-11-16: PGB-152/R1-38 source repair is implemented at eb978e8df8ee0fee40c034984db76693e03820dc (tree 77528fda578f71ac1cb1ce590be8134d79c9f246). Owning affected source checks passed 17/17 and publication guards 48/48 on that tree. Independent local source QA passed with two direct positive observations; the two controls use attributed owning-suite evidence. Earlier PGB-150 results remain attributed: 592/592 to implementation 58210517 and 48/48 prior guards to 95c7119. Original human acceptance remains NOT_RUN (0/4), and child acceptance NOT_RUN (0/2). At this checkpoint, claims-correction re-review, child PR, current-head hosted CI/Codex, parent integration, PR112 gates and Director main merge remain outstanding; no activation is authorized."
       }
     }
   },

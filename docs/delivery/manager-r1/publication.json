@@ -2,7 +2,7 @@
   "date": "2026-11-16",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+  "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152/154 source-contract composition remains separate; PGB-152 and PGB-154 native repairs add no source Story entries here. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -910,7 +910,8 @@
       "PGB-147",
       "PGB-148",
       "PGB-149",
-      "PGB-152"
+      "PGB-152",
+      "PGB-154"
     ],
     "pending_source_dependencies": [
       {
@@ -939,13 +940,22 @@
         "required_outcome": "ai_qa_complete",
         "native_link_id": "10748",
         "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-36",
+        "native_key": "PGB-150",
+        "prerequisite_source_id": "R1-40",
+        "prerequisite_native_key": "PGB-154",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10751",
+        "status": "native_verified_source_pending"
       }
     ],
     "forecast_days": {
       "min": 48.42875,
       "max": 52.11
     },
-    "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+    "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152/154 source-contract composition remains separate; PGB-152 and PGB-154 native repairs add no source Story entries here. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -2310,5 +2320,112 @@
       "current_source_scope_status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
     },
     "verification_limits": "Evidence checkpoint 2026-11-16: source repair is implemented at eb978e8df8ee0fee40c034984db76693e03820dc, with owning 17/17 affected source checks, 48/48 publication guards and independent local source QA PASS (two direct positive observations; two controls attributed to the owning suite). Parent source contract and counts remain unchanged; PGB-152 remains native-only in this source composition. Child human acceptance remains NOT_RUN (0/2), and original PGB-150 acceptance NOT_RUN (0/4). Claims-correction re-review, child PR, current-head hosted CI/Codex, parent integration and combined main merge require separate evidence after this checkpoint. No live Jira, installed-runtime, release or activation acceptance is claimed."
+  },
+  "native_target_identity_repair_amendment": {
+    "date": "2026-11-16",
+    "source_id": "R1-40",
+    "native_key": "PGB-154",
+    "native_id": "10614",
+    "parent": "PGB-66",
+    "source_composed": [],
+    "source_counts": {
+      "stories": 31,
+      "human_groups": 136,
+      "requirements": 53,
+      "scenarios": 41
+    },
+    "pinned_feature_revision": "1524127c6d9ffbad8481cf7ce86bcc19cb712f52",
+    "pinned_feature_tree": "b35fa3cb57dbdd133d61f76f6b6d1ba19ebb43a2",
+    "reviewed_plan_sha256": "a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b",
+    "receipt_sha256": "be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a",
+    "child_body_sha256": "38d5dc2eab7d775218c94e07e72d86b8645ecaceac9301456c8a783c2d217612",
+    "child_contract_sha256": "fb17e66615d918d607bc09cc0e509053a2e8191ff844d96eb47f2e0809975e8f",
+    "parent_body_sha256": {
+      "before": "5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9",
+      "after": "758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b"
+    },
+    "parent_contract_preserved_except_child_prerequisite": true,
+    "native_links": [
+      {
+        "from": "PGB-145",
+        "to": "PGB-150",
+        "id": "10744",
+        "preserved": true
+      },
+      {
+        "from": "PGB-150",
+        "to": "PGB-147",
+        "id": "10745",
+        "preserved": true
+      },
+      {
+        "from": "PGB-152",
+        "to": "PGB-150",
+        "id": "10748",
+        "preserved": true
+      },
+      {
+        "from": "PGB-145",
+        "to": "PGB-154",
+        "id": "10750",
+        "preserved": false
+      },
+      {
+        "from": "PGB-154",
+        "to": "PGB-150",
+        "id": "10751",
+        "preserved": false
+      }
+    ],
+    "child_hours": {
+      "min": 3,
+      "max": 5.1
+    },
+    "child_days": {
+      "min": 0.375,
+      "max": 0.6375
+    },
+    "child_changed_files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "child_human_groups": {
+      "count": 1,
+      "status": "NOT_RUN"
+    },
+    "child_status_at_publication": "To Do",
+    "parent_status_at_publication": "In Review",
+    "pending_source_dependency": {
+      "source_id": "R1-36",
+      "native_key": "PGB-150",
+      "prerequisite_source_id": "R1-40",
+      "prerequisite_native_key": "PGB-154",
+      "required_outcome": "ai_qa_complete",
+      "native_link_id": "10751",
+      "status": "native_verified_source_pending"
+    },
+    "source_forecast_days": {
+      "min": 48.42875,
+      "max": 52.11
+    },
+    "historical152_delivery_forecast_days": {
+      "min": 48.86625,
+      "max": 52.86
+    },
+    "current_delivery_forecast_days": {
+      "min": 49.24125,
+      "max": 53.4975
+    },
+    "historical_parent": {
+      "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+      "current_source_scope_status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+    },
+    "verification_limits": "Native PGB-154 publication is verified at this 2026-11-16 checkpoint; source contract/counts remain 31/136, and the child is not a source Story. This publication does not prove the reader repair, developer checks, independent QA, human acceptance, current-head hosted CI/Codex, parent integration, main merge or activation. PGB-154 human 0/1, PGB-152 human 0/2 and PGB-150 original human 0/4 remain NOT_RUN. The prior PGB-152 amendment and its internally named current forecast/status are dated predecessor facts; this newest amendment carries the authoritative known-repair total 49.24125–53.49750 days without claiming an exhaustive native Epic inventory."
   }
 }
