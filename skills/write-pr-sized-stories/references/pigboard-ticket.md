@@ -120,10 +120,12 @@ checks. The two supported locations are:
 # Contributor checkout: run from its root after setup.
 node scripts/validate-work.mjs --mode draft --input /absolute/ticket.yaml --json
 node scripts/validate-work.mjs --mode structure --input /absolute/ticket.yaml --json
+node scripts/validate-work.mjs --mode scheduling --input /absolute/ticket.yaml --config /absolute/company.yaml --scheduling /absolute/scheduling.yaml --json
 node scripts/validate-work.mjs --mode start --input /absolute/ticket.yaml --context /absolute/facts.yaml --json
 # Prepared installation: replace with the same receipt's exact skills path.
 node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode draft --input /absolute/ticket.yaml --json
 node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode structure --input /absolute/ticket.yaml --json
+node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode scheduling --input /absolute/ticket.yaml --config /absolute/company.yaml --scheduling /absolute/scheduling.yaml --json
 node /absolute/receipt/skills/work-validator/scripts/validate-work.mjs --mode start --input /absolute/ticket.yaml --context /absolute/facts.yaml --json
 ```
 
@@ -133,9 +135,24 @@ explains preparation outside delivery. A missing/corrupt checker means setup is
 missing: preserve the draft, report validation not run, and ask its setup owner
 to restore the reviewed installation. Never claim it passed or fetch packages.
 
-`draft` checks editable completeness; `structure` checks complete shape; `start`
-also checks local semantics against caller-supplied trusted context. Without
-context, run draft/structure and report start not run. Report the selected mode,
+`draft` checks editable completeness; `structure` checks complete shape.
+`scheduling` checks complete declarations against canonical configuration and
+separate `pigboard-work-scheduling/v1` facts: exact subject site/project ID/key,
+complete reachable prerequisite graph and minimum related-change obligations.
+Use its selected canonical project's repository URLs and the actual installed
+supported skills. There is no default project or caller skill override. Valid
+mechanical preparation slots may stay unfilled while coverage, ownership,
+expectations and reciprocal consumers remain complete. See the
+[authoring guide](https://github.com/danielchappell/Pigboard/blob/main/docs/authoring.md#check-complete-scheduling-declarations)
+for the complete example, APIs, bounds and human acceptance preparation.
+
+`start` additionally requires its full independently prepared execution context,
+including branch authority, runtime references and reviewed operations. Do not
+invent future facts to pass either check. Without that context, run scheduling
+for complete declarations or draft/structure for shape and report start not run.
+Scheduling reports its purpose, readiness not evaluated and execution unauthorized;
+it never makes the human Ready to Work decision. Configuration/facts are raw
+YAML/JSON even with ADF work; do not mix raw and value API input forms. Report the selected mode,
 actual result, exact missing paths and unresolved owners. Successful local start
 reports live readiness not evaluated; it executes no tests and authorizes no
 transition. Deliver the draft plus that concise summary. This writer does not
