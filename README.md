@@ -77,22 +77,27 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Known dependency wait goes to Rework Queued; human blockers to Blocked. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Dependency wait and blockers stop locally before candidate/append, preserving full evidence; no Jira transition. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
-| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicitly authorized in-scope findings can use request-rework to record and queue the same open PR. |
+| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; human rework is deferred from the ordinary invocation; retain findings for human handling. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
-The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the implementation record and queues all confirmed repairs on the same PR through [reviewer-jira](skills/reviewer-jira/SKILL.md); verified current approval permits QA. The [QA composer](skills/qa-entrypoint/SKILL.md) retains prescribed helper results and delegates canonical handoff to [qa-jira](skills/qa-jira/SKILL.md); confirmed defects and causal upstream waits queue on the same PR. Saved wiring and live acceptance still require their separate gates before activation. Missing access,
-incomplete instructions or required scope expansion blocks the ticket for a human.
-Discussion stays in Review or QA. [request-rework](skills/request-rework/SKILL.md)
-verifies current completed QA, records human findings and queues only that ticket.
-Active work continues; later manager admission remains separate. Workers do not
-select new work, merge, deploy or
-retry blocked work. The planned manager changes admission and repair routing only
-when its coordinated release is implemented and accepted. See the
-[installed workflow](docs/workflow.md) for current contracts.
+The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the actual
+implementation record; only verified current approval permits QA through
+[reviewer-jira](skills/reviewer-jira/SKILL.md). The [QA composer](skills/qa-entrypoint/SKILL.md)
+retains all prescribed helper results and delegates successful ordinary publication
+to [qa-jira](skills/qa-jira/SKILL.md). Failed review/QA, causal waits, blockers,
+repair/resume and human rework are deferred: preserve full local findings, partial
+ledgers and original receipts, then stop before candidate construction or append
+with no Jira transition. Local outcome labels do not mean Jira moved.
+
+Discussion stays in Review or QA. The separately prepared request-rework skill and
+legacy repair contracts do not provide an ordinary fallback. Saved wiring, provider
+acceptance and owner activation remain separate gates. Workers do not select new
+work, merge, deploy or retry blocked work. See the [installed workflow](docs/workflow.md)
+for current contracts.
 
 ## What is in this repository
 

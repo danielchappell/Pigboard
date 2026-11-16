@@ -38,9 +38,9 @@ prepared testing information for review and QA.
 
 | Trigger | Entry point | Required outcome |
 | --- | --- | --- |
-| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, same or new PR, passing current CI/artifacts, typed append/read-back and recheck before direct In Review; known dependency wait to Rework Queued, human blocker to Blocked. |
-| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; approve and move to QA, or publish all confirmed in-scope findings as a same-PR repair_request and move to Rework Queued. |
-| QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs and verifies Human Review, same-PR Rework Queued for repair/causal wait, or Blocked for inability. Humans stay pending. |
+| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, one PR, passing current CI/artifacts, ordinary READY append/read-back and recheck before direct In Review; waits/blockers remain local with no mutation. |
+| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; current approved PASS moves to QA; failed/incomplete review retains full findings locally with no candidate/append or transition. |
+| QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs successful ordinary QA to Human Review; failure/wait/inability remains local before candidate/append. Humans stay pending. |
 
 QA remains on the open PR. The four domain helpers now accept exact structured
 AI steps under their [common contract](../skills/qa-api/references/structured-steps.md).
@@ -55,8 +55,8 @@ deadline: no overlap, missed-offset catch-up or origin reset. It retains every
 attempt and one aggregate canonical PASS/FAIL/NOT_RUN row per expanded step.
 Local bounded helper exercises are not full-loop acceptance or activation.
 
-Reviewer and QA fixes queue on the same open PR; discussion stays In Review or
-QA. QA retains defects during later inability, marks every unfinished row NOT_RUN
+Reviewer and QA defects stay local in this ordinary release; discussion stays
+In Review or QA. No failure, wait or blocker candidate is constructed or appended. QA retains defects during later inability, marks every unfinished row NOT_RUN
 and carries the union of finding IDs only through explicit failed/skipped case
 dependencies, including chains and joins. Actual causal upstream wait retains
 its typed unresolved request and findings; inability takes priority. These are
@@ -65,31 +65,30 @@ The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
 [Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates
 Jira, while preflight/publication never edits code/PRs. Exact current assignment,
 server actor metadata, requirements, actual parent/source/base and current CI
-bind the result. The same still-open repair PR is mandatory; only documented
-pre-first-PR dependency wait with complete no-PR history permits null. No admission,
+bind the ordinary new_work result. Repair/resume and pre-first-PR wait execution
+are deferred; retain their authentic historical receipts without replay. No admission,
 pointer writes, worker exclusivity, deduplication or new provider engine is added.
 
 Failed/unknown writes stop without replacement records or competing transitions.
 At most one resolving read may confirm a lost response; confirmed earlier actions
 are retained. Local record/chain checks do not establish live freshness. See the
-[publication protocol](../skills/implementer-entrypoint/references/handoff.md#publication-protocol). Discussion alone stays in In Review or QA. Missing access, incomplete
-instructions, unavailable tools or necessary scope expansion moves work to Blocked
-with the reason, evidence, human action needed and stage to resume. All blocked
-work waits for a human; no autonomous retry or scope expansion. The agent can
-record a failed transition if its Jira access itself is unavailable.
+[publication protocol](../skills/implementer-entrypoint/references/handoff.md#publication-protocol).
+Missing access, incomplete instructions, unavailable tools or scope expansion
+stops locally with complete findings/partial ledgers, original receipts, precise
+missing facts and required human action. No blocker append or transition is
+permitted, even when the assignment is verified. Local BLOCKED does not claim
+native Jira changed. No autonomous retry, polling, resume or scope expansion.
 
-The AI board has a separate Blocked column. Showing the previous stage on each
-card and resuming it through a human-requested automation are agreed follow-up
-work in [PGB-62](https://scubapig.atlassian.net/browse/PGB-62), not configured
-capabilities. The [Jira setup record](jira-setup.md) captures the board mappings,
-disabled rules, installation IDs and remaining access dependencies for a
-future installer. Humans should not drag tickets to resume them.
+The AI board's Blocked column and the historical broader workflow do not provide
+an ordinary worker fallback. Previous-stage cards and human-requested resume are
+follow-up work in [PGB-62](https://scubapig.atlassian.net/browse/PGB-62). The
+[Jira setup record](jira-setup.md) retains board mappings and disabled rules.
 
 Human Review is for both the responsible developer and human QA reviewer. Agents
 do not merge. Product Acceptance follows human merge and UAT deployment; Done
 means production deployment. Those human and release stages are not automatic
-agent triggers. A human can
-explicitly invoke [request-rework](../skills/request-rework/SKILL.md) for in-scope
+agent triggers. The following separate prepared human-rework capability is outside
+the ordinary invocation and cannot be used as its fallback. A human can explicitly invoke [request-rework](../skills/request-rework/SKILL.md) for in-scope
 findings on the same still-open PR. With current compatible completed QA lineage,
 it verifies and appends one canonical human-request record, reads it back, rechecks
 facts and verifies one direct Human Review -> Rework Queued transition. It changes
@@ -109,8 +108,8 @@ work. Current implementer/reviewer instructions use structured assignments and
 receipts. QA now composes the structured contract; dated pilot wiring still needs
 its separate compatibility check.
 The matrix's [structured reviewer setup boundary](../config/cursor/automations.md#structured-reviewer-setup-boundary)
-distinguishes the current Story/Bug reviewer and QA/Rework Queued/Blocked outcomes
-from the old Story-only filter and reviewer In Progress checklist. Following that
+describes broader prepared QA/Rework Queued/Blocked mappings, which cannot
+expand this ordinary success-only publication boundary, and the old Story-only filter and reviewer In Progress checklist. Following that
 old checklist does not prepare the structured reviewer or QA composer. Use the
 current QA profile and same-release siblings for source invocation.
 
@@ -191,10 +190,10 @@ Use [qa-jira](../skills/qa-jira/SKILL.md) directly with a complete prepared
 assessment and trusted setup. Its read-only preflight establishes eligibility;
 final repeats current checks. Verified complete AI evidence or explicit static
 zero-AI work goes directly from QA to Human Review, with exact pending human IDs.
-A confirmed defect or real outstanding typed upstream request goes to Rework
-Queued. Unresolved access/evidence/cleanup/scope inability takes priority and goes
-to Blocked only when a supported complete canonical blocker can validate. Preserve
-earlier findings and partial rows. Discussion stays QA with no terminal record.
+A confirmed defect, real outstanding typed upstream request or unresolved
+access/evidence/cleanup/scope inability stops before candidate construction or
+append with no transition. Preserve complete local findings, partial rows/attempts,
+pending humans and original receipts. Discussion stays QA with no terminal record.
 
 Publication and native transition are separate effects. Keep the complete durable
 result and exact known receipts on failure; an uncertain append/transition permits
@@ -202,8 +201,8 @@ one resolving read, never replay or a fallback transition. The
 [direct guide](using-pigboard.md#publish-prepared-qa-evidence) supplies inputs and
 recovery. The compatible qa-entrypoint submits one complete actual assessment
 through this boundary. It never writes directly, issues a second final call or
-replays helpers after an unknown publisher return. Valid resume needs the existing
-unique human authorization and case-specific reuse proof. Preserve completed
+replays helpers after an unknown publisher return. Resume is deferred even with
+authentic legacy authorization; retain history for human handling. Preserve completed
 actions, original bytes/receipts and actual/unknown status. Same-release source
 compatibility does not enable delivery or prove installed/live acceptance.
 

@@ -8,7 +8,7 @@ description: Compose one authorized native Jira Story or Bug in In Progress thro
 ## Ordinary worker release boundary
 
 Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. This boundary overrides later general result mappings: repair,
+are supported. Reject unsupported invocation before work or candidate construction: repair,
 resume, human request-rework, failed review/QA, blocked and dependency-wait
 publication are deferred. Preserve local findings, partial ledgers and original
 receipts; return precise inability and hold with no mutation. Required repair
@@ -23,6 +23,12 @@ mismatches reject. Independently compare complete candidate semantics, record-ch
 before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
+
+Linked caller/profile/reference instructions may describe legacy classification or
+repair/resume. Those descriptions are deferred and grant no ordinary mutation
+authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
+not Jira status. The owning publisher must reject unsupported final outcomes
+before candidate construction or append, regardless of an upstream label.
 
 
 Own one ticket, one repository and one PR. This entrypoint dispatches phases;
@@ -43,16 +49,19 @@ admit, lock, deduplicate, interrupt another ticket, merge, deploy or activate.
    CLEAN for the exact plan before execution. Resolve only in-scope findings.
 3. Dispatch one verified Medium continuation with accepted plan/review, preflight,
    requirements, checkout/PR identity and all prior action receipts. It invokes the
-   job's **execute** mode, then Jira **final** mode for a valid candidate. A job
+   job's **execute** mode, then Jira **final** mode only for ordinary READY. A job
    cannot mutate Jira. Preserve the returned receipts; the parent never repeats
    completed execution/publication. NEEDS_HIGH_PLAN returns to High before changed
-   approach edits; new scope or >=2 human days/>20 files requires human Blocked.
+   approach edits; new scope or >=2 human days/>20 files stops locally for a human.
+   DEPENDENCY_WAIT, BLOCKED or NOT_RUN preserves full findings, unfinished checks
+   and original receipts locally; stop before candidate construction or append.
 4. Return the shared [durable result](references/handoff.md#durable-result), including
    exact implementation and delivery outcomes, visible record and observed status
-   or unknown. Early High-phase blockers may use the profile's authorized blocker
-   handoff without claiming Medium ran. Stop after the assigned handoff.
+   or unknown. Early High-phase blockers remain local with no final Jira call,
+   candidate or transition. Stop after the assigned handoff or local inability.
 
-Retain accepted work and receipts on repair/resume. Never infer a missing PR,
+Repair/resume invocation stops before dispatch; retain accepted work and receipts
+locally for human handling. Never infer a missing PR,
 assignment, human authorization, CI success or provider write. Current local
 validation is supplied-fact checking, not live authority. Read the shared
 [publication and uncertainty rules](references/handoff.md#publication-protocol)

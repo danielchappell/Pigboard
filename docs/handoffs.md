@@ -1,11 +1,12 @@
 # Validate local handoff evidence
 
-The prepared `work-validator` contains four read-only handoff checks:
+The prepared `work-validator` contains five read-only handoff checks:
 
 | Purpose | What it proves |
 | --- | --- |
 | `record` | One complete handoff's encoding, structure and digest. |
-| `chain` | The existing strict proof against supplied work/context, native and external observations. |
+| `chain` | The separate legacy strict proof against supplied work/context, native and external observations; no ordinary-worker fallback. |
+| `worker-current` | Current ordinary new_work predecessor or real-leaf proof with current own/required-parent/action observations; see the ordinary contract below. |
 | `recorded-history` | Authentication of one exact recorded target and its required ancestry, including manager admission and stack requests. It does not establish current completion. |
 | `recorded-completion` | A coherent exact current recorded QA leaf, current declarations/digest/assignment, accepted native stage and outstanding recorded obligations. |
 
@@ -13,15 +14,21 @@ No check fetches evidence or proves live provider origin. The recorded purposes
 explicitly report `external_freshness: not_evaluated` and
 `execution_authorized: false`. Hidden pushes, retargeting or PR closure may remain
 undetected; workers still check actual current facts before acting. A valid
-blocked, queued or partial strict result is not completion. Existing worker and
-manager consumers keep their strict routes until their own migration; adding
-these two purposes does not change callers or activate automation.
+blocked, queued or partial strict result is not completion. The ordinary workers
+use explicit worker-current proof; recorded manager purposes grant no worker
+execution or publication authority. The strict/legacy schema, repair/resume
+examples and historical ancestry below remain validator documentation, not active
+ordinary invocation instructions or a failure fallback.
 
-These local checks, composed implementer/reviewer producers and the standalone prepared QA publisher are available in this
-release. The reviewer contract below binds approval/repair to actual implementation receipts. Retained QA remains a basic prose worker; its typed migration, manager
-scheduling/provider adapters and human unblock automation are separate work. Installation does not activate automations or authorize a Jira/PR write.
-Workers need no database access; manager mode compares a separately supplied
-stored assignment and never contacts its operational store.
+The current ordinary producers support new_work implementer READY, reviewer
+approval and successful QA, including explicit static human-only QA. Other
+assignments/results retain full local findings, partial ledgers and original
+receipts and stop before candidate construction or append, with no transition.
+The owning publisher enforces that boundary even when an inherited caller or
+reference classifies local work as FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT.
+Installation activates no automation and authorizes no Jira/PR write. Workers
+need no database access; manager modes compare separately supplied stored
+assignments and never contact the operational store.
 
 Choose the link for the copy you are reading; installed payloads preserve the same guide bytes.
 
@@ -685,7 +692,9 @@ and supplied-evidence coherence, not real approval, human execution or freshness
 [Source qa-jira](../skills/qa-jira/SKILL.md) and
 [installed qa-jira](../../qa-jira/SKILL.md) refer to the source and installed layouts
 respectively; use the link for your layout only. This is the sole permanent QA
-publication/failure protocol. It consumes the incomplete-QA findings, declared
+publication/failure protocol. Ordinary success-only routing is defined below;
+the following broader schema and legacy descriptions cannot authorize failure,
+wait, blocked or resume publication in that invocation. It consumes the incomplete-QA findings, declared
 prerequisite cause propagation, nonnull actual tested PR and claim-sensitive
 recursive environment/reuse rules above without changing their schema. A complete
 all-NOT_RUN inability may retain missing proof; executed claims cannot evade proof
@@ -908,7 +917,9 @@ implementer READY, reviewer approval or successful QA. This boundary controls th
 later general record mappings and recovery examples: repair admission, resume,
 human request-rework, failed review/QA, blocked and dependency-wait publication
 are deferred. Preserve findings, partial ledgers and receipts locally, return a
-precise inability and hold with no mutation; do not publish an alternative result
+precise inability and hold with no mutation. Reject unsupported assignments
+before execution and unsupported final results before candidate construction or
+append; do not publish an alternative result
 or fall back to strict chain or manager recorded proof. A stream with required
 repair remains held for human handling.
 
