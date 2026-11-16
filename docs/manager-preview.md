@@ -688,6 +688,7 @@ complete approved root and its prepared dependencies outside the run.
 prescribed check. A failure retains completed safe `runs` and `run_roles`; the
 `failed_run` names the role but marks its observations unavailable and cleanup
 unreported. Do not treat missing failed-run details as a passing observation.
+Completed reports and safe failure envelopes identify `inspection_scope: requested_issues`; failed-run measurements remain unavailable unless retained from a completed run.
 The command uses only dummy local HTTPS data; it cannot inspect a live tenant.
 
 The designated human executes the prescribed source or installed-root fixture

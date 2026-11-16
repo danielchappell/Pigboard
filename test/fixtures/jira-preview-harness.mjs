@@ -17,7 +17,7 @@ const tls=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-tls.json'),'ut
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const fixedPrefix='/ex/jira/00000000-0000-0000-0000-000000000001';
 const jiraSourcePaths=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];
-function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.domain_complete,false);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
+function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.inspection_scope,'requested_issues');assert.equal(report.domain_complete,false);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
 
 async function runtimeSources(root){
  const manifest=JSON.parse(await fsp.readFile(path.join(root,'config/skill-bundle.json'),'utf8'));
@@ -55,7 +55,7 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
  catch{
   const runtimeAfter=await runtimeSnapshot(moduleRoot,missing),inputAfter=inputSnapshot(v);assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
   if(disposable)await fsp.rm(disposable,{recursive:true,force:true});
-  const report={status:'setup_failed',diagnostics:[{code:'SETUP_MISSING',message:'Prepare the complete copied validator; no source fallback or dependency repair was attempted.'}],counters:{requests_attempted:0},domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'};oracleCheck(report,v.oracle,trace);
+  const report={status:'setup_failed',inspection_scope:'requested_issues',diagnostics:[{code:'SETUP_MISSING',message:'Prepare the complete copied validator; no source fallback or dependency repair was attempted.'}],counters:{requests_attempted:0},domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'};oracleCheck(report,v.oracle,trace);
   return {report,trace,server_trace:[],fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},effects:0,resolver_calls:0,cleanup_complete:true,oracle_matched:true};
  }
  if(disposable){await fsp.rm(disposable,{recursive:true,force:true});throw Error('Damaged copy unexpectedly imported.');}
@@ -149,7 +149,7 @@ if(isMain){
    :setupFailed
     ?{code:'SETUP_MISSING',message:'A required runtime file or module is unavailable. Prepare the complete explicit runtime; no fallback or repair was attempted. Completed runs are retained.'}
     :{code:'FIXTURE_RUN_FAILED',message:'The fixture run did not verify. Retain completed runs and inspect the prescribed check; do not treat this as missing setup or a passing observation.'};
-  console.log(JSON.stringify({status,diagnostics:[diagnostic],case:selected?.case??null,variant:selected?.variant??null,runs,run_roles:runRoles,failed_run:failedRole?{role:failedRole,observations:'unavailable',cleanup:'not_reported'}:null,domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'}));
+  console.log(JSON.stringify({status,inspection_scope:'requested_issues',diagnostics:[diagnostic],case:selected?.case??null,variant:selected?.variant??null,runs,run_roles:runRoles,failed_run:failedRole?{role:failedRole,observations:'unavailable',cleanup:'not_reported'}:null,domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'}));
   process.exitCode=2;
  }
 }

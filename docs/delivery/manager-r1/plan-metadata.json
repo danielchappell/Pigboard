@@ -1412,7 +1412,7 @@
       "R1-31",
       "R1-36"
     ],
-    "days": 1.4875,
+    "days": 1.65,
     "files": [
       "ARCHITECTURE.md",
       "README.md",
@@ -1429,13 +1429,13 @@
     ],
     "forecast_provenance": {
       "native_key": "PGB-147",
-      "min_days": "1.06875",
-      "max_days": "1.48750",
-      "plan_sha256": "66e0c419a7cdd87106b1f1fc194a0464a68c6d6077899d65ebe6920610a8529b"
+      "min_days": "1.16875",
+      "max_days": "1.65000",
+      "plan_sha256": "ac7e496e479fd9d5a939abe58b83ba42c7fb500db81b5fcf7b158f12ece4eb3b"
     },
     "hours": {
-      "min": 8.55,
-      "max": 11.9
+      "min": 9.35,
+      "max": 13.2
     },
     "delivery_state": "Installed named-issue inspection and its source/copied fixture CLI are implemented; exact check/review/release evidence is recorded separately. Human acceptance NOT_RUN (0/4); no activation."
   },
