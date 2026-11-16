@@ -1076,7 +1076,11 @@ const expected169PayloadPaths = [
   "scripts/manager-preview.mjs",
   "docs/manager-preview.md",
   "test/fixtures/manager-candidates.json",
-  "test/fixtures/manager-repairs.json"
+  "test/fixtures/manager-repairs.json",
+  "lib/jira/read.mjs",
+  "test/fixtures/jira-preview-harness.mjs",
+  "test/fixtures/jira-preview-cases.json",
+  "test/fixtures/jira-preview-tls.json"
 ];
 async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
@@ -1084,7 +1088,7 @@ async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  assert.equal(installed.commit,expectedCommit,'installation receipt fixture commit');
  assert.deepEqual(manifest.bundle,bundle,'actual current bundle');
  assert.equal(bundle.validatorPayload.directory,'work-validator');
- assert.equal(expected169PayloadPaths.length,37);
+ assert.equal(expected169PayloadPaths.length,41);
  assert.deepEqual([...bundle.validatorPayload.sources].sort(),[...expected169PayloadPaths].sort(),'independent complete bundle payload paths');
  const paths=Object.keys(manifest.sourceFiles).filter(p=>p.startsWith('work-validator/')).map(p=>p.slice('work-validator/'.length)).sort();
  assert.deepEqual(paths,[...expected169PayloadPaths].sort(),'independent complete manifest payload paths');
@@ -1101,7 +1105,7 @@ async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
 test('PGB-169 every current source payload byte matches its installed copy and manifest',async t=>{
  const o=await fixture(t),expectedCommit=git(o.source,'rev-parse','HEAD'),installed=await installCursorSkills(o,fakeInstall);
  const evidence=await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
- t.diagnostic('Verified all37 source/fixture/installed/manifest entries at actual fixture '+expectedCommit);
+ t.diagnostic('Verified all41 source/fixture/installed/manifest entries at actual fixture '+expectedCommit);
  verificationAfter('current complete payload parity',()=>verificationRecord('payload-parity',{test:t.name,source:o.source,installed:installed.skills,...evidence}));
  const relative='lib/contracts/work.mjs',originalSHA=evidence.records.find(r=>r.path===relative).source_sha256;
  const controls=[

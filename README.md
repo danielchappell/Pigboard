@@ -41,7 +41,7 @@ for what Pigboard supports today.
 | Contribute to Pigboard | [Agent entry point](AGENTS.md) and [contributor agreement](CONTRIBUTING.md) |
 | Understand the product and next work | [Architecture and current Jira scope](ARCHITECTURE.md) |
 | Preview ready work and repairs from complete local facts | [Offline manager preview, examples and recovery](docs/manager-preview.md) |
-| Inspect requested Jira issues from a reviewed source checkout | [Named-issue source library and finite HTTPS packet](docs/manager-preview.md#inspect-named-jira-issues) |
+| Inspect requested Jira issues from a reviewed source or prepared installed validator | [Named-issue library and finite HTTPS packet](docs/manager-preview.md#inspect-named-jira-issues) |
 | Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
@@ -59,7 +59,7 @@ complete implementation Story coverage.
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Offline manager policy preview of supplied complete snapshots | Complete source and prepared-installed fixture preview of ordinary work, repair prerequisites and recorded-parent stack updates, with every readable cause identity in order. Installation verifies repair semantics with an eighth check before replacing the stable link. Local fixture evidence does not establish live discovery, delivery or activation; preview has no writes or execution authority. |
-| Requested Jira issue/pointer/comment inspection | Implemented as a bounded source library with caller-supplied secret resolver and importable local HTTPS packet; installed copy and fixture CLI remain PGB-147 work. No domain discovery, receipt proof or admission. [Limits and recovery](docs/manager-preview.md#inspect-named-jira-issues) |
+| Requested Jira issue/pointer/comment inspection | Bounded library in source and the complete prepared installed validator, with a caller-supplied secret resolver. The local dummy-HTTPS packet has an importable API and test-only fixture CLI; neither is a live Jira command. No domain discovery, receipt proof or admission. [Limits and recovery](docs/manager-preview.md#inspect-named-jira-issues) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
 | Customer-owned Lambda manager with DynamoDB admission state | Approved direction; discovery and complete Story-set review precede implementation under [PGB-66](https://scubapig.atlassian.net/browse/PGB-66) |
 | Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; composed by qa-entrypoint with ordered actual observations and a complete partial ledger |

@@ -513,19 +513,23 @@ of the original42 human cases, or R1-32's and R1-35's two human routes each, as 
 
 ## Inspect named Jira issues
 
-The source checkout provides **requested-issue inspection** through an importable
-library. A prepared installed `work-validator` copy is a later delivery.
+The reviewed source checkout and a complete prepared installed `work-validator`
+copy provide **requested-issue inspection** through an importable library.
 This is a read-only library, separate from offline selection above. It reads the
 supplied immutable issue IDs, assignment pointers, all visible comment pages and
 named exact comments. It does not discover a domain, evaluate admission or prove
-receipts. There is no production live CLI. Node 20+, a reviewed source checkout
-with its existing prepared dependencies, the canonical configuration's Jira
+receipts. There is no production live CLI. Node 20+, an explicit reviewed source
+root or receipt-derived installed `work-validator` root with its existing prepared
+dependencies, the canonical configuration's Jira
 connection and all eleven explicit read bounds are required. Site/cloud binding,
 credential access and visibility are operator
 prerequisites; a successful call cannot certify invisible work absent.
+Set `WORK_VALIDATOR_ROOT` to that absolute root before using the import example.
 
 ```js
-import { inspectJiraIssues } from './lib/jira/read.mjs';
+import { pathToFileURL } from 'node:url';
+const root = process.env.WORK_VALIDATOR_ROOT; // absolute source or installed work-validator root
+const { inspectJiraIssues } = await import(pathToFileURL(root + '/lib/jira/read.mjs'));
 // configText is UTF-8 authored configuration; resolveSecret is a trusted,
 // already prepared in-process capability, never loaded from a ticket or URL.
 const result = await inspectJiraIssues(configText, {
@@ -656,17 +660,39 @@ H02 has12, H03 has16, H04 has2, totaling35. Each entry carries exact request,
 config, scripted bodies, allowed request paths, expected status/code/request
 count and any paired positive-at-limit control. The example runs those controls
 and L06's private-projection subvariant too. It never derives an expected answer
-from the collector. H04's existing `guide-and-install` variant proves the source
-API here; its name does not prove an installed runtime. Its `damaged-copy` variant
-uses a complete disposable copy derived from the source, removes only
+from the collector. H04's existing `guide-and-install` variant checks the source
+API. Its `damaged-copy` variant uses a complete disposable copy derived from the
+source, removes only
 `lib/config/projects.mjs`, and expects `SETUP_MISSING` with zero resolver/Jira
 requests. The fixture preserves hashes of actual source files, prepared
 dependencies, effective inputs, case data and dummy TLS material. For real source
-damage, restore the approved checkout and prepared dependencies outside a run,
-then verify the source before another attempt. The installed copy, direct fixture
-CLI and human/JSON parity are PGB-147 outcomes.
+or copied-runtime damage, restore the approved complete root and prepared
+dependencies outside a run, then verify the root before another attempt.
 
-The designated human executes source imports for every listed
+For a single prescribed variant, set `ROOT` to the absolute reviewed source
+checkout or the receipt-derived installed `work-validator` directory. Its
+test-only command runs the declared control and private projection automatically:
+
+```sh
+ROOT=/absolute/reviewed-source-or-installed-work-validator
+env -u NODE_PATH node "$ROOT/test/fixtures/jira-preview-harness.mjs" --case R1-33-H04 --variant guide-and-install --runtime "$ROOT" --json
+```
+
+Omit `--json` for a readable report. Exit 0 means the literal fixture oracle
+matched; an expected incomplete read may still be reported. The JSON success
+shape is `{case,variant,runs}`. A failed readable or JSON command exits 2 with
+a safe structured result. `FIXTURE_SELECTION_INVALID` means choose a listed
+case/variant and supply the explicit root. `SETUP_MISSING` means restore the
+complete approved root and its prepared dependencies outside the run.
+`FIXTURE_RUN_FAILED` means the selected fixture did not verify; inspect its
+prescribed check. A failure retains completed safe `runs` and `run_roles`; the
+`failed_run` names the role but marks its observations unavailable and cleanup
+unreported. Do not treat missing failed-run details as a passing observation.
+Completed reports and safe failure envelopes identify `inspection_scope: requested_issues`; failed-run measurements remain unavailable unless retained from a completed run.
+The command uses only dummy local HTTPS data; it cannot inspect a live tenant.
+
+The designated human executes the prescribed source or installed-root fixture
+commands for every listed
 variant, compares literal oracles and audits, inspects zero-effect/cancellation
 observations and records revision, fixture hashes, commands, exit codes, reports,
 request traces, counts/bytes/time and cleanup. Preserve the packet and remove only

@@ -1728,6 +1728,8 @@ function assertCurrentCatalogue({drafts,metadata,publication,stories},evidence,e
  assert.deepEqual(metadata.map(r=>r.id),ids,'complete ordered metadata set');
  assert.deepEqual(publication.stories,mapping);assert.equal(new Set(Object.values(mapping)).size,51);
  assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[51,185,53,41]);
+ assert.equal(publication.status,"51-Story/185-human-case integrated source catalogue with installed named-issue inspection; historical evidence retained, human acceptance NOT_RUN; code review, hosted CI, merge and activation remain separate.",'current status agrees with51/185');assert.equal(publication.current_source_scope.status,publication.status,'current status projection');
+ assert.deepEqual(publication.current_source_scope.forecast_days,{min:68.5275,max:79.13375});
  assert.deepEqual(a.source_order,ids.map(id=>({id,key:mapping[id]})));
  assert.deepEqual([...stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),ids,'exactly one real/legacy heading per row');
  const seen=new Set(),external=new Set();let human=0,prerequisiteCount=0;
@@ -1769,8 +1771,223 @@ function assertCurrentCatalogue({drafts,metadata,publication,stories},evidence,e
 test('PGB-169 current catalogue matches approved native contracts and complete rendered Stories',async()=>{
  const current=await read169Catalogue(),evidence=approvedContractEvidence(current.publication);
  assertCurrentCatalogue(current,evidence,approved169Expected);
+ const staleStatus=structuredClone(current);staleStatus.publication.status='42-Story scoped source checkpoint';assert.throws(()=>assertCurrentCatalogue(staleStatus,evidence,approved169Expected),/current status agrees with51\/185/);
  const absentContract=structuredClone(current);absentContract.drafts=absentContract.drafts.filter(r=>r.id!=='PGB-160');
  assert.throws(()=>assertCurrentCatalogue(absentContract,evidence,approved169Expected),/complete ordered contract set/);
  const absentCase=structuredClone(current);absentCase.drafts.find(r=>r.id==='PGB-169').contract.testing_strategy.human_review.cases.pop();
  assert.throws(()=>assertCurrentCatalogue(absentCase,evidence,approved169Expected),/complete current contract/);
+});
+
+// Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
+const pre147Digests={"publication.json": ["f0a3a38292404fa1d180cfe2ae791f41bef8b5fca84c0e20b4c6737462042a31", "870f438e41a5acb8f4fcd9e087952dea8ea25d6dc7a0b2b636d42575ff4e8710"], "plan-metadata.json": ["e6f6e565292473e1e5060856778e265ebfe85368504f98669b94a95bcdbbb681", "32fb888754fbad25b9c44575fb42d49247fd07c7c8778cd821a417640c7fdc03"], "ticket-drafts.json": ["cbfbe1b2363e67989eec0f3837547627e377b3104f043ef74119502824f0dd3f", "51d888ce1ae1e046b29298d46594bd3fb9216ad7770ac48dfaeb91363a8fd4c3"], "config/skill-bundle.json": ["aa84523d0236fe00eeebe1fdcfafefd5669fd8c64754b666a9a15c07714c72bc", "3c032b634a068017464c7b2b9e2b0b83059678a76cc18a1099a2d18da772632b"], "docs/delivery/manager-r1/README.md": ["8360bb12066e95e230632716eeb1f8c724ab46a4c0e3b8fac84cdc003f3b27f6", null], "docs/manager-preview.md": ["e81605c01a69ef69cb7710742d838852b163dca6266d1448fc1abb8446b0d707", null]};
+async function pre147Capture(name){
+ assert(Object.hasOwn(pre147Digests,name),'Only six named PGB-81 predecessor inputs may be captured');
+ const p=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/publication.json',import.meta.url),'utf8')),c=p.installed_issue_inspection_amendment.historical_source_capture.files[name],[rawDigest,jsonDigest]=pre147Digests[name];
+ const sha=value=>createHash('sha256').update(value).digest('hex');
+ assert.equal(sha(c.raw),rawDigest,name+' original raw bytes');
+ assert.equal(c.raw_sha256,rawDigest,name+' named raw digest');
+ if(jsonDigest){assert.deepEqual(JSON.parse(c.raw),c.object,name+' complete raw/object identity');assert.equal(sha(JSON.stringify(c.object)),jsonDigest,name+' original JSON digest');assert.equal(c.json_stringify_sha256,jsonDigest,name+' named JSON digest');return structuredClone(c.object);}
+ assert.equal(c.object,undefined,name+' text has no parsed object');return c.raw;
+}
+
+
+// Exact actual147 projection. Only these dated assertions use retained bytes.
+const integration147Expected = {
+  "original_candidate": "7e8a14dce62cfb89ff963c5ec52f60ec3c8a2d61",
+  "actual147": "af9735fac9612d711a4194191852fb031e51b797",
+  "actual147_tree": "268b760daed22d5be234845659542ab51c8f42c6",
+  "publication_canonical_sha256": "41ffe768590c2a9180c24b4611cba5e4f5bca1c7a6fe2970a50022e7aa6f2382",
+  "metadata_canonical_sha256": "0ea832d345c347f29f9b9dfd672612fb827cfe27430cd7422d613d9ce8d07e3a",
+  "amendment_canonical_sha256": "f9469ec8c8f5b639ee58440092c62e4c406c6590382b58e43bd40472b47a656a",
+  "row_canonical_sha256": "17e76f93512a81b31d72eafce517bfcc5334411369842776aff998ef18a70f60",
+  "files_canonical_sha256": "23c89cb9356aa2d3cd14ea9ae19ee304d1d7b694961a3520a489916be7c6beb5",
+  "file_sha256": {
+    "config/skill-bundle.json": "3063c9117d1e1724fb0341c7b610cf1b9518c77f585161ae95c4a1ab86efec99",
+    "docs/manager-preview.md": "2dd6b2738ba3758337d23733128997a3fe6959462ca222ceb00b728577e8d339",
+    "lib/jira/read.mjs": "13e35c3e319f1a29f7b664a4503693dfd48590961435909f718efbcec37ab0a5",
+    "test/fixtures/jira-preview-harness.mjs": "c81b81789f3ecdcc801f7cdf8efde31d3d168e93d703fe2bbb3c57ceb5d0ab22",
+    "test/fixtures/jira-preview-cases.json": "dc88760cd897cfb997d6def8e50c59598ff133a5c19fe3fdd4a55dbcc1ff341e",
+    "test/fixtures/jira-preview-tls.json": "264fa815a82ab6c8b9ff2433b9113070130460c8ace7bfd8f6429116a4f33762"
+  },
+  "payload_sources": [
+    "package.json",
+    "package-lock.json",
+    "scripts/validate-work.mjs",
+    "lib/contracts/work.mjs",
+    "contracts/epic-v1.schema.json",
+    "contracts/ticket-v1.schema.json",
+    "docs/authoring.md",
+    "docs/architecture/examples/manager-epic.yaml",
+    "docs/architecture/examples/manager-epic-populated.yaml",
+    "docs/architecture/examples/manager-ticket.yaml",
+    "docs/architecture/examples/manager-ticket-populated.yaml",
+    "lib/contracts/work-semantics.mjs",
+    "lib/contracts/case-graph.mjs",
+    "contracts/work-validation-context-v1.schema.json",
+    "config/skill-bundle.json",
+    "contracts/handoff-v1.schema.json",
+    "contracts/work-pointer-v1.schema.json",
+    "lib/contracts/handoff.mjs",
+    "lib/contracts/receipts.mjs",
+    "scripts/validate-handoff.mjs",
+    "docs/handoffs.md",
+    "scripts/check-config.mjs",
+    "lib/config/parse.mjs",
+    "lib/config/projects.mjs",
+    "lib/config/diff.mjs",
+    "contracts/config-v1.schema.json",
+    "config/pigboss.example.yaml",
+    "docs/configuration.md",
+    "scripts/prepare-handoff.mjs",
+    "lib/manager/snapshot.mjs",
+    "lib/manager/availability.mjs",
+    "lib/manager/decisions.mjs",
+    "lib/manager/repair-policy.mjs",
+    "scripts/manager-preview.mjs",
+    "docs/manager-preview.md",
+    "test/fixtures/manager-candidates.json",
+    "test/fixtures/manager-repairs.json",
+    "lib/jira/read.mjs",
+    "test/fixtures/jira-preview-harness.mjs",
+    "test/fixtures/jira-preview-cases.json",
+    "test/fixtures/jira-preview-tls.json"
+  ],
+  "payload_sha256": {
+    "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+    "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+    "scripts/validate-work.mjs": "46023df5916da4ab7d5eaa8c44fec19e8aef708eb3e5ab76343662ddde06776d",
+    "lib/contracts/work.mjs": "50dbbd8a11237b1b90508a059a5ca9be44c4a39662e94ffbe39ab89db2808df4",
+    "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+    "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+    "docs/authoring.md": "792e7e28714a0e07dcffd011d3b628e1d1bfb14b4bde9e5e355de54ca7ce2c9d",
+    "docs/architecture/examples/manager-epic.yaml": "47da131cf06ddb68d042ec09113ab0132125a4454c46c7e72062219d3bbc4936",
+    "docs/architecture/examples/manager-epic-populated.yaml": "015d8a1f97ef24a8eb78d8832256ba3d711f15675cacc005f40a8a315eccd62c",
+    "docs/architecture/examples/manager-ticket.yaml": "ce9a6532bee4a6a561957d62a0198de61e7da0342ef8128853cc11dba3200ff0",
+    "docs/architecture/examples/manager-ticket-populated.yaml": "67684c400a6ebf50b2bb3b2db509d7b3c989dd2a89a713d56b3d91c088635338",
+    "lib/contracts/work-semantics.mjs": "ba1a3acadba6d169ec3bad52a3689c9b4b78b713dbac9fe408b949b966f2cc8d",
+    "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+    "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+    "config/skill-bundle.json": "3063c9117d1e1724fb0341c7b610cf1b9518c77f585161ae95c4a1ab86efec99",
+    "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+    "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+    "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+    "lib/contracts/receipts.mjs": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+    "scripts/validate-handoff.mjs": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+    "docs/handoffs.md": "08157ffd354999c44554040d44a73fccf31c86e1e37626131bc82e97562c17e4",
+    "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+    "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+    "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+    "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+    "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+    "config/pigboss.example.yaml": "21e38dc635fcc894fb3882731d458bc8e5d67b3cccc396953dfb57ea6baaa949",
+    "docs/configuration.md": "4daf03b46702cf35b9e7f64c5f45cb94b6c26703796171c5cb0f7481af23ccb9",
+    "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+    "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+    "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+    "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+    "lib/manager/repair-policy.mjs": "349f197f563794d3f9722605047f472f31aa1f16a8b97f1701d5aa9760b3b766",
+    "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+    "docs/manager-preview.md": "2dd6b2738ba3758337d23733128997a3fe6959462ca222ceb00b728577e8d339",
+    "test/fixtures/manager-candidates.json": "83d9fee49345eb078f9c9cb8ea1d2ddd962dd655e921bf9ae74f0e54042d71ca",
+    "test/fixtures/manager-repairs.json": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7",
+    "lib/jira/read.mjs": "13e35c3e319f1a29f7b664a4503693dfd48590961435909f718efbcec37ab0a5",
+    "test/fixtures/jira-preview-harness.mjs": "c81b81789f3ecdcc801f7cdf8efde31d3d168e93d703fe2bbb3c57ceb5d0ab22",
+    "test/fixtures/jira-preview-cases.json": "dc88760cd897cfb997d6def8e50c59598ff133a5c19fe3fdd4a55dbcc1ff341e",
+    "test/fixtures/jira-preview-tls.json": "264fa815a82ab6c8b9ff2433b9113070130460c8ace7bfd8f6429116a4f33762"
+  },
+  "runtime_paths": [
+    "contracts/config-v1.schema.json",
+    "contracts/epic-v1.schema.json",
+    "contracts/handoff-v1.schema.json",
+    "contracts/ticket-v1.schema.json",
+    "contracts/work-pointer-v1.schema.json",
+    "contracts/work-validation-context-v1.schema.json",
+    "lib/config/diff.mjs",
+    "lib/config/parse.mjs",
+    "lib/config/projects.mjs",
+    "lib/contracts/case-graph.mjs",
+    "lib/contracts/handoff.mjs",
+    "lib/contracts/receipts.mjs",
+    "lib/contracts/work-semantics.mjs",
+    "lib/contracts/work.mjs",
+    "lib/jira/read.mjs",
+    "lib/manager/availability.mjs",
+    "lib/manager/decisions.mjs",
+    "lib/manager/repair-policy.mjs",
+    "lib/manager/snapshot.mjs",
+    "package-lock.json",
+    "package.json",
+    "scripts/check-config.mjs",
+    "scripts/manager-preview.mjs",
+    "scripts/prepare-handoff.mjs",
+    "scripts/validate-handoff.mjs",
+    "scripts/validate-work.mjs",
+    "test/fixtures/jira-preview-harness.mjs"
+  ],
+  "current_forecast_canonical_sha256": "2da529ade802d35c33435c3c69221fcb1b8270404abc710e5dcfa14c334c8d1c"
+};
+const hash147=value=>createHash('sha256').update(value).digest('hex');
+const canonical147=value=>hash147(canonicalize(value));
+let retained147Source;
+async function read147Source(){if(!retained147Source)retained147Source=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/publication.json',import.meta.url),'utf8'));return retained147Source;}
+function assert147IntegrationBindings(p){
+ const a=p.installed_issue_inspection_amendment,i=p.approved_delivery_catalogue_amendment.parent_integration;
+ assert.equal(canonical147(a),integration147Expected.amendment_canonical_sha256,'complete immutable actual147 amendment');
+ assert.equal(i.actual147.commit,integration147Expected.actual147);assert.equal(i.actual147.tree,integration147Expected.actual147_tree);
+ assert.equal(i.actual147.publication_canonical_sha256,integration147Expected.publication_canonical_sha256);assert.equal(i.actual147.metadata_canonical_sha256,integration147Expected.metadata_canonical_sha256);
+ assert.equal(canonical147(i.actual147.r1_33_metadata),integration147Expected.row_canonical_sha256);assert.equal(i.actual147.r1_33_metadata_canonical_sha256,integration147Expected.row_canonical_sha256);
+ assert.equal(canonical147(i.historical_file_bytes),integration147Expected.files_canonical_sha256,'exact six additional actual147 bodies');assert.equal(i.historical_file_bytes_canonical_sha256,integration147Expected.files_canonical_sha256);
+ assert.deepEqual(Object.keys(i.historical_file_bytes).sort(),Object.keys(integration147Expected.file_sha256).sort());
+ for(const [file,digest]of Object.entries(integration147Expected.file_sha256)){const entry=i.historical_file_bytes[file];assert.equal(entry.representation,'utf8_source_file');assert.equal(hash147(entry.utf8),digest,file+' direct Git147 bytes');assert.equal(entry.sha256,digest);}
+ return i;
+}
+async function historical147File(file){
+ const p=await read147Source(),i=assert147IntegrationBindings(p);assert(integration147Expected.payload_sources.includes(file),file+' explicitly dated147 payload');
+ const entry=i.historical_file_bytes[file]??p.approved_delivery_catalogue_amendment.historical_file_bytes[file];assert(entry,file+' retained body');assert.equal(hash147(entry.utf8),integration147Expected.payload_sha256[file],file+' complete dated147 payload');return entry.utf8;
+}
+async function historical147Publication(){
+ const p=await read147Source(),i=assert147IntegrationBindings(p),prior=await pre147Capture('publication.json'),result=structuredClone(prior);
+ result.installed_issue_inspection_amendment=structuredClone(p.installed_issue_inspection_amendment);result.status=i.actual147.status;result.current_source_scope=structuredClone(i.actual147.current_source_scope);
+ assert.equal(canonical147(result),integration147Expected.publication_canonical_sha256,'entire reconstructed actual147 publication');return result;
+}
+async function historical147Metadata(){
+ const p=await read147Source(),i=assert147IntegrationBindings(p),rows=await pre147Capture('plan-metadata.json');const index=rows.findIndex(r=>r.id==='R1-33');assert(index>=0);rows[index]=structuredClone(i.actual147.r1_33_metadata);
+ assert.equal(canonical147(rows),integration147Expected.metadata_canonical_sha256,'entire reconstructed actual147 metadata');return rows;
+}
+async function assertHistorical147PayloadClosure(){
+ const p=await read147Source(),i=assert147IntegrationBindings(p),a=p.installed_issue_inspection_amendment;
+ assert.equal(canonical147(p.approved_delivery_catalogue_amendment.historical_file_bytes),'bb05c2d855eb26174aa695838a18b16b50a123f78c58ec9c91c47d42452bf517');
+ assert.equal(Object.keys(p.approved_delivery_catalogue_amendment.historical_file_bytes).length,43);
+ assert.deepEqual(a.payload.sources,integration147Expected.payload_sources);assert.equal(a.payload.sources.length,41);
+ for(const file of a.payload.sources)assert.equal(hash147(await historical147File(file)),a.payload.artifacts_sha256[file]);
+ assert.deepEqual(a.runtime.paths,integration147Expected.runtime_paths);assert.equal(a.runtime.paths.length,27);
+ for(const file of a.runtime.paths)assert.equal(hash147(await historical147File(file)),a.runtime.artifacts_sha256[file]);
+ assert.equal(a.runtime.artifacts_json_sha256,hash147(JSON.stringify(a.runtime.artifacts_sha256)));
+}
+
+// Unchanged147 assertions evaluated against its exact independently pinned dated view.
+test('PGB-147 installed inspection keeps the complete PGB-81 predecessor and current scoped contract',async()=>{
+ const sha=value=>createHash('sha256').update(value).digest('hex');
+ const files=Object.keys(pre147Digests);for(const name of files)await pre147Capture(name);
+ const publication=await historical147Publication();
+ const prior=await pre147Capture('publication.json'),a=publication.installed_issue_inspection_amendment;
+ assert.equal(Object.keys(prior).length,38);assert.equal(Object.keys(publication).length,39);
+ assert.deepEqual([a.story_id,a.native_key,a.plan_sha256,a.predecessor.commit,a.predecessor.tree],['R1-33','PGB-147','ac7e496e479fd9d5a939abe58b83ba42c7fb500db81b5fcf7b158f12ece4eb3b','850e0127c4f2105d7cb564efa868c70dd600b521','857ac885534b41d4c3ae640b9b1f2b280a55c23c']);
+ assert.equal(a.predecessor.status,prior.status);assert.deepEqual(a.predecessor.verification,prior.installed_repair_preview_amendment.verification);
+ const expectedStatus='42-Story scoped source checkpoint with installed named-issue inspection; acceptance, current-head checks and release are recorded separately.';
+ assert.equal(publication.status,expectedStatus);assert.equal(publication.current_source_scope.status,expectedStatus);assert.deepEqual(publication.current_source_scope.forecast_days,{min:58.55875,max:65.13375});
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[42,166,53,41]);
+ const restored=structuredClone(publication);restored.status=prior.status;restored.current_source_scope.status=prior.current_source_scope.status;restored.current_source_scope.forecast_days=prior.current_source_scope.forecast_days;delete restored.installed_issue_inspection_amendment;assert.deepEqual(restored,prior,'all predecessor publication fields and amendments retained');
+ const metadata=await historical147Metadata(),oldMetadata=await pre147Capture('plan-metadata.json');const row=metadata.find(r=>r.id==='R1-33'),oldRow=oldMetadata.find(r=>r.id==='R1-33');assert(row&&oldRow);
+ assert.deepEqual(row.files,['ARCHITECTURE.md','README.md','config/skill-bundle.json','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','docs/manager-preview.md','docs/product/README.md','test/fixtures/jira-preview-harness.mjs','test/qa-helper-contract.test.mjs','test/skill-distribution.test.mjs','test/story-authoring.test.mjs']);
+ assert.deepEqual(row.hours,{min:9.35,max:13.2});assert.equal(row.days,1.65);assert.deepEqual(row.forecast_provenance,{...oldRow.forecast_provenance,min_days:'1.16875',max_days:'1.65000',plan_sha256:a.plan_sha256});assert(row.delivery_state.includes('Human acceptance NOT_RUN (0/4)'));
+ const oldify=structuredClone(metadata);oldify[metadata.findIndex(r=>r.id==='R1-33')]=oldRow;assert.deepEqual(oldify,oldMetadata,'only R1-33 metadata changed');
+ const drafts=await pre147Capture('ticket-drafts.json');assert.deepEqual(drafts,await pre147Capture('ticket-drafts.json'));const native=drafts.find(r=>r.id==='R1-33').contract;assert.deepEqual([native.acceptance_criteria.length,native.technical_acceptance_criteria.constraints.length,native.testing_strategy.human_review.cases.length],[5,4,4]);
+ const bundle=JSON.parse(await readFile(new URL('../config/skill-bundle.json',import.meta.url),'utf8')),oldBundle=await pre147Capture('config/skill-bundle.json'),added=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];assert.deepEqual(bundle.validatorPayload.sources,[...oldBundle.validatorPayload.sources,...added]);assert.deepEqual({...bundle,validatorPayload:{...bundle.validatorPayload,sources:oldBundle.validatorPayload.sources}},oldBundle);assert.deepEqual(a.payload.sources,bundle.validatorPayload.sources);assert.equal(bundle.validatorPayload.sources.length,41);assert.equal(bundle.skills.length,22);assert.equal(bundle.dependencyDirectories.length,3);
+ const runtime=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort();assert.deepEqual(a.runtime.paths,runtime);assert.equal(runtime.length,27);assert.equal(a.runtime.artifacts_json_sha256,sha(JSON.stringify(a.runtime.artifacts_sha256)));assert.deepEqual(a.runtime.preserved_predecessor25_artifacts_sha256,prior.installed_repair_preview_amendment.source_runtime_revision.artifacts_sha256);assert.equal(Object.keys(a.runtime.preserved_predecessor25_artifacts_sha256).length,25);
+ for(const file of bundle.validatorPayload.sources){const actual=sha(await historical147File(file));assert.equal(a.payload.artifacts_sha256[file],actual,file+' current payload');}for(const file of runtime)assert.equal(a.runtime.artifacts_sha256[file],sha(await historical147File(file)),file+' current runtime');for(const [file,digest]of Object.entries(a.runtime.preserved_predecessor25_artifacts_sha256))assert.equal(sha(await historical147File(file)),digest,file+' still live');
+ assert.equal(a.literal_packet.cases_sha256,sha(await historical147File('test/fixtures/jira-preview-cases.json')));assert.equal(a.literal_packet.tls_sha256,sha(await historical147File('test/fixtures/jira-preview-tls.json')));assert.deepEqual([a.literal_packet.variants,a.literal_packet.controls,a.literal_packet.private_projection],[35,8,1]);
+ const oldDelivery=await pre147Capture('docs/delivery/manager-r1/README.md'),oldGuide=await pre147Capture('docs/manager-preview.md');assert(oldDelivery.includes('58.33375–64.76500 days'));assert(oldGuide.includes('source checkout provides'));const delivery=await readFile(new URL('../docs/delivery/manager-r1/README.md',import.meta.url),'utf8'),product=await readFile(new URL('../docs/product/README.md',import.meta.url),'utf8');assert(delivery.includes('58.55875–65.13375 days'));assert(delivery.includes('5855875/6513375'));assert(product.includes('58.55875–65.13375-day forecast'));assert(product.includes('NOT_RUN (0/4)'));
+ assert.equal(a.verification.activation_authorized,false);assert.equal(a.verification.human_acceptance,'NOT_RUN (0/4)');
+ await assertHistorical147PayloadClosure();
 });

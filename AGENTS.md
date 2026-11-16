@@ -80,6 +80,48 @@ PGB-110's owner-approved evidence exception is specific to that Story; it does n
 waive future required scenarios. Later integration work can supply further
 coverage without turning today's missing evidence into a false completion claim.
 
+### Delivery checkpoints and escalation
+
+Use the existing delivery queue and handoff to name the next usable milestone, accountable
+owner, finish condition and wall-clock checkpoint. Record the earliest affected check,
+expensive checks still planned, preserved evidence and any actual dependency. Set a
+checkpoint appropriate to the work; it is an escalation time, not permission to rush or
+bypass a gate. Do not create a second reporting system or ask for routine permission at
+each checkpoint.
+
+Run the cheapest meaningful changed-contract check as soon as its prerequisites exist. A
+plan limiting an expensive suite or scenario campaign must not forbid these early checks.
+Before repairing a failure, classify it against the governing contract as a product
+defect, test/expected-result defect, setup failure or evidence gap. Inspect existing
+artifacts once before proposing a replay; a missing preferred view does not prove the
+underlying evidence is absent. Preserve failed and successful results separately. Keep the
+existing Astra repair-planning and affected independent review requirements.
+
+A second repair cycle on the same Story, repeated evidence-only trouble, a concrete
+size-limit threat, a second invalidation of a shared baseline, or a missed agreed
+critical-path milestone requires Director intervention before another affected cycle. A
+cycle means a diagnosis, repair and its verification; do not reset the count by renaming a
+plan or moving the ticket. If no Director is assigned, the responsible delivery agent
+takes this role. Record one bounded correction, a complete same-scope split, deferral of
+unrelated work, or the required owner decision in the existing queue. Ordinary authorized
+corrections need no new owner approval.
+
+If that intervention cannot establish a bounded finish path, promptly tell the owner what
+failed, what is complete, elapsed time, known versus unknown resource use, and the
+remaining options. Do not silently commission another repair/review/capture loop.
+Independent authorized work continues. Story-size threats use the existing automatic split
+rule, not an exception request. Review, CI, Codex, human acceptance and merge authority
+remain unchanged.
+
+For shared reconciliation, name one dated scope and the owner of later changes. Refresh
+only for a concrete in-scope contract or dependency change, not status/count movement
+alone. Report human-effort estimates, agent elapsed time, logged token volume and billed
+cost separately. Do not attribute whole-Epic counters or cumulative cached context to a
+Story bill.
+
+See the [PGB-81 incident review](docs/engineering/pgb81-delivery-rca.md) for the failures
+this contributor rule addresses. It does not change customer runtime policy.
+
 ## Working boundaries
 
 Run `git status --short --branch` before edits. Preserve unrelated changes and
