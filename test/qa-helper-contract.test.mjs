@@ -10,6 +10,41 @@ import { readDatabase, connectionConfig, safeError, QaError } from '../skills/qa
 import { prepareFixture, serveFixture, query } from './fixtures/qa-helper-case.mjs';
 
 const read = p => readFile(new URL('../' + p, import.meta.url), 'utf8');
+
+// Explicit pre81 data access for dated guards only; current checks read current files.
+const pre81Digests={
+  "ticket-drafts.json": {
+    "raw": "9ffe565fa1565be450711f4f7fd87b8da3ec8071a3e9e4701426d658ede34990",
+    "json": "eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653",
+    "canonical": "9da9ac2fc693db4c2fe90402378bc400c5ce0b8c779fab95c5f8c1f76f29a767"
+  },
+  "plan-metadata.json": {
+    "raw": "a6feff8162b173221522ddc257b6c244a800a17aebeb3e1bfee7404179e643d2",
+    "json": "eb58c13c50f7acfe1610b73abe139703b4c92e312f8034c96d897843f41fe1b1",
+    "canonical": "11cacaa064a13f4d67f897e65c5e5c2f215b147593e7a91ee73edee869415e02"
+  },
+  "publication.json": {
+    "raw": "d4cf6fe3e07bdc156f29c4792eadc33a18f03392b2e0e07e2e9409398793d65e",
+    "json": "8624d22abca43b0f9929c7de5df31edbebc1a3e858269677cdae5b0f6fb907ad",
+    "canonical": "c9350ea0c9ad239450642e4e8666ece52114b7061a6c72a92d0f1924593c7611"
+  },
+  "config/skill-bundle.json": {
+    "raw": "6385214b9fa380394b6da33ffbe4eb43015f6bb3c0983d86e58ed61c83f260c2",
+    "json": "4fb87e988d1f8c4044cac5181b3df9d6c14ce0bb119b127865e822a0643c1ad8",
+    "canonical": "2205195a0e67d68a177f3ae937d512a8c4ab39822f5b0d741116802222e905d1"
+  }
+};
+async function pre81Capture(name){
+ assert(Object.hasOwn(pre81Digests,name),'Only the three named catalog files and old bundle may be captured');
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),c=p.installed_repair_preview_amendment.historical_source_capture.files[name],expected=pre81Digests[name];
+ const sha=value=>createHash('sha256').update(value).digest('hex');
+ assert.equal(sha(c.raw),expected.raw,name+' captured raw bytes');
+ assert.deepEqual(JSON.parse(c.raw),c.object,name+' captured raw/object equality');
+ assert.equal(sha(JSON.stringify(c.object)),expected.json,name+' JSON.stringify digest');
+ assert.equal(sha(canonicalize(c.object)),expected.canonical,name+' RFC8785 digest');
+ return structuredClone(c.object);
+}
+
 async function fixture(t) {
   const dir = await mkdtemp(path.join(tmpdir(), 'pgb-qa-contract-'));
   t.after(() => rm(dir, { recursive:true, force:true }));
@@ -298,7 +333,7 @@ function beforeOwnSelection(drafts) {
 }
 
 test('approved delivery mirrors preserve original contracts/order, counts and all requirements/scenarios',async()=>{
- const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),plan=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
+ const drafts=beforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),plan=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),publication=beforeReadConfiguration(await pre81Capture('publication.json'),'publication');
  const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
  assert.deepEqual(plan.map(x=>x.id),ids);assert.equal(drafts.length,29);assert.equal(new Set(drafts.map(x=>x.id)).size,29);assert.equal(new Set(Object.values(publication.stories)).size,29);assert.equal(publication.stories['R1-24'],'PGB-110');assert.equal(publication.stories['R1-27'],'PGB-132');
  assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-24','R1-11','R1-25','R1-26','R1-27','R1-30','R1-28'].includes(x.id))),'2f3a696d34467daa7036ed3907226fc403226dc09c08a97cb4af48b264b3b897');
@@ -410,7 +445,7 @@ test('H01 prepared original mock deployment and typed bound API/database/UI arti
 
 
 test('only the actual fixed-scope PGB-110 owner decision exempts the ordinary time limit without a replacement hourly cap',async()=>{
- const plan=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata');
+ const plan=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata');
  assertDeliverySizing(plan);
  assert.deepEqual(plan.find(x=>x.id==='R1-24').hours,{min:26.75,max:36.5});
  for(const change of [
@@ -606,7 +641,7 @@ test('R2 six distinct H02 families and joined control have independently inspect
 });
 
 test('PGB-113 source amendment preserves native contracts and full preview in combined publication',async()=>{
- const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
+ const drafts=beforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),publication=beforeReadConfiguration(await pre81Capture('publication.json'),'publication');
  const ids=['R1-01','R1-02','R1-03','R1-04','R1-21','R1-05','R1-06','R1-07','R1-24','R1-30','R1-27','R1-08','R1-09','R1-10','R1-25','R1-26','R1-28','R1-11','R1-12','R1-13','R1-14','R1-15','R1-16','R1-22','R1-23','R1-17','R1-18','R1-19','R1-20'];
  assert.deepEqual(drafts.map(x=>x.id),ids);assert.deepEqual(metadata.map(x=>x.id),ids);assert.equal(new Set(ids).size,29);
  const hash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex'),contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),preview=contract('R1-11');
@@ -1015,19 +1050,23 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
 });
 
 test('current PGB-132 forecast agrees across product, delivery and metadata while earlier estimates remain history',async()=>{
- const metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),plan=metadata.find(x=>x.id==='R1-27');
- const expected=`Current PGB-132 whole residual forecast: **${plan.hours.min}–${plan.hours.max} hours / ${plan.hours.min/8}–${plan.days} days**.`;
+ const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),plan=metadata.find(x=>x.id==='R1-27'),dated=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata');
+ const forecast={key:'PGB-132',minDays:'1.0625',maxDays:'1.59375',days:1.59375,files:12,minHours:8.5,maxHours:12.75};
+ assert(plan,'Current R1-27 metadata must exist');
+ assert.equal(plan.forecast_provenance.native_key,forecast.key);assert.equal(plan.forecast_provenance.min_days,forecast.minDays);assert.equal(plan.forecast_provenance.max_days,forecast.maxDays);
+ assert.equal(plan.days,forecast.days);assert.equal(plan.files.length,forecast.files);assert.equal(new Set(plan.files).size,forecast.files);
+ const expected=`Current PGB-132 whole residual forecast: **${forecast.minHours}–${forecast.maxHours} hours / ${forecast.minDays}–${forecast.maxDays} days**.`;
  const product=await read('docs/product/README.md'),delivery=await read('docs/delivery/manager-r1/README.md');
  for(const document of [product,delivery]){const statements=document.split('\n').filter(line=>line.startsWith('Current PGB-132 whole residual forecast:'));assert.equal(statements.length,1);assert(statements[0].startsWith(expected));}
- const lower=metadata.reduce((sum,x)=>sum+(x.hours?x.hours.min/8:x.days),0).toFixed(5),upper=metadata.reduce((sum,x)=>sum+x.days,0).toFixed(5);
- assert(delivery.includes(`Current metadata aggregate: **${lower}–${upper} days**`));
- assert(delivery.includes(`### R1-27 — 12 residual forecast files, ${plan.hours.min}–${plan.hours.max} hours`));
- assert(delivery.split('\n').find(line=>line.startsWith('| R1-27 /')).includes(`| ${plan.hours.min/8}–${plan.days} | 12 |`));
+ const lower=dated.reduce((sum,x)=>sum+(x.hours?x.hours.min/8:x.days),0).toFixed(5),upper=dated.reduce((sum,x)=>sum+x.days,0).toFixed(5);
+ assert(delivery.includes(`Dated 29-Story metadata aggregate: **${lower}–${upper} days**`));
+ assert(delivery.includes(`### R1-27 — ${forecast.files} residual forecast files, ${forecast.minHours}–${forecast.maxHours} hours`));
+ assert(delivery.split('\n').find(line=>line.startsWith('| R1-27 /')).includes(`| ${forecast.minDays}–${forecast.maxDays} | ${forecast.files} |`));
  for(const document of [product,delivery]){assert(document.includes('15 November'));assert(document.includes('6.75–9.75h'));assert(document.includes('16 November'));assert(document.includes('7.5–11.25h'));assert(document.includes('history'));}
 });
 
 test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
- const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
+ const drafts=beforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),publication=beforeReadConfiguration(await pre81Capture('publication.json'),'publication');
  const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
  assert.equal(draft.title,'Reject conflicting completion receipts');assert.deepEqual(draft.contract.prerequisites,[{ticket:'R1-25',required_outcome:'ai_qa_complete'}]);
  assert.deepEqual(plan.dependencies,['R1-25']);assert.equal(plan.days,1.28);assert.equal(plan.files.length,17);assert.equal(new Set(plan.files).size,17);
@@ -1042,7 +1081,7 @@ test('PGB-129 source publication binds the actual native prerequisite and preser
 });
 
 test('PGB-132 source publication preserves Core history and binds the preparation-only slice',async()=>{
- const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
+ const drafts=beforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),publication=beforeReadConfiguration(await pre81Capture('publication.json'),'publication');
  const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),a=publication.qa_input_preparation_amendment,prepared=contract('R1-27'),dispatcher=contract('R1-08');
  assert.equal(hash(beforeOwnSelection(drafts).filter(x=>!['R1-08','R1-27','R1-30','R1-28'].includes(x.id))),'7a152baf7eeb37385f7560fc430d50a2ed7cfdd26de05df75c202695420ab4ad');
  const upstream=['R1-04','R1-06','R1-07','PGB-108','R1-24'];
@@ -1084,7 +1123,7 @@ function beforeThreeInputControls(drafts) {
 }
 
 test('PGB-136 partial source publication binds the exact own-selection split and preserves all earlier contracts',async()=>{
- const drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication');
+ const drafts=beforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=beforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),publication=beforeReadConfiguration(await pre81Capture('publication.json'),'publication');
  const contract=id=>drafts.find(x=>x.id===id).contract,plan=id=>metadata.find(x=>x.id===id),own=contract('R1-28'),preview=contract('R1-11'),a=publication.own_ticket_selection_amendment;
  assert.equal(hash(beforeThreeInputControls(beforeOwnSelection(drafts)).filter(x=>x.id!=='R1-11')),'9e9e6274f7677f1150650cef8dd44233bec0e17769624af4646082f02cc28a81');
  assert.equal(hash(beforeOwnSelection(drafts).find(x=>x.id==='R1-11').contract),'a913b1a7e2f8efe4a129d35d8c15d29f3474a647851dfacdaea8f4a3fe32b403');
@@ -1231,7 +1270,7 @@ function stateBeforeReadConfiguration(value,kind){
 async function stateRawFile(file){
  assert(['ticket-drafts.json','plan-metadata.json'].includes(file));
  const kind=file==='ticket-drafts.json'?'drafts':'metadata';
- const current=JSON.parse(await read('docs/delivery/manager-r1/'+file));
+ const current=await pre81Capture(file);
  return JSON.stringify(stateCheckpoint(current,kind),null,2)+'\n';
 }
 
@@ -1399,7 +1438,7 @@ function beforeReadConfiguration(value,kind) {
 }
 
 test('PGB-145 current source independently binds the complete published amendment and retained original82 contract',async()=>{
- const load=async name=>JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/'+name,import.meta.url),'utf8'));
+ const load=async name=>pre81Capture(name);
  const drafts=beforeSourceIssueInspection(await load('ticket-drafts.json'),'drafts'),metadata=beforeSourceIssueInspection(await load('plan-metadata.json'),'metadata'),p=beforeSourceIssueInspection(await load('publication.json'),'publication'),a=p.read_configuration_amendment;
  assert.equal(drafts.length,30);assert.equal(new Set(drafts.map(x=>x.id)).size,30);assert.deepEqual(drafts.map(x=>x.id),metadata.map(x=>x.id));assert.equal(drafts[drafts.findIndex(x=>x.id==='R1-21')+1].id,'R1-31');
  assert.equal(readConfigHash(drafts),'2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62');assert.equal(a.current_drafts_sha256,readConfigHash(drafts));
@@ -1417,7 +1456,7 @@ test('PGB-145 current source independently binds the complete published amendmen
 });
 
 test('PGB-146 dated partial receipt preserves actual source inventory and complete native omissions',async()=>{
- const publication=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),drafts=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),a=publication.source_repair_preview_amendment,n=a.latest_native_receipt;
+ const publication=stateBeforeReadConfiguration(await pre81Capture('publication.json'),'publication'),drafts=stateBeforeReadConfiguration(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=stateBeforeReadConfiguration(await pre81Capture('plan-metadata.json'),'metadata'),a=publication.source_repair_preview_amendment,n=a.latest_native_receipt;
  assert.equal(a.date,'2026-11-16');assert.equal(a.story_id,'R1-32');assert.equal(a.native_key,'PGB-146');assert.equal(a.native_id,'10606');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);assert.equal(a.partial_publication,true);assert.equal(a.plan_sha256,'fdf2dd3397f17aed6816760660b202517f3109acaa199aa4da82ea98817e8f03');assert.equal(a.literal_sha256,'86b435b4431abcef7c57853de804d9d14e5d9e7b4503bac2c11b176173a32649');
  assert.equal(drafts.length,29);assert.equal(metadata.length,29);assert.equal(drafts.reduce((c,d)=>c+d.contract.testing_strategy.human_review.cases.length,0),128);assert.equal(publication.story_count,29);assert.equal(publication.case_count,128);assert(!drafts.some(d=>d.id==='R1-32'));assert(!Object.hasOwn(publication.stories,'R1-32'));assert.equal(hash(JSON.stringify(drafts,null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(a.source_inventory.plan_metadata_sha256,'d2309a2e6c76787b98f439ec4f5e1605b900c9d0204d20017dec183e69ea496e');
  assert.equal(n.date,'2026-11-16');assert.equal(n.isLast,true);assert.equal(n.native_story_count,32);assert.equal(n.native_case_count,136);assert.equal(n.native_readback_sha256,'674dd6c195575459f3ebb0a0b68bf8351389bbf47b4b9da33a802fee55ba00d3');assert.equal(n.observed_stories.length,32);assert.equal(new Set(n.observed_stories.map(i=>i.key)).size,32);assert.equal(n.observed_stories.reduce((sum,i)=>sum+i.human_cases,0),136);assert.deepEqual(n.unmatched_native_bodies_or_dependencies.map(i=>i.key),['PGB-81','PGB-82','PGB-85','PGB-137','PGB-145','PGB-146']);assert.equal(n.full_reconciliation_owner,'PGB-81');
@@ -1426,19 +1465,19 @@ test('PGB-146 dated partial receipt preserves actual source inventory and comple
  assert.equal(canonicalHash(metadata),'6e1fba025f1b35d8037b13e29f73d5b157dd6ea08dbbd8bff86e17c6ecacf910');
  for(const row of n.observed_stories){const d=drafts.find(d=>publication.stories[d.id]===row.key);assert.equal(row.source_id,d?.id??null);if(d){const c=structuredClone(d.contract);for(const p of c.prerequisites)p.ticket=publication.stories[p.ticket]??p.ticket;assert.equal(canonicalHash(c),row.source_contract_sha256);assert.deepEqual(c.prerequisites.map(p=>p.ticket),row.source_prerequisites);}assert.equal(row.body_matches_source,row.source_contract_sha256===row.native_contract_sha256);assert.equal(n.unmatched_native_bodies_or_dependencies.some(i=>i.key===row.key),!row.body_matches_source);}
  const links=[['10730','PGB-80','PGB-146'],['10731','PGB-113','PGB-146'],['10732','PGB-129','PGB-146'],['10733','PGB-136','PGB-146'],['10734','PGB-146','PGB-81']].map(([id,from,to])=>({id,type_id:'10000',from,to}));assert.deepEqual(a.dependency_links,links);assert.equal(a.PGB81.original_acceptance_criteria,4);assert.equal(a.PGB81.original_technical_constraints,2);assert.equal(a.PGB81.original_human_cases,42);assert.equal(a.PGB81.preserved_complete_testing_strategy,true);assert.equal(a.PGB81.scope_comment_id,'10845');assert.equal(a.State_A.key,'PGB-145');assert.equal(a.State_A.preserved,true);assert.equal(a.State_A.unmerged_source_not_absorbed,true);
- const runtime=a.source_runtime_revision,bundle=JSON.parse(await read('config/skill-bundle.json')),paths=bundle.validatorPayload.sources.filter(p=>p.endsWith('.mjs')||p.endsWith('.schema.json')||['package.json','package-lock.json'].includes(p)).sort();assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);assert.equal(canonicalHash(runtime),'b83fe45c41976f4cdcb0f389b1c5ca4d20a4f11f6374f642bce9e432ee2c657b');assert.equal('sha256:'+canonicalHash(runtime.artifacts_sha256),runtime.revision_sha256);assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert(bundle.validatorPayload.sources.includes('lib/manager/repair-policy.mjs'));assert(!bundle.validatorPayload.sources.includes('test/fixtures/manager-repairs.json'));
+ const runtime=a.source_runtime_revision,bundle=await pre81Capture('config/skill-bundle.json'),paths=bundle.validatorPayload.sources.filter(p=>p.endsWith('.mjs')||p.endsWith('.schema.json')||['package.json','package-lock.json'].includes(p)).sort();assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);assert.equal(canonicalHash(runtime),'b83fe45c41976f4cdcb0f389b1c5ca4d20a4f11f6374f642bce9e432ee2c657b');assert.equal('sha256:'+canonicalHash(runtime.artifacts_sha256),runtime.revision_sha256);assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert(bundle.validatorPayload.sources.includes('lib/manager/repair-policy.mjs'));assert(!bundle.validatorPayload.sources.includes('test/fixtures/manager-repairs.json'));
  assert.equal(publication.current_source_scope.native_snapshot.date,'2026-11-15');assert.equal(publication.current_source_scope.native_snapshot.story_count,30);assert.equal(publication.current_source_scope.native_snapshot.case_count,130);assert.deepEqual(publication.current_source_scope.pending_source_amendments,['PGB-137']);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.PGB81_human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
 });
 
 test('R1-35 machine source integration preserves complete historical receipts and runtime maps',async()=>{
- const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.machine_repair_preview_amendment,old=p.source_repair_preview_amendment;
+ const p=stateCheckpoint(await pre81Capture('publication.json'),'publication'),a=p.machine_repair_preview_amendment,old=p.source_repair_preview_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=v=>hash(canonicalize(v));
- const drafts=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata');
+ const drafts=stateCheckpoint(await pre81Capture('ticket-drafts.json'),'drafts'),metadata=stateCheckpoint(await pre81Capture('plan-metadata.json'),'metadata');
  assert.equal(a.story_id,'R1-35');assert.equal(a.native_key,'PGB-149');assert.equal(a.native_id,'10609');assert.equal(a.parent,'PGB-66');assert.equal(a.plan_sha256,'a2668b38252feb7227432d67bc2dd88e6feea4a8b69dddc1ab86bc44d0189e68');assert.equal(a.partial_publication,true);assert.equal(a.native_publication_verified,true);
  assert.equal(canonicalHash(old),'03026e5fa6c3443556bee62262311d5ebd88cdf78c6629c8388c187d200e7425');assert.equal(hash(old),'8efd0c844d9bcfbaf7f7ee99e0c272b29f32e8c9e60fb8e19b0c394d1873c10e');assert.equal(a.historical_source_capture.canonical_sha256,canonicalHash(old));assert.equal(a.historical_source_capture.json_sha256,hash(old));assert(a.historical_source_capture.meaning.includes('historical'));
  assert.equal(a.source_provenance.base_commit,'da39e3762f31704a832e0cbc503c3b0d6d2284dc');assert.equal(a.source_provenance.base_tree,'0a5c210464bd041cd2e70f4ce2475e4a8ca9c800');assert.equal(a.source_provenance.reused_machine_commit,'d34b2bb0e26ad58ae1e7564e32acfadaa9d9f45f');assert.equal(a.source_provenance.PGB145_included,true);assert.equal(canonicalHash(p.read_configuration_amendment),'82bd2f1594e142f513c5c1d1ddd2189e9eb97022a761529f54d161cc6018094d');assert.equal(a.source_provenance.read_configuration_amendment_sha256,canonicalHash(p.read_configuration_amendment));
- assert.deepEqual([drafts.length,metadata.length,p.story_count,p.case_count],[30,30,30,132]);assert.equal(drafts.reduce((n,d)=>n+d.contract.testing_strategy.human_review.cases.length,0),132);assert(!drafts.some(d=>['R1-32','R1-35','R1-33','R1-34'].includes(d.id)));assert(!Object.hasOwn(p.stories,'R1-35'));assert.deepEqual([a.source_inventory.story_count,a.source_inventory.case_count],[30,132]);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
- const bundle=JSON.parse(await read('config/skill-bundle.json')),paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort(),runtime=a.source_runtime_revision;assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);assert.equal(canonicalHash(a),'0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3');assert.equal(hash(a),'9dccea4120ef740ed1b59dc2a4d72bb5fa2c7ecc432154fb245a4c5c657de013');assert.equal(canonicalHash(runtime),'bcd999e01ea89308aaad5b7c295b26a3454ac387a49139689abb83eae2a7d1ae');assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(runtime.source_fixture_sha256,'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);
+ assert.deepEqual([drafts.length,metadata.length,p.story_count,p.case_count],[30,30,30,132]);assert.equal(drafts.reduce((n,d)=>n+d.contract.testing_strategy.human_review.cases.length,0),132);assert(!drafts.some(d=>['R1-32','R1-35','R1-33','R1-34'].includes(d.id)));assert(!Object.hasOwn(p.stories,'R1-35'));assert.deepEqual([a.source_inventory.story_count,a.source_inventory.case_count],[30,132]);assert.equal(hash(JSON.stringify(stateCheckpoint(await pre81Capture('ticket-drafts.json'),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(await pre81Capture('plan-metadata.json'),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
+ const bundle=await pre81Capture('config/skill-bundle.json'),paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort(),runtime=a.source_runtime_revision;assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);assert.equal(canonicalHash(a),'0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3');assert.equal(hash(a),'9dccea4120ef740ed1b59dc2a4d72bb5fa2c7ecc432154fb245a4c5c657de013');assert.equal(canonicalHash(runtime),'bcd999e01ea89308aaad5b7c295b26a3454ac387a49139689abb83eae2a7d1ae');assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(runtime.source_fixture_sha256,'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);
  assert.deepEqual(paths.filter(f=>runtime.artifacts_sha256[f]!==old.source_runtime_revision.artifacts_sha256[f]),['contracts/config-v1.schema.json','lib/config/diff.mjs','lib/config/parse.mjs','lib/config/projects.mjs','scripts/check-config.mjs']);assert(bundle.validatorPayload.sources.includes('lib/manager/repair-policy.mjs'));assert(!bundle.validatorPayload.sources.includes('test/fixtures/manager-repairs.json'));
  const publication=a.native_publication;assert.equal(publication.receipt_sha256,'f20cb80be5248db901dc6d06d6125e2d515cc179191702f2660aae8017238777');assert.equal(publication.readback_sha256,'43bbfab38e74c7c9a029b0f2b2f3493ed5fc28e772beaf38055275e6149eefc1');
  const bound={'PGB-149':['10609','9311afb53d125c112cbcbfec6cff80cd721d455e000f3903f83936aa249a530f','e1fea555cb032753af11ca7214b1738737c0aa4bb59f789c0c3611988eab0d0a'],'PGB-146':['10606','45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d','1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc'],'PGB-81':['10541','2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17','5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f']};assert.deepEqual(Object.keys(publication.contracts),Object.keys(bound));for(const [key,[id,description,digest]]of Object.entries(bound)){const row=publication.contracts[key];assert.equal(row.native_id,id);assert.equal(row.description_sha256,description);assert.equal(row.canonical_contract_sha256,digest);assert.equal(canonicalHash(row.contract),digest,key);}
@@ -1452,7 +1491,7 @@ test('R1-35 machine source integration preserves complete historical receipts an
 });
 
 test('R1-37 current PR repair preserves its complete historical runtime and native amendment',async()=>{
- const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.current_pr_repair_amendment,old=p.machine_repair_preview_amendment;
+ const p=stateCheckpoint(await pre81Capture('publication.json'),'publication'),a=p.current_pr_repair_amendment,old=p.machine_repair_preview_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  assert.equal(canonicalHash(a),'4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d');
  assert.deepEqual([a.story_id,a.native_key,a.native_id,a.parent],['R1-37','PGB-151','10611','PGB-66']);
@@ -1468,7 +1507,7 @@ test('R1-37 current PR repair preserves its complete historical runtime and nati
  assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert.equal(runtime.source_fixture_sha256,old.source_runtime_revision.source_fixture_sha256);
  assert.deepEqual(paths.filter(file=>runtime.artifacts_sha256[file]!==old.source_runtime_revision.artifacts_sha256[file]),['lib/manager/repair-policy.mjs']);
  assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);
- assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
+ assert.equal(hash(JSON.stringify(stateCheckpoint(await pre81Capture('ticket-drafts.json'),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(await pre81Capture('plan-metadata.json'),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
  assert(!Object.hasOwn(p.stories,'R1-37'));assert(a.source_inventory.meaning.includes('no exhaustive current native inventory'));
  const n=a.native_publication;assert.equal(n.receipt_sha256,'44d8b0e88cfdde7ba459b540a9355663080c5af88f35c7e7e0ea030272a404b4');assert.equal(hash(JSON.stringify(n.receipt,null,2)+'\n'),n.receipt_sha256);assert.equal(n.readback_sha256,'1b8e111b78a79e921c92b677541720bf99d1c5fb3e41fc8866b95c65fb92487b');assert.equal(n.receipt.native_readback_sha256,n.readback_sha256);assert.equal(n.receipt.work_sha256,'ce27bc1678a1137f4888820a9d7be9e2458ac6d4e6abf1ed3a90dbb2a4635b42');
  const bound={'PGB-151':['10611','756707e48cbe4aab24dd51748f637cd90d72d5c799a9f29bcda9f12995e15a3c','da6a1977ecb12d1e43f0ce89bcc2fabd6d4c483edf2442f1fdb8d7feb788c3e2'],'PGB-149':['10609','27edc3e6f35d957de95fcaf7ed77b6fd359c6bb24e8fcc55f9fb1c6b1abe65b9','5ada6d116a0aee07eca88fba6a19eaf7c24079cdc4744623998b1789a2b4004d'],'PGB-146':['10606','45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d','1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc'],'PGB-81':['10541','2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17','5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f']};
@@ -1486,7 +1525,7 @@ test('R1-37 current PR repair preserves its complete historical runtime and nati
 });
 
 test('R1-39 duplicate QA repair preserves complete historical captures',async()=>{
- const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.duplicate_qa_repair_amendment,old=p.current_pr_repair_amendment;
+ const p=stateCheckpoint(await pre81Capture('publication.json'),'publication'),a=p.duplicate_qa_repair_amendment,old=p.current_pr_repair_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=v=>hash(canonicalize(v));
  assert.equal(canonicalHash(a),'e54c5650f1b2ec7cf6b9702128f65baf94f118d2bbf5fb91c072c07785ff2f1c');assert.deepEqual([a.story_id,a.native_key,a.native_id,a.parent],['R1-39','PGB-153','10613','PGB-66']);
  assert.equal(a.date,'2026-11-16');assert.equal(a.plan_sha256,'91819fcd235c9c3209ced8a1a3a603e3d57a476f1a68a9f26e88238a1376b078');assert.equal(a.partial_publication,true);assert.equal(a.native_publication_verified,true);
@@ -1510,7 +1549,7 @@ test('R1-39 duplicate QA repair preserves complete historical captures',async()=
 });
 
 test('PGB-146 readable completion preserves its complete historical capture',async()=>{
- const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.readable_repair_preview_amendment,machine=p.machine_repair_preview_amendment,current=p.current_pr_repair_amendment;
+ const p=stateCheckpoint(await pre81Capture('publication.json'),'publication'),a=p.readable_repair_preview_amendment,machine=p.machine_repair_preview_amendment,current=p.current_pr_repair_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  const parent=structuredClone(p);delete parent.readable_repair_preview_amendment;delete parent.duplicate_qa_repair_amendment;delete parent.readable_repair_integration_amendment;
  assert.equal(canonicalHash(parent),'448d1c187e99926790dcad16ceb797fc55188edf5c77b4ed33874c3add9ccc1d','complete9767 publication object preserved, including every dated capture');
@@ -1534,8 +1573,8 @@ test('PGB-146 readable completion preserves its complete historical capture',asy
  for(const field of ['human_acceptance','original149_human_acceptance','original151_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');for(const field of ['hosted_checks','merge','release'])assert.equal(a[field],'NOT_CLAIMED');assert.equal(a.activation_authorized,false);
 });
 
-test('PGB-146 repaired-parent integration binds current artifacts and preserves both captures',async()=>{
- const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.readable_repair_integration_amendment;
+test('PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility',async()=>{
+ const p=stateCheckpoint(await pre81Capture('publication.json'),'publication'),a=p.readable_repair_integration_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  assert.deepEqual(Object.keys(p),["date", "epic", "grooming", "status", "stories", "operational_tasks", "story_count", "case_count", "requirement_count", "scenario_count", "dependency_links", "baseline_publication", "follow_on_tasks", "health_precedence_correction", "baseline_design_commit", "reviewed_design_artifacts", "startup_alarm_correction", "history", "qa_split", "repeated_parent_amendment", "current_source_scope", "baseline_before_amendments", "current_proof_conflict_amendment", "qa_input_preparation_amendment", "qa_input_controls_amendment", "own_ticket_selection_amendment", "read_configuration_amendment", "source_repair_preview_amendment", "machine_repair_preview_amendment", "current_pr_repair_amendment", "duplicate_qa_repair_amendment", "readable_repair_preview_amendment", "readable_repair_integration_amendment"]);assert.equal(Object.keys(p).length,33);
  const parent153=structuredClone(p);delete parent153.readable_repair_preview_amendment;delete parent153.readable_repair_integration_amendment;
@@ -1556,4 +1595,2704 @@ test('PGB-146 repaired-parent integration binds current artifacts and preserves 
  assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);assert.deepEqual(a.source_inventory,p.readable_repair_preview_amendment.source_inventory);for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']])assert.equal(hash(await stateRawFile(file)),a.source_inventory[field]);
  assert(a.source_inventory.meaning.includes('not an exhaustive current native inventory'));assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');assert.deepEqual(a.readable_cause_parity,p.readable_repair_preview_amendment.readable_cause_parity);assert.equal(a.readable_cause_parity.status,'SOURCE_COMPLETE');assert.deepEqual(a.readable_cause_parity.fields,['ticket_id','comment_id','record_id','digest']);assert.equal(a.readable_cause_parity.order,'Canonical proposal.roots order; no sorting or deduplication.');
  assert.equal(a.preview_execution_authorized,false);assert.equal(a.preview_writes,0);for(const field of ['human_acceptance','original149_human_acceptance','original151_human_acceptance','original153_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');for(const field of ['hosted_checks','merge','release'])assert.equal(a[field],'NOT_CLAIMED');assert.equal(a.activation_authorized,false);
+});
+
+const installed81HistoryExpected={
+  "capture": "fc04c489ab7a8339b37ae310f3f8368319f31b228296450265041d418d03a982",
+  "files": {
+    "ticket-drafts.json": {
+      "raw": "9ffe565fa1565be450711f4f7fd87b8da3ec8071a3e9e4701426d658ede34990",
+      "json": "eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653",
+      "canonical": "9da9ac2fc693db4c2fe90402378bc400c5ce0b8c779fab95c5f8c1f76f29a767"
+    },
+    "plan-metadata.json": {
+      "raw": "a6feff8162b173221522ddc257b6c244a800a17aebeb3e1bfee7404179e643d2",
+      "json": "eb58c13c50f7acfe1610b73abe139703b4c92e312f8034c96d897843f41fe1b1",
+      "canonical": "11cacaa064a13f4d67f897e65c5e5c2f215b147593e7a91ee73edee869415e02"
+    },
+    "publication.json": {
+      "raw": "d4cf6fe3e07bdc156f29c4792eadc33a18f03392b2e0e07e2e9409398793d65e",
+      "json": "8624d22abca43b0f9929c7de5df31edbebc1a3e858269677cdae5b0f6fb907ad",
+      "canonical": "c9350ea0c9ad239450642e4e8666ece52114b7061a6c72a92d0f1924593c7611"
+    },
+    "config/skill-bundle.json": {
+      "raw": "6385214b9fa380394b6da33ffbe4eb43015f6bb3c0983d86e58ed61c83f260c2",
+      "json": "4fb87e988d1f8c4044cac5181b3df9d6c14ce0bb119b127865e822a0643c1ad8",
+      "canonical": "2205195a0e67d68a177f3ae937d512a8c4ab39822f5b0d741116802222e905d1"
+    }
+  },
+  "amendments": {
+    "native_source_issue_inspection_amendment": "b802c5dca056c8672da3299bafe861de6a23a417c5087a62f61db963a5e601f7",
+    "native_observation_repair_amendment": "f26c0b04235d02b30efe4805fa60ecc19178f0a0da3419aae714ae25e9920f35",
+    "native_target_identity_repair_amendment": "fcbf4dc6136308a711d674fe1eb70575d3653d276a2ae5367fedaae52a6db351",
+    "source_repair_preview_amendment": "03026e5fa6c3443556bee62262311d5ebd88cdf78c6629c8388c187d200e7425",
+    "machine_repair_preview_amendment": "0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3",
+    "current_pr_repair_amendment": "4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d",
+    "duplicate_qa_repair_amendment": "e54c5650f1b2ec7cf6b9702128f65baf94f118d2bbf5fb91c072c07785ff2f1c",
+    "readable_repair_preview_amendment": "1a786ec14e05fa05d6cb74f49cbaa0116b6e829b6b4fc804a45825e600527254",
+    "readable_repair_integration_amendment": "76d16ffb7e040fcc86a234ef4eb47889d547d5cc6845aecca50e6e89571d3285"
+  },
+  "catalog": "92b3753b354125107f6c62bc56f784aa8b1669a2e28b764c6f967efa94a3fe62",
+  "predecessors": {
+    "source449": {
+      "raw": "71b2dc34074009d1ba2673d98d221d597a0b749882958bafe626af3d7f8ec238",
+      "json": "5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116",
+      "canonical": "ee31b50545cc3f92d72856b9366e909879e5da13b4aa0655697dde254d3f732d"
+    },
+    "state_main": {
+      "raw": "7f8053650b42ca413c0af1e1bcfb19be3f8528f82a2807abcb2c877db68ae39d",
+      "json": "549c5f4913e4be75a72c16e0f985dcc534b01c7b1cc40901d744f61f9af8c8a6",
+      "canonical": "7e999933eba22d8c7109df7a23aaae4715a60a97fc9abb6ea96ef6f53f887a7b"
+    }
+  }
+};
+const installed81ForecastExpected=[
+  {
+    "id": "R1-01",
+    "key": "PGB-71",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "package.json",
+      "package-lock.json",
+      "contracts/epic-v1.schema.json",
+      "contracts/ticket-v1.schema.json",
+      "docs/architecture/contracts/pigboard-epic-v1.schema.json",
+      "docs/architecture/contracts/pigboard-ticket-v1.schema.json",
+      "scripts/validate-work.mjs",
+      "lib/contracts/parse.mjs",
+      "lib/contracts/schema.mjs",
+      "test/work-syntax.test.mjs",
+      "test/fixtures/work-syntax.json",
+      "docs/authoring.md",
+      "config/skill-bundle.json",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/architecture/manager-work-schema.md",
+      "docs/architecture/contracts/check_work_examples.py",
+      "docs/architecture/manager-work-contract.md",
+      "docs/architecture/examples/manager-ticket.yaml"
+    ]
+  },
+  {
+    "id": "R1-02",
+    "key": "PGB-72",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "lib/contracts/work-semantics.mjs",
+      "lib/contracts/case-graph.mjs",
+      "scripts/validate-work.mjs",
+      "test/work-semantics.test.mjs",
+      "test/case-graph.test.mjs",
+      "test/fixtures/work-semantics.json",
+      "docs/authoring.md"
+    ]
+  },
+  {
+    "id": "R1-03",
+    "key": "PGB-73",
+    "min": "1.25",
+    "max": "1.25",
+    "files": [
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/pigboard-ticket.md",
+      "skills/write-pr-sized-stories/references/pigboard-example.md",
+      "skills/write-pr-sized-stories/references/pigboard-epic.md",
+      "skills/write-pr-sized-stories/references/epic.yaml",
+      "skills/write-pr-sized-stories/references/ticket.yaml",
+      "test/story-authoring.test.mjs",
+      "docs/authoring.md"
+    ]
+  },
+  {
+    "id": "R1-04",
+    "key": "PGB-74",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "contracts/handoff-v1.schema.json",
+      "contracts/work-pointer-v1.schema.json",
+      "docs/architecture/contracts/pigboard-handoff-v1.schema.json",
+      "docs/architecture/contracts/pigboard-work-pointer-v1.schema.json",
+      "lib/contracts/handoff.mjs",
+      "lib/contracts/canonical.mjs",
+      "lib/contracts/receipts.mjs",
+      "scripts/validate-handoff.mjs",
+      "test/handoff.test.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "docs/handoffs.md",
+      "config/skill-bundle.json",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/architecture/manager-handoff-contract.md",
+      "docs/architecture/contracts/check_work_examples.py",
+      "docs/architecture/examples/handoffs/admission.yaml"
+    ]
+  },
+  {
+    "id": "R1-21",
+    "key": "PGB-99",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "contracts/config-v1.schema.json",
+      "lib/config/parse.mjs",
+      "lib/config/projects.mjs",
+      "scripts/check-config.mjs",
+      "lib/config/diff.mjs",
+      "test/config-projects.test.mjs",
+      "test/fixtures/project-configs.json",
+      "docs/configuration.md",
+      "config/pigboss.example.yaml"
+    ]
+  },
+  {
+    "id": "R1-31",
+    "key": "PGB-145",
+    "min": "1.53125",
+    "max": "1.90625",
+    "files": [
+      "contracts/config-v1.schema.json",
+      "lib/config/parse.mjs",
+      "lib/config/projects.mjs",
+      "lib/config/diff.mjs",
+      "config/pigboss.example.yaml",
+      "scripts/check-config.mjs",
+      "test/config-projects.test.mjs",
+      "test/config-diff.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/configuration.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/coverage.md"
+    ]
+  },
+  {
+    "id": "R1-05",
+    "key": "PGB-75",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "skills/implementer-entrypoint/SKILL.md",
+      "skills/implementer-entrypoint/references/cursor.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/implementer-entrypoint/references/plan-review.md",
+      "skills/implementer-jira/SKILL.md",
+      "skills/implementer-jira/references/publication.md",
+      "config/skill-bundle.json",
+      "test/implementer-contract.test.mjs",
+      "test/fixtures/implementer-transcripts.json",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-06",
+    "key": "PGB-76",
+    "min": "1.25",
+    "max": "1.25",
+    "files": [
+      "skills/pigboard-pr-review/SKILL.md",
+      "skills/pigboard-pr-review/references/cursor.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "skills/reviewer-jira/SKILL.md",
+      "config/skill-bundle.json",
+      "test/reviewer-contract.test.mjs",
+      "test/fixtures/reviewer-transcripts.json",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-07",
+    "key": "PGB-77",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "skills/qa-api/SKILL.md",
+      "skills/qa-bruno/SKILL.md",
+      "skills/qa-database/SKILL.md",
+      "skills/qa-ui/SKILL.md",
+      "test/qa-helper-contract.test.mjs",
+      "test/fixtures/qa-helper-cases.json",
+      "docs/qa-cases.md"
+    ]
+  },
+  {
+    "id": "R1-24",
+    "key": "PGB-110",
+    "min": "3.34375",
+    "max": "4.5625",
+    "files": [
+      "skills/qa-jira/SKILL.md",
+      "config/skill-bundle.json",
+      "test/qa-helper-contract.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/cursor-environment.test.mjs",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/workflow.md",
+      "docs/install.md",
+      "docs/using-pigboard.md",
+      "docs/handoffs.md",
+      "config/cursor/automations.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ]
+  },
+  {
+    "id": "R1-30",
+    "key": "PGB-138",
+    "min": "1.0625",
+    "max": "1.5625",
+    "files": [
+      "skills/write-pr-sized-stories/SKILL.md",
+      "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "docs/authoring.md",
+      "test/story-authoring.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "skills/qa-api/references/structured-steps.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ]
+  },
+  {
+    "id": "R1-27",
+    "key": "PGB-132",
+    "min": "1.0625",
+    "max": "1.59375",
+    "files": [
+      "test/story-authoring.test.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/coverage.md",
+      "docs/product/README.md"
+    ]
+  },
+  {
+    "id": "R1-08",
+    "key": "PGB-78",
+    "min": "1.3125",
+    "max": "1.8125",
+    "files": [
+      "skills/qa-entrypoint/SKILL.md",
+      "skills/qa-entrypoint/references/execution-record.md",
+      "skills/qa-entrypoint/references/cursor.md",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/story-authoring.test.mjs",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/workflow.md",
+      "docs/install.md",
+      "docs/using-pigboard.md",
+      "docs/handoffs.md",
+      "config/cursor/automations.md",
+      "skills/qa-jira/SKILL.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json"
+    ]
+  },
+  {
+    "id": "R1-09",
+    "key": "PGB-79",
+    "min": "1.25",
+    "max": "1.25",
+    "files": [
+      "skills/request-rework/SKILL.md",
+      "skills/request-rework/references/example.md",
+      "config/skill-bundle.json",
+      "test/request-rework.test.mjs",
+      "test/fixtures/human-rework.json",
+      "docs/using-pigboard.md",
+      "docs/workflow.md"
+    ]
+  },
+  {
+    "id": "R1-10",
+    "key": "PGB-80",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "lib/manager/snapshot.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "scripts/manager-preview.mjs",
+      "test/manager-preview.test.mjs",
+      "test/fixtures/manager-candidates.json",
+      "docs/manager-preview.md"
+    ]
+  },
+  {
+    "id": "R1-25",
+    "key": "PGB-113",
+    "min": "1.98",
+    "max": "1.98",
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "test/cursor-environment.test.mjs",
+      "docs/handoffs.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-26",
+    "key": "PGB-129",
+    "min": "1.28",
+    "max": "1.28",
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "lib/manager/snapshot.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/manager-preview.test.mjs",
+      "test/fixtures/manager-proof-conflicts.json",
+      "test/cursor-environment.test.mjs",
+      "docs/manager-preview.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-28",
+    "key": "PGB-136",
+    "min": "1.92",
+    "max": "1.92",
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "lib/manager/snapshot.mjs",
+      "README.md",
+      "lib/manager/decisions.mjs",
+      "test/story-authoring.test.mjs",
+      "test/manager-preview.test.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/fixtures/manager-repairs.json",
+      "docs/manager-preview.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-11",
+    "key": "PGB-81",
+    "min": "1.91",
+    "max": "1.91",
+    "files": [
+      "config/skill-bundle.json",
+      "scripts/install-cursor-skills.mjs",
+      "test/cursor-environment.test.mjs",
+      "docs/manager-preview.md",
+      "docs/install.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/handoffs.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-12",
+    "key": "PGB-82",
+    "min": "1.375",
+    "max": "1.875",
+    "files": [
+      "config/pigboss.example.yaml",
+      "lib/manager/live-preview.mjs",
+      "test/manager-jira-preview.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "config/skill-bundle.json",
+      "scripts/install-cursor-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/configuration.md",
+      "docs/manager-preview.md",
+      "docs/install.md",
+      "README.md",
+      "ARCHITECTURE.md"
+    ],
+    "hours": {
+      "min": 11,
+      "max": 15
+    }
+  },
+  {
+    "id": "R1-13",
+    "key": "PGB-83",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "lib/aws/lambda.mjs",
+      "lib/aws/secrets.mjs",
+      "infra/aws/template.yaml",
+      "scripts/package-manager.mjs",
+      "scripts/deploy-manager.mjs",
+      "contracts/config-v1.schema.json",
+      "test/aws-package.test.mjs",
+      "test/aws-iam.test.mjs",
+      "test/fixtures/aws-config.json",
+      "docs/install-manager.md",
+      "docs/configuration.md",
+      "package.json",
+      "package-lock.json"
+    ]
+  },
+  {
+    "id": "R1-14",
+    "key": "PGB-84",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "lib/state/contract.mjs",
+      "lib/aws/dynamodb.mjs",
+      "scripts/manager-state.mjs",
+      "lib/aws/lambda.mjs",
+      "infra/aws/template.yaml",
+      "test/state-conformance.test.mjs",
+      "test/dynamodb-state.test.mjs",
+      "test/fixtures/state-history.json",
+      "docs/manager-state.md",
+      "docs/install-manager.md"
+    ]
+  },
+  {
+    "id": "R1-15",
+    "key": "PGB-85",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "lib/manager/reconcile.mjs",
+      "lib/state/contract.mjs",
+      "lib/aws/dynamodb.mjs",
+      "scripts/manager-state.mjs",
+      "lib/aws/reconcile-context.mjs",
+      "test/reconciliation.test.mjs",
+      "test/fixtures/reconciliation.json",
+      "scripts/test-manager-state.mjs",
+      "docs/manager-state.md",
+      "docs/install-manager.md",
+      "infra/aws/template.yaml",
+      "test/manager-state-cli.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-16",
+    "key": "PGB-86",
+    "min": "1.25",
+    "max": "1.25",
+    "files": [
+      "scripts/deploy-manager.mjs",
+      "scripts/manager-state.mjs",
+      "lib/config/compatibility.mjs",
+      "infra/aws/template.yaml",
+      "test/install-lifecycle.test.mjs",
+      "test/fixtures/upgrade-state.json",
+      "docs/install-manager.md",
+      "docs/manager-state.md"
+    ]
+  },
+  {
+    "id": "R1-22",
+    "key": "PGB-100",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "lib/manager/scan-summary.mjs",
+      "lib/manager/health.mjs",
+      "lib/aws/scan-telemetry.mjs",
+      "lib/aws/health-reader.mjs",
+      "lib/aws/lambda.mjs",
+      "scripts/pigboss-health.mjs",
+      "test/manager-health.test.mjs",
+      "test/aws-health.test.mjs",
+      "test/fixtures/health-results.json",
+      "docs/operate-pigboss.md",
+      "contracts/config-v1.schema.json"
+    ]
+  },
+  {
+    "id": "R1-23",
+    "key": "PGB-101",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "infra/aws/health.yaml",
+      "infra/aws/template.yaml",
+      "lib/aws/lifecycle.mjs",
+      "scripts/check-manager-readiness.mjs",
+      "test/aws-health-package.test.mjs",
+      "test/aws-lifecycle.test.mjs",
+      "test/fixtures/health-package.json",
+      "docs/operate-pigboss.md",
+      "docs/install-manager.md",
+      "contracts/config-v1.schema.json"
+    ]
+  },
+  {
+    "id": "R1-17",
+    "key": "PGB-87",
+    "min": "1.75",
+    "max": "1.75",
+    "files": [
+      "lib/manager/apply.mjs",
+      "lib/jira/mutations.mjs",
+      "lib/aws/lambda.mjs",
+      "scripts/manager-apply.mjs",
+      "scripts/manager-state.mjs",
+      "test/new-admission.test.mjs",
+      "test/admission-failures.test.mjs",
+      "test/fixtures/admission-traces.json",
+      "docs/manager-operations.md",
+      "docs/install-manager.md"
+    ]
+  },
+  {
+    "id": "R1-18",
+    "key": "PGB-88",
+    "min": "1.25",
+    "max": "1.25",
+    "files": [
+      "lib/manager/apply.mjs",
+      "lib/manager/repair-admission.mjs",
+      "test/repair-admission.test.mjs",
+      "test/fixtures/repair-admissions.json",
+      "docs/manager-operations.md"
+    ]
+  },
+  {
+    "id": "R1-19",
+    "key": "PGB-89",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "lib/manager/stack-queue.mjs",
+      "lib/manager/apply.mjs",
+      "test/stack-queue.test.mjs",
+      "test/fixtures/stack-traces.json",
+      "docs/manager-operations.md"
+    ]
+  },
+  {
+    "id": "R1-20",
+    "key": "PGB-90",
+    "min": "1.5",
+    "max": "1.5",
+    "files": [
+      "config/skill-bundle.json",
+      "config/cursor/automations.md",
+      "config/cursor/implementer-prompt.txt",
+      "config/cursor/pr-review-prompt.txt",
+      "config/cursor/qa-prompt.txt",
+      "config/jira/exports/AI-Daniel-1-implementer.json",
+      "config/jira/exports/AI-Daniel-1-pr-review.json",
+      "config/jira/exports/AI-Daniel-1-qa.json",
+      "scripts/check-manager-readiness.mjs",
+      "scripts/prepare-pigboard-skills.mjs",
+      "test/manager-readiness.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/install-manager.md",
+      "docs/workflow.md",
+      "docs/using-pigboard.md"
+    ]
+  },
+  {
+    "id": "R1-29",
+    "key": "PGB-137",
+    "min": "1.5625",
+    "max": "1.5625",
+    "files": [
+      "lib/state/contract.mjs",
+      "lib/aws/dynamodb.mjs",
+      "test/manager-state-contract.test.mjs",
+      "test/fixtures/transition-proof.json",
+      "scripts/test-transition-proof.mjs",
+      "scripts/manager-state.mjs",
+      "test/manager-state-cli.test.mjs",
+      "docs/manager-state.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-32",
+    "key": "PGB-146",
+    "min": "0.86",
+    "max": "0.86",
+    "files": [
+      "ARCHITECTURE.md",
+      "README.md",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/manager-preview.md",
+      "docs/product/README.md",
+      "scripts/manager-preview.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/manager-preview.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/repair-policy.test.mjs"
+    ],
+    "hours": {
+      "min": 6.88,
+      "max": 6.88
+    }
+  },
+  {
+    "id": "R1-33",
+    "key": "PGB-147",
+    "min": "0.94375",
+    "max": "1.28125",
+    "files": [
+      "ARCHITECTURE.md",
+      "README.md",
+      "config/skill-bundle.json",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/manager-preview.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "test/story-authoring.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-34",
+    "key": "PGB-148",
+    "min": "1.34375",
+    "max": "1.8125",
+    "files": [
+      "lib/jira/read.mjs",
+      "lib/jira/inventory.mjs",
+      "test/jira-inventory.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "config/skill-bundle.json",
+      "test/skill-distribution.test.mjs",
+      "docs/manager-preview.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/coverage.md"
+    ]
+  },
+  {
+    "id": "R1-35",
+    "key": "PGB-149",
+    "min": "1.965",
+    "max": "1.965",
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "lib/manager/repair-policy.mjs",
+      "lib/manager/snapshot.mjs",
+      "scripts/manager-preview.mjs",
+      "test/fixtures/manager-candidates.json",
+      "test/fixtures/manager-repairs.json",
+      "test/manager-preview.test.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/repair-policy.test.mjs",
+      "config/skill-bundle.json",
+      "test/cursor-environment.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/README.md",
+      "ARCHITECTURE.md",
+      "README.md",
+      "docs/architecture/manager-handoff-contract.md"
+    ]
+  },
+  {
+    "id": "R1-36",
+    "key": "PGB-150",
+    "min": "1.24375",
+    "max": "1.7875",
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "test/fixtures/jira-preview-tls.json",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 9.95,
+      "max": 14.3
+    }
+  },
+  {
+    "id": "R1-37",
+    "key": "PGB-151",
+    "min": "0.55",
+    "max": "0.55",
+    "files": [
+      "lib/manager/repair-policy.mjs",
+      "test/repair-policy.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-38",
+    "key": "PGB-152",
+    "min": "0.4375",
+    "max": "0.75",
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-39",
+    "key": "PGB-153",
+    "min": "0.65",
+    "max": "0.65",
+    "files": [
+      "lib/manager/repair-policy.mjs",
+      "test/repair-policy.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs"
+    ]
+  },
+  {
+    "id": "R1-40",
+    "key": "PGB-154",
+    "min": "0.375",
+    "max": "0.6375",
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 3,
+      "max": 5.1
+    }
+  },
+  {
+    "id": "R1-41",
+    "key": "PGB-155",
+    "min": "0.68125",
+    "max": "1.08125",
+    "files": [
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 5.45,
+      "max": 8.65
+    }
+  },
+  {
+    "id": "R1-42",
+    "key": "PGB-156",
+    "min": "0.69375",
+    "max": "1.175",
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-tls.json",
+      "docs/manager-preview.md"
+    ],
+    "hours": {
+      "min": 5.55,
+      "max": 9.4
+    }
+  }
+];
+const installed81CoverageExpected={
+  "docs/product/coverage.md": [
+    {
+      "ids": [
+        "A01"
+      ],
+      "prefix": " A01 | Existing writer; work contract | Bounded structured Story/Bug authoring ",
+      "references": [
+        "R1-03-H01",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A02"
+      ],
+      "prefix": " A02 | Existing bundle + sibling human-writing reference | Self-contained published skill dependency ",
+      "references": [
+        "R1-03-H01",
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A03"
+      ],
+      "prefix": " A03 | Epic/ticket skeletons; schema guide | Full editable YAML output ",
+      "references": [
+        "R1-01-H01",
+        "R1-03-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A04"
+      ],
+      "prefix": " A04 | Epic schema; work contract | Explicit stream membership/order ",
+      "references": [
+        "R1-03-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A05"
+      ],
+      "prefix": " A05 | Ticket schema; work contract | One-repository scope and prerequisites ",
+      "references": [
+        "R1-02-H02",
+        "R1-03-H01",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A06"
+      ],
+      "prefix": " A06 | Ticket schema testing strategy | Complete executable acceptance cases ",
+      "references": [
+        "R1-02-H01",
+        "R1-02-H02",
+        "R1-02-H03",
+        "R1-08-H01",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A07"
+      ],
+      "prefix": " A07 | Schema execution graph | Exact dispatch and helper ownership ",
+      "references": [
+        "R1-02-H01",
+        "R1-07-H01",
+        "R1-08-H01",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A08"
+      ],
+      "prefix": " A08 | Human cases; coverage validation | AI/human separation and requirement coverage ",
+      "references": [
+        "R1-02-H01",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "A09"
+      ],
+      "prefix": " A09 | Preparation slots | Prepared execution details without changed expectations ",
+      "references": [
+        "R1-02-H02",
+        "R1-05-H01",
+        "R1-07-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A10"
+      ],
+      "prefix": " A10 | Extraction/semantic rules | Safe parsing and useful validation errors ",
+      "references": [
+        "R1-01-H02",
+        "R1-02-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A11"
+      ],
+      "prefix": " A11 | Start conditions | Invalid/unresolved ticket cannot start ",
+      "references": [
+        "R1-01-H01",
+        "R1-02-H01",
+        "R1-02-H03",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A12"
+      ],
+      "prefix": " A12 | Config/work authority boundary | Work text cannot grant authority ",
+      "references": [
+        "R1-02-H01",
+        "R1-03-H02",
+        "R1-12-H03",
+        "R1-31-H02",
+        "R1-31-H04",
+        "R1-36-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W01"
+      ],
+      "prefix": " W01 | Existing model configuration; handoffs | High plan + one High review, Medium execution, High PR/QA ",
+      "references": [
+        "R1-05-H01",
+        "R1-06-H01",
+        "R1-08-H01",
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "W02"
+      ],
+      "prefix": " W02 | Work/stack contracts | Relevant Epic context with bounded change scope ",
+      "references": [
+        "R1-05-H01"
+      ]
+    },
+    {
+      "ids": [
+        "W03"
+      ],
+      "prefix": " W03 | Implementation handoff | Current CI, PR and prepared QA evidence ",
+      "references": [
+        "R1-05-H01",
+        "R1-05-H02",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W04"
+      ],
+      "prefix": " W04 | Actual lineage fields | Correct PR target and recorded parent revision ",
+      "references": [
+        "R1-05-H01",
+        "R1-05-H02",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-28-OC02",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "W05"
+      ],
+      "prefix": " W05 | Review handoff; shared pr-review | Approval or queued repair with PR/Jira findings ",
+      "references": [
+        "R1-06-H01",
+        "R1-06-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W06"
+      ],
+      "prefix": " W06 | QA ledger/handoff | Exact cases, evidence and correct stage result ",
+      "references": [
+        "R1-08-H01",
+        "R1-08-H02",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H01",
+        "R1-27-H03",
+        "R1-30-H01",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W07"
+      ],
+      "prefix": " W07 | Existing QA helpers; schema skill sections | Prescribed API/PostgreSQL/UI execution ",
+      "references": [
+        "R1-07-H01",
+        "R1-07-H02",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W08"
+      ],
+      "prefix": " W08 | Workflow environment contract | Trusted current-revision supplied environment ",
+      "references": [
+        "R1-07-H02",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H02",
+        "R1-27-H03",
+        "R1-30-H02",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W09"
+      ],
+      "prefix": " W09 | Repair/dependency-wait handoffs | Queue understood rework without launching it ",
+      "references": [
+        "R1-05-H02",
+        "R1-06-H02",
+        "R1-08-H02",
+        "R1-09-H01",
+        "R1-18-H01",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W10"
+      ],
+      "prefix": " W10 | Role authority; resume contract | Human-requested repair producer and human-only authority ",
+      "references": [
+        "R1-09-H01",
+        "R1-09-H02",
+        "R1-20-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W11"
+      ],
+      "prefix": " W11 | Human Review / UAT / production stages | Human reviews/cases recorded before acceptance ",
+      "references": [
+        "R1-08-H03",
+        "R1-20-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W12"
+      ],
+      "prefix": " W12 | Publication/semantic rules | Structured trustworthy role result and single transition ",
+      "references": [
+        "R1-04-H01",
+        "R1-04-H02",
+        "R1-04-H03",
+        "R1-05-H02",
+        "R1-06-H02",
+        "R1-08-H03",
+        "R1-09-H02",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-27-H03",
+        "R1-30-H03",
+        "R1-28-OC02",
+        "R1-28-OC05",
+        "R1-28-OC06"
+      ]
+    },
+    {
+      "ids": [
+        "M01"
+      ],
+      "prefix": " M01 | S01–S02 | Opt-in, active Epic and full stream identity ",
+      "references": [
+        "R1-11-S01",
+        "R1-11-S02",
+        "R1-17-H01",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M02"
+      ],
+      "prefix": " M02 | S18, S30 | Independent streams; conflicting ownership hold ",
+      "references": [
+        "R1-11-S18",
+        "R1-11-S30",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M03"
+      ],
+      "prefix": " M03 | S03–S04, S08–S09 | Ignore unready work without bypassing repair ",
+      "references": [
+        "R1-11-S03",
+        "R1-11-S04",
+        "R1-11-S08",
+        "R1-11-S09",
+        "R1-28-OC01",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "M04"
+      ],
+      "prefix": " M04 | S11, S17, S39 | One occupied cycle across worker stages ",
+      "references": [
+        "R1-11-S11",
+        "R1-11-S17",
+        "R1-11-S39",
+        "R1-17-H03",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M05"
+      ],
+      "prefix": " M05 | S12–S16 | Five-ticket cap including Bugs/rework ",
+      "references": [
+        "R1-11-S12",
+        "R1-11-S13",
+        "R1-11-S14",
+        "R1-11-S15",
+        "R1-11-S16",
+        "R1-18-H01",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M06"
+      ],
+      "prefix": " M06 | S07–S10, S37 | Repair/prerequisite/Bug/Story priority ",
+      "references": [
+        "R1-11-S07",
+        "R1-11-S08",
+        "R1-11-S09",
+        "R1-11-S10",
+        "R1-11-S37",
+        "R1-18-H01",
+        "R1-28-OC01",
+        "R1-28-OC03",
+        "R1-28-OC06"
+      ]
+    },
+    {
+      "ids": [
+        "M07"
+      ],
+      "prefix": " M07 | S05–S06, S34 | Current evidence satisfies prerequisites ",
+      "references": [
+        "R1-11-S05",
+        "R1-11-S06",
+        "R1-11-S34",
+        "R1-28-OC03"
+      ]
+    },
+    {
+      "ids": [
+        "M08"
+      ],
+      "prefix": " M08 | S19–S21 | Finish active work, then oldest repair ",
+      "references": [
+        "R1-11-S19",
+        "R1-11-S20",
+        "R1-11-S21",
+        "R1-09-H01",
+        "R1-18-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M09"
+      ],
+      "prefix": " M09 | S22–S24 | Queue stale completed child after parent QA ",
+      "references": [
+        "R1-11-S22",
+        "R1-11-S23",
+        "R1-11-S24",
+        "R1-19-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M10"
+      ],
+      "prefix": " M10 | S25, S29; stack chain | Consume roots once and propagate actual descendants ",
+      "references": [
+        "R1-11-S25",
+        "R1-11-S29",
+        "R1-18-H02",
+        "R1-19-H02",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-28-OC02",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "M11"
+      ],
+      "prefix": " M11 | S26–S28; stack boundary cases | No guessed lineage/merge cascade or active interruption ",
+      "references": [
+        "R1-11-S24",
+        "R1-11-S26",
+        "R1-11-S27",
+        "R1-11-S28",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M12"
+      ],
+      "prefix": " M12 | S02, S40 | Paused Epic starts no new cycle ",
+      "references": [
+        "R1-11-S02",
+        "R1-11-S40",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M13"
+      ],
+      "prefix": " M13 | S30–S36; retained inventory closure | Edits/missing work cannot release occupied stream ",
+      "references": [
+        "R1-11-S30",
+        "R1-11-S31",
+        "R1-11-S32",
+        "R1-11-S33",
+        "R1-11-S34",
+        "R1-11-S35",
+        "R1-11-S36",
+        "R1-12-H02",
+        "R1-14-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M14"
+      ],
+      "prefix": " M14 | S38, S41; intent protocol | Read-only preview and fresh directed mutations ",
+      "references": [
+        "R1-11-S37",
+        "R1-11-S38",
+        "R1-11-S41",
+        "R1-12-H01",
+        "R1-17-H02",
+        "R1-18-H03",
+        "R1-19-H03",
+        "R1-31-H04",
+        "R1-36-H01",
+        "R1-36-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O01"
+      ],
+      "prefix": " O01 | Customer-owned release design | Runnable private AWS installation ",
+      "references": [
+        "R1-13-H01",
+        "R1-13-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O02"
+      ],
+      "prefix": " O02 | Core/adapter/wrapper boundary | Local harness without cloud imports or credentials ",
+      "references": [
+        "R1-10-H01",
+        "R1-13-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O03"
+      ],
+      "prefix": " O03 | Config ownership | One validated customer configuration ",
+      "references": [
+        "R1-12-H01",
+        "R1-12-H03",
+        "R1-13-H01",
+        "R1-16-H01",
+        "R1-20-H02",
+        "R1-31-H01",
+        "R1-31-H02",
+        "R1-31-H03",
+        "R1-36-H01",
+        "R1-36-H04"
+      ]
+    },
+    {
+      "ids": [
+        "O04"
+      ],
+      "prefix": " O04 | Existing fetch/refresh scripts | Compatible pinned bundle verified in Build ",
+      "references": [
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O05"
+      ],
+      "prefix": " O05 | State ownership; reviewed closure | Four record types with retained history/member identity ",
+      "references": [
+        "R1-14-H01",
+        "R1-14-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O06"
+      ],
+      "prefix": " O06 | Publication order; provider receipts | Conditional intent before manager Jira side effects ",
+      "references": [
+        "R1-14-H02",
+        "R1-17-H01",
+        "R1-17-H02",
+        "R1-19-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O07"
+      ],
+      "prefix": " O07 | State failure table; partial probe evidence | Failure/uncertainty holds without replay ",
+      "references": [
+        "R1-14-H02",
+        "R1-17-H02",
+        "R1-18-H03",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "O08"
+      ],
+      "prefix": " O08 | Evidence-only reconciliation closure | Operator can inspect and reconcile proved outcomes ",
+      "references": [
+        "R1-15-H01",
+        "R1-15-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O09"
+      ],
+      "prefix": " O09 | Security boundaries; scoped probe evidence | Restricted runtime and sanitized outputs ",
+      "references": [
+        "R1-12-H03",
+        "R1-13-H02",
+        "R1-15-H02",
+        "R1-31-H02",
+        "R1-31-H04",
+        "R1-36-H02",
+        "R1-36-H03",
+        "R1-36-H04"
+      ]
+    },
+    {
+      "ids": [
+        "O10"
+      ],
+      "prefix": " O10 | Deployment/inventory closure | Disabled install, preview and bounded operation ",
+      "references": [
+        "R1-13-H02",
+        "R1-15-H02",
+        "R1-16-H02",
+        "R1-17-H03"
+      ]
+    },
+    {
+      "ids": [
+        "O11"
+      ],
+      "prefix": " O11 | State lifecycle | Safe upgrade/rollback/restore/removal ",
+      "references": [
+        "R1-14-H01",
+        "R1-15-H02",
+        "R1-16-H01",
+        "R1-16-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O12"
+      ],
+      "prefix": " O12 | Coordinated rollout audit; PGB-58 | Complete compatible release accepted before activation ",
+      "references": [
+        "R1-20-H01",
+        "R1-20-H02",
+        "R1-20-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M01",
+        "M02",
+        "M04",
+        "M05"
+      ],
+      "prefix": " M01, M02, M04, M05 | R1-04-H04, R1-10-H03, R1-21-H01, R1-21-H02 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "M07",
+        "M13",
+        "O03",
+        "O05",
+        "O07"
+      ],
+      "prefix": " M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "O13"
+      ],
+      "prefix": " O13 | R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-21-H01–H03 ",
+      "references": [
+        "R1-31-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O14"
+      ],
+      "prefix": " O14 | R1-22-H01–H04 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "O15",
+        "O09",
+        "O12"
+      ],
+      "prefix": " O15, O09–O12 | R1-23-H01–H04, R1-20-H04 ",
+      "references": []
+    }
+  ],
+  "docs/delivery/manager-r1/coverage.md": [
+    {
+      "ids": [
+        "A01"
+      ],
+      "prefix": " A01 ",
+      "references": [
+        "R1-03-H01",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A02"
+      ],
+      "prefix": " A02 ",
+      "references": [
+        "R1-03-H01",
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A03"
+      ],
+      "prefix": " A03 ",
+      "references": [
+        "R1-01-H01",
+        "R1-03-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A04"
+      ],
+      "prefix": " A04 ",
+      "references": [
+        "R1-03-H01"
+      ]
+    },
+    {
+      "ids": [
+        "A05"
+      ],
+      "prefix": " A05 ",
+      "references": [
+        "R1-02-H02",
+        "R1-03-H01",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A06"
+      ],
+      "prefix": " A06 ",
+      "references": [
+        "R1-02-H01",
+        "R1-02-H02",
+        "R1-02-H03",
+        "R1-08-H01",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A07"
+      ],
+      "prefix": " A07 ",
+      "references": [
+        "R1-02-H01",
+        "R1-07-H01",
+        "R1-08-H01",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A08"
+      ],
+      "prefix": " A08 ",
+      "references": [
+        "R1-02-H01",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "A09"
+      ],
+      "prefix": " A09 ",
+      "references": [
+        "R1-02-H02",
+        "R1-05-H01",
+        "R1-07-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A10"
+      ],
+      "prefix": " A10 ",
+      "references": [
+        "R1-01-H02",
+        "R1-02-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A11"
+      ],
+      "prefix": " A11 ",
+      "references": [
+        "R1-01-H01",
+        "R1-02-H01",
+        "R1-02-H03",
+        "R1-03-H02"
+      ]
+    },
+    {
+      "ids": [
+        "A12"
+      ],
+      "prefix": " A12 ",
+      "references": [
+        "R1-02-H01",
+        "R1-03-H02",
+        "R1-12-H03",
+        "R1-31-H02",
+        "R1-31-H04",
+        "R1-36-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W01"
+      ],
+      "prefix": " W01 ",
+      "references": [
+        "R1-05-H01",
+        "R1-06-H01",
+        "R1-08-H01",
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "W02"
+      ],
+      "prefix": " W02 ",
+      "references": [
+        "R1-05-H01"
+      ]
+    },
+    {
+      "ids": [
+        "W03"
+      ],
+      "prefix": " W03 ",
+      "references": [
+        "R1-05-H01",
+        "R1-05-H02",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W04"
+      ],
+      "prefix": " W04 ",
+      "references": [
+        "R1-05-H01",
+        "R1-05-H02",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-28-OC02",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "W05"
+      ],
+      "prefix": " W05 ",
+      "references": [
+        "R1-06-H01",
+        "R1-06-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W06"
+      ],
+      "prefix": " W06 ",
+      "references": [
+        "R1-08-H01",
+        "R1-08-H02",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H01",
+        "R1-27-H03",
+        "R1-30-H01",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W07"
+      ],
+      "prefix": " W07 ",
+      "references": [
+        "R1-07-H01",
+        "R1-07-H02",
+        "R1-27-H01",
+        "R1-27-H02",
+        "R1-30-H01",
+        "R1-30-H02"
+      ]
+    },
+    {
+      "ids": [
+        "W08"
+      ],
+      "prefix": " W08 ",
+      "references": [
+        "R1-07-H02",
+        "R1-08-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H02",
+        "R1-27-H03",
+        "R1-30-H02",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W09"
+      ],
+      "prefix": " W09 ",
+      "references": [
+        "R1-05-H02",
+        "R1-06-H02",
+        "R1-08-H02",
+        "R1-09-H01",
+        "R1-18-H01",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W10"
+      ],
+      "prefix": " W10 ",
+      "references": [
+        "R1-09-H01",
+        "R1-09-H02",
+        "R1-20-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W11"
+      ],
+      "prefix": " W11 ",
+      "references": [
+        "R1-08-H03",
+        "R1-20-H03",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-27-H03",
+        "R1-30-H03"
+      ]
+    },
+    {
+      "ids": [
+        "W12"
+      ],
+      "prefix": " W12 ",
+      "references": [
+        "R1-04-H01",
+        "R1-04-H02",
+        "R1-04-H03",
+        "R1-05-H02",
+        "R1-06-H02",
+        "R1-08-H03",
+        "R1-09-H02",
+        "R1-24-H01",
+        "R1-24-H02",
+        "R1-24-H03",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-27-H03",
+        "R1-30-H03",
+        "R1-28-OC02",
+        "R1-28-OC05",
+        "R1-28-OC06"
+      ]
+    },
+    {
+      "ids": [
+        "M01"
+      ],
+      "prefix": " M01 ",
+      "references": [
+        "R1-11-S01",
+        "R1-11-S02",
+        "R1-17-H01",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M02"
+      ],
+      "prefix": " M02 ",
+      "references": [
+        "R1-11-S18",
+        "R1-11-S30",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M03"
+      ],
+      "prefix": " M03 ",
+      "references": [
+        "R1-11-S03",
+        "R1-11-S04",
+        "R1-11-S08",
+        "R1-11-S09",
+        "R1-28-OC01",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "M04"
+      ],
+      "prefix": " M04 ",
+      "references": [
+        "R1-11-S11",
+        "R1-11-S17",
+        "R1-11-S39",
+        "R1-17-H03",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M05"
+      ],
+      "prefix": " M05 ",
+      "references": [
+        "R1-11-S12",
+        "R1-11-S13",
+        "R1-11-S14",
+        "R1-11-S15",
+        "R1-11-S16",
+        "R1-18-H01",
+        "R1-28-OC04"
+      ]
+    },
+    {
+      "ids": [
+        "M06"
+      ],
+      "prefix": " M06 ",
+      "references": [
+        "R1-11-S07",
+        "R1-11-S08",
+        "R1-11-S09",
+        "R1-11-S10",
+        "R1-11-S37",
+        "R1-18-H01",
+        "R1-28-OC01",
+        "R1-28-OC03",
+        "R1-28-OC06"
+      ]
+    },
+    {
+      "ids": [
+        "M07"
+      ],
+      "prefix": " M07 ",
+      "references": [
+        "R1-11-S05",
+        "R1-11-S06",
+        "R1-11-S34",
+        "R1-28-OC03"
+      ]
+    },
+    {
+      "ids": [
+        "M08"
+      ],
+      "prefix": " M08 ",
+      "references": [
+        "R1-11-S19",
+        "R1-11-S20",
+        "R1-11-S21",
+        "R1-09-H01",
+        "R1-18-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M09"
+      ],
+      "prefix": " M09 ",
+      "references": [
+        "R1-11-S22",
+        "R1-11-S23",
+        "R1-11-S24",
+        "R1-19-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M10"
+      ],
+      "prefix": " M10 ",
+      "references": [
+        "R1-11-S25",
+        "R1-11-S29",
+        "R1-18-H02",
+        "R1-19-H02",
+        "R1-26-PC01",
+        "R1-25-C01",
+        "R1-25-C02",
+        "R1-25-C03",
+        "R1-28-OC02",
+        "R1-28-OC05"
+      ]
+    },
+    {
+      "ids": [
+        "M11"
+      ],
+      "prefix": " M11 ",
+      "references": [
+        "R1-11-S24",
+        "R1-11-S26",
+        "R1-11-S27",
+        "R1-11-S28",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M12"
+      ],
+      "prefix": " M12 ",
+      "references": [
+        "R1-11-S02",
+        "R1-11-S40",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M13"
+      ],
+      "prefix": " M13 ",
+      "references": [
+        "R1-11-S30",
+        "R1-11-S31",
+        "R1-11-S32",
+        "R1-11-S33",
+        "R1-11-S34",
+        "R1-11-S35",
+        "R1-11-S36",
+        "R1-12-H02",
+        "R1-14-H01"
+      ]
+    },
+    {
+      "ids": [
+        "M14"
+      ],
+      "prefix": " M14 ",
+      "references": [
+        "R1-11-S37",
+        "R1-11-S38",
+        "R1-11-S41",
+        "R1-12-H01",
+        "R1-17-H02",
+        "R1-18-H03",
+        "R1-19-H03",
+        "R1-31-H04",
+        "R1-36-H01",
+        "R1-36-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O01"
+      ],
+      "prefix": " O01 ",
+      "references": [
+        "R1-13-H01",
+        "R1-13-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O02"
+      ],
+      "prefix": " O02 ",
+      "references": [
+        "R1-10-H01",
+        "R1-13-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O03"
+      ],
+      "prefix": " O03 ",
+      "references": [
+        "R1-12-H01",
+        "R1-12-H03",
+        "R1-13-H01",
+        "R1-16-H01",
+        "R1-20-H02",
+        "R1-31-H01",
+        "R1-31-H02",
+        "R1-31-H03",
+        "R1-36-H01",
+        "R1-36-H04"
+      ]
+    },
+    {
+      "ids": [
+        "O04"
+      ],
+      "prefix": " O04 ",
+      "references": [
+        "R1-20-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O05"
+      ],
+      "prefix": " O05 ",
+      "references": [
+        "R1-14-H01",
+        "R1-14-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O06"
+      ],
+      "prefix": " O06 ",
+      "references": [
+        "R1-14-H02",
+        "R1-17-H01",
+        "R1-17-H02",
+        "R1-19-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O07"
+      ],
+      "prefix": " O07 ",
+      "references": [
+        "R1-14-H02",
+        "R1-17-H02",
+        "R1-18-H03",
+        "R1-19-H03"
+      ]
+    },
+    {
+      "ids": [
+        "O08"
+      ],
+      "prefix": " O08 ",
+      "references": [
+        "R1-15-H01",
+        "R1-15-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O09"
+      ],
+      "prefix": " O09 ",
+      "references": [
+        "R1-12-H03",
+        "R1-13-H02",
+        "R1-15-H02",
+        "R1-31-H02",
+        "R1-31-H04",
+        "R1-36-H02",
+        "R1-36-H03",
+        "R1-36-H04"
+      ]
+    },
+    {
+      "ids": [
+        "O10"
+      ],
+      "prefix": " O10 ",
+      "references": [
+        "R1-13-H02",
+        "R1-15-H02",
+        "R1-16-H02",
+        "R1-17-H03"
+      ]
+    },
+    {
+      "ids": [
+        "O11"
+      ],
+      "prefix": " O11 ",
+      "references": [
+        "R1-14-H01",
+        "R1-15-H02",
+        "R1-16-H01",
+        "R1-16-H02"
+      ]
+    },
+    {
+      "ids": [
+        "O12"
+      ],
+      "prefix": " O12 ",
+      "references": [
+        "R1-20-H01",
+        "R1-20-H02",
+        "R1-20-H03"
+      ]
+    },
+    {
+      "ids": [
+        "M01",
+        "M02",
+        "M04",
+        "M05"
+      ],
+      "prefix": " M01, M02, M04, M05 | R1-04-H04, R1-10-H03, R1-21-H01, R1-21-H02 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "M07",
+        "M13",
+        "O03",
+        "O05",
+        "O07"
+      ],
+      "prefix": " M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "O13"
+      ],
+      "prefix": " O13 | R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-21-H01–H03 ",
+      "references": [
+        "R1-31-H01"
+      ]
+    },
+    {
+      "ids": [
+        "O14"
+      ],
+      "prefix": " O14 | R1-22-H01–H04 ",
+      "references": []
+    },
+    {
+      "ids": [
+        "O15",
+        "O09",
+        "O12"
+      ],
+      "prefix": " O15, O09–O12 | R1-23-H01–H04, R1-20-H04 ",
+      "references": []
+    }
+  ]
+};
+const installed81RuntimeExpected={
+  "artifacts_sha256": {
+    "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+    "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+    "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+    "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+    "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+    "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+    "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+    "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+    "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+    "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+    "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+    "lib/contracts/receipts.mjs": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+    "lib/contracts/work-semantics.mjs": "ba1a3acadba6d169ec3bad52a3689c9b4b78b713dbac9fe408b949b966f2cc8d",
+    "lib/contracts/work.mjs": "50dbbd8a11237b1b90508a059a5ca9be44c4a39662e94ffbe39ab89db2808df4",
+    "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+    "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+    "lib/manager/repair-policy.mjs": "349f197f563794d3f9722605047f472f31aa1f16a8b97f1701d5aa9760b3b766",
+    "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+    "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+    "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+    "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+    "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+    "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+    "scripts/validate-handoff.mjs": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+    "scripts/validate-work.mjs": "46023df5916da4ab7d5eaa8c44fec19e8aef708eb3e5ab76343662ddde06776d"
+  },
+  "revision_sha256": "sha256:c9bb78fbb34077cc7e7c114885fa1f014566acd20acb4aa3903e13ebb8038e8d",
+  "source_fixture_sha256": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7"
+};
+const installed81RoutesExpected=[
+  {
+    "case_id": "R1-29-H01",
+    "case_sha256": "a80e641cc7f4afb95d37803433fb1e91a9452e300a16b6fe7018b7a6bf93f83a",
+    "requirements": [
+      "O08"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Retains and inspects matching original transition proof without resending."
+  },
+  {
+    "case_id": "R1-29-H02",
+    "case_sha256": "2ea8a579039d85f1ef3062e4fc0af082c5855d1dc164a19fcc7929e8f13757c1",
+    "requirements": [
+      "O08",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Conflicting proof and bounded/uncertain observations preserve the evidence boundary."
+  },
+  {
+    "case_id": "R1-32-H01",
+    "case_sha256": "eae26476aeb1eabb39fb25a5f08824bd1704635814e7a771d15afe02bb89e127",
+    "requirements": [
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Full fixed repair reports include ordering, descendant lineage, parent QA and nonexecuting proposals."
+  },
+  {
+    "case_id": "R1-32-H02",
+    "case_sha256": "23f459d1b95fa984c107eed10f23a3342ae4d26fd6dd4e3e4e6b04386541d2bb",
+    "requirements": [
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Historical authentication remains distinct from current proof and performs no effects."
+  },
+  {
+    "case_id": "R1-33-H01",
+    "case_sha256": "6de8e247af9cf4998a4950ee14fb3b37beb6869f79277c1a04eb8f3c6a8e4bf7",
+    "requirements": [
+      "M13"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Bounded requested observations explicitly do not prove full domain inventory."
+  },
+  {
+    "case_id": "R1-33-H02",
+    "case_sha256": "b19ff8afb563f90a8c11e50c782e0bdcb60a76d677392b5c4ba28a042a95ea94",
+    "requirements": [
+      "M13",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Partial, changed or denied reads remain incomplete within explicit budgets."
+  },
+  {
+    "case_id": "R1-33-H03",
+    "case_sha256": "9a0e6b14ddc53e3ff4b96f4fcb0d027a9ce3e9f4b682eb8b967e91bfa13cd576",
+    "requirements": [
+      "O03",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Exact configuration scope, destination/TLS and safe output boundaries are enforced."
+  },
+  {
+    "case_id": "R1-33-H04",
+    "case_sha256": "7d9d4ec8f5874f061f7afc74b89be72277d8d48587387c1805fb3bbaff214bf9",
+    "requirements": [
+      "M14",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Copied guide/recovery and no-effects checks preserve the read-only boundary."
+  },
+  {
+    "case_id": "R1-34-H01",
+    "case_sha256": "985058f64d9cee1103cba98b65e611e92509825d2b44f81b17d4f8c4563e1c31",
+    "requirements": [
+      "M13"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Collects the complete scoped occupancy/domain including retained members."
+  },
+  {
+    "case_id": "R1-34-H02",
+    "case_sha256": "e9a91a8010b24e0ec8c99c6ab39fe1a66bbcb935c00125df8d00b0b14a680f93",
+    "requirements": [
+      "M13",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Partial, changed or denied reads remain incomplete within explicit budgets."
+  },
+  {
+    "case_id": "R1-34-H03",
+    "case_sha256": "b0732e8e38813867ecbe527639fe827c2ebe618e3efac916f067f6f3bfb50e7a",
+    "requirements": [
+      "O03",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Exact configuration scope, destination/TLS and safe output boundaries are enforced."
+  },
+  {
+    "case_id": "R1-34-H04",
+    "case_sha256": "3dfaed8c28fe2b7202d827b0fccc828ff2a4eaae3cc667f0e231eb92168ae94a",
+    "requirements": [
+      "M14",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Copied guide/recovery and no-effects checks preserve the read-only boundary."
+  },
+  {
+    "case_id": "R1-35-H01",
+    "case_sha256": "7ba944cb9abb614d8d1dcc5ccaaa619d88fc3d9ce8c09f24e5d10438467b1f64",
+    "requirements": [
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Fixed full reports prove typed repair order, parent revision, publication and false authority."
+  },
+  {
+    "case_id": "R1-35-H02",
+    "case_sha256": "248f91d47cb2bf8b77f96a79b11b3273b632a31990bd3ea36c5e4beb3c192a1f",
+    "requirements": [
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Copied fixed reports preserve zero effects and source/installed boundary."
+  },
+  {
+    "case_id": "R1-37-D1",
+    "case_sha256": "f5b868626ced1a416fb046b4d3b4c2232f827a048a9c0569ac3f009cc4f5f0cb",
+    "requirements": [
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Existing own repair uses the current observed source/target without new publication."
+  },
+  {
+    "case_id": "R1-37-D2",
+    "case_sha256": "8936790c95d293eac96ed195bce85f60ec7ba4debb02eccb31f3227efc96ac67",
+    "requirements": [
+      "M09",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Stale child QA holds a queued stack-update proposal."
+  },
+  {
+    "case_id": "R1-37-D3",
+    "case_sha256": "f39279c0f4dc1b1ccbee63350bfc61f3c3d4e6c4246701d83d391eab590b6bd3",
+    "requirements": [
+      "M09",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "New stack publication requires coherent current child QA."
+  },
+  {
+    "case_id": "R1-37-D4",
+    "case_sha256": "31f6fc65c208f8535e7e2039a7b1e86996815e3438e18a573e47f5c7d6b447c4",
+    "requirements": [
+      "M10",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Already published child request remains retained without duplicate publication."
+  },
+  {
+    "case_id": "R1-37-D5",
+    "case_sha256": "25d1863ddc6b3f56ba2cbb6dccd83f3721fd15f6e99feeb8d5af8b9066a0a53a",
+    "requirements": [
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Copied current-PR reports and immutable runtime maps preserve the same contract."
+  },
+  {
+    "case_id": "R1-38-H01",
+    "case_sha256": "c5d4f953d40ead865a238677239dd339dacfb29fc41c480db0b67a80e3547d3a",
+    "requirements": [
+      "M13",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Null description is retained while missing description remains invalid, without proof/admission."
+  },
+  {
+    "case_id": "R1-38-H02",
+    "case_sha256": "e9532ff9688ea97d0924175e68f4bcbf67ac759e35b8153bb8a4b53b6b1474d6",
+    "requirements": [
+      "M13",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Object member order is accepted but changed ADF array order is an incomplete observation."
+  },
+  {
+    "case_id": "R1-39-H01",
+    "case_sha256": "4b2f0216907d08117b9fb8c2dd5f4926ca805ab259b8ae8f98c7d26dbfc6b44c",
+    "requirements": [
+      "M09",
+      "M10",
+      "M11"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Canonical duplicate QA preserves the published request and incorporated-root coverage."
+  },
+  {
+    "case_id": "R1-39-H02",
+    "case_sha256": "51bc717228a0cf0d149ae52b02e4500e696b6ea17b68bd311c612b739d54592a",
+    "requirements": [
+      "M10",
+      "M14"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Copied request/coverage controls retain nonexecuting fixed reports."
+  },
+  {
+    "case_id": "R1-40-H01",
+    "case_sha256": "e625f56a7634fcdb2064e403c6a4a54ca1abdbc95ee7db9c6988d81b5805f27e",
+    "requirements": [
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Duplicate exact comment targets fail before resolver/network/effects."
+  },
+  {
+    "case_id": "R1-41-H01",
+    "case_sha256": "3fa0f8c906e99851f99184ada897d23c2a2938789de34eaef89d7a0527a00236",
+    "requirements": [],
+    "disposition": "catalog_only_preservation",
+    "rationale": "Catalog-only source/native preservation supports delivery accountability; it does not prove runtime selection or introduce a product requirement."
+  },
+  {
+    "case_id": "R1-42-H01",
+    "case_sha256": "de087beab674ac145fef77dc28eafed32ff3503e9cb1e440298ab7532fd6d825",
+    "requirements": [
+      "M13",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Caller target mutation cannot change acquired issue/comment identity."
+  },
+  {
+    "case_id": "R1-42-H02",
+    "case_sha256": "757a9ba5e51f8a42dafc1a72f9d35fb1f6958ec232b1ac21d303b5b4c946fe34",
+    "requirements": [
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Wire and private-byte budgets stop oversized observations."
+  },
+  {
+    "case_id": "R1-42-H03",
+    "case_sha256": "49dca9352e2f84c1befee518c683ff79aa5583333710f789cfd4af36c8200ccc",
+    "requirements": [
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Oversized provider JSON is RESPONSE_INVALID within the original bounds."
+  },
+  {
+    "case_id": "R1-42-H04",
+    "case_sha256": "28c5a525b4bd6f027eacae4e1fb31f9393ad93607d7f153e955627ad23502d0f",
+    "requirements": [
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Future/expired certificates fail TLS before HTTP observations."
+  },
+  {
+    "case_id": "R1-12-H05",
+    "case_sha256": "4e75fa6cec28030363d62c413ee989f1934ff521a70f0937b0f895fb043d55d7",
+    "requirements": [
+      "M13",
+      "M14",
+      "O03",
+      "O09"
+    ],
+    "disposition": "existing_requirement_support",
+    "rationale": "Complete profile/proof inputs bind offline-equivalent read-only decisions; mixed/changed inputs hold and hidden external changes remain unclaimed."
+  }
+];
+test('PGB-81 current scoped forecast, preserved history and installed closure have independent bindings',async()=>{
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.installed_repair_preview_amendment,metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),canonical=v=>hash(canonicalize(v)),history=a.historical_source_capture;
+ assert.equal(canonical(history),installed81HistoryExpected.capture);assert.equal(history.files['publication.json'].object.installed_repair_preview_amendment,undefined);assert.equal(Object.keys(history.files['publication.json'].object).length,37);
+ for(const name of Object.keys(pre81Digests))await pre81Capture(name);
+ for(const [key,digest]of Object.entries(installed81HistoryExpected.amendments)){assert.equal(canonical(p[key]),digest,key+' unchanged complete historic amendment');assert.deepEqual(p[key],history.files['publication.json'].object[key]);}
+ assert.equal(hash(p.source_inspection_catalog_integration_amendment),installed81HistoryExpected.catalog);
+ for(const [key,digests]of Object.entries(installed81HistoryExpected.predecessors)){const c=history.predecessors[key];assert.equal(hash(c.raw),digests.raw);assert.deepEqual(JSON.parse(c.raw),c.object);assert.equal(hash(c.object),digests.json);assert.equal(canonical(c.object),digests.canonical);}
+ const scale=100000n,toUnits=s=>{const [whole,fraction='']=String(s).split('.');assert(fraction.length<=5);return BigInt(whole)*scale+BigInt(fraction.padEnd(5,'0'));};let lower=0n,upper=0n;
+ for(const expected of installed81ForecastExpected){const row=metadata.find(r=>r.id===expected.id);assert(row);assert.deepEqual(row.files,expected.files);assert.equal(new Set(row.files).size,row.files.length);assert.equal(toUnits(row.days),toUnits(expected.max));if(expected.hours)assert.deepEqual(row.hours,expected.hours);else assert.equal(row.hours,undefined);assert.equal(row.forecast_provenance.min_days,expected.min);assert.equal(row.forecast_provenance.max_days,expected.max);lower+=toUnits(expected.min);upper+=toUnits(expected.max);}
+ assert.equal(metadata.length,42);assert.deepEqual([String(lower),String(upper)],['5833375','6476500']);assert.deepEqual(a.forecast.derivation,{scale:100000,integer_sums:{min_days:5833375,max_days:6476500},min_days:'58.33375',max_days:'64.765'});assert.deepEqual(p.current_source_scope.forecast_days,{min:58.33375,max:64.765});
+ const delivery=await read('docs/delivery/manager-r1/README.md');assert(delivery.includes('Current scoped source-row forecast: **58.33375–64.76500 days**'));assert(delivery.includes('excludes the eight later Core Stories'));assert(delivery.includes('18 paths / 1.91 days / 15.28 hours'));assert(delivery.includes('48.26625')||JSON.stringify(history).includes('48.26625'));
+ const human=new Map(drafts.flatMap(d=>d.contract.testing_strategy.human_review.cases.map(c=>[c.id,c])));assert.equal(human.size,166);
+ for(const [file,expectedRows]of Object.entries(installed81CoverageExpected)){const text=await read(file),rows=text.split('\n').filter(l=>/^\| [AWMO]\d{2}/.test(l)),ids=new Set(rows.flatMap(l=>l.split('|')[1].match(/[AWMO]\d{2}/g)??[]));assert.equal(ids.size,53);for(const expected of expectedRows){const actual=rows.find(l=>expected.ids.every(id=>l.split('|')[1].includes(id)));assert(actual);assert.equal(actual.split('|').slice(1,-2).join('|'),expected.prefix);for(const ref of expected.references)assert(actual.includes(ref),file+' retained '+ref);}for(const match of text.matchAll(/R1-\d{2}-(?:H\d{2}|S\d{2}|C\d{2}|OC\d{2}|PC\d{2}|D\d)/g))assert(human.has(match[0]),match[0]);}
+ const coverage=await read('docs/delivery/manager-r1/coverage.md');assert.equal(new Set([...coverage.matchAll(/^\| S(\d{2}) \|/gm)].map(m=>m[1])).size,41);
+ assert.deepEqual(a.case_requirement_dispositions,installed81RoutesExpected);
+ const originalCases=new Set(history.files['ticket-drafts.json'].object.flatMap(d=>d.contract.testing_strategy.human_review.cases.map(c=>c.id))),added=[...human.keys()].filter(id=>!originalCases.has(id));assert.deepEqual([...added].sort(),a.case_requirement_dispositions.map(r=>r.case_id).sort());
+ for(const route of a.case_requirement_dispositions){assert.equal(canonical(human.get(route.case_id)),route.case_sha256);assert(route.rationale);if(!route.requirements.length){assert.equal(route.case_id,'R1-41-H01');assert.equal(route.disposition,'catalog_only_preservation');}for(const file of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const rows=(await read(file)).split('\n');for(const id of route.requirements)assert(rows.find(l=>l.startsWith('| '+id+' |')).includes(route.case_id));}}
+ const bundle=JSON.parse(await read('config/skill-bundle.json')),oldBundle=await pre81Capture('config/skill-bundle.json');assert.deepEqual(bundle.skills,oldBundle.skills);assert.equal(bundle.skills.length,22);assert.deepEqual(bundle.dependencyDirectories,oldBundle.dependencyDirectories);assert.equal(bundle.dependencyDirectories.length,3);assert.deepEqual(bundle.validatorPayload.sources,[...oldBundle.validatorPayload.sources,'test/fixtures/manager-repairs.json']);assert.equal(bundle.validatorPayload.sources.length,37);assert.deepEqual(a.payload_sources,bundle.validatorPayload.sources);
+ assert.deepEqual(a.source_runtime_revision,installed81RuntimeExpected);const paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort();assert.equal(paths.length,25);assert.deepEqual(Object.keys(a.source_runtime_revision.artifacts_sha256),paths);
+ for(const file of paths)assert.equal(hash(await read(file)),installed81RuntimeExpected.artifacts_sha256[file],file+' actual unchanged runtime');assert.equal(installed81RuntimeExpected.revision_sha256,'sha256:'+canonical(installed81RuntimeExpected.artifacts_sha256));assert.equal(hash(await read('test/fixtures/manager-repairs.json')),'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');
+ for(const file of bundle.validatorPayload.sources)assert.equal(hash(await read(file)),a.payload_artifacts_sha256[file],file+' complete payload');assert.equal(hash(await read('config/skill-bundle.json')),a.bundle_sha256);assert.equal(hash(await read('scripts/install-cursor-skills.mjs')),a.installer_sha256);for(const [file,digest]of Object.entries(a.source_artifacts_sha256))assert.equal(hash(await read(file)),digest);
+ assert.equal(a.verification.activation_authorized,false);assert(a.verification.human_acceptance.includes('42 original81 NOT_RUN'));
 });
