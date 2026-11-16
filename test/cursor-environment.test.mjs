@@ -10,28 +10,50 @@ const VERIFICATION_LABEL='cursor-environment';
 
 // Contributor verification only. Opt-in capture retains existing observations
 // before disposable fixture cleanup; it never changes a product input/oracle.
-const verificationRoot=process.env.PGB81_EVIDENCE_DIR;let verificationSequence=0;
+const verificationRoot=process.env.PGB81_EVIDENCE_DIR;
+let verificationSequence=0,verificationCurrent=null;
+const verificationFixtures=[],verificationErrors=[];
 if(verificationRoot)assert(path.isAbsolute(verificationRoot),'Use an absolute external verification directory.');
 const verificationSHA=bytes=>verificationHash('sha256').update(bytes).digest('hex');
+const verificationInside=(root,file)=>{const relative=path.relative(root,file);return relative!=='..'&&!relative.startsWith('..'+path.sep)&&!path.isAbsolute(relative);};
 function verificationBlob(bytes){if(!verificationRoot)return null;const hash=verificationSHA(bytes),dir=path.join(verificationRoot,'blobs');verificationFs.mkdirSync(dir,{recursive:true});const file=path.join(dir,hash);try{verificationFs.writeFileSync(file,bytes,{flag:'wx'});}catch(e){if(e.code!=='EEXIST')throw e;}return {sha256:hash,bytes:Buffer.byteLength(bytes),file};}
-function verificationRecord(kind,value){if(!verificationRoot)return;assert(path.isAbsolute(verificationRoot),'Use an absolute external verification directory.');const dir=path.join(verificationRoot,VERIFICATION_LABEL);verificationFs.mkdirSync(dir,{recursive:true});verificationFs.writeFileSync(path.join(dir,String(verificationSequence++).padStart(6,'0')+'-'+kind+'.json'),JSON.stringify(value,null,2)+'\n');}
-function verificationFiles(args,cwd){if(!verificationRoot)return null;const result=[];for(const flag of ['--config','--input','--context']){const i=args.indexOf(flag);if(i<0||!args[i+1])continue;const argument=args[i+1],file=path.resolve(cwd??process.cwd(),argument);try{const st=verificationFs.statSync(file);result.push({flag,path:file,kind:st.isFile()?'file':'other',content:st.isFile()?verificationBlob(verificationFs.readFileSync(file)):null});}catch(e){result.push({flag,path:file,state:e.code??'unreadable'});}}return result;}
-function verificationInventory(cwd){if(!verificationRoot)return null;const dir=cwd??process.cwd();return verificationFs.readdirSync(dir,{withFileTypes:true}).map(e=>{const p=path.join(dir,e.name);return {name:e.name,kind:e.isFile()?'file':e.isDirectory()?'directory':'other',sha256:e.isFile()?verificationSHA(verificationFs.readFileSync(p)):null};}).sort((a,b)=>a.name.localeCompare(b.name));}
-function spawnSync(file,args=[],options={}){if(!verificationRoot||file!==process.execPath)return rawSpawnSync(file,args,options);const before={inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)},r=rawSpawnSync(file,args,options);verificationRecord('child',{file,args,cwd:options.cwd??process.cwd(),status:r.status,signal:r.signal,error:r.error?.message??null,stdout:r.stdout?.toString()??'',stderr:r.stderr?.toString()??'',before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}});return r;}
-function execFileSync(file,args=[],options={}){if(!verificationRoot||file!==process.execPath)return rawExecFileSync(file,args,options);const before={inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)};try{const r=rawExecFileSync(file,args,options);verificationRecord('child',{file,args,cwd:options.cwd??process.cwd(),status:0,stdout:r?.toString()??'',stderr:'',before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}});return r;}catch(e){verificationRecord('child',{file,args,cwd:options.cwd??process.cwd(),status:e.status??null,signal:e.signal??null,stdout:e.stdout?.toString()??'',stderr:e.stderr?.toString()??'',before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}});throw e;}}
-function verificationAPI(c,config,snapshot,actual){if(!verificationRoot)return;verificationRecord('api',{case_id:c.id??null,config:verificationBlob(config),snapshot:verificationBlob(snapshot),options_present:Object.hasOwn(c,'options'),options:c.options??{},actual});}
+function verificationRecord(kind,value){if(!verificationRoot)return;const dir=path.join(verificationRoot,VERIFICATION_LABEL);verificationFs.mkdirSync(dir,{recursive:true});verificationFs.writeFileSync(path.join(dir,String(verificationSequence++).padStart(6,'0')+'-'+kind+'.json'),JSON.stringify(value,null,2)+'\n');}
+function verificationError(error){const own={};for(const key of Object.getOwnPropertyNames(error)){const value=error[key];own[key]=Buffer.isBuffer(value)?verificationBlob(value):value;}return {own,status:error.status??null,signal:error.signal??null,stdout:error.stdout==null?null:verificationBlob(error.stdout),stderr:error.stderr==null?null:verificationBlob(error.stderr),unavailable:['status','signal','stdout','stderr'].filter(k=>!Object.hasOwn(error,k))};}
+function verificationLatch(error,context){const failure={context,message:error.message,stack:error.stack,registered_fixture_paths:verificationFixtures.map(f=>f.tmp)};verificationErrors.push(failure);try{verificationRecord('capture-error',failure);}catch(persist){console.error('PGB81 evidence persistence failed: '+persist.message);}console.error('PGB81 evidence incomplete; retain surviving fixtures: '+failure.registered_fixture_paths.join(', '));}
+function verificationCheck(){if(verificationRoot)assert.equal(verificationErrors.length,0,'PGB81 evidence capture failed; retain disposable fixtures: '+verificationFixtures.map(f=>f.tmp).join(', '));}
+function verificationAfter(context,observe){if(!verificationRoot)return;try{observe();}catch(error){verificationLatch(error,context);}}
+function verificationBefore(context,observe){verificationCheck();try{return observe();}catch(error){verificationLatch(error,context);throw error;}}
+function verificationFixture(file){return verificationFixtures.find(f=>verificationInside(f.tmp,path.resolve(file)));}
+// A registered lexical path is readable only while all of its existing ancestors
+// remain ordinary directories. Symlink entries are recorded, never traversed.
+function verificationSafe(file){const f=verificationFixture(file);if(!f)return false;let cursor=f.tmp;const parts=path.relative(f.tmp,path.resolve(file)).split(path.sep).filter(Boolean);for(const part of parts.slice(0,-1)){cursor=path.join(cursor,part);try{if(!verificationFs.lstatSync(cursor).isDirectory())return false;}catch(error){if(error.code==='ENOENT'||error.code==='ENOTDIR')return false;throw error;}}return true;}
+function verificationMap(root){if(!verificationSafe(root))return {root,state:'NOT_CAPTURED_UNREGISTERED_OR_SYMLINK_PATH'};const entries=[];function walk(file,relative){let st;try{st=verificationFs.lstatSync(file);}catch(error){if(error.code==='ENOENT'||error.code==='ENOTDIR'){entries.push({path:relative,state:'NOT_PRESENT_AT_RETURN'});return;}throw error;}if(st.isSymbolicLink()){entries.push({path:relative,kind:'symlink',link:verificationFs.readlinkSync(file)});return;}if(st.isFile()){const bytes=verificationFs.readFileSync(file);entries.push({path:relative,kind:'file',bytes:bytes.length,content:verificationBlob(bytes)});return;}entries.push({path:relative,kind:st.isDirectory()?'directory':'other'});if(st.isDirectory())for(const name of verificationFs.readdirSync(file).sort()){if(name==='.git')continue;walk(path.join(file,name),relative?relative+'/'+name:name);}}walk(root,'');return {root,entries};}
+function verificationFiles(args,cwd){const result=[];for(const flag of ['--config','--input','--context']){const i=args.indexOf(flag);if(i<0||!args[i+1])continue;const file=path.resolve(cwd??process.cwd(),args[i+1]);result.push({flag,argument:args[i+1],...verificationMap(file)});}return result;}
+function verificationInventory(cwd){const dir=cwd??process.cwd();if(!verificationSafe(dir))return {root:dir,state:'NOT_CAPTURED_UNREGISTERED_OR_SYMLINK_PATH'};const st=verificationFs.lstatSync(dir);if(!st.isDirectory())return {root:dir,state:'NOT_CAPTURED_NON_DIRECTORY'};return verificationFs.readdirSync(dir,{withFileTypes:true}).map(e=>{const file=path.join(dir,e.name);return {name:e.name,kind:e.isSymbolicLink()?'symlink':e.isFile()?'file':e.isDirectory()?'directory':'other',sha256:e.isFile()?verificationSHA(verificationFs.readFileSync(file)):null,link:e.isSymbolicLink()?verificationFs.readlinkSync(file):null};}).sort((a,b)=>a.name.localeCompare(b.name));}
+function verificationChildBefore(args,options){const f=verificationFixture(options.cwd??process.cwd());if(f)verificationCurrent=f;return {test:f?.label??null,...f?.context,inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)};}
+function spawnSync(file,args=[],options={}){if(!verificationRoot||file!==process.execPath)return rawSpawnSync(file,args,options);const before=verificationBefore('spawnSync before',()=>verificationChildBefore(args,options)),r=rawSpawnSync(file,args,options);verificationAfter('spawnSync after',()=>verificationRecord('child',{file,args,options,input_present:Object.hasOwn(options,'input'),input:options.input===undefined?null:verificationBlob(options.input),cwd:options.cwd??process.cwd(),status:r.status,signal:r.signal,error:r.error?verificationError(r.error):null,stdout:r.stdout===undefined||r.stdout===null?null:verificationBlob(r.stdout),stderr:r.stderr===undefined||r.stderr===null?null:verificationBlob(r.stderr),before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}}));return r;}
+function execFileSync(file,args=[],options={}){if(!verificationRoot||file!==process.execPath)return rawExecFileSync(file,args,options);const before=verificationBefore('execFileSync before',()=>verificationChildBefore(args,options));let value;try{value=rawExecFileSync(file,args,options);}catch(error){verificationAfter('execFileSync rejection',()=>verificationRecord('child',{file,args,options,cwd:options.cwd??process.cwd(),outcome:'threw',error:verificationError(error),before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}}));throw error;}verificationAfter('execFileSync return',()=>verificationRecord('child',{file,args,options,input_present:Object.hasOwn(options,'input'),input:options.input===undefined?null:verificationBlob(options.input),cwd:options.cwd??process.cwd(),outcome:'returned',stdout:verificationBlob(value),stderr:null,stderr_observation:'UNAVAILABLE_FROM_EXECFILESYNC_RETURN',before,after:{inputs:verificationFiles(args,options.cwd),inventory:verificationInventory(options.cwd)}}));return value;}
+function verificationContext(o,context){const f=verificationFixture(o.app);if(f){f.context=context;verificationCurrent=f;}}
+function verificationAPI(c,config,snapshot,actual){verificationAfter('source API return',()=>verificationRecord('api',{test:verificationCurrent?.label??null,...verificationCurrent?.context,case_id:verificationCurrent?.context.case_id??c.id??null,input_case_id:c.id??null,config:verificationBlob(config),snapshot:verificationBlob(snapshot),options_present:Object.hasOwn(c,'options'),options:c.options??{},actual}));}
+function verificationHistory(c,input,expected,actual,extra={}){verificationAfter('history API return',()=>verificationRecord('history-api',{test:verificationCurrent?.label??null,...verificationCurrent?.context,case_id:c.id,input:verificationBlob(JSON.stringify(input)),expected:verificationBlob(JSON.stringify(expected)),actual,projection:'JSON plain-data comparison; full public result retained in actual',...extra}));}
+function verificationComplete(o,group){verificationCheck();verificationAfter('assertion group '+group,()=>verificationRecord('assertion-group',{test:verificationFixture(o.app)?.label??null,group,status:'PASSED_EXISTING_ASSERTIONS'}));verificationCheck();}
 
 import { installCursorSkills as rawInstallCursorSkills } from '../scripts/install-cursor-skills.mjs';
 
-function verificationStable(root){try{return verificationFs.realpathSync(path.join(root,'skills'));}catch(e){return e.code??'unavailable';}}
-async function installCursorSkills(options,install){const before=verificationRoot?verificationStable(options.root):null;try{const receipt=await rawInstallCursorSkills(options,install);if(verificationRoot){const bytes=await readFile(receipt.manifest);verificationRecord('installation',{receipt,manifest:JSON.parse(bytes),manifest_blob:verificationBlob(bytes),stable_before:before,stable_after:verificationStable(options.root),runtime_kind:'Existing disposable source-test fixture: real copied work-validator dependencies; nonvalidator QA engines remain the existing fakeInstall stubs. This is not live installation acceptance.'});}return receipt;}catch(e){if(verificationRoot)verificationRecord('installation-failure',{source:options.source,ref:options.ref,root:options.root,app:options.app,stable_before:before,stable_after:verificationStable(options.root),message:e.message});throw e;}}
+function verificationStable(f){const file=path.join(f.root,'skills');if(!verificationSafe(file))return {state:'NOT_CAPTURED_UNREGISTERED_OR_SYMLINK_PATH'};try{const st=verificationFs.lstatSync(file);let resolved;try{resolved=verificationFs.realpathSync(file);}catch(error){if(error.code!=='ENOENT'&&error.code!=='ENOTDIR')throw error;resolved={state:'NOT_PRESENT_AT_RETURN'};}return {kind:st.isSymbolicLink()?'symlink':'unmanaged',link:st.isSymbolicLink()?verificationFs.readlinkSync(file):null,realpath:resolved};}catch(error){if(error.code==='ENOENT'||error.code==='ENOTDIR')return {state:'NOT_PRESENT_AT_RETURN'};throw error;}}
+function verificationReleases(f){const root=path.join(f.root,'releases');if(!verificationSafe(root))return [];try{if(!verificationFs.lstatSync(root).isDirectory())return [];return verificationFs.readdirSync(root,{withFileTypes:true}).filter(e=>e.isDirectory()).map(e=>e.name).sort();}catch(error){if(error.code==='ENOENT'||error.code==='ENOTDIR')return [];throw error;}}
+function verificationInstallAfter(f,before,receipt,error){const releases=verificationReleases(f),candidates=releases.filter(name=>!before.releases.includes(name)).map(name=>{const release=path.join(f.root,'releases',name),manifest=path.join(release,'manifest.json');return {release,map:verificationMap(release),manifest:verificationMap(manifest)};});verificationRecord('installation',{test:f.label,attempt:before.attempt,...f.context,options:before.options,before,stable_after:verificationStable(f),releases_after:releases,new_candidates:candidates,candidate_state:candidates.length?'PRESENT_AT_RETURN':'NOT_PRESENT_AT_RETURN',outcome:error?'threw':'returned',receipt:receipt??null,error:error?verificationError(error):null,receipt_release:receipt?.release??null,receipt_manifest:receipt?verificationMap(receipt.manifest):null,internal_observation:'UNAVAILABLE_INTERNAL: installer children, successful internal stderr and deleted staging/smoke temporary files are not observed.',runtime_kind:'Existing disposable source-test fixture: real copied work-validator dependencies; nonvalidator QA engines remain fakeInstall stubs. Not live installation acceptance.'});f.pending--;}
+async function installCursorSkills(options,install){if(!verificationRoot)return rawInstallCursorSkills(options,install);const f=verificationFixture(options.source)??verificationFixture(options.app);assert(f,'Capture only registered disposable fixture installations.');verificationCurrent=f;const before=verificationBefore('installer before',()=>{const value={attempt:++f.attempt,options:{...options},stable:verificationStable(f),releases:verificationReleases(f),source:verificationMap(f.source),fault_inputs:['lib/manager/repair-policy.mjs','test/fixtures/manager-repairs.json'].map(p=>({path:p,map:verificationMap(path.join(f.source,p))}))};verificationRecord('installation-start',{test:f.label,...f.context,...value});f.pending++;return value;});let receipt;try{receipt=await rawInstallCursorSkills(options,install);}catch(error){verificationAfter('installer rejection',()=>verificationInstallAfter(f,before,null,error));throw error;}verificationAfter('installer return',()=>verificationInstallAfter(f,before,receipt,null));return receipt;}
 
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, stdio: 'pipe' }).toString().trim();
 const bundle = JSON.parse(await readFile(new URL('../config/skill-bundle.json', import.meta.url)));
 async function fixture(t) {
   const tmp = await mkdtemp(path.join(os.tmpdir(), 'pigboard-env-'));
-  t.after(() => rm(tmp, { recursive: true, force: true }));
   const source = path.join(tmp, 'source'), app = path.join(tmp, 'app'), root = path.join(tmp, 'installed');
+  const observed={tmp,source,app,root,label:t.name,attempt:0,context:{},pending:0};
+  verificationFixtures.push(observed);
+  if(verificationRoot){assert(!verificationInside(tmp,path.resolve(verificationRoot)),'Evidence must be outside disposable fixture roots.');if(verificationFs.existsSync(verificationRoot))assert(!verificationInside(tmp,verificationFs.realpathSync(verificationRoot)),'Evidence must resolve outside disposable fixture roots.');}
+  t.after(async()=>{verificationCheck();assert.equal(observed.pending,0,'Public capture incomplete; retain fixture '+tmp);await rm(tmp,{recursive:true,force:true});});
   await mkdir(source); await mkdir(app);
   git(source, 'init', '-b', 'main');
   git(source, 'config', 'user.name', 'Fixture'); git(source, 'config', 'user.email', 'fixture@example.invalid');
@@ -74,36 +96,36 @@ test('install and refresh expose verified skills without changing app or older r
 test('failed fetch, dependency smoke check and changed source preserve previous binding', async t => {
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
-  await assert.rejects(installCursorSkills({ ...o, ref: 'missing' }, fakeInstall));
+  await assert.rejects(installCursorSkills({ ...o, ref: 'missing' }, fakeInstall));verificationCheck();
   await assert.rejects(installCursorSkills(o, async dir => {
     await fakeInstall(dir);
     if (dir.includes('qa-bruno')) await writeFile(path.join(dir, 'node_modules/@usebruno/cli/cli.cjs'), 'process.exit(1);');
-  }), /smoke check/);
+  }), /smoke check/);verificationCheck();
   await assert.rejects(installCursorSkills(o, async dir => {
     await fakeInstall(dir);
     await writeFile(path.join(dir, '../SKILL.md'), 'unexpected modification');
-  }), /hash mismatch/);
+  }), /hash mismatch/);verificationCheck();
   assert.equal(await realpath(first.stableSkills), first.skills);
   assert.deepEqual((await readdir(o.root)).sort(), ['releases', 'skills']);
 });
 test('unsafe roots and unmanaged destinations are rejected before preparation', async t => {
   const o = await fixture(t);
-  await assert.rejects(installCursorSkills({ ...o, root: path.parse(o.app).root }, fakeInstall), /separate/);
-  await assert.rejects(installCursorSkills({ ...o, root: path.join(o.app, 'unsafe') }, fakeInstall), /separate/);
-  await assert.rejects(installCursorSkills({ ...o, root: path.dirname(o.app) }, fakeInstall), /separate/);
-  await assert.rejects(installCursorSkills({ ...o, root: path.join(o.source, 'unsafe') }, fakeInstall), /Git checkout/);
+  await assert.rejects(installCursorSkills({ ...o, root: path.parse(o.app).root }, fakeInstall), /separate/);verificationCheck();
+  await assert.rejects(installCursorSkills({ ...o, root: path.join(o.app, 'unsafe') }, fakeInstall), /separate/);verificationCheck();
+  await assert.rejects(installCursorSkills({ ...o, root: path.dirname(o.app) }, fakeInstall), /separate/);verificationCheck();
+  await assert.rejects(installCursorSkills({ ...o, root: path.join(o.source, 'unsafe') }, fakeInstall), /Git checkout/);verificationCheck();
   await symlink(o.app, o.root);
-  await assert.rejects(installCursorSkills(o, fakeInstall), /symlink/);
+  await assert.rejects(installCursorSkills(o, fakeInstall), /symlink/);verificationCheck();
   await rm(o.root); await mkdir(o.root); await mkdir(path.join(o.root, 'skills'));
-  await assert.rejects(installCursorSkills(o, fakeInstall), /unmanaged/);
+  await assert.rejects(installCursorSkills(o, fakeInstall), /unmanaged/);verificationCheck();
   await rm(path.join(o.root, 'skills'), { recursive: true });
   await symlink(o.app, path.join(o.root, 'skills'));
-  await assert.rejects(installCursorSkills(o, fakeInstall), /unmanaged/);
+  await assert.rejects(installCursorSkills(o, fakeInstall), /unmanaged/);verificationCheck();
   assert.deepEqual(await readdir(o.root), ['skills']);
 });
 test('real installed validator runs outside checkout and failed runtime variants preserve stable link',async t=>{
  const o=await fixture(t), first=await installCursorSkills(o,fakeInstall);
- assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection']);
+ assert.deepEqual(first.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection','manager-preview nonexecuting repair queue']);
  const validator=path.join(first.stableSkills,'work-validator');
  const pair=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8')).mixed;
  const workFile=path.join(o.app,'work.json'),contextFile=path.join(o.app,'facts.json');
@@ -140,7 +162,7 @@ test('real installed validator runs outside checkout and failed runtime variants
   async dir=>writeFile(path.join(dir,'scripts/validate-work.mjs'),'process.exit(0);'),
   async dir=>{const p=JSON.parse(await readFile(path.join(dir,'package.json')));p.dependencies.yaml='^2.9.1';await writeFile(path.join(dir,'package.json'),JSON.stringify(p));},
  ]) {
-  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
@@ -259,7 +281,7 @@ test('installed receipt validator runs a complete repaired stack with real copie
   async dir=>writeFile(path.join(dir,'lib/contracts/receipts.mjs'),'throw Error("corrupt chain");'),
   async dir=>writeFile(path.join(dir,'scripts/validate-handoff.mjs'),'process.exit(0);'),
  ]){
-  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
@@ -276,7 +298,7 @@ test('installed config checker validates and previews outside checkout; corrupt 
  const preview=JSON.parse(run(['--previous',previous]));assert.equal(preview.preview.status,'review_required');assert.equal(preview.preview.display_changed.length,1);assert.deepEqual(preview.preview.state_actions,[]);
  await writeFile(input,'token: SECRET-INSTALLED');assert.throws(()=>run([]),error=>error.status===1&&!error.stdout.toString().includes('SECRET-INSTALLED'));
  for(const mutate of [async dir=>rm(path.join(dir,'lib/config/projects.mjs')),async dir=>writeFile(path.join(dir,'lib/config/parse.mjs'),'throw Error("corrupt config")'),async dir=>rm(path.join(dir,'contracts/config-v1.schema.json')),async dir=>writeFile(path.join(dir,'scripts/check-config.mjs'),'process.exit(0);')]){
-  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));assert.equal(await realpath(first.stableSkills),first.skills);
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.equal(await readFile(input,'utf8'),'token: SECRET-INSTALLED');assert.equal(await readFile(previous,'utf8'),JSON.stringify(JSON.parse(await readFile(new URL('./fixtures/project-configs.json',import.meta.url),'utf8')).two_project));
 });
@@ -326,7 +348,7 @@ test('installed composed implementer retains complete links and runs source-iden
   async dir => rm(path.join(dir,'../implementer-job/SKILL.md')),
   async dir => writeFile(path.join(dir,'../implementer-jira/SKILL.md'),'corrupt sibling'),
  ]) {
-  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
  assert.deepEqual(await readdir(o.app),[]);
@@ -336,7 +358,7 @@ test('installed manager preview runs all frozen complete snapshots with real cop
  const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
  const {previewSnapshot}=await import('../lib/manager/decisions.mjs');
  const cases=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-candidates.json'))).cases;
- const legacyFull=new Map(JSON.parse(await readFile(new URL('./fixtures/manager-repairs.json',import.meta.url))).legacy_native_full.cases.map(c=>[c.id,c.expected]));
+ const repairFixture=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-repairs.json'))),legacyFull=new Map(repairFixture.legacy_native_full.cases.map(c=>[c.id,c.expected]));
  // Exercise the same native/schema boundary through installed ADF extraction.
  for(const fixture of cases.filter(c=>c.id.startsWith('native-'))){const c=structuredClone(fixture),i=c.snapshot.issues[c.id.startsWith('native-epic-')?0:1];c.id+='-adf';i.format='adf';i.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:i.body}]}]});cases.push(c);}
  const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
@@ -372,14 +394,14 @@ test('installed manager preview runs all frozen complete snapshots with real cop
  for(const args of [['--help'],['--help','--json']]){const p=invoke(args,true);assert.equal(p.status,0);assert.equal(p.stderr,'OPEN_ATTEMPTS=0\n');if(args.includes('--json'))assert.match(JSON.parse(p.stdout).help,/Preview ready work/);else assert.match(p.stdout,/Preview ready work/);}
  const observed=invoke(['--config',literal,'--input',snapshot,'--json'],true);assert.equal(observed.status,2);assert.equal(observed.stderr,'OPEN_ATTEMPTS=1\n');assert.equal(JSON.parse(observed.stdout).scope_diagnostics[0].code,'INPUT');assert.deepEqual([await readFile(literal,'utf8'),await readFile(snapshot,'utf8')],before);
  assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);
- for(const mutate of [async dir=>rm(path.join(dir,'lib/manager/availability.mjs')),async dir=>writeFile(path.join(dir,'lib/manager/snapshot.mjs'),'throw Error("corrupt preview runtime")'),async dir=>writeFile(path.join(dir,'scripts/manager-preview.mjs'),'process.exit(0);')]){await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));assert.equal(await realpath(installed.stableSkills),installed.skills);}
+ for(const mutate of [async dir=>rm(path.join(dir,'lib/manager/availability.mjs')),async dir=>writeFile(path.join(dir,'lib/manager/snapshot.mjs'),'throw Error("corrupt preview runtime")'),async dir=>writeFile(path.join(dir,'scripts/manager-preview.mjs'),'process.exit(0);')]){await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();assert.equal(await realpath(installed.stableSkills),installed.skills);}
  // Committed wrong-result sources pass source hashing, so actual smoke semantics
  // (rather than tamper detection alone) must reject them before stable selection.
  for(const badSource of ['process.exit(0);', 'console.log(JSON.stringify({schema:"pigboard-manager-preview/v1",valid:true,status:"complete",execution_authorized:true,writes:0,streams:[]}));']){
   await writeFile(path.join(o.source,'scripts/manager-preview.mjs'),badSource);git(o.source,'add','.');git(o.source,'commit','-m','wrong preview smoke fixture');
-  await assert.rejects(installCursorSkills(o,fakeInstall),/Manager preview nonexecuting smoke check failed/);assert.equal(await realpath(installed.stableSkills),installed.skills);
+  await assert.rejects(installCursorSkills(o,fakeInstall),/Manager preview nonexecuting smoke check failed/);verificationCheck();assert.equal(await realpath(installed.stableSkills),installed.skills);
  }
- const manifest=JSON.parse(await readFile(installed.manifest));for(const relative of ['scripts/manager-preview.mjs','lib/manager/snapshot.mjs','lib/manager/availability.mjs','lib/manager/decisions.mjs','lib/manager/repair-policy.mjs','docs/manager-preview.md','test/fixtures/manager-candidates.json'])assert.ok(manifest.sourceFiles['work-validator/'+relative]);
+ const manifest=JSON.parse(await readFile(installed.manifest));for(const relative of ['scripts/manager-preview.mjs','lib/manager/snapshot.mjs','lib/manager/availability.mjs','lib/manager/decisions.mjs','lib/manager/repair-policy.mjs','docs/manager-preview.md','test/fixtures/manager-candidates.json','test/fixtures/manager-repairs.json'])assert.ok(manifest.sourceFiles['work-validator/'+relative]);
  const guide=await readFile(path.join(validator,'docs/manager-preview.md'),'utf8');for(const match of guide.matchAll(/\]\(([^)#]+)(?:#[^)]*)?\)/g)){if(/^(?:https?:|<)/.test(match[1]))continue;await readFile(path.resolve(path.dirname(path.join(validator,'docs/manager-preview.md')),match[1]));}
 });
 
@@ -418,11 +440,11 @@ test('reviewer sibling installation preserves complete folders and real formatte
  await assert.rejects(installCursorSkills(o,async dir=>{
   await fakeInstall(dir);
   if(path.basename(dir)==='work-validator')await writeFile(path.join(dir,'../reviewer-jira/SKILL.md'),'corrupted reviewer sibling');
- }),/hash mismatch/);
+ }),/hash mismatch/);verificationCheck();
  assert.equal(await realpath(first.stableSkills),first.skills);
  await rm(path.join(o.source,'skills/reviewer-jira'),{recursive:true});
  git(o.source,'add','.');git(o.source,'commit','-m','missing reviewer sibling');
- await assert.rejects(installCursorSkills(o,fakeInstall));
+ await assert.rejects(installCursorSkills(o,fakeInstall));verificationCheck();
  assert.equal(await realpath(first.stableSkills),first.skills);
 });
 
@@ -461,11 +483,11 @@ test('installed structured QA composer/helpers/publisher retain full sibling clo
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
   assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.dependencies,'verified');
-  assert.deepEqual(installed.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection']);
+  assert.deepEqual(installed.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection','manager-preview nonexecuting repair queue']);
   // Changed instruction bytes are copied exactly; neither this check nor the
   // dependency mocks establish actual Grok/helper/clock or publisher execution.
   for(const relative of ['qa-entrypoint/SKILL.md','qa-entrypoint/references/execution-record.md','qa-entrypoint/references/cursor.md','qa-jira/SKILL.md'])assert.deepEqual(await readFile(path.join(installed.skills,relative)),await readFile(path.join(o.source,'skills',relative)),relative);
-  await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));
+  await assert.rejects(readFile(path.join(installed.skills,'test/fixtures/qa-helper-case.mjs')));verificationCheck();
 });
 
 // This existing installation fixture simulates QA-helper packages, while copying
@@ -528,7 +550,7 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
  for(const relative of ['request-rework/SKILL.md','request-rework/references/example.md']) {
   await assert.rejects(installCursorSkills(o,async dir=>{
    await fakeInstall(dir);if(path.basename(dir)==='work-validator')await writeFile(path.join(dir,'..',relative),'changed new skill');
-  }),/hash mismatch/);
+  }),/hash mismatch/);verificationCheck();
   assert.equal(await realpath(first.stableSkills),first.skills);
  }
 });
@@ -731,10 +753,10 @@ test('standalone QA publisher ships exact folder and same-release contracts; sou
   dir=>rm(path.join(dir,'scripts/prepare-handoff.mjs')),
   dir=>writeFile(path.join(dir,'docs/configuration.md'),'corrupted scope guide'),
  ]){
-  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await corrupt(dir);}));
+  await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await corrupt(dir);}));verificationCheck();
   assert.equal(await realpath(installed.stableSkills),installed.skills);
  }
- await rm(path.join(o.source,'skills/qa-jira'),{recursive:true});git(o.source,'add','.');git(o.source,'commit','-m','missing publisher fixture');await assert.rejects(installCursorSkills(o,fakeInstall));assert.equal(await realpath(installed.stableSkills),installed.skills);
+ await rm(path.join(o.source,'skills/qa-jira'),{recursive:true});git(o.source,'add','.');git(o.source,'commit','-m','missing publisher fixture');await assert.rejects(installCursorSkills(o,fakeInstall));verificationCheck();assert.equal(await realpath(installed.stableSkills),installed.skills);
 });
 
 // These local copies preserve the eight sealed triage inputs, including raw packet bytes.
@@ -910,9 +932,9 @@ test('installed preview rejects frozen current-proof contradictions and preserve
 });
 
 test('installed preview preserves inherited36 typed own-repair outcomes and three controls',async t=>{
- const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),packet=JSON.parse(await readFile(new URL('./fixtures/manager-repairs.json',import.meta.url))),own=packet.inherited_own_preview,F={...own.original,cases:own.original.cases.map(c=>({...c,expected:own.cases.find(e=>e.id===c.id).expected}))};
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),packet=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-repairs.json'))),own=packet.inherited_own_preview,F={...own.original,cases:own.original.cases.map(c=>({...c,expected:own.cases.find(e=>e.id===c.id).expected}))};
  const {createHash}=await import('node:crypto'),sha=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(await readFile(installed.manifest));
- assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.smokeChecks.length,7);assert(Object.hasOwn(manifest.sourceFiles,'work-validator/lib/manager/repair-policy.mjs'));assert(!Object.hasOwn(manifest.sourceFiles,'work-validator/test/fixtures/manager-repairs.json'));
+ assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.smokeChecks.length,8);assert(Object.hasOwn(manifest.sourceFiles,'work-validator/lib/manager/repair-policy.mjs'));assert(Object.hasOwn(manifest.sourceFiles,'work-validator/test/fixtures/manager-repairs.json'));
  for(const relative of ['lib/contracts/receipts.mjs','lib/manager/snapshot.mjs','lib/manager/decisions.mjs']){const bytes=await readFile(new URL('../'+relative,import.meta.url));assert.equal(sha(await readFile(path.join(validator,relative))),sha(bytes));assert.equal(manifest.sourceFiles['work-validator/'+relative],sha(bytes));}
  assert.deepEqual(F.installed_case_ids,['OC01-selection','OC04-cap-5','OC05-stack-request']);
  const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
@@ -924,3 +946,93 @@ test('installed preview preserves inherited36 typed own-repair outcomes and thre
 
 // The copied runtime consumes independently frozen repair oracles; parity alone
 // is additional evidence, never the source of an expected report.
+test('installed repair preview preserves complete checkpoint and historical contracts',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
+ const {createHash}=await import('node:crypto'),{pathToFileURL}=await import('node:url'),sha=b=>createHash('sha256').update(b).digest('hex');
+ const relative='test/fixtures/manager-repairs.json',bytes=await readFile(new URL('../'+relative,import.meta.url)),F=JSON.parse(bytes),manifest=JSON.parse(await readFile(installed.manifest));
+ assert.equal(sha(await readFile(path.join(validator,relative))),sha(bytes));assert.equal(manifest.sourceFiles['work-validator/'+relative],sha(bytes));assert.equal(F.native_cases.length,42);
+ for(const p of ['lib/contracts/receipts.mjs','lib/manager/snapshot.mjs','lib/manager/repair-policy.mjs']){const source=await readFile(new URL('../'+p,import.meta.url));assert.equal(sha(await readFile(path.join(validator,p))),sha(source));assert.equal(manifest.sourceFiles['work-validator/'+p],sha(source));}
+ const {inspectManagerHistory,validateReceiptChain}=await import(pathToFileURL(path.join(validator,'lib/contracts/receipts.mjs')).href),plain=v=>JSON.parse(JSON.stringify(v));
+ const pair=F.projection_pair,histories=[],currents=[];
+ let historyStage='not_started';
+ try {
+ for(const [index,mode]of ['history','current','current','history','history','current'].entries()){
+  verificationContext(o,{group:'history',case_id:'projection_pair',mode,repetition:index+1,pointer:'/projection_pair'});historyStage='call';
+  const actual=mode==='history'?inspectManagerHistory(pair.input):validateReceiptChain(pair.input);historyStage='assertions';
+  const r=plain(actual);verificationHistory({id:'projection_pair'},pair.input,mode==='history'?pair.expected_history:pair.expected_current,actual,{comparison:r});
+  if(mode==='history'){assert.deepEqual(r,pair.expected_history);histories.push(r);}else{assert.deepEqual(r,pair.expected_current);currents.push(r);}
+ }
+ for(const h of histories)assert.deepEqual(h,histories[0]);for(const c of currents)assert.deepEqual(c,currents[0]);
+ for(const [index,c]of F.projections.entries())for(const repetition of [1,2]){
+  verificationContext(o,{group:'history',case_id:c.id,mode:'history',repetition,pointer:'/projections/'+index});historyStage='call';
+  const actual=inspectManagerHistory(c.input);historyStage='assertions';const result=plain(actual);verificationHistory(c,c.input,c.expected,actual,{comparison:result});assert.deepEqual(result,c.expected,c.id+(repetition===2?' repeat':''));
+ }
+ for(const [index,c]of F.normalization.positive_history_projections.entries()){
+  verificationContext(o,{group:'history',case_id:c.id,mode:'history',repetition:1,pointer:'/normalization/positive_history_projections/'+index});historyStage='call';
+  const actual=inspectManagerHistory(c.input);historyStage='assertions';const result=plain(actual);verificationHistory(c,c.input,c.expected,actual,{comparison:result});assert.deepEqual(result,c.expected,c.id);
+ }
+ for(const [index,c]of F.normalization.canonical_controls.entries())for(const [repetition,mode]of ['current','history','history','current'].entries()){
+  verificationContext(o,{group:'history',case_id:c.id,mode,repetition:repetition+1,pointer:'/normalization/canonical_controls/'+index});historyStage='call';
+  const actual=mode==='current'?validateReceiptChain(c.input):inspectManagerHistory(c.input);historyStage='assertions';const result=plain(actual);verificationHistory(c,c.input,mode==='current'?c.expected_current:c.expected_history,actual,{comparison:result});assert.deepEqual(result,mode==='current'?c.expected_current:c.expected_history,c.id+' '+mode);
+ }
+ for(const [index,c]of F.bounded_history_cases.entries()){
+  verificationContext(o,{group:'history',case_id:c.id,mode:'history',repetition:1,pointer:'/bounded_history_cases/'+index});
+  const {Session}=await import('node:inspector/promises'),session=new Session();session.connect();
+  try{
+   await session.post('Profiler.enable');await session.post('Profiler.startPreciseCoverage',{callCount:true,detailed:true});historyStage='call';
+   const result=inspectManagerHistory(c.input);const {result:coverage}=await session.post('Profiler.takePreciseCoverage');historyStage='assertions';
+   const scripts=coverage.filter(x=>x.url===pathToFileURL(path.join(validator,'lib/contracts/receipts.mjs')).href),entries=scripts.length===1?scripts[0].functions.reduce((n,f)=>n+f.ranges[0].count,0):null;
+   verificationHistory(c,c.input,c.expected,result,{coverage:scripts,module_entries:entries,module_entry_budget:c.module_entry_budget});
+   assert.equal(result.valid,c.expected.valid,c.id+JSON.stringify(result.diagnostics));assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);if(c.expected.diagnostic){assert(result.diagnostics.some(d=>d.code===c.expected.diagnostic.code&&d.path===c.expected.diagnostic.path));assert.deepEqual(result.records,[]);assert.deepEqual(result.coverage_segments,[]);assert.deepEqual(result.bindings,[]);}assert.equal(scripts.length,1);assert(entries>0&&entries<=c.module_entry_budget,c.id+': '+entries+' > '+c.module_entry_budget);t.diagnostic(c.id+': '+entries+' copied history-module entries <= '+c.module_entry_budget);
+  }finally{try{await session.post('Profiler.stopPreciseCoverage');}finally{session.disconnect();}}
+ }
+ }catch(error){verificationAfter('history API/assertion failure',()=>verificationRecord('history-failure',{test:t.name,...verificationCurrent?.context,stage:historyStage,error:verificationError(error)}));throw error;}
+ verificationComplete(o,'history');
+
+ const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');
+ for(const [caseIndex,c]of [...F.cases,...F.scenarios,...F.normalization.cases].entries()){verificationContext(o,{group:'full-loop',case_id:c.id,case_index:caseIndex});const rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const before=(await readdir(o.app)).sort(),args=[cli,'--config',config,'--input',input,...(c.options?.expectedSite?['--expected-site',c.options.expectedSite]:[]),...(c.options?.expectedSnapshotDigest?['--expected-snapshot-digest',c.options.expectedSnapshotDigest]:[])];
+  const expectedExit=c.expected.status==='complete'?0:1;
+  for(const json of [true,false]){let repetition=0;const invoke=()=>{verificationContext(o,{group:'full-loop',case_id:c.id,case_index:caseIndex,mode:json?'json':'readable',repetition:++repetition});return spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:30000});},p=invoke();assert.equal(p.status,expectedExit,c.id+p.stderr);assert.equal(p.stderr,'');assert.equal(invoke().stdout,p.stdout,c.id+' deterministic');if(json)assert.deepEqual(JSON.parse(p.stdout),c.expected,c.id);else{assert.match(p.stdout,/No execution authority; writes: 0/);const expectedCauses=c.expected.streams.flatMap(s=>(s.proposal?.roots??[]).map(r=>`  Cause: ticket ${r.ticket_id}; comment ${r.comment_id}; record ${r.record_id}; digest ${r.digest}.`));assert.deepEqual(p.stdout.split('\n').filter(line=>line.startsWith('  Cause:')),expectedCauses,c.id+' every ordered cause and exact cardinality');for(const s of c.expected.streams)if(s.proposal){assert(p.stdout.includes('Proposal '+s.proposal.kind));if(s.proposal.required_parent)assert(p.stdout.includes(s.proposal.required_parent.required_revision));assert(p.stdout.includes('publication required '+s.proposal.publication_required));}}}
+  assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),before);assert.equal(c.expected.writes,0);assert.equal(c.expected.execution_authorized,false);
+ }
+ assert.equal(sha(await readFile(path.join(validator,relative))),sha(bytes));
+ verificationComplete(o,'full-loop');
+});
+
+test('repair closure and eighth semantic smoke preserve the previous stable link on failure',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),originalRef=git(o.source,'rev-parse','HEAD');
+ const paths=['lib/manager/repair-policy.mjs','test/fixtures/manager-repairs.json'];
+ for(const p of paths)for(const corrupt of [false,true]){verificationContext(o,{group:'five-faults',fault_id:(corrupt?'corrupt-':'missing-')+p});git(o.source,'checkout',originalRef,'--',p);if(corrupt)await writeFile(path.join(o.source,p),p.endsWith('.json')?'not JSON':'throw Error("corrupt repair runtime");');else await rm(path.join(o.source,p));git(o.source,'add',p);git(o.source,'commit','-m','invalid repair closure fixture');await assert.rejects(installCursorSkills(o,fakeInstall));verificationCheck();assert.equal(await realpath(installed.stableSkills),installed.skills);git(o.source,'checkout',originalRef,'--',p);git(o.source,'commit','-m','restore repair closure fixture');}
+ // Preserve ordinary selection; only a repair decision has a deliberately wrong
+ // semantic result. Commit it so source hashing succeeds before the eighth check.
+ const p='lib/manager/repair-policy.mjs',good=await readFile(path.join(o.source,p),'utf8'),literal='if(chosen)return {required,proposal:chosen.proposal';assert.equal(good.split(literal).length-1,1,'Require the prescribed single fault literal.');const bad=good.replace(literal,'if(chosen)return {required,proposal:null');assert.notEqual(bad,good);verificationContext(o,{group:'five-faults',fault_id:'ordinary-correct-repair-wrong',original_ref:originalRef});await writeFile(path.join(o.source,p),bad);git(o.source,'add',p);git(o.source,'commit','-m','wrong repair semantics fixture');await assert.rejects(installCursorSkills(o,fakeInstall),/Manager preview nonexecuting repair queue smoke check failed/);verificationCheck();assert.equal(await realpath(installed.stableSkills),installed.skills);
+ verificationComplete(o,'five-faults');
+});
+
+function boundedNativeCases(fixtures){
+ const fresh=id=>structuredClone(fixtures.find(c=>c.id===id));
+ const refs=[{ticket_id:'1001',comment_id:'9001',record_id:'40000000-0000-4000-8000-000000000001',digest:'sha256:'+'1'.repeat(64)},{ticket_id:'1001',comment_id:'9002',record_id:'40000000-0000-4000-8000-000000000002',digest:'sha256:'+'2'.repeat(64)}];
+ const cases=[]; for(const side of [false,true]){const c=fresh('S01');c.snapshot.issues[1].required_requests=structuredClone(refs);if(side)c.snapshot.required_repairs=[{project_id:'100',label:'stream-1',ticket_id:'1001',reason:'required_request',references:structuredClone(refs)}];cases.push({side,c});}return cases;
+}
+function assertBoundedNativeResult(r){assert.equal(r.valid,true);assert.equal(r.status,'complete');assert.deepEqual(r.streams.filter(s=>s.decision==='select').map(s=>s.selected_ticket_id),[]);assert.ok(r.streams.some(s=>s.reasons.some(r=>r.code==='LINEAGE_REQUIRED'&&r.path==='/issues/1/required_requests')));}
+
+test('focused copied-installed obligation provenance and unfinished child waits',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),{previewSnapshot}=await import('../lib/manager/decisions.mjs');
+ const cases=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-candidates.json'))).cases,repairs=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-repairs.json'))),obligations=obligationCases(cases),prerequisites=prerequisitePathCases(cases),q6=[];
+ const specs=[{...obligations.find(s=>s.id==='R4'),expectedExit:0,assertion:assertObligationResult},...['Q5-label','Q5-project','Q6-accounted-first','Q6-unaccounted-first'].map(id=>({...prerequisites.find(s=>s.id===id),expectedExit:id.startsWith('Q5-')?1:0,assertion:assertPrerequisitePathResult})),...boundedNativeCases(cases).map(s=>({...s,expectedExit:0,assertion:assertBoundedNativeResult})),{...prerequisites.find(s=>s.id==='Q4'),expectedExit:0,assertion:assertPrerequisitePathResult},{...obligations.find(s=>s.id==='B4'),expectedExit:1,assertion:assertObligationResult},...['H02-B-own-dependency-wait','S21-after-worker-wait-B-Rework-Queued'].map(id=>({id,expectedExit:0,c:repairs.scenarios.find(c=>c.id===id),assertion:(r,s)=>assert.deepEqual(r,s.c.expected,s.id)}))];
+ for(const [caseIndex,spec]of specs.entries()){verificationContext(o,{group:'focused-provenance',case_id:spec.id??('BN-'+(spec.side?'side':'no-side')),case_index:caseIndex,mode:'json',repetition:1});const c=spec.c,before=JSON.stringify(c),config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);if(spec.orderControl)q6Descriptor(spec);
+  const p=spawnSync(process.execPath,[path.join(validator,'scripts/manager-preview.mjs'),'--config',config,'--input',input,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});assert.equal(p.stderr,'');assert.equal(p.status,spec.expectedExit,spec.id);const result=JSON.parse(p.stdout);spec.assertion(result,spec);let source;try{source=previewSnapshot(rawConfig,rawSnapshot,c.options);}catch(error){verificationAfter('source API throw',()=>verificationRecord('api-failure',{test:t.name,...verificationCurrent?.context,error:verificationError(error)}));throw error;}verificationAPI(c,rawConfig,rawSnapshot,source);assert.deepEqual(result,JSON.parse(JSON.stringify(source)),c.id+' source/installed parity');assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);assert.equal(JSON.stringify(c),before);assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);if(spec.orderControl)q6.push({spec,result});
+ }
+ assert.equal(q6.length,2);assertQ6Pair(q6[0].result,q6[0].spec,q6[1].result,q6[1].spec);verificationComplete(o,'focused-provenance');
+});
+
+function s41ContrastCases(f){return ['S41-published-U1-intent-and-drift','H02-03-u1-queued-r2-arrived','H02-paused','H02-five-Human-Review-cap','H02-unrelated-authentic-active-D','S17-unresolved-intent','S28-scoped-fix-worker-blocker'].map(id=>{const c=[...f.cases,...f.scenarios].find(c=>c.id===id);assert(c,id);return c;});}
+function assertS41Readable(text,c){assert.match(text,/No execution authority; writes: 0/);if(c.id==='S41-published-U1-intent-and-drift'){assert(text.includes(': hold;'));for(const r of [{code:'PARENT_REPAIR_PENDING',path:'/issues/2'},{code:'PARENT_REPAIR_PENDING',path:'/issues/3'},{code:'CHANGED_INPUT',path:''},{code:'PENDING_INTENT',path:'/pending_intents'}])assert(text.includes(r.code+' '+r.path+':'),r.code);for(const key of ['EX-2','EX-3'])assert(text.includes('Repair '+key+': parent_completion.'));}}
+
+test('focused S41 and six fixed contrasts copied installed',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),f=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-repairs.json'))),{previewSnapshot}=await import('../lib/manager/decisions.mjs');
+ for(const [caseIndex,c]of s41ContrastCases(f).entries()){verificationContext(o,{group:'focused-S41',case_id:c.id,case_index:caseIndex,repetition:1});const before=JSON.stringify(c),config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),rawConfig=JSON.stringify(c.config),rawSnapshot=JSON.stringify(c.snapshot);await writeFile(config,rawConfig);await writeFile(input,rawSnapshot);const args=[path.join(validator,'scripts/manager-preview.mjs'),'--config',config,'--input',input,...(c.options?.expectedSite?['--expected-site',c.options.expectedSite]:[]),...(c.options?.expectedSnapshotDigest?['--expected-snapshot-digest',c.options.expectedSnapshotDigest]:[])],exit=c.expected.status==='complete'?0:1;
+ for(const json of [true,false]){verificationContext(o,{group:'focused-S41',case_id:c.id,case_index:caseIndex,mode:json?'json':'readable',repetition:1});const p=spawnSync(process.execPath,[...args,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:30000});assert.equal(p.status,exit,c.id);assert.equal(p.stderr,'');if(json){const result=JSON.parse(p.stdout);assert.deepEqual(result,c.expected,c.id);let source;try{source=previewSnapshot(rawConfig,rawSnapshot,c.options);}catch(error){verificationAfter('source API throw',()=>verificationRecord('api-failure',{test:t.name,...verificationCurrent?.context,error:verificationError(error)}));throw error;}verificationAPI(c,rawConfig,rawSnapshot,source);assert.deepEqual(result,JSON.parse(JSON.stringify(source)),c.id+' parity');assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);}else assertS41Readable(p.stdout,c);}
+ assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);assert.equal(JSON.stringify(c),before);}
+ verificationComplete(o,'focused-S41');
+});

@@ -3,6 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, mkdir, mkdtemp, writeFile, readFile, readlink, realpath, rename, rm, symlink } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { isDeepStrictEqual } from 'node:util';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -116,7 +117,17 @@ export async function verifyRelease(receipt) {
     if (result.schema !== 'pigboard-manager-preview/v1' || result.valid !== true || result.status !== 'complete' || result.validation_scope !== 'supplied_snapshot' || result.execution_authorized !== false || result.writes !== 0 || result.live_freshness !== 'not_evaluated' || result.permission !== 'not_evaluated' || result.streams.length !== 1 || result.streams[0].decision !== 'select' || result.streams[0].selected_ticket_id !== '1001' || result.streams[0].return_count !== 1) throw new Error();
   } catch { throw new Error('Manager preview nonexecuting smoke check failed.'); }
   finally { await rm(previewTemporary, { recursive:true, force:true }); }
-  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record', 'config-validator project scope', 'manager-preview nonexecuting selection'] };
+  const repairTemporary = await mkdtemp(path.join(os.tmpdir(), 'pigboard-repair-smoke-'));
+  try {
+    const fixture = JSON.parse(await readFile(path.join(validatorRoot, 'test/fixtures/manager-repairs.json'))).cases.find(c=>c.id==='H02-02-a2-full-qa-before-u1');
+    const config=path.join(repairTemporary,'config.json'),input=path.join(repairTemporary,'snapshot.json');
+    await writeFile(config,JSON.stringify(fixture.config));await writeFile(input,JSON.stringify(fixture.snapshot));
+    const result=JSON.parse(execFileSync(process.execPath,[path.join(validatorRoot,'scripts/manager-preview.mjs'),'--config',config,'--input',input,'--json'],{cwd:repairTemporary,encoding:'utf8',stdio:['ignore','pipe','pipe'],timeout:30000}));
+    const stream=result.streams?.[0],proposal=stream?.proposal;
+    if(result.schema!=='pigboard-manager-preview/v1'||result.valid!==true||result.status!=='complete'||result.validation_scope!=='supplied_snapshot'||result.execution_authorized!==false||result.writes!==0||result.live_freshness!=='not_evaluated'||result.permission!=='not_evaluated'||result.streams.length!==1||stream.decision!=='queue'||stream.selected_ticket_id!=='1001'||proposal?.kind!=='queue_stack_update'||proposal.execution_authorized!==false||proposal.publication_required!==true||proposal.required_parent?.ticket_id!=='1000'||proposal.required_parent?.required_revision!=='2'.repeat(40)||proposal.roots.length!==1||proposal.request_refs.length!==0||proposal.required_stack_updates.length!==1||!isDeepStrictEqual(proposal,fixture.expected.streams[0].proposal))throw new Error();
+  }catch{throw new Error('Manager preview nonexecuting repair queue smoke check failed.');}
+  finally{await rm(repairTemporary,{recursive:true,force:true});}
+  return { entrypoints: bundle.skills.length, sourceFiles: Object.keys(manifest.sourceFiles).length, dependencies: 'verified', smokeChecks: ['pg.Client', 'bru --version', 'work-validator epic draft', 'work-validator ticket draft', 'handoff-validator admission record', 'config-validator project scope', 'manager-preview nonexecuting selection', 'manager-preview nonexecuting repair queue'] };
 }
 
 export async function installCursorSkills({ source, ref, app, root = '/opt/pigboard' }, install) {
