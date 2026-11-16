@@ -3,6 +3,34 @@
 The manager uses Jira work data and recorded evidence to select the next ticket.
 It does not run an AI, inspect agent transcripts or decide whether a PR is correct.
 
+## Approved role amendment — 16 November 2026
+
+The [role amendment](../delivery/manager-r1/role-amendment.md) supersedes the
+baseline's execution-context coupling and external-freshness interpretation for
+M03/M07/M11/M14. Current source retains strict validation, receipt and preview
+behavior; PGB-159/PGB-160/PGB-162 own the planned composition below.
+
+M03 checks complete scheduling declarations. For M07, current completion requires
+the exact current requirements and assignment, an accepted native stage and
+authenticated recorded results with complete ledgers/preparation and lineage.
+An old successful result cannot satisfy changed current requirements. The manager
+does not reconstruct old execution contexts or recheck external PR/evidence
+observations. Authentication identifies the configured publisher of the exact
+immutable record; it does not independently establish the operation's truth.
+
+**A hidden push, PR close/merge or retarget may escape detection.** A coherent
+recorded chain may still cause queueing or admission after such a change. M11's
+no ordinary-merge/retarget cascade is a scheduling rule, not a promise to detect
+those events live. Each worker checks the applicable current PR/action facts
+before acting; it does not promise to detect every conceivable external change.
+
+M14 still requires fresh bounded native reads and exact decision bindings before
+effects. It does not turn recorded proof into external freshness or transition
+proof. Ordering, occupancy, five-ticket capacity, pause, repair roots, repeated
+parent segments and uncertainty/no-replay rules remain unchanged.
+
+## Retained requirement baseline
+
 | ID | Required behavior |
 | --- | --- |
 | M01 | A configured Pigboard opt-in label and an In Progress Epic enable admission. Jira site identity, immutable project ID and full labels such as `AI-Daniel-1` together identify sequential streams; the worker-type routing may ignore the numeric suffix. |
