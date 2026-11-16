@@ -15,7 +15,7 @@
 | A09 | R1-02-H02, R1-05-H01, R1-07-H02 |
 | A10 | R1-01-H02, R1-02-H02 |
 | A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02 |
-| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04 |
+| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03 |
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01 |
 | W02 | R1-05-H01 |
 | W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
@@ -41,16 +41,16 @@
 | M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03 |
 | M12 | R1-11-S02, R1-11-S40, R1-19-H03 |
 | M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01 |
-| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04 |
+| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02 |
 | O01 | R1-13-H01, R1-13-H02 |
 | O02 | R1-10-H01, R1-13-H01 |
-| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03 |
+| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04 |
 | O04 | R1-20-H01 |
 | O05 | R1-14-H01, R1-14-H02 |
 | O06 | R1-14-H02, R1-17-H01, R1-17-H02, R1-19-H01 |
 | O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03 |
 | O08 | R1-15-H01, R1-15-H02 |
-| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04 |
+| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04 |
 | O10 | R1-13-H02, R1-15-H02, R1-16-H02, R1-17-H03 |
 | O11 | R1-14-H01, R1-15-H02, R1-16-H01, R1-16-H02 |
 | O12 | R1-20-H01, R1-20-H02, R1-20-H03 |
@@ -135,3 +135,9 @@ The separate Director native inventory on 15 November is30 Stories/130 cases, in
 R1-28/PGB-136 adds six supporting cases OC01–OC06 for own selection, exact same-ticket consumption, necessary prerequisites, existing safety gates, safe unsupported outcomes and actual installed use. These supplement the original requirement/scenario rows; all 53 requirements, 41 scenarios and all 42 PGB-81 cases remain unchanged. All six new and 42 original human cases remain NOT_RUN. This partial source checkpoint has 29 Stories/128 cases; native PGB-137/R1-29 composition is pending. Publication is not implementation or acceptance.
 
 PGB-145/R1-31 adds four supporting local configuration cases; all remain NOT_RUN. The partial source is 30 Stories/132 cases; dated native publication is 31/134, with PGB-137 source composition still pending. All 53 requirements, 41 scenarios and original PGB-82 cases remain.
+
+PGB-150/R1-36 adds four source inspection groups. The source checkpoint is 31 Stories/136 cases from actual merged PGB-145 source; all four groups remain NOT_RUN. The existing 35 variants, eight controls and L06 private projection use existing stable machine selectors while the new human case IDs are R1-36-H01–H04. The [source guide](../../manager-preview.md) and [Story](stories.md) give the exact selector mapping. Source read, partial-result, fixed transport and source-damage coverage belongs to this prerequisite. PGB-147's original source/copied groups and PGB-148's final consumption stay pending in source; PGB-82's original cases and PGB-110's owner exception remain unchanged. The dated native31/134 and34/144 observations, and known PGB-149 source omission, do not establish a current native total.
+
+The current catalog composes the same 31/136 source contract with State’s six complete repair-preview histories. PGB-155/R1-41 is a native-only catalog child (0/1 human group NOT_RUN), not a 32nd source entry. The State 30/132 capture and its native observations remain dated. Source inspection, partial results, bounded transport and private-source controls retain all 35 variants, eight controls and the L06 projection.
+
+PGB-156/R1-42 is a native-only boundary repair with four separate NOT_RUN human groups and nine fixed subcases. Its source entry is pending; the source mapping stays 31 Stories/136 groups, 53 requirements and 41 original scenarios. The reviewed PGB-156 runtime merge fixes request snapshot, exact-limit stop, provider ADF and certificate diagnostics. The PGB-155 catalog still owns the ten-path source record, and its own one human group remains NOT_RUN.

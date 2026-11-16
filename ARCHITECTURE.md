@@ -202,3 +202,22 @@ grants current completion. The same-ticket current-lineage coherence guard runs
 before baseline, consumption or completion-derived stack relationships: conflicting
 logical QA results cannot free a stream. Exact current assignment references keep
 their independent authority. See [offline preview](docs/manager-preview.md).
+
+## Requested native Jira inspection from source
+
+`lib/jira/read.mjs` exports `inspectJiraIssues` for an authorized Node caller in
+the reviewed source checkout. It accepts A's canonical configuration, explicit
+immutable issue IDs and exact comment targets, plus a trusted in-process secret
+resolver. It reads named issues, fixed assignment pointers, visible comment pages
+and supplied exact comments. It does not perform domain discovery, receipt proof,
+admission or Jira writes. No manager state or AWS wrapper consumes it yet.
+
+The reader owns fixed Atlassian gateway HTTPS requests, TLS verification, input
+and count/byte/time bounds, cancellation fencing, safe diagnostics and private
+observations. Report serialization excludes bodies and secrets. Failed or changed
+reads retain valid partial observations and mark missing information honestly.
+The [source API and fixture guide](docs/manager-preview.md#inspect-named-jira-issues)
+documents prerequisites, use, limits and recovery. Its importable test-only HTTPS
+packet hashes the complete source and prepared dependency closure and exercises
+source-derived disposable damage. PGB-147 later publishes an independent installed
+copy and runnable fixture CLI; their availability is not established here.

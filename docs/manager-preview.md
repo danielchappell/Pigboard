@@ -508,3 +508,199 @@ const result=previewSnapshot(fs.readFileSync(configFile,'utf8'),fs.readFileSync(
 The API returns the same complete structured value as JSON CLI output. Preserve
 input hashes and full fixed comparisons; successful local checks do not mark any
 of the original42 human cases, or R1-32's and R1-35's two human routes each, as passed.
+
+## Inspect named Jira issues
+
+The source checkout provides **requested-issue inspection** through an importable
+library. A prepared installed `work-validator` copy is a later delivery.
+This is a read-only library, separate from offline selection above. It reads the
+supplied immutable issue IDs, assignment pointers, all visible comment pages and
+named exact comments. It does not discover a domain, evaluate admission or prove
+receipts. There is no production live CLI. Node 20+, a reviewed source checkout
+with its existing prepared dependencies, the canonical configuration's Jira
+connection and all eleven explicit read bounds are required. Site/cloud binding,
+credential access and visibility are operator
+prerequisites; a successful call cannot certify invisible work absent.
+
+```js
+import { inspectJiraIssues } from './lib/jira/read.mjs';
+// configText is UTF-8 authored configuration; resolveSecret is a trusted,
+// already prepared in-process capability, never loaded from a ticket or URL.
+const result = await inspectJiraIssues(configText, {
+  issue_ids: ['1000'],
+  comment_targets: [{ ticket_id: '1000', comment_id: '2001' }]
+}, { resolveSecret });
+console.log(JSON.stringify(result.report));
+```
+
+Resolve once using `resolveSecret(reference, signal)`, returning a nonempty token
+of at most 16 KiB without control characters. The callback owns its I/O and must
+stop it and settle on abort. The library fences late results and starts no Jira
+work after its total deadline. `cleanup.resolver: cancel_unconfirmed` means the
+caller must confirm its own cleanup before another attempt; JavaScript callbacks
+cannot be forcibly stopped. Callback errors and credential/reference values never
+appear in reports. B-owned streams and timers are closed before return.
+
+The request has exactly `issue_ids` and `comment_targets`, with decimal-string IDs
+of 1–255 characters, unique entries and targets belonging to supplied issues.
+Comment targets are unique by the pair of `ticket_id` and `comment_id`; member
+order does not change that identity. Duplicate pairs fail before credential
+resolution or requests.
+Empty issue lists, accessors, extra keys, non-JSON values and requests over
+1 MiB/depth16/list1000 fail before credential resolution. The canonical configured
+known-issue/comment bounds apply too. An issue outside configured project IDs has
+no pointer/comment follow-up. Only fixed gateway HTTPS GETs are used; certificate
+and hostname verification remain enabled. There are no redirects, retries,
+caller-selected URLs, JQL, transport modules or environment credential overrides.
+Validated issue IDs and exact target pairs are copied before credential resolution.
+Changing the caller's arrays or pairs while the resolver is pending cannot change
+the work selected for that invocation; make a new invocation for new identities.
+
+`result.report` contains schema, status, requested scope, safe issue ID/project/key
+rows and read states, diagnostics, all eleven limits, counters and cleanup.
+`domain_complete` is always false, `retained_complete` null, and `admission` and
+`receipt_proof` are `not_evaluated`. `visibility` remains
+`operator_prerequisite`. `scopes` is empty. Complete requested reads do not mean
+complete inventory or scheduler readiness. Status is `complete`, `incomplete`,
+`invalid` or `setup_failed`; successful observations survive another read's
+failure. The test-only source packet below emits the same safe report as JSON.
+
+Read states describe processing phases. `not_requested` means the phase was not
+reached, or no exact targets were supplied; an earlier failure or limit can leave
+this state even when the caller supplied a target. `incomplete` means the phase
+was reached but its required observations were not completed; it does not imply
+that an HTTP request was sent. `complete` means that phase’s required observations
+were completed. Use the overall status, diagnostics and request counters alongside
+these states.
+
+A non-enumerable, read-only `result.observations` property exposes private
+in-memory acquisition to a trusted caller: `issues`, `comment_pages`,
+`exact_comments`, `references` and `provenance`. Serializing the whole result emits
+only the safe report. Issue rows retain current immutable identity, native status,
+type, parent, labels, ADF description and pointer state. An explicit empty Jira
+description is retained as `body: null`; a missing or malformed description is a
+response error. Null is an inventory observation, not valid work to start. Pages/exact comments keep
+server author/update-author/time metadata and bounded ADF strings. References are
+empty in this slice and provenance is `requested`. These are observations, not
+trusted work context or accepted receipt envelopes. Do not log private bodies.
+
+A present pointer must match the existing pointer schema. **Pointer404 remains
+unknown**, even after an accessible issue read: it never establishes absence.
+Comments require contiguous offsets, stable totals, unique IDs and explicit final
+counts; empty lists need a complete zero-total page. Exact targets must occur in
+that enumeration and match server metadata and ADF content. JSON object member
+order does not change an ADF value; content-array order and all metadata still
+matter. Each endpoint's original bounded ADF string remains in private
+observations. Changed input is retained as a failure; the library does not choose
+a newer version or restart the scan.
+
+Counters cover attempted/completed/failed requests, comment/search pages, relevant
+identities, comments, every received byte, private serialized observations and
+elapsed milliseconds. Discovery counters remain zero. Pages share `max_pages`;
+ordinary comments count toward `max_comments`. Per-response bytes and cumulative
+received bytes include errors and discarded replies. Private normalized
+observations independently fit `max_total_response_bytes`; this is a serialized
+bound, not an exact heap measurement. Request deadlines include headers and body;
+the total deadline also includes resolution and parsing. Time checks surround
+bounded synchronous parsing; timers cannot preempt JavaScript mid-parse.
+Non-identity compression is rejected. Nothing is silently truncated.
+When an exact target reaches a request, time, wire or private retention limit,
+the scan stops across all requested issues. Earlier observations remain available,
+the current issue is incomplete and no later issue is fetched.
+
+Fixed diagnostics tell the caller what to inspect next:
+
+| Code | Recovery |
+| --- | --- |
+| `CONFIG_INVALID`, `INPUT_INVALID` | Correct the authored configuration or closed caller request before retrying. |
+| `SETUP_MISSING`, `SECRET_UNAVAILABLE` | Restore the approved complete source checkout or prepared resolver; do not fetch/repair inside a run. |
+| `RESOLVER_CANCEL_UNCONFIRMED` | Confirm caller-owned resolver cleanup before a new invocation. |
+| `SCOPE_UNKNOWN`, `READ_DENIED_OR_MISSING`, `POINTER_UNKNOWN` | Confirm project scope and visibility; do not infer absence. |
+| `PAGE_INCOMPLETE`, `CHANGED_INPUT`, `RESPONSE_INVALID` | Investigate the incomplete, changed or oversized provider data outside the safe report. A provider ADF error is not a caller input error. |
+| `RATE_LIMITED`, `LIMIT_REACHED` | Retain partial results; review the named bound and required scope before an operator-approved later attempt. No automatic retry. |
+| `TLS_FAILED`, `REDIRECT_REJECTED` | Check prepared trust, hostname, certificate validity and local clock or the fixed destination; do not disable TLS or follow the redirect. |
+
+### Finite human acceptance packet
+
+The source fixture harness is a **test-only local HTTPS packet**, using public
+dummy TLS material and a dummy token. It audits the production gateway/path/method
+before redirecting the test process to its loopback HTTPS server; certificate and
+hostname checks stay enabled. It adds no production endpoint or insecure option.
+Use the exact reviewed source revision and its prepared existing dependencies.
+The four PGB-150 human groups `R1-36-H01` through `R1-36-H04` select the existing
+machine packet groups `R1-33-H01` through `R1-33-H04`, respectively. The selector
+IDs and literal fixture data remain stable for the later installed-runtime Story.
+From any directory, set `SOURCE` to the absolute reviewed checkout path, choose
+one group, and import the fixture API:
+
+```sh
+SOURCE=/absolute/reviewed-source
+GROUP=R1-33-H01
+env -u NODE_PATH node --input-type=module - "$SOURCE" "$GROUP" <<'NODE'
+import {pathToFileURL} from 'node:url';
+const root=process.argv[2],group=process.argv[3];
+const {runFixture,fixtureCases}=await import(pathToFileURL(root+'/test/fixtures/jira-preview-harness.mjs'));
+for(const v of fixtureCases.variants.filter(v=>v.case===group)){
+  const runs=[await runFixture(v.case,v.variant,root)];
+  if(v.control)runs.push(await runFixture(v.case,v.variant,root,{control:true}));
+  if(v.private_projection)runs.push(await runFixture(v.case,v.variant,root,{privateProjection:true}));
+  console.log(JSON.stringify({case:v.case,variant:v.variant,runs}));
+}
+NODE
+```
+
+Use only the literal case/variant pairs in `test/fixtures/jira-preview-cases.json`: H01 has5,
+H02 has12, H03 has16, H04 has2, totaling35. Each entry carries exact request,
+config, scripted bodies, allowed request paths, expected status/code/request
+count and any paired positive-at-limit control. The example runs those controls
+and L06's private-projection subvariant too. It never derives an expected answer
+from the collector. H04's existing `guide-and-install` variant proves the source
+API here; its name does not prove an installed runtime. Its `damaged-copy` variant
+uses a complete disposable copy derived from the source, removes only
+`lib/config/projects.mjs`, and expects `SETUP_MISSING` with zero resolver/Jira
+requests. The fixture preserves hashes of actual source files, prepared
+dependencies, effective inputs, case data and dummy TLS material. For real source
+damage, restore the approved checkout and prepared dependencies outside a run,
+then verify the source before another attempt. The installed copy, direct fixture
+CLI and human/JSON parity are PGB-147 outcomes.
+
+The designated human executes source imports for every listed
+variant, compares literal oracles and audits, inspects zero-effect/cancellation
+observations and records revision, fixture hashes, commands, exit codes, reports,
+request traces, counts/bytes/time and cleanup. Preserve the packet and remove only
+disposable fixtures. The harness leaves authored fixture files unchanged. Developer
+tests and fixture oracle matches are separate evidence; human acceptance remains
+NOT_RUN until that human review is recorded. These fixtures prove no live tenant,
+AWS deployment, activation or whole-PGB-82 policy acceptance.
+
+### PGB-156 source evidence groups
+
+PGB-156/R1-42 adds four checked-in `node:test` groups. They are separate from
+the R1-33 JSON packet and its importable `runFixture` example above. From the
+exact reviewed source root with its prepared dependencies, run the group needed
+for the designated human check:
+
+```sh
+SOURCE=/absolute/reviewed-source
+cd "$SOURCE"
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H01' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H02' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H03' test/jira-read.test.mjs
+env -u NODE_PATH node --test --test-reporter=tap --test-name-pattern='R1-42-H04' test/jira-read.test.mjs
+```
+
+H01 has two request-snapshot subcases, H02 three exact-limit subcases, H03 two
+provider-ADF subcases and H04 two TLS subcases. Each successful case prints one
+`PGB156_OBSERVATION` JSON diagnostic after fixture cleanup and restoration. It
+contains the safe report, actual dummy request/server traces and counters,
+input and fixture hashes, a hash-only actual/expected private comparison,
+runtime/dependency preservation summary, effects and cleanup. H04 also reports
+whether the socket and request error were observed, whether a secure connection
+completed, and whether certificate authorization failed; it never prints the
+raw TLS reason. Compare these actual fields with the literal case expectations
+and retain the command, reviewed revision, TAP, exit code and safe diagnostics.
+The full runtime/dependency file binding belongs in the external PREP receipt.
+If a case fails or its diagnostic is missing, record that gap; a green parent
+summary alone is not the human observation receipt. Do not retry, fetch
+dependencies or infer live Jira, installed-runtime or human acceptance from this
+source-only packet.
