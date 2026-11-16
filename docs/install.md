@@ -415,3 +415,9 @@ installation setting, export command or provider access is needed. Follow the
 Installer payload/dependency verification, semantic checks, candidate evidence and
 previous stable-link protection remain required. A copied fixture check proves
 local compatibility, not complete173/State/AWS integration or human acceptance.
+
+## Ordinary worker checker
+
+The prepared work-validator includes `--mode worker-current` and `validateWorkerCurrent`. Use the same pinned installed runtime for all three ordinary roles. Preparation and installation checks verify current copied files and dependencies; they do not prove provider publication or authorize activation. Missing or damaged runtime is a setup failure; do not fetch dependencies or fall back to source during delivery.
+
+See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

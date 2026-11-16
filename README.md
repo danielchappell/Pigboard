@@ -275,3 +275,9 @@ It selects ordinary work from supplied complete facts, holds required repair and
 reports hidden external PR changes as outside its proof. Existing v1 fixture repair
 preview remains available without the mode flag. Neither route writes or activates
 delivery;173/State/AWS integration and designated human acceptance remain separate.
+
+## Ordinary worker compatibility
+
+The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval and successful QA. It does not establish live freshness, execution authority or manager completion. Repair/resume and unsuccessful publication remain deferred with local findings and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
+
+See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

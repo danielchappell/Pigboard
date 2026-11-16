@@ -5,6 +5,26 @@ description: Compose one authorized native Jira Story or Bug in In Progress thro
 
 # Implement one assigned ticket
 
+## Ordinary worker release boundary
+
+Only current `new_work` implementer READY, reviewer approval and successful QA
+are supported. This boundary overrides later general result mappings: repair,
+resume, human request-rework, failed review/QA, blocked and dependency-wait
+publication are deferred. Preserve local findings, partial ledgers and original
+receipts; return precise inability and hold with no mutation. Required repair
+still holds. Do not fall back to strict chain or manager recorded proof.
+
+Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
+(installed); source help is repository `docs/handoffs.md`.
+Use the pinned checker in explicit `--mode worker-current` for actual predecessor
+preflight and real-leaf readback. Current own/required-parent/action proof stays
+required; ancestry needs no old context or mandatory capture. Genuine retained
+mismatches reject. Independently compare complete candidate semantics, record-check
+before append once, and compare original canonical bytes/digest/UUID at exact
+readback. Unknown append/transition holds original identity without replay. No
+manager completion grant, source fallback or dependency repair.
+
+
 Own one ticket, one repository and one PR. This entrypoint dispatches phases;
 [implementer-job](../implementer-job/SKILL.md) owns implementation evidence and
 [implementer-jira](../implementer-jira/SKILL.md) owns Jira reads/publication. Neither

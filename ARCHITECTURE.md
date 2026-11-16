@@ -278,3 +278,9 @@ ordinary admission caller. The existing CLI and actual prepared-copy payload use
 the same route. Strict execution APIs and legacy repair fixtures remain separate.
 This increment does not prove live173/State/AWS composition, worker compatibility,
 human acceptance, activation or a release; their owning delivery gates remain.
+
+## Current worker proof and recorded ancestry
+
+`lib/contracts/receipts.mjs` keeps one evaluator with per-record effective proof. `validateWorkerCurrent` and explicit CLI mode `worker-current` accept a separate closed worker envelope, without manager State access. Full selected-current start, own PR/evidence/preparation and supplied action capabilities remain required; parent ancestry authenticates recorded semantics while parent incorporation checks current PR identity/head/target/state. Older assignments require no reconstructed contexts or mandatory prior capture; genuine supplied retained mismatches reject. The direct labelled result grants no completion or execution authority. Strict and manager recorded APIs retain their own contracts. No new publication service or candidate API exists.
+
+See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

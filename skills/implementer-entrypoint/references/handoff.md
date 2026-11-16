@@ -1,5 +1,25 @@
 # Implementer inputs, job evidence and typed Jira handoff
 
+## Ordinary worker release boundary
+
+Only current `new_work` implementer READY, reviewer approval and successful QA
+are supported. This boundary overrides later general result mappings: repair,
+resume, human request-rework, failed review/QA, blocked and dependency-wait
+publication are deferred. Preserve local findings, partial ledgers and original
+receipts; return precise inability and hold with no mutation. Required repair
+still holds. Do not fall back to strict chain or manager recorded proof.
+
+Follow the [ordinary worker proof and publication contract](../../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
+(installed); source help is repository `docs/handoffs.md`.
+Use the pinned checker in explicit `--mode worker-current` for actual predecessor
+preflight and real-leaf readback. Current own/required-parent/action proof stays
+required; ancestry needs no old context or mandatory capture. Genuine retained
+mismatches reject. Independently compare complete candidate semantics, record-check
+before append once, and compare original canonical bytes/digest/UUID at exact
+readback. Unknown append/transition holds original identity without replay. No
+manager completion grant, source fallback or dependency repair.
+
+
 Read only the section required by the current phase. The composer dispatches; the
 job produces code/PR/evidence; the Jira skill owns preflight and publication.
 Generic “Story” in the existing plan-review prompt includes the assigned native
@@ -32,21 +52,19 @@ Use the installed sibling `work-validator` (or corresponding source modules):
 ```text
 node <receipt.skills>/work-validator/scripts/validate-work.mjs --mode start --input WORK --format yaml --context CONTEXT --json
 node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode record --input RECORD.yaml --format yaml --json
-node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode chain --input RECEIPTS.json --json
+node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode worker-current --input WORKER.json --json
 ```
 
 `--format adf` accepts original ADF work; chain input is JSON only. See the same
 payload's `docs/authoring.md` and `docs/handoffs.md` for exact local contracts.
 `lib/contracts/work.mjs` exposes `validateWork`, `parseWork`/`extractADF`;
 `lib/contracts/handoff.mjs` exposes `extractHandoff`/`digestValue`; receipts use
-`validateReceiptChain`. Preserve raw finite-float provenance: never JSON-parse and
-reserialize unvalidated provider work/record text before these checks. Chain input
-uses the existing `pigboard-receipt-input/v1` envelope with actual normalized
-observations: `trusted`, `issues`, `requirements`, `comment_pages`, `pr_receipts`,
-`evidence_receipts`, `retained`, `request_resolutions` and exact `target`. Do not add
-undeclared native type or runtime fields to that envelope. Check those separately.
-The chain result exposes `validated_leaf` and `qa_report`, not a `leaf` alias.
-Neither record nor chain validation fetches providers or proves live freshness.
+`validateWorkerCurrent`. Preserve raw finite-float provenance: never JSON-parse and
+reserialize unvalidated provider work/record text before these checks. Worker input
+is the closed JSON envelope above. Strict `chain` remains a separate legacy proof
+contract; it is not an ordinary-worker fallback. The result exposes `validated_leaf`
+and `qa_report`, not a `leaf` alias. Neither record nor worker-current fetches
+providers or proves live freshness.
 
 ## Preflight
 

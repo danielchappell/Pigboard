@@ -206,3 +206,9 @@ replays helpers after an unknown publisher return. Valid resume needs the existi
 unique human authorization and case-specific reuse proof. Preserve completed
 actions, original bytes/receipts and actual/unknown status. Same-release source
 compatibility does not enable delivery or prove installed/live acceptance.
+
+## Ordinary new-work delivery
+
+Ordinary implementer READY, reviewer approval and successful QA use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Repair/resume, human rework and unsuccessful/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
+
+See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

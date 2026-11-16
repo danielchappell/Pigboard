@@ -412,3 +412,16 @@ test('recorded CLI rejects mixed purposes and unsafe setup before reading input'
  ]){const child=run(script,args);assert.equal(child.status,2,child.stdout+child.stderr);assert.equal(child.stderr,'');assert(!child.stdout.includes('SECRET_CANARY'));const result=JSON.parse(child.stdout),v=result.validation??result;assert.equal(v.schema,'pigboard-recorded-handoff-validation/v1');assert.equal(v.purpose,mode);assert.equal(v.valid,false);assert.equal(v.recorded_completion_established,false);assert.equal(v.execution_authorized,false);assert.equal(v.external_freshness,'not_evaluated');assert.equal(v.diagnostics[0].code,code);assert.deepEqual(result.bindings,[]);if(mode==='recorded-completion')assert.equal(v.validated_leaf,null);}
  const help=run(cli,['--help']);assert.equal(help.status,0);const message=JSON.parse(help.stdout).help;for(const mode of ['record','chain','recorded-history','recorded-completion'])assert(message.includes('--mode '+mode));assert.match(message,/pigboard-manager-handoff-input\/v1/);
 });
+
+const ordinaryPacket=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))).worker_current;
+for(const row of ordinaryPacket.artifacts.filter(r=>r.group===8))test('ordinary unpublished record and original readback: '+row.id,()=>{
+ const raw=JSON.stringify(row.input),v=validateHandoff(raw,{format:'yaml'});assert(v.valid,JSON.stringify(v.diagnostics));assert.equal(v.record_digest,row.original_digest);assert.equal(row.input.record_id,row.original_record_id);assert.equal(v.validation_scope,'record');assert.equal(v.completion_established,false);
+ const preflight=ordinaryPacket.artifacts.find(r=>r.file===row.preflight).input;assert.equal(Object.hasOwn(preflight,'candidate'),false);
+ const readback=ordinaryPacket.artifacts.find(r=>r.file===row.simulated_native_readback).input,c=readback.comment_pages.flatMap(p=>p.comments).find(c=>c.id===readback.target.comment_id),record=extractHandoff(c.body,{format:c.format});
+ assert.equal(digestValue(record.value),digestValue(row.input));assert.equal(JSON.stringify(record.value),JSON.stringify(row.input));assert.equal(record.record_digest,row.original_digest);assert.equal(readback.target.record_id,row.original_record_id);
+ for(const changed of ordinaryPacket.artifacts.filter(r=>r.id.startsWith(row.id+'-'))){assert.notEqual(digestValue(changed.input),row.original_digest);assert.notDeepEqual(changed.input,record.value);if(changed.id.endsWith('UUID'))assert.notEqual(changed.input.record_id,row.original_record_id);}
+});
+test('ordinary publication protocol retains unknown effects without simulated success',()=>{
+ const p=ordinaryPacket.artifacts.find(r=>r.id==='publication-protocol').input;for(const c of p.controls){assert.equal(c.unknown_append.known_native_reference,null);assert.equal(c.unknown_append.expected,'hold original identity; no second append or transition replay');assert.equal(c.mismatched_readback.expected,'no transition');assert.match(c.provider_execution,/NOT_RUN/);}
+ const guide=readFileSync(new URL('../docs/handoffs.md',import.meta.url),'utf8').split('## Ordinary worker release boundary')[1];for(const text of ['independently compare','complete role-specific semantics','canonical record/digest/UUID','append once','no replacement append, second append or transition replay'])assert(guide.includes(text),text);
+});

@@ -900,3 +900,67 @@ freshness remains outside recorded proof. Ordinary ADF comments are retained in
 complete pages and ignored only as records; malformed or ambiguous attempted
 handoffs reject through the existing candidate parser. HTML and strict extraction
 keep their original contracts.
+
+## Ordinary worker release boundary
+
+This invocation supports only the current `new_work` admission and ordinary
+implementer READY, reviewer approval or successful QA. This boundary controls the
+later general record mappings and recovery examples: repair admission, resume,
+human request-rework, failed review/QA, blocked and dependency-wait publication
+are deferred. Preserve findings, partial ledgers and receipts locally, return a
+precise inability and hold with no mutation; do not publish an alternative result
+or fall back to strict chain or manager recorded proof. A stream with required
+repair remains held for human handling.
+
+Use the same pinned installed `work-validator` with explicit `--mode worker-current`
+for actual predecessors before publication and the exact real published leaf at
+readback. Its `pigboard-worker-handoff-input/v1` envelope has `consumer: worker`,
+`purpose: worker-current`, exact `target`, configured `trusted` scope (without
+`manager_assignments`), native `issues`, current original `requirements` bodies
+(without old `context_body`), the selected issue's full `current_context_body`,
+complete `comment_pages`, current `pr_receipts`/`evidence_receipts`, genuinely
+`retained` metadata, `request_resolutions`, `publisher: {role, account_id}` and
+`action_receipt: {site, project_id, ticket_id, actor_id, stage_id, can_read_issue,
+can_append_comment, transitions}`. Each transition is an observed unique
+`{from_stage_id, to_stage_id}` direct pair. Read actual capabilities, never infer
+permission from a record. Role edges are In Progress→In Review, In Review→QA and
+QA→Human Review. Run both checks before that transition; verify native status
+separately afterward.
+
+The checker uses full current start, own PR, preparation, evidence and action
+proof; required parent PR identity/head/target/state remains current at incorporation.
+Authenticate recorded ancestry without reconstructing old execution contexts or
+requiring old captures. Every genuinely retained tuple must still match. Missing
+prior captures alone cannot prove historical continuity. Current supplied proof
+returns `schema: pigboard-worker-handoff-validation/v1`, `validated_leaf`,
+assignment and requirements bindings, `live_freshness: not_evaluated` and
+`execution_authorized: false`; it grants no manager completion or execution rights.
+Missing proof holds without mutation. No source fallback or dependency repair.
+
+Preflight targets the actual predecessor, with no candidate or fabricated native
+metadata. Before append, validate the original unpublished candidate in `record`
+mode and independently compare its complete role-specific semantics with current
+prepared facts (assignment, requirements, PR/parent revision, preparation, reports,
+ledger and intended direct edge). Record validity alone is insufficient. Preserve
+original canonical record bytes, UUID and digest; append once. At exact readback,
+compare canonical record/digest/UUID with that independently retained original
+before worker-current validation; transport wrappers may differ. A first PR's
+preparation snapshot never invents a `published_prs` row. Missing eventual
+preparation cannot become READY. Unknown append or transition holds the original
+identity: no replacement append, second append or transition replay. Keep the
+current security, same-PR/revision, complete ledger and no-write preflight rules.
+
+Commands use the prepared runtime (Node 20+), with no dependency operations during delivery:
+
+```sh
+node scripts/validate-handoff.mjs --mode worker-current --input WORKER.json --json
+node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode worker-current --input WORKER.json --json
+```
+
+The direct API is `validateWorkerCurrent(input)` from `lib/contracts/receipts.mjs`.
+CLI JSON is the same result. Exit 0 means supplied current proof passed; 1 rejects;
+2 indicates usage/input/setup failure. Invalid results clear success bindings and
+QA fields. No `completion_established` or `recorded_completion_established` exists.
+The separate strict `chain`, `recorded-history` and `recorded-completion` contracts
+retain their previous purpose and security checks. H01/H02 provider execution is
+required release evidence; fixture/API/CLI checks cannot establish that acceptance.

@@ -171,3 +171,9 @@ test('writer scopes prose and structured-helper compatibility to the selected in
 
 // Dated catalogue/forecast reconstruction guards are withdrawn by the reduced
 // release boundary. Authoring, raw schema and invocation-authority checks above remain.
+
+test('ordinary implementer and reviewer share explicit worker proof and retained publication safety',async()=>{
+ for(const name of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md','implementer-jira/SKILL.md','pigboard-pr-review/references/jira-handoff.md','reviewer-jira/SKILL.md']){
+  const s=await readFile(new URL('../skills/'+name,import.meta.url),'utf8');for(const text of ['worker-current','Required repair','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay','No\nmanager completion grant'])assert(s.includes(text),name+': '+text);
+ }
+});

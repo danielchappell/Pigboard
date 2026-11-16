@@ -976,3 +976,7 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
 // helper dispatch, authority, ledger, atomic-write, size and rollback checks above remain.
 // Current source/copy/manifest integrity stays in skill-distribution and
 // cursor-environment tests; historical hashes cannot validate a changed runtime.
+
+test('ordinary QA instructions retain current proof and no-mutation failure boundary',async()=>{
+ for(const name of ['qa-entrypoint','qa-jira']){const s=await read('skills/'+name+'/SKILL.md');for(const text of ['worker-current','failed review/QA','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay'])assert(s.includes(text),name+text);assert.match(s,/ordinary-worker-release-boundary/);}
+});

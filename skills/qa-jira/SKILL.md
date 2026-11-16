@@ -5,6 +5,26 @@ description: Check a configured native QA Story/Bug in read-only preflight, or i
 
 # Publish prepared QA evidence
 
+## Ordinary worker release boundary
+
+Only current `new_work` implementer READY, reviewer approval and successful QA
+are supported. This boundary overrides later general result mappings: repair,
+resume, human request-rework, failed review/QA, blocked and dependency-wait
+publication are deferred. Preserve local findings, partial ledgers and original
+receipts; return precise inability and hold with no mutation. Required repair
+still holds. Do not fall back to strict chain or manager recorded proof.
+
+Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
+(installed); source help is repository `docs/handoffs.md`.
+Use the pinned checker in explicit `--mode worker-current` for actual predecessor
+preflight and real-leaf readback. Current own/required-parent/action proof stays
+required; ancestry needs no old context or mandatory capture. Genuine retained
+mismatches reject. Independently compare complete candidate semantics, record-check
+before append once, and compare original canonical bytes/digest/UUID at exact
+readback. Unknown append/transition holds original identity without replay. No
+manager completion grant, source fallback or dependency repair.
+
+
 Use explicit `preflight` or `final` mode with the trusted inputs below. This skill
 is the sole QA Jira publication and failure boundary. The caller owns execution,
 observations and evidence retention. Never run QA helpers to fill missing evidence.
@@ -81,7 +101,7 @@ No new runtime validates this output shape. Existing validators continue to vali
 | Inability or scope increase | `blocked` / Blocked | Existing supported reason/detail/human_action, known PR/basis/evidence, full partial report and required retained findings |
 | Discussion only | None / stay QA | NOT_ATTEMPTED delivery and readable result; no approval-shaped terminal record or transition |
 
-4. Retain the immutable candidate bytes and UUID before mutation. Record-validate the unpublished candidate with `validate-handoff.mjs --mode record --input RECORD --format yaml --json`; validate actual predecessor receipts with `validate-handoff.mjs --mode chain --input RECEIPTS.json --json`, using current review as target. Use the existing complete `pigboard-receipt-input/v1` envelope: trusted scope, issues, original requirement/context bodies, complete comment pages, PR/evidence receipts, retained metadata and request resolutions. Reuse the delivered schema fields; do not add invented ones or pretend a candidate has a Jira comment ID.
+4. Retain the immutable candidate bytes and UUID before mutation. Record-validate the unpublished candidate with `validate-handoff.mjs --mode record --input RECORD --format yaml --json`; validate actual predecessor receipts with `validate-handoff.mjs --mode worker-current --input WORKER.json --json`, using current review as target. Use the closed worker envelope above, retaining full selected current context and current own/required-parent observations. Reuse the delivered schema fields; do not add invented ones or pretend a candidate has a Jira comment ID.
 5. Format with existing `prepare-handoff.mjs --input RECORD --summary SUMMARY --format html|adf`, choosing only the prepared transport. The helper validates raw encoding/roundtrip, not authority. Preserve its raw body/UUID/digest and existing 16-KiB/depth16/list100 record bounds, wrapper bounds and 2000-byte summary bound. No truncation, terminal splitting or silent omission.
 6. Fresh-check eligibility, current result slot and requirements/PR facts before append. Append exactly once. Read the exact returned comment ID; verify original body/digest/server author/update metadata. Build chain input from actual observed receipts, with that actual leaf as target; require complete bounded discovery and a valid unique chain. A valid QA-stage receipt does not itself prove Human Review completion.
 7. Recheck eligibility, assignment, requirements content/digest, current source/target/open state, review/CI and relevant environment facts. An issue-wide update timestamp changed solely by this comment does not stale unchanged requirements. Invoke one actual configured direct transition only after all gates pass; independently read native status before claiming delivery complete.
