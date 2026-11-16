@@ -1,8 +1,95 @@
-# Pig Boss release one: scoped delivery plan
+# Pig Boss release one: complete approved delivery catalogue
+
+The complete approved source catalogue contains **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combine the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.
+
+Read [all complete Story bodies](stories.md), the [machine contracts](ticket-drafts.json), [ordered allocations](plan-metadata.json), [coverage](coverage.md) and [publication evidence](publication.json). Jira owns current delivery status. A readable contract or green developer test does not establish implemented behavior or designated human acceptance. PGB-159–166 remain planned; PGB-169 adds catalogue and guard behavior only.
+
+## Current integrated dependency order and allocation — 16 November 2026
+
+| ID / Jira Story | Complete usable outcome | Depends on | Current row allocation days | Forecast paths |
+| --- | --- | --- | ---: | ---: |
+| R1-01 / [PGB-71](https://scubapig.atlassian.net/browse/PGB-71) | Validate an editable work document | Reviewed design | 1.5 | 19 |
+| R1-02 / [PGB-72](https://scubapig.atlassian.net/browse/PGB-72) | Check the complete prescribed test plan | R1-01 | 1.5 | 7 |
+| R1-03 / [PGB-73](https://scubapig.atlassian.net/browse/PGB-73) | Write complete Epic and ticket YAML | R1-01, R1-02 | 1.25 | 8 |
+| R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | Validate assignment and handoff evidence | R1-01, R1-02 | 1.75 | 18 |
+| R1-21 / [PGB-99](https://scubapig.atlassian.net/browse/PGB-99) | Configure Pig Boss for multiple projects | R1-04 | 1.5 | 9 |
+| R1-31 / [PGB-145](https://scubapig.atlassian.net/browse/PGB-145) | Check Jira read configuration before use | R1-21 | 1.53125–1.90625 | 20 |
+| R1-38 / [PGB-152](https://scubapig.atlassian.net/browse/PGB-152) | Read native Jira observations accurately | R1-31 | 0.4375–0.75 | 8 |
+| R1-40 / [PGB-154](https://scubapig.atlassian.net/browse/PGB-154) | Reject duplicate Jira comment targets | R1-31 | 0.375–0.6375 | 8 |
+| R1-41 / [PGB-155](https://scubapig.atlassian.net/browse/PGB-155) | Reconcile the source inspection delivery record | R1-31 | 0.68125–1.08125 | 10 |
+| R1-42 / [PGB-156](https://scubapig.atlassian.net/browse/PGB-156) | Keep Jira inspection within its original bounds | R1-31 | 0.69375–1.175 | 5 |
+| R1-36 / [PGB-150](https://scubapig.atlassian.net/browse/PGB-150) | Inspect named Jira issues from source | R1-31, R1-38, R1-40, R1-41, R1-42 | 1.24375–1.7875 | 18 |
+| R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
+| R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
+| R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
+| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
+| R1-30 / [PGB-138](https://scubapig.atlassian.net/browse/PGB-138) | Prepare mixed QA inputs and two boundary controls | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.0625–1.5625 | 18 |
+| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Prepare the prescribed QA inputs | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 1.0625–1.59375 | 12 |
+| R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27 | 1.3125–1.8125 | 17 |
+| R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
+| R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
+| R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
+| R1-26 / [PGB-129](https://scubapig.atlassian.net/browse/PGB-129) | Reject conflicting completion receipts | R1-25 | 1.28 | 17 |
+| R1-28 / [PGB-136](https://scubapig.atlassian.net/browse/PGB-136) | Preview own-ticket repairs | R1-26 | 1.92 | 20 |
+| R1-37 / [PGB-151](https://scubapig.atlassian.net/browse/PGB-151) | Keep repair proposals current | Reviewed design | 0.55 | 5 |
+| R1-39 / [PGB-153](https://scubapig.atlassian.net/browse/PGB-153) | Preserve published repairs across identical QA copies | Reviewed design | 0.65 | 5 |
+| R1-35 / [PGB-149](https://scubapig.atlassian.net/browse/PGB-149) | Preview complete repairs as structured data | R1-10, R1-25, R1-26, R1-28, R1-31, R1-37, R1-39 | 1.965 | 20 |
+| R1-32 / [PGB-146](https://scubapig.atlassian.net/browse/PGB-146) | Preview repairs from a source checkout | R1-10, R1-25, R1-26, R1-28, R1-35 | 0.86 | 10 |
+| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25, R1-26, R1-28, R1-32 | 1.91 | 18 |
+| PGB-169 / [PGB-169](https://scubapig.atlassian.net/browse/PGB-169) | Publish approved delivery contracts with intact evidence | PGB-81 | 0.84375–1.3125 | 11 |
+| PGB-159 / [PGB-159](https://scubapig.atlassian.net/browse/PGB-159) | Check complete scheduling declarations | PGB-81, PGB-99, PGB-145, PGB-169 | 1.4375–1.875 | 9 |
+| PGB-160 / [PGB-160](https://scubapig.atlassian.net/browse/PGB-160) | Validate authenticated recorded handoffs | PGB-159 | 1.4375–1.875 | 8 |
+| PGB-161 / [PGB-161](https://scubapig.atlassian.net/browse/PGB-161) | Check current worker proof and truthful inability | PGB-160 | 1.3125–1.8125 | 9 |
+| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |
+| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33 | 1.34375–1.8125 | 20 |
+| PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |
+| PGB-163 / [PGB-163](https://scubapig.atlassian.net/browse/PGB-163) | Read exact handoffs and reconciliation facts | PGB-160, PGB-147, PGB-148, PGB-150 | 1.375–1.875 | 14 |
+| PGB-164 / [PGB-164](https://scubapig.atlassian.net/browse/PGB-164) | Complete implementation with current permitted facts | PGB-161 | 0.75–1.125 | 7 |
+| PGB-165 / [PGB-165](https://scubapig.atlassian.net/browse/PGB-165) | Review current proof with recorded ancestry | PGB-161 | 0.5625–0.875 | 5 |
+| PGB-166 / [PGB-166](https://scubapig.atlassian.net/browse/PGB-166) | Finish prescribed QA and authorized human rework | PGB-161 | 0.875–1.3125 | 11 |
+| R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21, R1-31, R1-34, PGB-162, PGB-163 | 1.375–1.875 | 13 |
+| R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
+| R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 | 1.75 | 10 |
+| R1-29 / [PGB-137](https://scubapig.atlassian.net/browse/PGB-137) | Retain and inspect original transition proof | R1-14 | 1.5625 | 17 |
+| R1-15 / [PGB-85](https://scubapig.atlassian.net/browse/PGB-85) | Reconcile an uncertain attempt with evidence | R1-12, R1-14, R1-29 | 1.5 | 12 |
+| R1-16 / [PGB-86](https://scubapig.atlassian.net/browse/PGB-86) | Upgrade and remove the AWS installation safely | R1-14, R1-15 | 1.25 | 8 |
+| R1-22 / [PGB-100](https://scubapig.atlassian.net/browse/PGB-100) | Inspect Pig Boss operating health | R1-13, R1-14, R1-21 | 1.75 | 11 |
+| R1-23 / [PGB-101](https://scubapig.atlassian.net/browse/PGB-101) | Install Pig Boss health alarms | R1-16, R1-22 | 1.5 | 10 |
+| R1-17 / [PGB-87](https://scubapig.atlassian.net/browse/PGB-87) | Admit a ready Story or Bug safely | R1-05, R1-06, R1-08, R1-12, R1-14, R1-15, R1-16 | 1.75 | 10 |
+| R1-18 / [PGB-88](https://scubapig.atlassian.net/browse/PGB-88) | Admit queued rework on its existing PR | R1-09, R1-17 | 1.25 | 5 |
+| R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
+| R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
+
+Current integrated51-row allocation: **68.5275–79.13375 days**, integer units6852750/7913375 at scale100000. Only the actual147 R1-33 row replaces the original169 allocation. The original169 approved source-row checkpoint remains **68.3025–78.76500 days**, integer units6830250/7876500, in its immutable dated forecast. This arithmetic replaces the former PGB-159 allocation once and includes the new PGB-169 row once. It excludes seven captured Tasks and unmeasured shared planning, and is not a remaining-project estimate. PGB-81 retains its historical 1.91-day row; PGB-82 retains its residual **13 paths / 11–15 hours** and H05 exactly once.
+
+At the approved 16 November allocation checkpoint, PGB-169 owned **11 paths / 6.75–10.5 human hours**, including its own planning, reviews, corrections, tests, documentation and PR preparation. Residual PGB-159 owns **9 paths / 11.5–15 human hours**. Combined: **18.25–25.5 hours**, 19 unique paths and 20 change incidences; the cursor test is counted in both PRs. These are dated approved allocations, not implementation-plan approval for the later Stories or a measured saving. Their exact-source plans remain provisional until their own gates pass.
+
+The pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-human hours**. The current combined actual147 integration/F1 correction forecast is **9.75–15.25 familiar-human hours**, adding2.5–4.0 hours for the exact-parent plan/reviews, bounded reconciliation, affected checks and final readbacks/PR support. Three mechanical test-expectation corrections and their affected reviews add 0.5–0.75 hours of support to the original allocation; the revised support line is 3–4.5 hours. This forecast includes the remaining checks, exact-commit reviews and PR preparation. The approved row values and aggregate above remain the historical allocation checkpoint, and are not silently rotated. Human forecasts, agent elapsed time, logged tokens and billed cost are distinct; token volume and billed cost are unknown here.
+
+## Inspect and verify the catalogue
+
+Use the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command checks every complete native-bound contract/case, ordering and dependency before expensive installation checks:
+
+```sh
+node --test --test-name-pattern='PGB-169 current catalogue matches approved native contracts and complete rendered Stories' test/story-authoring.test.mjs
+node --test --test-name-pattern='PGB-169 current catalogue coverage and forecast retain historical evidence|PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+node --test --test-name-pattern='PGB-169 every current source payload byte matches its installed copy and manifest|real installed validator runs outside checkout and failed runtime variants preserve stable link|installed repair preview preserves complete checkpoint and historical contracts|repair closure and eighth semantic smoke preserve the previous stable link on failure' test/cursor-environment.test.mjs
+npm test
+```
+
+A passing command must select the intended tests. Keep each command, exact revision, exit status and TAP log; the copy test retains its fixture commit and per-control outcomes through the existing opt-in evidence capture. Missing contract/case, historical tampering and missing/mismatched copied payload controls fail against unchanged expected evidence. Inspect the first concrete failure before repair; preserve successful and failed attempts separately. Local mock servers require the prepared local-loopback permission for the full suite. No provider credentials or customer targets are needed.
+
+The publication preserves its original 43-entry historical byte closure: 37 payload sources, five other catalogue artifacts and the installer. Six additional147 bodies preserve only the four payload additions and two changed old sources; those six additional147 bodies plus35 unchanged original bodies reconstruct the dated41-file payload and27 runtime paths. The current installation guard compares all41 payload paths with actual source/fixture/copied/manifest bytes. Independent old hashes and a whole-capture digest bind those exact parent bytes. Those dated bytes do not stand in for current modules. Current semantic checks use actual source/copied code, and the fresh installation guard compares every independently expected payload path with the actual source, fixture, installed bytes and manifest. It records the real fixture commit. This introduces no rotating runtime hash map or future-change allowlist.
+
+All 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior are unchanged; no scheduling implementation or activation is authorized by publication.
+
+## Dated PGB-81 checkpoint and prior evidence
+
+# Dated PGB-81 scoped delivery checkpoint
 
 42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. The 42 included Stories contain 166 complete human groups, all NOT_RUN, and zero AI cases. This checkpoint reconciles settled source contracts; it is not a complete Epic inventory or a claim that the manager has shipped.
 
-## Current scoped order and forecast
+## Historical scoped order and forecast
 
 [Complete Story bodies](stories.md) · [Requirement and scenario coverage](coverage.md) · [Frozen provenance and history](publication.json)
 
@@ -36,7 +123,7 @@
 | R1-35 / [PGB-149](https://scubapig.atlassian.net/browse/PGB-149) | Preview complete repairs as structured data | R1-10, R1-25, R1-26, R1-28, R1-31, R1-37, R1-39 | 1.965 | 20 |
 | R1-32 / [PGB-146](https://scubapig.atlassian.net/browse/PGB-146) | Preview repairs from a source checkout | R1-10, R1-25, R1-26, R1-28, R1-35 | 0.86 | 10 |
 | R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25, R1-26, R1-28, R1-32 | 1.91 | 18 |
-| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |
+| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 0.94375–1.28125 | 16 |
 | R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33 | 1.34375–1.8125 | 20 |
 | R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21, R1-31, R1-34, PGB-162, PGB-163 | 1.375–1.875 | 13 |
 | R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
@@ -51,13 +138,12 @@
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Current scoped source-row forecast: **58.55875–65.13375 days**. Exact Decimal inputs use scale 100000 and sum to 5855875/6513375. This excludes the eight later Core Stories, their separately allocated C/foundation work, seven Tasks and unmeasured shared planning. It is not a complete Epic/Core estimate, net saving or elapsed effort. PGB-82 is its approved residual 13-path/11–15h allocation only. PGB-150 charges 9.95–14.30h runtime work once (8 owned paths plus 10 inherited catalog paths); PGB-155 charges 5.45–8.65h/10 paths and PGB-156 5.55–9.40h/5 paths.
+Current scoped source-row forecast: **58.33375–64.76500 days**. Exact Decimal inputs use scale 100000 and sum to 5833375/6476500. This excludes the eight later Core Stories, their separately allocated C/foundation work, seven Tasks and unmeasured shared planning. It is not a complete Epic/Core estimate, net saving or elapsed effort. PGB-82 is its approved residual 13-path/11–15h allocation only. PGB-150 charges 9.95–14.30h runtime work once (8 owned paths plus 10 inherited catalog paths); PGB-155 charges 5.45–8.65h/10 paths and PGB-156 5.55–9.40h/5 paths.
 
 PGB-81 delivers the complete prepared-installed repair fixture, receipt-bound export route and eighth semantic smoke before stable-link replacement. At the scoped source checkpoint, its whole forecast was **18 paths / 1.91 days / 15.28 hours**, including all incurred planning/support, authoring, checks, reviews and PR preparation. The amended PR #120 changes 19 paths against main `9dfbe436`, adding `docs/using-pigboard.md` for the current smoke-count correction. The 18-path metadata and publication forecast retain that planning checkpoint; the actual PR footprint is 19 paths. This documentation correction is charged to ordinary support within the same 15.28-hour whole forecast. Only 0.72h remains below the strict two-day boundary; a concrete increase reaching 16h requires a same-scope split. All 42 original human cases remain NOT_RUN. Local tests, retained-evidence QA, exact-commit reviews, hosted CI/Codex, Director merge, live acceptance and activation remain separate gates.
 
-PGB-147 adds named Jira inspection to the prepared validator with a source/copied test-only fixture CLI. Its cumulative whole forecast is **12 paths / 9.35–13.20 hours**; its four human groups remain NOT_RUN (0/4). The preceding PGB-81 R1-33 row was 16 paths / 0.94375–1.28125 days and the dated scoped total was 58.33375–64.76500 days; those values are predecessor history, not a second current allocation. Local fixture checks, independent review, hosted CI/Codex, Director merge and live acceptance remain separate.
-
 The observed deferred rows retain their raw descriptions, IDs, links and date in publication metadata. They are not translated, rendered, forecast or assessed for delivery here. External prerequisites PGB-108, PGB-162 and PGB-163 keep their native keys and do not imply completed work.
+
 
 ## Earlier delivery record — dated history
 
@@ -612,3 +698,7 @@ The source-only R1-36 forecast is **9.95–14.30 hours** (1.24375–1.7875 days)
 Verified native PGB-155 ID 10615 has PGB-145→PGB-155 link 10752 and PGB-155→PGB-150 link 10753. The native-only PGB-156/R1-42 repair has ID 10616, PGB-145→PGB-156 link 10754 and PGB-156→PGB-150 link 10755; its one five-path outcome fixes the four validated invocation boundaries. Existing PGB-145/PGB-152/PGB-154→PGB-150, PGB-150→PGB-147 and PGB-148→PGB-82 links remain. PGB-150 keeps its original 5 AC, 4 TAC and 4 human groups; PGB-147 keeps its original source/copied contract and later installed CLI/copy responsibility. PGB-137/146/147/148/149/151/152/153/154/155/156 source entries remain uncomposed. Dated native31/134 and34/144 snapshots, State30/132 and PGB-149 recorded comparison are historical, not a fresh native inventory. PGB-82 original criteria/cases and PGB-110 specific exception are unchanged.
 
 PGB-150 human acceptance remains NOT_RUN (0/4), PGB-152 NOT_RUN (0/2), PGB-154 NOT_RUN (0/1), PGB-155 NOT_RUN (0/1), and PGB-156 NOT_RUN (0/4). Local guard checks, independent committed-code reviews, current hosted CI/Codex, actual main integration and activation are distinct gates. The [source guide](../../manager-preview.md) covers normal use, partial results and source-damage recovery; the [publication record](publication.json) binds each historical receipt and the current reconciliation.
+
+## Actual147 installed-inspection checkpoint — dated history
+
+The actual14742-row checkpoint had a58.55875–65.13375 days allocation (5855875/6513375 units). Its exact12-path R1-33 row was9.35–13.2hours, replacing only the earlier16-path row. Installed named-issue inspection and the test-only HTTPS fixture CLI are inherited from that reviewed parent:35 variants,8 controls and1 private projection, human NOT_RUN (0/4). The source guide explains finite inputs, partial outcomes and recovery. Original81 human42 cases and169 human0/2 remain NOT_RUN; developer evidence is separate. This integration adds no runtime beyond inherited147 and authorizes no activation.

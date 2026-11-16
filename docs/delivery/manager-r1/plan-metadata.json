@@ -1406,6 +1406,130 @@
     "delivery_state": "Prepared installed repair fixture and semantic eighth check; local suite, reviews and delivery gates pending"
   },
   {
+    "id": "PGB-169",
+    "title": "Publish approved delivery contracts with intact evidence",
+    "dependencies": [
+      "PGB-81"
+    ],
+    "days": 1.3125,
+    "files": [
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/cursor-environment.test.mjs"
+    ],
+    "hours": {
+      "min": 6.75,
+      "max": 10.5
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-169",
+      "min_days": "0.84375",
+      "max_days": "1.3125",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-159",
+    "title": "Check complete scheduling declarations",
+    "dependencies": [
+      "PGB-81",
+      "PGB-99",
+      "PGB-145",
+      "PGB-169"
+    ],
+    "days": 1.875,
+    "files": [
+      "lib/contracts/work.mjs",
+      "lib/contracts/work-semantics.mjs",
+      "scripts/validate-work.mjs",
+      "test/work-semantics.test.mjs",
+      "test/fixtures/work-semantics.json",
+      "test/cursor-environment.test.mjs",
+      "docs/authoring.md",
+      "skills/write-pr-sized-stories/references/pigboard-ticket.md",
+      "docs/architecture/manager-work-contract.md"
+    ],
+    "hours": {
+      "min": 11.5,
+      "max": 15
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-159",
+      "min_days": "1.4375",
+      "max_days": "1.875",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-160",
+    "title": "Validate authenticated recorded handoffs",
+    "dependencies": [
+      "PGB-159"
+    ],
+    "days": 1.875,
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "scripts/validate-handoff.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/handoff.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "docs/handoffs.md",
+      "docs/architecture/manager-handoff-contract.md",
+      "test/cursor-environment.test.mjs"
+    ],
+    "hours": {
+      "min": 11.5,
+      "max": 15
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-160",
+      "min_days": "1.4375",
+      "max_days": "1.875",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-161",
+    "title": "Check current worker proof and truthful inability",
+    "dependencies": [
+      "PGB-160"
+    ],
+    "days": 1.8125,
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "scripts/validate-handoff.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/handoff.test.mjs",
+      "test/fixtures/handoff-chains.json",
+      "test/cursor-environment.test.mjs",
+      "docs/handoffs.md",
+      "docs/install.md",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 10.5,
+      "max": 14.5
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-161",
+      "min_days": "1.3125",
+      "max_days": "1.8125",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
     "id": "R1-33",
     "title": "Inspect named Jira issues safely",
     "dependencies": [
@@ -1474,6 +1598,167 @@
       "max_days": "1.8125",
       "plan_sha256": "858c3e8d02a8ae0b3cd810f1e2e00a70dedcd3515cfe18f415a98ef0828f3cb4"
     }
+  },
+  {
+    "id": "PGB-162",
+    "title": "Preview scheduling and repairs from recorded proof",
+    "dependencies": [
+      "PGB-160",
+      "PGB-81"
+    ],
+    "days": 1.9375,
+    "files": [
+      "lib/manager/snapshot.mjs",
+      "lib/manager/decisions.mjs",
+      "lib/manager/repair-policy.mjs",
+      "scripts/manager-preview.mjs",
+      "test/manager-preview.test.mjs",
+      "test/repair-policy.test.mjs",
+      "test/fixtures/manager-candidates.json",
+      "test/fixtures/manager-repairs.json",
+      "test/fixtures/manager-proof-conflicts.json",
+      "scripts/install-cursor-skills.mjs",
+      "docs/manager-preview.md",
+      "ARCHITECTURE.md",
+      "test/cursor-environment.test.mjs",
+      "docs/install.md",
+      "README.md"
+    ],
+    "hours": {
+      "min": 11,
+      "max": 15.5
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-162",
+      "min_days": "1.375",
+      "max_days": "1.9375",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-163",
+    "title": "Read exact handoffs and reconciliation facts",
+    "dependencies": [
+      "PGB-160",
+      "PGB-147",
+      "PGB-148",
+      "PGB-150"
+    ],
+    "days": 1.875,
+    "files": [
+      "lib/jira/receipts.mjs",
+      "contracts/manager-live-input-v1.schema.json",
+      "test/jira-receipts.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "config/skill-bundle.json",
+      "test/skill-distribution.test.mjs",
+      "docs/handoffs.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/configuration.md"
+    ],
+    "hours": {
+      "min": 11,
+      "max": 15
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-163",
+      "min_days": "1.375",
+      "max_days": "1.875",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-164",
+    "title": "Complete implementation with current permitted facts",
+    "dependencies": [
+      "PGB-161"
+    ],
+    "days": 1.125,
+    "files": [
+      "skills/implementer-entrypoint/SKILL.md",
+      "skills/implementer-entrypoint/references/handoff.md",
+      "skills/implementer-job/SKILL.md",
+      "skills/implementer-jira/SKILL.md",
+      "test/implementer-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "README.md"
+    ],
+    "hours": {
+      "min": 6,
+      "max": 9
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-164",
+      "min_days": "0.75",
+      "max_days": "1.125",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-165",
+    "title": "Review current proof with recorded ancestry",
+    "dependencies": [
+      "PGB-161"
+    ],
+    "days": 0.875,
+    "files": [
+      "skills/pigboard-pr-review/SKILL.md",
+      "skills/pigboard-pr-review/references/jira-handoff.md",
+      "skills/reviewer-jira/SKILL.md",
+      "test/reviewer-contract.test.mjs",
+      "docs/using-pigboard.md"
+    ],
+    "hours": {
+      "min": 4.5,
+      "max": 7
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-165",
+      "min_days": "0.5625",
+      "max_days": "0.875",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
+  },
+  {
+    "id": "PGB-166",
+    "title": "Finish prescribed QA and authorized human rework",
+    "dependencies": [
+      "PGB-161"
+    ],
+    "days": 1.3125,
+    "files": [
+      "skills/qa-entrypoint/SKILL.md",
+      "skills/qa-entrypoint/references/execution-record.md",
+      "skills/qa-jira/SKILL.md",
+      "skills/request-rework/SKILL.md",
+      "skills/request-rework/references/example.md",
+      "test/request-rework.test.mjs",
+      "test/fixtures/human-rework.mjs",
+      "test/fixtures/qa-helper-case.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/using-pigboard.md",
+      "README.md"
+    ],
+    "hours": {
+      "min": 7,
+      "max": 10.5
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-166",
+      "min_days": "0.875",
+      "max_days": "1.3125",
+      "provenance": "Approved role delivery allocation; PGB-159/PGB-169 split bound to native comment10942; later implementation plans remain provisional."
+    },
+    "delivery_status": "Provisional — not ready for delivery; exact-source implementation plan and normal gates required."
   },
   {
     "id": "R1-12",
