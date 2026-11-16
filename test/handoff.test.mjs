@@ -386,6 +386,20 @@ test('PGB-172 candidate recognition', () => {
   }
 });
 
+test("PGB-172 malformed selected-block language returns a safe diagnostic", () => {
+  const input = "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":{\"toLowerCase\":\"x\"}},\"content\":[{\"type\":\"text\",\"text\":\"schema: pigboard-handoff/v1\\n\"}]}]}";
+  const before = input;
+  const expected = {"code": "ADF_BLOCK", "path": "/content/0", "message": "Use a YAML code block containing only text children."};
+  for (const invoke of [() => extractHandoffCandidate(input), () => extractHandoff(input, {format:'adf'})]) {
+    assert.throws(invoke, error => {
+      assert(error instanceof Error); assert(!(error instanceof TypeError));
+      assert.deepEqual(error.diagnostic, expected); assert.deepEqual(error.diagnostics, [expected]);
+      return true;
+    });
+  }
+  assert.equal(input, before);
+});
+
 test('recorded CLI rejects mixed purposes and unsafe setup before reading input',async t=>{
  const {mkdir,copyFile}=await import('node:fs/promises'),dir=await mkdtemp(path.join(os.tmpdir(),'recorded-cli-'));t.after(()=>rm(dir,{recursive:true,force:true}));
  const cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname,run=(script,args)=>spawnSync(process.execPath,[script,...args,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});

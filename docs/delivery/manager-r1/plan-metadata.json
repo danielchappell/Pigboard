@@ -1601,7 +1601,7 @@
     "id": "R1-44",
     "title": "Inspect handoff candidates from ordinary comments",
     "dependencies": [],
-    "days": 0.8875,
+    "days": 1.0125,
     "files": [
       "lib/contracts/handoff.mjs",
       "test/handoff.test.mjs",
@@ -1621,13 +1621,13 @@
       "test/qa-helper-contract.test.mjs"
     ],
     "hours": {
-      "min": 4.5,
-      "max": 7.1
+      "min": 5.1,
+      "max": 8.1
     },
     "forecast_provenance": {
       "native_key": "PGB-172",
-      "min_days": "0.56250",
-      "max_days": "0.88750",
+      "min_days": "0.63750",
+      "max_days": "1.01250",
       "plan_sha256": "690be6a8012e27c490f435bfc412a9548e9187185c021575a7b0e3c4b80f8612",
       "historical_approved_allocation": {
         "hours": [
@@ -1637,7 +1637,11 @@
         "min_days": "0.48750",
         "max_days": "0.76250"
       },
-      "current_repair_plan_sha256": "3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3"
+      "current_repair_plan_sha256": "c683c8d9a7179d5344bdfe5dfac6eedfb86b9443b41694f3065315b854fe1855",
+      "previous_implementation_forecast_hours": [
+        4.5,
+        7.1
+      ]
     },
     "delivery_state": {
       "code": "candidate implementation; checks and independent committed review remain separate",

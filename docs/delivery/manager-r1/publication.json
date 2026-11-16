@@ -1793,10 +1793,10 @@
       "meaning": "Dated original frozen native page; not refreshed"
     },
     "forecast_days": {
-      "min": 68.72125,
-      "max": 79.60875
+      "min": 68.79625,
+      "max": 79.73375
     },
-    "forecast_scope": "53-row source allocation excluding pendingS173; R residual148 preserved once; ownP4.50–7.10h included once; not remaining project effort",
+    "forecast_scope": "53-row source allocation excluding pendingS173; R residual148 preserved once; currentP5.10–8.10h included once, previous4.50–7.10h/original3.90–6.10h dated; not remaining project effort",
     "acceptance": "189 human groups NOT_RUN; developer evidence is separate."
   },
   "baseline_before_amendments": {
@@ -167841,7 +167841,7 @@
             "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
             "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
             "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
-            "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+            "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
             "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
             "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
             "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
@@ -167868,7 +167868,7 @@
             "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
             "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
             "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
-            "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+            "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
             "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
             "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
             "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
@@ -167904,7 +167904,7 @@
             "config/skill-bundle.json": "3063c9117d1e1724fb0341c7b610cf1b9518c77f585161ae95c4a1ab86efec99",
             "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
             "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
-            "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+            "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
             "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
             "scripts/validate-handoff.mjs": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe",
             "docs/handoffs.md": "72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915",
@@ -167939,12 +167939,12 @@
             "scenarios": 41
           },
           "forecast_units": [
-            6872125,
-            7960875
+            6879625,
+            7973375
           ],
           "forecast_days": [
-            "68.72125",
-            "79.60875"
+            "68.79625",
+            "79.73375"
           ]
         },
         "canonical_hash_algorithm": "SHA256 of UTF-8 canonicalize(JSON.parse(raw)) using the checkout's installed canonicalize package, identical to existing catalogue guards; no terminal newline. Canonical JSON uses JavaScript number serialization, recursively sorted object keys and unchanged array order. Raw hashes cover original bytes separately."
@@ -168053,12 +168053,12 @@
       ],
       "current_forecast": {
         "days": [
-          68.72125,
-          79.60875
+          68.79625,
+          79.73375
         ],
         "units": [
-          6872125,
-          7960875
+          6879625,
+          7973375
         ]
       },
       "current_maps": {
@@ -168073,7 +168073,7 @@
           "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
           "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
           "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
-          "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+          "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
           "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
           "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
           "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
@@ -168100,7 +168100,7 @@
           "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
           "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
           "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
-          "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+          "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
           "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
           "lib/contracts/work-semantics.mjs": "2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772",
           "lib/contracts/work.mjs": "fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329",
@@ -168136,7 +168136,7 @@
           "config/skill-bundle.json": "3063c9117d1e1724fb0341c7b610cf1b9518c77f585161ae95c4a1ab86efec99",
           "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
           "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
-          "lib/contracts/handoff.mjs": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+          "lib/contracts/handoff.mjs": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
           "lib/contracts/receipts.mjs": "918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b",
           "scripts/validate-handoff.mjs": "109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe",
           "docs/handoffs.md": "72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915",
@@ -168171,12 +168171,12 @@
           "scenarios": 41
         },
         "forecast_units": [
-          6872125,
-          7960875
+          6879625,
+          7973375
         ],
         "forecast_days": [
-          "68.72125",
-          "79.60875"
+          "68.79625",
+          "79.73375"
         ]
       },
       "text_hunks": {
@@ -168196,6 +168196,26 @@
           {
             "old": "\nThe actual14742-row checkpoint had a58.55875–65.13375 days allocation (5855875/6513375 units). Its exact12-path R1-33 row was9.35–13.2hours, replacing only the earlier16-path row. Installed named-issue inspection and the test-only HTTPS fixture CLI are inherited from that reviewed parent:35 variants,8 controls and1 private projection, human NOT_RUN (0/4). The source guide explains finite inputs, partial outcomes and recovery. Original81 human42 cases and169 human0/2 remain NOT_RUN; developer evidence is separate. This integration adds no runtime beyond inherited147 and authorizes no activation.\n",
             "new": "\nThe actual14742-row checkpoint had a58.55875–65.13375 days allocation (5855875/6513375 units). Its exact12-path R1-33 row was9.35–13.2hours, replacing only the earlier16-path row. Installed named-issue inspection and the test-only HTTPS fixture CLI are inherited from that reviewed parent:35 variants,8 controls and1 private projection, human NOT_RUN (0/4). The source guide explains finite inputs, partial outcomes and recovery. Original81 human42 cases and169 human0/2 remain NOT_RUN; developer evidence is separate. This integration adds no runtime beyond inherited147 and authorizes no activation.\n\n<!-- PGB-172 integrated current start -->\n\nCurrent actual171 + PGB-172 source allocation (53 rows): **68.72125–79.60875 days**, integer units6872125/7960875 at scale100000. This preserves the one R171 residual148 replacement and adds P once. Pending S173 is excluded; this is a source allocation, not remaining project effort. PGB-172 current forecast remains4.50–7.10h, with its original3.90–6.10h allocation retained as history. All189 human groups, including R1-44-H01/H02, remain NOT_RUN.\n\nFor the current composition plus dated preservation, this selector executes six named catalogue guards:\n\n```sh\nnode --test --test-name-pattern='PGB-171 current|PGB-172 current|PGB-169 dated catalogue' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs\n```\n\nVerify all six names execute without skips; local checks, exact committed review, human acceptance, hosted CI/Codex, merge and activation remain separate. The pure [supplied-comment API guide](../../manager-preview.md#inspect-a-supplied-handoff-comment) remains complete.\n\n<!-- PGB-172 integrated current end -->\n"
+          },
+          {
+            "old": "Current integrated source catalogue: **53 Stories, 189 full human cases, zero AI cases and125 prerequisite occurrences**. All133 unique typed links are retained, including existing172→173/10776; this integration adds zero links. The53 requirements and41 original scenarios are unchanged. PGB-173 is the sole pending source amendment.\n\nThe current source now composes that R1-43 reader with the reviewed PGB-160 recorded-handoff changes delivered on main at `da92a4e1d7839f815e661ffe7709f1891038b454`. The R1-43 publication keeps its original 159-based 41-payload/27-runtime maps as dated evidence; its named parent-integration record owns the current maps, changing only PGB-160's three payload and two runtime hashes. The 52/187 catalogue and R's named-reader behavior are unchanged. R's 692/692 local suite and 12/12 independent QA observations, and PGB-160's 694/694 suite, belong to their original revisions. The composed candidate has separate affected checks; current-head review, CI, human acceptance, merge and activation remain separate.\n\nAt the dated PGB-169/147 checkpoint, the approved source catalogue contained **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combined the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.\n",
+            "new": "Current integrated source catalogue: **53 Stories, 189 full human cases, zero AI cases and125 prerequisite occurrences**. All133 unique typed links are retained, including existing172→173/10776; this integration adds zero links. The53 requirements and41 original scenarios are unchanged. PGB-173 is the sole pending source amendment.\n\nThe current source composes53 Stories/189 designated human groups with inherited R1-43 acquisition, PGB-160 recorded-handoff behavior and the PGB-172 pure candidate API. PGB-173 alone is pending source composition; final148 delivery remains later. R's outer and nested160 maps remain dated171 evidence; P's nested parent_integration current25/27/41 maps bind this final source. Only handoff differs from actual171 runtime; handoff and the unchanged P guide differ in payload. Original R/160/P suite claims belong to their own revisions. The new shared-helper revision requires its own full result; local checks, human acceptance, current-head review/CI, merge and activation remain separate.\n\nAt the dated PGB-169/147 checkpoint, the approved source catalogue contained **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combined the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.\n"
+          },
+          {
+            "old": "| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |\n| R1-43 / [PGB-171](https://scubapig.atlassian.net/browse/PGB-171) | Preserve named-issue reads in one acquisition session | R1-33 | 0.43750–0.66250 | 13 |\n| R1-44 / [PGB-172](https://scubapig.atlassian.net/browse/PGB-172) | Inspect handoff candidates from ordinary comments | Reviewed design; no technical prerequisites | 0.56250–0.88750 | 16 |\n| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33, pending PGB-173 | 0.53750–0.73750 | 12 |\n| PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |\n",
+            "new": "| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |\n| R1-43 / [PGB-171](https://scubapig.atlassian.net/browse/PGB-171) | Preserve named-issue reads in one acquisition session | R1-33 | 0.43750–0.66250 | 13 |\n| R1-44 / [PGB-172](https://scubapig.atlassian.net/browse/PGB-172) | Inspect handoff candidates from ordinary comments | Reviewed design; no technical prerequisites | 0.63750–1.01250 | 16 |\n| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33, pending PGB-173 | 0.53750–0.73750 | 12 |\n| PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |\n"
+          },
+          {
+            "old": "At the approved 16 November allocation checkpoint, PGB-169 owned **11 paths / 6.75–10.5 human hours**, including its own planning, reviews, corrections, tests, documentation and PR preparation. Residual PGB-159 owns **9 paths / 11.5–15 human hours**. Combined: **18.25–25.5 hours**, 19 unique paths and 20 change incidences; the cursor test is counted in both PRs. These are dated approved allocations, not implementation-plan approval for the later Stories or a measured saving. Their exact-source plans remain provisional until their own gates pass.\n\nThe pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-human hours**. The current combined actual147 integration/F1 correction forecast is **9.75–15.25 familiar-human hours**, adding2.5–4.0 hours for the exact-parent plan/reviews, bounded reconciliation, affected checks and final readbacks/PR support. Three mechanical test-expectation corrections and their affected reviews add 0.5–0.75 hours of support to the original allocation; the revised support line is 3–4.5 hours. This forecast includes the remaining checks, exact-commit reviews and PR preparation. The approved row values and aggregate above remain the historical allocation checkpoint, and are not silently rotated. Human forecasts, agent elapsed time, logged tokens and billed cost are distinct; token volume and billed cost are unknown here.\n\n## Inspect and verify the catalogue\n\nUse the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command checks every complete native-bound contract/case, ordering and dependency before expensive installation checks:\n\n```sh\nnode --test --test-name-pattern='PGB-169 dated catalogue matches approved native contracts and complete rendered Stories' test/story-authoring.test.mjs\nnode --test --test-name-pattern='PGB-169 dated catalogue coverage and forecast retain historical evidence|PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs\nnode --test --test-name-pattern='PGB-169 every current source payload byte matches its installed copy and manifest|real installed validator runs outside checkout and failed runtime variants preserve stable link|installed repair preview preserves complete checkpoint and historical contracts|repair closure and eighth semantic smoke preserve the previous stable link on failure' test/cursor-environment.test.mjs\nnpm test\n",
+            "new": "At the approved 16 November allocation checkpoint, PGB-169 owned **11 paths / 6.75–10.5 human hours**, including its own planning, reviews, corrections, tests, documentation and PR preparation. Residual PGB-159 owns **9 paths / 11.5–15 human hours**. Combined: **18.25–25.5 hours**, 19 unique paths and 20 change incidences; the cursor test is counted in both PRs. These are dated approved allocations, not implementation-plan approval for the later Stories or a measured saving. Their exact-source plans remain provisional until their own gates pass.\n\nDated169 operational forecast: The pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-human hours**. The then-combined actual147 integration/F1 correction forecast is **9.75–15.25 familiar-human hours**, adding2.5–4.0 hours for the exact-parent plan/reviews, bounded reconciliation, affected checks and final readbacks/PR support. Three mechanical test-expectation corrections and their affected reviews add 0.5–0.75 hours of support to the original allocation; the revised support line is 3–4.5 hours. That forecast included the remaining checks, exact-commit reviews and PR preparation. The approved row values and aggregate above remain the historical allocation checkpoint, and are not silently rotated. Human forecasts, agent elapsed time, logged tokens and billed cost are distinct; token volume and billed cost are unknown here.\n\n## Inspect and verify the catalogue\n\nUse the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command must execute exactly six names: current R/P catalogue and coverage guards plus the two dated169 guards. The second command selects three additional historical81/146 guards. Exit0 with skipped or unselected intended tests is not verification. These general inspection commands do not change this repair's one-smoke/one-full-suite execution order:\n\n```sh\nnode --test --test-name-pattern='PGB-171 current|PGB-172 current|PGB-169 dated catalogue' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs\nnode --test --test-name-pattern='PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs\nnode --test --test-name-pattern='PGB-169 every current source payload byte matches its installed copy and manifest|real installed validator runs outside checkout and failed runtime variants preserve stable link|installed repair preview preserves complete checkpoint and historical contracts|repair closure and eighth semantic smoke preserve the previous stable link on failure' test/cursor-environment.test.mjs\nnpm test\n"
+          },
+          {
+            "old": "The publication preserves its original 43-entry historical byte closure: 37 payload sources, five other catalogue artifacts and the installer. Six additional147 bodies preserve only the four payload additions and two changed old sources; those six additional147 bodies plus35 unchanged original bodies reconstruct the dated41-file payload and27 runtime paths. The current installation guard compares all41 payload paths with actual source/fixture/copied/manifest bytes. Independent old hashes and a whole-capture digest bind those exact parent bytes. Those dated bytes do not stand in for current modules. Current semantic checks use actual source/copied code, and the fresh installation guard compares every independently expected payload path with the actual source, fixture, installed bytes and manifest. It records the real fixture commit. This introduces no rotating runtime hash map or future-change allowlist.\n\nAll 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior are unchanged; no scheduling implementation or activation is authorized by publication.\n\n## Current R1-43 source and full split forecast\n\nThe current **52-row source allocation is 68.15875–78.72125 human days**. It replaces the old PGB-148 row once with its residual row and adds R1-43. Pending PGB-172 and PGB-173 add **14.15–20.00 hours (1.76875–2.50000 days)**, giving a **69.92750–81.22125 day full split-accounted forecast**. PGB-172 later preserves this residual and adds P only; PGB-173 adds S only and moves its external prerequisite into the source order. The source subtotal alone is not a whole-project saving.\n\nR1-43 changes the existing source reader and its narrow ownership regression; the public ID-only API, prepared copied route and fixed fixture oracles stay the same. Developer checks, independent committed-code review, CI, designated human acceptance (0/2 NOT_RUN), merge and activation are separate. The original 51-row and historical paragraphs below remain dated evidence.\n",
+            "new": "The publication preserves its original 43-entry historical byte closure: 37 payload sources, five other catalogue artifacts and the installer. Six additional147 bodies preserve only the four payload additions and two changed old sources; those six additional147 bodies plus35 unchanged original bodies reconstruct the dated41-file payload and27 runtime paths. The current installation guard compares all41 payload paths with actual source/fixture/copied/manifest bytes. Independent old hashes and a whole-capture digest bind those exact parent bytes. Those dated bytes do not stand in for current modules. Current semantic checks use actual source/copied code, and the fresh installation guard compares every independently expected payload path with the actual source, fixture, installed bytes and manifest. It records the real fixture commit. This introduces no rotating runtime hash map or future-change allowlist.\n\nDated169 catalogue publication: All 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior were unchanged at that checkpoint; no scheduling implementation or activation is authorized by publication.\n\n## Dated R1-43 checkpoint before PGB-172 — 16 November 2026\n\nAt that R-only checkpoint, the **52-row source allocation was 68.15875–78.72125 human days**. It replaced the old PGB-148 row once with its residual row and added R1-43. Then-pending PGB-172 and PGB-173 were estimated to add **14.15–20.00 hours (1.76875–2.50000 days)**, giving a **69.92750–81.22125 day full split-accounted forecast**. The planned PGB-172 addition would preserve this residual and add P only; PGB-173 would add S only and move its external prerequisite into the source order. That dated source subtotal alone was not a whole-project saving.\n\nR1-43 changes the existing source reader and its narrow ownership regression; the public ID-only API, prepared copied route and fixed fixture oracles stay the same. Developer checks, independent committed-code review, CI, designated human acceptance (0/2 NOT_RUN), merge and activation are separate. The original 51-row and historical paragraphs below remain dated evidence.\n"
+          },
+          {
+            "old": "<!-- PGB-172 integrated current start -->\n\nCurrent actual171 + PGB-172 source allocation (53 rows): **68.72125–79.60875 days**, integer units6872125/7960875 at scale100000. This preserves the one R171 residual148 replacement and adds P once. Pending S173 is excluded; this is a source allocation, not remaining project effort. PGB-172 current forecast remains4.50–7.10h, with its original3.90–6.10h allocation retained as history. All189 human groups, including R1-44-H01/H02, remain NOT_RUN.\n\nFor the current composition plus dated preservation, this selector executes six named catalogue guards:\n",
+            "new": "<!-- PGB-172 integrated current start -->\n\nCurrent actual171 + PGB-172 source allocation (53 rows): **68.79625–79.73375 days**, integer units6879625/7973375 at scale100000. This preserves the one R171 residual148 replacement and adds P once. Pending S173 is excluded; this is a source allocation, not remaining project effort. PGB-172 current forecast is5.10–8.10h, including0.60–1.00h of this concrete review correction; previous4.50–7.10h and original3.90–6.10h remain dated history. All189 human groups, including R1-44-H01/H02, remain NOT_RUN.\n\nFor the current composition plus dated preservation, this selector executes six named catalogue guards:\n"
           }
         ],
         "docs/delivery/manager-r1/coverage.md": [
@@ -168214,6 +168234,14 @@
           {
             "old": "| R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |\n| R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |\n",
             "new": "| R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |\n| R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |\n\n<!-- PGB-172 support start -->\n\nPGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2).\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n| --- | --- | --- | --- | --- |\n| R1-44-H01 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |\n| R1-44-H02 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |\n\n<!-- PGB-172 support end -->\n"
+          },
+          {
+            "old": "| PGB-166-H03 | S19 | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |\n\n## Current actual147-integrated catalogue — 16 November 2026\n\nThe current source remains51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its current integrated row allocation is **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The current operational169 whole-work forecast is **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n\n## Current R1-43 source support — 16 November 2026\n\nCurrent source: **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured links**; 53 requirements and 41 scenarios are unchanged. The two R1-43 groups support existing requirements and remain NOT_RUN (0/2). PGB-172, PGB-173 and final PGB-148 are pending; this is not full inventory or live manager acceptance. Current source rows total **68.15875–78.72125 days**; with pending P/S, the full split forecast is **69.92750–81.22125 days**. Prior 51/185 and 169/147 numbers above are dated.\n\n| R case | Requirements | Scenario support | Disposition | Scope |\n",
+            "new": "| PGB-166-H03 | S19 | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |\n\n## Dated actual147/169 catalogue checkpoint — 16 November 2026\n\nAt that dated147/169 checkpoint, the source contained51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its integrated row allocation was **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The then-current operational169 whole-work forecast was **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n\n## Dated R1-43 support before PGB-172 — 16 November 2026\n\nAt the dated pre-P172 checkpoint, source: **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured links**; 53 requirements and 41 scenarios are unchanged. The two R1-43 groups support existing requirements and remain NOT_RUN (0/2). PGB-172, PGB-173 and final PGB-148 were pending; this is not full inventory or live manager acceptance. Those source rows totalled **68.15875–78.72125 days**; with then-pending P/S, the full split forecast was **69.92750–81.22125 days**. Prior 51/185 and 169/147 numbers above are dated.\n\n| R case | Requirements | Scenario support | Disposition | Scope |\n"
+          },
+          {
+            "old": "<!-- PGB-172 support start -->\n\nPGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2).\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n",
+            "new": "<!-- PGB-172 support start -->\n\nCurrent integrated source:53 Stories/189 human groups,0AI,125 prerequisite occurrences and133 links. Its53-row allocation is68.79625–79.73375 days, excluding pendingS173; this is not remaining project effort. PGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 delivery scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2); all189 designated groups remain NOT_RUN.\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n"
           }
         ],
         "docs/delivery/manager-r1/stories.md": [
@@ -168226,6 +168254,18 @@
           {
             "old": "\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n",
             "new": "\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n\n<!-- PGB-172 integrated current start -->\n\nCurrent integrated source composition has53 Stories/189 human cases,125 prerequisites and133 links. The current53-row source allocation is **68.72125–79.60875 days**, with the R171 residual148 replacement preserved once and pending173 excluded. This is not remaining project effort. PGB-172 supplies the pure source/copied [candidate API](../manager-preview.md#inspect-a-supplied-handoff-comment); its current4.50–7.10h forecast preserves the original3.90–6.10h allocation as history. R1-44-H01/H02 remain NOT_RUN (0/2); all189 designated groups remain NOT_RUN. Current developer checks, human acceptance, committed review, hosted CI/Codex, merge and activation remain separate.\n\n<!-- PGB-172 integrated current end -->\n"
+          },
+          {
+            "old": "requirement and coverage row together.\n\n## Current R1-43 source composition — 16 November 2026\n\nThe source catalogue now has **52 Stories and 187 designated human cases**, all NOT_RUN, with 53 requirements and 41 original scenarios unchanged. R1-43/PGB-171 extracts one immediately used named-issue acquisition owner while preserving the ID-only source and prepared copied inspection routes. PGB-172/R1-44, PGB-173/R1-45 and final PGB-148 remain pending full source work. Current source rows total **68.15875–78.72125 human days**; pending P/S add **1.76875–2.50000 days**, yielding **69.92750–81.22125 days** for the full split. The dated 169/147 checkpoints below remain historical, and developer checks, human acceptance, hosted CI, merge and activation remain separate.\n\n## Current, required and later\n",
+            "new": "requirement and coverage row together.\n\n## Current integrated R/P source composition — 16 November 2026\n\nThe current source contains53 Stories/189 human groups,0AI,125 prerequisites and133 links;53 requirements and41 delivery scenarios are unchanged. PGB-172 candidate inspection is implemented in this source composition; PGB-173 alone remains pending source composition and final148 delivery remains later. Current53-row allocation is68.79625–79.73375 human days, excluding pendingS, not remaining project effort. PGB-172 current forecast is5.10–8.10h; all189 human groups remain NOT_RUN.\n\n## Dated R1-43 composition before PGB-172 — 16 November 2026\n\nAt that pre-P172 checkpoint the source catalogue had **52 Stories and 187 designated human cases**, all NOT_RUN, with 53 requirements and 41 original scenarios unchanged. R1-43/PGB-171 extracts one immediately used named-issue acquisition owner while preserving the ID-only source and prepared copied inspection routes. PGB-172/R1-44, PGB-173/R1-45 and final PGB-148 remained pending full source work. Those source rows totalled **68.15875–78.72125 human days**; then-pending P/S were estimated to add **1.76875–2.50000 days**, yielding **69.92750–81.22125 days** for the full split. The dated 169/147 checkpoints below remain historical, and developer checks, human acceptance, hosted CI, merge and activation remain separate.\n\n## Current, required and later\n"
+          },
+          {
+            "old": "PGB-169 supplies the catalogue and historical/current/source-copy guards. PGB-159 consumes it for the remaining scheduling implementation. Their approved 16 November allocation checkpoint records 11 paths/6.75–10.5 hours and 9 paths/11.5–15 hours; both count their cursor-test edits. Its dated 51-row allocation sum is 68.3025–78.765 days, not remaining project effort. The pre-integration PGB-169 whole-work forecast was 7.25–11.25 familiar-human hours: three test-expectation corrections and affected reviews add 0.5–0.75 hours of support. The original approved metadata and numeric pins remain historical evidence. The original frozen page and PGB-81 historical evidence stay separately dated. PGB-159–166 APIs and caller changes remain planned. All 185 designated human cases remain NOT_RUN; local checks do not establish hosted CI, merge, live delivery or activation.\n\n## Current actual147-integrated catalogue — 16 November 2026\n\nThe current source remains51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its current integrated row allocation is **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The current operational169 whole-work forecast is **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n",
+            "new": "PGB-169 supplies the catalogue and historical/current/source-copy guards. PGB-159 consumes it for the remaining scheduling implementation. Their approved 16 November allocation checkpoint records 11 paths/6.75–10.5 hours and 9 paths/11.5–15 hours; both count their cursor-test edits. Its dated 51-row allocation sum is 68.3025–78.765 days, not remaining project effort. The pre-integration PGB-169 whole-work forecast was 7.25–11.25 familiar-human hours: three test-expectation corrections and affected reviews add 0.5–0.75 hours of support. The original approved metadata and numeric pins remain historical evidence. The original frozen page and PGB-81 historical evidence stay separately dated. PGB-159–166 APIs and caller changes remain planned. All 185 designated human cases remain NOT_RUN; local checks do not establish hosted CI, merge, live delivery or activation.\n\n## Dated actual147/169 catalogue checkpoint — 16 November 2026\n\nAt that dated147/169 checkpoint, the source contained51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its integrated row allocation was **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The then-current operational169 whole-work forecast was **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n"
+          },
+          {
+            "old": "<!-- PGB-172 integrated current start -->\n\nCurrent integrated source composition has53 Stories/189 human cases,125 prerequisites and133 links. The current53-row source allocation is **68.72125–79.60875 days**, with the R171 residual148 replacement preserved once and pending173 excluded. This is not remaining project effort. PGB-172 supplies the pure source/copied [candidate API](../manager-preview.md#inspect-a-supplied-handoff-comment); its current4.50–7.10h forecast preserves the original3.90–6.10h allocation as history. R1-44-H01/H02 remain NOT_RUN (0/2); all189 designated groups remain NOT_RUN. Current developer checks, human acceptance, committed review, hosted CI/Codex, merge and activation remain separate.\n\n<!-- PGB-172 integrated current end -->\n",
+            "new": "<!-- PGB-172 integrated current start -->\n\nCurrent integrated source composition has53 Stories/189 human cases,125 prerequisites and133 links. The current53-row source allocation is **68.79625–79.73375 days**, with the R171 residual148 replacement preserved once and pending173 excluded. This is not remaining project effort. PGB-172 supplies the pure source/copied [candidate API](../manager-preview.md#inspect-a-supplied-handoff-comment); its current5.10–8.10h forecast retains previous4.50–7.10h and original3.90–6.10h as dated history. R1-44-H01/H02 remain NOT_RUN (0/2); all189 designated groups remain NOT_RUN. Current developer checks, human acceptance, committed review, hosted CI/Codex, merge and activation remain separate.\n\n<!-- PGB-172 integrated current end -->\n"
           }
         ],
         "docs/product/coverage.md": [
@@ -168244,6 +168284,14 @@
           {
             "old": "| R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |\n| R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |\n",
             "new": "| R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |\n| R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |\n\n<!-- PGB-172 support start -->\n\nPGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2).\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n| --- | --- | --- | --- | --- |\n| R1-44-H01 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |\n| R1-44-H02 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |\n\n<!-- PGB-172 support end -->\n"
+          },
+          {
+            "old": "| PGB-166-H03 | S19 | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |\n\n## Current actual147-integrated catalogue — 16 November 2026\n\nThe current source remains51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its current integrated row allocation is **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The current operational169 whole-work forecast is **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n\n## Current R1-43 source support — 16 November 2026\n\nCurrent source: **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured links**; 53 requirements and 41 scenarios are unchanged. The two R1-43 groups support existing requirements and remain NOT_RUN (0/2). PGB-172, PGB-173 and final PGB-148 are pending; this is not full inventory or live manager acceptance. Current source rows total **68.15875–78.72125 days**; with pending P/S, the full split forecast is **69.92750–81.22125 days**. Prior 51/185 and 169/147 numbers above are dated.\n\n| R case | Requirements | Scenario support | Disposition | Scope |\n",
+            "new": "| PGB-166-H03 | S19 | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |\n\n## Dated actual147/169 catalogue checkpoint — 16 November 2026\n\nAt that dated147/169 checkpoint, the source contained51 Stories/185 full human cases,123 prerequisite occurrences and129 captured links, with53 requirements,41 original scenarios and19 supplemental dispositions unchanged. Its integrated row allocation was **68.5275–79.13375 days** (6852750/7913375 units), replacing only R1-33 with exact actual147 metadata. Original16968.3025–78.765 and the actual14758.55875–65.13375-day forecast remain dated checkpoints; the earlier42-row58.33375–64.76500 checkpoint also remains historical. The then-current operational169 whole-work forecast was **9.75–15.25 familiar-human hours**, including2.5–4.0 hours of integration/F1 support; the pre-integration7.25–11.25h checkpoint is historical.\n\nInstalled named-issue inspection and its test-only HTTPS fixture CLI are inherited147 behavior:35 variants,8 controls,1 private projection and human NOT_RUN (0/4). Original81 human42 and169 human0/2 remain NOT_RUN. Current source/fixture/copy/manifest equality covers all41 payload paths; the original43 archived bodies and six additional147 bodies preserve exact historical evidence, with no new customer setup or runtime machinery. Code review, hosted CI, merge, human acceptance and activation remain separate.\n\n## Dated R1-43 support before PGB-172 — 16 November 2026\n\nAt the dated pre-P172 checkpoint, source: **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured links**; 53 requirements and 41 scenarios are unchanged. The two R1-43 groups support existing requirements and remain NOT_RUN (0/2). PGB-172, PGB-173 and final PGB-148 were pending; this is not full inventory or live manager acceptance. Those source rows totalled **68.15875–78.72125 days**; with then-pending P/S, the full split forecast was **69.92750–81.22125 days**. Prior 51/185 and 169/147 numbers above are dated.\n\n| R case | Requirements | Scenario support | Disposition | Scope |\n"
+          },
+          {
+            "old": "<!-- PGB-172 support start -->\n\nPGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2).\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n",
+            "new": "<!-- PGB-172 support start -->\n\nCurrent integrated source:53 Stories/189 human groups,0AI,125 prerequisite occurrences and133 links. Its53-row allocation is68.79625–79.73375 days, excluding pendingS173; this is not remaining project effort. PGB-172 adds two existing-requirement support dispositions; all53 requirement identities and0 standalone product scenario rows (the41 baseline scenarios remain in delivery coverage) remain unchanged. Human acceptance is NOT_RUN (0/2); all189 designated groups remain NOT_RUN.\n\n| Case | Requirements | Scenario support | Disposition | Rationale |\n"
           }
         ]
       },
@@ -168272,6 +168320,85 @@
       "human": {
         "R1-44-H01": "NOT_RUN",
         "R1-44-H02": "NOT_RUN"
+      },
+      "review_correction": {
+        "findings": [
+          "F1",
+          "F2"
+        ],
+        "plan_sha256": "c683c8d9a7179d5344bdfe5dfac6eedfb86b9443b41694f3065315b854fe1855",
+        "previous_binding_canonical_sha256": "ddcfd1acf24e2d2be6352bc9cf49b4d20486c5255154a4c70eae733b50750a12",
+        "original172_metadata_row": {
+          "id": "R1-44",
+          "title": "Inspect handoff candidates from ordinary comments",
+          "dependencies": [],
+          "days": 0.8875,
+          "files": [
+            "lib/contracts/handoff.mjs",
+            "test/handoff.test.mjs",
+            "test/skill-distribution.test.mjs",
+            "docs/manager-preview.md",
+            "README.md",
+            "ARCHITECTURE.md",
+            "docs/delivery/manager-r1/stories.md",
+            "docs/delivery/manager-r1/README.md",
+            "docs/delivery/manager-r1/coverage.md",
+            "docs/delivery/manager-r1/plan-metadata.json",
+            "docs/delivery/manager-r1/publication.json",
+            "docs/delivery/manager-r1/ticket-drafts.json",
+            "docs/product/README.md",
+            "docs/product/coverage.md",
+            "test/story-authoring.test.mjs",
+            "test/qa-helper-contract.test.mjs"
+          ],
+          "hours": {
+            "min": 4.5,
+            "max": 7.1
+          },
+          "forecast_provenance": {
+            "native_key": "PGB-172",
+            "min_days": "0.56250",
+            "max_days": "0.88750",
+            "plan_sha256": "690be6a8012e27c490f435bfc412a9548e9187185c021575a7b0e3c4b80f8612",
+            "historical_approved_allocation": {
+              "hours": [
+                3.9,
+                6.1
+              ],
+              "min_days": "0.48750",
+              "max_days": "0.76250"
+            },
+            "current_repair_plan_sha256": "3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3"
+          },
+          "delivery_state": {
+            "code": "candidate implementation; checks and independent committed review remain separate",
+            "human": {
+              "R1-44-H01": "NOT_RUN",
+              "R1-44-H02": "NOT_RUN"
+            },
+            "hosted_ci": "NOT_RUN",
+            "merge": "NOT_AUTHORIZED"
+          }
+        },
+        "original172_metadata_row_canonical_sha256": "957227c77a09998315fe6a0ff48eecdb60bb486c309e272bececb397465200ad",
+        "runtime_inverse": {
+          "old": "function blockText({ node, path }) {\n  if (!['yaml', 'yml'].includes(node.attrs?.language?.toLowerCase?.()) || !Array.isArray(node.content) || node.content.some(child => child.type !== 'text' || typeof child.text !== 'string' || child.content !== undefined)) fail('ADF_BLOCK', path, 'Use a YAML code block containing only text children.');\n  return node.content.map(child => child.text).join('');\n}",
+          "new": "function blockText({ node, path }) {\n  const language = node.attrs?.language;\n  if (typeof language !== 'string' || !['yaml', 'yml'].includes(language.toLowerCase()) || !Array.isArray(node.content) || node.content.some(child => child.type !== 'text' || typeof child.text !== 'string' || child.content !== undefined)) fail('ADF_BLOCK', path, 'Use a YAML code block containing only text children.');\n  return node.content.map(child => child.text).join('');\n}",
+          "old_module_sha256": "101750d780d38fc753b93c38437fdeab66849ac381f2df8d5238fd23d1890566",
+          "predicted_new_module_sha256": "39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f"
+        },
+        "historical_hours": [
+          4.5,
+          7.1
+        ],
+        "additional_hours": [
+          0.6,
+          1
+        ],
+        "current_hours": [
+          5.1,
+          8.1
+        ]
       }
     }
   }
