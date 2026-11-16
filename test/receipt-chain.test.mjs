@@ -361,3 +361,51 @@ test('bounded historical coverage reuses sealed DAG outcomes and fixed module bu
 test('historical shared inventories and early current/history negatives match full independent reports',()=>{
  const n=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url))).normalization,plain=v=>JSON.parse(JSON.stringify(v));assert.equal(n.positive_history_projections.length,3);assert.equal(n.canonical_controls.length,2);for(const c of n.positive_history_projections){assert.deepEqual(plain(inspectManagerHistory(c.input)),c.expected,c.id);assert.equal(c.expected.records.length,4);assert.equal(c.expected.bindings.length,57);}for(const c of n.canonical_controls)for(const mode of ['current','history','history','current'])assert.deepEqual(plain(mode==='current'?validateReceiptChain(c.input):inspectManagerHistory(c.input)),mode==='current'?c.expected_current:c.expected_history,c.id+' '+mode);for(const c of n.positive_history_projections)assert.deepEqual(plain(inspectManagerHistory(c.input)),c.expected,c.id+'after invalid calls');
 });
+
+// Recorded fixtures and expectations are prepared independently from immutable
+// source publications. JSON normalization compares the declared wire domain.
+const recordedPacket=fixtures.recorded;
+const plainRecorded=value=>JSON.parse(JSON.stringify(value));
+async function recordedAPI(mode,input){const runtime=await import('../lib/contracts/receipts.mjs');return plainRecorded(mode==='recorded-history'?runtime.inspectRecordedHistory(input):runtime.inspectRecordedCompletion(input));}
+function assertRecordedResult(result,expected,row,mode){
+ const validation=mode==='recorded-history'?result:result.validation;
+ assert.equal(validation.schema,'pigboard-recorded-handoff-validation/v1');assert.equal(validation.mode,mode);assert.equal(validation.purpose,mode);assert.equal(validation.validation_scope,'authenticated_recorded_handoffs');assert.equal(validation.basis,'authenticated_jira_handoff');assert.equal(validation.external_freshness,'not_evaluated');assert.equal(validation.execution_authorized,false);assert.equal(Object.hasOwn(validation,'completion_established'),false);assert.equal(validation.valid,expected.valid,row.id+': '+JSON.stringify(validation.diagnostics));
+ if(expected.valid||!['STRUCTURE','NUMBER'].includes(expected.code))assert.deepEqual(validation.target,row.input.target);else assert.equal(validation.target,null);const actualBindings=mode==='recorded-history'?validation.bindings:result.bindings;
+ if(expected.valid){assert.deepEqual(validation.diagnostics,[]);assert.deepEqual(actualBindings,row.expected_bindings,row.id+' full independently expected recorded/native bindings');if(mode==='recorded-history'){assert.equal(validation.recorded_completion_established,false);assert.deepEqual(validation.records,expected.records);assert.deepEqual(validation.coverage_segments,expected.coverage_segments);}else{assert.equal(validation.recorded_completion_established,true);assert.equal(validation.record_digest,row.input.target.digest);assert.equal(validation.outcome,'qa');assert.deepEqual(validation.validated_leaf,expected.leaf);assert.deepEqual(validation.qa_report,expected.qa_report);assert.equal(validation.ai_steps,expected.qa_report.steps.length);assert.deepEqual(validation.human_pending,expected.qa_report.human_pending);assert.equal(validation.no_ai_cases_reason,expected.qa_report.no_ai_cases_reason);}}
+ else{assert.equal(validation.recorded_completion_established,false);assert.deepEqual(actualBindings,[]);if(mode==='recorded-history'){assert.deepEqual(validation.records,[]);assert.deepEqual(validation.coverage_segments,[]);}else assert.equal(validation.validated_leaf,null);assert(validation.diagnostics.some(d=>d.code===expected.code&&(!expected.path||d.path===expected.path)),row.id+': '+JSON.stringify(validation.diagnostics));}
+}
+test('recorded purposes distinguish exact historical targets from current completion',async()=>{
+ const selected=recordedPacket.rows.filter(r=>['P01','P03','N04'].includes(r.id));assert.equal(selected.length,3);
+ for(const row of selected)for(const [mode,expected]of Object.entries(row.modes)){const raw=JSON.stringify(row.input),before=raw;assert.equal(createHash('sha256').update(raw).digest('hex'),row.input_sha256);const result=await recordedAPI(mode,raw);assertRecordedResult(result,expected,row,mode);assert.equal(JSON.stringify(row.input),before);}
+});
+
+
+test('recorded finite30-row source packet and CLI preserve exact proof boundaries',async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'recorded-source-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const ids=[...Array.from({length:6},(_,i)=>'P'+String(i+1).padStart(2,'0')),...Array.from({length:3},(_,i)=>'X'+String(i+1).padStart(2,'0')),...Array.from({length:17},(_,i)=>'N'+String(i+1).padStart(2,'0')),...Array.from({length:4},(_,i)=>'B'+String(i+1).padStart(2,'0'))];
+ assert.equal(recordedPacket.row_count,30);assert.deepEqual(recordedPacket.rows.map(r=>r.id),ids);let states=0,invocations=0;
+ const invoke=(mode,file,args=[])=>spawnSync(process.execPath,[cli,'--mode',mode,'--input',file,...args,'--json'],{cwd:dir,encoding:'utf8',timeout:30000});
+ for(const row of recordedPacket.rows)for(const state of [row,...row.additional_states??[]]){
+  states++;const raw=state.raw_input??JSON.stringify(state.input),file=path.join(dir,state.id+'.json');await writeFile(file,raw);assert.equal(createHash('sha256').update(raw).digest('hex'),state.input_sha256);
+  for(const [mode,expected]of Object.entries(state.modes)){invocations++;const actual=await recordedAPI(mode,raw);assertRecordedResult(actual,expected,state,mode);const child=invoke(mode,file);assert.equal(child.stderr,'');assert.equal(child.status,expected.valid?0:1,state.id+child.stdout);assert.deepEqual(JSON.parse(child.stdout),actual,state.id+' exact source CLI/API parity');assert.equal(await readFile(file,'utf8'),raw);}
+  if(row.strict_input){const strict=validateReceiptChain(JSON.stringify(row.strict_input));assert.equal(strict.valid,false);assert(strict.diagnostics.some(d=>d.code===row.strict_expected.code));const external=path.join(dir,row.id+'-strict.json');await writeFile(external,JSON.stringify(row.strict_input));const strictCLI=invoke('chain',external);assert.equal(strictCLI.status,1);assert.deepEqual(JSON.parse(strictCLI.stdout),plainRecorded(strict));const reduced=validateReceiptChain(raw);assert.equal(reduced.valid,false);assert(reduced.diagnostics.some(d=>d.code==='STRUCTURE'));assert.equal(invoke('chain',file).status,1);}
+ }
+ assert.equal(states,31);assert.equal(invocations,46);assert.equal(recordedPacket.state_count,31);assert.equal(recordedPacket.purpose_invocations,46);
+ const base=validateReceiptChain(JSON.stringify(recordedPacket.strict_baseline));assert.equal(base.valid,true,JSON.stringify(base.diagnostics));const baseline=path.join(dir,'strict-baseline.json');await writeFile(baseline,JSON.stringify(recordedPacket.strict_baseline));assert.equal(invoke('chain',baseline).status,0);
+ const b=recordedPacket.rows.find(r=>r.id==='B04').additional_checks,unknown=b.unknown_key,raw=JSON.stringify(unknown.input),file=path.join(dir,'unknown.json');await writeFile(file,raw);const unknownResult=await recordedAPI(unknown.mode,raw);assert.equal(unknownResult.valid,false);assert(unknownResult.diagnostics.some(d=>d.code==='STRUCTURE'));assert(!JSON.stringify(unknownResult).includes('SECRET_UNKNOWN'));assert.equal(invoke(unknown.mode,file).status,1);
+ const misuse=invoke(b.format_misuse.mode,path.join(dir,'MISSING_SECRET_INPUT'),['--format',b.format_misuse.format]);assert.equal(misuse.status,2);assert.equal(JSON.parse(misuse.stdout).diagnostics[0].code,'USAGE');assert(!misuse.stdout.includes('MISSING_SECRET'));
+ for(const [id,mode]of [['P01','recorded-completion'],['P03','recorded-history']]){const row=recordedPacket.rows.find(r=>r.id===id),file=path.join(dir,id+'.json'),human=spawnSync(process.execPath,[cli,'--mode',mode,'--input',file],{cwd:dir,encoding:'utf8',timeout:30000});assert.equal(human.status,0,human.stdout);assert.match(human.stdout,/execution_authorized:false/);assert.match(human.stdout,/external freshness not evaluated/);assert(human.stdout.includes(JSON.stringify(row.input.target)));}
+ t.diagnostic('30 explicit rows,31 ordered states,46 purpose invocations; independently prepared bindings/history/ledger; source API/CLI;3 strict external companions and no reduced-envelope fallback.');
+});
+
+const original160SectionHashes={
+  "notice": "sha256:b77c4a87fc92da9511059e1f73637904883b229dc1f145bbc8dbb6541669defd",
+  "chains": "sha256:2a626de2152c1a92b4163bd9b494702742b03e5c46fb0031ee292950eb6dda88",
+  "mutations": "sha256:7469a39f83deb37712e7c6bf3f1d23ec89a609cbda767ff8d0b0229411624a92",
+  "repeated_parent": "sha256:e6a3cb5dd005083ec0d430bde53f6f116b23f908d7bc48d2a7d32d7d1cb5c94b"
+};
+test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
+ assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded'].sort());
+ for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
+ const cursor=readFileSync(new URL('./cursor-environment.test.mjs',import.meta.url),'utf8'),marker='\n// PGB-160 focused recorded manager packet',index=cursor.indexOf(marker);assert(index>0);assert.equal(createHash('sha256').update(cursor.slice(0,index)).digest('hex'),"5222f9441e6e5546265569cddcacff8297d2f1de132b7c944d64a4e5df2f1266",'all original169/159 copied assertions remain exact');
+});
