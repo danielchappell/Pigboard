@@ -148,6 +148,41 @@
     "plan_sha256": "6ee1739214d48e5a1d58a74c8a882513bd694c7cfa8188487aee2dc4aa60bcee"
   },
   {
+    "id": "R1-36",
+    "title": "Inspect named Jira issues from source",
+    "dependencies": [
+      "R1-31"
+    ],
+    "days": 1.875,
+    "hours": {
+      "min": 10.85,
+      "max": 15
+    },
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "test/fixtures/jira-preview-tls.json",
+      "docs/manager-preview.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "delivery_state": "PGB-150 In Progress; source implementation and checks pending. Human acceptance NOT_RUN (0/4). Independent committed-code review, hosted CI, PR, merge and activation are separate.",
+    "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+    "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47"
+  },
+  {
     "id": "R1-05",
     "title": "Hand an implemented PR to review",
     "dependencies": [

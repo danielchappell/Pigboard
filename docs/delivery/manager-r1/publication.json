@@ -2,7 +2,7 @@
   "date": "2026-11-16",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation.",
+  "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -33,15 +33,16 @@
     "R1-17": "PGB-87",
     "R1-18": "PGB-88",
     "R1-19": "PGB-89",
-    "R1-20": "PGB-90"
+    "R1-20": "PGB-90",
+    "R1-36": "PGB-150"
   },
   "operational_tasks": {
     "AT-01": "PGB-91",
     "AT-02": "PGB-58",
     "AT-03": "PGB-92"
   },
-  "story_count": 30,
-  "case_count": 132,
+  "story_count": 31,
+  "case_count": 136,
   "requirement_count": 53,
   "scenario_count": 41,
   "dependency_links": [
@@ -364,6 +365,12 @@
       "type_id": "10000",
       "from": "PGB-145",
       "to": "PGB-82"
+    },
+    {
+      "id": "10744",
+      "type_id": "10000",
+      "from": "PGB-145",
+      "to": "PGB-150"
     }
   ],
   "baseline_publication": {
@@ -876,21 +883,59 @@
     "activation_authorized": false
   },
   "current_source_scope": {
-    "story_count": 30,
-    "case_count": 132,
-    "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
-    "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
-    "native_snapshot": {
-      "date": "2026-11-16",
-      "story_count": 31,
-      "case_count": 134,
-      "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
-      "captured_at": "2026-11-16 02:24:40 UTC"
+    "story_count": 31,
+    "case_count": 136,
+    "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+    "source_order": "R1-36 immediately after R1-31; all other relative order preserved.",
+    "prior_source_scope": {
+      "story_count": 30,
+      "case_count": 132,
+      "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
+      "source_order": "R1-31 immediately after R1-21; all other relative order preserved.",
+      "native_snapshot": {
+        "date": "2026-11-16",
+        "story_count": 31,
+        "case_count": 134,
+        "source": "Verified PGB-145 publication readback at the recorded capture time; historical native inventory, not the current Epic total or all-ticket acceptance.",
+        "captured_at": "2026-11-16 02:24:40 UTC"
+      },
+      "pending_source_amendments": [
+        "PGB-137"
+      ],
+      "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
     },
     "pending_source_amendments": [
-      "PGB-137"
+      "PGB-137",
+      "PGB-146",
+      "PGB-147",
+      "PGB-148",
+      "PGB-149"
     ],
-    "status": "Dated partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 remains pending. Dated PGB-145 publication readback separately 31/134; no acceptance or activation."
+    "pending_source_dependencies": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147",
+        "prerequisite_source_id": "R1-36",
+        "prerequisite_native_key": "PGB-150",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10745",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-12",
+        "native_key": "PGB-82",
+        "prerequisite_source_id": "R1-34",
+        "prerequisite_native_key": "PGB-148",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10737",
+        "status": "native_verified_source_pending"
+      }
+    ],
+    "forecast_days": {
+      "min": 48.37875,
+      "max": 52.0225
+    },
+    "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -1949,5 +1994,190 @@
     "current_drafts_sha256": "2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62",
     "source_contract_sha256": "c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81",
     "captured_at": "2026-11-16 02:24:40 UTC"
+  },
+  "native_source_issue_inspection_amendment": {
+    "date": "2026-11-16",
+    "stories": {
+      "R1-36": "PGB-150"
+    },
+    "source_composed": [
+      "R1-36"
+    ],
+    "native_only": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147"
+      },
+      {
+        "source_id": "R1-34",
+        "native_key": "PGB-148"
+      },
+      {
+        "native_key": "PGB-137"
+      },
+      {
+        "native_key": "PGB-146"
+      },
+      {
+      "native_key": "PGB-149"
+      }
+    ],
+    "native_id": "10610",
+    "parent": "PGB-66",
+    "native_publication_verified": true,
+    "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
+    "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47",
+    "binding_sha256": "57e89536744d82b81e26627d96b3d886ddf76172498789e548d33f2fe171aec6",
+    "receipt_sha256": "93029aad4c561c70072d96eb542780a72540bd69ba172650325885149f0b226a",
+    "description_sha256": {
+      "source": "afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94",
+      "amended147": "1b1f744f9ba73466a814315896bcb68d64bf10495edfc4d623408828ea0e8ee6"
+    },
+    "native_stories": [
+      {
+        "source_id": "R1-36",
+        "key": "PGB-150",
+        "id": "10610",
+        "url": "https://scubapig.atlassian.net/browse/PGB-150",
+        "status_at_publication": "To Do",
+        "stage_after_publication": {
+          "status": "In Progress",
+          "comment_id": "10857"
+        },
+        "parent": "PGB-66",
+        "body_sha256": "afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94",
+        "prerequisites": [
+          {
+            "ticket": "PGB-145",
+            "required_outcome": "ai_qa_complete"
+          }
+        ],
+        "acceptance_criteria": 5,
+        "technical_constraints": 4,
+        "human_groups": 4,
+        "human_execution": "NOT_RUN",
+        "ai_cases": 0
+      },
+      {
+        "source_id": "R1-33",
+        "key": "PGB-147",
+        "id": "10607",
+        "status_at_readback": "In Progress",
+        "parent": "PGB-66",
+        "body_sha256": "1b1f744f9ba73466a814315896bcb68d64bf10495edfc4d623408828ea0e8ee6",
+        "original_contract_preserved": true,
+        "prerequisites": [
+          {
+            "ticket": "PGB-145",
+            "required_outcome": "ai_qa_complete"
+          },
+          {
+            "ticket": "PGB-150",
+            "required_outcome": "ai_qa_complete"
+          }
+        ],
+        "acceptance_criteria": 5,
+        "technical_constraints": 4,
+        "human_groups": 4,
+        "human_execution": "NOT_RUN"
+      }
+    ],
+    "dependency_links": [
+      {
+        "id": "10735",
+        "type_id": "10000",
+        "from": "PGB-145",
+        "to": "PGB-147",
+        "preserved": true
+      },
+      {
+        "id": "10736",
+        "type_id": "10000",
+        "from": "PGB-147",
+        "to": "PGB-148",
+        "preserved": true
+      },
+      {
+        "id": "10737",
+        "type_id": "10000",
+        "from": "PGB-148",
+        "to": "PGB-82",
+        "preserved": true
+      },
+      {
+        "id": "10744",
+        "type_id": "10000",
+        "from": "PGB-145",
+        "to": "PGB-150",
+        "preserved": false
+      },
+      {
+        "id": "10745",
+        "type_id": "10000",
+        "from": "PGB-150",
+        "to": "PGB-147",
+        "preserved": false
+      }
+    ],
+    "pending_source_dependencies": [
+      {
+        "source_id": "R1-33",
+        "native_key": "PGB-147",
+        "prerequisite_source_id": "R1-36",
+        "prerequisite_native_key": "PGB-150",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10745",
+        "status": "native_verified_source_pending"
+      },
+      {
+        "source_id": "R1-12",
+        "native_key": "PGB-82",
+        "prerequisite_source_id": "R1-34",
+        "prerequisite_native_key": "PGB-148",
+        "required_outcome": "ai_qa_complete",
+        "native_link_id": "10737",
+        "status": "native_verified_source_pending"
+      }
+    ],
+    "native148": {
+      "source_id": "R1-34",
+      "native_key": "PGB-148",
+      "native_id": "10608",
+      "prerequisite_native_key": "PGB-147",
+      "native_link_id": "10736",
+      "status": "native_verified_source_pending"
+    },
+    "original82_source_unchanged": true,
+    "original82_cases": 4,
+    "source_contract_sha256": "edd0ee2f2be6bcee256fddff8b8f39de729115a88684c69990fa42ec643c94ed",
+    "current_drafts_sha256": "eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653",
+    "receipt_readback_sha256": {
+      "source": "cb20bdae49a5ed84f00e8790414a53e1a445739f080a55ca2cee2237e3691272",
+      "amended147": "4ab12490d9385c5d336b9aa1e2f3a09f6d37ef74dd0f6624291734967860cbc0"
+    },
+    "historical_native_snapshots": [
+      {
+        "story_count": 31,
+        "case_count": 134,
+        "source": "PGB-145 dated readback"
+      },
+      {
+        "story_count": 34,
+        "case_count": 144,
+        "source": "Director dated later readback; not a current inventory"
+      }
+    ],
+    "known_later_native_omission": "PGB-149 is native but its source change is separately owned and not composed here.",
+    "forecast_days": {
+      "base_min": 47.0225,
+      "base_max": 50.1475,
+      "added_min": 1.35625,
+      "added_max": 1.875,
+      "current_min": 48.37875,
+      "current_max": 52.0225
+    },
+    "human_acceptance": "NOT_RUN",
+    "activation_authorized": false,
+    "verification_limits": "Source composition only; local tests, designated human acceptance, independent committed-code reviews, hosted CI/bot, merge and activation remain separate."
   }
 }
