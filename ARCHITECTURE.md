@@ -204,10 +204,11 @@ before baseline, consumption or completion-derived stack relationships: conflict
 logical QA results cannot free a stream. Exact current assignment references keep
 their independent authority. See [offline preview](docs/manager-preview.md).
 
-## Requested native Jira inspection from source
+## Requested native Jira inspection from source or prepared validator
 
 `lib/jira/read.mjs` exports `inspectJiraIssues` for an authorized Node caller in
-the reviewed source checkout. It accepts A's canonical configuration, explicit
+the reviewed source checkout or a complete prepared installed `work-validator`.
+It accepts A's canonical configuration, explicit
 immutable issue IDs and exact comment targets, plus a trusted in-process secret
 resolver. It reads named issues, fixed assignment pointers, visible comment pages
 and supplied exact comments. It does not perform domain discovery, receipt proof,
@@ -217,8 +218,10 @@ The reader owns fixed Atlassian gateway HTTPS requests, TLS verification, input
 and count/byte/time bounds, cancellation fencing, safe diagnostics and private
 observations. Report serialization excludes bodies and secrets. Failed or changed
 reads retain valid partial observations and mark missing information honestly.
-The [source API and fixture guide](docs/manager-preview.md#inspect-named-jira-issues)
+The [API and fixture guide](docs/manager-preview.md#inspect-named-jira-issues)
 documents prerequisites, use, limits and recovery. Its importable test-only HTTPS
-packet hashes the complete source and prepared dependency closure and exercises
-source-derived disposable damage. PGB-147 later publishes an independent installed
-copy and runnable fixture CLI; their availability is not established here.
+packet and direct fixture CLI hash the complete explicit runtime and prepared
+dependency closure and exercise disposable damage. The installed validator carries
+the reader, harness, literal cases and dummy TLS material as one payload. The CLI
+selects only prescribed local dummy-HTTPS cases; it adds no live Jira command or
+manager admission authority.

@@ -17,7 +17,7 @@ const tls=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-tls.json'),'ut
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const fixedPrefix='/ex/jira/00000000-0000-0000-0000-000000000001';
 const jiraSourcePaths=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];
-function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.domain_complete,false);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
+function oracleCheck(report,oracle,trace){assert.equal(report.status,oracle.status);if(oracle.code)assert(report.diagnostics.some(d=>d.code===oracle.code),JSON.stringify(report));else assert.deepEqual(report.diagnostics,[]);assert.equal(report.counters.requests_attempted,oracle.calls);assert.equal(trace.length,oracle.calls);if(oracle.trace)assert.deepEqual(trace,oracle.trace);if(oracle.counters)for(const [k,value]of Object.entries(oracle.counters))assert.equal(report.counters[k],value,k);if(oracle.diagnostic)assert(report.diagnostics.some(d=>Object.entries(oracle.diagnostic).every(([k,value])=>d[k]===value)));if(oracle.cleanup_resolver)assert.equal(report.cleanup.resolver,oracle.cleanup_resolver);assert.equal(report.inspection_scope,'requested_issues');assert.equal(report.domain_complete,false);assert.equal(report.admission,'not_evaluated');assert.equal(report.receipt_proof,'not_evaluated');}
 
 async function runtimeSources(root){
  const manifest=JSON.parse(await fsp.readFile(path.join(root,'config/skill-bundle.json'),'utf8'));
@@ -55,7 +55,7 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
  catch{
   const runtimeAfter=await runtimeSnapshot(moduleRoot,missing),inputAfter=inputSnapshot(v);assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
   if(disposable)await fsp.rm(disposable,{recursive:true,force:true});
-  const report={status:'setup_failed',diagnostics:[{code:'SETUP_MISSING',message:'Prepare the complete copied validator; no source fallback or dependency repair was attempted.'}],counters:{requests_attempted:0},domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'};oracleCheck(report,v.oracle,trace);
+  const report={status:'setup_failed',inspection_scope:'requested_issues',diagnostics:[{code:'SETUP_MISSING',message:'Prepare the complete copied validator; no source fallback or dependency repair was attempted.'}],counters:{requests_attempted:0},domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'};oracleCheck(report,v.oracle,trace);
   return {report,trace,server_trace:[],fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},effects:0,resolver_calls:0,cleanup_complete:true,oracle_matched:true};
  }
  if(disposable){await fsp.rm(disposable,{recursive:true,force:true});throw Error('Damaged copy unexpectedly imported.');}
@@ -113,4 +113,43 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
  assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),before.cases);assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),before.tls);
  const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
  return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},runtime_hashes:{before:runtimeBefore,after:runtimeAfter},private_comparison:privateComparison,tls_observation:tlsObservation,...(lateEvidence?{late_resolver:lateEvidence}:{}),effects,resolver_calls:resolverCalls,mutations,getter_calls:getterCalls,cleanup_complete:sockets.size===0,oracle_matched:true};
+}
+
+// Dedicated local fixture command. Importing runFixture never starts a read.
+let isMain=false;
+if(process.argv[1]){
+ try{isMain=fs.realpathSync(process.argv[1])===fs.realpathSync(fileURLToPath(import.meta.url));}
+ catch{/* An imported harness need not have a resolvable host entry. */}
+}
+if(isMain){
+ let json=false,selected=null,failedRole=null;
+ const runs=[],runRoles=[];
+ try{
+  const args=process.argv.slice(2),values={};
+  for(let i=0;i<args.length;i++){
+   if(args[i]==='--json'){json=true;continue;}
+   if(!['--case','--variant','--runtime'].includes(args[i])||values[args[i]]||!args[i+1])throw Error('Invalid fixture selection.');
+   values[args[i]]=args[++i];
+  }
+  if(Object.keys(values).length!==3)throw Error('Invalid fixture selection.');
+  selected=fixtureCases.variants.find(v=>v.case===values['--case']&&v.variant===values['--variant']);
+  if(!selected)throw Error('Invalid fixture selection.');
+  for(const [role,options]of [['main',{}],...(selected.control?[['control',{control:true}]]:[]),...(selected.private_projection?[['private_projection',{privateProjection:true}]]:[])]){
+   failedRole=role;
+   const run=await runFixture(selected.case,selected.variant,values['--runtime'],options);
+   runs.push(run);runRoles.push(role);failedRole=null;
+  }
+  if(json)console.log(JSON.stringify({case:selected.case,variant:selected.variant,runs}));
+  else{console.log(selected.case+' / '+selected.variant+': literal oracle matched. Human acceptance remains a separate review.');for(const run of runs)console.log(JSON.stringify(run.report,null,2));}
+ }catch(error){
+  const selectionFailed=!selected,setupFailed=!selectionFailed&&['ENOENT','ERR_MODULE_NOT_FOUND'].includes(error?.code);
+  const status=selectionFailed?'selection_failed':setupFailed?'setup_failed':'fixture_failed';
+  const diagnostic=selectionFailed
+   ?{code:'FIXTURE_SELECTION_INVALID',message:'Use --case CASE --variant NAME --runtime ROOT [--json] with a prescribed case and variant; no fixture run was started.'}
+   :setupFailed
+    ?{code:'SETUP_MISSING',message:'A required runtime file or module is unavailable. Prepare the complete explicit runtime; no fallback or repair was attempted. Completed runs are retained.'}
+    :{code:'FIXTURE_RUN_FAILED',message:'The fixture run did not verify. Retain completed runs and inspect the prescribed check; do not treat this as missing setup or a passing observation.'};
+  console.log(JSON.stringify({status,inspection_scope:'requested_issues',diagnostics:[diagnostic],case:selected?.case??null,variant:selected?.variant??null,runs,run_roles:runRoles,failed_run:failedRole?{role:failedRole,observations:'unavailable',cleanup:'not_reported'}:null,domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'}));
+  process.exitCode=2;
+ }
 }
