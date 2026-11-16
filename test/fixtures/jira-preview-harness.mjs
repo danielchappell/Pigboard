@@ -34,9 +34,9 @@ async function runtimeSnapshot(root, missing = [], inventory=false) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
-export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false}={}) {
+export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null}={}) {
  const inventory=caseId.startsWith('R1-45-');const selectedCases=inventory?JSON.parse(fs.readFileSync(path.join(here,'jira-inventory-cases.json'),'utf8')):fixtureCases;
- const authored=selectedCases.variants.find(v=>v.case===caseId&&v.variant===variant);if(!authored)throw Error('Use a prescribed case and variant.');
+ const authored=authoredFixture??selectedCases.variants.find(v=>v.case===caseId&&v.variant===variant);if(authoredFixture)assert(authoredFixture.case===caseId&&authoredFixture.variant===variant);if(!authored)throw Error('Use a prescribed case and variant.');
  const v=structuredClone(authored),root=path.resolve(runtime),trace=[],serverTrace=[];let disposable=null;
  if(control){assert(v.control);if(v.control.bound)v.config.jira.read_bounds[v.control.bound]=v.control.value;if(v.control.immediate){delete v.resolver_delay_ms;for(const step of v.script){delete step.header_delay_ms;delete step.body_delay_ms;}}v.oracle=v.control.oracle;if(v.control.script)v.script=v.control.script;}
  for(const entry of fixtureCases.variants)for(const [i,step]of entry.script.entries())if(Object.hasOwn(step,'wire_prefix')){if(entry.variant==='total-byte-limit'){assert.equal(i,0);assert.equal(step.wire_prefix,' '.repeat(256));}else{assert.equal(entry.case,'R1-42-H02');assert(['exact-wire-stop','exact-two-issue-control'].includes(entry.variant));assert.equal(i,3);assert.equal(step.wire_prefix,' '.repeat(600));}}
