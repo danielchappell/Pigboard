@@ -1027,7 +1027,43 @@ export async function prepareQaFixture(runDir,{suite='publication'}={}) {
   return {runDir:root,preparation,cases,ready:false};
 }
 
-// PGB-138 PREP-01: finite source-only input copies, never a dispatcher or result
+// One designated historical supplied/mock reuse control. The two completed
+// observations precede inability, blocker and explicit authorization. Nothing
+// here is a current result or an executed helper.
+function dispatchRetainedInput() {
+  let e=structuredClone(qaSeeds.resume);
+  const terminal=structuredClone(e.target),current=targetRecord(e);
+  const blocker=records(e).find(x=>x.r.kind==='blocked');
+  e.target=qaRef(blocker.r,blocker.c.id);
+  changeTarget(e,r=>{r.payload.qa_report.steps.splice(0,2,...structuredClone(current.payload.report.steps.slice(0,2)));});
+  e=qaCompletePair(e,{pass:true});
+  const work=JSON.parse(e.requirements[0].body),historical=targetRecord(e),report=historical.payload.qa_report;
+  const artifacts=report.steps.slice(0,2).map(row=>{
+    const receipt=e.evidence_receipts.find(r=>r.uri===row.evidence[0].uri),body=qaSavedObservation(work,report,receipt);
+    body.category='historical supplied/mock';body.observed_at=qaInstructionClock.request;
+    return {uri:receipt.uri,available:true,category:'historical supplied/mock',body};
+  });
+  const [parent,child]=artifacts;
+  parent.body.child_source={step:child.body.step,uri:child.uri,response_digest:qaHash(JSON.stringify(child.body.response)),observed_at:child.body.observed_at};
+  for(const artifact of artifacts){artifact.body_sha256=qaHash(JSON.stringify(artifact.body));e.evidence_receipts.find(r=>r.uri===artifact.uri).observed_digest=artifact.body_sha256;}
+  changeTarget(e,r=>{for(const row of r.payload.qa_report.steps.slice(0,2))row.evidence[0].digest=artifacts.find(a=>a.uri===row.evidence[0].uri).body_sha256;});
+  const blocked=records(e).find(x=>x.r.kind==='blocked'),auth=records(e).find(x=>x.r.kind==='resume_authorization');
+  blocked.c.created=blocked.c.updated='2026-11-15T10:02:00Z';auth.c.created=auth.c.updated='2026-11-15T10:03:00Z';
+  const source=qaRef(blocked.r,blocked.c.id),reuse=[];
+  for(const row of report.steps.slice(0,2)){
+    const uri=`https://evidence.example.invalid/pgb132-reuse-${row.id}`;
+    const receipt={uri,observed_digest:null,available:true,actor_id:'observer',pr:structuredClone(historical.payload.pr),kind:'reuse',details:{case_id:work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id===row.id)).id,step_id:row.id,basis:'This exact historical supplied/mock completed observation remains applicable at the unchanged source revision; no completed action is replayed.',source}};
+    e.evidence_receipts.push(receipt);e.trusted.projects[0].evidence_uris.push(uri);reuse.push({label:'Case-specific historical reuse proof',uri,digest:null});
+  }
+  e.target=terminal;sealQa(e);
+  const facts=qaOutcomeFacts('Q13-partial-pass-inability',e,work,report);
+  for(const fact of facts.domain_inabilities)fact.observed_at=qaInstructionClock.inability;
+  return {envelope:e,historical:{notice:qaNotice,category:'historical supplied/mock',artifacts,reuse,
+    blocker:source,authorization:qaRef(auth.r,auth.c.id),domain_inabilities:facts.domain_inabilities,
+    new_execution_not_before:'2026-11-15T10:03:01Z'}};
+}
+
+// PGB-132 PREP-01: finite source-only input copies, never a dispatcher or result
 // producer. Publication specimens and their default export remain untouched.
 async function prepareDispatchInputs(runDir) {
   if(typeof runDir!=='string'||!isAbsolute(runDir))throw Error('Supply a fresh absolute private directory.');
@@ -1038,20 +1074,46 @@ async function prepareDispatchInputs(runDir) {
     const bytes=Buffer.isBuffer(value)||typeof value==='string'?value:JSON.stringify(value,null,2)+'\n';
     await writeFile(file,bytes,{flag:'wx',mode:0o600});return {path:name,digest:qaHash(bytes)};
   };
-  const fixed={'I01-story':mixedQa(),'I02-parameters':mixedQa(),'I11-stale-environment':mixedQa()};
+  const partial=partialFixtures(),transitive=transitiveFixtures(),retained=dispatchRetainedInput();
+  const fixed={
+    'I01-story':mixedQa(),'I01-bug':mixedQa(),
+    'I02-child-receipt':mixedQa(),'I02-extraction':mixedQa(),'I02-provenance':mixedQa(),
+    'I02-query':mixedQa(),'I02-parameters':mixedQa(),'I02-checkpoint':mixedQa(),
+    'I03-pending-ready':mixedQa(),'I03-all-pending':mixedQa(),
+    'I04-all-ready':mixedQa(),'I04-one-mismatch':mixedQa(),
+    'I05-next-offset':mixedQa(),'I05-deadline':mixedQa(),'I05-missed-offset':mixedQa(),'I05-access-loss':mixedQa(),'I05-missing-bound':mixedQa(),
+    'I06-dependent-independent':transitive['transitive-blocked-independent'],
+    'I06-chain':transitive['transitive-blocked-three'],'I06-join':qaJoinedCopy(transitive['transitive-blocked-join']),
+    'I06-unbound-output':mixedQa(),
+    'I07-domain-inability':mixedQa(),'I07-cleanup-inability':mixedQa(),
+    'I08-pure-wait':qaWaitCopy(partial['wait-retained-fail'],{pure:true}),
+    'I08-fail-wait':qaWaitCopy(partial['wait-retained-fail']),'I08-discussion':mixedQa(),
+    'I08-missing-cause':qaWaitCopy(partial['wait-retained-fail'],{pure:true}),
+    'I09-static-bug':staticQa(),'I09-task':mixedQa(),'I09-epic':mixedQa(),
+    'I10-source-drift':mixedQa(),'I10-requirement-drift':mixedQa(),'I10-stage-drift':mixedQa(),
+    'I10-incomplete-pages':mixedQa(),'I10-wrong-scope':mixedQa(),'I10-wrong-actor':mixedQa(),'I10-wrong-tenant':mixedQa(),
+    'I11-missing-environment':mixedQa(),'I11-stale-environment':mixedQa(),
+    'I11-partial-pass-null-proof':mixedQa(),'I11-partial-fail-null-proof':mixedQa(),
+    'I12-append-unknown':mixedQa(),'I12-transition-unknown':mixedQa(),
+    'I14-no-model':mixedQa(),'I14-no-clock':mixedQa(),'I14-no-helper':mixedQa(),
+    'I14-oversized-ledger':mixedQa(),
+    'I13-valid':retained.envelope,'I13-stale':retained.envelope,
+    'I13-wrong-tenant':retained.envelope,'I13-untrusted-approval':retained.envelope
+  };
   for(const [id,original]of Object.entries(fixed)) {
     for(const {r}of records(original))if(!validateHandoff(JSON.stringify(r),{mode:'record'}).valid)throw Error('Invalid original fixed record: '+id);
     const e=structuredClone(original),terminal=structuredClone(targetRecord(e));
     const issue=e.issues.find(x=>x.id===terminal.ticket_id),project=e.trusted.projects.find(x=>x.id===issue.project_id);
     const requirement=e.requirements.find(x=>x.ticket_id===terminal.ticket_id),work=JSON.parse(requirement.body);
-    const facts=JSON.parse(requirement.context_body),steps=work.testing_strategy.cases.flatMap(c=>c.steps);
+    const facts=JSON.parse(requirement.context_body);let steps=work.testing_strategy.cases.flatMap(c=>c.steps);
     const parent=steps.find(s=>s.skill==='qa-api'),child=steps.find(s=>s.skill==='qa-bruno');
-    const db=steps.find(s=>s.skill==='qa-database'),uiStep=steps.find(s=>s.skill==='qa-ui');
+    let db=steps.find(s=>s.skill==='qa-database'),uiStep=steps.find(s=>s.skill==='qa-ui');
+    const mixed=parent?.id==='E01.S1',actor=work.testing_strategy.actors[0];
     const review=records(e).filter(x=>x.r.ticket_id===terminal.ticket_id&&x.r.kind==='review').at(-1);
     // Original canonical bytes are inspected before a fixed copy is changed.
     // The synthetic unattempted current result and its report/finding artifacts
     // are never input to a new instruction exercise. Upstream history is kept.
-    const preserved=new Set();
+    const preserved=new Set(id.startsWith('I13-')?[...retained.historical.artifacts,...retained.historical.reuse].map(a=>a.uri):[]);
     for(const {r}of records(e).filter(x=>x.r.record_id!==terminal.record_id)){
       const p=r.payload;
       const refs=[p.plan,p.plan_review,p.ci,p.approval,
@@ -1078,41 +1140,121 @@ async function prepareDispatchInputs(runDir) {
     e.evidence_receipts=e.evidence_receipts.filter(r=>!removed.has(r.uri));
     e.trusted.projects.forEach(p=>p.evidence_uris=p.evidence_uris.filter(uri=>!removed.has(uri)));
     e.target=qaRef(review.r,review.c.id);issue.stage_id=project.stages.QA;
+    const asyncCase=/^I0[345]-/.test(id);
+    if(asyncCase){
+      const c=work.testing_strategy.cases[0];c.steps=[parent,child];
+      c.observation={mode:'asynchronous',schedule:[0,30,60],deadline_seconds:90,step:parent.id,completion:id.startsWith('I04-')?'all_observations':'until_expected'};
+      work.testing_strategy.dispatch_order=[parent.id];
+      work.testing_strategy.testing_types=['api'];
+      facts.operations=facts.operations.filter(o=>[parent.id,child.id].includes(o.step));
+      facts.operations.forEach(o=>{o.max_duration_seconds=o.step===parent.id?20:5;});
+      if(id==='I05-missing-bound')facts.operations.find(o=>o.step===parent.id).max_duration_seconds=null;
+      steps=[parent,child];db=undefined;uiStep=undefined;
+    }
     // Missing reviewed count is a trusted-input refusal; work and SQL stay intact.
     if(id==='I02-parameters')facts.operations.find(o=>o.step===db.id).parameter_count=null;
-    const clock={notice:qaNotice,origin:'2026-11-15T10:00:00Z',offsets:[0],deadline_seconds:null,
-      now_offsets_seconds:[0,30,60],unit_elapsed_seconds:[5,5,5],
-      whole_unit_bound_seconds:20,child_bound_seconds:5,database_outer_bound_seconds:20};
-    uiStep.ui.surface='supplied/mock browser';uiStep.ui.browser='supplied/mock Chromium';
+    // Whole-unit and child bounds are supplied facts, never run by preparation.
+    const clock={notice:qaNotice,origin:id.startsWith('I13-')?retained.historical.new_execution_not_before:'2026-11-15T10:00:00Z',offsets:asyncCase?[0,30,60]:[0],deadline_seconds:asyncCase?90:null,
+      now_offsets_seconds:id==='I05-missed-offset'?[0,31]:[0,30,60],
+      unit_elapsed_seconds:id==='I05-next-offset'?[31]:id==='I05-deadline'?[5,5,31]:[5,5,5],
+      whole_unit_bound_seconds:id==='I05-missing-bound'?null:20,child_bound_seconds:5,database_outer_bound_seconds:20};
+    if(uiStep&&!id.startsWith('I13-')){uiStep.ui.surface='supplied/mock browser';uiStep.ui.browser='supplied/mock Chromium';}
+    // This negative exercises the existing complete-ledger projection before
+    // dispatch. Declare required evidence, never supplied observation results.
+    if(id==='I14-oversized-ledger')for(const step of steps)step.evidence=[step.evidence[0],...Array.from({length:99},(_,i)=>`${step.id} supplied evidence ${i+2}`)];
     // Refresh only fixed copied work references. Original publication bytes and
     // real externally supplied receipts are never rewritten.
     requirement.context_body=JSON.stringify(facts);
     qaRebindWork(e,work);
     const bound=e.requirements.find(x=>x.ticket_id===terminal.ticket_id);
     const boundFacts=JSON.parse(bound.context_body);
+    const sourcePr=structuredClone(review.r.payload.pr);
     const native={notice:qaNotice,id:issue.id,key:issue.key,site:issue.site,project_id:issue.project_id,
-      type_id:'22',
+      type_id:id==='I01-bug'||id==='I09-static-bug'?'23':id==='I09-task'?'24':id==='I09-epic'?'21':'22',
       stage_id:issue.stage_id,labels:['pigboard',issue.stream],pointer:issue.pointer,description:bound.body};
     const access=qaMockAccess(work);
     const capabilities={notice:qaNotice,model_profile:'Grok High',clock:'fixed supplied/mock clock cards',
       helpers:['qa-api','qa-bruno','qa-database','qa-ui'],publisher_reads:true,publisher_append:true,publisher_direct_transition:true};
-    const responseBody={record_id:'record-001',tenant_id:'tenant-a',state:'ready'};
+    const responseBody=mixed?{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}:structuredClone(savedFilterPassResponse.body);
+    if(id==='I03-all-pending')responseBody.state='pending';
+    if(/^I0[67]-/.test(id)||id==='I08-fail-wait'||id==='I11-partial-fail-null-proof'){
+      if(mixed)responseBody.state='pending';else responseBody.results=[];
+    }
+    const responses=asyncCase?(id==='I03-pending-ready'?[{...responseBody,state:'pending'},responseBody,responseBody]:id==='I04-one-mismatch'?[responseBody,{...responseBody,state:'pending'},responseBody]:[responseBody,responseBody,responseBody]):[responseBody];
+    // Remove absent proof before constructing any consumer receipt/body mirror.
+    if(['I11-missing-environment','I11-partial-pass-null-proof','I11-partial-fail-null-proof'].includes(id))e.evidence_receipts=e.evidence_receipts.filter(r=>r.kind!=='environment');
     // Build original pipeline comments only after making the receipt stale.
     if(id==='I11-stale-environment')e.evidence_receipts.filter(r=>r.kind==='environment').forEach(r=>r.pr.source_revision='f'.repeat(40));
     const pipeline=e.evidence_receipts.filter(r=>r.kind==='environment').map(r=>({notice:qaNotice,id:r.details.comment_id,author_id:r.details.pipeline_actor_id,update_author_id:r.details.pipeline_actor_id,created:'2026-11-15T09:30:00Z',updated:'2026-11-15T09:30:00Z',uri:r.uri,repository:r.pr?.repository,pr_number:r.pr?.number,
       body:JSON.stringify({notice:qaNotice,event:'deployment_ready',readiness:'ready',source_revision:r.pr?.source_revision,deployed_revision:r.pr?.source_revision,target_reference:r.details.target_reference,target_uri:'https://qa.example.invalid/pgb132',repository:r.pr?.repository,pr_number:r.pr?.number,target_branch:r.pr?.target_branch})}));
+    const report=terminal.payload.report??terminal.payload.qa_report;
+    const causeFacts=qaOutcomeFacts(id==='I08-pure-wait'||id==='I08-missing-cause'?'H02-upstream-wait':id==='I08-fail-wait'?'H02-wait-instruction':'',original,work,report);
+    if(id==='I08-missing-cause')causeFacts.dependency_observations=[];
     const cards={notice:qaNotice,category:'supplied/mock',
       caller_scope:'Requires independently supplied trusted caller identity and allowed actions; these cards grant no authority.',
       reads:{native,comments:e.comment_pages,pr:e.pr_receipts,evidence:e.evidence_receipts,pipeline:{original_comments:pipeline},access},
-      tool_inputs:{api:parent?{step:parent.id,child:child.id,selected_request_count:1,responses:[{status:200,body:responseBody}]}:null,
-        database:db?{step:db.id,rows:[{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}],rollback:'complete',close:'complete'}:null,
-        ui:uiStep?{step:uiStep.id,surface:uiStep.ui.surface,browser:uiStep.ui.browser,viewport:{width:440,height:130},route:uiStep.ui.entry_route,checkpoints:uiStep.ui.screenshot_checkpoints.map((checkpoint,i)=>({checkpoint,screenshot:`screens/ui-${i}.png`,width:440,height:130,digest:qaHash(mockQaPng(['start','input','result'][i])),visible_text:[['SUPPLIED MOCK','RECORD ID','LOOKUP'],['SUPPLIED MOCK','RECORD ID RECORD-001','LOOKUP'],['SUPPLIED MOCK','RECORD-001','TENANT-A READY']][i]}))}:null},
-      capability_observations:[],dependency_observations:[],
-      append:{storage:'stored',reply:{id:'9901'}},
+      tool_inputs:{api:parent?{step:parent.id,child:child.id,selected_request_count:1,responses:responses.map(body=>({status:200,body}))}:null,
+        database:db?{step:db.id,rows:mixed?[{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}]:[{id:'fixture-1',name:'Monthly',tenant_id:'example'}],rollback:'complete',close:'complete'}:null,
+        ui:uiStep?{step:uiStep.id,surface:uiStep.ui.surface,browser:uiStep.ui.browser,viewport:mixed?{width:440,height:130}:{width:1280,height:800},route:uiStep.ui.entry_route,checkpoints:uiStep.ui.screenshot_checkpoints.map((checkpoint,i)=>({checkpoint,screenshot:`screens/ui-${i}.png`,width:mixed?440:1280,height:mixed?130:800,digest:qaHash(mockQaPng(mixed?['start','input','result'][i]:'filter-result')),visible_text:mixed?[['SUPPLIED MOCK','RECORD ID','LOOKUP'],['SUPPLIED MOCK','RECORD ID RECORD-001','LOOKUP'],['SUPPLIED MOCK','RECORD-001','TENANT-A READY']][i]:['SUPPLIED MOCK','SEARCH MONTHLY','FIXTURE-1 MONTHLY','TENANT EXAMPLE']}))}:null},
+      capability_observations:[],dependency_observations:causeFacts.dependency_observations,
+      append:{storage:id==='I12-append-unknown'?'ambiguous':'stored',reply:id==='I12-append-unknown'?'timeout':{id:'9901'}},
       readback:{id:'9901',author_id:project.actors.qa[0],update_author_id:project.actors.qa[0],created:'2026-11-15T14:00:00Z',updated:'2026-11-15T14:00:00Z',body:'ECHO_ONLY_ACTUAL_SUBMITTED_TRANSPORT'},
       capabilities:{actor_id:project.actors.qa[0],append:true,read_exact:true,direct_transitions:true},
       transitions:['Human Review','Rework Queued','Blocked'].map((stage,i)=>({id:String(61+i),from:project.stages.QA,to:project.stages[stage],name:stage})),
-      transition:{reply:'accepted',resolving_status:'requested destination'}};
+      transition:{reply:id==='I12-transition-unknown'?'timeout':'accepted',resolving_status:id==='I12-transition-unknown'?'unknown':'requested destination'}};
+    if(id==='I08-discussion')cards.caller_request='Discuss supplied observations only; no final publication or transition requested.';
+    let historical=null;
+    if(id.startsWith('I13-')){
+      historical=structuredClone(retained.historical);
+      if(id==='I13-stale')for(const artifact of historical.artifacts)artifact.body.pr.source_revision='f'.repeat(40);
+      if(id==='I13-wrong-tenant'){
+        const artifact=historical.artifacts.find(a=>a.body.kind==='bruno_response');artifact.body.tenant=artifact.body.request.tenant='foreign';
+      }
+      for(const artifact of historical.artifacts){artifact.body_sha256=qaHash(JSON.stringify(artifact.body));e.evidence_receipts.find(r=>r.uri===artifact.uri).observed_digest=artifact.body_sha256;}
+      if(id==='I13-stale')for(const receipt of e.evidence_receipts.filter(r=>historical.artifacts.some(a=>a.uri===r.uri)))receipt.pr.source_revision='f'.repeat(40);
+      if(id==='I13-stale'||id==='I13-wrong-tenant'){
+        const reviewTarget=structuredClone(e.target),blocked=records(e).find(x=>x.r.kind==='blocked');
+        e.target=qaRef(blocked.r,blocked.c.id);
+        changeTarget(e,r=>{for(const row of r.payload.qa_report.steps.slice(0,2))row.evidence[0].digest=historical.artifacts.find(a=>a.uri===row.evidence[0].uri).body_sha256;});
+        e.target=reviewTarget;sealQa(e);
+        const blocker=records(e).find(x=>x.r.kind==='blocked'),auth=records(e).find(x=>x.r.kind==='resume_authorization');
+        historical.blocker=qaRef(blocker.r,blocker.c.id);historical.authorization=qaRef(auth.r,auth.c.id);
+      }
+      if(id==='I13-untrusted-approval'){
+        const auth=records(e).find(x=>x.r.kind==='resume_authorization');auth.c.author_id=auth.c.update_author_id='stranger';
+      }
+      cards.reads.historical=historical;
+    }
+    if(id==='I02-child-receipt'){
+      const current=targetRecord(e),environment=e.evidence_receipts.find(r=>r.kind==='environment');
+      cards.reads.child_operation_history=[{notice:qaNotice,category:'supplied/mock',attempt_id:`${id}-prior-attempt`,
+        ticket_id:issue.id,assignment:structuredClone(current.assignment),requirements_digest:bound.digest,
+        pr:structuredClone(current.payload.pr),deployed_revision:environment.pr.source_revision,
+        case_id:work.testing_strategy.cases.find(c=>c.steps.some(s=>s.id===parent.id)).id,
+        parent_step:parent.id,child_step:child.id,parent_caller:parent.caller,caller:child.caller,
+        actor_id:access.actor_id,tenant:access.tenant,identity_reference:access.identity_reference,
+        request:{method:child.api.method,operation:child.api.operation,route:child.api.route,request_selector:child.api.request_selector},
+        attempted_at:'2026-11-15T10:01:03Z',original_transport:{submitted:true},
+        unavailability_observed_at:'2026-11-15T10:01:04Z',response:{available:false},report:{available:false},execution:'unknown',effects:'unknown'}];
+      delete cards.tool_inputs.api.selected_request_count;cards.tool_inputs.api.responses=[];
+      clock.origin='2026-11-15T10:01:10Z';
+    }
+    if(id==='I02-provenance')cards.tool_inputs.api.responses[0].actor_id='OTHER';
+    if(id==='I06-unbound-output')delete cards.tool_inputs.api.responses[0].body.record_id;
+    if(id==='I02-checkpoint')cards.tool_inputs.ui.checkpoints.pop();
+    if(id==='I05-access-loss'||id==='I07-domain-inability')cards.capability_observations.push({step:uiStep?.id??parent.id,offset_seconds:id==='I05-access-loss'?30:5,status:503,body:{code:'SESSION_UNAVAILABLE',session_available:false,observation_started:false},actor_id:actor.id,tenant:actor.tenant,pr:sourcePr});
+    if(id==='I07-cleanup-inability')cards.tool_inputs.database.rollback='unavailable';
+    if(id==='I06-join')cards.tool_inputs.database.rows=[];
+    if(id==='I10-source-drift')cards.reads.pre_final={pr:{...sourcePr,source_revision:'f'.repeat(40)}};
+    if(id==='I10-requirement-drift'){const changed=JSON.parse(bound.body);changed.problem_to_solve+=' Current requirements changed after preparation.';cards.reads.pre_final={native:{...native,description:JSON.stringify(changed)}};}
+    if(id==='I10-stage-drift')cards.reads.pre_final={native:{...native,stage_id:project.stages['In Review']}};
+    if(id==='I10-incomplete-pages')cards.reads.comments.at(-1).total++;
+    if(id==='I10-wrong-scope')native.project_id='999';
+    if(id==='I10-wrong-actor')access.actors=[];
+    if(id==='I10-wrong-tenant')access.actors.forEach(a=>a.tenant='tenant-b');
+    if(id==='I14-no-model')capabilities.model_profile=null;
+    if(id==='I14-no-clock')capabilities.clock=null;
+    if(id==='I14-no-helper')capabilities.helpers=[];
     const base=`cases/${id}`,input=`${base}/input`,artifacts=[];
     const emit=async(name,value)=>artifacts.push(await put(`${input}/${name}`,value));
     await emit('work.yaml',bound.body);await emit('facts.yaml',JSON.stringify(boundFacts));
@@ -1122,15 +1264,16 @@ async function prepareDispatchInputs(runDir) {
     await emit('scope.yaml',stringify(config));await emit('predecessors.json',e);
     await emit('known-requests.json',terminal.payload.requests??[]);await emit('access.json',access);
     await emit('cards.json',cards);await emit('clock.json',clock);await emit('capabilities.json',capabilities);
+    if(historical)await emit('historical.json',historical);
     if(parent){
-      const request=selected.replace('http://127.0.0.1:REQUIRED_PORT','https://qa.example.invalid');
+      const request=mixed?selected.replace('http://127.0.0.1:REQUIRED_PORT','https://qa.example.invalid'): `meta {\n  name: Supplied mock Monthly search\n  type: http\n  seq: 1\n}\nget {\n  url: https://qa.example.invalid/api/filters?name=Monthly\n  body: none\n  auth: none\n}\nassert {\n  res.status: 200\n  res.body.results[0].id: fixture-1\n  res.body.results[0].name: Monthly\n  res.body.results[0].tenant_id: example\n}\n`;
       await emit(`collection/${child.api.request_selector}`,request);
       await emit('collection/bruno.json',{version:'1',name:'Supplied mock prescribed collection',type:'collection',ignore:['node_modules','.git']});
-      await emit('extraction.json',{step:child.id,output:'record_id',json_pointer:'/response/body/record_id',source:'actual selected request response in retained original Bruno report',parent_exposes:`${parent.id}.record_id`,value:null});
+      await emit('extraction.json',id==='I02-extraction'?{step:child.id,output:'record_id',json_pointer:null}:{step:child.id,output:'record_id',json_pointer:mixed?'/response/body/record_id':'/response/body/results/0/id',source:'actual selected request response in retained original Bruno report',parent_exposes:`${parent.id}.record_id`,value:null});
     }
-    if(db){await emit('query.sql',query);await emit('parameters.json',id==='I02-parameters'?null:db.database.parameters);
+    if(db){if(id!=='I02-query')await emit('query.sql',mixed?query:savedFilterQuery);await emit('parameters.json',id==='I02-parameters'?null:db.database.parameters);
       await emit('database-context.json',{notice:qaNotice,environment:'test',stage:'pgb132-mock',targetIdentityEvidence:'fixture://pgb132/mock-target',readOnlyRoleEvidence:'fixture://pgb132/mock-role',database:{host:'qa.example.invalid',port:5432,name:'pgb132_mock',user:'qa_reader'},tls:{required:true,rejectUnauthorized:true,ca_reference:'fixture://pgb132/mock-ca',servername:'qa.example.invalid'},role:{rolsuper:false,rolcreaterole:false,rolcreatedb:false,rolreplication:false,rolbypassrls:false},scope:db.database.scope,parameter_layout:db.database.parameter_bindings});}
-    if(uiStep)for(let i=0;i<cards.tool_inputs.ui.checkpoints.length;i++)await emit(`screens/ui-${i}.png`,mockQaPng(['start','input','result'][i]));
+    if(uiStep)for(let i=0;i<cards.tool_inputs.ui.checkpoints.length;i++)await emit(`screens/ui-${i}.png`,mockQaPng(mixed?['start','input','result'][i]??'result':'filter-result'));
     await emit('reference-map.json',{
       fixtures:work.testing_strategy.fixtures.map(f=>({reference:f.reference,consumer:f.id,source:'Fixed supplied/mock data and cards.json; not live readiness.'})),
       artifacts:steps.filter(s=>s.prepared_artifact.reference).map(s=>({reference:s.prepared_artifact.reference,consumer:s.id,path:s.database?'query.sql':'collection/'})),
@@ -1140,12 +1283,13 @@ async function prepareDispatchInputs(runDir) {
     });
     await emit('index.json',{notice:qaNotice,preparation_id:'PREP-01',consumers:steps.map(s=>s.id),artifacts,source_inputs:qaHash(readFileSync(new URL('./handoff-chains.json',import.meta.url))),output:'../output',binding:'Extraction value remains null until original actual helper evidence exists. Bind no expected value.',readiness:'NOT_READY until independently supplied source/installed hashes, caller and chosen exercise capabilities are frozen.'});
     await mkdir(join(root,base,'output'),{mode:0o700});
-    await put(`${base}/invocation.txt`,'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
-    await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-30-H01','R1-30-H02','R1-30-H03'],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
+    const priorHistory=id==='I02-child-receipt'?'Before invoking qa-api, independently bind and supply input/cards.json#/reads/child_operation_history as trusted supplied/mock original child-operation history. It describes an earlier submitted operation whose response/report and execution/effects remain unavailable or unknown, not a reply to a fresh tool call. Read the existing qa-api unresolved earlier-operation rule before any action. These fixture facts grant no authority.\n':'';
+    await put(`${base}/invocation.txt`,priorHistory+'Use the exact immutable installed qa-api/qa-bruno/qa-database/qa-ui instructions, full input/work.yaml and separately trusted input/facts.yaml. Trusted operator must independently authorize caller qa-entrypoint for top-level units; the API parent alone owns its Bruno child. Supply exact case/step/caller, assignment/current review from input/predecessors.json, input/scope.yaml, access and capabilities. Execute only the prescribed unit with fixed supplied/mock cards returned in response to its actual requested action. Retain original helper results and evidence in output/. Bind only actual named output with original revision/actor/tenant/offset provenance using input/extraction.json. After independent assessment of actual results, invoke immutable qa-jira preflight then final with that actual assessment, current raw work/context, predecessors, known requests and the supplied/mock publisher cards. qa-jira owns publication decisions and unknown-write recovery. Never expose operator files, execute legacy qa-entrypoint, contact live providers or substitute a saved assessment. Source/installed hashes and independent authority are prerequisites, not fixture facts.\n');
+    await put(`operator/${id}.json`,{notice:qaNotice,independent_operator_only:true,group:id.slice(0,3),native_cases:['R1-27-H01','R1-27-H02','R1-27-H03'],shared_control_cases:['I01-story','I02-parameters','I11-stale-environment'].includes(id)?['R1-30-H01','R1-30-H02','R1-30-H03']:[],inspection:'Inspect this fixed input variant at its named boundary against unchanged work expectations; retain actual result and original requested action. No expected final ledger, verdict or destination is supplied.'});
     cases[id]=join(root,base);index.push({id,group:id.slice(0,3),input:join(root,input)});
   }
   const preparation=await put('preparation.json',{suite:'dispatch-inputs',state:'NOT_READY',notice:qaNotice,cases:index,source_module_sha256:qaHash(readFileSync(fileURLToPath(import.meta.url))),
     binding_required:['Actual reviewed full source commit','Immutable installed skills/manifest/payload hashes','Hashes of emitted inputs before exercise','Independent caller/action/actor/tenant scope','Actual selected exercise capabilities; fixed mock facts prove no live engine or deployment'],
-    human_acceptance:'R1-30-H01/H02/H03 NOT RUN',cleanup:'Retain sanitized inputs, actual results and audit first; remove only this owned disposable root. No services or live resources created.'});
+    human_acceptance:'R1-27-H01/H02/H03 NOT RUN; R1-30-H01/H02/H03 NOT RUN',cleanup:'Retain sanitized inputs, actual results and audit first; remove only this owned disposable root. No services or live resources created.'});
   return {runDir:root,preparation:join(root,preparation.path),cases,ready:false};
 }

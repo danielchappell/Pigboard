@@ -265,7 +265,7 @@
       "R1-24",
       "R1-30"
     ],
-    "days": 1.21875,
+    "days": 1.59375,
     "files": [
       "test/story-authoring.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
@@ -281,10 +281,10 @@
       "docs/product/README.md"
     ],
     "hours": {
-      "min": 6.75,
-      "max": 9.75
+      "min": 8.5,
+      "max": 12.75
     },
-    "delivery_state": "Pending residual implementation: extend the existing three-input command to the full prescribed suite; human cases NOT_RUN.",
+    "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
       "days": 1.875,
       "hours": {
@@ -311,7 +311,8 @@
         "docs/product/coverage.md",
         "docs/product/README.md"
       ]
-    }
+    },
+    "estimate_basis": "Historical residual allocation on 15 November 2026: 6.75–9.75h; proof/size control repair checkpoint on 16 November: 7.5–11.25h, adding 0.75–1.5h. Current whole residual 8.5–12.75h adds 1–1.5h for original child-operation-history and current-forecast correction, including diagnosis/plan, tests, docs, ordinary correction, independent review and PR evidence. Prior allocations remain counted; no other Story forecast or source ownership changes."
   },
   {
     "id": "R1-08",

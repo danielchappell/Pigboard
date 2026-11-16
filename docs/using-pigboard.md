@@ -369,36 +369,171 @@ the designated developer and QA reviewer execute them.
 
 ## Prepare prescribed QA inputs
 
-The source-only PREP-01 command currently supplies three complete inputs:
-`I01-story`, `I02-parameters` and `I11-stale-environment`. These support
-PGB-138's human-owned R1-30-H01/H02/H03 inspection cases. PGB-132's wider suite
-and its separate human acceptance remain pending. Use the already prepared
-same-release source checkout; the preparer runs no helper, timer, model, provider
-transport or publisher:
+PGB-132's source-only PREP-01 exports all 51 finite inputs in the I01–I14 families
+for human-owned
+R1-27-H01/H02/H03. Use the already prepared same-release source checkout and
+immutable installed skills. This command creates a fresh private folder; it
+runs no helpers, timers, model, provider transport or publication:
 
 ```sh
 node --input-type=module -e 'import {prepareQaFixture} from "./test/fixtures/qa-helper-case.mjs"; await prepareQaFixture(process.argv[1], {suite:"dispatch-inputs"});' /absolute/private/fresh-run
 ```
 
-Use a new absolute path. An occupied path is refused without overwriting retained
-evidence. Default publication preparation and older helper `prepare`/`serve`
-commands are unchanged. This source preparer is not installed into customer bundles.
+Use a new absolute path each time. Existing paths are rejected, preserving prior
+failed evidence. The default `prepareQaFixture` publication suite, older local
+helper `prepare`/`serve` commands and fixed histories are unchanged. The source
+preparer is not installed into customer bundles.
 
-`preparation.json` lists the exact available variants. Each
-`cases/<variant>/input/` contains:
+`preparation.json` lists every variant. Each `cases/<variant>/input/` contains:
 
 - Full original `work.yaml`, separately trusted mock `facts.yaml`, customer
-  `scope.yaml`, current-review `predecessors.json` and `known-requests.json`.
-- `access.json` and original pipeline/server metadata in `cards.json`. Mock access
-  and deployment facts grant no live permission.
-- Selected Bruno request/assertions, `extraction.json`, SQL, parameter array and
-  layout, database context, UI route/browser/viewport and three screenshot cards.
-- Supplied `clock.json`, operation bounds, capabilities, reference mapping and a
-  hashed `index.json`. Preparation executes no schedule.
+  `scope.yaml`, current-review `predecessors.json` and exact `known-requests.json`.
+- Separate `access.json` and pipeline/server metadata in `cards.json`. Mock access
+  and deployment facts are labelled mock and grant no live permission.
+- The selected Bruno request/assertions, `extraction.json`, SQL and parameter
+  layout, database context, UI route/browser/viewport and named screenshot cards.
+- Finite `clock.json`, operation bounds, capabilities and a hashed `index.json`.
+  These are supplied inputs; the preparer executes no schedule.
 
-`output/` starts empty. Keep `operator/` outside each consumer's view. No current
-terminal, assessment, verdict or final ledger is supplied; human cases remain
-NOT RUN. Supplied response/image cards are mock inputs, never observed results.
+`output/` is empty. `operator/` is outside each consumer root and must be withheld.
+No current terminal record, assessment, verdict or final ledger is supplied.
+R1-27-H01/H02/H03 and the shared controls' R1-30-H01/H02/H03
+remain NOT RUN. The I13 control alone keeps the required
+historical partial observations, blocker and later human authorization; they are
+historical supplied/mock inputs, with separate case-specific reuse proof.
+
+Before exercising a variant, record `git rev-parse HEAD`, the SHA256 of
+`test/fixtures/qa-helper-case.mjs`, the exact immutable installed `skills` root,
+its source revision and manifest/payload hashes from the preparation/install
+receipt. Record each emitted input's actual SHA256 and compare the hashes in
+`input/index.json`; hash the index itself too. `preparation.json` remains
+`NOT_READY` until these bindings and the chosen exercise capabilities are supplied.
+Do not use a mutable installed link as revision proof. Fixed `.invalid` destinations,
+dummy identity and simulated database/TLS facts are mock inputs, not usable live
+connection credentials or hosted acceptance.
+
+For R1-27-H01, choose fresh I01 Story and Bug folders. An independently authorized
+caller opens the immutable installed `qa-api/SKILL.md` and common structured-step
+reference. Supply full raw work/context, scope, exact assignment/current review,
+PR/revision, access, capabilities, output/audience and exact case/step/caller.
+Top-level logical caller is `qa-entrypoint`; trusted invocation must establish its
+identity and action scope independently of the ticket. Run the API unit once;
+it alone calls its named Bruno child. The fixed operator responds only to actual
+requested tool actions using the frozen cards and retains request/response audit.
+Keep all helper output under `output/`, labelled supplied/mock.
+
+Use the actual child's declared output and original report pointer to expose the
+parent output. Pass that actual value and provenance through the declared DB and
+UI bindings; never use the requirement's expected ID or prefill a bound parameter.
+Invoke the installed database and UI instructions for their exact units. Inspect
+the original query, parameters, rollback/close evidence and actual three UI
+checkpoint screenshots. A card is an input response; a helper's actual retained
+result is the observation. These exercises do not prove live Bruno, PostgreSQL,
+browser or deployment behavior.
+
+Independently assess those actual results, preserving every row, finding, unknown
+effect and pending human. Invoke immutable `qa-jira/SKILL.md` in `preflight`, then
+`final` when appropriate, with that actual `prepared_assessment`, full raw work
+and trusted context, scope/capabilities, assignment, original predecessors,
+known requests and any valid retained delivery. The publisher owns destination,
+append/readback, transition and uncertain-write recovery. For simulated stored
+writes, echo only the actual submitted transport bytes with the fixed card's
+metadata; retain ordered calls and actual/unknown status. Never inject an expected
+record, verdict, UUID or route. Use the existing standalone publisher guidance
+above; the legacy full `qa-entrypoint` remains incompatible until PGB-78.
+
+For R1-27-H02, inspect positive controls and the named missing extraction,
+query/parameters, checkpoint, identity/tenant, bounds and cause variants in fresh
+folders. Run only the applicable existing read-only validation/preflight. Some
+missing artifact facts belong to instruction preflight rather than the raw work
+schema; start-valid declarations alone do not mean execution-ready. Do not fix a
+negative by guessing a fact, inferring permission or changing case expectations.
+
+For `I02-child-receipt`, the trusted operator must independently bind and supply
+`input/cards.json#/reads/child_operation_history` **before invoking qa-api**.
+This supplied/mock past input records an earlier submitted child operation whose
+original response/report is unavailable and execution/effects remain unknown.
+It is distinct from losing a reply after a new call. No fresh API response or
+selected-request-count observation is available in this packet; the downstream
+SQL/UI cards remain prescribed inputs, not executed observations. The existing
+qa-api unresolved-operation rule governs the handoff. Canonical
+`known-requests.json` remains the publisher's upstream repair-request list and
+must not contain this child history.
+
+The named access/preparation operator must resolve the original uncertainty and
+retain its evidence before a later authorized handoff. Do not replace the
+request, infer success or treat the fixture as new authorization or completion.
+Developer source checks verify the history's identity, chronology and pre-action
+binding; they do not demonstrate an actual helper refusal or zero calls. The
+specific accepted helper/publisher evidence gap10765 remains separate.
+
+For R1-27-H03, inspect static human-only work, all-NOT_RUN missing-environment,
+partial observations without proof, earlier mismatch then inability, pure wait,
+mismatch plus wait and retained-evidence controls. A typed unresolved request
+needs its actual current-case cause. Any supplied PASS/FAIL or reused claim needs
+nonnull tested PR and trusted matching environment proof. Static human-only work
+needs no invented environment. Preserve prior findings when a later unit cannot
+run. I12 contains only the existing publisher's unknown-write seam; it does not
+repeat the publication matrix or permit replay.
+
+The two `I11-partial-*-null-proof` controls remove actual environment receipts
+from the predecessor envelope, card evidence and original pipeline comments.
+Current reviewed PR identity and ready/pending response facts remain present;
+there is no supplied assessment or result. If a helper/composer discovers this
+missing prerequisite before execution, it must stop with all-NOT_RUN. That
+truthful startup response does not demonstrate rejection of a partial PASS/FAIL
+claim. The developer contract test separately feeds the emitted proof slices
+into test-only canonical partial PASS/FAIL probes: positive proof validates and
+missing proof rejects at the environment boundary. These probes are never actor
+inputs. Keep genuine earlier observations local when they cannot be truthfully
+published; do not invent execution or a late loss of proof. The independent
+null-PR regression tests a different predicate.
+
+`I14-oversized-ledger` declares 100 evidence requirements for each of its four
+original steps, retaining each first requirement, IDs, ownership and order.
+Existing start validation refuses its complete projected ledger with
+`LEDGER_BYTES` before dispatch, with zero omitted entries. It is an input-budget
+control, not evidence of post-execution publication overflow. The separate
+publication `H03-oversized-ledger` fixture still checks actual canonical overflow.
+No large label sidecar or generated ledger is supplied to an actor.
+
+When a required fact is missing, retain the original inputs, exact missing
+field/artifact/consumer, parser or preflight diagnostics and actual partial results.
+Ask the named preparation/access owner for that fact through the authorized
+workflow. Stop the affected prescribed check after its bounded attempt; an
+untestable case remains unverified for the authorized human decision. The PGB-110
+evidence exception does not transfer. Do not reconstruct a result or retry a
+completed action. Retain sanitized evidence first, then remove only the owned
+disposable fixture folder; this preparer creates no services or live resources.
+
+### Complete source catalogue
+
+Each row lists the fixed variant IDs in `preparation.json`. Families describe
+supplied inputs; their names do not assert an executed outcome.
+
+| Family | Fixed variants |
+| --- | --- |
+| I01 — mixed work | `I01-story`, `I01-bug` |
+| I02 — missing handoff facts | `I02-child-receipt`, `I02-extraction`, `I02-provenance`, `I02-query`, `I02-parameters`, `I02-checkpoint` |
+| I03 — until expected | `I03-pending-ready`, `I03-all-pending` |
+| I04 — all observations | `I04-all-ready`, `I04-one-mismatch` |
+| I05 — time and access | `I05-next-offset`, `I05-deadline`, `I05-missed-offset`, `I05-access-loss`, `I05-missing-bound` |
+| I06 — dependency graphs | `I06-dependent-independent`, `I06-chain`, `I06-join`, `I06-unbound-output` |
+| I07 — inability | `I07-domain-inability`, `I07-cleanup-inability` |
+| I08 — wait and discussion | `I08-pure-wait`, `I08-fail-wait`, `I08-discussion`, `I08-missing-cause` |
+| I09 — native work types | `I09-static-bug`, `I09-task`, `I09-epic` |
+| I10 — current authority and reads | `I10-source-drift`, `I10-requirement-drift`, `I10-stage-drift`, `I10-incomplete-pages`, `I10-wrong-scope`, `I10-wrong-actor`, `I10-wrong-tenant` |
+| I11 — environment proof | `I11-missing-environment`, `I11-stale-environment`, `I11-partial-pass-null-proof`, `I11-partial-fail-null-proof` |
+| I12 — uncertain writes | `I12-append-unknown`, `I12-transition-unknown` |
+| I13 — historical reuse | `I13-valid`, `I13-stale`, `I13-wrong-tenant`, `I13-untrusted-approval` |
+| I14 — capabilities and size | `I14-no-model`, `I14-no-clock`, `I14-no-helper`, `I14-oversized-ledger` |
+
+### Inspect the three shared PGB-138 controls
+
+The full catalogue above is PGB-132's preparation contract. The three corrected
+controls `I01-story`, `I02-parameters` and `I11-stale-environment` retain
+PGB-138's narrower inspection provenance; their inspection does
+not complete the original PGB-132 human cases.
 
 For R1-30-H01, record `git rev-parse HEAD`, the SHA256 of
 `test/fixtures/qa-helper-case.mjs`, all emitted input hashes and the index hash.
@@ -430,27 +565,7 @@ from current review/PR. Actor, target, readiness and remaining proof identities
 stay consistent with I01. This isolates stale deployment; inspection does not
 assert a runtime publisher result or live deployment readiness.
 
-Preparation remains `NOT_READY` until an independent operator supplies the actual
-reviewed source, immutable installed skills/manifest/payload hashes, input hashes,
-caller/action/actor/tenant authority and selected exercise capabilities. A mutable
-installed link is not revision proof. Fixed `.invalid` targets and simulated
-DB/TLS facts are mock inputs, not live credentials.
-
-Optional downstream exercises use the existing immutable installed helper
-contracts and an independently authorized caller. Top-level logical caller is
-`qa-entrypoint`; the API parent alone owns its named Bruno child. Supply exact
-case/step/caller, raw work/context, assignment/current review, scope, access and
-capabilities. Return fixed cards only for actual requested actions; retain actual
-helper output in `output/`. Bind only actual child output with original
-revision/actor/tenant provenance through the declared extraction and DB/UI inputs.
-After independent assessment, standalone `qa-jira` owns preflight/final publication
-and uncertain-write recovery. Echo only the actual submitted transport when using
-mock publisher cards. The retained full `qa-entrypoint` remains incompatible until
-PGB-78. None of these optional exercises is PGB-138 acceptance.
-
-For a missing fact, retain original inputs, exact field/artifact/consumer and
-read-only diagnostics. Ask the named preparation/access owner through the
-authorized workflow; stop after the bounded attempt and leave the case unverified
-for a human decision. PGB-132's owner evidence exception does not cover PGB-138.
-Retain sanitized evidence first, then remove only the owned disposable root.
-Preparation creates no services or live resources.
+PGB-132's original independent QA report remains INCOMPLETE. Owner decision
+10765 accepts its specific actual-helper/dependent-publisher evidence gap; this
+source extension does not rerun or waive that gap, transfer it to PGB-138, or
+claim human, live, installed, CI, merge or activation acceptance.

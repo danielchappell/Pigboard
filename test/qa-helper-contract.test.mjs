@@ -128,7 +128,7 @@ import { readdir } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { parse, stringify } from 'yaml';
 import { prepareQaFixture } from './fixtures/qa-helper-case.mjs';
-import { records, targetRecord, changeTarget } from './fixtures/qa-partial-results.mjs';
+import { records, targetRecord, changeTarget, executionProofFixtures } from './fixtures/qa-partial-results.mjs';
 import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
 import { validateHandoff, extractHandoff, digestValue } from '../lib/contracts/handoff.mjs';
 import { parseConfig } from '../lib/config/parse.mjs';
@@ -748,45 +748,53 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
  assert.equal(p.ready,false);assert.equal((await stat(p.runDir)).mode&0o777,0o700);
  await assert.rejects(prepareQaFixture(p.runDir,{suite:'dispatch-inputs'}),/exist/i);
  await assert.rejects(prepareQaFixture('relative',{suite:'dispatch-inputs'}),/absolute/);
- assert.deepEqual(Object.keys(p.cases),['I01-story','I02-parameters','I11-stale-environment']);
- const summary=JSON.parse(await readFile(p.preparation,'utf8'));assert.equal(summary.cases.length,3);
- assert.equal(summary.human_acceptance,'R1-30-H01/H02/H03 NOT RUN');
+ assert.deepEqual([...new Set(Object.keys(p.cases).map(id=>id.slice(0,3)))].sort(),Array.from({length:14},(_,i)=>'I'+String(i+1).padStart(2,'0')));
+ const summary=JSON.parse(await readFile(p.preparation,'utf8'));assert.equal(summary.cases.length,51);
+ assert.deepEqual(Object.fromEntries(Array.from({length:14},(_,i)=>{const family='I'+String(i+1).padStart(2,'0');return [family,Object.keys(p.cases).filter(id=>id.startsWith(family+'-')).length];})),{I01:2,I02:6,I03:2,I04:2,I05:5,I06:4,I07:2,I08:4,I09:3,I10:7,I11:4,I12:2,I13:4,I14:4});
+ assert.equal(summary.human_acceptance,'R1-27-H01/H02/H03 NOT RUN; R1-30-H01/H02/H03 NOT RUN');
  assert.equal(summary.source_module_sha256,'sha256:'+hash(await readFile(new URL('./fixtures/qa-helper-case.mjs',import.meta.url))));
  for(const [id,dir]of Object.entries(p.cases)){
   assert.deepEqual(await readdir(path.join(dir,'output')),[],id);
+  const operator=JSON.parse(await readFile(path.join(p.runDir,'operator',id+'.json'),'utf8'));
+  assert.deepEqual(operator.native_cases,['R1-27-H01','R1-27-H02','R1-27-H03']);
+  assert.deepEqual(operator.shared_control_cases,['I01-story','I02-parameters','I11-stale-environment'].includes(id)?['R1-30-H01','R1-30-H02','R1-30-H03']:[]);
   const files=await readdir(path.join(dir,'input'));for(const forbidden of ['assessment.json','record.yaml','verdict.json','expectations.json','candidate.json'])assert(!files.includes(forbidden),id);
   const index=await input(id,'index.json');assert.equal(index.preparation_id,'PREP-01');
   for(const a of index.artifacts){const bytes=await readFile(path.join(p.runDir,a.path));assert.equal(a.digest,'sha256:'+hash(bytes));assert.equal((await stat(path.join(p.runDir,a.path))).mode&0o777,0o600);}
   const work=JSON.parse(await raw(id,'work.yaml')),facts=await raw(id,'facts.yaml');
   assert.deepEqual(index.consumers,work.testing_strategy.cases.flatMap(c=>c.steps.map(s=>s.id)));
   const result=validateWork(await raw(id,'work.yaml'),{mode:'start',contextInput:facts});
-  assert.equal(result.valid,id!=='I02-parameters',id+JSON.stringify(result.diagnostics));
+  assert.equal(result.valid,!['I02-parameters','I05-missing-bound','I14-oversized-ledger'].includes(id),id+JSON.stringify(result.diagnostics));
   if(id==='I02-parameters')assert(result.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
+  if(id==='I05-missing-bound')assert(result.diagnostics.some(d=>d.code==='OBSERVATION'));
+  if(id==='I14-oversized-ledger')assert.deepEqual(result.diagnostics.map(d=>[d.code,d.path]),[['LEDGER_BYTES','/testing_strategy']]);
   assert.equal(parseConfig(await raw(id,'scope.yaml')).valid,true,id);
   const e=await input(id,'predecessors.json'),target=targetRecord(e);assert.equal(target.kind,'review',id);
   assert.equal(validateHandoff(JSON.stringify(target),{mode:'record'}).valid,true);
-  const expectedChain=id!=='I02-parameters';
+  const expectedChain=!['I02-parameters','I05-missing-bound','I10-incomplete-pages','I13-untrusted-approval','I14-oversized-ledger'].includes(id);
   const receipt=chain(e);assert.equal(receipt.valid,expectedChain,id+JSON.stringify(receipt.diagnostics));
   if(id==='I02-parameters')assert(receipt.diagnostics.some(d=>d.code==='DATABASE_PARAMETERS'));
+  const diagnostic={ 'I05-missing-bound':'OBSERVATION','I10-incomplete-pages':'INCOMPLETE_READ','I13-untrusted-approval':'ACTOR','I14-oversized-ledger':'LEDGER_BYTES' }[id];
+  if(diagnostic)assert(receipt.diagnostics.some(d=>d.code===diagnostic),id+JSON.stringify(receipt.diagnostics));
   for(const {r}of records(e).filter(x=>x.r.ticket_id===target.ticket_id)){
    assert(!['qa','repair_request','dependency_wait'].includes(r.kind),id+' current terminal leak');
-   assert(!['blocked','resume_authorization'].includes(r.kind),id+' unexpected historical terminal');
+   if(r.kind==='blocked'||r.kind==='resume_authorization')assert(id.startsWith('I13-'));
   }
   const cards=await input(id,'cards.json');assert.equal(cards.category,'supplied/mock');
   assert.deepEqual(cards.reads.evidence,e.evidence_receipts,id+' receipt mirrors');
   for(const {r}of records(e).filter(x=>x.r.kind==='implementation'))for(const ref of r.payload.verification){assert(e.evidence_receipts.some(receipt=>receipt.uri===ref.uri),id+' retained verification');assert(e.trusted.projects.some(project=>project.evidence_uris.includes(ref.uri)));}
   const currentOnly=e.evidence_receipts.filter(receipt=>/^https:\/\/evidence\.example\.invalid\/1000-(?:005|009|013)-1-TC-01\.S[1-4]-0$/.test(receipt.uri));
-  assert.deepEqual(currentOnly.map(r=>r.uri).sort(),[],id+' no unused current-step receipt');
+  assert.deepEqual(currentOnly.map(r=>r.uri).sort(),id.startsWith('I13-')?['https://evidence.example.invalid/1000-013-1-TC-01.S1-0','https://evidence.example.invalid/1000-013-1-TC-01.S2-0']:[],id+' no unused current-step receipt');
   for(const uri of ['https://evidence.example.invalid/1000-009-1-TC-01.S2-0','https://evidence.example.invalid/1000-009-1-TC-01.S3-0','https://evidence.example.invalid/1000-009-1-TC-01.S4-0']){assert(!cards.reads.evidence.some(r=>r.uri===uri),id);assert(!e.trusted.projects.some(project=>project.evidence_uris.includes(uri)),id);}
   assert(!e.evidence_receipts.some(r=>r.uri==='https://evidence.example.invalid/finding'),id+' no unused current finding');
   for(const forbidden of ['assessment','qa_report','findings','proposed_outcome','destination','candidate'])assert(!Object.hasOwn(cards,forbidden),id);
   assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('independently authorize caller qa-entrypoint'));
  }
- await t.test('mixed Story preserves exact types, consumers, request/assertions, two-hop extraction and three actual image inputs',async()=>{
-  for(const id of ['I01-story']){
+ await t.test('mixed Story/Bug preserve exact types, consumers, request/assertions, two-hop extraction and three actual image inputs',async()=>{
+  for(const id of ['I01-story','I01-bug']){
    const work=JSON.parse(await raw(id,'work.yaml')),cards=await input(id,'cards.json'),[api,child,db,ui]=work.testing_strategy.cases[0].steps;
    assert.deepEqual(work.testing_strategy.dispatch_order,[api.id,db.id,ui.id]);assert.deepEqual(api.children,[child.id]);assert.equal(child.caller,api.id);
-   assert.equal(cards.reads.native.type_id,'22');
+   assert.equal(cards.reads.native.type_id,id==='I01-story'?'22':'23');
    const request=await raw(id,'collection/selected.bru');for(const text of ['/api/record','res.status: 200','res.body.tenant_id: tenant-a','res.body.state: ready','res.getBody().record_id'])assert(request.includes(text));
    assert(!request.includes('REQUIRED_PORT'));assert.equal(await raw(id,'query.sql'),query);
    assert.deepEqual(await input(id,'parameters.json'),['tenant-a',null]);assert.deepEqual(db.database.parameter_bindings,[{input:'record_id',index:1}]);
@@ -798,6 +806,152 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
    assert.equal(cards.reads.access.actor_id,'ACTOR-01');assert.equal(cards.reads.access.tenant,'tenant-a');
    assert.deepEqual(cards.tool_inputs.api.responses,[{status:200,body:{record_id:'record-001',tenant_id:'tenant-a',state:'ready'}}]);
   }
+ });
+ await t.test('negative facts remain incomplete at their own boundary without rewriting original expectations',async()=>{
+  const positive=await raw('I01-story','work.yaml');
+  for(const id of ['I02-child-receipt','I02-extraction','I02-provenance','I02-query','I02-parameters','I02-checkpoint','I10-wrong-actor','I10-wrong-tenant'])assert.equal(await raw(id,'work.yaml'),positive,id);
+  assert.equal((await input('I02-extraction','extraction.json')).json_pointer,null);
+  await assert.rejects(stat(path.join(p.cases['I02-query'],'input/query.sql')),/ENOENT/);
+  assert.equal(await input('I02-parameters','parameters.json'),null);
+  assert.equal((await input('I02-checkpoint','cards.json')).tool_inputs.ui.checkpoints.length,2);
+  const checkpointWork=JSON.parse(await raw('I02-checkpoint','work.yaml'));assert.equal(checkpointWork.testing_strategy.cases[0].steps.find(s=>s.skill==='qa-ui').ui.screenshot_checkpoints.length,3);
+  await assert.rejects(stat(path.join(p.cases['I02-checkpoint'],'input/screens/ui-2.png')),/ENOENT/);
+  assert.equal((await input('I02-provenance','cards.json')).tool_inputs.api.responses[0].actor_id,'OTHER');
+  assert.deepEqual((await input('I10-wrong-actor','access.json')).actors,[]);
+  assert.equal((await input('I10-wrong-tenant','access.json')).actors[0].tenant,'tenant-b');
+  assert.equal((await input('I14-no-model','capabilities.json')).model_profile,null);
+  assert.equal((await input('I14-no-clock','capabilities.json')).clock,null);
+  assert.deepEqual((await input('I14-no-helper','capabilities.json')).helpers,[]);
+ });
+ await t.test('earlier unresolved child history is bound before invocation without available fresh API observations',async()=>{
+  const id='I02-child-receipt',cards=await input(id,'cards.json'),positive=await input('I01-story','cards.json');
+  const work=JSON.parse(await raw(id,'work.yaml')),e=await input(id,'predecessors.json'),access=await input(id,'access.json'),current=targetRecord(e);
+  const c=work.testing_strategy.cases[0],[parent,child]=c.steps,history=cards.reads.child_operation_history;
+  assert.equal(history.length,1);const [attempt]=history;assert.equal(attempt.category,'supplied/mock');assert(attempt.attempt_id.trim());
+  assert.equal(attempt.ticket_id,current.ticket_id);assert.deepEqual(attempt.assignment,current.assignment);assert.equal(attempt.requirements_digest,current.requirements_digest);
+  assert.deepEqual(attempt.pr,current.payload.pr);assert.equal(attempt.deployed_revision,e.evidence_receipts.find(r=>r.kind==='environment').pr.source_revision);
+  assert.equal(attempt.case_id,c.id);assert.equal(attempt.parent_step,parent.id);assert.equal(attempt.child_step,child.id);
+  assert.deepEqual(parent.children,[attempt.child_step]);assert.equal(attempt.caller,child.caller);assert.equal(attempt.caller,parent.id);assert.equal(attempt.parent_caller,parent.caller);
+  assert.equal(attempt.actor_id,access.actor_id);assert.equal(attempt.actor_id,child.api.actor);assert.equal(attempt.tenant,access.tenant);assert.equal(attempt.identity_reference,access.identity_reference);
+  assert.deepEqual(attempt.request,{method:child.api.method,operation:child.api.operation,route:child.api.route,request_selector:child.api.request_selector});
+  assert.deepEqual(attempt.original_transport,{submitted:true});assert.deepEqual(attempt.response,{available:false});assert.deepEqual(attempt.report,{available:false});assert.equal(attempt.execution,'unknown');assert.equal(attempt.effects,'unknown');
+  const clock=await input(id,'clock.json'),lastReview=e.comment_pages.flatMap(p=>p.comments).find(x=>x.id===e.target.comment_id);
+  assert.equal(attempt.attempted_at,'2026-11-15T10:01:03Z');assert.equal(attempt.unavailability_observed_at,'2026-11-15T10:01:04Z');assert.equal(clock.origin,'2026-11-15T10:01:10Z');
+  assert(lastReview.updated<attempt.attempted_at);assert(attempt.attempted_at<attempt.unavailability_observed_at);assert(attempt.unavailability_observed_at<clock.origin);
+  const positiveClock=await input('I01-story','clock.json');clock.origin=positiveClock.origin;assert.deepEqual(clock,positiveClock);
+  assert.deepEqual(cards.tool_inputs.api,{step:parent.id,child:child.id,responses:[]});
+  const copy=structuredClone(cards);delete copy.reads.child_operation_history;copy.tool_inputs.api=positive.tool_inputs.api;assert.deepEqual(copy,positive,'all other cards unchanged');
+  assert(!Object.hasOwn(positive.reads,'child_operation_history'));assert.equal(positive.tool_inputs.api.selected_request_count,1);assert.equal(positive.tool_inputs.api.responses[0].body.state,'ready');
+  for(const file of ['work.yaml','facts.yaml','predecessors.json','known-requests.json','access.json','extraction.json','collection/selected.bru'])assert.equal(await raw(id,file),await raw('I01-story',file),file);
+  assert.deepEqual(await input(id,'known-requests.json'),[]);assert.equal((await input(id,'extraction.json')).value,null);
+  const invocation=await readFile(path.join(p.cases[id],'invocation.txt'),'utf8');
+  assert(invocation.startsWith('Before invoking qa-api, independently bind and supply input/cards.json#/reads/child_operation_history'));
+  assert(invocation.indexOf('before any action')<invocation.indexOf('Execute only the prescribed unit'));assert.match(invocation,/earlier submitted operation/);assert.match(invocation,/not a reply to a fresh tool call/);
+  // These assertions inspect inputs. No helper interpreter or call counter runs,
+  // and declaration validity does not prove execution readiness or zero calls.
+ });
+ await t.test('finite observation, dependency, inability, static and publisher seam inputs retain distinct facts',async()=>{
+  for(const id of ['I03-pending-ready','I03-all-pending','I04-all-ready','I04-one-mismatch']){
+   const work=JSON.parse(await raw(id,'work.yaml')),c=work.testing_strategy.cases[0],clock=await input(id,'clock.json');
+   assert.deepEqual(c.observation.schedule,[0,30,60]);assert.equal(c.observation.deadline_seconds,90);assert.equal(c.observation.completion,id.startsWith('I03')?'until_expected':'all_observations');
+   assert.deepEqual(work.testing_strategy.dispatch_order,['E01.S1']);assert.deepEqual(clock.offsets,[0,30,60]);assert.equal(clock.whole_unit_bound_seconds,20);assert.equal(clock.child_bound_seconds,5);
+  }
+  assert.deepEqual((await input('I03-pending-ready','cards.json')).tool_inputs.api.responses.map(r=>r.body.state),['pending','ready','ready']);
+  assert.deepEqual((await input('I04-one-mismatch','cards.json')).tool_inputs.api.responses.map(r=>r.body.state),['ready','pending','ready']);
+  assert.deepEqual((await input('I05-next-offset','clock.json')).unit_elapsed_seconds,[31]);
+  assert.deepEqual((await input('I05-missed-offset','clock.json')).now_offsets_seconds,[0,31]);
+  const pure=await input('I08-pure-wait','cards.json'),fail=await input('I08-fail-wait','cards.json');
+  for(const cards of [pure,fail]){assert.equal(cards.dependency_observations.length,1);const cause=cards.dependency_observations[0];assert.equal(cause.original_response.body.resolved,false);assert.equal(cause.original_response.body.case_id,cause.case_id);assert.equal(cause.upstream.request.digest,cause.original_response.body.request.digest);}
+  assert.deepEqual((await input('I08-missing-cause','cards.json')).dependency_observations,[]);
+  assert.notDeepEqual(pure.tool_inputs.api.responses,fail.tool_inputs.api.responses);
+  assert.equal((await input('I07-cleanup-inability','cards.json')).tool_inputs.database.rollback,'unavailable');
+  assert.equal((await input('I07-domain-inability','cards.json')).capability_observations[0].body.observation_started,false);
+  const joined=JSON.parse(await raw('I06-join','work.yaml')),dbCase=joined.testing_strategy.cases.find(c=>c.steps.some(s=>s.skill==='qa-database')),db=dbCase.steps.find(s=>s.skill==='qa-database');
+  assert.deepEqual(dbCase.depends_on,[]);assert.deepEqual(db.bindings,[]);assert.deepEqual(db.inputs,{record_id:'fixture-1'});assert.deepEqual(db.database.parameters,['example','fixture-1']);assert.deepEqual(db.database.parameter_bindings,[]);
+  assert.deepEqual((await input('I06-join','cards.json')).tool_inputs.api.responses[0].body,{results:[]});assert.deepEqual((await input('I06-join','cards.json')).tool_inputs.database.rows,[]);
+  const joinCase=joined.testing_strategy.cases.find(c=>c.depends_on.length===2);assert(joinCase);assert.deepEqual(joinCase.depends_on.map(d=>d.step).sort(),['TC-01.S3','TC-01.S4']);
+  assert.equal((await input('I01-story','cards.json')).tool_inputs.database.rows.length,1);
+  const staticWork=JSON.parse(await raw('I09-static-bug','work.yaml'));assert.deepEqual(staticWork.testing_strategy.cases,[]);assert.deepEqual(staticWork.testing_strategy.human_review.cases.map(c=>c.id),['HQA-01','HQA-02']);
+  assert.deepEqual((await input('I11-missing-environment','cards.json')).reads.pipeline.original_comments,[]);
+  assert.equal((await input('I12-append-unknown','cards.json')).append.storage,'ambiguous');
+  assert.equal((await input('I12-transition-unknown','cards.json')).transition.resolving_status,'unknown');
+ });
+ await t.test('emitted missing environment proof rejects test-only partial claims while preserving actual input facts',async()=>{
+  const positive=await input('I01-story','predecessors.json'),positiveCards=await input('I01-story','cards.json');
+  const proof=positive.evidence_receipts.filter(r=>r.kind==='environment');assert.equal(proof.length,1);
+  assert.deepEqual(positiveCards.reads.evidence,positive.evidence_receipts);
+  assert.equal(JSON.parse(positiveCards.reads.pipeline.original_comments[0].body).source_revision,proof[0].pr.source_revision);
+  const specimens=executionProofFixtures();
+  for(const [id,result]of [['I11-partial-pass-null-proof','PASS'],['I11-partial-fail-null-proof','FAIL']]){
+   const emitted=await input(id,'predecessors.json'),cards=await input(id,'cards.json');
+   const withoutProof=structuredClone(positive);withoutProof.evidence_receipts=withoutProof.evidence_receipts.filter(r=>r.kind!=='environment');
+   assert.deepEqual(emitted,withoutProof,id+' actual envelope changes only environment proof');
+   assert.deepEqual(cards.reads.evidence,emitted.evidence_receipts);assert.deepEqual(cards.reads.pipeline.original_comments,[]);
+   assert(!Object.hasOwn(cards,'proof_inputs'));assert(!emitted.evidence_receipts.some(r=>r.kind==='environment'));
+   assert.deepEqual(targetRecord(emitted).payload.pr,targetRecord(positive).payload.pr);assert.notEqual(targetRecord(emitted).payload.pr,null);
+   const expectedCards=structuredClone(positiveCards);expectedCards.reads.evidence=withoutProof.evidence_receipts;expectedCards.reads.pipeline.original_comments=[];
+   if(result==='FAIL')expectedCards.tool_inputs.api.responses[0].body.state='pending';
+   assert.deepEqual(cards,expectedCards,id+' observations/current reads retained');
+   for(const file of ['work.yaml','facts.yaml','clock.json','capabilities.json','known-requests.json'])assert.equal(await raw(id,file),await raw('I01-story',file),id+' '+file);
+   // Only actual emitted environment slices vary. This canonical candidate is
+   // test-local, never an actor input or a claim of earlier helper execution.
+   const original=specimens['proof-blocked-exact-'+result.toLowerCase()],before=JSON.stringify(original);
+   for(const [source,valid]of [[positive,true],[emitted,false]]){
+    const probe=structuredClone(original),environment=source.evidence_receipts.filter(r=>r.kind==='environment');
+    probe.evidence_receipts=[...probe.evidence_receipts.filter(r=>r.kind!=='environment'),...structuredClone(environment)];
+    for(const project of probe.trusted.projects)project.evidence_uris=[...new Set([...project.evidence_uris,...environment.map(r=>r.uri)])];
+    assert.notEqual(targetRecord(probe).payload.pr,null);assert.equal(targetRecord(probe).payload.qa_report.steps[0].result,result);
+    const checked=chain(probe);assert.equal(checked.valid,valid,id+JSON.stringify(checked.diagnostics));
+    if(!valid)assert.deepEqual(checked.diagnostics.map(d=>[d.code,d.path]),[['EVIDENCE','/comment_pages/0/comments/3/body/payload/qa_report/environment']]);
+   }
+   assert.equal(JSON.stringify(original),before,'canonical specimen remains unchanged');
+  }
+ });
+ await t.test('emitted oversized declared evidence binds all mirrors and refuses only complete pre-dispatch projection',async()=>{
+  const id='I14-oversized-ledger',work=JSON.parse(await raw(id,'work.yaml')),facts=await input(id,'facts.yaml');
+  const positiveWork=JSON.parse(await raw('I01-story','work.yaml')),positiveFacts=await raw('I01-story','facts.yaml');
+  const steps=work.testing_strategy.cases.flatMap(c=>c.steps),positiveSteps=positiveWork.testing_strategy.cases.flatMap(c=>c.steps);
+  assert.deepEqual(steps.map(s=>s.id),positiveSteps.map(s=>s.id));assert.equal(steps.length,4);
+  for(let i=0;i<steps.length;i++){
+   assert.equal(steps[i].evidence.length,100);assert.equal(new Set(steps[i].evidence).size,100);assert.equal(steps[i].evidence[0],positiveSteps[i].evidence[0]);
+   assert.deepEqual(facts.operations.find(o=>o.step===steps[i].id).contract,steps[i]);
+   steps[i].evidence=positiveSteps[i].evidence;
+  }
+  assert.deepEqual(work,positiveWork,'IDs/order/children/outputs/expectations/human cases unchanged');
+  const emitted=await input(id,'predecessors.json'),cards=await input(id,'cards.json'),bound=emitted.requirements.find(r=>r.ticket_id===emitted.target.ticket_id);
+  const actual=JSON.parse(await raw(id,'work.yaml')),digest=digestValue(actual);
+  assert.equal(bound.body,await raw(id,'work.yaml'));assert.equal(bound.context_body,await raw(id,'facts.yaml'));assert.equal(bound.digest,digest);
+  assert.equal(cards.reads.native.description,bound.body);assert.deepEqual(cards.reads.comments,emitted.comment_pages);assert.deepEqual(cards.reads.evidence,emitted.evidence_receipts);
+  assert.equal(emitted.issues.find(i=>i.id===emitted.target.ticket_id).requirements_digest,digest);
+  for(const {r}of records(emitted).filter(x=>x.r.ticket_id===emitted.target.ticket_id))assert.equal(r.requirements_digest,digest);
+  for(const receipt of emitted.evidence_receipts.filter(r=>Object.hasOwn(r.details,'requirements_digest')))assert.equal(receipt.details.requirements_digest,digest);
+  assert.equal(emitted.target.digest,digestValue(targetRecord(emitted)));assert(!Object.hasOwn(cards,'evidence_label_inputs'));
+  const checked=validateWork(bound.body,{mode:'start',contextInput:bound.context_body});
+  assert.equal(checked.valid,false);assert.equal(checked.draft_valid,true);assert.equal(checked.start_structure_valid,true);assert.equal(checked.start_semantics_valid,false);
+  assert.deepEqual(checked.diagnostics.map(d=>[d.code,d.path]),[['LEDGER_BYTES','/testing_strategy']]);
+  assert.deepEqual(checked.ledger_budget,{encoding:'json-yaml-1.2',projection_bytes:25003,limit_bytes:16384,ai_steps:4,human_cases:2,omitted_entries:0,actual_publication:'not_evaluated'});
+  assert.equal(validateWork(await raw('I01-story','work.yaml'),{mode:'start',contextInput:positiveFacts}).valid,true);
+ });
+ await t.test('designated historical reuse closes the review/blocker/auth proofs and separates earlier observations from current output',async()=>{
+  const e=await input('I13-valid','predecessors.json'),history=await input('I13-valid','historical.json'),rows=records(e);
+  const blocker=rows.find(x=>x.r.kind==='blocked'),auth=rows.find(x=>x.r.kind==='resume_authorization');
+  assert.deepEqual(blocker.r.payload.qa_report.steps.map(s=>s.result),['PASS','PASS','NOT_RUN','NOT_RUN']);assert(!blocker.r.payload.findings);
+  assert.deepEqual(auth.r.payload.blocked_result,history.blocker);assert.equal(auth.c.author_id,'human');
+  const parent=history.artifacts.find(a=>a.body.kind==='api_parent_observation'),child=history.artifacts.find(a=>a.body.kind==='bruno_response');
+  assert.deepEqual(parent.body.response,child.body.response);assert.equal(parent.body.child_source.uri,child.uri);
+  assert.equal(parent.body.child_source.response_digest,'sha256:'+hash(JSON.stringify(child.body.response)));
+  for(const artifact of history.artifacts){assert.equal(artifact.body_sha256,'sha256:'+hash(JSON.stringify(artifact.body)));assert.equal(artifact.body.category,'historical supplied/mock');assert(artifact.body.observed_at<history.domain_inabilities[0].observed_at);assert(e.evidence_receipts.some(r=>r.uri===artifact.uri&&r.observed_digest===artifact.body_sha256));}
+  assert(history.domain_inabilities.every(f=>f.observed_at<blocker.c.created));assert(blocker.c.updated<auth.c.created);assert(auth.c.updated<history.new_execution_not_before);
+  assert.equal(history.reuse.length,2);for(const ref of history.reuse){const receipt=e.evidence_receipts.find(r=>r.uri===ref.uri);assert.equal(receipt.kind,'reuse');assert.deepEqual(receipt.details.source,history.blocker);assert.equal(receipt.details.case_id,'TC-01');assert(['TC-01.S1','TC-01.S2'].includes(receipt.details.step_id));}
+  // Validate separate historical snapshots; future authorization is not present
+  // in the earlier blocker snapshot. No current terminal is invented for a pass.
+  for(const entry of [blocker,auth]){const copy=structuredClone(e);copy.target={ticket_id:entry.r.ticket_id,comment_id:entry.c.id,record_id:entry.r.record_id,digest:digestValue(entry.r)};copy.issues[0].stage_id=copy.trusted.projects[0].stages[entry.r.to_stage];if(entry===blocker)for(const page of copy.comment_pages){page.comments=page.comments.filter(c=>c.created<=blocker.c.created);page.total=page.comments.length;}const r=chain(copy);assert.equal(r.valid,true,entry.r.kind+JSON.stringify(r.diagnostics));}
+  const stale=await input('I13-stale','historical.json');assert(stale.artifacts.every(a=>a.body.pr.source_revision==='f'.repeat(40)));
+  assert.equal((await input('I13-wrong-tenant','historical.json')).artifacts.find(a=>a.body.kind==='bruno_response').body.tenant,'foreign');
+  const untrusted=await input('I13-untrusted-approval','predecessors.json');assert(chain(untrusted).diagnostics.some(d=>d.code==='ACTOR'));
+  for(const id of ['I13-stale','I13-wrong-tenant','I13-untrusted-approval'])assert.equal(await raw(id,'work.yaml'),await raw('I13-valid','work.yaml'));
+  for(const id of ['I13-valid','I13-stale','I13-wrong-tenant','I13-untrusted-approval']){const clock=await input(id,'clock.json'),old=await input(id,'historical.json');assert.equal(clock.origin,old.new_execution_not_before);assert.equal(clock.origin,'2026-11-15T10:03:01Z');assert.equal(old.artifacts[0].body.observed_at,'2026-11-15T10:01:03Z');assert.deepEqual(clock.offsets,[0]);assert.equal(clock.whole_unit_bound_seconds,20);}
+  assert.equal((await input('I01-story','clock.json')).origin,'2026-11-15T10:00:00Z');
  });
  await t.test('missing trusted parameter count is the sole context difference and rejects at the named boundary',async()=>{
   const base='I01-story',negative='I02-parameters';
@@ -833,6 +987,18 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
  });
 });
 
+test('current PGB-132 forecast agrees across product, delivery and metadata while earlier estimates remain history',async()=>{
+ const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),plan=metadata.find(x=>x.id==='R1-27');
+ const expected=`Current PGB-132 whole residual forecast: **${plan.hours.min}–${plan.hours.max} hours / ${plan.hours.min/8}–${plan.days} days**.`;
+ const product=await read('docs/product/README.md'),delivery=await read('docs/delivery/manager-r1/README.md');
+ for(const document of [product,delivery]){const statements=document.split('\n').filter(line=>line.startsWith('Current PGB-132 whole residual forecast:'));assert.equal(statements.length,1);assert(statements[0].startsWith(expected));}
+ const lower=metadata.reduce((sum,x)=>sum+(x.hours?x.hours.min/8:x.days),0).toFixed(5),upper=metadata.reduce((sum,x)=>sum+x.days,0).toFixed(5);
+ assert(delivery.includes(`Current metadata aggregate: **${lower}–${upper} days**`));
+ assert(delivery.includes(`### R1-27 — 12 residual forecast files, ${plan.hours.min}–${plan.hours.max} hours`));
+ assert(delivery.split('\n').find(line=>line.startsWith('| R1-27 /')).includes(`| ${plan.hours.min/8}–${plan.days} | 12 |`));
+ for(const document of [product,delivery]){assert(document.includes('15 November'));assert(document.includes('6.75–9.75h'));assert(document.includes('16 November'));assert(document.includes('7.5–11.25h'));assert(document.includes('history'));}
+});
+
 test('PGB-129 source publication binds the actual native prerequisite and preserves original preview scope',async()=>{
  const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),publication=JSON.parse(await read('docs/delivery/manager-r1/publication.json'));
  const draft=drafts.find(x=>x.id==='R1-26'),plan=metadata.find(x=>x.id==='R1-26'),a=publication.current_proof_conflict_amendment;
@@ -859,8 +1025,8 @@ test('PGB-132 source publication preserves Core history and binds the preparatio
  assert.deepEqual(dispatcher.prerequisites,[...upstream,'R1-27'].map(ticket=>({ticket,required_outcome:'ai_qa_complete'})));
  assert.equal(hash([...plan('R1-27').files].sort()),'b9236d7417b1d57b9bbf8954a82b1ecfe24a314464733faa446571a2ce801af6');
  assert.equal(hash([...plan('R1-08').files].sort()),'5a066e773dae845a29b4df278fb01d129f6c6ba0a23f0c2585e1f66c540cfaad');
- assert.deepEqual(plan('R1-27').hours,{min:6.75,max:9.75});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
- assert.equal(plan('R1-27').days,1.21875);assert.equal(plan('R1-08').days,1.8125);
+ assert.deepEqual(plan('R1-27').hours,{min:8.5,max:12.75});assert.deepEqual(plan('R1-08').hours,{min:10.5,max:14.5});
+ assert.equal(plan('R1-27').days,1.59375);assert.equal(plan('R1-08').days,1.8125);
  const prepFiles=new Set(plan('R1-27').files),dispatchFiles=new Set(plan('R1-08').files);assert.equal(new Set([...prepFiles,...dispatchFiles]).size,23);assert.equal([...prepFiles].filter(f=>dispatchFiles.has(f)).length,6);
  for(const id of ['R1-27','R1-08']){assert(!plan(id).time_limit_exception);assert(plan(id).hours.max<16);const r=validateWork(JSON.stringify(contract(id)),{mode:'structure'});assert.equal(r.valid,true,JSON.stringify(r.diagnostics));}
  assert.deepEqual(a.stories,{'R1-27':'PGB-132'});assert.equal(a.native_id,'10592');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);
@@ -905,7 +1071,7 @@ test('PGB-136 partial source publication binds the exact own-selection split and
  for(const [id,days]of [['R1-28',1.92],['R1-11',1.53]]){assert.equal(plan(id).days,days);assert.equal(plan(id).files.length,20);assert.equal(new Set(plan(id).files).size,20);assert(!plan(id).time_limit_exception);}
  const publicationFiles=['docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/ticket-drafts.json','docs/delivery/manager-r1/publication.json','docs/delivery/manager-r1/stories.md','docs/delivery/manager-r1/coverage.md','docs/product/README.md','docs/product/coverage.md','test/qa-helper-contract.test.mjs'];
  for(const file of publicationFiles)assert(plan('R1-28').files.includes(file),file);for(const file of ['test/story-authoring.test.mjs','test/manager-preview.test.mjs'])assert(plan('R1-28').files.includes(file),file);assert(!plan('R1-28').files.includes('test/receipt-chain.test.mjs'));assert(plan('R1-28').files.includes('README.md'));assert(!plan('R1-28').files.includes('lib/manager/availability.mjs'));
- assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),47.86625);
+ assert.equal(Number(metadata.reduce((n,x)=>n+x.days,0).toFixed(5)),48.24125);
  assert.equal(publication.stories['R1-28'],'PGB-136');assert.equal(a.native_id,'10596');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);
  assert.deepEqual(a.dependency_links,[{id:'10715',type_id:'10000',from:'PGB-129',to:'PGB-136'},{id:'10716',type_id:'10000',from:'PGB-136',to:'PGB-81'}]);for(const edge of a.dependency_links)assert(publication.dependency_links.some(x=>x.id===edge.id&&x.from===edge.from&&x.to===edge.to));
  assert.deepEqual(a.preserved_link_ids,['10637','10638','10686','10705']);assert.equal(a.description_sha256.prerequisite,'905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7');assert.equal(a.description_sha256.preview_after,'7506971ef565beb236c1006ade1104ad83762e748526dedc45c28420ffdadfb4');
