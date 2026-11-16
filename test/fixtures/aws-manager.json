@@ -1,0 +1,287 @@
+{
+  "config": {
+    "schema": "pigboard-config/v1",
+    "jira": {
+      "site": "https://jira.example.invalid",
+      "connection": {
+        "credential_kind": "atlassian_scoped_service_account_token",
+        "cloud_id": "00000000-0000-0000-0000-000000000001",
+        "secret_reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef"
+      },
+      "read_bounds": {
+        "max_epics": 4,
+        "max_streams": 8,
+        "max_known_issues": 32,
+        "max_comments": 256,
+        "max_pages": 64,
+        "max_requests": 256,
+        "page_size": 25,
+        "max_response_bytes": 1048576,
+        "max_total_response_bytes": 8388608,
+        "request_timeout_ms": 5000,
+        "scan_timeout_ms": 60000
+      }
+    },
+    "defaults": {
+      "stages": {
+        "Ready to Work": "11",
+        "In Progress": "12",
+        "In Review": "13",
+        "QA": "14",
+        "Human Review": "15",
+        "Rework Queued": "16",
+        "Blocked": "17"
+      },
+      "accepted_later_stage_ids": [
+        "18"
+      ],
+      "types": {
+        "epic": "21",
+        "story": "22",
+        "bug": "23"
+      },
+      "actors": {
+        "manager": [
+          "operator-demo"
+        ],
+        "implementer": [
+          "operator-demo"
+        ],
+        "reviewer": [
+          "operator-demo"
+        ],
+        "qa": [
+          "operator-demo"
+        ],
+        "human_request": [
+          "operator-demo"
+        ]
+      },
+      "repositories": [
+        "https://git.example.invalid/team/app"
+      ],
+      "worker_prefixes": [
+        "AI-Daniel-"
+      ],
+      "opt_in_label": "pigboard"
+    },
+    "projects": [
+      {
+        "id": "10001",
+        "key": "APP",
+        "board_ids": [
+          "101"
+        ],
+        "inherit": [
+          "stages",
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "repositories",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {}
+      },
+      {
+        "id": "10002",
+        "key": "OPS",
+        "board_ids": [
+          "102"
+        ],
+        "inherit": [
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {
+          "stages": {
+            "Ready to Work": "31",
+            "In Progress": "32",
+            "In Review": "33",
+            "QA": "34",
+            "Human Review": "35",
+            "Rework Queued": "36",
+            "Blocked": "37"
+          },
+          "repositories": [
+            "https://code.example.invalid/ops/service"
+          ]
+        }
+      }
+    ],
+    "manager": {
+      "installation_id": "fixture",
+      "domain_id": "fixture-domain",
+      "aws": {
+        "account_id": "123456789012",
+        "region": "eu-west-1",
+        "stack_name": "pigboard-fixture",
+        "operator_role_arn": "arn:aws:iam::123456789012:role/pigboard-operator",
+        "deployer_role_arn": "arn:aws:iam::123456789012:role/pigboard-deployer"
+      },
+      "controls": {
+        "mode": "preview",
+        "schedule_enabled": false,
+        "writes_enabled": false,
+        "maintenance": false
+      },
+      "schedule_minutes": 5,
+      "invocation_timeout_seconds": 120,
+      "log_retention_days": 14,
+      "activation": {
+        "full_visibility_confirmed": false,
+        "sole_admitting_installation_confirmed": false,
+        "inventory_reviewed": false
+      },
+      "transition_edges": []
+    }
+  },
+  "ordinary_source": {
+    "fixture": "test/fixtures/manager-candidates.json ordinary_recorded.S01",
+    "config": {
+      "schema": "pigboard-config/v1",
+      "jira": {
+        "site": "https://jira.example.invalid"
+      },
+      "defaults": {
+        "stages": {
+          "Ready to Work": "1",
+          "In Progress": "2",
+          "In Review": "3",
+          "QA": "4",
+          "Human Review": "5",
+          "Rework Queued": "6",
+          "Blocked": "7"
+        },
+        "accepted_later_stage_ids": [
+          "8"
+        ],
+        "preparation_stage_ids": [
+          "9"
+        ],
+        "cancelled_stage_ids": [
+          "10"
+        ],
+        "types": {
+          "epic": "21",
+          "story": "22",
+          "bug": "23"
+        },
+        "actors": {
+          "manager": [
+            "manager"
+          ],
+          "implementer": [
+            "implementer"
+          ],
+          "reviewer": [
+            "reviewer"
+          ],
+          "qa": [
+            "qa"
+          ],
+          "human_request": [
+            "human"
+          ]
+        },
+        "repositories": [
+          "https://example.invalid/example/application"
+        ],
+        "worker_prefixes": [
+          "stream-"
+        ],
+        "opt_in_label": "pigboard"
+      },
+      "projects": [
+        {
+          "id": "100",
+          "key": "EX",
+          "board_ids": [],
+          "inherit": [
+            "stages",
+            "accepted_later_stage_ids",
+            "preparation_stage_ids",
+            "cancelled_stage_ids",
+            "types",
+            "actors",
+            "repositories",
+            "worker_prefixes",
+            "opt_in_label"
+          ],
+          "mappings": {}
+        }
+      ]
+    },
+    "snapshot": {
+      "schema": "pigboard-manager-snapshot/v2",
+      "site": "https://jira.example.invalid",
+      "discovery_complete": true,
+      "retained_complete": true,
+      "projects": [
+        {
+          "project_id": "100",
+          "complete": true
+        }
+      ],
+      "issues": [
+        {
+          "id": "900",
+          "key": "EX-90",
+          "project_id": "100",
+          "type_id": "21",
+          "status_id": "2",
+          "parent_id": null,
+          "labels": [
+            "pigboard"
+          ],
+          "format": "yaml",
+          "body": "{\"schema\":\"pigboard-epic/v1\",\"problem_to_solve\":\"Choose complete work.\",\"outcome\":\"One usable proposal.\",\"scope\":{\"included\":[\"Offline preview.\"],\"excluded\":[\"Execution.\"]},\"workstreams\":[{\"label\":\"stream-1\",\"story_order\":[\"EX-2\"]}],\"accepted_decisions\":[],\"open_questions\":[]}",
+          "pointer": null,
+          "required_requests": []
+        },
+        {
+          "id": "1001",
+          "key": "EX-2",
+          "project_id": "100",
+          "type_id": "22",
+          "status_id": "1",
+          "parent_id": "900",
+          "labels": [
+            "stream-1"
+          ],
+          "format": "yaml",
+          "body": "{\"schema\":\"pigboard-ticket/v1\",\"problem_to_solve\":\"A reader cannot find a saved filter without scanning the whole list.\",\"prerequisites\":[],\"acceptance_criteria\":[{\"id\":\"AC-01\",\"requirement\":\"A reader can find a saved filter by its name.\"}],\"technical_acceptance_criteria\":{\"repository\":{\"url\":\"https://example.invalid/example/application\",\"base_branch\":\"main\",\"change_boundary\":\"Existing saved-filter search and its tests.\",\"out_of_scope\":[\"Changing ownership or cross-tenant access.\"],\"related_repositories\":[]},\"accepted_decisions\":[],\"constraints\":[{\"id\":\"TAC-01\",\"requirement\":\"Search and observations remain within the reader tenant.\"}]},\"testing_strategy\":{\"testing_types\":[],\"environment\":{\"source\":\"configured_target\",\"target_reference\":\"local-review\",\"required_capabilities\":[]},\"actors\":[],\"fixtures\":[],\"preparation\":[],\"dispatch_order\":[],\"cases\":[],\"human_review\":{\"no_ai_cases_reason\":\"Human review of local contract behavior.\",\"cases\":[{\"id\":\"HQA-01\",\"execution\":\"human\",\"owner_role\":\"Product reviewer\",\"requirements\":[\"AC-01\",\"TAC-01\"],\"prerequisites\":[\"AI evidence is available for the same PR revision.\"],\"steps\":[\"Review the search label and empty-state wording with product expectations.\"],\"expected\":[\"The wording is understandable to a new report user.\"],\"evidence\":[\"Human review comment with the PR revision and outcome.\"],\"cleanup\":{\"mode\":\"none\",\"reason\":\"All observations are read-only against a prepared fixture.\",\"owner\":null,\"steps\":null}}]},\"automated_regression\":\"Run the prescribed local regression suite.\"},\"open_questions\":[]}",
+          "pointer": null,
+          "required_requests": []
+        }
+      ],
+      "retained_members": [],
+      "stream_checks": [
+        {
+          "project_id": "100",
+          "label": "stream-1",
+          "known_ids_complete": true,
+          "repair_inventory_complete": true
+        }
+      ],
+      "pending_intents": [],
+      "required_repairs": [],
+      "completion_receipts": []
+    },
+    "expected": {
+      "streams": [
+        {
+          "project_id": "100",
+          "label": "stream-1",
+          "decision": "select",
+          "selected_ticket_id": "1001",
+          "reason": null,
+          "return_count": 1
+        }
+      ]
+    }
+  }
+}
