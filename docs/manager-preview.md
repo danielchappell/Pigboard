@@ -404,10 +404,13 @@ Complete synthetic native repair scenarios and all nine H02 checkpoints live in
 ### Reproduce a repair queue and admission
 
 The source fixture contains complete synthetic receipt envelopes and fixed reports
-for all prescribed checkpoints, scenarios and normalization cases. Full installed
-fixture export and its additional semantic smoke remain PGB-81; existing installed
-scripts can consume source-exported inputs for compatibility. Set `bundle` to this
-source checkout. Export writes only disposable files; preview writes nothing:
+for the checkpoints, scenarios and normalization cases, plus `OC01-selection`.
+The export prepares all three PGB-149 cases: `H02-06-a3-full-qa-u2-unpublished`,
+`OC01-selection` and `S06-second-configured-accepted-stage`. OC01 keeps its original
+inputs and options with its current full expected report. Full installed fixture
+export and its additional semantic smoke remain PGB-81; existing installed scripts
+can consume source-exported inputs for compatibility. Set `bundle` to this source
+checkout. Export writes only disposable files; preview writes nothing:
 
 ```sh
 bundle="$PWD" # Source checkout for PGB-149/R1-35.
@@ -417,14 +420,22 @@ import fs from 'node:fs';
 import path from 'node:path';
 const [file,destination]=process.argv.slice(2);
 const fixture=JSON.parse(fs.readFileSync(file));
-for(const c of [...fixture.cases,...fixture.scenarios,...fixture.normalization.cases]){
+const ownId='OC01-selection';
+const ownInputs=fixture.inherited_own_preview.original.cases.filter(c=>c.id===ownId);
+const ownReports=fixture.inherited_own_preview.cases.filter(c=>c.id===ownId);
+if(ownInputs.length!==1||ownReports.length!==1||!ownReports[0].expected)
+ throw new Error(`Missing or ambiguous preserved input/current expected report for ${ownId}`);
+const [ownInput]=ownInputs,[ownCurrent]=ownReports;
+const cases=[...fixture.cases,...fixture.scenarios,...fixture.normalization.cases,
+ {...ownInput,expected:ownCurrent.expected}];
+for(const c of cases){
  const dir=path.join(destination,c.id);
  fs.mkdirSync(dir);
  for(const [name,value]of Object.entries({config:c.config,snapshot:c.snapshot,options:c.options??{},expected:c.expected}))
   fs.writeFileSync(path.join(dir,name+'.json'),JSON.stringify(value));
 }
 NODE
-# Pick any exported checkpoint/scenario ID; options retain drift/site guards.
+# Pick any exported checkpoint/scenario/normalization ID or OC01; options retain drift/site guards.
 id="S06-second-configured-accepted-stage"
 node --input-type=module - "$bundle" "$PGB_REPAIR_FIXTURE_DIR/$id" <<'NODE'
 import fs from 'node:fs';
@@ -437,6 +448,11 @@ for(const [key,flag]of [['expectedSite','--expected-site'],['expectedSnapshotDig
 for(const json of [true,false]){const p=spawnSync(process.execPath,[...args,...(json?['--json']:[])],{encoding:'utf8'});process.stdout.write(p.stdout);process.stderr.write(p.stderr);assert.equal(p.status,expected.status==='complete'?0:1);if(json)assert.deepEqual(JSON.parse(p.stdout),expected);}
 NODE
 ```
+
+If export reports a missing or ambiguous OC01 record, stop and retain the error
+and disposable directory. Do not substitute a historical expected report. Resolve
+the source mismatch before retrying with a fresh `mktemp` directory. Retain any
+partial export on other errors; do not overwrite an existing case directory.
 
 At checkpoint 02, B's old assignment remains intact. Its `queue_stack_update`
 proposal names A's actual repaired completion and R1, with missing publication
