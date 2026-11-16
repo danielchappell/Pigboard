@@ -1276,7 +1276,7 @@ test('copied recorded30-row manager packet preserves purposes proof and strict c
  const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),expectedCommit=git(o.source,'rev-parse','HEAD'),validator=path.join(installed.skills,'work-validator'),cli=path.join(validator,'scripts/validate-handoff.mjs');
  await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
  await assert.rejects(readFile(path.join(validator,'test/fixtures/handoff-chains.json')),error=>error.code==='ENOENT');
- const packet=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).recorded;
+ const packet=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).recorded;applyOrdinaryCaptureCut(packet);
  const run=(mode,file,extra=[],json=true)=>spawnSync(process.execPath,[cli,'--mode',mode,'--input',file,...extra,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:30000});
  let rows=0,states=0,invocations=0;const expectedNames=[];
  for(const row of packet.rows){rows++;for(const state of [row,...row.additional_states??[]]){
@@ -1292,4 +1292,21 @@ test('copied recorded30-row manager packet preserves purposes proof and strict c
  assert.deepEqual((await readdir(o.app)).sort(),expectedNames.sort(),'checker creates no files');assert.equal(await realpath(installed.stableSkills),installed.skills);
  verificationAfter('recorded copied fixture identity',()=>verificationRecord('recorded-packet',{test:t.name,fixture_commit:expectedCommit,payload_paths:41,rows,states,purpose_invocations:invocations,source_fixture:verificationBlob(verificationFs.readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),input_files:verificationInventory(o.app),human_acceptance:'PGB-160-H01/H02 NOT_RUN'}));verificationComplete(o,'PGB-160-recorded');
  t.diagnostic('One actual installation;41 current payload entries;30rows/31states/46purposes; external absolute inputs; strict baseline/companions and no fallback; no customer/provider access.');
+});
+
+
+// Adopted ordinary guarantee: missing prior capture alone no longer rejects N13.
+// Its original supplied input is exactly P05 with one retained tuple removed.
+function applyOrdinaryCaptureCut(packet){
+ const missing=packet.rows.find(r=>r.id==='N13'),positive=packet.rows.find(r=>r.id==='P05');
+ assert.deepEqual({...missing.input,retained:[]},{...positive.input,retained:[]});
+ const absent=positive.input.retained.filter(r=>!missing.input.retained.some(n=>n.ticket_id===r.ticket_id&&n.comment_id===r.comment_id));assert.equal(absent.length,1);
+ const r=absent[0],key=JSON.stringify([r.site,JSON.stringify([r.ticket_id,r.comment_id,r.record_id,r.digest])]);
+ missing.modes=structuredClone(positive.modes);missing.expected_bindings=positive.expected_bindings.filter(b=>!(b.kind==='retained'&&b.key===key));
+}
+
+test('copied ordinary API and CLI consume the same versioned recorded proof',async t=>{
+ const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),expectedCommit=git(o.source,'rev-parse','HEAD');await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ const packet=JSON.parse(await readFile(new URL('./fixtures/manager-candidates.json',import.meta.url))).ordinary_recorded,validator=path.join(installed.skills,'work-validator'),runtime=await import(path.join(validator,'lib/manager/decisions.mjs')),cli=path.join(validator,'scripts/manager-preview.mjs');
+ for(const id of ['S01','S06']){const c=packet.cases.find(c=>c.id===id),config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json');await writeFile(config,JSON.stringify(c.config));await writeFile(input,JSON.stringify(c.snapshot));const result=runtime.previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),{mode:'ordinary'}),args=[cli,'--mode','ordinary','--config',config,'--input',input];const child=spawnSync(process.execPath,[...args,'--json'],{cwd:o.app,encoding:'utf8'});assert.equal(child.status,0,child.stdout);assert.deepEqual(JSON.parse(child.stdout),JSON.parse(JSON.stringify(result)));assert.equal(result.streams[0].selected_ticket_id,c.expected.streams[0].selected_ticket_id);assert.equal(result.proof_basis,'authenticated_recorded_handoffs');const human=spawnSync(process.execPath,args,{cwd:o.app,encoding:'utf8'});assert.equal(human.status,0);assert.match(human.stdout,/hidden external PR changes are not detected/);}
 });

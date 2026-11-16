@@ -795,7 +795,7 @@ requires exactly these top-level fields:
 | `issues` | Current immutable identity/key/project/stream, stage, pointer, digest, outstanding requests and PR-publication inventory. |
 | `requirements` | Current-only ticket/digest/format/original raw body. No old work version or execution context. |
 | `comment_pages` | Complete contiguous discovery, including exact original ADF/HTML bytes and immutable server actor/time metadata. |
-| `retained` | Previously retained exact reference/server-metadata tuples for historical ancestry. Current comments cannot replace missing prior proof. |
+| `retained` | Genuine previously retained exact reference/server-metadata tuples, when available. Every supplied tuple must match. Ordinary recorded proof permits missing prior capture; strict worker/current-manager proof keeps its historical closure requirement. |
 | `request_resolutions` | Exact recorded request/completion pairs whose coherent consumption is checked. |
 
 `context_body`, external `pr_receipts`/`evidence_receipts`, execution allowlists and
@@ -879,3 +879,24 @@ missing retained slot or retry a strict failure through a recorded purpose.
 Retain the exact revision, input hashes, command/output and result before removing
 only the disposable P01/P03 files created above. There is no provider call,
 customer write, setup repair, worker launch, merge or activation in these checks.
+
+
+### Ordinary recorded authentication and prior observations
+
+The ordinary MVP manager checks the exact currently authenticated Jira record and
+its complete relevant chain: immutable issue/comment IDs, record UUID and canonical
+digest, configured role authors, unchanged native creation/update/editor indicators,
+unique slots, requirements, assignment and repair lineage. Its recorded purposes
+report `metadata_continuity: supplied_prior_tuples_only`. Prior capture of every
+historical comment is not required. A metadata change that still passes current
+authentication may go undetected when no earlier tuple exists. Every genuine
+supplied `retained` tuple is still compared and a mismatch rejects.
+
+Never manufacture an earlier tuple from today's read or add a capture store to
+satisfy this contract. Strict worker/current-manager modes remain separate; this
+cut grants no execution authority and does not weaken own-attempt State retention,
+publication/transition evidence or unknown-effect holds. External PR/evidence
+freshness remains outside recorded proof. Ordinary ADF comments are retained in
+complete pages and ignored only as records; malformed or ambiguous attempted
+handoffs reject through the existing candidate parser. HTML and strict extraction
+keep their original contracts.
