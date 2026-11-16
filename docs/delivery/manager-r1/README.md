@@ -1,8 +1,10 @@
 # Pig Boss release one: complete approved delivery catalogue
 
-The complete approved source catalogue contains **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combine the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.
+Current source composition is **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured native links**. R1-43/PGB-171 gives the existing named-issue reader one acquisition owner; its two human groups remain NOT_RUN. PGB-172/R1-44 and PGB-173/R1-45 still require their own full source Stories, and final PGB-148 remains pending. This is source code/catalogue work, not a refreshed native inventory or activated manager.
 
-Read [all complete Story bodies](stories.md), the [machine contracts](ticket-drafts.json), [ordered allocations](plan-metadata.json), [coverage](coverage.md) and [publication evidence](publication.json). Jira owns current delivery status. A readable contract or green developer test does not establish implemented behavior or designated human acceptance. PGB-159–166 remain planned; PGB-169 adds catalogue and guard behavior only.
+At the dated PGB-169/147 checkpoint, the approved source catalogue contained **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combined the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.
+
+Read [all complete Story bodies](stories.md), the [machine contracts](ticket-drafts.json), [ordered allocations](plan-metadata.json), [coverage](coverage.md) and [publication evidence](publication.json). Jira owns current delivery status. A readable contract or green developer test does not establish implemented behavior or designated human acceptance. PGB-169's earlier source record added catalogue and guard behavior only; subsequent delivery states are tracked separately.
 
 ## Current integrated dependency order and allocation — 16 November 2026
 
@@ -41,7 +43,8 @@ Read [all complete Story bodies](stories.md), the [machine contracts](ticket-dra
 | PGB-160 / [PGB-160](https://scubapig.atlassian.net/browse/PGB-160) | Validate authenticated recorded handoffs | PGB-159 | 1.4375–1.875 | 8 |
 | PGB-161 / [PGB-161](https://scubapig.atlassian.net/browse/PGB-161) | Check current worker proof and truthful inability | PGB-160 | 1.3125–1.8125 | 9 |
 | R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |
-| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33 | 1.34375–1.8125 | 20 |
+| R1-43 / [PGB-171](https://scubapig.atlassian.net/browse/PGB-171) | Preserve named-issue reads in one acquisition session | R1-33 | 0.43750–0.66250 | 13 |
+| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33, pending PGB-173 | 0.53750–0.73750 | 12 |
 | PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |
 | PGB-163 / [PGB-163](https://scubapig.atlassian.net/browse/PGB-163) | Read exact handoffs and reconciliation facts | PGB-160, PGB-147, PGB-148, PGB-150 | 1.375–1.875 | 14 |
 | PGB-164 / [PGB-164](https://scubapig.atlassian.net/browse/PGB-164) | Complete implementation with current permitted facts | PGB-161 | 0.75–1.125 | 7 |
@@ -60,7 +63,7 @@ Read [all complete Story bodies](stories.md), the [machine contracts](ticket-dra
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Current integrated51-row allocation: **68.5275–79.13375 days**, integer units6852750/7913375 at scale100000. Only the actual147 R1-33 row replaces the original169 allocation. The original169 approved source-row checkpoint remains **68.3025–78.76500 days**, integer units6830250/7876500, in its immutable dated forecast. This arithmetic replaces the former PGB-159 allocation once and includes the new PGB-169 row once. It excludes seven captured Tasks and unmeasured shared planning, and is not a remaining-project estimate. PGB-81 retains its historical 1.91-day row; PGB-82 retains its residual **13 paths / 11–15 hours** and H05 exactly once.
+Dated actual147 integrated51-row allocation: **68.5275–79.13375 days**, integer units6852750/7913375 at scale100000. Only the actual147 R1-33 row replaces the original169 allocation. The original169 approved source-row checkpoint remains **68.3025–78.76500 days**, integer units6830250/7876500, in its immutable dated forecast. This arithmetic replaces the former PGB-159 allocation once and includes the new PGB-169 row once. It excludes seven captured Tasks and unmeasured shared planning, and is not a remaining-project estimate. PGB-81 retains its historical 1.91-day row; PGB-82 retains its residual **13 paths / 11–15 hours** and H05 exactly once.
 
 At the approved 16 November allocation checkpoint, PGB-169 owned **11 paths / 6.75–10.5 human hours**, including its own planning, reviews, corrections, tests, documentation and PR preparation. Residual PGB-159 owns **9 paths / 11.5–15 human hours**. Combined: **18.25–25.5 hours**, 19 unique paths and 20 change incidences; the cursor test is counted in both PRs. These are dated approved allocations, not implementation-plan approval for the later Stories or a measured saving. Their exact-source plans remain provisional until their own gates pass.
 
@@ -82,6 +85,12 @@ A passing command must select the intended tests. Keep each command, exact revis
 The publication preserves its original 43-entry historical byte closure: 37 payload sources, five other catalogue artifacts and the installer. Six additional147 bodies preserve only the four payload additions and two changed old sources; those six additional147 bodies plus35 unchanged original bodies reconstruct the dated41-file payload and27 runtime paths. The current installation guard compares all41 payload paths with actual source/fixture/copied/manifest bytes. Independent old hashes and a whole-capture digest bind those exact parent bytes. Those dated bytes do not stand in for current modules. Current semantic checks use actual source/copied code, and the fresh installation guard compares every independently expected payload path with the actual source, fixture, installed bytes and manifest. It records the real fixture commit. This introduces no rotating runtime hash map or future-change allowlist.
 
 All 185 designated human cases, including PGB-169-H01/H02, remain **NOT_RUN**. Developer regressions, contributor review, hosted CI/Codex, merge, live acceptance and activation are separate. Runtime and installer behavior are unchanged; no scheduling implementation or activation is authorized by publication.
+
+## Current R1-43 source and full split forecast
+
+The current **52-row source allocation is 68.15875–78.72125 human days**. It replaces the old PGB-148 row once with its residual row and adds R1-43. Pending PGB-172 and PGB-173 add **14.15–20.00 hours (1.76875–2.50000 days)**, giving a **69.92750–81.22125 day full split-accounted forecast**. PGB-172 later preserves this residual and adds P only; PGB-173 adds S only and moves its external prerequisite into the source order. The source subtotal alone is not a whole-project saving.
+
+R1-43 changes the existing source reader and its narrow ownership regression; the public ID-only API, prepared copied route and fixed fixture oracles stay the same. Developer checks, independent committed-code review, CI, designated human acceptance (0/2 NOT_RUN), merge and activation are separate. The original 51-row and historical paragraphs below remain dated evidence.
 
 ## Dated PGB-81 checkpoint and prior evidence
 

@@ -218,6 +218,11 @@ The reader owns fixed Atlassian gateway HTTPS requests, TLS verification, input
 and count/byte/time bounds, cancellation fencing, safe diagnostics and private
 observations. Report serialization excludes bodies and secrets. Failed or changed
 reads retain valid partial observations and mark missing information honestly.
+Its immediately used `createJiraIssueAcquirer(session)` owns one normalized named
+issue and its pointer, comment discovery and exact-comment cache within a read
+session. The public `inspectJiraIssues` owner still validates requested IDs,
+resolves the credential once and finishes the session once. This extraction adds
+no key lookup, search, reference closure, new transport or Jira write authority.
 The [API and fixture guide](docs/manager-preview.md#inspect-named-jira-issues)
 documents prerequisites, use, limits and recovery. Its importable test-only HTTPS
 packet and direct fixture CLI hash the complete explicit runtime and prepared

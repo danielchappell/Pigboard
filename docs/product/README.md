@@ -28,6 +28,10 @@ The linked architecture documents own technical contracts, not extra product sco
 Jira PGB owns the delivery queue, dependencies and current work status. Discrepancies are findings to reconcile, not authority to silently override either source. Later owner decisions must update the affected
 requirement and coverage row together.
 
+## Current R1-43 source composition — 16 November 2026
+
+The source catalogue now has **52 Stories and 187 designated human cases**, all NOT_RUN, with 53 requirements and 41 original scenarios unchanged. R1-43/PGB-171 extracts one immediately used named-issue acquisition owner while preserving the ID-only source and prepared copied inspection routes. PGB-172/R1-44, PGB-173/R1-45 and final PGB-148 remain pending full source work. Current source rows total **68.15875–78.72125 human days**; pending P/S add **1.76875–2.50000 days**, yielding **69.92750–81.22125 days** for the full split. The dated 169/147 checkpoints below remain historical, and developer checks, human acceptance, hosted CI, merge and activation remain separate.
+
 ## Current, required and later
 
 Verified source baseline: Pigboard main

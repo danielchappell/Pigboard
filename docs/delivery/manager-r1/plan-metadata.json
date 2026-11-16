@@ -1564,12 +1564,47 @@
     "delivery_state": "Installed named-issue inspection and its source/copied fixture CLI are implemented; exact check/review/release evidence is recorded separately. Human acceptance NOT_RUN (0/4); no activation."
   },
   {
-    "id": "R1-34",
-    "title": "Inspect complete scoped Jira inventory",
+    "id": "R1-43",
+    "title": "Preserve named-issue reads in one acquisition session",
     "dependencies": [
       "R1-33"
     ],
-    "days": 1.8125,
+    "days": 0.6625,
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-171",
+      "min_days": "0.43750",
+      "max_days": "0.66250",
+      "plan_sha256": "f742c29f6c7ddb14c4ceffb93096523223498eb4643578e44a0cdc73e2e3a754"
+    },
+    "hours": {
+      "min": 3.5,
+      "max": 5.3
+    },
+    "delivery_state": "Named-issue acquisition refactor is implemented in source; exact code review, hosted checks, human acceptance and delivery remain separate. Human acceptance NOT_RUN (0/2); no activation."
+  },
+  {
+    "id": "R1-34",
+    "title": "Inspect complete scoped Jira inventory",
+    "dependencies": [
+      "R1-33",
+      "PGB-173"
+    ],
+    "days": 0.7375,
     "files": [
       "lib/jira/read.mjs",
       "lib/jira/inventory.mjs",
@@ -1582,21 +1617,17 @@
       "README.md",
       "ARCHITECTURE.md",
       "docs/delivery/manager-r1/stories.md",
-      "docs/delivery/manager-r1/README.md",
-      "docs/delivery/manager-r1/coverage.md",
-      "docs/product/README.md",
-      "docs/delivery/manager-r1/plan-metadata.json",
-      "docs/delivery/manager-r1/publication.json",
-      "docs/delivery/manager-r1/ticket-drafts.json",
-      "test/story-authoring.test.mjs",
-      "test/qa-helper-contract.test.mjs",
-      "docs/product/coverage.md"
+      "docs/delivery/manager-r1/README.md"
     ],
     "forecast_provenance": {
       "native_key": "PGB-148",
-      "min_days": "1.34375",
-      "max_days": "1.8125",
+      "min_days": "0.53750",
+      "max_days": "0.73750",
       "plan_sha256": "858c3e8d02a8ae0b3cd810f1e2e00a70dedcd3515cfe18f415a98ef0828f3cb4"
+    },
+    "hours": {
+      "min": 4.3,
+      "max": 5.9
     }
   },
   {

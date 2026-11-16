@@ -4859,7 +4859,17 @@ async function historicalArtifactBytes(file) {
  return historical169Capture[file].utf8;
 }
 async function assertCurrentCatalogueCoverage() {
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.approved_delivery_catalogue_amendment,metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json'));
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),r=p.named_issue_acquisition_amendment;
+ assert(r,'dated169 coverage requires exact R predecessor');
+ const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json'));
+ metadata.splice(metadata.findIndex(x=>x.id==='R1-43'),1);drafts.splice(drafts.findIndex(x=>x.id==='R1-43'),1);
+ metadata[metadata.findIndex(x=>x.id==='R1-34')]=structuredClone(r.prior_148.metadata);
+ drafts[drafts.findIndex(x=>x.id==='R1-34')]=structuredClone(r.prior_148.draft);
+ for(const [key,value]of Object.entries(r.prior_publication.values))p[key]=structuredClone(value);
+ delete p.named_issue_acquisition_amendment;
+ assert.equal(hash(JSON.stringify(p,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb','whole dated169 publication');
+ const a=p.approved_delivery_catalogue_amendment;
+ const datedText=async file=>{const value=r.prior_catalogue_text[file];assert(value,file+' named predecessor');assert.equal(hash(value.utf8),value.sha256);return value.utf8;};
  assertHistoricalCapture(a.historical_file_bytes,catalogue169Expected);
  const tampered=structuredClone(a.historical_file_bytes);tampered['lib/contracts/work.mjs'].utf8+='\nchanged historical byte';
  assert.throws(()=>assertHistoricalCapture(tampered,catalogue169Expected),/complete43-entry historical capture/);
@@ -4887,17 +4897,52 @@ async function assertCurrentCatalogueCoverage() {
  }
  assert.deepEqual(empty.sort(),['PGB-169-H01','R1-41-H01']);
  for(const [file,expectedRows]of Object.entries(installed81CoverageExpected)) {
-  const text=await read(file),lines=text.split('\n'),rows=lines.filter(l=>/^\| [AWMO]\d{2}/.test(l)),ids=new Set(rows.flatMap(l=>l.split('|')[1].match(/[AWMO]\d{2}/g)??[]));assert.equal(ids.size,53);
+  const text=await datedText(file),lines=text.split('\n'),rows=lines.filter(l=>/^\| [AWMO]\d{2}/.test(l)),ids=new Set(rows.flatMap(l=>l.split('|')[1].match(/[AWMO]\d{2}/g)??[]));assert.equal(ids.size,53);
   for(const expected of expectedRows){const matches=rows.filter(line=>{const ids=line.split('|')[1].match(/[AWMO]\d{2}/g)??[];return ids.length===expected.ids.length&&ids.every((id,i)=>id===expected.ids[i]);});assert.equal(matches.length,1,file+' exact requirement row');assert.equal(matches[0].split('|').slice(1,-2).join('|'),expected.prefix);for(const ref of expected.references)assert(matches[0].includes(ref),file+' retains '+ref);}
   for(const ref of text.matchAll(/(?:R1-\d{2}|PGB-\d+)-(?:H\d{2}|S\d{2}|C\d{2}|OC\d{2}|PC\d{2}|D\d)/g))assert(known.has(ref[0]),file+' unknown case '+ref[0]);
   const dispositionRows=lines.filter(l=>/^\| PGB-(?:159|160|161|162|163|164|165|166|169)-H\d{2} \|/.test(l)&&l.split('|').length===7);assert.equal(dispositionRows.length,19,file+' complete disposition table');
   for(const route of a.case_dispositions){const line=dispositionRows.find(l=>l.startsWith('| '+route.case_id+' |'));assert(line);const fields=line.split('|').slice(1,-1).map(s=>s.trim());assert.deepEqual(fields.slice(0,4),[route.case_id,route.requirements.join(', ')||'none',route.scenario_support.join(', ')||'none',route.disposition]);for(const id of route.requirements)assert(rows.find(l=>l.startsWith('| '+id+' |')).includes(route.case_id));}
   assert(text.includes('51 Stories'));assert(text.includes('185 full human cases'));assert(text.includes('68.3025–78.765'));
  }
- const historicalCoverage=await historicalArtifactBytes('docs/delivery/manager-r1/coverage.md'),currentCoverage=await read('docs/delivery/manager-r1/coverage.md'),scenarioRows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));assert.equal(scenarioRows(currentCoverage).length,41);assert.deepEqual(scenarioRows(currentCoverage),scenarioRows(historicalCoverage),'all41 original scenario rows unchanged');
- const delivery=await read('docs/delivery/manager-r1/README.md'),product=await read('docs/product/README.md');for(const text of [delivery,product]){assert(text.includes('68.3025–78.765'));assert(text.includes('6.75–10.5'));assert(text.includes('11.5–15'));assert(text.includes('NOT_RUN'));}assert(delivery.includes('original 43-entry historical byte closure'));assert(delivery.includes('six additional147 bodies'));assert(delivery.includes('68.5275–79.13375'));assert(delivery.includes('9.75–15.25'));assert(delivery.includes('actual PR footprint is 19 paths'));assert(delivery.includes('eighth semantic smoke'));assert.equal(a.verification.activation_authorized,false);
+ const historicalCoverage=await historicalArtifactBytes('docs/delivery/manager-r1/coverage.md'),currentCoverage=await datedText('docs/delivery/manager-r1/coverage.md'),scenarioRows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));assert.equal(scenarioRows(currentCoverage).length,41);assert.deepEqual(scenarioRows(currentCoverage),scenarioRows(historicalCoverage),'all41 original scenario rows unchanged');
+ const delivery=await datedText('docs/delivery/manager-r1/README.md'),product=await datedText('docs/product/README.md');for(const text of [delivery,product]){assert(text.includes('68.3025–78.765'));assert(text.includes('6.75–10.5'));assert(text.includes('11.5–15'));assert(text.includes('NOT_RUN'));}assert(delivery.includes('original 43-entry historical byte closure'));assert(delivery.includes('six additional147 bodies'));assert(delivery.includes('68.5275–79.13375'));assert(delivery.includes('9.75–15.25'));assert(delivery.includes('actual PR footprint is 19 paths'));assert(delivery.includes('eighth semantic smoke'));assert.equal(a.verification.activation_authorized,false);
 }
 test('PGB-169 current catalogue coverage and forecast retain historical evidence',assertCurrentCatalogueCoverage);
+
+test('PGB-171 current coverage and actual159 payload retain dated evidence',async()=>{
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.named_issue_acquisition_amendment;
+ assert(a,'current R amendment');
+ const originalHashes={'docs/delivery/manager-r1/stories.md':'7afd4e4ac5bd6103769e869ed3f726bc9a5e13822c6f7f3aaf664ebed509a784','docs/delivery/manager-r1/README.md':'0ce6c007c51f8a3c161ef96eaa1f3c04c2140ca6027c33bd71ae5b14431cc0e0','docs/delivery/manager-r1/coverage.md':'b298c54ead6925f53c15f145bd737cb13979cac33b7eeb28fd36b078b5f0c6fb','docs/product/README.md':'83678127dcf811b51d58b4bfaaa6dcbd96ef4ff266771fbf7f1e434ea5016f41','docs/product/coverage.md':'982cf750aed25cc0396b026df91f17ae126f4b0d804c3d2b192c008d148d6057'};
+ assert.deepEqual(Object.keys(a.prior_catalogue_text).sort(),Object.keys(originalHashes).sort());
+ for(const [file,digest]of Object.entries(originalHashes)){assert.equal(hash(a.prior_catalogue_text[file].utf8),digest,file+' exact predecessor');assert.equal(a.prior_catalogue_text[file].sha256,digest);}
+ const expected159={'scripts/validate-work.mjs':'794a5c19d8cf39da3e547d9ea9e4d04249b8838073cefbeef43fe10dd4a0e51f','lib/contracts/work.mjs':'fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329','docs/authoring.md':'26836a1971faf4d39705133bdf1b57283427c980af67dd47886963c9b313784b','lib/contracts/work-semantics.mjs':'2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772'};
+ const rRead='5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7';
+ const old=p.installed_issue_inspection_amendment;
+ assert.equal(a.payload.count,41);assert.equal(a.runtime.count,27);
+ assert.deepEqual(Object.keys(a.payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
+ assert.deepEqual(Object.keys(a.runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
+ for(const file of old.payload.sources){
+  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.payload.artifacts_sha256[file];
+  assert.equal(a.payload.artifacts_sha256[file],expected,file+' R payload map');
+  assert.equal(hash(await read(file)),expected,file+' actual source bytes');
+ }
+ for(const file of old.runtime.paths){
+  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.runtime.artifacts_sha256[file];
+  assert.equal(a.runtime.artifacts_sha256[file],expected,file+' R runtime map');
+ }
+ assert.equal(a.payload.only_changed_path,'lib/jira/read.mjs');
+ assert.equal(a.runtime.only_changed_path,'lib/jira/read.mjs');
+ for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){
+  const current=await read(file),prior=a.prior_catalogue_text[file].utf8;
+  const rows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));
+  assert.deepEqual(rows(current),rows(prior),file+' original scenario rows');if(file==='docs/delivery/manager-r1/coverage.md')assert.equal(rows(current).length,41);
+  for(const [requirement,caseId]of [['M13','R1-43-H01'],['M14','R1-43-H01'],['A12','R1-43-H02'],['O09','R1-43-H02']])assert(current.split('\n').find(l=>l.startsWith('| '+requirement+' |')).includes(caseId),file+' '+requirement);
+  for(const c of ['R1-43-H01','R1-43-H02'])assert(current.includes('| '+c+' |'),file+' '+c+' disposition');
+ }
+ assert.deepEqual(a.case_dispositions.map(c=>[c.case_id,c.requirements]),[['R1-43-H01',['M13','M14']],['R1-43-H02',['A12','O09']]]);
+ assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
+ const changed=structuredClone(a);changed.payload.artifacts_sha256['lib/jira/read.mjs']='0';assert.notDeepEqual(changed.payload.artifacts_sha256,a.payload.artifacts_sha256);
+});
 
 // Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
 const pre147Digests={"publication.json": ["f0a3a38292404fa1d180cfe2ae791f41bef8b5fca84c0e20b4c6737462042a31", "870f438e41a5acb8f4fcd9e087952dea8ea25d6dc7a0b2b636d42575ff4e8710"], "plan-metadata.json": ["e6f6e565292473e1e5060856778e265ebfe85368504f98669b94a95bcdbbb681", "32fb888754fbad25b9c44575fb42d49247fd07c7c8778cd821a417640c7fdc03"], "ticket-drafts.json": ["cbfbe1b2363e67989eec0f3837547627e377b3104f043ef74119502824f0dd3f", "51d888ce1ae1e046b29298d46594bd3fb9216ad7770ac48dfaeb91363a8fd4c3"], "config/skill-bundle.json": ["aa84523d0236fe00eeebe1fdcfafefd5669fd8c64754b666a9a15c07714c72bc", "3c032b634a068017464c7b2b9e2b0b83059678a76cc18a1099a2d18da772632b"], "docs/delivery/manager-r1/README.md": ["8360bb12066e95e230632716eeb1f8c724ab46a4c0e3b8fac84cdc003f3b27f6", null], "docs/manager-preview.md": ["e81605c01a69ef69cb7710742d838852b163dca6266d1448fc1abb8446b0d707", null]};
