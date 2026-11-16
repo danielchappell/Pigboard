@@ -103,8 +103,9 @@ values. `writes: 0` and `execution_authorized: false` remain explicit even when 
 proposal is selected. A proposal is no permission to execute it.
 
 Use [state inspection](manager-state.md) for all four kinds, pagination and holds.
-CLI exit zero confirms the reported operation, one means conflict/incomplete or
-partial work, and two means invalid, unavailable or uncertain. Readable and JSON
+CLI exit zero confirms the reported operation and required receipt publication;
+one means conflict/incomplete, partial work or failed receipt publication, and
+two means invalid, unavailable or uncertain. Readable and JSON
 output expose the same facts. Preserve partial results and inspect the same
 installation; do not repeat an uncertain write to make output look complete.
 
@@ -131,9 +132,40 @@ changes outside function configuration/code, schedule and retention, and applies
 while quiesced. It observes code/configuration and original resources, restores
 preview concurrency and desired schedule, verifies them and commits final applied
 controls last. Successful output creates a new receipt retaining original anchors.
-Use that receipt subsequently and preserve its predecessors. Partial/uncertain
-output is not a success receipt; inspect both host and applied state, then stop.
-No mutation is automatically retried.
+Use that receipt subsequently and preserve its predecessors. Bind/configure
+exclusively reserve `--output` with private permissions before dispatch. An existing
+path or unavailable parent refuses the command before configure changes anything.
+Choose a new path; existing contents are never overwritten.
+
+Storage can still fail after the operation. `receipt_publication: failed` with
+`publication_code: RECEIPT_PUBLICATION_FAILED` exits one while preserving the actual
+`configured` or `bound` status, phase, controls and **full receipt** in both output
+forms. Save the emitted `receipt` object as JSON in a new private file (permissions
+0600), preserve the complete result, and inspect with that receipt. Do not repeat
+configure just to obtain a receipt. `output_cleanup` reports whether this command's
+reservation was removed, replaced or left uncertain; treat any residual output as
+untrusted/incomplete. A replacement path is left untouched.
+
+Partial/uncertain configure output includes `recovery_receipt` with its explicit
+original-authority role. It is not a successful new-package receipt and is never
+published to `--output` as one. Preserve the result, original receipt and desired
+build outputs. Inspect the original installation explicitly, then stop it:
+
+```sh
+node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind installation --recovery --json
+node scripts/manager-installation.mjs stop --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --json
+```
+
+Keep the desired canonical file when recovering. Recovery checks the original
+account/role, resources and installation generation, reads actual retained controls
+and reports original, desired, observed and applied identities separately. Its
+`package_verified: false` warning means that a confirmed read does not validate the
+changed package or runtime safety. Normal inspection, health, init and configure
+retain strict package checks and may refuse the original receipt after a partial
+host update. Recovery inspection and stop do not reconstruct that authority or
+provide apply, rollback, replay, initialization or state-clearing permission. If
+normal binding remains unresolved, retain the evidence for the operator/owner's
+release decision. No mutation is automatically retried.
 
 For emergency stop, only the operator profile is needed:
 
@@ -142,12 +174,19 @@ node scripts/manager-installation.mjs stop --config /absolute/customer.json --in
 ```
 
 Stop first fences the same installation record, then disables actual scheduling
-and sets concurrency zero. It waits for prior invocation timeout plus margin;
+and sets concurrency zero. It waits for the greater of the original and valid observed timeout plus ten
+seconds (within the AWS 900-second timeout bound);
 it cannot revoke an already in-flight request. Retained pending/uncertain work
 remains. Output distinguishes stopped from partial/unavailable and reports whether
-canonical intent still asks for scheduling. Stop never edits your file. Set desired
-controls disabled and perform the supported control rebuild to converge canonical
-and applied digests. Do not initialize again or clear holds.
+canonical intent still asks for scheduling. In stop results, `observed_scope: before_stop`
+labels the host snapshot captured before the stop; `stopped` confirms the later
+disable/quiescence checks, while `partial` does not confirm completion. If disabling or bounded quiescence
+cannot be confirmed, the result remains partial and identifies the failed phase;
+an unknown timeout cannot become a stopped result. Stop never edits your file or
+changes retained digest/package, generation, extensions or pending work. To converge
+intent later, set desired controls disabled and use the supported control rebuild
+only when a strictly verified current receipt/package is available. Recovery stop
+alone does not establish that prerequisite. Do not initialize again or clear holds.
 
 Apply mode is refused: this pinned package has no sender. Future apply support
 must also require explicit writes, all three operator confirmations, current
