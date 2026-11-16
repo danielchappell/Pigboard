@@ -43,6 +43,18 @@ async function pre81Capture(name){
  return structuredClone(c.object);
 }
 
+// Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
+const pre147Digests={"publication.json": ["f0a3a38292404fa1d180cfe2ae791f41bef8b5fca84c0e20b4c6737462042a31", "870f438e41a5acb8f4fcd9e087952dea8ea25d6dc7a0b2b636d42575ff4e8710"], "plan-metadata.json": ["e6f6e565292473e1e5060856778e265ebfe85368504f98669b94a95bcdbbb681", "32fb888754fbad25b9c44575fb42d49247fd07c7c8778cd821a417640c7fdc03"], "ticket-drafts.json": ["cbfbe1b2363e67989eec0f3837547627e377b3104f043ef74119502824f0dd3f", "51d888ce1ae1e046b29298d46594bd3fb9216ad7770ac48dfaeb91363a8fd4c3"], "config/skill-bundle.json": ["aa84523d0236fe00eeebe1fdcfafefd5669fd8c64754b666a9a15c07714c72bc", "3c032b634a068017464c7b2b9e2b0b83059678a76cc18a1099a2d18da772632b"], "docs/delivery/manager-r1/README.md": ["8360bb12066e95e230632716eeb1f8c724ab46a4c0e3b8fac84cdc003f3b27f6", null], "docs/manager-preview.md": ["e81605c01a69ef69cb7710742d838852b163dca6266d1448fc1abb8446b0d707", null]};
+async function pre147Capture(name){
+ assert(Object.hasOwn(pre147Digests,name),'Only six named PGB-81 predecessor inputs may be captured');
+ const p=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/publication.json',import.meta.url),'utf8')),c=p.installed_issue_inspection_amendment.historical_source_capture.files[name],[rawDigest,jsonDigest]=pre147Digests[name];
+ const sha=value=>createHash('sha256').update(value).digest('hex');
+ assert.equal(sha(c.raw),rawDigest,name+' original raw bytes');
+ assert.equal(c.raw_sha256,rawDigest,name+' named raw digest');
+ if(jsonDigest){assert.deepEqual(JSON.parse(c.raw),c.object,name+' complete raw/object identity');assert.equal(sha(JSON.stringify(c.object)),jsonDigest,name+' original JSON digest');assert.equal(c.json_stringify_sha256,jsonDigest,name+' named JSON digest');return structuredClone(c.object);}
+ assert.equal(c.object,undefined,name+' text has no parsed object');return c.raw;
+}
+
 const root = new URL('../', import.meta.url).pathname;
 const writer = new URL('../skills/write-pr-sized-stories/', import.meta.url);
 const read = relative => readFile(new URL(relative, writer), 'utf8');
@@ -1018,4 +1030,29 @@ test('PGB-81 scoped current source matches every frozen native contract and comp
  assert.equal(canonical(a.native_reconciliation.non_scope),e.nonScope);for(const row of a.native_reconciliation.non_scope){const raw=nodes.find(n=>n.key===row.key);assert(raw);assert.equal(raw.id,row.id);assert.equal(raw.fields.summary,row.summary);assert.equal(raw.fields.status.name,row.status);assert.equal(sha(raw.fields.description??''),row.description_sha256);assert(!Object.values(mapping).includes(row.key));assert(!stories.includes('https://scubapig.atlassian.net/browse/'+row.key));}
  const original81=drafts.find(r=>r.id==='R1-11').contract,fixture=JSON.parse(await readFile(new URL('../test/fixtures/manager-repairs.json',import.meta.url),'utf8'));assert.deepEqual(original81.testing_strategy.human_review.cases,fixture.native_cases);assert.equal(original81.acceptance_criteria.length,4);assert.equal(original81.technical_acceptance_criteria.constraints.length,2);
  assert.equal(canonical(original81.testing_strategy),"91053d460bea8b41774a5aa6bf11ea56e2b8f8439f3444e0c8f0f3a67f685b9c");
+});
+
+test('PGB-147 installed inspection keeps the complete PGB-81 predecessor and current scoped contract',async()=>{
+ const sha=value=>createHash('sha256').update(value).digest('hex');
+ const files=Object.keys(pre147Digests);for(const name of files)await pre147Capture(name);
+ const publication=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/publication.json',import.meta.url),'utf8'));
+ const prior=await pre147Capture('publication.json'),a=publication.installed_issue_inspection_amendment;
+ assert.equal(Object.keys(prior).length,38);assert.equal(Object.keys(publication).length,39);
+ assert.deepEqual([a.story_id,a.native_key,a.plan_sha256,a.predecessor.commit,a.predecessor.tree],['R1-33','PGB-147','66e0c419a7cdd87106b1f1fc194a0464a68c6d6077899d65ebe6920610a8529b','850e0127c4f2105d7cb564efa868c70dd600b521','857ac885534b41d4c3ae640b9b1f2b280a55c23c']);
+ assert.equal(a.predecessor.status,prior.status);assert.deepEqual(a.predecessor.verification,prior.installed_repair_preview_amendment.verification);
+ const expectedStatus='42-Story scoped source checkpoint with installed named-issue inspection; acceptance, current-head checks and release are recorded separately.';
+ assert.equal(publication.status,expectedStatus);assert.equal(publication.current_source_scope.status,expectedStatus);assert.deepEqual(publication.current_source_scope.forecast_days,{min:58.45875,max:64.97125});
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[42,166,53,41]);
+ const restored=structuredClone(publication);restored.status=prior.status;restored.current_source_scope.status=prior.current_source_scope.status;restored.current_source_scope.forecast_days=prior.current_source_scope.forecast_days;delete restored.installed_issue_inspection_amendment;assert.deepEqual(restored,prior,'all predecessor publication fields and amendments retained');
+ const metadata=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/plan-metadata.json',import.meta.url),'utf8')),oldMetadata=await pre147Capture('plan-metadata.json');const row=metadata.find(r=>r.id==='R1-33'),oldRow=oldMetadata.find(r=>r.id==='R1-33');assert(row&&oldRow);
+ assert.deepEqual(row.files,['ARCHITECTURE.md','README.md','config/skill-bundle.json','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','docs/manager-preview.md','docs/product/README.md','test/fixtures/jira-preview-harness.mjs','test/qa-helper-contract.test.mjs','test/skill-distribution.test.mjs','test/story-authoring.test.mjs']);
+ assert.deepEqual(row.hours,{min:8.55,max:11.9});assert.equal(row.days,1.4875);assert.deepEqual(row.forecast_provenance,{...oldRow.forecast_provenance,min_days:'1.06875',max_days:'1.48750',plan_sha256:a.plan_sha256});assert(row.delivery_state.includes('Human acceptance NOT_RUN (0/4)'));
+ const oldify=structuredClone(metadata);oldify[metadata.findIndex(r=>r.id==='R1-33')]=oldRow;assert.deepEqual(oldify,oldMetadata,'only R1-33 metadata changed');
+ const drafts=JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/ticket-drafts.json',import.meta.url),'utf8'));assert.deepEqual(drafts,await pre147Capture('ticket-drafts.json'));const native=drafts.find(r=>r.id==='R1-33').contract;assert.deepEqual([native.acceptance_criteria.length,native.technical_acceptance_criteria.constraints.length,native.testing_strategy.human_review.cases.length],[5,4,4]);
+ const bundle=JSON.parse(await readFile(new URL('../config/skill-bundle.json',import.meta.url),'utf8')),oldBundle=await pre147Capture('config/skill-bundle.json'),added=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];assert.deepEqual(bundle.validatorPayload.sources,[...oldBundle.validatorPayload.sources,...added]);assert.deepEqual({...bundle,validatorPayload:{...bundle.validatorPayload,sources:oldBundle.validatorPayload.sources}},oldBundle);assert.deepEqual(a.payload.sources,bundle.validatorPayload.sources);assert.equal(bundle.validatorPayload.sources.length,41);assert.equal(bundle.skills.length,22);assert.equal(bundle.dependencyDirectories.length,3);
+ const runtime=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort();assert.deepEqual(a.runtime.paths,runtime);assert.equal(runtime.length,27);assert.deepEqual(a.runtime.preserved_predecessor25_artifacts_sha256,prior.installed_repair_preview_amendment.source_runtime_revision.artifacts_sha256);assert.equal(Object.keys(a.runtime.preserved_predecessor25_artifacts_sha256).length,25);
+ for(const file of bundle.validatorPayload.sources){const actual=sha(await readFile(new URL('../'+file,import.meta.url)));assert.equal(a.payload.artifacts_sha256[file],actual,file+' current payload');}for(const file of runtime)assert.equal(a.runtime.artifacts_sha256[file],sha(await readFile(new URL('../'+file,import.meta.url))),file+' current runtime');for(const [file,digest]of Object.entries(a.runtime.preserved_predecessor25_artifacts_sha256))assert.equal(sha(await readFile(new URL('../'+file,import.meta.url))),digest,file+' still live');
+ assert.equal(a.literal_packet.cases_sha256,sha(await readFile(new URL('../test/fixtures/jira-preview-cases.json',import.meta.url))));assert.equal(a.literal_packet.tls_sha256,sha(await readFile(new URL('../test/fixtures/jira-preview-tls.json',import.meta.url))));assert.deepEqual([a.literal_packet.variants,a.literal_packet.controls,a.literal_packet.private_projection],[35,8,1]);
+ const oldDelivery=await pre147Capture('docs/delivery/manager-r1/README.md'),oldGuide=await pre147Capture('docs/manager-preview.md');assert(oldDelivery.includes('58.33375–64.76500 days'));assert(oldGuide.includes('source checkout provides'));const delivery=await readFile(new URL('../docs/delivery/manager-r1/README.md',import.meta.url),'utf8'),product=await readFile(new URL('../docs/product/README.md',import.meta.url),'utf8');assert(delivery.includes('58.45875–64.97125 days'));assert(delivery.includes('5845875/6497125'));assert(product.includes('58.45875–64.97125-day forecast'));assert(product.includes('NOT_RUN (0/4)'));
+ assert.equal(a.verification.activation_authorized,false);assert.equal(a.verification.human_acceptance,'NOT_RUN (0/4)');
 });

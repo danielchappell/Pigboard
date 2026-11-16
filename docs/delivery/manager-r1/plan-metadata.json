@@ -1412,20 +1412,16 @@
       "R1-31",
       "R1-36"
     ],
-    "days": 1.28125,
+    "days": 1.4875,
     "files": [
       "ARCHITECTURE.md",
       "README.md",
       "config/skill-bundle.json",
       "docs/delivery/manager-r1/README.md",
-      "docs/delivery/manager-r1/coverage.md",
       "docs/delivery/manager-r1/plan-metadata.json",
       "docs/delivery/manager-r1/publication.json",
-      "docs/delivery/manager-r1/stories.md",
-      "docs/delivery/manager-r1/ticket-drafts.json",
       "docs/manager-preview.md",
       "docs/product/README.md",
-      "docs/product/coverage.md",
       "test/fixtures/jira-preview-harness.mjs",
       "test/qa-helper-contract.test.mjs",
       "test/skill-distribution.test.mjs",
@@ -1433,10 +1429,15 @@
     ],
     "forecast_provenance": {
       "native_key": "PGB-147",
-      "min_days": "0.94375",
-      "max_days": "1.28125",
-      "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47"
-    }
+      "min_days": "1.06875",
+      "max_days": "1.48750",
+      "plan_sha256": "66e0c419a7cdd87106b1f1fc194a0464a68c6d6077899d65ebe6920610a8529b"
+    },
+    "hours": {
+      "min": 8.55,
+      "max": 11.9
+    },
+    "delivery_state": "Installed named-issue inspection and its source/copied fixture CLI are implemented; exact check/review/release evidence is recorded separately. Human acceptance NOT_RUN (0/4); no activation."
   },
   {
     "id": "R1-34",
