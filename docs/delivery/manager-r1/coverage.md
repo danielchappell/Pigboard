@@ -8,49 +8,49 @@
 | A02 | R1-03-H01, R1-20-H01 |
 | A03 | R1-01-H01, R1-03-H01 |
 | A04 | R1-03-H01 |
-| A05 | R1-02-H02, R1-03-H01, R1-03-H02 |
-| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
-| A07 | R1-02-H01, R1-07-H01, R1-08-H01; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
-| A08 | R1-02-H01, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03 |
-| A09 | R1-02-H02, R1-05-H01, R1-07-H02 |
-| A10 | R1-01-H02, R1-02-H02 |
-| A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02 |
-| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03 |
-| W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01 |
+| A05 | R1-02-H02, R1-03-H01, R1-03-H02; PGB-159-H02 |
+| A06 | R1-02-H01, R1-02-H02, R1-02-H03, R1-08-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-159-H01; PGB-159-H02 |
+| A07 | R1-02-H01, R1-07-H01, R1-08-H01; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-159-H02; PGB-166-H01 |
+| A08 | R1-02-H01, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03; PGB-159-H01; PGB-159-H02; PGB-166-H01 |
+| A09 | R1-02-H02, R1-05-H01, R1-07-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-164-H01; PGB-166-H02 |
+| A10 | R1-01-H02, R1-02-H02; PGB-159-H02 |
+| A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H02 |
+| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03; PGB-159-H01; PGB-159-H02; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02 |
+| W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01; PGB-164-H01; PGB-165-H01 |
 | W02 | R1-05-H01 |
-| W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
-| W04 | R1-05-H01, R1-05-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05 |
-| W05 | R1-06-H01, R1-06-H02 |
-| W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H03; R1-30-H01, R1-30-H03 |
-| W07 | R1-07-H01, R1-07-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02 |
-| W08 | R1-07-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H02, R1-27-H03; R1-30-H02, R1-30-H03 |
-| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03 |
-| W10 | R1-09-H01, R1-09-H02, R1-20-H03 |
-| W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03; R1-28-OC02, R1-28-OC05, R1-28-OC06 |
+| W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-161-H01; PGB-164-H01; PGB-165-H01 |
+| W04 | R1-05-H01, R1-05-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05; PGB-161-H01; PGB-164-H01 |
+| W05 | R1-06-H01, R1-06-H02; PGB-161-H01; PGB-165-H01; PGB-165-H02 |
+| W06 | R1-08-H01, R1-08-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H01, R1-27-H03; R1-30-H01, R1-30-H03; PGB-161-H01; PGB-166-H01; PGB-166-H02 |
+| W07 | R1-07-H01, R1-07-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-166-H01 |
+| W08 | R1-07-H02, R1-08-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H02, R1-27-H03; R1-30-H02, R1-30-H03; PGB-166-H02 |
+| W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; PGB-166-H03 |
+| W10 | R1-09-H01, R1-09-H02, R1-20-H03; PGB-161-H01; PGB-166-H03 |
+| W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03; PGB-166-H01 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03; R1-28-OC02, R1-28-OC05, R1-28-OC06; PGB-160-H01; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H01; PGB-166-H02; PGB-166-H03 |
 | M01 | R1-11-S01, R1-11-S02, R1-17-H01; R1-28-OC04 |
-| M02 | R1-11-S18, R1-11-S30; R1-28-OC04 |
-| M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09; R1-28-OC01, R1-28-OC05 |
-| M04 | R1-11-S11, R1-11-S17, R1-11-S39, R1-17-H03; R1-28-OC04 |
-| M05 | R1-11-S12, R1-11-S13, R1-11-S14, R1-11-S15, R1-11-S16, R1-18-H01; R1-28-OC04 |
-| M06 | R1-11-S07, R1-11-S08, R1-11-S09, R1-11-S10, R1-11-S37, R1-18-H01; R1-28-OC01, R1-28-OC03, R1-28-OC06 |
-| M07 | R1-11-S05, R1-11-S06, R1-11-S34; R1-28-OC03 |
-| M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01; R1-32-H01, R1-35-H01 |
-| M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01; R1-32-H01, R1-35-H01, R1-37-D2, R1-37-D3, R1-39-H01 |
-| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05; R1-32-H01, R1-35-H01, R1-37-D4, R1-39-H01, R1-39-H02 |
-| M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03; R1-32-H01, R1-35-H01, R1-39-H01 |
-| M12 | R1-11-S02, R1-11-S40, R1-19-H03 |
-| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01; R1-33-H01, R1-33-H02, R1-34-H01, R1-34-H02, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05 |
-| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02; R1-32-H01, R1-32-H02, R1-33-H04, R1-34-H04, R1-35-H01, R1-35-H02, R1-37-D1, R1-37-D2, R1-37-D3, R1-37-D4, R1-37-D5, R1-39-H02, R1-12-H05 |
+| M02 | R1-11-S18, R1-11-S30; R1-28-OC04; PGB-162-H02 |
+| M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09; R1-28-OC01, R1-28-OC05; PGB-162-H01 |
+| M04 | R1-11-S11, R1-11-S17, R1-11-S39, R1-17-H03; R1-28-OC04; PGB-162-H02 |
+| M05 | R1-11-S12, R1-11-S13, R1-11-S14, R1-11-S15, R1-11-S16, R1-18-H01; R1-28-OC04; PGB-162-H02 |
+| M06 | R1-11-S07, R1-11-S08, R1-11-S09, R1-11-S10, R1-11-S37, R1-18-H01; R1-28-OC01, R1-28-OC03, R1-28-OC06; PGB-162-H01 |
+| M07 | R1-11-S05, R1-11-S06, R1-11-S34; R1-28-OC03; PGB-160-H01; PGB-160-H02; PGB-162-H01; PGB-162-H02; PGB-163-H01 |
+| M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01; R1-32-H01, R1-35-H01; PGB-162-H01 |
+| M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01; R1-32-H01, R1-35-H01, R1-37-D2, R1-37-D3, R1-39-H01; PGB-162-H01 |
+| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05; R1-32-H01, R1-35-H01, R1-37-D4, R1-39-H01, R1-39-H02; PGB-160-H01; PGB-160-H02; PGB-162-H01; PGB-162-H02 |
+| M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03; R1-32-H01, R1-35-H01, R1-39-H01; PGB-160-H01; PGB-160-H02; PGB-162-H01 |
+| M12 | R1-11-S02, R1-11-S40, R1-19-H03; PGB-162-H02 |
+| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01; R1-33-H01, R1-33-H02, R1-34-H01, R1-34-H02, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05; PGB-162-H02; PGB-163-H01; PGB-163-H02 |
+| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02; R1-32-H01, R1-32-H02, R1-33-H04, R1-34-H04, R1-35-H01, R1-35-H02, R1-37-D1, R1-37-D2, R1-37-D3, R1-37-D4, R1-37-D5, R1-39-H02, R1-12-H05; PGB-162-H01; PGB-162-H02; PGB-163-H01 |
 | O01 | R1-13-H01, R1-13-H02 |
 | O02 | R1-10-H01, R1-13-H01 |
-| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04; R1-33-H03, R1-34-H03, R1-12-H05 |
-| O04 | R1-20-H01 |
-| O05 | R1-14-H01, R1-14-H02 |
+| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04; R1-33-H03, R1-34-H03, R1-12-H05; PGB-163-H01 |
+| O04 | R1-20-H01; PGB-162-H01; PGB-169-H02 |
+| O05 | R1-14-H01, R1-14-H02; PGB-163-H01 |
 | O06 | R1-14-H02, R1-17-H01, R1-17-H02, R1-19-H01 |
-| O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03 |
-| O08 | R1-15-H01, R1-15-H02; R1-29-H01, R1-29-H02 |
-| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05 |
+| O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03; PGB-161-H02; PGB-162-H02; PGB-163-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; PGB-166-H03 |
+| O08 | R1-15-H01, R1-15-H02; R1-29-H01, R1-29-H02; PGB-163-H01 |
+| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05; PGB-163-H02 |
 | O10 | R1-13-H02, R1-15-H02, R1-16-H02, R1-17-H03 |
 | O11 | R1-14-H01, R1-15-H02, R1-16-H01, R1-16-H02 |
 | O12 | R1-20-H01, R1-20-H02, R1-20-H03 |
@@ -145,3 +145,45 @@ PGB-156/R1-42 is a native-only boundary repair with four separate NOT_RUN human 
 ## Settled source checkpoint — 16 November 2026
 
 42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. The 166 human groups remain NOT_RUN; this mapping is not acceptance. All 53 existing requirements and 41 original scenarios remain. R1-41-H01 is catalog-only preservation, recorded in [publication.json](publication.json); it does not prove runtime selection. Later Core requirements and mappings are outside this checkpoint.
+
+## Complete approved catalogue — 16 November 2026
+
+The complete approved source catalogue contains **51 Stories, 185 full human cases, zero AI cases and 123 prerequisite occurrences**. Its 129 captured native links combine the original 127 links with the two bounded PGB-169/PGB-159 links. The 50-Story/7-Task/57-row native page is a dated observation; this composition is not a new Jira inventory. The 53 product requirements and 41 original scenarios remain unchanged.
+
+PGB-169 publishes these contracts and guards; PGB-159 consumes the catalogue and retains its remaining scheduling implementation. Planned PGB-159–166 behavior is not implemented by this publication. PGB-82 H05 and all original 166 cases are retained once. Every designated human case remains NOT_RUN. [Full contracts and cases](stories.md) provide prerequisites, preparation, steps, expectations, evidence and cleanup. The approved 16 November row allocation checkpoint sums to 68.3025–78.765 days, not remaining project effort. The current PGB-169 whole-work forecast is 7.25–11.25 familiar-human hours, adding 0.5–0.75 hours for three test-expectation corrections and affected reviews. Original approved row values stay historical.
+
+### Additional case dispositions
+
+The following 19 rows support existing requirements; they add no product requirement. Only R1-41-H01 and PGB-169-H01 are catalogue-only preservation cases with no product requirement. Scenario support describes a related family, not execution or replacement of the original scenario acceptance case.
+
+| Case | Existing requirement IDs | Scenario support IDs | Disposition | Rationale / limit |
+| --- | --- | --- | --- | --- |
+| PGB-159-H01 | A06, A08, A09, A11, A12 | none | existing_requirement_support | Complete mixed/allhuman scheduling declarations,futureartifactslots and strictstart distinction; not previewselection. |
+| PGB-159-H02 | A05, A06, A07, A08, A09, A10, A11, A12 | none | existing_requirement_support | Namednegative declarationcontrols,scope,coverage,graph,ledger andpreparedconsumers; cataloguepart is preservation support. |
+| PGB-160-H01 | M07, M10, M11, W12 | none | existing_requirement_support | Exactrecordedcompletion/history,allroots/parentsegments and truthfuluncheckedexternalfreshness; doesnotrunmanagerselection. |
+| PGB-160-H02 | M07, M10, M11, W12, A12 | none | existing_requirement_support | Rejectmismatchedmetadata/UUID/requirements/assignment/ancestry/cutoffs without fabricatedproof. |
+| PGB-161-H01 | A09, A11, A12, W03, W04, W05, W06, W10, W12 | none | existing_requirement_support | CurrentREADY/review/QA/humanreworkproof,own/parentPR,preparedinputs andactualrights; checkercomposition notfullproduceracceptance. |
+| PGB-161-H02 | A11, A12, W09, W12, O07 | none | existing_requirement_support | Assignment/inabilityshape,candidateversusreadback,unknownpublicationhold; noexecutionorcompletionfromassignment. |
+| PGB-162-H01 | M03, M06, M07, M08, M09, M10, M11, M14, O04 | S01, S09, S23, S25, S29 | existing_requirement_support | Existingordinary/ownrepair/stack/rootfamilies andactual81v2export/copiedsmoke; these are relatedfamilysupport,original41casesremainrequired. |
+| PGB-162-H02 | M02, M04, M05, M07, M10, M12, M13, M14, O07 | S11, S13, S17, S30, S38, S40, S41 | existing_requirement_support | Namedoccupancy/cap/pause/Epicconflict/changedproof/retaineduncertaintyholds. S41support is retaineduncertaintyonly,notliveintent/transitionexecution. |
+| PGB-163-H01 | M07, M13, M14, O03, O05, O08 | none | existing_requirement_support | Exactnativeproofandseparateoriginal-attemptnativehistory,sharedbounds,retainedidentity,zero writes; doesnotfinalizereconciliationorprovetransitionoutcome. |
+| PGB-163-H02 | M13, O07, O09 | none | existing_requirement_support | Missing/denied/budget/timeout/destination/secret/proofshapecontrols; proofacquisitionfailuresnotwholeinventoryscenarioexecution. |
+| PGB-164-H01 | W01, W03, W04, W12, A09, A11 | none | existing_requirement_support | ExistingHigh→review→Mediumroute,declaredartifactpreparation,READYcandidate/readback andcurrentparentproof; simulatedinstructionevidence labelled. |
+| PGB-164-H02 | A11, A12, W09, W12, O07 | none | existing_requirement_support | Missingactionauthority/finalartifact/assignment anduncertainPR/publication/transitionholdwithoutreplay. |
+| PGB-165-H01 | W01, W03, W05, W12, A11 | none | existing_requirement_support | Oneindependentreviewjob,currentPR/CI/approvals/preparedinputs andclean/findingpublication. |
+| PGB-165-H02 | A11, A12, W05, W09, W12, O07 | none | existing_requirement_support | Stale/missingcurrentproof,unsupportedcapability anduncertainpublicationstoptruthfullywithoutduplicatejob. |
+| PGB-166-H01 | A07, A08, W06, W07, W11, W12 | none | existing_requirement_support | Prescribedmixedhelperparent/childorder,fullledger,FAIL/NOT_RUN/humanpending andallhumanseparation. |
+| PGB-166-H02 | A09, A11, A12, W06, W08, W09, W12, O07 | none | existing_requirement_support | Missingpreparedartifact/environment/access,unsafe/changed/deadline/unknownoutcomes preservepartialledger andstopdependentactions. |
+| PGB-166-H03 | W09, W10, W12, O07 | S19 | existing_requirement_support | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |
+| PGB-169-H01 | none | none | catalog_only_preservation | `catalog_only_preservation`: completeapprovedcontracts/cases/dependencies/coverage/forecasts; administrativeevidenceintegrityisnotanewproductruntimeclaim. |
+| PGB-169-H02 | O04 | none | existing_requirement_support | `existing_requirement_support`: exactlocalcurrentpinnedpayload/manifest/sourcecopyintegrity andstrictcontrols. DoesnotclaimwholeBuildorfinalinstalledloopacceptance. |
+
+### Supplementary scenario support
+
+Original scenario rows and their exact ticket/live-apply columns above remain required and unchanged. None of the following mappings claims that a component case executes a whole manager scenario.
+
+| Supporting case | Related scenario family IDs | Limit |
+| --- | --- | --- |
+| PGB-162-H01 | S01, S09, S23, S25, S29 | Existingordinary/ownrepair/stack/rootfamilies andactual81v2export/copiedsmoke; these are relatedfamilysupport,original41casesremainrequired. |
+| PGB-162-H02 | S11, S13, S17, S30, S38, S40, S41 | Namedoccupancy/cap/pause/Epicconflict/changedproof/retaineduncertaintyholds. S41support is retaineduncertaintyonly,notliveintent/transitionexecution. |
+| PGB-166-H03 | S19 | Authorizedsame-open-PRhumanrecord-and-queueproducer only. ThisdoesnotproveS19'sseparateactiveworker/managerconcurrencybehavior. |

@@ -1,6 +1,6 @@
 # Pig Boss release one: implementation Stories
 
-42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. The scoped set has 166 complete human groups and zero AI cases. The [publication record](publication.json) retains dated prior contracts and raw native observations. Publication does not establish acceptance, live delivery or activation.
+Complete approved source catalogue: 51 Stories, 185 full human cases and zero AI cases, in dependency order. The original frozen observation remains 50 Stories and7 Tasks; only PGB-169 and the bounded PGB-159 amendment are later readbacks. Publication is not implementation, human acceptance, merge or activation. See [delivery and checks](README.md) and [provenance](publication.json).
 
 ## R1-01: Validate an editable work document
 
@@ -230,7 +230,6 @@ Authors cannot yet distinguish a valid draft from a ticket that meets the new st
   "open_questions": []
 }
 ```
-
 
 ## R1-02: Check the complete prescribed test plan
 
@@ -514,7 +513,6 @@ A well-shaped ticket can still have missing acceptance coverage or an impossible
 }
 ```
 
-
 ## R1-03: Write complete Epic and ticket YAML
 
 [PGB-73](https://scubapig.atlassian.net/browse/PGB-73)
@@ -751,7 +749,6 @@ The existing writing skill produces prose tickets. Humans and workers need the s
   "open_questions": []
 }
 ```
-
 
 ## R1-04: Validate assignment and handoff evidence
 
@@ -1085,7 +1082,6 @@ Workers and the manager need to agree on which assignment and PR revision a resu
 }
 ```
 
-
 ## R1-21: Configure Pig Boss for multiple projects
 
 [PGB-99](https://scubapig.atlassian.net/browse/PGB-99)
@@ -1360,7 +1356,6 @@ A company needs one installation and one editable configuration for several Jira
   "open_questions": []
 }
 ```
-
 
 ## R1-31: Check Jira read configuration before use
 
@@ -3430,7 +3425,6 @@ The implementer still uses the earlier prose handoff. It needs the structured as
 }
 ```
 
-
 ## R1-06: Review and hand off the current PR
 
 [PGB-76](https://scubapig.atlassian.net/browse/PGB-76)
@@ -3663,7 +3657,6 @@ The reviewer must preserve its existing review criteria while handing results to
   "open_questions": []
 }
 ```
-
 
 ## R1-07: Execute prescribed QA helper steps
 
@@ -3902,7 +3895,6 @@ Existing QA helpers need the structured case bindings and evidence shape. They m
   "open_questions": []
 }
 ```
-
 
 ## R1-24: Publish prepared QA evidence safely
 
@@ -4217,7 +4209,6 @@ Prerequisites: R1-04, R1-06, R1-07, PGB-108; required outcome ai_qa_complete.
   "open_questions": []
 }
 ```
-
 
 ## R1-30: Prepare mixed QA inputs and two boundary controls
 
@@ -5100,7 +5091,6 @@ Prerequisites: R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27; required outcome ai_q
 }
 ```
 
-
 ## R1-09: Request rework through the human’s assistant
 
 [PGB-79](https://scubapig.atlassian.net/browse/PGB-79)
@@ -5338,7 +5328,6 @@ A human who rejects an open PR needs to record actionable findings without start
   "open_questions": []
 }
 ```
-
 
 ## R1-10: Preview ready work from a complete snapshot
 
@@ -5631,7 +5620,6 @@ An operator needs to see why a stream can or cannot start work before granting w
   "open_questions": []
 }
 ```
-
 
 ## R1-25: Validate repeated-parent repairs
 
@@ -6096,7 +6084,6 @@ The existing local chain validator rejects a legitimate repaired child that cons
   "open_questions": []
 }
 ```
-
 
 ## R1-26: Reject conflicting completion receipts
 
@@ -9914,6 +9901,1109 @@ Human acceptance remains NOT_RUN. AI cases: zero.
 }
 ```
 
+## PGB-169: Publish approved delivery contracts with intact evidence
+
+[PGB-169](https://scubapig.atlassian.net/browse/PGB-169)
+
+### Problem to solve
+
+The source catalogue omits approved Core and caller work. Its checks also compare today's files to historical runtime hashes, which mixes preservation of evidence with validation of current behavior.
+
+### Acceptance Criteria
+
+- **AC1.** Humans and agents can read every approved contract, complete case and dependency under its real Jira key in the source catalogue, including this Story and the approved PGB-159 amendment.
+- **AC2.** Original captures, contract versions and evidence remain unchanged and clearly dated; current checks validate the current catalogue and actual copied runtime without treating planned behavior as implemented.
+- **AC3.** The readable catalogue, machine data, coverage and whole-work forecasts agree, including the catalogue supplied to PGB-159 and its remaining scheduling work.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Publish the complete approved catalogue, guides and historical/current/source-copy guard checks in the eleven paths recorded in the reviewed delivery plan.
+- **TAC1.** Repository danielchappell/Pigboard, base main; change only the catalogue, guides and existing guard/copy tests listed in the reviewed delivery plan, with no runtime or installer behavior change.
+- **TAC2.** Preserve all immutable PGB-81 and predecessor captures and independent hashes, using exact retained original bytes where needed; use the frozen native page plus bounded actual new-Story and changed PGB-159 readbacks, with no new inventory campaign.
+- **TAC3.** Current validation must independently match approved native contracts and expected semantics and compare every actual source payload byte with its installed copy and manifest; do not introduce a rotating publication hash map, future-change allowlist or skipped check.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-169-H01
+
+{
+  "id": "PGB-169-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC3",
+    "TAC1"
+  ],
+  "prerequisites": [
+    "Accepted exact PGB-81 source, complete approved new/changed native readbacks and the prepared isolated current catalogue."
+  ],
+  "steps": [
+    "Inspect both rendered and machine contracts, all complete case objects, dependency order, coverage and forecast arithmetic.",
+    "Run the prepared catalogue checks."
+  ],
+  "expected": [
+    "The same complete real-key set is represented, including this Story and the approved PGB-159 amendment.",
+    "No duplicate PGB-82 H05, dropped prior case or invented current inventory; readable, machine, coverage and forecast views agree."
+  ],
+  "evidence": [
+    "Exact revision, native readback IDs, prepared commands, sanitized output and observed counts; distinguish inspection from execution and designated human acceptance from contributor evidence."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-169-H02
+
+{
+  "id": "PGB-169-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "The same prepared source, existing dependencies and disposable copied installation; approved local loopback permission where existing tests require it."
+  ],
+  "steps": [
+    "Run the historical/current guard checks and strict copied controls.",
+    "Exercise bounded fixture mutations for historical bytes, a missing current contract or case, and a missing or mismatched copied payload."
+  ],
+  "expected": [
+    "Each defect fails its relevant check while unchanged legitimate current data passes.",
+    "Original captures and independent hashes remain exact; current semantics and every actual source/copied payload/manifest entry agree; planned scheduling stays unimplemented."
+  ],
+  "evidence": [
+    "Exact revision, fixture identity, commands and per-control outcomes; retain sanitized evidence before cleanup."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The source catalogue omits approved Core and caller work. Its checks also compare today's files to historical runtime hashes, which mixes preservation of evidence with validation of current behavior.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-81",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "Humans and agents can read every approved contract, complete case and dependency under its real Jira key in the source catalogue, including this Story and the approved PGB-159 amendment."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Original captures, contract versions and evidence remain unchanged and clearly dated; current checks validate the current catalogue and actual copied runtime without treating planned behavior as implemented."
+    },
+    {
+      "id": "AC3",
+      "requirement": "The readable catalogue, machine data, coverage and whole-work forecasts agree, including the catalogue supplied to PGB-159 and its remaining scheduling work."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Publish the complete approved catalogue, guides and historical/current/source-copy guard checks in the eleven paths recorded in the reviewed delivery plan.",
+      "out_of_scope": [
+        "Runtime or installer behavior changes",
+        "Customer repository changes, deployment or automation activation",
+        "New inventory campaign, rotating publication runtime map or future-change allowlist"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-SPLIT",
+        "decision": "The Director authorized the same-scope catalogue/guard Story followed by residual PGB-159 after two independent delivery reviews; each slice retains its complete supporting work and normal delivery gates.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-169?focusedCommentId=10942"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Repository danielchappell/Pigboard, base main; change only the catalogue, guides and existing guard/copy tests listed in the reviewed delivery plan, with no runtime or installer behavior change."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Preserve all immutable PGB-81 and predecessor captures and independent hashes, using exact retained original bytes where needed; use the frozen native page plus bounded actual new-Story and changed PGB-159 readbacks, with no new inventory campaign."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Current validation must independently match approved native contracts and expected semantics and compare every actual source payload byte with its installed copy and manifest; do not introduce a rotating publication hash map, future-change allowlist or skipped check."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Accepted exact Pigboard source and prepared disposable local catalogue/copied-installation fixtures; no customer target or provider access.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "The accepted PGB-81 source, complete approved new/changed native readbacks and isolated catalogue/copy fixtures, with bounded historical-byte, missing-current-data and copied-payload mutations.",
+        "initial_state": "Unchanged runtime and fresh disposable copies per control; all unrelated facts remain valid.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Exact catalogue/guard/copy commands, independent expected contract/case/dependency/forecast values and bounded mutation fixtures for the prescribed cases, bound to the reviewed revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-169-H01",
+          "PGB-169-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Approved API, database and UI helpers do not execute source catalogue and local installation contracts; designated human acceptance remains separate from developer regressions and contributor QA.",
+      "cases": [
+        {
+          "id": "PGB-169-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC3",
+            "TAC1"
+          ],
+          "prerequisites": [
+            "Accepted exact PGB-81 source, complete approved new/changed native readbacks and the prepared isolated current catalogue."
+          ],
+          "steps": [
+            "Inspect both rendered and machine contracts, all complete case objects, dependency order, coverage and forecast arithmetic.",
+            "Run the prepared catalogue checks."
+          ],
+          "expected": [
+            "The same complete real-key set is represented, including this Story and the approved PGB-159 amendment.",
+            "No duplicate PGB-82 H05, dropped prior case or invented current inventory; readable, machine, coverage and forecast views agree."
+          ],
+          "evidence": [
+            "Exact revision, native readback IDs, prepared commands, sanitized output and observed counts; distinguish inspection from execution and designated human acceptance from contributor evidence."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-169-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "The same prepared source, existing dependencies and disposable copied installation; approved local loopback permission where existing tests require it."
+          ],
+          "steps": [
+            "Run the historical/current guard checks and strict copied controls.",
+            "Exercise bounded fixture mutations for historical bytes, a missing current contract or case, and a missing or mismatched copied payload."
+          ],
+          "expected": [
+            "Each defect fails its relevant check while unchanged legitimate current data passes.",
+            "Original captures and independent hashes remain exact; current semantics and every actual source/copied payload/manifest entry agree; planned scheduling stays unimplemented."
+          ],
+          "evidence": [
+            "Exact revision, fixture identity, commands and per-control outcomes; retain sanitized evidence before cleanup."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Extend existing authoring, QA-helper and cursor installation checks for complete current contracts, immutable history and full source/copy equality, retaining existing strict semantics and required repository checks. Use prepared dependencies only; no fetch, provider credentials, customer target or activation."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-159: Check complete scheduling declarations
+
+[PGB-159](https://scubapig.atlassian.net/browse/PGB-159)
+
+### Problem to solve
+
+Pig Boss needs to check whether a human-ready ticket is structurally complete without demanding execution facts that can only exist during implementation. The current full-start check couples those two decisions.
+
+### Acceptance Criteria
+
+- **AC1.** The existing source and installed work checker accepts complete scheduling declarations against canonical scope and installed supported skills without requiring future execution facts.
+- **AC2.** It rejects incomplete coverage, invalid dispatch or references, unsupported skills, unsafe scope and inconsistent preparation declarations with actionable field diagnostics.
+- **AC3.** The current catalogue contains every approved new Core and caller contract and the amended PGB-82 contract under real keys; historical completion and evidence stay historical.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Check complete scheduling declarations through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Keep strict draft, structure and full start meanings; reuse complete semantic checks for coverage, children, binding order, graphs, bounded observations, ledgers and preparation consumers.
+- **TAC2.** Add the scheduling purpose to the existing checker and copied capability set; work text grants no authority and a scheduling result grants no execution readiness or human Ready to Work decision.
+- **TAC3.** Consume and verify the catalogue delivered by prerequisite PGB-169; retain its historical-byte and current-semantic/source-copy checks, and count any necessary supporting edits in this Story's actual scope.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-159-H01
+
+{
+  "id": "PGB-159-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Complete mixed and all-human tickets; a declared code-dependent preparation slot not yet filled; canonical scope and supported skills."
+  ],
+  "steps": [
+    "Run the prepared source and installed checker commands for scheduling and strict start.",
+    "Compare structured and readable results for both plans."
+  ],
+  "expected": [
+    "Scheduling accepts both complete declarations without invented context; strict start still requires its full applicable context.",
+    "Outputs identify the checked purpose and do not assert execution permission or make the human readiness decision."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-159-H02
+
+{
+  "id": "PGB-159-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Separate controls for missing AC/TAC coverage, duplicate dispatch, wrong API child, forward binding, unknown preparation consumer, unauthorized repository, unsupported skill, dependency cycle, missing SQL input, invalid observation schedule and exceeded ledger bound; approved real key mapping."
+  ],
+  "steps": [
+    "Run each isolated declaration control through source and copied scheduling checks.",
+    "Inspect the complete catalogue and run its prescribed preservation/current-runtime checks."
+  ],
+  "expected": [
+    "Every control fails at its relevant field without dropping full test-plan semantics.",
+    "All eight approved new Story keys and revised PGB-82 dependencies/contracts are represented; immutable captures retain their original content while current semantic and copy checks cover the changed route."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Pig Boss needs to check whether a human-ready ticket is structurally complete without demanding execution facts that can only exist during implementation. The current full-start check couples those two decisions.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-81",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-99",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-145",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-169",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing source and installed work checker accepts complete scheduling declarations against canonical scope and installed supported skills without requiring future execution facts."
+    },
+    {
+      "id": "AC2",
+      "requirement": "It rejects incomplete coverage, invalid dispatch or references, unsupported skills, unsafe scope and inconsistent preparation declarations with actionable field diagnostics."
+    },
+    {
+      "id": "AC3",
+      "requirement": "The current catalogue contains every approved new Core and caller contract and the amended PGB-82 contract under real keys; historical completion and evidence stay historical."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Check complete scheduling declarations through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Keep strict draft, structure and full start meanings; reuse complete semantic checks for coverage, children, binding order, graphs, bounded observations, ledgers and preparation consumers."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Add the scheduling purpose to the existing checker and copied capability set; work text grants no authority and a scheduling result grants no execution readiness or human Ready to Work decision."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Consume and verify the catalogue delivered by prerequisite PGB-169; retain its historical-byte and current-semantic/source-copy checks, and count any necessary supporting edits in this Story's actual scope."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-159-H01",
+          "PGB-159-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-159-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Complete mixed and all-human tickets; a declared code-dependent preparation slot not yet filled; canonical scope and supported skills."
+          ],
+          "steps": [
+            "Run the prepared source and installed checker commands for scheduling and strict start.",
+            "Compare structured and readable results for both plans."
+          ],
+          "expected": [
+            "Scheduling accepts both complete declarations without invented context; strict start still requires its full applicable context.",
+            "Outputs identify the checked purpose and do not assert execution permission or make the human readiness decision."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-159-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Separate controls for missing AC/TAC coverage, duplicate dispatch, wrong API child, forward binding, unknown preparation consumer, unauthorized repository, unsupported skill, dependency cycle, missing SQL input, invalid observation schedule and exceeded ledger bound; approved real key mapping."
+          ],
+          "steps": [
+            "Run each isolated declaration control through source and copied scheduling checks.",
+            "Inspect the complete catalogue and run its prescribed preservation/current-runtime checks."
+          ],
+          "expected": [
+            "Every control fails at its relevant field without dropping full test-plan semantics.",
+            "All eight approved new Story keys and revised PGB-82 dependencies/contracts are represented; immutable captures retain their original content while current semantic and copy checks cover the changed route."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-160: Validate authenticated recorded handoffs
+
+[PGB-160](https://scubapig.atlassian.net/browse/PGB-160)
+
+### Problem to solve
+
+Manager history currently depends on old execution bodies and external observations that it no longer owns. Its existing checker needs to distinguish exact historical authentication from proof that current work has recorded completion.
+
+### Acceptance Criteria
+
+- **AC1.** The existing handoff checker authenticates an exact historical target and required ancestry, including manager admission and stack-update requests, without requiring a completed QA leaf.
+- **AC2.** Its separate completion purpose establishes recorded completion only for the exact current requirements, assignment and complete leaf; changed or incomplete proof cannot pass.
+- **AC3.** Both results state that external freshness was not evaluated and grant no execution authority; no old work/context reconstruction is required.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Validate authenticated recorded handoffs through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Implement the planned inspectRecordedHistory and inspectRecordedCompletion contracts in the existing receipts module and command, preserving strict public v1 record/chain behavior.
+- **TAC2.** Retain authenticated actor/server metadata and original bytes, unique UUID/slot rules, current raw work/digest, assignments, all repair roots, parent segments/cutoffs, retained tuples and genuine pre-first-PR inventory.
+- **TAC3.** Use the closed manager envelope and canonical native authority specified in docs/delivery/manager-r1/role-amendment.md; remove historical bodies/context and external PR/evidence inputs without manufacturing observations or replacing missing retained proof with current comments.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-160-H01
+
+{
+  "id": "PGB-160-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Exact current QA completion, manager admission and stack-update targets with authenticated pages/retained tuples; ordinary, repeated-parent/root and genuine pre-first-PR histories."
+  ],
+  "steps": [
+    "Invoke history for each exact target and completion for the current completed leaf, without old work/context or external observations.",
+    "Change only hidden external PR head/target/open state; compare results and strict-v1 behavior on the reduced envelope."
+  ],
+  "expected": [
+    "History validates the exact manager targets without claiming QA completion; completion proves only the valid current completed leaf.",
+    "Recorded results do not change merely because unseen external facts changed; external freshness remains unchecked and strict v1 does not accept the reduced input as its old full proof."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-160-H02
+
+{
+  "id": "PGB-160-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Isolated edited server metadata/body, conflicting UUID, changed current requirement, wrong assignment, missing ancestor/root, conflicting QA slot, omitted first-PR inventory and missing parent-cutoff controls."
+  ],
+  "steps": [
+    "Run each control for its relevant target/purpose using source and copied command.",
+    "Inspect target, binding and diagnostic fields."
+  ],
+  "expected": [
+    "Every missing, conflicting or mismatched proof fails its relevant purpose; no historical body or retained tuple is synthesized and no result establishes completion from an unpublished or wrong target."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Manager history currently depends on old execution bodies and external observations that it no longer owns. Its existing checker needs to distinguish exact historical authentication from proof that current work has recorded completion.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-159",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing handoff checker authenticates an exact historical target and required ancestry, including manager admission and stack-update requests, without requiring a completed QA leaf."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Its separate completion purpose establishes recorded completion only for the exact current requirements, assignment and complete leaf; changed or incomplete proof cannot pass."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Both results state that external freshness was not evaluated and grant no execution authority; no old work/context reconstruction is required."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Validate authenticated recorded handoffs through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Implement the planned inspectRecordedHistory and inspectRecordedCompletion contracts in the existing receipts module and command, preserving strict public v1 record/chain behavior."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Retain authenticated actor/server metadata and original bytes, unique UUID/slot rules, current raw work/digest, assignments, all repair roots, parent segments/cutoffs, retained tuples and genuine pre-first-PR inventory."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Use the closed manager envelope and canonical native authority specified in docs/delivery/manager-r1/role-amendment.md; remove historical bodies/context and external PR/evidence inputs without manufacturing observations or replacing missing retained proof with current comments."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-160-H01",
+          "PGB-160-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-160-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Exact current QA completion, manager admission and stack-update targets with authenticated pages/retained tuples; ordinary, repeated-parent/root and genuine pre-first-PR histories."
+          ],
+          "steps": [
+            "Invoke history for each exact target and completion for the current completed leaf, without old work/context or external observations.",
+            "Change only hidden external PR head/target/open state; compare results and strict-v1 behavior on the reduced envelope."
+          ],
+          "expected": [
+            "History validates the exact manager targets without claiming QA completion; completion proves only the valid current completed leaf.",
+            "Recorded results do not change merely because unseen external facts changed; external freshness remains unchecked and strict v1 does not accept the reduced input as its old full proof."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-160-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Isolated edited server metadata/body, conflicting UUID, changed current requirement, wrong assignment, missing ancestor/root, conflicting QA slot, omitted first-PR inventory and missing parent-cutoff controls."
+          ],
+          "steps": [
+            "Run each control for its relevant target/purpose using source and copied command.",
+            "Inspect target, binding and diagnostic fields."
+          ],
+          "expected": [
+            "Every missing, conflicting or mismatched proof fails its relevant purpose; no historical body or retained tuple is synthesized and no result establishes completion from an unpublished or wrong target."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-161: Check current worker proof and truthful inability
+
+[PGB-161](https://scubapig.atlassian.net/browse/PGB-161)
+
+### Problem to solve
+
+Workers need current execution proof while consuming older authenticated handoffs. They also need to report inability before code-dependent QA facts exist without treating that report as permission to act.
+
+### Acceptance Criteria
+
+- **AC1.** The existing checker validates full current work, applicable current PR/evidence and configured authority with recorded ancestry for READY, review, QA and human request-rework consumers.
+- **AC2.** A separate narrow assignment check validates complete declarations, exact stage/actor/assignment and supported existing inability candidates without asserting execution readiness; unsupported or unverified candidates stay local.
+- **AC3.** Unpublished candidates and real native readback remain distinct, and unknown publication never becomes success or permission to replay.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Check current worker proof and truthful inability through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Implement validateWorkerCurrent and validateWorkerAssignment with worker-current and worker-assignment modes in the existing module/command and one copied capability set, using the planned closed pigboard-worker-handoff-input/v1 envelope.
+- **TAC2.** Preserve strict full current start and own/required-parent action proof; facts come from canonical setup and permitted observations, never authority inferred from ticket or historical success; return execution_authorized:false.
+- **TAC3.** Validate candidate bytes, UUID, coverage and assignment before append; only real immutable server readback can establish published history. Unknown/mixed versions reject without strict-v1 or manager-result fallback.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-161-H01
+
+{
+  "id": "PGB-161-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Full current READY, review, QA and authorized human-rework inputs; authenticated old ancestry without old context; actual own/required-parent PR, evidence and configured rights."
+  ],
+  "steps": [
+    "Run each current purpose in source and copied checker.",
+    "Repeat with changed PR identity/head/target, unsafe operation, missing prepared input, missing authority and mixed-version controls."
+  ],
+  "expected": [
+    "Valid current inputs pass only their explicit proof purpose without granting execution permission.",
+    "Each current-proof failure rejects before its dependent action; prior recorded success cannot cure it and current human rework retains current QA/same-open-PR proof."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-161-H02
+
+{
+  "id": "PGB-161-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Valid assignment with a declared future artifact unavailable; supported blocked/dependency-wait candidates and unknown assignment/publisher or unsupported-kind controls."
+  ],
+  "steps": [
+    "Validate assignment and unpublished candidate without fabricated native metadata.",
+    "Validate real readback, then changed bytes/UUID and unknown-publication variants."
+  ],
+  "expected": [
+    "Only an authorized supported inability shape validates; unknown assignment/rights or unsupported shapes remain local.",
+    "Assignment success cannot replace full current readiness. Real readback binds the original candidate; changed/uncertain publication fails or holds without replay, fake IDs or completion."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Workers need current execution proof while consuming older authenticated handoffs. They also need to report inability before code-dependent QA facts exist without treating that report as permission to act.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-160",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing checker validates full current work, applicable current PR/evidence and configured authority with recorded ancestry for READY, review, QA and human request-rework consumers."
+    },
+    {
+      "id": "AC2",
+      "requirement": "A separate narrow assignment check validates complete declarations, exact stage/actor/assignment and supported existing inability candidates without asserting execution readiness; unsupported or unverified candidates stay local."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Unpublished candidates and real native readback remain distinct, and unknown publication never becomes success or permission to replay."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Check current worker proof and truthful inability through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Implement validateWorkerCurrent and validateWorkerAssignment with worker-current and worker-assignment modes in the existing module/command and one copied capability set, using the planned closed pigboard-worker-handoff-input/v1 envelope."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Preserve strict full current start and own/required-parent action proof; facts come from canonical setup and permitted observations, never authority inferred from ticket or historical success; return execution_authorized:false."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Validate candidate bytes, UUID, coverage and assignment before append; only real immutable server readback can establish published history. Unknown/mixed versions reject without strict-v1 or manager-result fallback."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-161-H01",
+          "PGB-161-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-161-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Full current READY, review, QA and authorized human-rework inputs; authenticated old ancestry without old context; actual own/required-parent PR, evidence and configured rights."
+          ],
+          "steps": [
+            "Run each current purpose in source and copied checker.",
+            "Repeat with changed PR identity/head/target, unsafe operation, missing prepared input, missing authority and mixed-version controls."
+          ],
+          "expected": [
+            "Valid current inputs pass only their explicit proof purpose without granting execution permission.",
+            "Each current-proof failure rejects before its dependent action; prior recorded success cannot cure it and current human rework retains current QA/same-open-PR proof."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-161-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Valid assignment with a declared future artifact unavailable; supported blocked/dependency-wait candidates and unknown assignment/publisher or unsupported-kind controls."
+          ],
+          "steps": [
+            "Validate assignment and unpublished candidate without fabricated native metadata.",
+            "Validate real readback, then changed bytes/UUID and unknown-publication variants."
+          ],
+          "expected": [
+            "Only an authorized supported inability shape validates; unknown assignment/rights or unsupported shapes remain local.",
+            "Assignment success cannot replace full current readiness. Real readback binds the original candidate; changed/uncertain publication fails or holds without replay, fake IDs or completion."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
 ## R1-33: Inspect named Jira issues safely
 
 [PGB-147](https://scubapig.atlassian.net/browse/PGB-147)
@@ -10816,6 +11906,1462 @@ Human acceptance remains NOT_RUN. AI cases: zero.
 }
 ```
 
+## PGB-162: Preview scheduling and repairs from recorded proof
+
+[PGB-162](https://scubapig.atlassian.net/browse/PGB-162)
+
+### Problem to solve
+
+The existing offline preview still expects manager execution contexts and external PR observations. Operators need one explicit preview format that preserves scheduling and repair rules while showing the weaker recorded-proof guarantee.
+
+### Acceptance Criteria
+
+- **AC1.** The existing source and installed preview select ordinary, own-repair and parent-stack work from complete scheduling declarations and authenticated recorded proof.
+- **AC2.** Ordering, scope, capacity, pause, repair roots, parent incorporation, pre-first-PR waits and retained uncertainty remain enforced; hidden external changes are explicitly outside the result.
+- **AC3.** The new pinned release accepts snapshot v2 and rejects old/mixed inputs with migration guidance; the older pinned release keeps its historical behavior.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Preview scheduling and repairs from recorded proof through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Adapt snapshot composition and repair-policy guards to recorded PR identity/assertions; never fabricate current PR availability, state, source or target observations.
+- **TAC2.** Preserve retained_members, pending_intents and retained_complete shapes and original attempt package/configuration/assignment/transition identity; incompatible or unknown old uncertainty holds.
+- **TAC3.** Migrate the actual PGB-81 fixture/export/installed-smoke consumers and readable/JSON help once, preserving the distinct 67 exported bodies, 66 installed inputs and 42 human objects; retain strict primitive APIs without a second preview evaluator.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-162-H01
+
+{
+  "id": "PGB-162-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC3",
+    "TAC1",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Existing ordinary, own-repair, repeated-parent, unfinished-child and first-PR fixture families; actual PGB-81 export/installed-smoke inputs migrated to explicit v2."
+  ],
+  "steps": [
+    "Run each prepared source and installed preview and compare its prescribed selection, roots and recorded identity.",
+    "Run the existing exporter/eighth smoke, including its semantic-failure/previous-link checks, and inspect the migrated readable/JSON guidance."
+  ],
+  "expected": [
+    "Expected scheduling and repair selections are unchanged apart from the approved recorded-freshness interpretation.",
+    "Actual incoming consumers use v2 coherently; export/body/installed/human counts remain distinct and no additional workflow generation is introduced."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-162-H02
+
+{
+  "id": "PGB-162-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "AC3",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Occupied stream, fifth Human Review, pause, cycle, Epic conflict, changed current requirements, missing root and old/mixed-version controls; retained incompatible uncertain attempt; hidden external PR change only."
+  ],
+  "steps": [
+    "Run each isolated control through the preview.",
+    "Inspect holds/rejections, exact retained identity and the unchanged-record hidden-change result."
+  ],
+  "expected": [
+    "Policy controls still hold the required scope; unknown old uncertainty is never reinterpreted or replayed.",
+    "Old/mixed input rejects precisely; hidden external change alone is not detected or described as live-safe, and readable/JSON output states that limitation."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The existing offline preview still expects manager execution contexts and external PR observations. Operators need one explicit preview format that preserves scheduling and repair rules while showing the weaker recorded-proof guarantee.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-160",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-81",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing source and installed preview select ordinary, own-repair and parent-stack work from complete scheduling declarations and authenticated recorded proof."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Ordering, scope, capacity, pause, repair roots, parent incorporation, pre-first-PR waits and retained uncertainty remain enforced; hidden external changes are explicitly outside the result."
+    },
+    {
+      "id": "AC3",
+      "requirement": "The new pinned release accepts snapshot v2 and rejects old/mixed inputs with migration guidance; the older pinned release keeps its historical behavior."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Preview scheduling and repairs from recorded proof through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Adapt snapshot composition and repair-policy guards to recorded PR identity/assertions; never fabricate current PR availability, state, source or target observations."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Preserve retained_members, pending_intents and retained_complete shapes and original attempt package/configuration/assignment/transition identity; incompatible or unknown old uncertainty holds."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Migrate the actual PGB-81 fixture/export/installed-smoke consumers and readable/JSON help once, preserving the distinct 67 exported bodies, 66 installed inputs and 42 human objects; retain strict primitive APIs without a second preview evaluator."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-162-H01",
+          "PGB-162-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-162-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC3",
+            "TAC1",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Existing ordinary, own-repair, repeated-parent, unfinished-child and first-PR fixture families; actual PGB-81 export/installed-smoke inputs migrated to explicit v2."
+          ],
+          "steps": [
+            "Run each prepared source and installed preview and compare its prescribed selection, roots and recorded identity.",
+            "Run the existing exporter/eighth smoke, including its semantic-failure/previous-link checks, and inspect the migrated readable/JSON guidance."
+          ],
+          "expected": [
+            "Expected scheduling and repair selections are unchanged apart from the approved recorded-freshness interpretation.",
+            "Actual incoming consumers use v2 coherently; export/body/installed/human counts remain distinct and no additional workflow generation is introduced."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-162-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "AC3",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Occupied stream, fifth Human Review, pause, cycle, Epic conflict, changed current requirements, missing root and old/mixed-version controls; retained incompatible uncertain attempt; hidden external PR change only."
+          ],
+          "steps": [
+            "Run each isolated control through the preview.",
+            "Inspect holds/rejections, exact retained identity and the unchanged-record hidden-change result."
+          ],
+          "expected": [
+            "Policy controls still hold the required scope; unknown old uncertainty is never reinterpreted or replayed.",
+            "Old/mixed input rejects precisely; hidden external change alone is not detected or described as live-safe, and readable/JSON output states that limitation."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-163: Read exact handoffs and reconciliation facts
+
+[PGB-163](https://scubapig.atlassian.net/browse/PGB-163)
+
+### Problem to solve
+
+Existing native consumers need complete authenticated target facts, and reconciliation also needs real native transition history. The current bounded reader has comments but no native changelog operation.
+
+### Acceptance Criteria
+
+- **AC1.** The source and installed native receipt route produce exact recorded proof for the requested target using configured authority and complete native closure.
+- **AC2.** For an original retained attempt, the same bounded session produces complete publication observations and separate native status-change history, including a truthful complete-empty result.
+- **AC3.** Missing, denied, incomplete, unsupported or exhausted observations return precise unavailable/incomplete/unsupported outcomes; acquisition writes no provider or operational state.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Read exact handoffs and reconciliation facts through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Compose the actual handed-off reader session and planned readReconciliationFacts({attempt,publicationReferences,limits}); consume validated retained selectors and preserve original package/configuration/assignment/attempt identity.
+- **TAC2.** Add only fixed GET /rest/api/3/issue/{id}/changelog with startAt/maxResults and native ID/actor/from/to/time projection, sharing counters/deadline/byte limits with issue/comment/publication reads; no generic GET, response-URL following or fresh-budget reader.
+- **TAC3.** Preserve HTTPS/TLS, destination and secret boundaries, prior retained metadata and exact manager-target bindings; comments cannot substitute for native history, and history alone proves neither 204/409 outcome nor operation correlation.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-163-H01
+
+{
+  "id": "PGB-163-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC2",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Prepared bounded REST fixtures for a current QA target and original manager admission/stack-update targets, with exact comments, retained tuples, publication references and native changelog pages; separate complete-empty history variant."
+  ],
+  "steps": [
+    "Run exact native receipt and original-attempt reconciliation acquisition through source and copied consumers.",
+    "Inspect exact selectors, shared request/byte/time accounting, proof bindings, native-history projection and mutation audit."
+  ],
+  "expected": [
+    "All requested pages/proofs bind to the original target and attempt; actual history ID/actor/from/to/time is separate from typed-record ancestry.",
+    "Complete empty history remains complete empty, not transition proof; the producer does not assert 204/409 or finalize an attempt and performs zero mutations."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-163-H02
+
+{
+  "id": "PGB-163-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Missing page, 403/404, exhausted shared budget, timeout, foreign/redirect destination, secret-bearing error, wrong UUID/assignment, edited metadata, absent prior retained tuple and unsupported changelog-shape controls."
+  ],
+  "steps": [
+    "Run each isolated acquisition control under the same configured session limit.",
+    "Inspect bounded calls, provenance/status and sanitized diagnostics."
+  ],
+  "expected": [
+    "No failure becomes empty complete data or fabricated identity; exact unsupported/incomplete reasons remain visible.",
+    "No second budget, arbitrary destination, credential leak, write or automatic replay escapes the configured boundary."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "Existing native consumers need complete authenticated target facts, and reconciliation also needs real native transition history. The current bounded reader has comments but no native changelog operation.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-160",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-147",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-148",
+      "required_outcome": "ai_qa_complete"
+    },
+    {
+      "ticket": "PGB-150",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The source and installed native receipt route produce exact recorded proof for the requested target using configured authority and complete native closure."
+    },
+    {
+      "id": "AC2",
+      "requirement": "For an original retained attempt, the same bounded session produces complete publication observations and separate native status-change history, including a truthful complete-empty result."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Missing, denied, incomplete, unsupported or exhausted observations return precise unavailable/incomplete/unsupported outcomes; acquisition writes no provider or operational state."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Read exact handoffs and reconciliation facts through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Compose the actual handed-off reader session and planned readReconciliationFacts({attempt,publicationReferences,limits}); consume validated retained selectors and preserve original package/configuration/assignment/attempt identity."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Add only fixed GET /rest/api/3/issue/{id}/changelog with startAt/maxResults and native ID/actor/from/to/time projection, sharing counters/deadline/byte limits with issue/comment/publication reads; no generic GET, response-URL following or fresh-budget reader."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve HTTPS/TLS, destination and secret boundaries, prior retained metadata and exact manager-target bindings; comments cannot substitute for native history, and history alone proves neither 204/409 outcome nor operation correlation."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-163-H01",
+          "PGB-163-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-163-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Prepared bounded REST fixtures for a current QA target and original manager admission/stack-update targets, with exact comments, retained tuples, publication references and native changelog pages; separate complete-empty history variant."
+          ],
+          "steps": [
+            "Run exact native receipt and original-attempt reconciliation acquisition through source and copied consumers.",
+            "Inspect exact selectors, shared request/byte/time accounting, proof bindings, native-history projection and mutation audit."
+          ],
+          "expected": [
+            "All requested pages/proofs bind to the original target and attempt; actual history ID/actor/from/to/time is separate from typed-record ancestry.",
+            "Complete empty history remains complete empty, not transition proof; the producer does not assert 204/409 or finalize an attempt and performs zero mutations."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-163-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Missing page, 403/404, exhausted shared budget, timeout, foreign/redirect destination, secret-bearing error, wrong UUID/assignment, edited metadata, absent prior retained tuple and unsupported changelog-shape controls."
+          ],
+          "steps": [
+            "Run each isolated acquisition control under the same configured session limit.",
+            "Inspect bounded calls, provenance/status and sanitized diagnostics."
+          ],
+          "expected": [
+            "No failure becomes empty complete data or fabricated identity; exact unsupported/incomplete reasons remain visible.",
+            "No second budget, arbitrary destination, credential leak, write or automatic replay escapes the configured boundary."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-164: Complete implementation with current permitted facts
+
+[PGB-164](https://scubapig.atlassian.net/browse/PGB-164)
+
+### Problem to solve
+
+The implementer currently expects a full supplied context before work that may create the declared QA artifacts. Its existing journey needs to prepare permitted current facts at the correct time while preserving strict final readiness.
+
+### Acceptance Criteria
+
+- **AC1.** The existing key-and-skill journey retains High planning, independent review and Medium execution while deriving current facts from already-authorized setup and permitted observations.
+- **AC2.** The implementer fills only declared mechanical preparation slots, including artifacts that depend on code, and proves full current start/prepared coverage/PR/CI before READY publication.
+- **AC3.** Missing next-action authority or required facts stops that action; a supported authenticated inability can be published once, otherwise inability stays local, and uncertain effects never replay.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Complete implementation with current permitted facts through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Use PGB-161 worker-assignment/current and PGB-160 recorded ancestry through the handed-off copied capability set; a declaration or recorded history result is not execution authority.
+- **TAC2.** Preserve one assigned ticket/PR, exact repair roots and current parent incorporation; do not add a public phase framework, external per-ticket setup chore, dependency installation or new permission source.
+- **TAC3.** Keep candidate validation, original UUID/bytes, real readback, final history/freshness and transition as separate checks; no full READY or successful publication claim before its required proof.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-164-H01
+
+{
+  "id": "PGB-164-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC2",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Prepared existing implementer instruction harness with current canonical rights, a declared code-dependent QA artifact, repair roots and a current required-parent PR; all provider/model responses labelled simulated."
+  ],
+  "steps": [
+    "Drive the existing High plan, independent review and Medium execution route.",
+    "Fill only the declared mechanical artifact after its code exists; validate full current proof and the READY candidate/readback."
+  ],
+  "expected": [
+    "The route preserves role order and current action checks without demanding nonexistent future facts before code.",
+    "READY requires the complete prepared plan, current PR/CI and repair/parent proof; a simulated instruction trace is not live model/provider acceptance."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-164-H02
+
+{
+  "id": "PGB-164-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Isolated missing authority, unsafe operation, missing final artifact, changed assignment and unknown publisher controls; uncertain PR creation, publication and transition results."
+  ],
+  "steps": [
+    "Drive each control to its first affected boundary.",
+    "Inspect the action/publication ledger and any supported blocked candidate/readback."
+  ],
+  "expected": [
+    "No dependent code/provider/helper action occurs without applicable proof; known authorized supported inability may publish once, while unverified assignment/rights stays local.",
+    "Uncertain effects retain original identity and stop without execution/publication replay or fabricated READY."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The implementer currently expects a full supplied context before work that may create the declared QA artifacts. Its existing journey needs to prepare permitted current facts at the correct time while preserving strict final readiness.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-161",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing key-and-skill journey retains High planning, independent review and Medium execution while deriving current facts from already-authorized setup and permitted observations."
+    },
+    {
+      "id": "AC2",
+      "requirement": "The implementer fills only declared mechanical preparation slots, including artifacts that depend on code, and proves full current start/prepared coverage/PR/CI before READY publication."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Missing next-action authority or required facts stops that action; a supported authenticated inability can be published once, otherwise inability stays local, and uncertain effects never replay."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Complete implementation with current permitted facts through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Use PGB-161 worker-assignment/current and PGB-160 recorded ancestry through the handed-off copied capability set; a declaration or recorded history result is not execution authority."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Preserve one assigned ticket/PR, exact repair roots and current parent incorporation; do not add a public phase framework, external per-ticket setup chore, dependency installation or new permission source."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Keep candidate validation, original UUID/bytes, real readback, final history/freshness and transition as separate checks; no full READY or successful publication claim before its required proof."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-164-H01",
+          "PGB-164-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-164-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Prepared existing implementer instruction harness with current canonical rights, a declared code-dependent QA artifact, repair roots and a current required-parent PR; all provider/model responses labelled simulated."
+          ],
+          "steps": [
+            "Drive the existing High plan, independent review and Medium execution route.",
+            "Fill only the declared mechanical artifact after its code exists; validate full current proof and the READY candidate/readback."
+          ],
+          "expected": [
+            "The route preserves role order and current action checks without demanding nonexistent future facts before code.",
+            "READY requires the complete prepared plan, current PR/CI and repair/parent proof; a simulated instruction trace is not live model/provider acceptance."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-164-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Isolated missing authority, unsafe operation, missing final artifact, changed assignment and unknown publisher controls; uncertain PR creation, publication and transition results."
+          ],
+          "steps": [
+            "Drive each control to its first affected boundary.",
+            "Inspect the action/publication ledger and any supported blocked candidate/readback."
+          ],
+          "expected": [
+            "No dependent code/provider/helper action occurs without applicable proof; known authorized supported inability may publish once, while unverified assignment/rights stays local.",
+            "Uncertain effects retain original identity and stop without execution/publication replay or fabricated READY."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-165: Review current proof with recorded ancestry
+
+[PGB-165](https://scubapig.atlassian.net/browse/PGB-165)
+
+### Problem to solve
+
+The reviewer needs old authenticated history without reconstructing previous workers’ contexts. Its current PR, independence and prepared-input checks must still govern the actual review and publication.
+
+### Acceptance Criteria
+
+- **AC1.** The existing reviewer assembles permitted current work/PR/evidence facts and runs the shared read-only review job once for the current snapshot using recorded ancestry.
+- **AC2.** It preserves independence, complete C01–C20/category coverage and clean/finding outcomes while checking actual open PR, approvals/revocations, CI and completed prepared QA inputs.
+- **AC3.** Missing current proof stops review/publication at the applicable boundary; supported inability remains truthful and unknown publication cannot replay or become success.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Review current proof with recorded ancestry through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Use the planned current/assignment checker and recorded ancestry at existing preflight, freshness, candidate and final boundaries; keep the shared review job rather than cloning it.
+- **TAC2.** Canonical configuration and actual permitted observations supply facts and rights; the reviewer consumes prepared inputs and never invents tests, queries, expectations or missing artifacts.
+- **TAC3.** Preserve one authorized canonical publication with original bytes/UUID and real readback; no silent capability/route fallback or inference of a product defect from missing evidence.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-165-H01
+
+{
+  "id": "PGB-165-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC2",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Prepared source/copied reviewer instruction harness with a current open PR, independent reviewer, current CI/approvals, completed prepared inputs and authenticated old ancestry; clean and finding variants."
+  ],
+  "steps": [
+    "Invoke the existing review route for each snapshot.",
+    "Inspect current-proof checks, the one job invocation, all review categories and candidate/readback."
+  ],
+  "expected": [
+    "Each snapshot receives one independent complete review with its prescribed clean/finding result.",
+    "Old contexts are not reconstructed; current PR/CI/independence/prepared-input proof remains mandatory and no deployment is invented for a static review."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-165-H02
+
+{
+  "id": "PGB-165-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC3",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Missing artifact, stale/changed PR/CI/approval, absent independence, unauthorized capability and uncertain-publication controls."
+  ],
+  "steps": [
+    "Drive each isolated control to its affected boundary.",
+    "Inspect supported inability or local result and the publication/action ledger."
+  ],
+  "expected": [
+    "The affected action stops with truthful evidence; missing facts do not become a fabricated product defect or invented QA artifact.",
+    "Only a supported authorized inability can publish; uncertain append/transition retains identity without replay, job duplication or alternate-route fallback."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "The reviewer needs old authenticated history without reconstructing previous workers’ contexts. Its current PR, independence and prepared-input checks must still govern the actual review and publication.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-161",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing reviewer assembles permitted current work/PR/evidence facts and runs the shared read-only review job once for the current snapshot using recorded ancestry."
+    },
+    {
+      "id": "AC2",
+      "requirement": "It preserves independence, complete C01–C20/category coverage and clean/finding outcomes while checking actual open PR, approvals/revocations, CI and completed prepared QA inputs."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Missing current proof stops review/publication at the applicable boundary; supported inability remains truthful and unknown publication cannot replay or become success."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Review current proof with recorded ancestry through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Use the planned current/assignment checker and recorded ancestry at existing preflight, freshness, candidate and final boundaries; keep the shared review job rather than cloning it."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Canonical configuration and actual permitted observations supply facts and rights; the reviewer consumes prepared inputs and never invents tests, queries, expectations or missing artifacts."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve one authorized canonical publication with original bytes/UUID and real readback; no silent capability/route fallback or inference of a product defect from missing evidence."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-165-H01",
+          "PGB-165-H02"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-165-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Prepared source/copied reviewer instruction harness with a current open PR, independent reviewer, current CI/approvals, completed prepared inputs and authenticated old ancestry; clean and finding variants."
+          ],
+          "steps": [
+            "Invoke the existing review route for each snapshot.",
+            "Inspect current-proof checks, the one job invocation, all review categories and candidate/readback."
+          ],
+          "expected": [
+            "Each snapshot receives one independent complete review with its prescribed clean/finding result.",
+            "Old contexts are not reconstructed; current PR/CI/independence/prepared-input proof remains mandatory and no deployment is invented for a static review."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-165-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC3",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Missing artifact, stale/changed PR/CI/approval, absent independence, unauthorized capability and uncertain-publication controls."
+          ],
+          "steps": [
+            "Drive each isolated control to its affected boundary.",
+            "Inspect supported inability or local result and the publication/action ledger."
+          ],
+          "expected": [
+            "The affected action stops with truthful evidence; missing facts do not become a fabricated product defect or invented QA artifact.",
+            "Only a supported authorized inability can publish; uncertain append/transition retains identity without replay, job duplication or alternate-route fallback."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
+## PGB-166: Finish prescribed QA and authorized human rework
+
+[PGB-166](https://scubapig.atlassian.net/browse/PGB-166)
+
+### Problem to solve
+
+QA and human request-rework consume historical handoffs but need current execution and PR proof. They must share the new current/history composition without recreating old QA context or repeating completed tests.
+
+### Acceptance Criteria
+
+- **AC1.** The existing QA route assembles current facts from canonical setup and completed prepared inputs, then preserves full case inventory, ordered helpers/children, expectations and final current proof.
+- **AC2.** Partial, failed, not-run and human-pending results remain truthful; missing authority/prepared inputs or uncertain effects stop the affected action without helper/publication replay.
+- **AC3.** Explicit human request-rework uses the current QA result and same open PR/current revision/evidence to retain all findings and queue once; discussion or missing authorization performs no write.
+
+### Technical Acceptance Criteria
+
+- **Repository:** https://github.com/danielchappell/Pigboard; base `main`.
+- **Change boundary:** Finish prescribed QA and authorized human rework through the existing consumers and exact path forecast in the delivery plan.
+- **TAC1.** Use PGB-161 current/assignment and PGB-160 ancestry at existing input, candidate, readback and final boundaries; human rework retains full current work/QA proof without reconstructing old execution contexts.
+- **TAC2.** Invoke only the ticket’s approved installed qa-api, qa-bruno, qa-database and qa-ui contracts in their exact order; reviewer/QA consume prepared artifacts and never install, discover an environment, invent queries or change expectations.
+- **TAC3.** Preserve original UUID/bytes, complete partial ledger and no replay; request-rework does not rerun QA, launch a worker, change the pointer, produce Blocked, mutate a child or access manager controls.
+
+### Testing Strategy
+
+All cases below are designated human acceptance and remain NOT_RUN. Developer regressions and contributor evidence are separate. The complete structured contract includes every prerequisite, preparation, case input, step, expected outcome, evidence and cleanup field.
+
+#### PGB-166-H01
+
+{
+  "id": "PGB-166-H01",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC1",
+    "AC2",
+    "TAC1",
+    "TAC2"
+  ],
+  "prerequisites": [
+    "Prepared instruction/fixture harness for mixed qa-api→qa-bruno, database and UI dispatch, plus an all-human plan; current allowed artifacts/operations and old authenticated ancestry without old execution context."
+  ],
+  "steps": [
+    "Drive the prescribed ordered cases through the existing QA route, including one observed FAIL and remaining human work.",
+    "Inspect parent/child calls, complete ledger and final candidate/current proof."
+  ],
+  "expected": [
+    "Every top-level step and API child executes only as prescribed; original expectations and finite schedules remain intact.",
+    "FAIL, NOT_RUN and human_pending remain distinct and complete; all-human work is not dispatched or marked passed, and simulated helper responses are not live acceptance."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-166-H02
+
+{
+  "id": "PGB-166-H02",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC2",
+    "TAC1",
+    "TAC2",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Missing artifact/access/required environment, unsafe operation, changed work, expired prescribed deadline and unknown helper/publication outcome controls."
+  ],
+  "steps": [
+    "Drive each control to the applicable action boundary.",
+    "Inspect partial ledger, supported inability or local result and append/readback trace."
+  ],
+  "expected": [
+    "No invented artifact, permission, query, environment or success repairs the gap; completed results remain preserved and remaining work is truthful.",
+    "Unknown outcomes retain identity and stop without helper or publication replay; incomplete evidence is not automatically a product defect."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+#### PGB-166-H03
+
+{
+  "id": "PGB-166-H03",
+  "execution": "human",
+  "owner_role": "developer and human QA reviewer",
+  "requirements": [
+    "AC3",
+    "TAC1",
+    "TAC3"
+  ],
+  "prerequisites": [
+    "Current QA result, same open PR/current revision/evidence and explicit human record-and-queue authorization; separate discussion-only, no-authorization, closed/changed PR, conflicting QA, already-queued and unknown-publication controls."
+  ],
+  "steps": [
+    "Invoke existing request-rework for the authorized positive case and each isolated control.",
+    "Inspect retained findings, exact candidate/readback and all attempted mutations."
+  ],
+  "expected": [
+    "Only the eligible authorized case records all findings and queues once on the same open PR; controls refuse or hold truthfully.",
+    "No QA rerun, worker launch, Blocked record, pointer/child change, manager action or uncertain-write replay occurs."
+  ],
+  "evidence": [
+    "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+  ],
+  "cleanup": {
+    "mode": "prescribed",
+    "reason": null,
+    "owner": "human QA reviewer",
+    "steps": [
+      "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+    ]
+  }
+}
+
+### Complete structured contract
+
+```json
+{
+  "schema": "pigboard-ticket/v1",
+  "problem_to_solve": "QA and human request-rework consume historical handoffs but need current execution and PR proof. They must share the new current/history composition without recreating old QA context or repeating completed tests.",
+  "prerequisites": [
+    {
+      "ticket": "PGB-161",
+      "required_outcome": "ai_qa_complete"
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "requirement": "The existing QA route assembles current facts from canonical setup and completed prepared inputs, then preserves full case inventory, ordered helpers/children, expectations and final current proof."
+    },
+    {
+      "id": "AC2",
+      "requirement": "Partial, failed, not-run and human-pending results remain truthful; missing authority/prepared inputs or uncertain effects stop the affected action without helper/publication replay."
+    },
+    {
+      "id": "AC3",
+      "requirement": "Explicit human request-rework uses the current QA result and same open PR/current revision/evidence to retain all findings and queue once; discussion or missing authorization performs no write."
+    }
+  ],
+  "technical_acceptance_criteria": {
+    "repository": {
+      "url": "https://github.com/danielchappell/Pigboard",
+      "base_branch": "main",
+      "change_boundary": "Finish prescribed QA and authorized human rework through the existing consumers and exact path forecast in the delivery plan.",
+      "out_of_scope": [
+        "Customer repository changes, activation or deployment",
+        "Context service, public phase framework, parallel preview generation or new permission source"
+      ],
+      "related_repositories": []
+    },
+    "accepted_decisions": [
+      {
+        "id": "D-ROLE",
+        "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+      },
+      {
+        "id": "D-PREP",
+        "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+        "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
+      }
+    ],
+    "constraints": [
+      {
+        "id": "TAC1",
+        "requirement": "Use PGB-161 current/assignment and PGB-160 ancestry at existing input, candidate, readback and final boundaries; human rework retains full current work/QA proof without reconstructing old execution contexts."
+      },
+      {
+        "id": "TAC2",
+        "requirement": "Invoke only the ticket’s approved installed qa-api, qa-bruno, qa-database and qa-ui contracts in their exact order; reviewer/QA consume prepared artifacts and never install, discover an environment, invent queries or change expectations."
+      },
+      {
+        "id": "TAC3",
+        "requirement": "Preserve original UUID/bytes, complete partial ledger and no replay; request-rework does not rerun QA, launch a worker, change the pointer, produce Blocked, mutate a child or access manager controls."
+      }
+    ]
+  },
+  "testing_strategy": {
+    "testing_types": [],
+    "environment": {
+      "source": "configured_target",
+      "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+      "required_capabilities": []
+    },
+    "actors": [],
+    "fixtures": [
+      {
+        "id": "DATA-01",
+        "description": "Finite isolated fixtures for every control stated in this ticket; all other facts are valid and no earlier-priority work exists.",
+        "initial_state": "Fresh per control unless an ordered sequence is explicit; provider/model/helper outputs are simulated and credentials dummy.",
+        "reference": null,
+        "preparation_id": "PREP-01",
+        "owner": "implementer"
+      }
+    ],
+    "preparation": [
+      {
+        "id": "PREP-01",
+        "owner": "implementer",
+        "supplies": "Executable fixtures and exact source/copied commands or instruction invocations for the prescribed cases, bound to the reviewed PR revision.",
+        "used_by": [
+          "DATA-01",
+          "PGB-166-H01",
+          "PGB-166-H02",
+          "PGB-166-H03"
+        ],
+        "preserves": [
+          "All prescribed inputs, ordering, expectations, evidence and cleanup; no invented authority, capability or live result."
+        ]
+      }
+    ],
+    "dispatch_order": [],
+    "cases": [],
+    "human_review": {
+      "no_ai_cases_reason": "Acceptance concerns CLI and instruction contracts that the approved API/database/UI helpers do not execute; designated human reviewers run these cases. Developer regression and contributor QA evidence are separate.",
+      "cases": [
+        {
+          "id": "PGB-166-H01",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC1",
+            "AC2",
+            "TAC1",
+            "TAC2"
+          ],
+          "prerequisites": [
+            "Prepared instruction/fixture harness for mixed qa-api→qa-bruno, database and UI dispatch, plus an all-human plan; current allowed artifacts/operations and old authenticated ancestry without old execution context."
+          ],
+          "steps": [
+            "Drive the prescribed ordered cases through the existing QA route, including one observed FAIL and remaining human work.",
+            "Inspect parent/child calls, complete ledger and final candidate/current proof."
+          ],
+          "expected": [
+            "Every top-level step and API child executes only as prescribed; original expectations and finite schedules remain intact.",
+            "FAIL, NOT_RUN and human_pending remain distinct and complete; all-human work is not dispatched or marked passed, and simulated helper responses are not live acceptance."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-166-H02",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC2",
+            "TAC1",
+            "TAC2",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Missing artifact/access/required environment, unsafe operation, changed work, expired prescribed deadline and unknown helper/publication outcome controls."
+          ],
+          "steps": [
+            "Drive each control to the applicable action boundary.",
+            "Inspect partial ledger, supported inability or local result and append/readback trace."
+          ],
+          "expected": [
+            "No invented artifact, permission, query, environment or success repairs the gap; completed results remain preserved and remaining work is truthful.",
+            "Unknown outcomes retain identity and stop without helper or publication replay; incomplete evidence is not automatically a product defect."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        },
+        {
+          "id": "PGB-166-H03",
+          "execution": "human",
+          "owner_role": "developer and human QA reviewer",
+          "requirements": [
+            "AC3",
+            "TAC1",
+            "TAC3"
+          ],
+          "prerequisites": [
+            "Current QA result, same open PR/current revision/evidence and explicit human record-and-queue authorization; separate discussion-only, no-authorization, closed/changed PR, conflicting QA, already-queued and unknown-publication controls."
+          ],
+          "steps": [
+            "Invoke existing request-rework for the authorized positive case and each isolated control.",
+            "Inspect retained findings, exact candidate/readback and all attempted mutations."
+          ],
+          "expected": [
+            "Only the eligible authorized case records all findings and queues once on the same open PR; controls refuse or hold truthfully.",
+            "No QA rerun, worker launch, Blocked record, pointer/child change, manager action or uncertain-write replay occurs."
+          ],
+          "evidence": [
+            "Tested revision/pin, exact prepared commands or invocation, sanitized ordered action/result audit and observed outcome for each named control; label simulated and actual evidence separately."
+          ],
+          "cleanup": {
+            "mode": "prescribed",
+            "reason": null,
+            "owner": "human QA reviewer",
+            "steps": [
+              "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
+            ]
+          }
+        }
+      ]
+    },
+    "automated_regression": "Update affected source/copied integration or instruction-contract regressions for these prescribed outcomes, retain strict primitive/security regressions and run required repository checks."
+  },
+  "open_questions": []
+}
+```
+
 ## R1-12: Preview current Jira work with bounded reads
 
 [PGB-82](https://scubapig.atlassian.net/browse/PGB-82)
@@ -11493,7 +14039,6 @@ A company needs to run the preview in its own AWS account without giving Scuba P
 }
 ```
 
-
 ## R1-14: Inspect durable scheduling state
 
 [PGB-84](https://scubapig.atlassian.net/browse/PGB-84)
@@ -11785,7 +14330,6 @@ Operators need to see retained stream ownership and attempts without storing tic
   "open_questions": []
 }
 ```
-
 
 ## R1-29: Retain and inspect original transition proof
 
@@ -12507,7 +15051,6 @@ A customer must be able to upgrade, stop or remove Pigboard without losing unres
 }
 ```
 
-
 ## R1-22: Inspect Pig Boss operating health
 
 [PGB-100](https://scubapig.atlassian.net/browse/PGB-100)
@@ -12851,7 +15394,6 @@ Operators cannot tell whether Pig Boss has finished its scans or is nearing its 
 }
 ```
 
-
 ## R1-23: Install Pig Boss health alarms
 
 [PGB-101](https://scubapig.atlassian.net/browse/PGB-101)
@@ -13185,7 +15727,6 @@ A stopped or failing manager cannot report its own absence. Customers need basic
 }
 ```
 
-
 ## R1-17: Admit a ready Story or Bug safely
 
 [PGB-87](https://scubapig.atlassian.net/browse/PGB-87)
@@ -13495,7 +16036,6 @@ After preview and installation, the manager must advance the selected ticket thr
 }
 ```
 
-
 ## R1-18: Admit queued rework on its existing PR
 
 [PGB-88](https://scubapig.atlassian.net/browse/PGB-88)
@@ -13777,7 +16317,6 @@ Queued work needs another implementation cycle without racing active work or los
 }
 ```
 
-
 ## R1-19: Queue a completed dependent PR for repair
 
 [PGB-89](https://scubapig.atlassian.net/browse/PGB-89)
@@ -14053,7 +16592,6 @@ When A’s repair completes, a stale dependent B in Human Review needs updating.
   "open_questions": []
 }
 ```
-
 
 ## R1-20: Check a compatible release before enabling delivery
 

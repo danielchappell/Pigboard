@@ -1036,3 +1036,91 @@ test('focused S41 and six fixed contrasts copied installed',async t=>{
  assert.equal(await readFile(config,'utf8'),rawConfig);assert.equal(await readFile(input,'utf8'),rawSnapshot);assert.deepEqual((await readdir(o.app)).sort(),['config.json','snapshot.json']);assert.equal(JSON.stringify(c),before);}
  verificationComplete(o,'focused-S41');
 });
+
+
+// Independently reviewed complete payload path set; equality of two incomplete maps is insufficient.
+const expected169PayloadPaths = [
+  "package.json",
+  "package-lock.json",
+  "scripts/validate-work.mjs",
+  "lib/contracts/work.mjs",
+  "contracts/epic-v1.schema.json",
+  "contracts/ticket-v1.schema.json",
+  "docs/authoring.md",
+  "docs/architecture/examples/manager-epic.yaml",
+  "docs/architecture/examples/manager-epic-populated.yaml",
+  "docs/architecture/examples/manager-ticket.yaml",
+  "docs/architecture/examples/manager-ticket-populated.yaml",
+  "lib/contracts/work-semantics.mjs",
+  "lib/contracts/case-graph.mjs",
+  "contracts/work-validation-context-v1.schema.json",
+  "config/skill-bundle.json",
+  "contracts/handoff-v1.schema.json",
+  "contracts/work-pointer-v1.schema.json",
+  "lib/contracts/handoff.mjs",
+  "lib/contracts/receipts.mjs",
+  "scripts/validate-handoff.mjs",
+  "docs/handoffs.md",
+  "scripts/check-config.mjs",
+  "lib/config/parse.mjs",
+  "lib/config/projects.mjs",
+  "lib/config/diff.mjs",
+  "contracts/config-v1.schema.json",
+  "config/pigboss.example.yaml",
+  "docs/configuration.md",
+  "scripts/prepare-handoff.mjs",
+  "lib/manager/snapshot.mjs",
+  "lib/manager/availability.mjs",
+  "lib/manager/decisions.mjs",
+  "lib/manager/repair-policy.mjs",
+  "scripts/manager-preview.mjs",
+  "docs/manager-preview.md",
+  "test/fixtures/manager-candidates.json",
+  "test/fixtures/manager-repairs.json"
+];
+async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
+ const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
+ assert.equal(manifest.commit,expectedCommit,'actual prepared fixture commit');
+ assert.equal(installed.commit,expectedCommit,'installation receipt fixture commit');
+ assert.deepEqual(manifest.bundle,bundle,'actual current bundle');
+ assert.equal(bundle.validatorPayload.directory,'work-validator');
+ assert.equal(expected169PayloadPaths.length,37);
+ assert.deepEqual([...bundle.validatorPayload.sources].sort(),[...expected169PayloadPaths].sort(),'independent complete bundle payload paths');
+ const paths=Object.keys(manifest.sourceFiles).filter(p=>p.startsWith('work-validator/')).map(p=>p.slice('work-validator/'.length)).sort();
+ assert.deepEqual(paths,[...expected169PayloadPaths].sort(),'independent complete manifest payload paths');
+ const records=[];
+ for(const relative of expected169PayloadPaths) {
+  const source=await readFile(new URL('../'+relative,import.meta.url)),fixture=await readFile(path.join(sourceRoot,relative)),copied=await readFile(path.join(installed.skills,'work-validator',relative)),expected=verificationSHA(source);
+  assert(source.equals(fixture),relative+' actual source/fixture bytes');
+  assert(source.equals(copied),relative+' actual source/installed bytes');
+  assert.equal(manifest.sourceFiles['work-validator/'+relative],expected,relative+' actual source/manifest SHA');
+  records.push({path:relative,source_sha256:expected,fixture_sha256:verificationSHA(fixture),installed_sha256:verificationSHA(copied),manifest_sha256:manifest.sourceFiles['work-validator/'+relative]});
+ }
+ return {fixture_commit:expectedCommit,manifest_commit:manifest.commit,payload_paths:paths,records};
+}
+test('PGB-169 every current source payload byte matches its installed copy and manifest',async t=>{
+ const o=await fixture(t),expectedCommit=git(o.source,'rev-parse','HEAD'),installed=await installCursorSkills(o,fakeInstall);
+ const evidence=await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ t.diagnostic('Verified all37 source/fixture/installed/manifest entries at actual fixture '+expectedCommit);
+ verificationAfter('current complete payload parity',()=>verificationRecord('payload-parity',{test:t.name,source:o.source,installed:installed.skills,...evidence}));
+ const relative='lib/contracts/work.mjs',originalSHA=evidence.records.find(r=>r.path===relative).source_sha256;
+ const controls=[
+  {id:'missing-copied-payload',mutate:async copy=>rm(path.join(copy.skills,'work-validator',relative)),expected:/ENOENT/},
+  {id:'missing-manifest-payload',mutate:async copy=>{const m=JSON.parse(await readFile(copy.manifest));delete m.sourceFiles['work-validator/'+relative];await writeFile(copy.manifest,JSON.stringify(m));},expected:/independent complete manifest payload paths/},
+  {id:'mismatched-copied-bytes',mutate:async copy=>writeFile(path.join(copy.skills,'work-validator',relative),'changed disposable payload bytes'),expected:/actual source\/installed bytes/},
+  {id:'mismatched-manifest-hash',mutate:async copy=>{const m=JSON.parse(await readFile(copy.manifest));m.sourceFiles['work-validator/'+relative]='0'.repeat(64);await writeFile(copy.manifest,JSON.stringify(m));},expected:/actual source\/manifest SHA/},
+ ];
+ for(const c of controls) {
+  const release=path.join(o.app,c.id);await cp(installed.release,release,{recursive:true});
+  const copy={...installed,release,skills:path.join(release,'skills'),manifest:path.join(release,'manifest.json')};
+  await c.mutate(copy);
+  let observed;
+  await assert.rejects(async()=>{try{await assertCurrentPayloadCopy({sourceRoot:o.source,installed:copy,expectedCommit});}catch(error){observed={message:error.message,code:error.code??null};throw error;}},c.expected);
+  verificationAfter('bounded payload mutation '+c.id,()=>verificationRecord('payload-control',{test:t.name,control:c.id,fixture_commit:expectedCommit,source:o.source,copy:copy.skills,path:relative,independent_expected_sha256:originalSHA,outcome:'REJECTED_AS_EXPECTED',observed,manifest:verificationBlob(verificationFs.readFileSync(copy.manifest)),copied_payload:verificationFs.existsSync(path.join(copy.skills,'work-validator',relative))?verificationBlob(verificationFs.readFileSync(path.join(copy.skills,'work-validator',relative))):{state:'MISSING_AS_PRESCRIBED'}}));
+  t.diagnostic(c.id+': rejected against unchanged actual source and fixture '+expectedCommit);
+  await rm(release,{recursive:true,force:true});
+ }
+ assert.equal(await realpath(installed.stableSkills),installed.skills,'disposable controls preserve stable release');
+ await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ verificationComplete(o,'PGB-169-current-payload');
+});

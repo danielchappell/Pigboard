@@ -990,7 +990,8 @@ const installed81NativeExpected={
 };
 test('PGB-81 scoped current source matches every frozen native contract and complete rendered Story',async()=>{
  const readCurrent=async name=>JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/'+name,import.meta.url),'utf8'));
- const drafts=await readCurrent('ticket-drafts.json'),metadata=await readCurrent('plan-metadata.json'),p=await readCurrent('publication.json'),a=p.installed_repair_preview_amendment,e=installed81NativeExpected;
+ const actual=await readCurrent('publication.json'),a=actual.installed_repair_preview_amendment,e=installed81NativeExpected;
+ const drafts=JSON.parse(await historical81File('docs/delivery/manager-r1/ticket-drafts.json',actual)),metadata=JSON.parse(await historical81File('docs/delivery/manager-r1/plan-metadata.json',actual)),p={...actual,stories:Object.fromEntries(e.order.map(r=>[r.id,r.key])),story_count:42,case_count:166,dependency_links:a.native_reconciliation.all_observed_links};
  const sha=value=>createHash('sha256').update(value).digest('hex'),canonical=value=>sha(canonicalize(value));
  assert.equal(canonical(a.native_reconciliation),e.nativeAudit);assert.equal(canonical(a.scope_order),e.scopeOrder);
  for(const [field,digest]of [['page',e.page],['epic',e.epic],['manifest',e.manifest]])assert.equal(sha(a.native_capture[field+'_raw']),digest,field+' exact frozen bytes');
@@ -998,7 +999,7 @@ test('PGB-81 scoped current source matches every frozen native contract and comp
  const {parse}=await import('yaml'),mapping=Object.fromEntries(e.order.map(r=>[r.id,r.key])),ids=e.order.map(r=>r.id);
  assert.deepEqual(drafts.map(r=>r.id),ids);assert.deepEqual(metadata.map(r=>r.id),ids);assert.deepEqual(p.stories,mapping);assert.equal(new Set(Object.values(mapping)).size,42);
  assert.deepEqual([p.story_count,p.case_count,p.requirement_count,p.scenario_count],[42,166,53,41]);
- const stories=await readFile(new URL('../docs/delivery/manager-r1/stories.md',import.meta.url),'utf8'),seen=new Set(),external=new Set();let human=0,previous=-1;
+ const stories=await historical81File('docs/delivery/manager-r1/stories.md',actual),seen=new Set(),external=new Set();let human=0,previous=-1;
  for(const row of drafts){
   const key=mapping[row.id],raw=nodes.find(n=>n.key===key);assert(raw);assert.equal(sha(raw.fields.description),e.descriptions[key]);
   const match=raw.fields.description.match(/```(?:yaml|json)[^\n]*\n([\s\S]*?)```/);assert(match,key);const native=parse(match[1]);assert.equal(canonical(native),e.contracts[key]);
@@ -1018,4 +1019,758 @@ test('PGB-81 scoped current source matches every frozen native contract and comp
  assert.equal(canonical(a.native_reconciliation.non_scope),e.nonScope);for(const row of a.native_reconciliation.non_scope){const raw=nodes.find(n=>n.key===row.key);assert(raw);assert.equal(raw.id,row.id);assert.equal(raw.fields.summary,row.summary);assert.equal(raw.fields.status.name,row.status);assert.equal(sha(raw.fields.description??''),row.description_sha256);assert(!Object.values(mapping).includes(row.key));assert(!stories.includes('https://scubapig.atlassian.net/browse/'+row.key));}
  const original81=drafts.find(r=>r.id==='R1-11').contract,fixture=JSON.parse(await readFile(new URL('../test/fixtures/manager-repairs.json',import.meta.url),'utf8'));assert.deepEqual(original81.testing_strategy.human_review.cases,fixture.native_cases);assert.equal(original81.acceptance_criteria.length,4);assert.equal(original81.technical_acceptance_criteria.constraints.length,2);
  assert.equal(canonical(original81.testing_strategy),"91053d460bea8b41774a5aa6bf11ea56e2b8f8439f3444e0c8f0f3a67f685b9c");
+});
+
+
+// Independent expectations captured from the accepted parent/native readbacks before source edits.
+const approved169Expected = {
+  "capture_sha256": "bb05c2d855eb26174aa695838a18b16b50a123f78c58ec9c91c47d42452bf517",
+  "files": {
+    "config/pigboss.example.yaml": "21e38dc635fcc894fb3882731d458bc8e5d67b3cccc396953dfb57ea6baaa949",
+    "config/skill-bundle.json": "aa84523d0236fe00eeebe1fdcfafefd5669fd8c64754b666a9a15c07714c72bc",
+    "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+    "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+    "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+    "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+    "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+    "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+    "docs/architecture/examples/manager-epic-populated.yaml": "015d8a1f97ef24a8eb78d8832256ba3d711f15675cacc005f40a8a315eccd62c",
+    "docs/architecture/examples/manager-epic.yaml": "47da131cf06ddb68d042ec09113ab0132125a4454c46c7e72062219d3bbc4936",
+    "docs/architecture/examples/manager-ticket-populated.yaml": "67684c400a6ebf50b2bb3b2db509d7b3c989dd2a89a713d56b3d91c088635338",
+    "docs/architecture/examples/manager-ticket.yaml": "ce9a6532bee4a6a561957d62a0198de61e7da0342ef8128853cc11dba3200ff0",
+    "docs/authoring.md": "792e7e28714a0e07dcffd011d3b628e1d1bfb14b4bde9e5e355de54ca7ce2c9d",
+    "docs/configuration.md": "4daf03b46702cf35b9e7f64c5f45cb94b6c26703796171c5cb0f7481af23ccb9",
+    "docs/delivery/manager-r1/coverage.md": "80a1a35bddc3d1ba71c8b047abaa98194e0e3d886a7be8cade91e4946876129e",
+    "docs/delivery/manager-r1/plan-metadata.json": "e6f6e565292473e1e5060856778e265ebfe85368504f98669b94a95bcdbbb681",
+    "docs/delivery/manager-r1/stories.md": "a4785e244bf34d6739b3a3622e33f075580c3ee56e5a41aa59c8dbe3c6406fa4",
+    "docs/delivery/manager-r1/ticket-drafts.json": "cbfbe1b2363e67989eec0f3837547627e377b3104f043ef74119502824f0dd3f",
+    "docs/handoffs.md": "08157ffd354999c44554040d44a73fccf31c86e1e37626131bc82e97562c17e4",
+    "docs/manager-preview.md": "e81605c01a69ef69cb7710742d838852b163dca6266d1448fc1abb8446b0d707",
+    "docs/product/coverage.md": "503ca2bb8d3ddba70a4a889cc55db0b93279dd6d6c9cc57a3284f6c0e95f812e",
+    "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+    "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+    "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+    "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+    "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+    "lib/contracts/receipts.mjs": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+    "lib/contracts/work-semantics.mjs": "ba1a3acadba6d169ec3bad52a3689c9b4b78b713dbac9fe408b949b966f2cc8d",
+    "lib/contracts/work.mjs": "50dbbd8a11237b1b90508a059a5ca9be44c4a39662e94ffbe39ab89db2808df4",
+    "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+    "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+    "lib/manager/repair-policy.mjs": "349f197f563794d3f9722605047f472f31aa1f16a8b97f1701d5aa9760b3b766",
+    "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+    "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+    "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+    "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+    "scripts/install-cursor-skills.mjs": "2c0a249487888a6932a715ec69d2b84517c071f3ba4177c30490887e52b21814",
+    "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+    "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+    "scripts/validate-handoff.mjs": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+    "scripts/validate-work.mjs": "46023df5916da4ab7d5eaa8c44fec19e8aef708eb3e5ab76343662ddde06776d",
+    "test/fixtures/manager-candidates.json": "83d9fee49345eb078f9c9cb8ea1d2ddd962dd655e921bf9ae74f0e54042d71ca",
+    "test/fixtures/manager-repairs.json": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7"
+  },
+  "contracts": {
+    "PGB-71": {
+      "description_sha256": "cc9b75c2195dcf7f302a103d95adf1eaa9ec47039e689cf929170f546d41ad47",
+      "contract_sha256": "f51b72d9983b1ca2d44b5de4fd3196ec484f78eddc13f48ec905cebd957523f7",
+      "cases": {
+        "R1-01-H01": "92f92c020e67ce57d97b232b80bc843f788ecaae61ff6f3cecba64416dfc28ef",
+        "R1-01-H02": "9728f468cb90486eaa881a7c0b3615c4c67ee2172dc7c181c78d0c0cfe3304fe"
+      }
+    },
+    "PGB-72": {
+      "description_sha256": "25ae09a61bb53dc4ed762dc7bafa07f30cec4b43b5c88b461743698871dc2e4a",
+      "contract_sha256": "f593a4c5c01d89c56170da4e18cf31bf01dd4db58dfc68fcf8c7a324534dbe2a",
+      "cases": {
+        "R1-02-H01": "edf2605dfdecbd80e0b0415c1d9cf10d67bd72388190ed9f84b492b81b756ead",
+        "R1-02-H02": "579a99bd9bde6a817147172f43fab161a62766e440ba98c3e8be5ffd3baa9c31",
+        "R1-02-H03": "656cf3f2c00c6d3c3555e108cb12a7609d26055f5bd1e18661cb3edfe4195e7e"
+      }
+    },
+    "PGB-73": {
+      "description_sha256": "be4336490b3a227a57a5493f74c4be64211dbfe99cc27ad5b0eb0068eced01d3",
+      "contract_sha256": "e5b49fb052ea84536834d7e39f5b2c6a9d3c052e1774d0e580ed0dcab9dcd579",
+      "cases": {
+        "R1-03-H01": "d7e539aa873723ba45890e33479894e7885340510e00d58e1c62fadce888e51e",
+        "R1-03-H02": "8e3e28146a15dfaaa844ec205c47ebef2cf344b75f889a8799329ef57260622b"
+      }
+    },
+    "PGB-74": {
+      "description_sha256": "ba7286b71b28709c2eafb8a1ad1d7ed6ff4db533ddbcb71c0dcb0041e04723a1",
+      "contract_sha256": "cd005fd77b2146c53e5dc657cae8ee8a0059e167ad12553fab77abe87a8ca52b",
+      "cases": {
+        "R1-04-H01": "7b193d7e0217ba44f4bff1fdff7541fb0abee8e4372d2e052149047e62679118",
+        "R1-04-H02": "bdb5eabd3abdec70308e8b959472a293538d523fd5fc6bf9b887da433376a736",
+        "R1-04-H03": "122acb54e32c8967dcfcbd1af8e703da704ed65a8135eb81034f771d314a7dff",
+        "R1-04-H04": "83abe35b7d7c8aea5e6b4b5bd3ad65b366646a5b9aa4bc860554e1623aadb120"
+      }
+    },
+    "PGB-99": {
+      "description_sha256": "4c9213d90d439b61709bc3ff9272c9245b780fceaa01906ec39ecb72dadb8af8",
+      "contract_sha256": "08ad1b5c45d6eee953b8aaab7d810eca703fb62e2d9a868e2e8c005dc497a3c0",
+      "cases": {
+        "R1-21-H01": "f4c47e27d41a92c7de2bdfc31b9054c7d55d06b1294f0e30f8aad1beb3a3b5dc",
+        "R1-21-H02": "8769edc20d2763dd3b8e2bf250c704aae84c4c90fb8a25f3c7e78e29388436f0",
+        "R1-21-H03": "acd2b2becea5f5d6918627ba869d0377e0976b7129725abdaeeab60ea96b697e"
+      }
+    },
+    "PGB-145": {
+      "description_sha256": "365029d6439052f74217db9f4b56bfdb535234cb20901fc785a55891027fe483",
+      "contract_sha256": "32709463d8557f625d622e4a2f6a0a2833f2a9f9d5771ac85b6c6f5014b80ef0",
+      "cases": {
+        "R1-31-H01": "fab8abffdeb162b0d4f1d8395e56433e4904201d789176e223fe8d38a31f643e",
+        "R1-31-H02": "82ba12438d33322d42a778b3ff745dc9379762486445bda3a38ff105fda95671",
+        "R1-31-H03": "4d23833ac32a032fb1a54f3ba1845cf2f10fb8e82bd1b7156d81ff07261e1082",
+        "R1-31-H04": "43996698e584fce7abc7ae0366e9a15abff4bad99abdd4571001368c623a2316"
+      }
+    },
+    "PGB-152": {
+      "description_sha256": "910a0d4cb508902c789d1209251402d5853cfbde43d5717efe38e76f57e79917",
+      "contract_sha256": "a9d881d2ce1bd607bc7030aa6e1678000027f1706d1fcdeeea2892a84b8731d6",
+      "cases": {
+        "R1-38-H01": "c5d4f953d40ead865a238677239dd339dacfb29fc41c480db0b67a80e3547d3a",
+        "R1-38-H02": "e9532ff9688ea97d0924175e68f4bcbf67ac759e35b8153bb8a4b53b6b1474d6"
+      }
+    },
+    "PGB-154": {
+      "description_sha256": "38d5dc2eab7d775218c94e07e72d86b8645ecaceac9301456c8a783c2d217612",
+      "contract_sha256": "a01a3d0cbc96ae4cb2f0f38f9805bfaff895720c1016e023cd01c2652f2ec061",
+      "cases": {
+        "R1-40-H01": "e625f56a7634fcdb2064e403c6a4a54ca1abdbc95ee7db9c6988d81b5805f27e"
+      }
+    },
+    "PGB-155": {
+      "description_sha256": "0833c522f975fd5732908589e4391195e53e340fc3234f15a64381185942cf9b",
+      "contract_sha256": "5a6d1866be6ed301e21cb1016ccb4e5e52f84a373660f0e84bf34fdf3ee693e5",
+      "cases": {
+        "R1-41-H01": "3fa0f8c906e99851f99184ada897d23c2a2938789de34eaef89d7a0527a00236"
+      }
+    },
+    "PGB-156": {
+      "description_sha256": "bb65b27b2e2d7a1172135a9846654e4533c39c1b882cb509faf4c96f9c96d23a",
+      "contract_sha256": "43ec301bd8082c83ad4b461d8b13a82a9ae5ea348d7d7cd95d61905e8aef569c",
+      "cases": {
+        "R1-42-H01": "de087beab674ac145fef77dc28eafed32ff3503e9cb1e440298ab7532fd6d825",
+        "R1-42-H02": "757a9ba5e51f8a42dafc1a72f9d35fb1f6958ec232b1ac21d303b5b4c946fe34",
+        "R1-42-H03": "49dca9352e2f84c1befee518c683ff79aa5583333710f789cfd4af36c8200ccc",
+        "R1-42-H04": "28c5a525b4bd6f027eacae4e1fb31f9393ad93607d7f153e955627ad23502d0f"
+      }
+    },
+    "PGB-150": {
+      "description_sha256": "8fe2512a12fbbaf8f1a9ded99d1529c1d3dc01d460ba9dbf73e68e91388f0324",
+      "contract_sha256": "935daecd35a906802e7d40aaacfe1d79e8ef4374ed5aa3858454f174a0ceb3cd",
+      "cases": {
+        "R1-36-H01": "c13b888db3ee8999c3a26e0cd17d5c03db2cd6a3eea7b676b05021c8592d9327",
+        "R1-36-H02": "2c9a62cf95f9438753d836b6d25c4a46511607b0a114df4ab674493bdcef6877",
+        "R1-36-H03": "ac3d6cc195915dfcfaa87f653d20e55d5eefaafc447b3bbfaefbba378824a6fb",
+        "R1-36-H04": "f1d643bc576d23719341516134a8f7224adb25f5e46411c85c8ee33cf50c6c71"
+      }
+    },
+    "PGB-75": {
+      "description_sha256": "4f2481f8b22ee7dadeda3626ecb98e587041f279f76e2ef9176eba6c9ee780f3",
+      "contract_sha256": "9b23e24bde583d75d1a956ba79310b7d25eb1199397dd57a994186bc25c8ee0e",
+      "cases": {
+        "R1-05-H01": "29c95768e56a28dcd44568e2e8da0a7816f4e146f89d8f075d5140c79101610f",
+        "R1-05-H02": "86c2c28e2a9c6f17183b9d288afd09d36dc608dfbb288eb031f403cad03433a9"
+      }
+    },
+    "PGB-76": {
+      "description_sha256": "0fa12a0cec8111de01141eb1deed02764547b9d53368e41be80fd49bd79ffd90",
+      "contract_sha256": "b7852b345b9a3ee36f89f2b847143977a915318db3b4dc696c93125c1b5e8d12",
+      "cases": {
+        "R1-06-H01": "29eeb3e017ff5a6079ba76d818a7cc82656ecb36ef6c71cb244411ad243a03fa",
+        "R1-06-H02": "a0daf99436edaacdb624f70711313d52a584a624537ebbd94096ea5d0e52d68b"
+      }
+    },
+    "PGB-77": {
+      "description_sha256": "a78ca725b4dedcbd07581a7c3d4269c657ed0c6bef16c4def4bba9d9657a5553",
+      "contract_sha256": "6356e9609cab7b1b55f3dd92cd982749390549d27865e2859325eea86501499d",
+      "cases": {
+        "R1-07-H01": "0334eae4fdca231dbe5f0bd56c8b14655d2cfbca19f6e3b66438566793d5a3d0",
+        "R1-07-H02": "acd1131dded8c718321e5458da0fedcc02060e1f9af049a025b27e842b5ea5b2"
+      }
+    },
+    "PGB-110": {
+      "description_sha256": "7f4ddc8cc6ff72ad8e45c91f659dd7e9e2cd4311fb7d196149627c28996895fb",
+      "contract_sha256": "65a9d9ed12e18bda8bc9de1e3898eef8cc664192a0d423c5653d8bbaf5d5d823",
+      "cases": {
+        "R1-24-H01": "43643111d7f05e63880d8c952e727fd1aae4df75c87ade31c52b1935b7d5377d",
+        "R1-24-H02": "1df0287441ce026737d373d04bc7ddae79b6cef44d3a843e119bd2ce6f070b8f",
+        "R1-24-H03": "d1d395917f4a4db44a6cf6dc73d351ab911cbd0a6a4fb6371aa5b70ce9247796"
+      }
+    },
+    "PGB-138": {
+      "description_sha256": "0a78de20124a8eecca08dc1a8c39f3434951f60a7b453822964f34b557b79cb0",
+      "contract_sha256": "33446740e0d6bb4d35b3f0d48475a3ced8e639cc3d49a9df3b39ac55e6cf2820",
+      "cases": {
+        "R1-30-H01": "23b6945093ae600680cb601734857412ccb6631f52c309f342af25e4e3093024",
+        "R1-30-H02": "5e06e5cf56ed45ebf4a413a1644591b3d5da96437a0c097e1230ead524f9526a",
+        "R1-30-H03": "2810c33e99994078563b425a05582911b7497686eecc3b22dfed3fad4aafd18f"
+      }
+    },
+    "PGB-132": {
+      "description_sha256": "5284ae68d9f54e809409ed8dd966fa4494c813f57b70ef3c6038a84bdfcbb38a",
+      "contract_sha256": "5e2896f4c64a6a1ee7c1f46cbe36cca7d929a15cce2ff33921483e337ff94f09",
+      "cases": {
+        "R1-27-H01": "afba7221e15f3fcd7250ae6fe4dfa2d1a45f87d284ec2ef2cbe59f6c2303f5d4",
+        "R1-27-H02": "0038e49ffa0cb7acfc6cec365d4e9d2961952771448e0ad57749f518373dacd6",
+        "R1-27-H03": "82676afbf24966d3dcd016af2c5ee03faf080c1a625248c7d876fe8bbb666c52"
+      }
+    },
+    "PGB-78": {
+      "description_sha256": "6a553206c0768143f0b478fc787c98140a233cc937189b6818cb83a5db02c97a",
+      "contract_sha256": "6001af1669f9fcda9ea568ca06601a704f65d5f79fd58edbddd3bcb6b69c32a0",
+      "cases": {
+        "R1-08-H01": "7476b2718d38a81f3df80ea3a5418ff61ad5a43766639bcf22e9ee4904e130d0",
+        "R1-08-H02": "3d67192f9b726e2bd3da734696cc9c69febf7ee283ac144fed7a9dbfeee91ed9",
+        "R1-08-H03": "ab15e782fc441c95d1027812226f32a807fa30a3b3136c1e330fa23bd35ee63b"
+      }
+    },
+    "PGB-79": {
+      "description_sha256": "e61b836dbf4a5e92767b92c58119c69282f2426c56ca7b2ee82f3f67c73e55a6",
+      "contract_sha256": "40deed85e34faf13d5237d6e04fa803479ea37dce9ffb49221f46d9f66100ba3",
+      "cases": {
+        "R1-09-H01": "5451971287852d15314b4afb4e1628eb6700cd65e56b6db9dd292b5d2f07ae47",
+        "R1-09-H02": "b41734b342c48286f77d3de9baa11deb61f0db8833115c8a0b3be36c3996f108"
+      }
+    },
+    "PGB-80": {
+      "description_sha256": "71dc29fd094d1952a5ec4b4ad763584edac9b62d006bfd054db968f5306f263a",
+      "contract_sha256": "bfcc531c39f4f5000be0b80a85ace47d61d65984802a90eafba00f1b7ad97520",
+      "cases": {
+        "R1-10-H01": "f04650f2fd5c679bab377aaf127c3a610f52278664e7b8cc1edfe20090f23b7f",
+        "R1-10-H02": "4a15c92bb4910ebe0acf06b5138cd6ce5962fe063afc80925600771aa9707437",
+        "R1-10-H03": "903c6870ae068c90122719109e6ce056fa8ce9a03dd8a63943636b090bd25a9e"
+      }
+    },
+    "PGB-113": {
+      "description_sha256": "c987a76d937e7d162dec793c4f840079206342460d2c406d28a8a27caf02acd8",
+      "contract_sha256": "ac3b25432e45c1c89cb2e1222ba6442fc6b9b2ec12b66da0181563e1d676edf4",
+      "cases": {
+        "R1-25-C01": "fe04e473881d474b110f4ce6f34168027ad870902d7b1bfd162ab5555287bf9f",
+        "R1-25-C02": "42f103d041afb6197064b906b1f0f58414e308561474cd544eeb2b4174897bff",
+        "R1-25-C03": "eddcfc10d1ebf2d6648e4e70d1d82461f2f7c5f9d4065bb1439ec0749f9e61df"
+      }
+    },
+    "PGB-129": {
+      "description_sha256": "b6bacbb594b7008dfeba4722fd686b5379bd7336834cbcfa811d07187ce255b5",
+      "contract_sha256": "d293bc48cba396244989e23eb8f6dd936e9cdeb218283a558889a3cd33ef5ed6",
+      "cases": {
+        "R1-26-PC01": "245535e0f7963f09fb17e647a0df62db09efc2390048d2edc433e0d7f5453588",
+        "R1-26-PC02": "418d3472e1605a321337364602c13f9dabf2c2dd26b66d542600a227a067de41",
+        "R1-26-PC03": "987ec7bc61aab9afb5c0ec972706ec958cbecd7862e46b77d81a5ab2f346a993",
+        "R1-26-PC04": "25e030ad7834db148573a75b83991f4b74b298a11d464d12e54140459f2b24bc",
+        "R1-26-PC05": "d6289623cbb13e15cc621a78cbfb0c0b59fb2cfee34a0d77b55f7bb4d10cadd2",
+        "R1-26-PC06": "d5442b69a70d595229795857b22cfb9f874e0a769b19fcdb654928599146d253"
+      }
+    },
+    "PGB-136": {
+      "description_sha256": "905166bacbffd705eed56e3ee4c018ded0ccb047a23a8d3b37cdcb51809a71b7",
+      "contract_sha256": "3800a418211822a8110af368301206500830a48d475eb6efac4b91a5724fea21",
+      "cases": {
+        "R1-28-OC01": "3cec2da085eda956c56d3809531bc38ba135db1080e224d443cd3d27f56f558c",
+        "R1-28-OC02": "273041e53b5e54b463d1f9a14cd53269867aa5c5d3dba8213b4535c7ff97e637",
+        "R1-28-OC03": "b4e4751047568051a5e8698fa9c696af0ef477cc5f06284e07bf81e2b93c34eb",
+        "R1-28-OC04": "bee20f90e7a895158a64d8ad17fea512fcbadbb4ca308d70d8751179c3647abf",
+        "R1-28-OC05": "950853b8ce71142998c74fafe495fdbec22a7a8586cc0d244864c759c77b2516",
+        "R1-28-OC06": "c4356988a708b9e41db46ffd7f020b053296fdb89c20a7005203fb0effea386c"
+      }
+    },
+    "PGB-151": {
+      "description_sha256": "756707e48cbe4aab24dd51748f637cd90d72d5c799a9f29bcda9f12995e15a3c",
+      "contract_sha256": "da6a1977ecb12d1e43f0ce89bcc2fabd6d4c483edf2442f1fdb8d7feb788c3e2",
+      "cases": {
+        "R1-37-D1": "f5b868626ced1a416fb046b4d3b4c2232f827a048a9c0569ac3f009cc4f5f0cb",
+        "R1-37-D2": "8936790c95d293eac96ed195bce85f60ec7ba4debb02eccb31f3227efc96ac67",
+        "R1-37-D3": "f39279c0f4dc1b1ccbee63350bfc61f3c3d4e6c4246701d83d391eab590b6bd3",
+        "R1-37-D4": "31f6fc65c208f8535e7e2039a7b1e86996815e3438e18a573e47f5c7d6b447c4",
+        "R1-37-D5": "25d1863ddc6b3f56ba2cbb6dccd83f3721fd15f6e99feeb8d5af8b9066a0a53a"
+      }
+    },
+    "PGB-153": {
+      "description_sha256": "59c2b5fe721c26d22d666087d3c88459c3f5e7ec04e1464fd35ad63b9c4710e4",
+      "contract_sha256": "0b9c78b511db03f49c14dff20ad9e16d7094a8bf10786429efd94ba3f4a5d56e",
+      "cases": {
+        "R1-39-H01": "4b2f0216907d08117b9fb8c2dd5f4926ca805ab259b8ae8f98c7d26dbfc6b44c",
+        "R1-39-H02": "51bc717228a0cf0d149ae52b02e4500e696b6ea17b68bd311c612b739d54592a"
+      }
+    },
+    "PGB-149": {
+      "description_sha256": "04045bdb1015f5ac75ecb6c65afaf260a3de75c459579bda129fa452031b387c",
+      "contract_sha256": "4576fdfe550451e5ecbd671cdf1c8a7a76bd62dff407a1fd5ed091d21cc46f39",
+      "cases": {
+        "R1-35-H01": "7ba944cb9abb614d8d1dcc5ccaaa619d88fc3d9ce8c09f24e5d10438467b1f64",
+        "R1-35-H02": "248f91d47cb2bf8b77f96a79b11b3273b632a31990bd3ea36c5e4beb3c192a1f"
+      }
+    },
+    "PGB-146": {
+      "description_sha256": "45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d",
+      "contract_sha256": "1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc",
+      "cases": {
+        "R1-32-H01": "eae26476aeb1eabb39fb25a5f08824bd1704635814e7a771d15afe02bb89e127",
+        "R1-32-H02": "23f459d1b95fa984c107eed10f23a3342ae4d26fd6dd4e3e4e6b04386541d2bb"
+      }
+    },
+    "PGB-81": {
+      "description_sha256": "2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17",
+      "contract_sha256": "5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f",
+      "cases": {
+        "R1-11-S01": "2fbafca839910f54f2220fe085bcaee9525e6fd6c7a0faba474cf429a80934f6",
+        "R1-11-S02": "1ed6d4950e0ac7ed12337eab6eba9d4918a7dddd23d70563de3547d3baa1d692",
+        "R1-11-S03": "539dedac2336c72454002705f11345cfb74c475fb5ac1a6bb93057bfa373b166",
+        "R1-11-S04": "888d8dedf5d8ae237051271828a63acc144da84433035282a56f299cc0324430",
+        "R1-11-S05": "c3e846f07964f3f424128e68fb711f35946ff0cfe0cf8c581f2aba58a041b53a",
+        "R1-11-S06": "f536feb761e2c8a5ce610268313cd7a5fd90f5b191779b199c02724202ba3896",
+        "R1-11-S07": "997129db4bda17efd499d67a329e680ee8fdac674d8335a042826e572b7b2c32",
+        "R1-11-S08": "6f44132ac102dec4314d2dbfe014284cd8dcd74b3893f5ef462d6d8613ca14b7",
+        "R1-11-S09": "bf2beb5e99ea181b3f498b4f699754ceb590159b241254507d547c5e31b87ba9",
+        "R1-11-S10": "7d6744b706bc4755b48dfe8b2a063b3983d7fe6fedbff94b5fe271c77a20f387",
+        "R1-11-S11": "eeef7f11ee7b87883bb5fcc8e4e8147eb8d4ebcb4684e12ce8b661ebf136cc1a",
+        "R1-11-S12": "6e657eff21305fa68d14fdaa7646f80eaa987958ec97c29e2c4d47e3b6f09761",
+        "R1-11-S13": "90854282c1417711dd4721ed288d578e3bc59e55258969210b5c75a362889a95",
+        "R1-11-S14": "798e08742309eac17b8881b0f2eef769a7a4340bf9298de50eda6163291257da",
+        "R1-11-S15": "cddf58a77c8b31eb2499ca1d9bed0533c6126e43af14771f405e057e29d99a18",
+        "R1-11-S16": "cf94fffd72fdcf405370f0bc00bc05c2b05b3656da42d4381a47d848a24db152",
+        "R1-11-S17": "0de0c8cdc9371fb01ab965cad31f5d5fbd2c9ac2fabee6df2231da26e529dfbf",
+        "R1-11-S18": "2abd8b2ecf565534f3953d9a9e40d4647d87f1af70c790e31f67a26ff2b59da7",
+        "R1-11-S19": "1d09e0f8c48f4ce483dec3bb79061fd3778d6ef0e348dbe4e4873b497617321a",
+        "R1-11-S20": "f849f96a84088890667b7e6a9b22f027196caa5dc14480569225b805c1094f8c",
+        "R1-11-S21": "b262c4643710ee9d59f5c5cebf85e945684f27f6fc96a02e37972596bafc5997",
+        "R1-11-S22": "9f6a45bb3ba17bbc91cd6663d30ae219191cb5acdc21040077da9d50d15b24e9",
+        "R1-11-S23": "8554b01a9e964d926fbfbe1291e38d7a38d8180b45a02df976372ee530a74b9e",
+        "R1-11-S24": "8d4787f5da83374cd963378012182fb94e10ea5877feef9501644c7397ab5723",
+        "R1-11-S25": "1da9d6f5d7f6956fcd521fc49bcc78dd3d0e860b47abbe96b41534b30efee744",
+        "R1-11-S26": "9360a2870ea7b9e407629f6dde76095c8c9553be66b1c7e56e31b9ec790031fe",
+        "R1-11-S27": "1c9fdb036b8708fc9b1281907eb03031c6ba3474e23d03f7a387cfa8068310cb",
+        "R1-11-S28": "47ec50a695e9b7c50bb45dd10f28e3f10c1dc0545b3fd14285050dedb9c734fe",
+        "R1-11-S29": "fc04245752947fa70be098f3d8dca280a4bee6157a53a2a1804d5f76f9ad4c5f",
+        "R1-11-S30": "2e255d04c772b0c4b59aa445b985eb70676f8c0729a78109a1d188a88e36a98a",
+        "R1-11-S31": "bfdbe9115d18b22f25809beb2b6308c10381771dd08c8f25e86c705b6401ef19",
+        "R1-11-S32": "2f6d529a2ea8368156f2bb0a0bc698e045c02a4bc1df1d4c0efa299a6a31f814",
+        "R1-11-S33": "a24d9c031d3f46280fd59ed4e9666a579487d71503f309bf0a114b9bbeb3cd30",
+        "R1-11-S34": "11cf8140786e3ad8c149c192fba904c9ad56e1f94953c18ad4d9c52f8d3c8f81",
+        "R1-11-S35": "7be853daff304b878a2a13d2045b40e45d8348295555b57acc0492eaa2633979",
+        "R1-11-S36": "19e6ba0997f977403e6961f686dcf9c2bbbef571f5be8521556caad546e8c025",
+        "R1-11-S37": "f75a315e2567a4457944b5fb796ba2920463797996977c47fbe5a9371e62b3a0",
+        "R1-11-S38": "c8ef9d445ea0f6036041dd02f6c5e63f83e721e68ca86a319bef55469d235d46",
+        "R1-11-S39": "19ad9dc662eed6671ae9cf6b57cda78bb29760d4593c82f211b6f94430e7af01",
+        "R1-11-S40": "cf179af09bc31e2a3cb243ebe3292077211a4efad10c1c05be12a0f56575002c",
+        "R1-11-S41": "d3b6a64526f43a08eda883243e1e7c3852e8f033ecd4fe5a1179d7aaa1ec0b93",
+        "R1-11-H02": "b537f13d4bdffb7887afc286b233ae026c9546443263955a6954b1c191c1ceb5"
+      }
+    },
+    "PGB-169": {
+      "description_sha256": "3682f212fc186fd0d04dfebfc32057ced211d3f6d88e7998858df6fd45e9ea09",
+      "contract_sha256": "2679e9528ec7ce31362054898ff444bab1317adad2762e285eaf750528ea66d7",
+      "cases": {
+        "PGB-169-H01": "eee6d7e5688636e34b85b82766515043cd8f8e50febb4a3482737c424c4a2690",
+        "PGB-169-H02": "68a3dea2554a85ea9a7cfef725d6ada2c5dd48774912c8c8588497385aede8ec"
+      }
+    },
+    "PGB-159": {
+      "description_sha256": "63d3aafa76e8549c82a03d3cb275ad417ccdc53b0482ee27834ae9e1fe94f475",
+      "contract_sha256": "c6110c09fedf2b1443c494857e9dc3e36262dde63db47ba54a03424024c06f31",
+      "cases": {
+        "PGB-159-H01": "3795b1146fa62bfcada2d5c3adfaf76e45d421975b1de3c9f4fe491d2915b1a2",
+        "PGB-159-H02": "489fc90a4eacfac1bb4385c0fbc8f484f2fc477ee3e7c51fcc7191fda5e598aa"
+      }
+    },
+    "PGB-160": {
+      "description_sha256": "f939a500827c4959d3f620a27c9aafb3fd153057cf13d6837a937dfd4722cddb",
+      "contract_sha256": "161fe9f108ea3fde6a57f35add4a97609c385d13998686faa563b1038789229d",
+      "cases": {
+        "PGB-160-H01": "94a79d83e8f929124b9c8d55053aa7c88d10ab32ca157ef9ebb214e46fca5b7e",
+        "PGB-160-H02": "c099e3df73146046865b23436c0e20dc55abb9772e2af4676295045b1869c7fb"
+      }
+    },
+    "PGB-161": {
+      "description_sha256": "c66f72a9c2ed482a7c16547a2481e142a61332dcab0c0521d916c0859f9ebc89",
+      "contract_sha256": "9ff475dd3a1f8608f040df58ba4ddbc13e9884f8fd8fab9cae6b354e6f0ac69e",
+      "cases": {
+        "PGB-161-H01": "ec3fec66ff3f0fecb38f0630367578734cd1a9f4301b3c334c8263a48ae81365",
+        "PGB-161-H02": "b76f6f99e4ac4618ac494bed098849663e6e35ce3b7f82ce4e364c8eccb25d06"
+      }
+    },
+    "PGB-147": {
+      "description_sha256": "07e3ae06dab84ce9593fed88fbb69b9ac1eb2378e1da36cad8bcffab3c322f3a",
+      "contract_sha256": "0f10effc236e82c69c1852d7ea754e99a29fc84a6da1f0b1280ea32d61157234",
+      "cases": {
+        "R1-33-H01": "6de8e247af9cf4998a4950ee14fb3b37beb6869f79277c1a04eb8f3c6a8e4bf7",
+        "R1-33-H02": "b19ff8afb563f90a8c11e50c782e0bdcb60a76d677392b5c4ba28a042a95ea94",
+        "R1-33-H03": "9a0e6b14ddc53e3ff4b96f4fcb0d027a9ce3e9f4b682eb8b967e91bfa13cd576",
+        "R1-33-H04": "7d9d4ec8f5874f061f7afc74b89be72277d8d48587387c1805fb3bbaff214bf9"
+      }
+    },
+    "PGB-148": {
+      "description_sha256": "ff23e1fc122e6da6137585b9555b6216a25af4f83602e67d2d877bb905a537f1",
+      "contract_sha256": "d0cca84d58ead387cb5041fbc0515eef8b5814ca50c3e5f9ee9601b0d63ee766",
+      "cases": {
+        "R1-34-H01": "985058f64d9cee1103cba98b65e611e92509825d2b44f81b17d4f8c4563e1c31",
+        "R1-34-H02": "e9a91a8010b24e0ec8c99c6ab39fe1a66bbcb935c00125df8d00b0b14a680f93",
+        "R1-34-H03": "b0732e8e38813867ecbe527639fe827c2ebe618e3efac916f067f6f3bfb50e7a",
+        "R1-34-H04": "3dfaed8c28fe2b7202d827b0fccc828ff2a4eaae3cc667f0e231eb92168ae94a"
+      }
+    },
+    "PGB-162": {
+      "description_sha256": "7984253cface16974c9d2988e37419b39ce6576ee5a987f7a4c1a7a591fe11a0",
+      "contract_sha256": "262c6968ddcc7da36f1617284416514b19eb1baa836320de1c6002c4227a7b0f",
+      "cases": {
+        "PGB-162-H01": "d310b21591c62a85976f68c7bbff89a8fba2de70aafbc215c910d5d5e2f1bba7",
+        "PGB-162-H02": "c34fe441830301e7fdd355ec6939542a0d7f0d1a2954742a506c948cf02bdf81"
+      }
+    },
+    "PGB-163": {
+      "description_sha256": "1807c39630ebbe1ac31c8c6445c54f855bcf6f0a67a91c59f7843b5f2fe98ae7",
+      "contract_sha256": "357e00db6ac13cefb7baa25a5b14291d0616165bca58e39d6b94851b0cad60fc",
+      "cases": {
+        "PGB-163-H01": "5ee7a86871810a2aca821f21aa15a91484c1993972ea143925a0e5d85427a596",
+        "PGB-163-H02": "1b09c89ce69bde50e6dc9e4962708d315c570bbdb6caf961b1ddb6651884b49d"
+      }
+    },
+    "PGB-164": {
+      "description_sha256": "c02876ebd41a1197e5a20ed71b3e19b220d3098c0b33e03eca3ecccc6c24578f",
+      "contract_sha256": "fa2ebf537e935b338d90075c7a93d18b63738f21c799d5a1eca0df7b7d69d603",
+      "cases": {
+        "PGB-164-H01": "052c9528d14fcca7dd8c2f565477173d516d119290ae9c0fdcad392a102979ce",
+        "PGB-164-H02": "e0bc2a03f15b4869331ab029807f4593e131c592cd75ba70d125d8959492c74c"
+      }
+    },
+    "PGB-165": {
+      "description_sha256": "86ab2cf071a245c60170108dfd4ab4c8ccdd7ec9d421582ac91565ff69a5136f",
+      "contract_sha256": "58c8ebced87f607c71af701e05a509df727acdf392d7900ea0ebca8671152ab1",
+      "cases": {
+        "PGB-165-H01": "079c57b0c66fa477be8e0494a137a0b47ddc6fcfa5778cecd00d096db3dac126",
+        "PGB-165-H02": "5cdfca261c4b4a68299f4b29e50f449b8ecfbba7f00e1f25f0151bc36d5760b6"
+      }
+    },
+    "PGB-166": {
+      "description_sha256": "1076dac9ad30fc2502698224100d41635a57a7c40506dca4c251c950df93973c",
+      "contract_sha256": "c1edcbbc47227319b2914654b57b3dec5df25900bd257762727b8c9dc0019c2a",
+      "cases": {
+        "PGB-166-H01": "a1973fb1e1e158c63c408b902d18a50bfba0ec609bd8942276aed0ce4ebe7d56",
+        "PGB-166-H02": "791583de00758a696b972ab165226e39f4c9af6b5a7b8053b56ea2f113dcedc2",
+        "PGB-166-H03": "a79f12a480a3fd3ce9ee89def86062fb6959ac2d3b497657197f79ebcd9c74cd"
+      }
+    },
+    "PGB-82": {
+      "description_sha256": "20a92b8ac2f6c0bf811395ac1115aed67bdefb0ed59b5de95560f49121f41517",
+      "contract_sha256": "5ee332ec46521dc62ed86d1a85c0bbfec771db0b54d74d3e111ea33192f16327",
+      "cases": {
+        "R1-12-H01": "1cb49fd91c8564617972767822d498226715d40421ecaaa819cfffa6e9227de1",
+        "R1-12-H02": "16a0845bc4667747dfb943094dbe0e29db00bff9a50cea473f45f2576c81469c",
+        "R1-12-H03": "6bdf4da8ac988f1cc188dcc1ae0606abdd616ace010e0a8f796b95045e0deca9",
+        "R1-12-H04": "626d476b4cda472e88c95320d7eb841fc74a43597aabdef972fce95b47cf3fb3",
+        "R1-12-H05": "4e75fa6cec28030363d62c413ee989f1934ff521a70f0937b0f895fb043d55d7"
+      }
+    },
+    "PGB-83": {
+      "description_sha256": "efb5eef852a6dcc0af396a953ba3b00d475cea69fe7e601e85b3c328a351a3a5",
+      "contract_sha256": "5593dfe55708317f226bbf55e6ac78ae70b194c4959d9870b25570c1e7583724",
+      "cases": {
+        "R1-13-H01": "71be8aee5f6a53945461e914224113dacfb088100c3b19d103a184014d3d4fbc",
+        "R1-13-H02": "4b0c1d659fea3f54a2edbfa9247602d1b69b3f445c914380b92f6aa3a5f466eb"
+      }
+    },
+    "PGB-84": {
+      "description_sha256": "c445f415b458a25bb7e73ea2ee3c9d91812a37e4c60784201b5d5893e616fd65",
+      "contract_sha256": "2afe3d6298d1489042caeb2f658ed2d68de6a3632cc7e584ff4107d3d75ee7e4",
+      "cases": {
+        "R1-14-H01": "05780853656f0f2028217a0ef71a3491d6b178c77beb8c3e225bd2f8bdc3ab53",
+        "R1-14-H02": "70bdfd05f8fff94e8500e1c14e0bf7c45ab57ffd9f9419d916760eba78caa06a",
+        "R1-14-H03": "acc8a8b9d4f1efbcebe3b92f0fe86dd7d3e5c7221754b0faba84bf1a03cc84e1"
+      }
+    },
+    "PGB-137": {
+      "description_sha256": "19a52058b9c25ad7b054a5d8fadd16b7457a7a445290376e77572433777a5978",
+      "contract_sha256": "cddac0d6e37ae86ce41332efc16fc34376175292c63fbb4660508bdaa4cb6642",
+      "cases": {
+        "R1-29-H01": "a80e641cc7f4afb95d37803433fb1e91a9452e300a16b6fe7018b7a6bf93f83a",
+        "R1-29-H02": "2ea8a579039d85f1ef3062e4fc0af082c5855d1dc164a19fcc7929e8f13757c1"
+      }
+    },
+    "PGB-85": {
+      "description_sha256": "5f0c4dc7e7fa3294ea60518b693353f858179d4ff2bbcd36d1f62593a02253bf",
+      "contract_sha256": "3b18caf2cca1c4b4f3e0f31904c8f3ae8c467a7445bcba2962ae920fcbedf45d",
+      "cases": {
+        "R1-15-H01": "2bc4e0ea0a8f18fb74734d68074c340fab145cc0a48037bdaf05a808d5edd3ac",
+        "R1-15-H02": "e498721ce0812e80397b7f87169486e88520ce69abc12481a920d700ffc98544"
+      }
+    },
+    "PGB-86": {
+      "description_sha256": "ac95b1b23e0f6a906f3ed08ca2d49a4684f78e15e2673bb3fc683c431265578f",
+      "contract_sha256": "4dff64575f90c37f69215c8dc74288dc73c74028ee3d8f1bcaac9c6e70d5537b",
+      "cases": {
+        "R1-16-H01": "d624ea2b0ab35c31dd5993dda07374d41d0562b2bc2f78eb77431aaff1525aff",
+        "R1-16-H02": "07d5fc4ba86cab3da279d4451f6e6e4ad9a4868a8f82c21da219de80d9a33860"
+      }
+    },
+    "PGB-100": {
+      "description_sha256": "33879c2037c33faac8d41e6f45dc0ec7904d60e81f1d7a7fd1cd4a0a877c81cb",
+      "contract_sha256": "c31782694e973da9eb9288ab1e1e95cfa3bc0a8a8b7ef16b9630d8390f23a9d1",
+      "cases": {
+        "R1-22-H01": "ba6fb52c99371e023c956e39160524e6c65eb744b2838a7e089102864eddda50",
+        "R1-22-H02": "d416c963b9768e1aa408f2d1ce3800d28e01bede11f3c42bce32a479308a42e9",
+        "R1-22-H03": "54f1c678c0cd11a43d97c66a645a320168e26ff3c6bca423a6e7fd4c08a01e39",
+        "R1-22-H04": "261347fd5f5f9756424cf6975bef80759ccfc080abaea65317ad9a83ab24cc95"
+      }
+    },
+    "PGB-101": {
+      "description_sha256": "ea145542ccf8b8973d4cc86c7ec4fe587b2e0c6202835b9c0855cbc2e6e6f704",
+      "contract_sha256": "b92a1a1b8f649e0366db4cdf6a461bd3250bec1dc8724c15db653e710d846ede",
+      "cases": {
+        "R1-23-H01": "e97c4a0df892cf0883cd5c8f14639fb425edc5972f9eeba0ebb07696168c7aad",
+        "R1-23-H02": "1aa51e22634a4d31f02555af4fe629295c03d25d4174ee44882bd52afed6de7c",
+        "R1-23-H03": "eb7c4e70da339feb6d01877a30a8de649adff8ccbfea5c374755826f26331cff",
+        "R1-23-H04": "4d94bc2f94c959ece706a4800053b298d9fb7f8c3438e373e0ad01b06d59e56a"
+      }
+    },
+    "PGB-87": {
+      "description_sha256": "ac9f9a6a493d90d505ff6ae63e6b92063cfddad3fbde62a31f20ef2b25687cd5",
+      "contract_sha256": "1101e101d2b09497286531a7cac82a4753cec209dde5896e3da69c8c95d10d0f",
+      "cases": {
+        "R1-17-H01": "33612942270b581154f807cfe59460d5a55ea01a463eb8c74961864e982924ce",
+        "R1-17-H02": "516fbc5d4a479c88bc8ef224629511a236474a1d6eea4c7a425a59225b9344e5",
+        "R1-17-H03": "c5d738e9808c92322218a10f60e8cca186c1fc086a85c5d8d237082795506744"
+      }
+    },
+    "PGB-88": {
+      "description_sha256": "6622b1d25263059a9fe5a3875031c08ffaab7dce88f36f734e154109e9230e09",
+      "contract_sha256": "90a1ed2a5609cce9aae2fe5df58d5c3d1086c223d0cd4c8e5bb68d2a3db5ce45",
+      "cases": {
+        "R1-18-H01": "63b97863812a40d2f622880abb76b018db7d93b8c22bc944413de658d5a8e836",
+        "R1-18-H02": "d3df7cab6de70e64333e08fc413baa60e6e4dbb60a8a7adca566232842689291",
+        "R1-18-H03": "1ce4cc763dafbc75eca8be119158ccc03f0f78f11997b231be1879fd3ffc3dcf"
+      }
+    },
+    "PGB-89": {
+      "description_sha256": "f7519a39449fb3dc97e3dd7f70eb341777b5e44ada1d633cd5b7be4c7c05042c",
+      "contract_sha256": "a128a188e0c2e57e772a7dad238bc1fd42742511773d5050ddc28d7ef252e080",
+      "cases": {
+        "R1-19-H01": "7b19d13fcd43180b41f39db239375337cf2e488abb9d3419cf44e42c71b97381",
+        "R1-19-H02": "8bd055e9141e7410739433f498d96c3043f0198377c21aea63b790dfd43e82e3",
+        "R1-19-H03": "51d382b5a44c1c5d8eec3f2e952ea20acfc2c605ca8d8c948c72862b9d943147"
+      }
+    },
+    "PGB-90": {
+      "description_sha256": "077d6d2d55a261f741a6d266e9b52ba0a2a5f151cde96fc8754ec234f1b07b01",
+      "contract_sha256": "674842332c6d1f31faae15f72b16ef4a3bc5a651cca9922518f59a56b9b71348",
+      "cases": {
+        "R1-20-H01": "d5a1cf0d35f1cda84cd7aab9c6033955302bdc8b553fa8d2cd5cee99121d0511",
+        "R1-20-H02": "55c0fd5cc53a43576d209d85380a364e4d5a51a20d62c0bc57ac3856558be3e0",
+        "R1-20-H03": "797f2163242549b378d8b08f9b1a64f6b5947fd4ebc1a514b9c6b11a8664bad7",
+        "R1-20-H04": "2474326afd8ed0f827dcf01890e4e36a9b19049d41816f95300a399824dd56e2"
+      }
+    }
+  },
+  "order": [
+    "R1-01",
+    "R1-02",
+    "R1-03",
+    "R1-04",
+    "R1-21",
+    "R1-31",
+    "R1-38",
+    "R1-40",
+    "R1-41",
+    "R1-42",
+    "R1-36",
+    "R1-05",
+    "R1-06",
+    "R1-07",
+    "R1-24",
+    "R1-30",
+    "R1-27",
+    "R1-08",
+    "R1-09",
+    "R1-10",
+    "R1-25",
+    "R1-26",
+    "R1-28",
+    "R1-37",
+    "R1-39",
+    "R1-35",
+    "R1-32",
+    "R1-11",
+    "PGB-169",
+    "PGB-159",
+    "PGB-160",
+    "PGB-161",
+    "R1-33",
+    "R1-34",
+    "PGB-162",
+    "PGB-163",
+    "PGB-164",
+    "PGB-165",
+    "PGB-166",
+    "R1-12",
+    "R1-13",
+    "R1-14",
+    "R1-29",
+    "R1-15",
+    "R1-16",
+    "R1-22",
+    "R1-23",
+    "R1-17",
+    "R1-18",
+    "R1-19",
+    "R1-20"
+  ],
+  "mapping": {
+    "R1-01": "PGB-71",
+    "R1-02": "PGB-72",
+    "R1-03": "PGB-73",
+    "R1-04": "PGB-74",
+    "R1-21": "PGB-99",
+    "R1-31": "PGB-145",
+    "R1-38": "PGB-152",
+    "R1-40": "PGB-154",
+    "R1-41": "PGB-155",
+    "R1-42": "PGB-156",
+    "R1-36": "PGB-150",
+    "R1-05": "PGB-75",
+    "R1-06": "PGB-76",
+    "R1-07": "PGB-77",
+    "R1-24": "PGB-110",
+    "R1-30": "PGB-138",
+    "R1-27": "PGB-132",
+    "R1-08": "PGB-78",
+    "R1-09": "PGB-79",
+    "R1-10": "PGB-80",
+    "R1-25": "PGB-113",
+    "R1-26": "PGB-129",
+    "R1-28": "PGB-136",
+    "R1-37": "PGB-151",
+    "R1-39": "PGB-153",
+    "R1-35": "PGB-149",
+    "R1-32": "PGB-146",
+    "R1-11": "PGB-81",
+    "PGB-169": "PGB-169",
+    "PGB-159": "PGB-159",
+    "PGB-160": "PGB-160",
+    "PGB-161": "PGB-161",
+    "R1-33": "PGB-147",
+    "R1-34": "PGB-148",
+    "PGB-162": "PGB-162",
+    "PGB-163": "PGB-163",
+    "PGB-164": "PGB-164",
+    "PGB-165": "PGB-165",
+    "PGB-166": "PGB-166",
+    "R1-12": "PGB-82",
+    "R1-13": "PGB-83",
+    "R1-14": "PGB-84",
+    "R1-29": "PGB-137",
+    "R1-15": "PGB-85",
+    "R1-16": "PGB-86",
+    "R1-22": "PGB-100",
+    "R1-23": "PGB-101",
+    "R1-17": "PGB-87",
+    "R1-18": "PGB-88",
+    "R1-19": "PGB-89",
+    "R1-20": "PGB-90"
+  }
+};
+const sha169=value=>createHash('sha256').update(value).digest('hex');
+const canonical169=value=>sha169(canonicalize(value));
+async function historical81File(name, publication) {
+ const capture=publication.approved_delivery_catalogue_amendment.historical_file_bytes;
+ assert.equal(canonical169(capture),approved169Expected.capture_sha256,'complete43-entry historical capture');
+ assert.equal(Object.keys(capture).length,43);
+ const entry=capture[name];assert(entry,name+' retained historical bytes');
+ assert.equal(entry.representation,'utf8_source_file');
+ assert.equal(sha169(entry.utf8),approved169Expected.files[name],name+' independent historical digest');
+ assert.equal(entry.sha256,approved169Expected.files[name]);
+ const prior=publication.installed_repair_preview_amendment.source_artifacts_sha256[name];
+ if(prior)assert.equal(entry.sha256,prior,name+' original source artifact');
+ return entry.utf8;
+}
+async function read169Catalogue() {
+ const base='../docs/delivery/manager-r1/';
+ return {drafts:JSON.parse(await readFile(new URL(base+'ticket-drafts.json',import.meta.url),'utf8')),metadata:JSON.parse(await readFile(new URL(base+'plan-metadata.json',import.meta.url),'utf8')),publication:JSON.parse(await readFile(new URL(base+'publication.json',import.meta.url),'utf8')),stories:await readFile(new URL(base+'stories.md',import.meta.url),'utf8')};
+}
+function approvedContractEvidence(publication) {
+ const a=publication.installed_repair_preview_amendment;
+ assert.equal(canonical169(a),'14f9022022778fdb23afe24f2fddd28f574f05768f8cd2027d70e53073e6c53e','complete immutable81 amendment');
+ assert.equal(sha169(a.native_capture.page_raw),installed81NativeExpected.page);
+ const nodes=JSON.parse(a.native_capture.page_raw).structuredContent.issues.nodes;
+ const evidence=new Map();
+ for(const node of nodes.filter(n=>n.fields.issuetype.name==='Story')) {
+  const match=node.fields.description.match(/```(?:yaml|json)[^\n]*\n([\s\S]*?)```/);assert(match,node.key);
+  evidence.set(node.key,{contract:parseWork(match[1]),description:node.fields.description});
+ }
+ const supplement=publication.approved_delivery_catalogue_amendment.native_supplement;
+ assert.equal(supplement.representation,'jira_mcp_markdown_description');
+ assert.equal(supplement.retrieved_at,'2026-11-16T13:24:14.505Z');
+ assert.deepEqual(supplement.issues.map(i=>i.key).sort(),['PGB-159','PGB-169']);
+ for(const issue of supplement.issues) {
+  const expected=approved169Expected.contracts[issue.key];
+  assert.equal(issue.representation,'jira_mcp_markdown_description');
+  assert.equal(sha169(issue.description_markdown),expected.description_sha256,issue.key+' exact description');
+  assert.equal(issue.description_sha256,expected.description_sha256);
+  const match=issue.description_markdown.match(/```yaml\n([\s\S]*?)```/);assert(match);
+  const contract=parseWork(match[1]);assert.equal(canonical169(contract),expected.contract_sha256);
+  assert.deepEqual(issue.contract,JSON.parse(JSON.stringify(contract)));assert.equal(issue.contract_canonical_sha256,expected.contract_sha256);
+  if(issue.key==='PGB-159') {
+   const original=evidence.get(issue.key).contract,restored=structuredClone(contract);
+   assert.deepEqual(restored.prerequisites.at(-1),{ticket:'PGB-169',required_outcome:'ai_qa_complete'});
+   restored.prerequisites.pop();
+   assert.equal(restored.technical_acceptance_criteria.constraints[2].id,'TAC3');
+   restored.technical_acceptance_criteria.constraints[2].requirement=original.technical_acceptance_criteria.constraints[2].requirement;
+   assert.deepEqual(restored,JSON.parse(JSON.stringify(original)),'159 changes only prerequisite and TAC3 ownership');
+  }
+  evidence.set(issue.key,{contract,description:issue.description_markdown});
+ }
+ return evidence;
+}
+function assertCurrentCatalogue({drafts,metadata,publication,stories},evidence,expected) {
+ const mapping=expected.mapping,ids=expected.order,a=publication.approved_delivery_catalogue_amendment;
+ assert.deepEqual(drafts.map(r=>r.id),ids,'complete ordered contract set');
+ assert.deepEqual(metadata.map(r=>r.id),ids,'complete ordered metadata set');
+ assert.deepEqual(publication.stories,mapping);assert.equal(new Set(Object.values(mapping)).size,51);
+ assert.deepEqual([publication.story_count,publication.case_count,publication.requirement_count,publication.scenario_count],[51,185,53,41]);
+ assert.deepEqual(a.source_order,ids.map(id=>({id,key:mapping[id]})));
+ assert.deepEqual([...stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),ids,'exactly one real/legacy heading per row');
+ const seen=new Set(),external=new Set();let human=0,prerequisiteCount=0;
+ for(let index=0;index<drafts.length;index++) {
+  const row=drafts[index],key=mapping[row.id],binding=expected.contracts[key],native=evidence.get(key);assert(native,key+' independent native input');
+  assert.equal(sha169(native.description),binding.description_sha256,key+' native description');
+  assert.equal(canonical169(native.contract),binding.contract_sha256,key+' native complete contract');
+  const normalized=structuredClone(row.contract);for(const d of normalized.prerequisites)d.ticket=mapping[d.ticket]??d.ticket;
+  assert.deepEqual(normalized,JSON.parse(JSON.stringify(native.contract)),key+' complete current contract');
+  assert.deepEqual(metadata[index].dependencies,row.contract.prerequisites.map(d=>d.ticket));
+  const result=validateWork(JSON.stringify(row.contract),{mode:'structure'});assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.readiness,'not_evaluated');
+  assert.deepEqual(row.contract.testing_strategy.cases,[]);
+  for(const c of row.contract.testing_strategy.human_review.cases) {
+   assert(!seen.has(c.id),c.id+' unique');seen.add(c.id);human++;
+   assert.equal(canonical169(c),binding.cases[c.id],c.id+' complete independent human object');
+  }
+  assert.deepEqual(row.contract.testing_strategy.human_review.cases.map(c=>c.id).sort(),Object.keys(binding.cases).sort());
+  const start=stories.indexOf('## '+row.id+':'),next=index+1<ids.length?stories.indexOf('## '+ids[index+1]+':'):stories.length,section=stories.slice(start,next);
+  assert(section.includes(JSON.stringify(row.contract,null,2)),row.id+' complete rendered structured contract');
+  assert(section.includes('https://scubapig.atlassian.net/browse/'+key));
+  for(const dep of row.contract.prerequisites) {
+   prerequisiteCount++;const from=mapping[dep.ticket]??dep.ticket;
+   if(Object.values(mapping).includes(from))assert(ids.findIndex(id=>mapping[id]===from)<index,key+' prerequisite precedes dependent');else external.add(from);
+  }
+  assert.deepEqual(a.current_contracts[row.id],{native_key:key,representation:['PGB-159','PGB-169'].includes(key)?'jira_mcp_markdown_description':'frozen_native_page_description',locator:['PGB-159','PGB-169'].includes(key)?'native_supplement.issues':'installed_repair_preview_amendment.native_capture.page_raw',...binding});
+ }
+ assert.equal(human,185);assert.equal(seen.size,185);assert.equal(prerequisiteCount,123);assert.deepEqual([...external],['PGB-108']);
+ const oldLinks=publication.installed_repair_preview_amendment.native_reconciliation.all_observed_links;
+ assert.equal(canonical169(oldLinks),installed81NativeExpected.links);assert.equal(oldLinks.length,127);
+ const newLinks=[{id:'10772',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-81',to:'PGB-169'},{id:'10773',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-169',to:'PGB-159'}];
+ assert.deepEqual(publication.dependency_links,[...oldLinks,...newLinks]);assert.equal(new Set(publication.dependency_links.map(l=>l.id)).size,129);
+ assert.deepEqual(a.dependency_reconciliation.new_links,newLinks);assert.equal(a.dependency_reconciliation.combined_links_canonical_sha256,canonical169(publication.dependency_links));
+ const prerequisites=drafts.flatMap(row=>row.contract.prerequisites.map(dep=>{const from=mapping[dep.ticket]??dep.ticket,to=mapping[row.id],matches=publication.dependency_links.filter(l=>l.from===from&&l.to===to&&l.type_id==='10000'&&l.type_name==='Blocks');assert.equal(matches.length,1);return{from,to,required_outcome:dep.required_outcome,link_id:matches[0].id,scope:Object.values(mapping).includes(from)?'included':'external_native_key_retained'};}));
+ assert.deepEqual(a.dependency_reconciliation.scoped_prerequisites,prerequisites);
+ assert.deepEqual(a.counts,{source_stories:51,human_cases:185,ai_cases:0,requirements:53,scenarios:41});
+ assert.equal(a.verification.runtime_change,false);assert.equal(a.verification.activation_authorized,false);
+ assert.deepEqual(a.verification.human_acceptance,{'PGB-169-H01':'NOT_RUN','PGB-169-H02':'NOT_RUN'});
+}
+test('PGB-169 current catalogue matches approved native contracts and complete rendered Stories',async()=>{
+ const current=await read169Catalogue(),evidence=approvedContractEvidence(current.publication);
+ assertCurrentCatalogue(current,evidence,approved169Expected);
+ const absentContract=structuredClone(current);absentContract.drafts=absentContract.drafts.filter(r=>r.id!=='PGB-160');
+ assert.throws(()=>assertCurrentCatalogue(absentContract,evidence,approved169Expected),/complete ordered contract set/);
+ const absentCase=structuredClone(current);absentCase.drafts.find(r=>r.id==='PGB-169').contract.testing_strategy.human_review.cases.pop();
+ assert.throws(()=>assertCurrentCatalogue(absentCase,evidence,approved169Expected),/complete current contract/);
 });
