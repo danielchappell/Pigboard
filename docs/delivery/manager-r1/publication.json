@@ -2,7 +2,7 @@
   "date": "2026-11-16",
   "epic": "PGB-66",
   "grooming": "PGB-93",
-  "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+  "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
   "stories": {
     "R1-01": "PGB-71",
     "R1-02": "PGB-72",
@@ -945,7 +945,7 @@
       "min": 48.42875,
       "max": 52.11
     },
-    "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
+    "status": "Partial 31-Story/136-case source-contract checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149/152 source-contract composition remains separate; PGB-152 implementation does not add a source Story entry. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
   },
   "baseline_before_amendments": {
     "date": "2026-11-14",
@@ -2305,8 +2305,10 @@
         "added_max": 1.875,
         "current_min": 48.37875,
         "current_max": 52.0225
-      }
+      },
+      "status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed.",
+      "current_source_scope_status": "Partial 31-Story/136-case source checkpoint including PGB-150/R1-36. PGB-137/146/147/148/149 source composition remains separate. Dated native31/134 and34/144 snapshots remain historical; no current native count, human acceptance or activation is claimed."
     },
-    "verification_limits": "Native child publication only. Parent source contract and counts unchanged; child repair, human acceptance, hosted CI/Codex, combined main merge and activation remain pending."
+    "verification_limits": "Evidence checkpoint 2026-11-16: source repair is implemented at eb978e8df8ee0fee40c034984db76693e03820dc, with owning 17/17 affected source checks, 48/48 publication guards and independent local source QA PASS (two direct positive observations; two controls attributed to the owning suite). Parent source contract and counts remain unchanged; PGB-152 remains native-only in this source composition. Child human acceptance remains NOT_RUN (0/2), and original PGB-150 acceptance NOT_RUN (0/4). Claims-correction re-review, child PR, current-head hosted CI/Codex, parent integration and combined main merge require separate evidence after this checkpoint. No live Jira, installed-runtime, release or activation acceptance is claimed."
   }
 }
