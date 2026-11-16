@@ -1,6 +1,6 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
-import { validateReceiptChain,inspectManagerCompletion,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
+import { validateReceiptChain,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
 const entries=e=>e.comment_pages.flatMap(p=>p.comments.map(c=>({p,c,r:JSON.parse(JSON.parse(c.body).content[0].content[0].text)}))),target=e=>entries(e).find(x=>x.r.record_id===e.target.record_id);
 function seal(e){for(let round=0;round<20;round++){let changed=false;const map=new Map(entries(e).map(x=>[x.r.record_id,digestValue(x.r)]));function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='digest'&&v.record_id&&map.has(v.record_id)&&x!==map.get(v.record_id)){v[k]=map.get(v.record_id);changed=true;}else if(x&&typeof x==='object')walk(x);}}walk(e);for(const x of entries(e)){walk(x.r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(x.r)}]}]});}if(!changed&&round>0)return e;}return e;}
@@ -339,4 +339,25 @@ test('three distinct current envelopes export all 57 matching observation bindin
  }
  assert.equal(groups.size,57);
  for(const b of expected){const group=groups.get(JSON.stringify([b.kind,b.key]));assert.deepEqual([...group.digests],[b.digest]);assert.deepEqual([...group.participants],['1000','2000','3000']);}
+});
+
+test('manager history and strict current purposes preserve the complete audited paired contract',()=>{
+ const fixture=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url))),pair=fixture.projection_pair,raw=pair.input;assert.equal(typeof raw,'string');
+ const histories=[],currents=[];for(const mode of ['history','current','current','history','history','current']){const result=JSON.parse(JSON.stringify(mode==='history'?inspectManagerHistory(raw):validateReceiptChain(raw)));if(mode==='history'){assert.deepEqual(result,pair.expected_history);histories.push(result);}else{assert.deepEqual(result,pair.expected_current);currents.push(result);}assert.equal(pair.input,raw);}
+ assert.equal(histories.length,3);assert.equal(currents.length,3);for(const h of histories)assert.deepEqual(h,histories[0]);for(const c of currents)assert.deepEqual(c,currents[0]);
+});
+test('manager history projects exact B1/B2/A3 role consumption, parents, coverage and authenticated inventories',()=>{
+ const fixture=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url)));assert.deepEqual(fixture.projections.map(c=>c.id),['B1-at-A2','B2-at-final','A3-at-final']);
+ for(const c of fixture.projections){const raw=c.input,before=JSON.stringify(c),result=JSON.parse(JSON.stringify(inspectManagerHistory(raw)));assert.deepEqual(result,c.expected,c.id);assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);assert.deepEqual(JSON.parse(JSON.stringify(inspectManagerHistory(raw))),result);assert.equal(JSON.stringify(c),before);}
+});
+
+// Reuse the sealed68-node, two-root graph. Precise coverage counts only the actual
+// production module; the harness and independent topology audit are excluded.
+test('bounded historical coverage reuses sealed DAG outcomes and fixed module budgets',async t=>{
+ const packet=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url)));assert.equal(packet.bounded_history_cases.length,2);
+ for(const c of packet.bounded_history_cases){const input=JSON.parse(c.input),audit=auditRepeated(input);assert.equal(input.consumer,'manager');assert.deepEqual([audit.records,audit.reference_occurrences,audit.repair_leaves],[68,c.reference_occurrences,2]);assert.equal(c.module_entry_budget,256*(68+c.reference_occurrences+1)*3+64*68**2);const before=c.input,{result,entries}=await measuredReceiptCall(before,inspectManagerHistory,new URL('../lib/contracts/receipts.mjs',import.meta.url).href);assert.equal(result.valid,c.expected.valid,c.id+JSON.stringify(result.diagnostics));assert.equal(result.completion_established,false);assert.equal(result.execution_authorized,false);if(c.expected.diagnostic){assert(result.diagnostics.some(d=>d.code===c.expected.diagnostic.code&&d.path===c.expected.diagnostic.path));assert.deepEqual(result.records,[]);assert.deepEqual(result.coverage_segments,[]);assert.deepEqual(result.bindings,[]);}assert(entries>0&&entries<=c.module_entry_budget,c.id+': '+entries+' > '+c.module_entry_budget);assert.equal(c.input,before);t.diagnostic(c.id+': '+entries+' receipt-module entries <= '+c.module_entry_budget);}
+});
+
+test('historical shared inventories and early current/history negatives match full independent reports',()=>{
+ const n=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url))).normalization,plain=v=>JSON.parse(JSON.stringify(v));assert.equal(n.positive_history_projections.length,3);assert.equal(n.canonical_controls.length,2);for(const c of n.positive_history_projections){assert.deepEqual(plain(inspectManagerHistory(c.input)),c.expected,c.id);assert.equal(c.expected.records.length,4);assert.equal(c.expected.bindings.length,57);}for(const c of n.canonical_controls)for(const mode of ['current','history','history','current'])assert.deepEqual(plain(mode==='current'?validateReceiptChain(c.input):inspectManagerHistory(c.input)),mode==='current'?c.expected_current:c.expected_history,c.id+' '+mode);for(const c of n.positive_history_projections)assert.deepEqual(plain(inspectManagerHistory(c.input)),c.expected,c.id+'after invalid calls');
 });
