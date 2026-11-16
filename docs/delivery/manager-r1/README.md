@@ -30,7 +30,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
 | R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
 | R1-30 / [PGB-138](https://scubapig.atlassian.net/browse/PGB-138) | Prepare mixed QA inputs and two boundary controls | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.0625–1.5625 | 18 |
-| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Complete the prescribed QA input suite | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 0.9375–1.40625 | 12 |
+| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Complete the prescribed QA input suite | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 1.0625–1.59375 | 12 |
 | R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27 | 1.3125–1.8125 | 17 |
 | R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
 | R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
@@ -104,7 +104,7 @@ These are bounded proposed file inventories, including tests/docs. Names are imp
 
 `skills/write-pr-sized-stories/SKILL.md`, `skills/write-pr-sized-stories/references/basic-workflow-ticket.md`, `skills/implementer-entrypoint/references/handoff.md`, `skills/pigboard-pr-review/references/jira-handoff.md`, `docs/authoring.md`, `test/story-authoring.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/qa-helper-contract.test.mjs`, `docs/using-pigboard.md`, `skills/qa-api/references/structured-steps.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
-### R1-27 — 12 residual forecast files, 7.5–11.25 hours
+### R1-27 — 12 residual forecast files, 8.5–12.75 hours
 
 `test/story-authoring.test.mjs`, `test/fixtures/qa-helper-case.mjs`, `test/qa-helper-contract.test.mjs`, `docs/using-pigboard.md`, `docs/delivery/manager-r1/README.md`, `docs/delivery/manager-r1/plan-metadata.json`, `docs/delivery/manager-r1/ticket-drafts.json`, `docs/delivery/manager-r1/publication.json`, `docs/delivery/manager-r1/stories.md`, `docs/delivery/manager-r1/coverage.md`, `docs/product/coverage.md`, `docs/product/README.md`.
 
@@ -338,7 +338,7 @@ At that competing-completions checkpoint, the metadata total was **47.80625 days
 
 The current R1-11 forecast is **20 paths/1.53 days**: 0.55 completed plus a conservative 0.98 further-work envelope before reconciling the newly completed preparation. The additional 0.06 covers amended binding/plan participation (0.02), intact guard migration (0.01), three full typed successor reports (0.01), affected audit/test/docs integration (0.01), and additional review/QA handoff (0.01). It preserves the earlier allocations, including the 0.08/0.07 overhead; concurrent reviewer elapsed time is not added.
 
-The current metadata total is **47.86625 days**, with an exact lower/upper range of **45.27250–47.86625 days**, rounded to **45.27–47.87**. R1-28 remains **20 paths/1.92 days**; combined R1-28/R1-11 effort is **3.45 days**. R1-28's existing 0.04-day docs/forecast allocation covers this bounded update through three paths already in its 20-path footprint. PGB-81 feature code, cases, tests and user guides remain with PGB-81. This forecast publication does not establish implementation progress or waive any remaining plan, code review, QA, CI, Codex or merge gate. Source/native counts, contracts and NOT_RUN human acceptance remain unchanged.
+At that 15 November checkpoint, the metadata total was **47.86625 days**, with an exact lower/upper range of **45.27250–47.86625 days**, rounded to **45.27–47.87**. R1-28 remains **20 paths/1.92 days**; combined R1-28/R1-11 effort is **3.45 days**. R1-28's existing 0.04-day docs/forecast allocation covers this bounded update through three paths already in its 20-path footprint. PGB-81 feature code, cases, tests and user guides remain with PGB-81. This forecast publication does not establish implementation progress or waive any remaining plan, code review, QA, CI, Codex or merge gate. Source/native counts, contracts and NOT_RUN human acceptance remain unchanged.
 
 ## Residual PGB-132 source candidate
 
@@ -372,13 +372,20 @@ accepts only its specific actual-helper/dependent-publisher evidence gap. No
 helper, Bruno, model or provider acceptance was rerun here. R1-27-H01/H02/H03
 and R1-30-H01/H02/H03 remain NOT_RUN. Developer source checks, installed
 evidence reuse, hosted CI/Codex, merge/release and activation are distinct.
-The current reviewed residual forecast is 12 maximum authored paths, with nine
-authored paths, and 7.5–11.25 familiar-human hours: the prior 6.75–9.75h plus
-0.75–1.5h for actual-consumer proof/size control repair, affected checks, docs,
-ordinary correction and review/PR evidence. Prior allocations remain counted;
-unchanged publication bodies are not edited merely to fill that list. Only
-PGB-132 changes: the current aggregate upper forecast is 48.05375 days
-(47.86625 + 1.5/8); other Story forecasts and source ownership stay unchanged.
+The historical residual allocation on 15 November was 6.75–9.75h. The proof/size
+repair checkpoint on 16 November was 7.5–11.25h, adding 0.75–1.5h for that repair,
+affected checks, docs, ordinary correction and review/PR evidence. Its aggregate
+upper forecast was 48.05375 days (47.86625 + 1.5/8); those checkpoints remain history.
+
+Current PGB-132 whole residual forecast: **8.5–12.75 hours / 1.0625–1.59375 days**.
+This 16 November correction adds 1–1.5 familiar-human hours for original
+child-operation history, current forecast agreement, diagnosis/plan, tests/docs,
+ordinary correction and independent review/PR evidence. Prior allocations remain
+counted. The residual has nine authored paths within twelve maximum paths;
+unchanged publication bodies are not edited merely to fill that list.
+Current metadata aggregate: **45.49125–48.24125 days**, derived from all Story
+minimum hours and upper days (upper 48.05375 + 1.5/8). Only R1-27's forecast changes;
+other Story forecasts and source ownership stay unchanged.
 Both I11 partial controls remove actual environment proof and preserve current
 PR/response facts. I14 now refuses the complete projected ledger before dispatch;
 the separate actual-canonical publication overflow control remains unchanged.
@@ -462,6 +469,10 @@ No activation, saved automation, deployment or native ticket change is made here
 
 ## PGB-78 corrected prerequisite composition — 16 November 2026
 
+Historical held952/003 checkpoint; its next source suite never started. The
+child-history composition below supersedes its pending diagnosis/current estimate
+binding while preserving this source and setup applicability evidence.
+
 The composer now includes reviewed PGB-132 correction
 `003160f4fa4bb4ba744ee0d5a1af9a686033e38c`, tree
 `e4a833ce1b4d0038e1866112678524100f04d9dc`, through normal merge ancestry from
@@ -476,7 +487,8 @@ and all incoming nonowned files remain unchanged. Existing default publication
 inputs, I06/I13 history, original native bodies and all 51 IDs/14 families survive.
 No result/assessment oracle, new engine, installed change or dependency is added.
 
-Current aggregate forecast is 45.36625–48.05375 familiar-human days, reflecting only
+At this checkpoint the aggregate forecast was 45.36625–48.05375 familiar-human
+days, reflecting only
 PGB-132's revised 7.5–11.25-hour residual forecast. PGB-78 remains 17 paths and
 10.5–14.5 hours; 29 Stories/128 cases, 53 requirements/41 scenarios and pending
 PGB-137 are unchanged. The earlier aggregate above is historical.
@@ -490,3 +502,28 @@ that applicability binding supply no actual Grok/helper/clock/publisher acceptan
 or transferred PGB-132 exception. Fresh final code review, current-head CI/Codex,
 actual acceptance disposition and ordered authorized publication/merge remain
 separate. No activation, deployment or native ticket write is made here.
+
+
+## PGB-78 child-history composition — 16 November 2026
+
+The composer now includes reviewed PGB-132 candidate
+`ac22d02365ad970d1ce627fb52f96501d161a2a6`, tree
+`335d4ae8be3a6ab6752053212136e493f31fbcb0`, through normal merge ancestry from
+held952. Both exact prerequisite code reviews and both affected integration-plan
+reviews were CLEAN before this composition. Publication and merge remain ordered
+under Director authority; local consumption does not claim hosted or merge results.
+
+I02-child now supplies original submitted/unknown child-operation history before
+the actual78 composer introduction. The generic composer suffix is unchanged;
+other 50 invocation views, earlier I11/I14 corrections and all original bodies/
+case IDs remain. This is supplied/mock past input, not a helper result or proof
+of zero calls. Current source remains 29 Stories/128 cases and 53 requirements/41
+scenarios, with PGB-137 pending. The current metadata aggregate above is
+45.49125–48.24125 days. PGB-78 retains 17 authored paths and10.5–14.5 hours.
+
+Final producer/input/index hashes, one composed-source suite, unchanged81-file
+installed applicability and fresh committed-code reviews are separate evidence.
+The original bf10 installation retains its source identity; exact byte/config/
+dependency equality permits reuse of22/81/7 setup results, without reinstalling
+or repeating smokes. Actual Grok/helper/clock/publisher behavior or authorized
+disposition remains separate; no132 exception transfers and no activation follows.

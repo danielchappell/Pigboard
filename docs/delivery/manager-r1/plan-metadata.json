@@ -265,7 +265,7 @@
       "R1-24",
       "R1-30"
     ],
-    "days": 1.40625,
+    "days": 1.59375,
     "files": [
       "test/story-authoring.test.mjs",
       "test/fixtures/qa-helper-case.mjs",
@@ -281,8 +281,8 @@
       "docs/product/README.md"
     ],
     "hours": {
-      "min": 7.5,
-      "max": 11.25
+      "min": 8.5,
+      "max": 12.75
     },
     "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
@@ -312,7 +312,7 @@
         "docs/product/README.md"
       ]
     },
-    "estimate_basis": "Prior residual 6.75\u20139.75h plus 0.75\u20131.5h for the bounded actual-consumer proof/size control repair, affected tests, docs, ordinary correction and independent review/PR evidence; current whole residual 7.5\u201311.25h. Prior allocations remain counted. No other Story forecast or source ownership changes."
+    "estimate_basis": "Historical residual allocation on 15 November 2026: 6.75–9.75h; proof/size control repair checkpoint on 16 November: 7.5–11.25h, adding 0.75–1.5h. Current whole residual 8.5–12.75h adds 1–1.5h for original child-operation-history and current-forecast correction, including diagnosis/plan, tests, docs, ordinary correction, independent review and PR evidence. Prior allocations remain counted; no other Story forecast or source ownership changes."
   },
   {
     "id": "R1-08",
@@ -349,7 +349,7 @@
       "min": 10.5,
       "max": 14.5
     },
-    "delivery_state": "Source composed with the actual reviewed PGB-132 consumed-proof/projected-size correction; final composed-source checks, unchanged installed-payload applicability binding, fresh exact-code review, actual capability/acceptance disposition and ordered hosted/publication/merge gates remain separate.",
+    "delivery_state": "Source composed with actual reviewed PGB-132 original-child-history and forecast correction; final source/input/index checks, unchanged installed applicability, fresh exact-code review and distinct runtime/hosted/publication/merge gates remain required.",
     "development_binding": {
       "base_commit": "0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a",
       "base_tree": "991e23fff8ac436e4f0bcfb92e82df2743f5d628",
@@ -402,8 +402,29 @@
       },
       "installed_evidence": "Check final81 source/installed/manifest hashes and config/dependency closure; reuse original bf10 22/81/7-smoke evidence only on exact identity, without rewriting its receipt or claiming a new installation.",
       "acceptance": "Actual Grok/helpers/clock/resulting publisher evidence or authorized disposition remains separate; no transferred exception or activation."
+    },
+    "child_history_composition_binding": {
+      "incoming_commit": "ac22d02365ad970d1ce627fb52f96501d161a2a6",
+      "incoming_tree": "335d4ae8be3a6ab6752053212136e493f31fbcb0",
+      "prior78_commit": "952883492a2e053c5ca399d22b65079a75ea4e44",
+      "integration_plan_sha256": "c2e316cc6a2603de3274e2e9a05bb0aadd784cc16cf5de4bb56fe08ac788c316",
+      "review_state": "Both exact prerequisite code reviews and both affected child-history integration-plan reviews CLEAN before normal composition; fresh composed-code review remains separate.",
+      "incoming_paths": 6,
+      "owned_overlaps": 5,
+      "authored_paths": 17,
+      "other_authored_paths_preserved": 12,
+      "source_story_count": 29,
+      "source_case_count": 128,
+      "requirement_count": 53,
+      "scenario_count": 41,
+      "current_aggregate_days": {
+        "min": 45.49125,
+        "max": 48.24125
+      },
+      "evidence_boundary": "Case-only original history prefix precedes unchanged78 composer invocation; raw prior unknown effects are supplied input, not actual refusal/zero-call evidence. Rebind existing bf10 installation only on final81/config/dependency equality; no new installation/waiver/activation."
     }
   },
+
   {
     "id": "R1-09",
     "title": "Request rework through the human\u2019s assistant",
