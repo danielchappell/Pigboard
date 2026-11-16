@@ -210,3 +210,33 @@ ambient credentials cannot replace it. Operator IAM includes exact-table fresh
 emptiness Scan and transactional Put/Update privileges for initialization/control
 fencing. Those are real operator privileges, not runtime admission authority.
 The preview runtime receives only exact-table reads and never Scan or mutations.
+
+
+For a partial configure that changed the host package, use the **original** receipt
+and explicit recovery inspection, keeping the desired canonical configuration:
+
+```sh
+node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind installation --recovery --json
+```
+
+`--recovery` works only with `inspect`; initialization rejects it before access.
+The same four kinds, record selector, limit and cursor rules apply. Normal inspect
+and health retain strict package validation and never fall back automatically.
+Recovery still verifies the selected account/role, original stack/table/function/
+schedule/roles, installation/domain/site and generation, and validates the retained
+installation record. Missing, replaced or mismatched original identity is refused.
+It never initializes an empty replacement.
+
+The explicit `recovery` field in readable and JSON output warns
+`package_verified: false`. Original receipt identity, authored desired controls,
+mutable host observations and actual applied State identity are separately labelled;
+null observations are unavailable, not verified defaults. The original receipt is
+unchanged. A transient caller binding uses the validated desired configuration
+digest solely to read State; it does not accept an observed package or persist a
+new binding. Retained records and controls disagreement remain visible unchanged.
+Exit zero confirms only the reported read, never package/runtime safety or health.
+The flag grants no enable, apply, replay, rollback, clear or new-record authority.
+Use the existing [stop command](manager-installation.md#deliberate-scheduling-and-stop)
+to disable the verified original resources; preserve partial results and build
+outputs for an authorized decision if strict current package binding remains
+unresolved. Do not repeat configure or reconstruct a receipt to hide uncertainty.

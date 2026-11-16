@@ -6,13 +6,15 @@ import { result } from '../lib/state/contract.mjs';
 
 const help = `Usage:
   node scripts/manager-state.mjs init --config FILE --installation FILE --operator-profile NAME [--json]
-  node scripts/manager-state.mjs inspect --config FILE --installation FILE --kind installation|stream|attempt|member [--record-id ID|--cursor CURSOR] [--limit 1..100] --operator-profile NAME [--json]
+  node scripts/manager-state.mjs inspect --config FILE --installation FILE --kind installation|stream|attempt|member [--record-id ID|--cursor CURSOR] [--limit 1..100] --operator-profile NAME [--recovery] [--json]
 
 Initialize a verified fresh installation while disabled, or inspect retained state.
 Use the canonical configuration and generated installation receipt. No resource
 override, enable, unlock, purge, reconciliation or retry command exists.
 Prepare pinned root and runtime/aws dependencies before use; commands never install.
 Select the prepared operator profile; its exact canonical role is verified.
+Use inspect --recovery only after partial configure: original resources remain
+verified, but package/runtime safety is unverified. It grants no enable/apply/replay.
 An unknown write must be inspected using the same installation and attempt ID.
 `;
 function parse(argv) {
@@ -23,6 +25,7 @@ function parse(argv) {
   const seen = new Set();
   for (let n = 1; n < argv.length; n++) {
     const flag = argv[n]; if (!flag.startsWith('--') || seen.has(flag)) throw Error(); seen.add(flag);
+    if (flag === '--recovery') { if(out.command !== 'inspect') throw Error(); out.recovery = true; continue; }
     if (flag === '--json') { out.json = true; continue; }
     const field = flag.slice(2); if (!allowed.has(field) || typeof argv[n + 1] !== 'string' || argv[n + 1].startsWith('--') || !argv[n + 1].length || argv[n + 1].length > 4096) throw Error();
     out[field] = argv[++n];
@@ -42,6 +45,7 @@ export function stateExitCode(outcome) {
 }
 function readable(outcome) {
   const rows = [outcome.status + ': ' + outcome.code, ...outcome.diagnostics.map(d => d.message)];
+  if (outcome.recovery) rows.push('Recovery: ' + JSON.stringify(outcome.recovery));
   if (outcome.data) {
     rows.push('Canonical/applied controls: ' + (outcome.data.controls_match ? 'match' : 'differ; inspect remains read-only'));
     for (const record of outcome.data.records ?? (outcome.data.installation ? [outcome.data.installation] : [])) {
@@ -64,11 +68,12 @@ export async function runStateCommand(argv, { resolveInstallation = productionRe
   try {
     if (typeof resolveInstallation !== 'function') outcome = result('unavailable', 'CORE_PREREQUISITE');
     else {
-      resolved = await resolveInstallation({ configPath: options.config, installationPath: options.installation, purpose: options.command, operatorProfile: options['operator-profile'] });
+      resolved = await resolveInstallation({ configPath: options.config, installationPath: options.installation, purpose: options.recovery ? 'recovery-inspect' : options.command, operatorProfile: options['operator-profile'] });
       state = createState({ binding: resolved.binding, control: resolved.control, client: resolved.client });
       outcome = options.command === 'init'
         ? await state.initialize({ fresh_installation: resolved.fresh_installation, now: now() })
         : await state.inspect({ kind: options.kind, ...(options['record-id'] ? { record_id: options['record-id'] } : {}), ...(options.cursor ? { cursor: options.cursor } : {}), ...(options.limit ? { limit: options.limit } : {}) });
+      if(options.recovery && resolved.recovery) outcome = {...outcome, recovery:resolved.recovery};
     }
   } catch (error) { outcome = error.stateResult ?? result('unavailable', 'UNAVAILABLE'); }
   finally { state?.close?.(); resolved?.dispose?.(); }
