@@ -383,6 +383,20 @@ code-parent edges. Old findings remain applicable until verified incorporation a
 child cutoff. A newer parent's direct request list cannot erase older causes that
 the child has not incorporated.
 
+Repair admission uses the current observed PR's source revision and target branch.
+Older completion and request PR references remain authentic history; observing a
+new revision does not prove QA for that revision. Admission references contain only
+the five PR fields, without observation-only state or current flags.
+
+A new stack-update payload must match both its immutable child QA completion and
+the current observed child PR. If the source or target has changed, preview waits
+with no proposal and a `human_hold` repair-order entry. `PR_HUMAN_HANDLING` asks
+the child-QA owner for coherent completion evidence for the current source and
+target. Retain existing causes and history; do not edit old QA or substitute the
+new observation as QA proof. A valid already-published request remains history:
+when no new payload is needed, an otherwise eligible repair can still be admitted
+with the current PR reference.
+
 `LINEAGE_REQUIRED` means supply authenticated repair history;
 `REPAIR_PROOF_INVALID` means replace incoherent/unbound supplied evidence.
 An authenticated unfinished child dependency wait leaves that child queued while

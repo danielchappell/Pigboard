@@ -28,6 +28,56 @@ const fixtureURL=new URL('./fixtures/manager-repairs.json',import.meta.url);
 const load=()=>JSON.parse(readFileSync(fixtureURL));
 const allCases=f=>[...f.cases,...f.scenarios,...f.normalization.cases];
 const run=c=>{const config=JSON.stringify(c.config),snapshot=JSON.stringify(c.snapshot),actual=JSON.parse(JSON.stringify(previewSnapshot(config,snapshot,c.options)));verificationAPI(c,config,snapshot,actual);return actual;};
+
+test('current PR observations preserve four fixed controls and distinguish admission from new publication',()=>{
+ const fixtureBytes=readFileSync(fixtureURL,'utf8'),f=JSON.parse(fixtureBytes);
+ const routes=[['OC01-selection','10',false],['H02-02-a2-full-qa-before-u1','11',true],['H02-06-a3-full-qa-u2-unpublished','11',true],['H02-07-u2-published-b-not-admitted','11',false]];
+ const handling={code:'PR_HUMAN_HANDLING',path:'/issues/2',message:'Obtain coherent child QA for the current observed PR source and target before publishing a new stack update; retain existing repair causes and historical evidence.'};
+ const referenceFields=['provider','repository','number','source_revision','target_branch'];
+ // All twelve complete expectations are specified from frozen fixture reports
+ // and the accepted contract before the first product evaluation.
+ const checks=[];
+ for(const [id,number,publicationWait]of routes){
+  const input=id==='OC01-selection'?f.inherited_own_preview.original.cases.find(c=>c.id===id):f.cases.find(c=>c.id===id);
+  const oracle=id==='OC01-selection'?f.inherited_own_preview.cases.find(c=>c.id===id):input;
+  assert(input&&oracle?.expected,id);
+  const control={...structuredClone(input),expected:structuredClone(oracle.expected)};
+  checks.push({...control,id:id+'/control'});
+  const identity=control.expected.streams[0].proposal.existing_pr;
+  assert.equal(identity.number,number);
+  for(const target of [null,'repair-current-target']){
+   const c=structuredClone(control);c.id=id+(target?'/source-plus-target':'/source-only');let changed=0;
+   for(const field of ['repair_receipts','completion_receipts'])for(const [index,raw]of (c.snapshot[field]??[]).entries()){
+    const e=JSON.parse(raw),same=p=>p.provider===identity.provider&&p.repository===identity.repository&&p.number===number;
+    if(!e.pr_receipts.some(same))continue;
+    const current=e.pr_receipts.filter(p=>same(p)&&p.current);assert.equal(current.length,1,c.id+' current observation');
+    const old=current[0];old.current=false;e.pr_receipts.push({...old,current:true,source_revision:'9999999999999999999999999999999999999999',...(target?{target_branch:target}:{})});
+    c.snapshot[field][index]=JSON.stringify(e);changed++;
+   }
+   assert(changed>0,c.id);
+   c.expected.snapshot_digest='sha256:'+createHash('sha256').update(canonicalize({configuration_digest:c.expected.configuration_digest,snapshot:c.snapshot})).digest('hex');
+   if(Object.hasOwn(c.options??{},'expectedSnapshotDigest'))c.options.expectedSnapshotDigest=c.expected.snapshot_digest;
+   const stream=c.expected.streams[0];
+   if(publicationWait){
+    stream.decision='wait';stream.selected_ticket_id=null;stream.selected_key=null;stream.proposal=null;
+    const row=stream.repair_order.find(r=>r.ticket_id==='1001');row.state='human_hold';row.reasons=[structuredClone(handling)];
+    stream.reasons=[...stream.reasons.filter(r=>r.path!=='/issues/2'),structuredClone(handling)].sort((a,b)=>a.path.localeCompare(b.path)||a.code.localeCompare(b.code));
+    stream.candidates.find(c=>c.ticket_id==='1001').eligible=false;
+   }else{
+    stream.proposal.existing_pr.source_revision='9999999999999999999999999999999999999999';
+    if(target)stream.proposal.existing_pr.target_branch=target;
+    assert.deepEqual(Object.keys(stream.proposal.existing_pr),referenceFields);
+   }
+   checks.push(c);
+  }
+ }
+ assert.equal(checks.length,12);
+ assert.equal(createHash('sha256').update(canonicalize(checks.map(({id,config,snapshot,options,expected})=>({id,config,snapshot,options:options??{},expected})))).digest('hex'),'48be5f8ea0c02394b17774f661b3a257234f05b165e1652dae38043981acc0e1','complete prepared inputs and expectations independently crosschecked before execution');
+ verificationRecord('current-pr-fixed-expectations',checks);
+ for(const c of checks){const before=JSON.stringify(c),actual=run(c);assert.deepEqual(actual,c.expected,c.id);assert.equal(JSON.stringify(c),before,c.id+' immutable input/oracle');assert.equal(actual.writes,0);assert.equal(actual.execution_authorized,false);for(const stream of actual.streams)assert(stream.proposal===null||stream.proposal.execution_authorized===false);}
+ assert.equal(readFileSync(fixtureURL,'utf8'),fixtureBytes,'original fixture bytes');
+});
+
 test('repair fixture preserves all complete native human cases and nine distinct immutable checkpoints',()=>{
  const f=load();assert.equal(f.native_cases.length,42);assert.deepEqual(f.native_cases.map(c=>c.id),[...Array.from({length:41},(_,i)=>'R1-11-S'+String(i+1).padStart(2,'0')),'R1-11-H02']);
  for(const c of f.native_cases){assert.equal(c.execution,'human');for(const field of ['requirements','prerequisites','steps','expected','evidence'])assert(c[field].length>0,c.id+' '+field);assert.equal(typeof c.cleanup,'object');}
