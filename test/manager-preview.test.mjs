@@ -25,7 +25,7 @@ import canonicalize from 'canonicalize';
 import { createHash } from 'node:crypto';
 import { previewSnapshot } from '../lib/manager/decisions.mjs';
 import { SNAPSHOT_LIMITS, composeOrdinarySnapshot } from '../lib/manager/snapshot.mjs';
-import { inspectManagerHistory } from '../lib/contracts/receipts.mjs';
+import { inspectManagerHistory, inspectRecordedCompletion } from '../lib/contracts/receipts.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).cases;
 const repairPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url))),compatibility=repairPacket.inherited_current_preview;
 const legacyFullById=new Map(repairPacket.legacy_native_full.cases.map(c=>[c.id,c.expected]));
@@ -484,4 +484,62 @@ test('ordinary retained scheduling cycle missing-root and changed-requirements c
  const cycle=ordinaryFresh('S01'),i=cycle.snapshot.issues[1],w=JSON.parse(i.body);w.prerequisites=[{ticket:i.key,required_outcome:'ai_qa_complete'}];i.body=JSON.stringify(w);assert.deepEqual(selected(run(cycle)),[]);assert(codes(run(cycle)).includes('INVALID_WORK'));
  const missing=structuredClone(ordinaryPacket.repair_control),e=JSON.parse(missing.snapshot.completion_receipts[0]),own=missing.snapshot.issues.at(-1),extra={ticket_id:own.id,comment_id:'9998',record_id:'40000000-0000-4000-8000-000000000003',digest:'sha256:'+'3'.repeat(64)};own.required_requests.push(extra);e.issues.find(r=>r.id===own.id).required_requests.push(extra);missing.snapshot.completion_receipts[0]=JSON.stringify(e);assert.deepEqual(selected(run(missing)),[]);assert(codes(run(missing)).includes('REPAIR_PROOF_INVALID'));
  const changed=ordinaryFresh('S06');changed.snapshot.issues.at(-1).body+=' ';assert.deepEqual(selected(run(changed)),[]);assert(codes(run(changed)).includes('PREREQUISITE_UNSATISFIED'));
+});
+
+test('ordinary composition retains transitive declared prerequisites in recorded completion',()=>{
+ const c=ordinaryFresh('S06'),original=JSON.parse(c.snapshot.completion_receipts[0]),template=c.snapshot.issues.at(-1),originalWork=JSON.parse(template.body);
+ const sha=value=>'sha256:'+createHash('sha256').update(canonicalize(value)).digest('hex');
+ function completion(id,key,prerequisites){
+  const work={...structuredClone(originalWork),prerequisites},references=new Map();
+  const transform=value=>{
+   if(Array.isArray(value))return value.map(transform);
+   if(value&&typeof value==='object'){
+    if(Object.keys(value).sort().join(',')==='comment_id,digest,record_id,ticket_id'){
+     const reference=references.get(canonicalize(value));if(reference)return reference;
+    }
+    return Object.fromEntries(Object.entries(value).map(([field,item])=>[field,
+     field==='ticket_id'&&item==='1000'?id:
+     ['record_id','operation_id'].includes(field)?(id==='1003'?item.replace(/^00000000/,'10000000'):item):
+     field==='requirements_digest'?sha(work):transform(item)]));
+   }
+   return value;
+  };
+  const comments=original.comment_pages[0].comments.map(old=>{
+   const wrapper=JSON.parse(old.body),record=JSON.parse(wrapper.content[0].content[0].text),next=transform(record);
+   const comment_id=id==='1003'?String(Number(old.id)+10000):old.id;
+   references.set(canonicalize({ticket_id:'1000',comment_id:old.id,record_id:record.record_id,digest:sha(record)}),{ticket_id:id,comment_id,record_id:next.record_id,digest:sha(next)});
+   wrapper.content[0].content[0].text=JSON.stringify(next);
+   return {...old,id:comment_id,body:JSON.stringify(wrapper)};
+  });
+  const pointer={...template.pointer,assignment:references.get(canonicalize(template.pointer.assignment))};
+  return {issue:{...structuredClone(template),id,key,body:JSON.stringify(work),pointer},comments};
+ }
+ const current=completion('1000','EX-1',[{ticket:'EX-99',required_outcome:'ai_qa_complete'}]),upstream=completion('1003','EX-99',[]);
+ c.snapshot.issues[c.snapshot.issues.length-1]=current.issue;c.snapshot.issues.push(upstream.issue);
+ const epic=JSON.parse(c.snapshot.issues[0].body);epic.workstreams[0].story_order.unshift('EX-99');c.snapshot.issues[0].body=JSON.stringify(epic);
+ c.snapshot.retained_members[0].assignment=current.issue.pointer.assignment;
+ c.snapshot.retained_members.push({...structuredClone(c.snapshot.retained_members[0]),ticket_id:'1003',assignment:upstream.issue.pointer.assignment});
+ c.snapshot.completion_receipts=[];
+ const {inspection,state}=acquired(c);
+ for(const item of [current,upstream]){
+  const page=inspection.observations.comment_pages.find(page=>page.ticket_id===item.issue.id);
+  page.comments=item.comments.map(({format,...comment})=>comment);page.total=page.comments.length;
+ }
+ inspection.observations.exact_comments=inspection.observations.comment_pages.flatMap(page=>page.comments.map(comment=>({ticket_id:page.ticket_id,...comment})));
+ const before=JSON.stringify({inspection,state}),composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);
+ assert.equal(composed.valid,true,JSON.stringify(composed.diagnostics));
+ const raw=composed.snapshot.completion_receipts.find(raw=>JSON.parse(raw).target.ticket_id==='1000'),envelope=JSON.parse(raw);
+ assert.deepEqual(envelope.issues.map(issue=>issue.id).sort(),['1000','1003']);
+ assert.deepEqual(envelope.requirements.map(row=>row.ticket_id).sort(),['1000','1003']);
+ assert.deepEqual(envelope.comment_pages.map(page=>page.ticket_id).sort(),['1000','1003']);
+ for(const id of ['1000','1003']){
+  const observed=inspection.observations.issues.find(issue=>issue.id===id),requirements=envelope.requirements.find(row=>row.ticket_id===id),page=inspection.observations.comment_pages.find(page=>page.ticket_id===id);
+  assert.equal(requirements.body,observed.body);assert.equal(requirements.format,observed.format);
+  assert.deepEqual(envelope.comment_pages.find(row=>row.ticket_id===id),{...page,comments:page.comments.map(comment=>({...comment,format:'adf'}))});
+  assert.deepEqual(envelope.trusted.manager_assignments.find(row=>row.ticket_id===id).assignment,observed.pointer.value.assignment);
+ }
+ const validation=inspectRecordedCompletion(raw).validation;assert.equal(validation.valid,true,JSON.stringify(validation.diagnostics));assert.equal(validation.recorded_completion_established,true);
+ const result=previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});
+ assert.deepEqual(selected(result),['1100']);assert.equal(result.proof_basis,'authenticated_recorded_handoffs');assert.equal(result.external_freshness,'not_evaluated');assert.equal(result.execution_authorized,false);assert.equal(result.writes,0);
+ assert.equal(JSON.stringify({inspection,state}),before);
 });
