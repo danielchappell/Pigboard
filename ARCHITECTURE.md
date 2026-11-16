@@ -147,9 +147,10 @@ Optional preparation/cancelled native mappings live only in canonical configurat
 with explicit inheritance and backward-compatible empty resolution.
 
 The manager modules, CLI, guide and existing compatibility fixtures ship in the
-prepared validator payload. Installer verification exercises ordinary selection
-with the existing seven installer smoke checks. Full installed repair fixture
-verification and the eighth semantic queue check remain PGB-81. The complete
+prepared validator payload. Installer verification exercises ordinary selection and the complete installed repair
+fixture with eight smoke checks before stable-link replacement. The
+[preview guide](docs/manager-preview.md) supports source and receipt-bound installed
+fixture export. Local fixture checks do not establish live delivery or activation. The complete
 offline source policy orders necessary prerequisites, queued repairs, Bugs and Stories, and
 proposes stack updates only along authenticated actual parent relationships.
 No provider/AWS/state client, discovery, publication, intent/apply operation or

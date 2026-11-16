@@ -322,9 +322,10 @@ completion.
 
 PGB-149/R1-35 supplies the complete source API and JSON CLI result. PGB-146
 completes readable parity: each proposal names every canonical cause in the same
-order as `proposal.roots`, including own-ticket repairs without a parent. Full
-installed repair fixture packaging and final publication reconciliation remain
-PGB-81.
+order as `proposal.roots`, including own-ticket repairs without a parent. The full
+repair fixture ships in the prepared installation; its eighth semantic check runs
+before stable-link replacement. Source publication and designated human acceptance
+remain separate.
 
 Each `Cause:` line gives the immutable native ticket ID, comment ID, record UUID
 and full SHA256 digest. Together these four fields identify the exact retained
@@ -435,13 +436,14 @@ The source fixture contains complete synthetic receipt envelopes and fixed repor
 for the checkpoints, scenarios and normalization cases, plus `OC01-selection`.
 The export prepares all three PGB-149 cases: `H02-06-a3-full-qa-u2-unpublished`,
 `OC01-selection` and `S06-second-configured-accepted-stage`. OC01 keeps its original
-inputs and options with its current full expected report. Full installed fixture
-export and its additional semantic smoke remain PGB-81; existing installed scripts
-can consume source-exported inputs for compatibility. Set `bundle` to this source
-checkout. Export writes only disposable files; preview writes nothing:
+inputs and options with its current full expected report. Export works from the source
+checkout or the prepared installation. For the installed route, set `bundle` to the
+`skills/work-validator` directory under the actual installation receipt’s release
+path. The fixture supplies 67 export filesets, including OC01; the comparison loop
+contains 66 inputs. Export writes only disposable files; preview writes nothing:
 
 ```sh
-bundle="$PWD" # Source checkout for PGB-149/R1-35.
+bundle="$PWD" # Source checkout, or the actual receipt release + /skills/work-validator.
 export PGB_REPAIR_FIXTURE_DIR="$(mktemp -d /tmp/pigboard-repairs.XXXXXX)"
 node --input-type=module - "$bundle/test/fixtures/manager-repairs.json" "$PGB_REPAIR_FIXTURE_DIR" <<'NODE'
 import fs from 'node:fs';

@@ -67,7 +67,8 @@
       "lib/manager/repair-policy.mjs",
       "scripts/manager-preview.mjs",
       "docs/manager-preview.md",
-      "test/fixtures/manager-candidates.json"
+      "test/fixtures/manager-candidates.json",
+      "test/fixtures/manager-repairs.json"
     ]
   }
 }

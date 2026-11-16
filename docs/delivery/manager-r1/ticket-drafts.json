@@ -1312,6 +1312,720 @@
     }
   },
   {
+    "id": "R1-38",
+    "title": "Read native Jira observations accurately",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "A caller inspecting a visible issue currently loses its pointer and comments when its description is empty. The same caller can receive a false changed-input failure when Jira returns an unchanged comment with a different JSON member order. Both failures prevent a truthful bounded inspection.",
+      "prerequisites": [
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A named issue with an explicit null description retains that absence and completes its requested pointer, comment-page and exact-comment reads when those responses are otherwise valid. A missing description remains a response-shape failure."
+        },
+        {
+          "id": "AC2",
+          "requirement": "An exact comment with the same JSON body value and server metadata completes even when root or nested object members arrive in a different order. A changed content-array order or existing metadata mismatch remains CHANGED_INPUT; an unmatched exact value is not retained as accepted."
+        },
+        {
+          "id": "AC3",
+          "requirement": "The safe report, private observation boundary, limits, partial-result behavior and cleanup remain intact. The source guide explains empty descriptions and semantic comment comparison without claiming valid work, complete domain inventory or installed delivery."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb150-source-inspection",
+          "change_boundary": "One eight-path child PR corrects explicit null issue descriptions and semantic exact-comment comparison in the pinned PGB-150 source feature. It adds four finite source regressions, guide and native-only publication support; no source Story is composed.",
+          "out_of_scope": [
+            "No customer repository, installed bundle, manager state, policy, admission, proof, provider probe, activation or new transport/credential path.",
+            "No fixture packet JSON/TLS/harness rewrite, source contract-count change or production parser format change."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository danielchappell/Pigboard; this native child targets the pinned PGB-150 source feature branch at 95c711999b90b20842dfd172f7966f73c8cfde34 and owns exactly the eight reviewed paths. PGB-145 is its sole native ai_qa_complete prerequisite; PGB-150 receives this child as its own prerequisite."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Preserve inspectJiraIssues(configInput,{issue_ids,comment_targets},{resolveSecret}), the existing string/null consumer shape, raw/private byte meanings, validation, credentials, TLS, scope restrictions and no-effect controls. Correct only the demonstrated issue-description normalization and exact-comment comparison sites."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Keep the existing 35-variant packet, eight controls and private-projection case unchanged. Add only the four prescribed finite regression subcases through the existing importable test fixture API with independent literal observations, counters, cleanup and source/input/runtime preservation. Document current effort and native-only repair history without claiming complete source/native inventory."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Pinned Pigboard PGB-150 source branch at 95c711999b90b20842dfd172f7966f73c8cfde34 with prepared Node dependencies and disposable local HTTPS fixtures; no live Jira or installed runtime.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Four literal source regression subcases: null-description, missing-description, adf-nested-order and adf-array-change. The original 35 variants, eight controls and private projection remain unchanged.",
+            "initial_state": "Fresh dummy local HTTPS server and source-derived fixture per subcase. Only the named response field/body member order changes from the guide-and-install input.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Reviewed PR-bound exact source import commands and four independently authored literal expected safe/private reports, GET traces, wire/private byte counts and preservation hashes from the sealed regression design; no oracle is derived from production output.",
+            "used_by": [
+              "DATA-01",
+              "R1-38-H01",
+              "R1-38-H02"
+            ],
+            "preserves": [
+              "Pinned PGB-150 source API, existing 35-variant/eight-control/private-projection packet, fixed HTTPS/TLS, dummy secret resolver, count/byte/time limits and no-effect controls.",
+              "Four named subcases and their exact literal values; no new provider run, raised bound, test-only production hook, changed fixture packet JSON/TLS/harness or inferred acceptance."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "The currently approved automated QA skills do not execute this source library and local HTTPS fixture contract. QA skills are []; two designated human groups remain NOT_RUN until separately executed or dispositioned. Developer tests, independent QA, CI and code review are separate.",
+          "cases": [
+            {
+              "id": "R1-38-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies reviewed source import commands and independent literal oracles for null-description and missing-description; use fresh dummy data and prepared dependencies.",
+                "No live Jira, provider, Postman, UI, installed runtime or dependency fetch is required."
+              ],
+              "steps": [
+                "From the reviewed source checkout, run the null-description subcase through the importable fixture API. Compare the retained issue body:null, four-read issue→pointer→page→exact trace, complete phases, safe JSON, counters, zero effects and cleanup.",
+                "Run the missing-description control on fresh data. Compare the one-read RESPONSE_INVALID stop, no retained issue and all later phases not_requested.",
+                "Inspect source/input/runtime before-after hashes and record the exact revision, command, outputs and cleanup."
+              ],
+              "expected": [
+                "null-description completes four GETs with attempts/completed/failed 4/4/0, wire lengths 146+265+258+206=875 and private serialized bytes 1109. The issue body is literal null, not an empty document; pointer, page and exact observations complete.",
+                "missing-description fails after one issue GET with RESPONSE_INVALID, 127 received bytes, zero retained observation bytes and no pointer/page/exact request. Both have resolver_calls=1, effects=0, cleanup_complete and unchanged hashes.",
+                "Safe JSON omits private bodies, retains inspection_scope requested_issues/domain_complete false/admission and receipt_proof not_evaluated. Null inventory is not valid startable work."
+              ],
+              "evidence": [
+                "Tested child PR revision, pinned parent revision, exact import command, fixture and prepared dependency identity.",
+                "Safe report, private acquisition comparison, permitted GET trace, wire and private byte counters, resolver/effects audit, before/after hashes and cleanup result.",
+                "Any failed or unverified step with its actual stop point; local observations do not establish live provider, installed-runtime or activation acceptance."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the PR revision, exact source invocation and literal comparison evidence. Close local fixture servers, sockets and timers; verify cleanup_complete and unchanged source/input/runtime hashes.",
+                  "Remove only disposable source-derived fixtures. Preserve the reviewed source, first failure evidence and all retained results. No live Jira or operational-state changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-38-H02",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies reviewed source import commands and independent literal oracles for adf-nested-order and adf-array-change; use fresh dummy data and prepared dependencies.",
+                "Retain original endpoint-specific ADF strings in private observations; do not rewrite the packet or derive expected values from the reader."
+              ],
+              "steps": [
+                "Run adf-nested-order through the importable fixture API. Compare root, paragraph and text object member reordering with the same JSON value and metadata, distinct retained endpoint strings, four-read trace, safe/private reports, counters and cleanup.",
+                "Run adf-array-change on fresh data. Compare the B-then-A content array with the A-then-B page value and confirm CHANGED_INPUT with no accepted exact comment.",
+                "Inspect the unchanged existing exact-mismatch timestamp-sensitive case, zero effects and source/input/runtime preservation; record revision, commands, outputs and cleanup."
+              ],
+              "expected": [
+                "adf-nested-order completes with 4/4/0 GETs, wire lengths 181+265+344+292=1082 and private serialized bytes 1370; same JSON value and metadata complete despite object-member order. Both original body strings remain distinct and retained.",
+                "adf-array-change is incomplete/CHANGED_INPUT after 4/4/0 GETs and the same 1082 wire bytes; private serialized bytes are 1048. Earlier issue/pointer/page acquisition remains; exact_comments is empty. Changed array order and real metadata mismatch remain failures.",
+                "Both have resolver_calls=1, effects=0, cleanup_complete and unchanged hashes. Safe JSON omits private data and does not claim whole-domain inventory, proof or admission."
+              ],
+              "evidence": [
+                "Tested child PR revision, pinned parent revision, exact import command, fixture and prepared dependency identity.",
+                "Safe report, private acquisition comparison, permitted GET trace, wire and private byte counters, resolver/effects audit, before/after hashes and cleanup result.",
+                "Any failed or unverified step with its actual stop point; local observations do not establish live provider, installed-runtime or activation acceptance."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the PR revision, exact source invocation and literal comparison evidence. Close local fixture servers, sockets and timers; verify cleanup_complete and unchanged source/input/runtime hashes.",
+                  "Remove only disposable source-derived fixtures. Preserve the reviewed source, first failure evidence and all retained results. No live Jira or operational-state changes."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Four finite source regressions with literal private/report/trace/counter oracles; preserve the original 35 variants, eight controls and L06 private projection. Run the bounded affected source selection and both publication guards. Hosted CI, independent QA and designated human acceptance remain separate."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-40",
+    "title": "Reject duplicate Jira comment targets",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "A source caller can request one exact Jira comment twice by reversing the two target fields. The invalid request currently resolves credentials and performs duplicate reads instead of stopping before provider access.",
+      "prerequisites": [
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "Duplicate ticket/comment ID pairs are invalid regardless of object-member order: report invalid/INPUT_INVALID before resolver invocation, Jira requests or private observation, without mutating the input."
+        },
+        {
+          "id": "AC2",
+          "requirement": "One unique target with reversed member order completes the same bounded native inspection as before. Existing shape, membership, security, limits, private output and the PGB-152 null/ADF corrections remain intact."
+        },
+        {
+          "id": "AC3",
+          "requirement": "The source guide states that target identity is the ticket/comment pair. Native-only delivery records distinguish implemented behavior, dated publication facts and separate verification, human acceptance and integration evidence."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb150-source-inspection",
+          "change_boundary": "One eight-path native-only child PR fixes exact-comment target uniqueness in the pinned PGB-150 feature; source Story counts stay unchanged.",
+          "out_of_scope": [
+            "No customer repository, installed runtime, manager state, proof, policy, admission, live provider, deployment or activation change.",
+            "No generic parser, canonicalizer, new dependency, transport, credential path, fixture packet rewrite or limit change."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository danielchappell/Pigboard; one eight-path child PR targets the pinned PGB-150 feature branch at 1524127c6d9ffbad8481cf7ce86bcc19cb712f52. PGB-145 is its sole native ai_qa_complete prerequisite; PGB-150 adds this child as a prerequisite without losing PGB-145 or PGB-152."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Preserve inspectJiraIssues and validation order. Compare the two already validated string IDs as one fixed ordered pair; do not deduplicate, coerce, sort caller keys, change membership, resolve a secret for invalid input or add a transport capability."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Preserve all 35 original fixture variants, eight controls, private projection and four PGB-152 regression subcases. Add only the two finite source subcases through the existing fixture API with independent literal reports, traces, counters, cleanup and preservation checks."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Pinned PGB-150 feature branch at 1524127c6d9ffbad8481cf7ce86bcc19cb712f52 with prepared Node dependencies and disposable local HTTPS fixtures; no live Jira or installed runtime.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Two source-derived guide-and-install subcases: duplicate-target-member-order and unique-target-member-order. The original fixture packet and PGB-152 cases remain unchanged.",
+            "initial_state": "Fresh dummy local HTTPS server per subcase. The negative adds a reordered duplicate target and one unused exact reply; the positive reverses the sole target member order while retaining the four original replies.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Reviewed source import commands, prepared absolute root and independently authored literal safe/private oracles, request traces, counters, preservation hashes and cleanup checks for the two named subcases.",
+            "used_by": [
+              "DATA-01",
+              "R1-40-H01"
+            ],
+            "preserves": [
+              "The original 35-variant packet, eight controls, private projection and four PGB-152 source regression subcases.",
+              "Fixed HTTPS/TLS, dummy trusted resolver, existing finite bounds, no-effect controls and original guide acquisition. No provider run or oracle generated from production output."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "No approved automated QA skill executes this source library/local HTTPS fixture. qa_skills are []; the one designated human group remains NOT_RUN until separately observed or dispositioned. Developer tests, independent QA, CI and code review are separate.",
+          "cases": [
+            {
+              "id": "R1-40-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed source command, dummy HTTPS fixtures and independent literal oracles. Use fresh data and prepared dependencies.",
+                "No live Jira, provider, Postman, UI, installed runtime or dependency fetch is required."
+              ],
+              "steps": [
+                "Run duplicate-target-member-order with two targets for ticket_id 1000/comment_id 2001 in reversed member order. Compare invalid/INPUT_INVALID before the resolver, all-zero counters, no private rows or GETs, and unchanged input/runtime hashes.",
+                "Run unique-target-member-order on fresh data with one reversed-order target and the original four replies. Compare the complete guide-and-install acquisition, ordered four-GET trace, literal safe/private reports, byte counts and cleanup.",
+                "Record exact revision, command, report, traces, counters, resolver/effects audit, before/after hashes and human result."
+              ],
+              "expected": [
+                "Duplicate pair: invalid with exactly one INPUT_INVALID diagnostic at null operation/issue/scope; issue/scope/private arrays empty, limits null, all request/byte/elapsed counters zero, resolver_calls 0, server and client traces empty, effects 0, cleanup_complete, Jira not_started and resolver settled. No secret access, fallback or mutation.",
+                "Unique reversed pair: complete with no diagnostics; 4/4/0 GETs in issue→pointer→page→exact order; wire bytes 181+265+258+206=910, private serialized bytes 1154, resolver_calls 1, effects 0, cleanup_complete and unchanged input/runtime hashes. The original literal guide acquisition is retained.",
+                "Safe JSON omits private observations; no whole-domain discovery, receipt proof, admission, human acceptance or activation is inferred from fixture completion."
+              ],
+              "evidence": [
+                "Exact reviewed child revision and source import command, fixture and dependency identity.",
+                "Safe report, private acquisition comparison, resolver and effects audit, GET trace, byte counters, before/after input/runtime hashes and cleanup result.",
+                "Retain any failed/unverified step with its actual stop point; local source observation does not establish human, live-provider or installed acceptance."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain evidence and close disposable HTTPS fixture servers, sockets and timers; verify cleanup_complete and unchanged input/runtime hashes.",
+                  "Remove only disposable fixture data. Preserve the reviewed source, original failure record and retained reports. Make no live Jira or operational-state changes."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Two finite source subcases with literal zero-call rejection and four-call positive-control oracles; retain the original packet and PGB-152 regressions, then run the bounded affected source selection and both publication guards. Hosted CI and human acceptance remain separate."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-41",
+    "title": "Reconcile the source inspection delivery record",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "The implemented source inspection API and the offline repair preview have separate reviewed delivery records. A contributor needs one truthful source catalog that preserves both histories and shows the remaining source and native differences.",
+      "prerequisites": [
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The catalog includes the implemented R1-36 contract and its four source human groups, with 31 source Stories/136 groups and an explicit partial-inventory limitation."
+        },
+        {
+          "id": "AC2",
+          "requirement": "A reviewer can recover both complete prior publication records and all native contracts, links, source/runtime fingerprints and dated observations without treating historical counts as current."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Current ownership, forecasts, dependencies and evidence distinguish source inspection, catalog completion, installed PGB-147 work and final PGB-82 acceptance; no pending or accepted human observation is reported PASS."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb150-source-inspection",
+          "change_boundary": "One ten-path catalog PR stacked on the exact reviewed source runtime candidate; compose the source delivery record and exact history guards only.",
+          "out_of_scope": [
+            "No reader, fixture, source guide, installed Jira payload, provider probe, admission, policy, proof, AWS, customer repository or PGB-144 decision change.",
+            "No native inventory claim, new QA engine, generic history stripping, test oracle relaxation or merge/activation authority."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository danielchappell/Pigboard; one ten-path PR stacked on the exact reviewed runtime candidate. Its actual revision/tree and State/main ancestry must be bound in implementation evidence before catalog coding; publication does not bind that future candidate."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Preserve PGB-150 original 5 AC/4 TAC/4 human groups and 35 variants/eight controls/private projection; retain PGB-152/PGB-154 repairs and all State runtime/history records. Native PGB-145 is the catalog child’s only ai_qa_complete prerequisite; PGB-150 gains this child as an additional prerequisite."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Both whole predecessor publications and all nine complete amendment objects must reconstruct exactly. Existing actual 25-file State runtime-byte checks remain live; missing, changed, extra or reordered history fails instead of being stripped."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact reviewed source runtime candidate to be bound before implementation; actual State/main a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9 and PGB-150 parent 7a06f7b25bbf79315f0a1e0763f1863d4b1f57f4 are planning context only, not the catalog implementation base.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Read-only source catalog, current native child/parent receipt, both predecessor publication records, exact guard transcript and actual State runtime-byte comparison.",
+            "initial_state": "Use the reviewed runtime plus catalog checkout with prepared dependencies and saved read-only evidence. Do not access live Jira, change native records or synthesize a current native inventory.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "PR-bound exact runtime/catalog revisions and trees, State/main ancestry, nine amendment object hashes, two whole predecessor hashes, current native receipt, finite guard command/result and 25-file runtime comparison.",
+            "used_by": [
+              "DATA-01",
+              "R1-41-H01"
+            ],
+            "preserves": [
+              "The original PGB-150 contract, four human groups and 35 variants/eight controls/private projection.",
+              "All PGB-152/PGB-154 and State history, links and dated counts; no new runtime test campaign or current native inventory inferred."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "No approved automated QA skill executes this source-catalog comparison; qa_skills are []. One designated human group remains NOT_RUN until separately observed or dispositioned. Guard tests and independent code QA are separate evidence.",
+          "cases": [
+            {
+              "id": "R1-41-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed runtime/catalog revisions, prepared dependencies, complete native receipt and both predecessor publications.",
+                "No credentials, live Jira, provider, Postman, UI or runtime fixture campaign is needed."
+              ],
+              "steps": [
+                "Inspect the 31/136 source table, R1-36 contract, four human groups, 53 requirement rows and 41 original scenarios. Compare the exact PGB-150 native body before and after the catalog child prerequisite.",
+                "Inspect the nine complete amendment hashes, both whole predecessor reconstructions, current State/main ancestry, 8/10/18 file ownership and actual 25-file runtime-byte comparison.",
+                "Inspect the passing delivery guard transcript and compare current forecasts, pending source/native differences, human NOT_RUN and CI/merge/activation statements with the exact handoff evidence. Retain revision and comparison evidence."
+              ],
+              "expected": [
+                "Every source entry and mapping agrees; current 31 Stories/136 groups is explicitly partial. The original PGB-150 5 AC/4 TAC/4 human groups and existing prerequisites remain unchanged except the actual catalog child prerequisite and concise ownership note.",
+                "Both complete predecessor publications reconstruct exactly; all nine amendment objects and the actual 25-file runtime closure match their pinned hashes. Missing, changed, extra or reordered history fails.",
+                "Source runtime and catalog allocations are separate, installed PGB-147 and final PGB-82 acceptance remain pending, and no pending/accepted human observation is labelled PASS. Any missing evidence remains unverified or NOT_RUN."
+              ],
+              "evidence": [
+                "Exact reviewed runtime and catalog revisions/trees, current native receipt, before/after parent body hashes and bound child key/link.",
+                "31/136/53/41 mapping, all nine object hashes, both predecessor hashes, 25-file runtime comparison and guard transcript.",
+                "Current forecasts, pending dependency/status notes and any failed or unverified check with its stop point."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the comparison evidence and reviewed revisions; remove only disposable evidence copies.",
+                  "Make no live Jira, provider, state, installation or activation change."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "The two existing delivery-contract guard files assert exact current composition, both predecessor restorations, all nine amendment objects and the actual State runtime closure; run only their affected selection after implementation. Independent QA and hosted checks remain separate."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-42",
+    "title": "Keep Jira inspection within its original bounds",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "A source inspection can follow caller changes made after validation or continue to another issue after an exact-read limit. Provider body and certificate failures can also send the caller toward the wrong recovery action.",
+      "prerequisites": [
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The invocation reads only the issue IDs and exact comment pairs validated at entry, despite later caller mutations, without invoking later replacement accessors."
+        },
+        {
+          "id": "AC2",
+          "requirement": "A limit reached during an exact-comment read stops the entire issue scan, retains earlier valid observations and makes no request for a later issue."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Oversized provider ADF reports RESPONSE_INVALID and failed certificate validation reports TLS_FAILED; invalid caller input and non-certificate connection failures keep their distinct diagnostics without leaking private data."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb150-source-inspection",
+          "change_boundary": "One five-path runtime repair PR stacked on actual PGB-150 runtime23bb352b4d9f945f65e34d3d15d28dced51d9b80: existing reader, Jira test, fixture harness/TLS data and source guide. Native publication and PR receipts remain external; PGB-155 owns the final catalog ledger.",
+          "out_of_scope": [
+            "No provider probe, new API, live CLI, arbitrary destination, resolver/transport override, receipt proof, admission, AWS, installed PGB-147/PGB-148 delivery or PGB-144 decision.",
+            "No new source Story entry or top-level publication amendment, generic parser redesign, fixture campaign, relaxed TLS/budget/oracle or merge/activation authority."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository danielchappell/Pigboard; change only the five reviewed runtime paths and bind the exact current parent revision/tree before implementation. Preserve every original PGB-150 criterion and its four human groups."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Keep inspectJiraIssues(configInput, request, {resolveSecret}), canonical PGB-145 configuration, verified fixed-destination HTTPS, all budgets, safe/private observations and owned-I/O cancellation; caller objects remain caller-owned."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Preserve the original35 variants/eight controls/L06 private subvariant and all PGB-152/PGB-154 regressions. Add only the nine prescribed boundary subcases with independently fixed traces, counts, bytes and cleanup evidence; no expected result is derived from the production collector."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact reviewed source runtime based on23bb352, prepared Node/dependencies and disposable local HTTPS fixtures; no live or installed target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Four source boundary groups containing nine finite subcases and the unchanged existing controls.",
+            "initial_state": "Fresh local state per subcase, fixed dummy data/certificates, independently authored literal expectations and prepared source/dependencies; no product execution used to derive expected results.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "PR-bound exact source/dependency hashes, nine literal subcases, named source test commands and safe TAP diagnostics containing actual report/trace/counters, private-comparison hash, mutation/getter counts and cleanup. Preserve the original first-failure diagnostic packet and separate F2 setup correction.",
+            "used_by": [
+              "DATA-01",
+              "R1-42-H01",
+              "R1-42-H02",
+              "R1-42-H03",
+              "R1-42-H04"
+            ],
+            "preserves": [
+              "Original1505AC/4TAC/4groups,35 variants/eight controls/L06 private subvariant and all152/154 fixes; no source catalog or native inventory claim.",
+              "Fixed destination/TLS, all budgets, caller ownership, safe/private boundary and source/input/server/dependency preservation; report uncertainty honestly."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "No approved automated QA skill executes these source-library observations; qa_skills are []. Four designated human groups remain NOT_RUN until separately observed or dispositioned. Developer regressions and independent code QA are separate evidence.",
+          "cases": [
+            {
+              "id": "R1-42-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed five-path runtime, prepared dependencies, fixed dummy HTTPS/TLS data and independently authored literal traces/counters/private comparisons before execution.",
+                "No Jira/provider, credentials, Postman, UI, dependency fetch/repair, signing or clock change is permitted during execution. The source test harness retains verified TLS and fixed-origin/method auditing before loopback routing."
+              ],
+              "steps": [
+                "Run exactly mutate-values and replace-accessors, once each. Resolver gates make the caller mutation occur after validation without sleeps.",
+                "From the exact source root run node --test --test-name-pattern='R1-42-H01' test/jira-read.test.mjs, using the reviewed prepared dependencies. PREP-01 supplies the bound command and safe diagnostics. Compare every prescribed actual trace/counter/private-comparison result with its independently fixed literal.",
+                "Inspect fixture/config/server/source/dependency preservation and cleanup; keep intentional caller mutation separate from immutable fixture hashes. Retain any failure or missing evidence without retries or alternative cases."
+              ],
+              "expected": [
+                "Both retain original issue1000 and exact target2001: four original GETs, complete, no diagnostics, four completed/zero failed,910 received/1154 private bytes and one resolver call.",
+                "mutate-values changes caller issue and target values only; replace-accessors installs throwing array-property getters. Getter calls stay zero, inspection resolves normally, fixture data/source stay unchanged and cleanup completes.",
+                "Safe reports exclude bodies, tokens and raw provider/TLS errors; domain_complete is false and admission/receipt_proof remain not_evaluated. Close owned resources and preserve original successful evidence."
+              ],
+              "evidence": [
+                "Exact source revision/tree, prepared dependency identity, input/script/TLS hashes and command/TAP transcript.",
+                "Actual safe report, permitted request/server trace, counts/bytes, private-comparison hash, mutation/getter observations and before/after preservation.",
+                "Cleanup and every unverified outcome; developer PASS does not become human acceptance or authorize merge/activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain evidence; close local servers/sockets/timers and remove only disposable fixture data.",
+                  "Do not mutate source, fetch/repair dependencies, contact providers or repeat a failed case without its bounded disposition."
+                ]
+              }
+            },
+            {
+              "id": "R1-42-H02",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC2",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed five-path runtime, prepared dependencies, fixed dummy HTTPS/TLS data and independently authored literal traces/counters/private comparisons before execution.",
+                "No Jira/provider, credentials, Postman, UI, dependency fetch/repair, signing or clock change is permitted during execution. The source test harness retains verified TLS and fixed-origin/method auditing before loopback routing."
+              ],
+              "steps": [
+                "Run exactly exact-wire-stop, exact-private-stop and exact-two-issue-control, once each. Use the fixed first issue1000/target2001 and remaining issue1001 script.",
+                "From the exact source root run node --test --test-name-pattern='R1-42-H02' test/jira-read.test.mjs, using the reviewed prepared dependencies. PREP-01 supplies the bound command and safe diagnostics. Compare every prescribed actual trace/counter/private-comparison result with its independently fixed literal.",
+                "Inspect fixture/config/server/source/dependency preservation and cleanup; keep intentional caller mutation separate from immutable fixture hashes. Retain any failure or missing evidence without retries or alternative cases."
+              ],
+              "expected": [
+                "Wire: per-response1000/total1500, exact response806 bytes including600 spaces, cumulative1510; stop after4 attempts/3 completed/1 failed, retain940 private bytes, with no issue1001 GET.",
+                "Private: omit the600 spaces and set total1153; stop after4 completed requests,910 received/940 retained private bytes when the proposed1154-byte private projection fails.",
+                "Control: same padded exact response and complete second issue pointer/empty page; total2008 permits7 completed requests,2008 received/1818 private bytes, two issues and complete status.",
+                "Safe reports exclude bodies, tokens and raw provider/TLS errors; domain_complete is false and admission/receipt_proof remain not_evaluated. Close owned resources and preserve original successful evidence."
+              ],
+              "evidence": [
+                "Exact source revision/tree, prepared dependency identity, input/script/TLS hashes and command/TAP transcript.",
+                "Actual safe report, permitted request/server trace, counts/bytes, private-comparison hash, mutation/getter observations and before/after preservation.",
+                "Cleanup and every unverified outcome; developer PASS does not become human acceptance or authorize merge/activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain evidence; close local servers/sockets/timers and remove only disposable fixture data.",
+                  "Do not mutate source, fetch/repair dependencies, contact providers or repeat a failed case without its bounded disposition."
+                ]
+              }
+            },
+            {
+              "id": "R1-42-H03",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed five-path runtime, prepared dependencies, fixed dummy HTTPS/TLS data and independently authored literal traces/counters/private comparisons before execution.",
+                "No Jira/provider, credentials, Postman, UI, dependency fetch/repair, signing or clock change is permitted during execution. The source test harness retains verified TLS and fixed-origin/method auditing before loopback routing."
+              ],
+              "steps": [
+                "Run exactly provider-adf-over and provider-adf-at, once each, using262145/262144-byte ADF documents and unchanged response300000/total400000 limits. No exact target is requested.",
+                "From the exact source root run node --test --test-name-pattern='R1-42-H03' test/jira-read.test.mjs, using the reviewed prepared dependencies. PREP-01 supplies the bound command and safe diagnostics. Compare every prescribed actual trace/counter/private-comparison result with its independently fixed literal.",
+                "Inspect fixture/config/server/source/dependency preservation and cleanup; keep intentional caller mutation separate from immutable fixture hashes. Retain any failure or missing evidence without retries or alternative cases."
+              ],
+              "expected": [
+                "Over: one completed GET,262287 wire bytes, zero private bytes/known issues, incomplete/RESPONSE_INVALID at issue; never INPUT_INVALID and no pointer/comment follow-up.",
+                "At: three completed GETs (issue/pointer/comment page),262809 wire/263059 private bytes, one known issue/comment page/comment and complete status.",
+                "Safe reports exclude bodies, tokens and raw provider/TLS errors; domain_complete is false and admission/receipt_proof remain not_evaluated. Close owned resources and preserve original successful evidence."
+              ],
+              "evidence": [
+                "Exact source revision/tree, prepared dependency identity, input/script/TLS hashes and command/TAP transcript.",
+                "Actual safe report, permitted request/server trace, counts/bytes, private-comparison hash, mutation/getter observations and before/after preservation.",
+                "Cleanup and every unverified outcome; developer PASS does not become human acceptance or authorize merge/activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain evidence; close local servers/sockets/timers and remove only disposable fixture data.",
+                  "Do not mutate source, fetch/repair dependencies, contact providers or repeat a failed case without its bounded disposition."
+                ]
+              }
+            },
+            {
+              "id": "R1-42-H04",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the exact reviewed five-path runtime, prepared dependencies, fixed dummy HTTPS/TLS data and independently authored literal traces/counters/private comparisons before execution.",
+                "No Jira/provider, credentials, Postman, UI, dependency fetch/repair, signing or clock change is permitted during execution. The source test harness retains verified TLS and fixed-origin/method auditing before loopback routing."
+              ],
+              "steps": [
+                "Run exactly future-certificate and connection-reset-control, once each. Use prepared fixed future leaf validity and a valid trust anchor; keep hostname checks enabled. The reset occurs before certificate authorization.",
+                "From the exact source root run node --test --test-name-pattern='R1-42-H04' test/jira-read.test.mjs, using the reviewed prepared dependencies. PREP-01 supplies the bound command and safe diagnostics. Compare every prescribed actual trace/counter/private-comparison result with its independently fixed literal.",
+                "Inspect fixture/config/server/source/dependency preservation and cleanup; keep intentional caller mutation separate from immutable fixture hashes. Retain any failure or missing evidence without retries or alternative cases."
+              ],
+              "expected": [
+                "Future: incomplete/TLS_FAILED; one attempted/failed request, zero completed requests, HTTP server requests, wire/private bytes and known issues. Inspect the actual certificate authorization failure without echoing it in the public report.",
+                "Reset: incomplete/READ_DENIED_OR_MISSING, one attempted/failed request, zero completed/HTTP requests/wire/private bytes; an unverified socket alone must not become TLS_FAILED.",
+                "Safe reports exclude bodies, tokens and raw provider/TLS errors; domain_complete is false and admission/receipt_proof remain not_evaluated. Close owned resources and preserve original successful evidence."
+              ],
+              "evidence": [
+                "Exact source revision/tree, prepared dependency identity, input/script/TLS hashes and command/TAP transcript.",
+                "Actual safe report, permitted request/server trace, counts/bytes, private-comparison hash, mutation/getter observations and before/after preservation.",
+                "Cleanup and every unverified outcome; developer PASS does not become human acceptance or authorize merge/activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain evidence; close local servers/sockets/timers and remove only disposable fixture data.",
+                  "Do not mutate source, fetch/repair dependencies, contact providers or repeat a failed case without its bounded disposition."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Nine finite source boundary subcases plus the prescribed affected existing selection; all original oracles remain unchanged. Prepared fixed future TLS data is not generated during execution."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-36",
     "title": "Inspect named Jira issues from source",
     "contract": {
@@ -1320,6 +2034,22 @@
       "prerequisites": [
         {
           "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-38",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-40",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-41",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-42",
           "required_outcome": "ai_qa_complete"
         }
       ],
@@ -4334,6 +5064,849 @@
     }
   },
   {
+    "id": "R1-37",
+    "title": "Keep repair proposals current",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "The preview can return an old PR revision after observing a newer one. Consumers then receive a proposal that the receipt contract cannot accept.",
+      "prerequisites": [],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "Eligible repair admission uses the current observed PR source and target while preserving its existing identity, requests and parent requirements."
+        },
+        {
+          "id": "AC2",
+          "requirement": "A new stack publication is withheld when its recorded child completion differs from current PR source or target, with an actionable explanation and no replacement QA claim."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Already-published valid requests remain usable history, unaffected cases keep their fixed results, and previews retain zero writes and false execution authority."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb149-machine-preview",
+          "change_boundary": "Change only these five existing paths: lib/manager/repair-policy.mjs, test/repair-policy.test.mjs, docs/manager-preview.md, docs/delivery/manager-r1/publication.json, test/qa-helper-contract.test.mjs. Deliver current PR admission references, safe new stack publication, regression coverage, guide recovery and a dated partial publication amendment.",
+          "out_of_scope": [
+            "Receipt-validator or schema changes; original fixture/input/oracle changes; renderer or snapshot-normalization changes.",
+            "Provider operations, dependency installation, deployment or activation; other repositories or paths.",
+            "Changes to original PGB-149/PGB-146/PGB-81 criteria or human cases, except the explicitly authorized added repair prerequisite and matching PGB-149 TAC amendment."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Use one repair PR based on prepared PGB-149 candidate 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379, tree 62b8e8b4754e504a7ca75a7d7cb983b8d19f3ffe, targeting codex/pgb149-machine-preview; integrate it there before any parent main merge."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Stay within the five named paths; preserve receipt validators, original fixtures/oracles, current/history authority, original PGB-149/PGB-146/PGB-81 requirements and human objects, and the guide exporter; retain zero writes and false execution authority."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "This repair blocks PGB-149 without a reverse completion prerequisite; retain its original five prerequisites, amend its matching TAC, preserve historical publication captures, and append exact native/readback/Blocks/branch/plan/current-runtime bindings as a dated partial amendment. Full source/native reconciliation remains PGB-81."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact reviewed repair source revision based on prepared 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379; unchanged synthetic manager-repairs.json, prepared Node dependencies and complete copied runtime from an unrelated cwd. No deployed target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "The four fixed cases OC01-selection, H02-02-a2-full-qa-before-u1, H02-06-a3-full-qa-u2-unpublished, H02-07-u2-published-b-not-admitted, each unchanged control and its independent source-only/source-plus-target copies; full fixed expectations and complete prepared copied-runtime closure.",
+            "initial_state": "PREP-01 records absolute config/input/options/expectation paths, exact source API and copied JSON commands, input/runtime/dependency hashes and complete fixed expectations before execution. Original cases and receipts remain untouched.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Supply the exact reviewed source revision, prepared Node dependencies, unchanged test/fixtures/manager-repairs.json and complete copied runtime/unrelated cwd. For OC01-selection join inherited_own_preview.original.cases inputs/config/options to inherited_own_preview.cases full current expected by exact ID; use named cases records/full expected for H02-02-a2-full-qa-before-u1, H02-06-a3-full-qa-u2-unpublished and H02-07-u2-published-b-not-admitted. Prepare each control plus two separate fresh copies. For D1 change PR10; for D2–D4 change PR11. In every repair_receipts/completion_receipts envelope containing that provider/repository/number, require exactly one matching current observation, retain it with only current:false, and append its clone with current:true and source_revision:9999999999999999999999999999999999999999. Source-only keeps the target; source-plus-target sets only the appended target_branch to repair-current-target. Apply each variant independently to the control, consistently across envelopes; preserve original comments/evidence/references/config and all other observations. Use original options, retaining expectedSite and all supplied keys; if expectedSnapshotDigest exists, bind it independently to the variant digest, and do not add an absent guard. Forward API options and existing CLI flag mappings. Independently calculate the output snapshot digest and freeze complete expected reports from the existing full oracles plus specified contract outcomes, including exact reason text, repair_order, eligibility and unchanged fields, before execution; never capture runtime output as an oracle. Record absolute paths, exact commands/options, prescribed exits and manifests. Prepare existing publication guard commands and historical/current binding evidence for D5 inspection; no additional product scenario.",
+            "used_by": [
+              "DATA-01",
+              "R1-37-D1",
+              "R1-37-D2",
+              "R1-37-D3",
+              "R1-37-D4",
+              "R1-37-D5"
+            ],
+            "preserves": [
+              "Original fixture inputs/full expected results, receipt bodies/references/evidence and guide exporter remain unchanged; never rewrite QA or fabricate same-revision target conflicts.",
+              "Every admission PR reference contains exactly provider, repository, number, source_revision and target_branch; no state/current observation fields.",
+              "D1–D4 total 12 API evaluations once; D5 adds only 2 copied-runtime JSON evaluations once. No diagnostic or broad scenario campaign, dependency fetch or repair.",
+              "Original PGB-149 two, PGB-146 two and PGB-81 forty-two human objects remain untouched; all new designated human routes remain NOT_RUN until a human performs them.",
+              "Direct developer checks, human acceptance, independent reviews, local checks, hosted CI, merge and release evidence remain separately attributed."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this local CLI/internal API contract. Authorized direct developer checks produce separate evidence; the five designated human routes remain NOT_RUN until performed by a human.",
+          "cases": [
+            {
+              "id": "R1-37-D1",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+              ],
+              "steps": [
+                "From PREP-01 select OC01-selection with its complete current oracle and unchanged options.",
+                "Run the unchanged control through the source API; then run the independently prepared source-only and source-plus-target PR10 variants once each.",
+                "Compare each complete report to its fixed expectation and inspect the exact five-field existing_pr, retained assignment/requests/roots/parent requirements and authority."
+              ],
+              "expected": [
+                "Control equals its complete frozen report: select/admit_repair for1000 with no new publication.",
+                "Both variants retain the same admission and full report except the independently derived input digest and current five-field existing_pr; source is9999999999999999999999999999999999999999, and only source-plus-target uses repair-current-target.",
+                "Assignment, requests, roots and parent requirements remain exact; writes stay0 and execution_authorized staysfalse."
+              ],
+              "evidence": [
+                "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                ]
+              }
+            },
+            {
+              "id": "R1-37-D2",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+              ],
+              "steps": [
+                "From PREP-01 select H02-02-a2-full-qa-before-u1 with its unchanged control, fixed reports and options.",
+                "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                "Compare complete reports and inspect the variant issue-scoped reason, repair_order, eligibility and null proposal."
+              ],
+              "expected": [
+                "Control equals its complete frozen report: queue/queue_stack_update for1001 with required publication.",
+                "Only the two variants wait with null proposal, actionable issue-scoped PR_HUMAN_HANDLING requiring coherent child-completion evidence, and a human_hold repair-order entry; no stale/invented payload or unrelated bypass is returned.",
+                "Historical child QA, comments, references and causes remain exact; writes stay0 and execution authority staysfalse."
+              ],
+              "evidence": [
+                "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                ]
+              }
+            },
+            {
+              "id": "R1-37-D3",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+              ],
+              "steps": [
+                "From PREP-01 select H02-06-a3-full-qa-u2-unpublished with its unchanged control, fixed reports and options.",
+                "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                "Compare complete reports and inspect current parent proof, historical child evidence, variant reason and human_hold entry."
+              ],
+              "expected": [
+                "Control equals its complete frozen report: select/admit_repair for1001 with required publication.",
+                "Only the two variants wait with null proposal, actionable issue-scoped PR_HUMAN_HANDLING and a human_hold entry because new publication would bind stale child QA; no unrelated admission bypass occurs.",
+                "Current parent proof and historical child evidence remain exact; no QA rewrite occurs, writes stay0 and execution authority staysfalse."
+              ],
+              "evidence": [
+                "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                ]
+              }
+            },
+            {
+              "id": "R1-37-D4",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC3",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+              ],
+              "steps": [
+                "From PREP-01 select H02-07-u2-published-b-not-admitted with its unchanged control, fixed reports and options.",
+                "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                "Compare complete reports and inspect the exact current five-field admission PR and retained published request/root/parent references."
+              ],
+              "expected": [
+                "Control equals its complete frozen report: select/admit_repair for1001 with no new publication.",
+                "Both variants retain that admission and full report except the independently derived input digest and current five-field existing_pr; exact published requests, roots and parent references remain unchanged.",
+                "There is no new stack payload or invented hold; writes stay0 and execution_authorized staysfalse."
+              ],
+              "evidence": [
+                "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                ]
+              }
+            },
+            {
+              "id": "R1-37-D5",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+              ],
+              "steps": [
+                "After D1–D4, use only the already-prepared D1 and D2 source-plus-target inputs and options; do not derive another scenario.",
+                "From the unrelated cwd run each input once through copied-runtime JSON with the complete prepared closure; compare the complete JSON value to its already-fixed D1/D2 expected report and check its prescribed exit.",
+                "Inspect exact source/branch/plan/native/readback/Blocks bindings and affected publication-guard evidence, complete closure/runtime/dependency manifests, and before/after inventories."
+              ],
+              "expected": [
+                "The two copied JSON values equal their fixed full source expectations: D1 admits1000 using current source and repair-current-target without new publication; D2 waits with null proposal and actionable child-QA handling.",
+                "Prepared dependency/package-lock equality and complete runtime closure hold; exactly lib/manager/repair-policy.mjs differs from the90c92 runtime map.",
+                "Historical captures/maps remain fixed history; the new partial amendment binds every current allowlisted artifact, fixture/aggregate hashes, revised149 prerequisite/TAC and actual repair→149 Blocks link. Source inventory stays30 Stories/132 cases; full reconciliation remains81.",
+                "The repair PR targets codex/pgb149-machine-preview from prepared90c92, within five paths; neither repair nor149 is Done before main integration. No product scenario or authority is added."
+              ],
+              "evidence": [
+                "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority.",
+                "Retain complete copied-runtime and dependency/package-lock manifests, unrelated cwd, current/historical publication guard results and exact native/branch/readback/Blocks bindings."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Retain the bounded current-admission/child-completion-publication table, unchanged full-case controls and historical/current publication binding guards."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-39",
+    "title": "Preserve published repairs across identical QA copies",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Two authenticated publications of the same QA result can make preview treat an existing stack request as missing. An operator receives an unnecessary publication payload depending on input order.",
+      "prerequisites": [],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "Equivalent authenticated QA copies and their envelope order do not duplicate or lose an existing required stack request; output uses stable authenticated exact references."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Strict current-parent authority and exact incorporated cutoff remain required, and a genuinely missing publication or conflicting logical QA result retains its existing outcome."
+        },
+        {
+          "id": "AC3",
+          "requirement": "The full reports preserve unchanged assignments, exact requests/roots, PGB-151 PR-reference safeguards, zero writes and false execution authority."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "codex/pgb149-machine-preview",
+          "change_boundary": "One repair PR changes only these five existing paths: lib/manager/repair-policy.mjs, test/repair-policy.test.mjs, docs/manager-preview.md, docs/delivery/manager-r1/publication.json, test/qa-helper-contract.test.mjs. Preserve authenticated QA-copy identity across existing/missing stack publication and strict-current parent alias handling, with tests, guide, partial receipt and guards.",
+          "out_of_scope": [
+            "Schema, receipt-validator, original fixture/oracle, renderer, installer, helper-module or State-owned branch changes; general reference normalization or new ordering policy.",
+            "Provider operations, dependency installation/repair, deployment, activation, new151 scope or full81 source/native reconciliation."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Base one five-path PR on prepared PGB-149 source9305f5cd2beea8bba84121b076efc8210a625459, treecd94c4be3e9b1ef5527307214d890701eba1f39c, targeting codex/pgb149-machine-preview. This repair blocks149 with an added AI-QA prerequisite and matching TAC amendment while preserving its original five plus151 and all links/human objects; no reverse149 completion prerequisite. Preserve full historical receipts and append actual source/native/readback/plan/dependency/current-runtime bindings; integrate before parent main merge, with neither Story Done before main."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Resolve both exact references through authenticated completed-QA rows before comparing ticket/record/digest. Apply equivalence only to existing stack-request child/parent QA and coverage fallback parent endpoint; keep exact current-parent proof, incorporated cutoff, assignment/request/root lookup, consumption and ranking. Choose the current-assignment child QA deterministically by existing exact-reference key order. Preserve151 safeguards, original validators/schemas/fixtures and zero authority; add no provider operation, activation or general reference normalization."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact reviewed repair revision based on prepared source9305f5cd2beea8bba84121b076efc8210a625459; unchanged synthetic manager-repairs.json and prepared complete runtime/Node dependencies. Copied checks use an unrelated cwd; no live target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "C1–C9 full inputs and independent fixed reports for H02-07-u2-published-b-not-admitted, H02-06-a3-full-qa-u2-unpublished, OC05-competing-completions-no-parent-first and OC05-competing-completions-stack-parent-first, plus prescribed QA-copy/parent-alias variants and complete copied runtime.",
+            "initial_state": "PREP-01 supplies all exact independent copies, recipes, options, complete expectations, command paths and hashes before execution; original source/evidence remains unchanged.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Use the exact reviewed repair revision based on prepared PGB-149 source9305f5cd2beea8bba84121b076efc8210a625459, treecd94c4be3e9b1ef5527307214d890701eba1f39c, prepared Node dependencies and unchanged test/fixtures/manager-repairs.json (SHA25626280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7). Supply a complete worker-owned copy of the existing prepared runtime and an unrelated cwd; preserve the original copy and evidence. No account, credential, UI, HTTP/Postman or live target is needed.\n\nControl provenance: C1 uses the exact cases record H02-07-u2-published-b-not-admitted and its full expected report; C4 uses H02-06-a3-full-qa-u2-unpublished and its full expected report. For C8 OC05-competing-completions-no-parent-first and C9 OC05-competing-completions-stack-parent-first, take inputs/config/options from inherited_own_preview.original.cases and join each exact ID to its full current report in inherited_own_preview.cases. Never substitute an older inherited expected report. Every case starts as a fresh independent copy of its named control.\n\nChild-copy recipe for C2/C3 and C5/C6: from that case's snapshot.repair_receipts find exactly one parsed envelope whose target.ticket_id is1001 and target.comment_id is81008. Clone that entire envelope. In its ticket1001 comment_pages page require start_at0, total equal to comments.length and the original complete-page metadata; find comment.id81008 and its exact retained tuple. Require99008 absent. Append an exact copy of that comment with only id changed to99008; increment only that page's total by1. Append an exact copy of the retained tuple with only comment_id changed to99008. Change only the cloned envelope's target.comment_id to99008, keeping target.ticket_id/record_id/digest exact. Keep the original envelope, original81008 comment/tuple and every original request/reference/body. JSON-encode the clone with existing field order. Require no existing completion_receipts target for ticket1001 before adding this envelope. B stays Rework Queued, so the clone supplies history and grants no strict current completion.\n\nC1: unchanged H02-07 control. Expected: its complete fixed report, select/admit_repair1001, deterministic child_completion81008, publication_required:false, required_stack_updates:[], original request/root/current-parent references and selection/eligibility, zero writes and false authority.\n\nC2: apply the child-copy recipe independently to C1, placing only the new99008 envelope first in completion_receipts and preserving the original array's relative order. C3: apply the same recipe independently to C1, placing that same new envelope last. C2/C3 expected: each entire C1 report except its independently calculated snapshot_digest; retain child81008, original published requests/roots/current parent, no new payload or publication warning, same selection/eligibility, zero writes and false authority. Array order cannot create another publication.\n\nC4: unchanged H02-06 control. Expected: its complete fixed report, select/admit_repair1001, publication_required:true and its exact81008 child payload for genuinely missing U2. C5/C6: apply the same child-copy recipe independently to C4, putting the new99008 envelope first/last respectively in completion_receipts; preserve every original item/order otherwise. Each expected report equals the entire C4 report except its independently calculated snapshot_digest, including the exact deterministic81008 payload, required publication, original requests/roots/current parent, selection/eligibility, zero writes and false authority. Identical QA neither invents publication nor waives missing U2.\n\nC7: start independently from C1. In completion_receipts find exactly one existing current-parent envelope with target.ticket_id1000 and target.comment_id81023. In that envelope's ticket1000 page require start_at0, total equal to comments.length and original complete-page metadata; locate original81023 comment and exact retained tuple, and require99023 absent. Append the exact same-body/server-metadata comment with only id99023, append the exact retained tuple with only comment_id99023, increment only that page's total by1, and change only this envelope's target.comment_id from81023 to99023. Keep target ticket/record/digest, all old comments/tuples/requests, every other envelope, exact child incorporated cutoff, requirements, native stages/current assignment and PR observations unchanged; JSON-encode in existing field order. Expected: the entire C1 report except independently calculated snapshot_digest and proposal.required_parent.completion.comment_id99023; its ticket1000, record81000000-0000-4000-8000-000000000023 and digestsha256:4d4cd1f5c92e0548fc245014c1bd97fce659e3208a523c5e33ef0bff6087783d remain exact. Parent remains strict current accepted QA of the same logical result. Select1001, deterministic child81008, no new payload/publication warning/hold; retain exact old requests/roots/cutoff, zero writes and false authority. If static preparation cannot establish this contract, stop for Astra; do not try product calls to discover an expectation.\n\nC8/C9: leave the two named inherited OC05 controls unchanged. Each equals its entire current frozen report: valid:true, status:complete, scope_diagnostics:[], wait with null selection/proposal and issue-scoped REPAIR_PROOF_INVALID at /issues/2, human_hold for1001 and no unrelated admission. Different logical QA bodies remain conflicting in both envelope orders; do not coalesce them. Keep all original flags/reasons/repair_order and zero writes/false authority.\n\nFor C1–C9 preserve each original options object, including expectedSite and all supplied keys. If expectedSnapshotDigest already exists, bind it independently to the variant's digest; never add an absent guard. Independently calculate snapshot_digest as SHA256 of RFC8785 canonical JSON {configuration_digest,snapshot}, using the unchanged control's configuration_digest. Before any repaired execution, freeze every complete input/config/options/expected report, exact reference/reason/repair_order/eligibility fields, paths and hashes. Derive variants only from the independent full control reports and specified contract deltas; never use original failure or repaired runtime output as an oracle.\n\nSupply exact commands using the reviewed source lib/manager/decisions.mjs previewSnapshot(JSON.stringify(config),JSON.stringify(snapshot),options) once for each C1–C9 in order. For copied C2 and C7 only, use prepared Node to invoke the copied scripts/manager-preview.mjs --config <absolute-config-path> --input <absolute-snapshot-path> --json from the unrelated cwd. Map only supplied expectedSite to --expected-site and expectedSnapshotDigest to --expected-snapshot-digest. Use the same fixed inputs/options/full expected values; expected exit is0 for each complete report. Retain stdout/stderr/exits, Node/runtime/dependency/package-lock manifests, input/expectation hashes and before/after inventories. Refresh only reviewed policy bytes in the worker-owned complete runtime copy; do not install, fetch or repair dependencies. Nine API plus two copied calls are the entire author product-evaluation budget; no additional diagnostic, matrix, installer, smoke or151 replay.\n\nRetain exact source/base/branch/plan/native/readback/dependency bindings and affected historical/current publication-guard evidence. Preserve all historical receipt objects/maps and bind all current allowlisted artifacts/aggregate/unchanged fixture in the new partial amendment; only policy differs from9305 runtime. Keep original151 regression and guide67-case exporter,151 recovery, State146 Cause guidance when integrated, and all original149/151/146/81 human objects. Source inventory stays30 Stories/132 cases; this is a partial native amendment and full reconciliation remains81. Preserve independent review, hosted full npm, current Codex approval, child/parent merge gates and State-owned integration separately. Nothing is Done before combined main integration.",
+            "used_by": [
+              "DATA-01",
+              "R1-39-H01",
+              "R1-39-H02"
+            ],
+            "preserves": [
+              "All original fixture inputs/full oracles, exact QA/assignment/request/root records, native human objects, historical failures/receipts/runtime maps and151 successful evidence retain their original revisions.",
+              "New human routes H01/H02 remain NOT_RUN until human execution. Authorized direct developer checks are separate from human acceptance and independent QA; QA skills/types/cases/dispatch remain empty.",
+              "Freeze complete values before repaired execution; nine source API and two copied JSON evaluations once, no retries or extra scenario campaign. Failure stops affected verification; preserve evidence and return a changed causal strategy to Astra.",
+              "Cleanup removes only worker-owned disposable exports/copies after evidence capture; never change frozen source, live records or historical evidence."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this internal API/CLI contract. Authorized direct developer evidence is separate from designated human execution; H01/H02 remain NOT_RUN until a human performs them.",
+          "cases": [
+            {
+              "id": "R1-39-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "PREP-01/DATA-01 supplies the reviewed revision, all nine complete frozen cases/expectations and exact API commands/options/hashes. Follow each named control and variant outcome separately.",
+                "Prepared synthetic fixtures and Node dependencies only; no account, credentials, UI, HTTP/Postman or live target."
+              ],
+              "steps": [
+                "Verify PREP-01 source/input/expectation bindings and immutable originals before execution.",
+                "Run C1–C9 once each in order through the source API with the exact original/prepared options. The authorized author run totals nine API evaluations; human execution is recorded separately.",
+                "Compare each complete report to its independently frozen expectation; inspect deterministic exact child QA, strict current parent and exact cutoff, original requests/roots, publication status, conflict controls and zero authority.",
+                "Retain full results, exits and immutable before/after input evidence; stop on a failure without retries."
+              ],
+              "expected": [
+                "C1 is the complete published H02-07 control. C2/C3 equal its entire report except their input-derived digest: child81008, select1001, no publication payload/warning, exact original requests/roots/current parent and selection/eligibility.",
+                "C4 is the complete missing-U2 H02-06 control. C5/C6 equal its entire report except their input-derived digest, retaining required publication and exact deterministic81008 payload; no missing request is waived.",
+                "C7 equals complete C1 except its digest and authenticated required_parent.completion.comment_id99023. Strict current parent QA remains valid, exact incorporated cutoff/old references stay intact, and no new payload or hold appears.",
+                "C8/C9 retain their complete conflicting-QA control reports, including wait/null proposal, REPAIR_PROOF_INVALID /issues/2 and1001 human_hold; distinct logical QA is not coalesced.",
+                "Every case preserves original assignments/requests/roots and151 PR safeguards, writes0 and execution_authorized:false; no human case becomes PASS from developer execution."
+              ],
+              "evidence": [
+                "Retain tested revision, exact commands/options, all nine full outputs/exits, fixed input/expectation hashes, runtime/Node/dependency manifests and before/after immutable inventories.",
+                "Retain original failures and all independent expectation/construction provenance; never use output as an oracle."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "After evidence capture remove only worker-owned disposable exports/copies; preserve frozen source, historical failures and original fixtures."
+                ]
+              }
+            },
+            {
+              "id": "R1-39-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Complete PREP-01/DATA-01 with the same already-frozen C2/C7 inputs/options/full expectations and prepared copied runtime; use the unrelated cwd.",
+                "Use prepared dependencies only; no account, credentials, UI, HTTP/Postman or live target. Human status remains NOT_RUN until a human performs this route."
+              ],
+              "steps": [
+                "From the unrelated cwd run only C2 and C7 once each through copied-runtime JSON with PREP-01 exact config/input paths and existing option-to-flag mapping; no new derivation or scenario.",
+                "Compare each complete JSON value to its already-fixed source expectation; require exit0 and retain stdout/stderr/exits.",
+                "Inspect complete runtime/Node/dependency/package-lock closure and input inventories before/after, plus source/native/plan/dependency and historical/current publication-guard bindings."
+              ],
+              "expected": [
+                "C2 copied JSON equals the complete fixed published-request variant: deterministic child81008, select1001 and no new payload/publication warning.",
+                "C7 copied JSON equals its complete fixed strict-current parent-alias report: authenticated parent99023, original cutoff/requests/roots, select1001 and no new payload or hold.",
+                "Exactly two copied evaluations complete the eleven-product-call author budget; prepared dependency bytes and inputs remain unchanged, only policy differs from9305 runtime, all prior captures/maps remain history, and writes0/false authority remain.",
+                "New native amendment preserves149 original five+151 prerequisites and links plus its single repair blocker, with no reverse dependency or premature Done; source inventory and full81/State ownership remain distinct."
+              ],
+              "evidence": [
+                "Retain tested source/runtime revision, exact commands/options, complete JSON stdout/stderr/exits, fixed input/expected hashes and full runtime/Node/dependency/package-lock manifests.",
+                "Retain before/after input/runtime inventories and native/readback/link/plan/current-versus-historical binding evidence; human execution remains separately attributed."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "After evidence capture remove only worker-owned exports and runtime copies; retain original prepared runtime, historical evidence and frozen source."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Add the bounded published/missing-publication QA-copy permutations, strict-current parent alias and existing conflicting-completion controls; preserve full historical/current receipt guards and151 tests."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-35",
+    "title": "Preview complete repairs as structured data",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Agents and tools need the full repair decision before any live action. They must see the actual parent, every unresolved cause and any required publication without inferring authority from readable summaries.",
+      "prerequisites": [
+        {
+          "ticket": "R1-10",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-25",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-26",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-28",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-37",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-39",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The source API and JSON CLI return the complete approved reports for the existing repair fixtures, including actual dependency order, capacity, pause and current-parent requirements."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Structured proposals identify target, exact canonical causes, parent revision and required publication, with false execution authority and zero writes."
+        },
+        {
+          "id": "AC3",
+          "requirement": "The guide makes source API/JSON use and recovery usable; existing copied-runtime compatibility is retained and readable cause parity is explicitly assigned to PGB-146."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own the complete cloud-neutral source API/JSON repair preview, required copied-runtime compatibility, guides and dated partial publication receipt within the20 reviewed R1-35 paths.",
+          "out_of_scope": [
+            "Customer repository changes, provider operations, worker monitoring, run cancellation, deployment or activation.",
+            "Readable cause parity remains PGB-146; the full installed repair fixture kit, eighth semantic smoke and complete source/native publication reconciliation remain PGB-81.",
+            "Changes outside the20 reviewed R1-35 paths or to unrelated configuration/source/native contracts."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository: danielchappell/Pigboard, main; own the listed20-path cloud-neutral source/JSON outcome and its required compatibility, docs and partial receipt."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Preserve all existing raw inputs/independent full expectations, the three typed edges and strict current/history boundaries; add no provider operation, worker monitoring, cancellation or activation."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Compose verified merged145 without changing its contracts; preserve all original146 and81 criteria/human objects and name PGB-81 as full publication/installed-kit owner. Preserve native prerequisites PGB-80, PGB-113, PGB-129, PGB-136 and PGB-145, each requiring ai_qa_complete; additionally require PGB-151 ai_qa_complete for the current-PR repair. Publish/read back the original five incoming Blocks links, the repair→PGB-149 Blocks link and R1-35→146 as specified in the delivery plan. Additionally require PGB-153 ai_qa_complete for the identical-QA publication repair; publish/read back its repair→PGB-149 Blocks link while preserving all existing dependencies."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact approved Pigboard PR source revision composed with verified merged PGB-145, already prepared Node dependencies and unchanged complete local fixtures; copied-runtime checks use one complete prepared closure from an unrelated cwd. No deployed target or live account.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Existing H02-06-a3-full-qa-u2-unpublished, OC01-selection and S06-second-configured-accepted-stage inputs/options and independent full expected reports; complete copied-runtime closure and retained seven-smoke evidence.",
+            "initial_state": "Fresh read-only exported inputs per case and a worker-owned allowlisted runtime copy with prepared dependency bytes; preserve frozen expectations and historical evidence.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "At the exact PR revision, prepare source-guide exports for DATA-01, independent complete expected reports, exact API/JSON/copied-runtime commands and options, Node/dependency hashes, before/after manifests and zero-effects evidence; supply dated/current receipt guard commands and attributable existing seven-smoke evidence.",
+            "used_by": [
+              "DATA-01",
+              "R1-35-H01",
+              "R1-35-H02"
+            ],
+            "preserves": [
+              "All existing raw inputs, full expected outcomes and required compatibility coverage; no new scenario or dependency installation.",
+              "All original PGB-146 criteria, testing strategy and two human routes and all original PGB-81 criteria and42 human cases remain unchanged.",
+              "Readable cause parity remains pending PGB-146; the full installed kit and final publication reconciliation remain PGB-81.",
+              "Human routes remain NOT_RUN until a human performs them; developer checks, independent review and CI are separate."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this CLI/internal API contract; use authorized requirement-based direct developer checks and retain designated human review separately.",
+          "cases": [
+            {
+              "id": "R1-35-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Exact approved source revision, PREP-01/DATA-01, prepared Node dependencies and unchanged exported fixtures are available. No account, credentials, UI, HTTP/Postman or live target is required."
+              ],
+              "steps": [
+                "Export the fixed H02-06-a3-full-qa-u2-unpublished, OC01-selection and S06-second-configured-accepted-stage inputs and options using the source guide.",
+                "Run the existing source API full comparison for H02-06 and the source JSON CLI full comparisons for H02-06, OC01 and S06."
+              ],
+              "expected": [
+                "Complete reports match their independent fixed expectations, including correct targets, exact canonical causes, actual dependency order, current parent revision and required publication.",
+                "Every result retains false execution authority and zero product writes."
+              ],
+              "evidence": [
+                "Retain exact commands/options, complete reports, tested revision, input/runtime hashes and before/after input inventories."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence, then remove only the worker-owned disposable exports and runtime copy."
+                ]
+              }
+            },
+            {
+              "id": "R1-35-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Use the same exact approved revision and PREP-01/DATA-01 with a complete worker-owned copied runtime, prepared dependency bytes and unrelated cwd; retain existing seven-smoke evidence with its original revision attribution. No credentials or live target are required."
+              ],
+              "steps": [
+                "Run the existing copied-runtime JSON CLI full comparisons for H02-06-a3-full-qa-u2-unpublished and OC01-selection from the unrelated cwd.",
+                "Inspect the complete closure manifests, attributable existing seven-smoke evidence, source guide and dated/current receipt guard outputs."
+              ],
+              "expected": [
+                "Complete copied-runtime reports match the independent fixed expectations with zero effects.",
+                "Current source30 Stories/132 cases is preserved; the earlier native32/136 snapshot and the five differences against the hash-bound recorded comparison set remain explicitly dated, not an exhaustive current native inventory.",
+                "The guide and partial receipt keep readable cause parity pending PGB-146 and name PGB-81 as the full publication/installed-kit owner.",
+                "Later PGB-82→PGB-148 and native PGB-147/PGB-148 source omissions remain deferred to PGB-81 full reconciliation."
+              ],
+              "evidence": [
+                "Retain complete manifests, commands/options, reports, source/runtime/input hashes, before/after inventories, guard output and original attribution for reused smoke evidence."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence, then remove only the worker-owned disposable exports and runtime copy."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Retain existing complete policy/API/JSON, strict-history/current, no-effects, fixture-preservation and installed-compatibility coverage; add only actual integration/publication binding guards."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-32",
+    "title": "Preview repairs from a source checkout",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Operators and agents need to inspect the complete repair decision before any live action. The source preview must explain actual parent dependencies, preserve every unresolved cause and distinguish queueing from admission.",
+      "prerequisites": [
+        {
+          "ticket": "R1-10",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-25",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-26",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-28",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-35",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "The source API and CLI return the approved complete repair decisions for the existing PGB-81 fixtures, including priority, capacity, pause and current-parent requirements."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Structured and readable results name the same target, actual dependency order, parent revision, causes and required publication, with no execution authority or writes."
+        },
+        {
+          "id": "AC3",
+          "requirement": "The source guide is sufficient to prepare inputs, run the preview and resolve common waits; existing installed behavior retains a working closure and regression coverage."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own the complete cloud-neutral source repair preview, its required installed compatibility, source tests, guides and explicitly dated partial delivery-publication receipt.",
+          "out_of_scope": [
+            "Customer repository changes, provider writes, worker monitoring, run cancellation, deployment or activation.",
+            "The full installed repair fixture kit, eighth semantic smoke and complete source/native publication reconciliation remain PGB-81 outcomes.",
+            "Changes outside the20 reviewed R1-32 paths or to unrelated State A/source/native contracts."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository: danielchappell/Pigboard, default main; change only cloud-neutral source preview, its required compatibility, tests and listed documentation/publication receipt."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Keep the three existing typed proposal edges and strict current-versus-history authority; add no provider calls, worker monitoring, cancellation, publication or activation."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Preserve all original PGB-81 human cases; the dated partial publication receipt names PGB-81 as the full reconciliation owner."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Exact approved Pigboard PR source revision with already prepared Node dependencies and existing complete local fixtures; existing installed compatibility tests use the complete copied runtime from an unrelated cwd. No deployed customer target or live account.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "The existing PGB-81 source fixture matrix, seven corrected cases, unchanged H02-06 contrast and required installed compatibility fixtures; no new product scenario.",
+            "initial_state": "Fresh read-only local files per case; frozen snapshots retain their existing independent facts and expected reports.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "At the exact PR revision, prepare the source-guide exports, existing complete fixtures, independent full expected reports, exact source/API/CLI and compatibility commands, prepared dependency/runtime hashes and zero-effects/input-inventory evidence.",
+            "used_by": [
+              "DATA-01",
+              "R1-32-H01",
+              "R1-32-H02"
+            ],
+            "preserves": [
+              "All existing fixture inputs, expected outcomes and required source/installed compatibility coverage; no new scenario.",
+              "All original PGB-81 AC1–AC4, TAC1–TAC2 and42 human cases remain unchanged.",
+              "Human routes remain NOT_RUN until a human performs them; developer regression, independent review and CI are separate."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this CLI/internal API contract; use the authorized requirement-based direct checks and retain designated human review separately.",
+          "cases": [
+            {
+              "id": "R1-32-H01",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Approved source revision, PREP-01/DATA-01, prepared Node dependencies and existing complete fixtures are available. No credentials, live account, UI or Postman are required."
+              ],
+              "steps": [
+                "Export the fixed inputs using the source guide.",
+                "Run the existing source/API/CLI matrix tests and inspect JSON/readable outputs for the seven corrected cases plus the unchanged H02-06-a3-full-qa-u2-unpublished contrast."
+              ],
+              "expected": [
+                "Full reports match their independent fixed expectations, including S06 selecting1100, A/B/C dependency order, the retained queue-capacity explanation and active/Blocked suppression.",
+                "Structured and readable results retain the same targets, parent revisions, causes and required publication, with zero writes and false execution authority."
+              ],
+              "evidence": [
+                "Retain exact commands, complete outputs, input/runtime hashes and the tested source revision."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence, then remove only the worker-owned disposable export directory."
+                ]
+              }
+            },
+            {
+              "id": "R1-32-H02",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Use the same approved revision and prepared fixtures as R1-32-H01, including the complete runtime closure for existing installed compatibility tests. No provider credentials or live target are required."
+              ],
+              "steps": [
+                "Run the existing source no-effects/history/current-boundary tests and complete npm test, including existing installed regressions with the complete runtime closure.",
+                "Check that the dated partial publication receipt names PGB-81 as the full reconciliation owner and preserves its original42 human objects."
+              ],
+              "expected": [
+                "No product writes or provider calls occur, and historical evidence never grants strict current-proof authority.",
+                "Prior installation behavior remains compatible and reports its existing seven smokechecks honestly.",
+                "The dated partial receipt assigns full publication reconciliation to PGB-81 while preserving all original42 PGB-81 human cases."
+              ],
+              "evidence": [
+                "Retain complete test output, exact revision, input/runtime hashes and temporary-directory inventories."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Remove only the worker-owned disposable fixtures after evidence capture."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Update the existing complete source/API/CLI matrices, exact fixture-preservation assertions, current/history authority checks and required installed compatibility tests; run the prescribed complete repository checks."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-11",
     "title": "Preview the complete repair order",
     "contract": {
@@ -4354,6 +5927,10 @@
         },
         {
           "ticket": "R1-28",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-32",
           "required_outcome": "ai_qa_complete"
         }
       ],
@@ -5676,6 +7253,602 @@
     }
   },
   {
+    "id": "R1-33",
+    "title": "Inspect named Jira issues safely",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "An authorized caller cannot inspect the native issues and comments needed to diagnose a manager input. It needs current observations and explicit incomplete results without first running a scheduler or discovering a whole project.",
+      "prerequisites": [
+        {
+          "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-36",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A documented source/copied library call inspects the supplied immutable issue IDs, their fixed assignment properties, complete comment pages and named exact comments."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Results identify complete, unavailable and changed observations, retain successful observations, and distinguish an unknown pointer from a confirmed value."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Invalid inputs fail before credential resolution; requests use the fixed HTTPS gateway, verified TLS, no redirects or retries, and finite count/byte/time limits."
+        },
+        {
+          "id": "AC4",
+          "requirement": "Safe human/JSON harness reports show requested completeness, counters and recovery without credentials or raw bodies; every result says domain discovery and admission are not evaluated."
+        },
+        {
+          "id": "AC5",
+          "requirement": "The same prescribed inspection works through actual copied dependencies from an unrelated directory, with honest setup failure and no source fallback."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own fixed read-only native issue inspection, its source/copied library and fixture harness, distribution, tests, documentation and publication metadata.",
+          "out_of_scope": [
+            "Plexus/customer repository changes, AWS resolver/wrapper, State adapter and operational-state writes.",
+            "Receipt acceptance, policy selection/admission, external PR/evidence fetching, a new input producer or a PGB-144 proof-policy decision.",
+            "Production live CLI, provider probes, deployment, activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository `danielchappell/Pigboard`, base `main`, one PR; own the fixed native read/inspection library, test harness, distribution and its docs/metadata only."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Consume PGB-145's canonical validated connection/bounds and trusted programmatic resolver; expose no arbitrary URL, JQL, method, transport module, credential CLI flag, environment override or insecure mode."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Preserve native IDs/server metadata and endpoint-specific comment pagination; generic 404, missing pages and visibility limits cannot prove absence."
+          },
+          {
+            "id": "TAC4",
+            "requirement": "Count all attempted requests and bytes, bound private observations as well as public reports, cancel owned I/O and fence late resolver results; return no scheduling or semantic receipt proof."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout, actual prepared copied runtime and disposable local HTTPS fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated B1 fixture set for the four human groups below, including only their listed finite variants and controls.",
+            "initial_state": "Fresh per variant; only explicitly paired controls share their stated sequence. Provider responses are scripted and credentials are dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "PR-bound executable local HTTPS fixture scripts, literal reports and permitted request traces, exact source/copied commands and prepared absolute paths for every listed variant; all expected answers are authored independently of the production collector.",
+            "used_by": [
+              "DATA-01",
+              "R1-33-H01",
+              "R1-33-H02",
+              "R1-33-H03",
+              "R1-33-H04"
+            ],
+            "preserves": [
+              "All acceptance criteria, technical constraints, case inputs, finite variants and limits, paired controls, order, expected outcomes, evidence and cleanup.",
+              "Existing source/copied distinction, verified TLS and no-effects boundaries; no live provider data, changed expectations, new cases or raised budgets.",
+              "All original PGB-82 acceptance remains on final82: five AC, three TAC and four human groups, including full integrated preview and offline-equivalent policy results."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.",
+          "cases": [
+            {
+              "id": "R1-33-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC4",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: complete, empty-comments, renamed-key, unknown-pointer, exact-mismatch. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-33-H01 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "complete: two issues, one present pointer each, two comment pages plus one named exact target, literal IDs/metadata and requested complete/domain false. empty-comments: explicit zero-total page, present pointer. renamed-key: same ID/current key. unknown-pointer: pointer404 yields incomplete/POINTER_UNKNOWN, never null. exact-mismatch: changed exact body/metadata yields CHANGED_INPUT.",
+                "Every result reports inspection_scope requested_issues, domain_complete false, admission not_evaluated and receipt_proof not_evaluated; requested completeness never certifies the whole domain.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-33-H02",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "AC4",
+                "TAC3",
+                "TAC4"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: missing-page, changed-total, duplicate-comment, zero-progress, issue403, issue404, rate429, header-timeout, body-timeout, resolver-reject, resolver-abort, resolver-late. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-33-H02 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "missing-page, changed-total, duplicate-comment, zero-progress, issue403, issue404, rate429, header-timeout, body-timeout, resolver-reject, resolver-abort, resolver-late: each has a literal stop point/code; no retry, swallowed secret, false absence or post-return B-owned read. Late resolver case expects cancel_unconfirmed and discards the late dummy token; fixture itself acknowledges/stops its own I/O during cleanup.",
+                "Every result reports inspection_scope requested_issues, domain_complete false, admission not_evaluated and receipt_proof not_evaluated; requested completeness never certifies the whole domain.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-33-H03",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC3",
+                "AC4",
+                "TAC2",
+                "TAC4"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: invalid-origin, invalid-request, out-of-scope-issue, redirect, untrusted-ca, wrong-host, error-canary, compressed-response, known-limit, comment-limit, page-limit, request-limit, response-byte-limit, total-byte-limit, request-time-limit, scan-time-limit. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-33-H03 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "invalid-origin, invalid-request, out-of-scope-issue, redirect, untrusted-ca, wrong-host, error-canary, compressed-response. Invalid setup invokes no resolver; rejected scope has no follow-up body/comment reads; redirect target receives no credentials/request; TLS failures occur; reports exclude every body/token/reference/error canary.",
+                "L01 known-limit: two supplied issues, max_known_issues1 then2. B1 rejects pre-resolver at1; at2 continues.",
+                "L02 comment-limit: two ordinary comments, max_comments1 then2. B1 incomplete before retaining excess; at2 complete.",
+                "L03 page-limit: two comment pages, max_pages1 then2. B1 stops before requesting second at1.",
+                "L04 request-limit: a literal four-request single-issue script, max_requests3 then4, max_pages1. B1 stops before fourth at3; at4 completes.",
+                "L05 response-byte-limit: one identity-encoded body with literal byte lengthN, capN−1 thenN. B1 aborts at excess; no raw/error disclosure.",
+                "L06 total-byte-limit: two responses with literal lengths summingN, per-response cap≤N−1, totalN−1 thenN. B1 counts both and stops at aggregate excess; private observation serialization has a separate deterministic oversized-projection subvariant within this case.",
+                "L07 request-time-limit: fixture withholds headers/body past fixed request deadline; paired immediate response. B1 cancels actual socket, no later B-owned work. Deadline is not increased to force a pass.",
+                "L08 scan-time-limit: resolver plus two individually timely responses exceed total deadline; paired immediate sequence. B1 total includes resolution, parsing and cleanup; result incomplete even if last parse otherwise succeeds.",
+                "Each budget-hit input changes only the named budget to one below its independently known demand while preserving A’s cross-field relations; run its paired positive-at-limit control. Expected demand and call counts are literal fixture facts prepared before execution. Do not raise bounds after observing failure.",
+                "Every result reports inspection_scope requested_issues, domain_complete false, admission not_evaluated and receipt_proof not_evaluated; requested completeness never certifies the whole domain.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-33-H04",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC4",
+                "AC5",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: guide-and-install, damaged-copy. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-33-H04 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "guide-and-install: source/copied documented examples and human/JSON parity, actual copied module/dependency hashes, unrelated cwd. damaged-copy: remove one required module only in a disposable copy; expect safe setup failure, no source fallback/fetch/repair. Other cases already run both routes; this group verifies installation/recovery rather than adding a third matrix.",
+                "Every result reports inspection_scope requested_issues, domain_complete false, admission not_evaluated and receipt_proof not_evaluated; requested completeness never certifies the whole domain.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Real HTTPS transport cancellation, TLS and sanitization plus direct native inspection integration, actual copied payload isolation and source/publication guards."
+      },
+      "open_questions": []
+    }
+  },
+  {
+    "id": "R1-34",
+    "title": "Inspect complete scoped Jira inventory",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "Named-issue inspection cannot find occupied work omitted from a caller's list. A manager caller needs the union of opt-in work, native membership, retained work and typed references, with honest limits and ownership changes.",
+      "prerequisites": [
+        {
+          "ticket": "R1-33",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A source/copied library call returns complete or explicitly incomplete native inventory for the configured domain, with retained-source completeness reported separately."
+        },
+        {
+          "id": "AC2",
+          "requirement": "Discovery covers all-status opt-in seeds, native children and exact full-label occupancy, then fresh-reads the union of declared, retained, prerequisite and typed-reference identities to a bounded fixed point."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Missing/drifting/denied reads and exhausted limits retain known observations and old/current ownership; failures identify a proven isolated scope or shared uncertainty."
+        },
+        {
+          "id": "AC4",
+          "requirement": "Immutable project/issue IDs preserve equal-label separation, renamed keys and cross-project references; collecting a prerequisite never marks it satisfied."
+        },
+        {
+          "id": "AC5",
+          "requirement": "The documented source/copied harness demonstrates complete, failure and unrelated-history cases without writes, receipt acceptance, state mutation or admission claims."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own complete scoped native inventory and reference collection using B1’s reader, with source/copied harness, distribution, tests, documentation and publication metadata.",
+          "out_of_scope": [
+            "Plexus/customer repository changes, AWS resolver/wrapper, State adapter and operational-state writes.",
+            "Receipt acceptance, policy selection/admission, external PR/evidence fetching, a new input producer or a PGB-144 proof-policy decision.",
+            "Production live CLI, provider probes, deployment, activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines."
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Repository `danielchappell/Pigboard`, base `main`, one PR; own scoped inventory and reference acquisition using B1's fixed reader, with complete docs/distribution/publication tests."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Use the same single canonical config and invocation accounting. The supplied object has exactly retained_members, pending_intents and explicit retained_complete. Retained members carry ticket_id, project_id, epic_id, label and assignment (null or ticket_id/comment_id/record_id/digest); pending intents carry project_id, label, ticket_id and attempt_id. Validate existing bounded field shapes, unique records and configured site/project bindings. Missing or false retained completeness never becomes empty complete state or new setup authority."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Search only fixed enhanced-JQL families; follow actual search tokens and comment offsets separately, preserve former ownership and never crawl unrelated project history."
+          },
+          {
+            "id": "TAC4",
+            "requirement": "Existing work/handoff parsers identify candidate references only; completeness does not establish visibility, current receipt proof, trusted context, capacity or policy success."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout, actual prepared copied runtime and disposable local HTTPS fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated B2 fixture set for the four human groups below, including only their listed finite variants and controls.",
+            "initial_state": "Fresh per variant; only explicitly paired controls share their stated sequence. Provider responses are scripted and credentials are dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "PR-bound executable local HTTPS fixture scripts, literal reports and permitted request traces, exact source/copied commands and prepared absolute paths for every listed variant; all expected answers are authored independently of the production collector.",
+            "used_by": [
+              "DATA-01",
+              "R1-34-H01",
+              "R1-34-H02",
+              "R1-34-H03",
+              "R1-34-H04"
+            ],
+            "preserves": [
+              "All acceptance criteria, technical constraints, case inputs, finite variants and limits, paired controls, order, expected outcomes, evidence and cleanup.",
+              "Existing source/copied distinction, verified TLS and no-effects boundaries; no live provider data, changed expectations, new cases or raised budgets.",
+              "All original PGB-82 acceptance remains on final82: five AC, three TAC and four human groups, including full integrated preview and offline-equivalent policy results."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/library contracts, which the currently approved automated QA skills do not execute. QA skills are []; human reviewers run the prescribed cases. Developer regressions, CI and independent PR review remain required and do not count as human acceptance.",
+          "cases": [
+            {
+              "id": "R1-34-H01",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "AC5",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: complete-domain, unrelated-history, retained-incomplete. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-34-H01 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "complete-domain: opted-in and paused Epic, undeclared child, Human Review/Blocked occupancy outside the Epic, retained member, declared prerequisite and typed target closure; literal complete ID/provenance set with present pointers. unrelated-history: add exactly 65 unrelated historical issues with 512 total comments to the server script; queries/reads and result stay identical, no unrelated ID/comment access. retained-incomplete: same data with explicit false retained_complete yields shared incomplete.",
+                "Native completeness and retained completeness remain separate; no result grants admission, prerequisite success or receipt proof.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-34-H02",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC2",
+                "AC3",
+                "TAC2",
+                "TAC3",
+                "TAC4"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: seed-page-missing, child-page-missing, label-page-missing, token-repeat, token-missing, search-duplicate, fresh-membership-change, malformed-seed, malformed-record, reference-missing, reference-digest-change, reference-cycle, epic-limit, stream-limit, page-size, closure-target-limit. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-34-H02 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "seed-page-missing, child-page-missing, label-page-missing, token-repeat, token-missing, search-duplicate, fresh-membership-change, malformed-seed, malformed-record, reference-missing, reference-digest-change, reference-cycle. Every missing/drifting/invalid item has the literal isolated/shared scope; cycle terminates but grants no receipt proof.",
+                "L09 epic-limit: two relevant Epics, max_epics1 then2. B2 incomplete at second unique Epic; no silent omission.",
+                "L10 stream-limit: two full-label tuples, max_streams1 then2. B2 incomplete at second tuple; equal labels in two projects count twice.",
+                "L11 page-size: page_size1 then2 with provider returning smaller pages and explicit continuation. B2 respects requested size and completes by metadata, not short-page heuristic; counts differ by literal oracle.",
+                "L12 closure-target-limit: two unique typed comment targets, max_comments1 then2, with all A cross-field relations valid. B2 stops before enqueuing the second target at1; at2 collects both only if the complete comment inventory also fits. All reference/provenance bytes count toward L06; no new edge-limit setting is added.",
+                "Each budget-hit input changes only the named budget to one below its independently known demand while preserving A’s cross-field relations; run its paired positive-at-limit control. Expected demand and call counts are literal fixture facts prepared before execution. Do not raise bounds after observing failure.",
+                "Native completeness and retained completeness remain separate; no result grants admission, prerequisite success or receipt proof.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-34-H03",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC3",
+                "AC4",
+                "AC5",
+                "TAC2",
+                "TAC4"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: two-projects, cross-project-prerequisite, renamed-alias, old-ownership, denied-project, isolated-conflict, out-of-scope-reference. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-34-H03 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "two-projects: different mappings/equal labels remain separate. cross-project-prerequisite: allowed reference collected, not satisfied. renamed-alias: key resolves same ID once. old-ownership: retained member removes parent/label or moves projects; retain old/current affected scopes. denied-project: unknown reach yields shared incomplete. isolated-conflict: established stream conflict preserves unaffected observations without selection. out-of-scope-reference: bounded identity resolution only, no downstream reads.",
+                "Native completeness and retained completeness remain separate; no result grants admission, prerequisite success or receipt proof.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            },
+            {
+              "id": "R1-34-H04",
+              "execution": "human",
+              "owner_role": "designated human reviewer",
+              "requirements": [
+                "AC1",
+                "AC5",
+                "TAC1",
+                "TAC4"
+              ],
+              "prerequisites": [
+                "PREP-01 supplies the PR-bound local fixture packet DATA-01, exact commands, literal expected reports and maximum permitted call traces before execution; do not generate expected answers from the production collector.",
+                "Prepared Node and root validator dependencies, source checkout and actual copied runtime; fresh disposable data per variant, dummy token/reference and fixed local HTTPS fixture servers. No live Jira account, AWS, Postman or UI is needed.",
+                "Run exactly these named variants: guide-and-install, missing-retained-input, no-effects. Each uses fresh state except its explicitly paired controls.",
+                "The test-only harness audits the original fixed HTTPS origin/path/method before routing to loopback HTTPS with explicit test CA and hostname; certificate and hostname checks stay enabled. Production has no test origin, CA, transport, insecure mode or fixture imports."
+              ],
+              "steps": [
+                "For each listed variant, run the prepared source command using node test/fixtures/jira-preview-harness.mjs --case R1-34-H04 --variant NAME --runtime SOURCE_ROOT --json; PREP-01 supplies each exact variant name and absolute prepared root.",
+                "Compare the report and permitted request audit with the literal expectations below; inspect actual counters, bytes, elapsed time and cleanup.",
+                "Repeat the same variant through the actual copied runtime from an unrelated working directory, using the copied harness and --runtime COPIED_ROOT; PREP-01 supplies the exact copied command and absolute root.",
+                "Inspect no-effects and cancellation evidence and compare source/input/server before-and-after hashes. Where the guide-and-install variant prescribes readable output, also run its human form without --json and compare its meaning with JSON."
+              ],
+              "expected": [
+                "guide-and-install: actual copied inventory API and guide, no import of policy/snapshot/AWS/provider-proof modules. missing-retained-input: input failure before resolver. no-effects: deny/audit filesystem writes, child processes and all nonallowlisted requests, compare source/input/server state hashes. Reports expose limits/partial observations and no admitted/eligible/completed claim.",
+                "Native completeness and retained completeness remain separate; no result grants admission, prerequisite success or receipt proof.",
+                "Library collection makes no Jira or operational-state writes. Keep successful observations and explicit failures; do not turn missing evidence into a pass or start an alternate fixture campaign."
+              ],
+              "evidence": [
+                "Tested PR revision, source/copied runtime identity, fixture hashes and exact source/copied commands.",
+                "Command/output transcripts, exit codes, safe reports and literal expected-report comparison.",
+                "Permitted request trace, actual request/count/byte/time measurements, no-effects/cancellation observations and before/after hashes.",
+                "Cleanup result and any remaining unverified outcome; these local fixture observations do not prove live Jira, AWS, supported production capacity or activation."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "designated human reviewer",
+                "steps": [
+                  "Retain the evidence packet and close the prescribed local fixture servers, sockets and timers; the resolver-late fixture stops and acknowledges its own I/O where that variant applies.",
+                  "Remove only disposable fixture/build directories and damaged copies; preserve the usable prepared release, source and retained evidence. Do not change live records/resources."
+                ]
+              }
+            }
+          ]
+        },
+        "automated_regression": "Scoped search, retained/reference closure, failure scope and copied inventory integration, preserving B1 reader accounting and both source/publication guard suites."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-12",
     "title": "Preview current Jira work with bounded reads",
     "contract": {
@@ -5692,6 +7865,18 @@
         },
         {
           "ticket": "R1-31",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-34",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "PGB-162",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "PGB-163",
           "required_outcome": "ai_qa_complete"
         }
       ],
@@ -5715,6 +7900,10 @@
         {
           "id": "AC5",
           "requirement": "Live preview resolves each project mapping and allowed cross-project prerequisites; project identity uses immutable IDs and incomplete shared inventory never yields free capacity."
+        },
+        {
+          "id": "AC-ROLE1",
+          "requirement": "The live preview composes complete scheduling declarations and recorded proof against exact current native/configured/retained identity, explicitly reporting that worker execution and external PR freshness were not checked."
         }
       ],
       "technical_acceptance_criteria": {
@@ -5739,6 +7928,16 @@
             "id": "D04",
             "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
             "reference": "docs/architecture/pig-boss-operations.md"
+          },
+          {
+            "id": "D-ROLE",
+            "decision": "Owner10906 assigns Pig Boss complete deterministic scheduling and recorded-proof checks; workers retain current applicable execution proof.",
+            "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10906"
+          },
+          {
+            "id": "D-PREP",
+            "decision": "Director10909 permits in-stage current fact preparation from existing authority; only the implementer fills declared mechanical slots and every action requires its applicable proof.",
+            "reference": "https://scubapig.atlassian.net/browse/PGB-144?focusedCommentId=10909"
           }
         ],
         "constraints": [
@@ -5753,6 +7952,14 @@
           {
             "id": "TAC3",
             "requirement": "Initial operator verification of complete service-account visibility is a prerequisite; searches cannot prove unseen issues do not exist."
+          },
+          {
+            "id": "TAC-ROLE1",
+            "requirement": "Use the selected supported package/configuration and snapshot v2 profile without manager execution-context or external PR/evidence prerequisites; retain complete native lineage, retained identity and uncertainty guards."
+          },
+          {
+            "id": "TAC-ROLE2",
+            "requirement": "Publish supported initial defaults from the prescribed finite source/copied fixture evidence, including count/byte/time bounds and limits; do not claim every parser maximum or a live customer environment is supported."
           }
         ]
       },
@@ -5784,7 +7991,8 @@
               "R1-12-H01",
               "R1-12-H02",
               "R1-12-H03",
-              "R1-12-H04"
+              "R1-12-H04",
+              "R1-12-H05"
             ],
             "preserves": [
               "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
@@ -5917,6 +8125,39 @@
                 "owner": "human QA reviewer",
                 "steps": [
                   "Retain evidence then remove disposable fixture/build output; no live changes."
+                ]
+              }
+            },
+            {
+              "id": "R1-12-H05",
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "requirements": [
+                "AC-ROLE1",
+                "TAC-ROLE1",
+                "TAC-ROLE2"
+              ],
+              "prerequisites": [
+                "Original H01–H04 fixture packet plus complete mixed/all-human scheduling and recorded repair inputs from PGB-163 without manager execution context or external PR observations.",
+                "Independent PGB-162 expected decisions; isolated current-requirement/root/mixed-profile failures and hidden external-change-only control."
+              ],
+              "steps": [
+                "Run the source and installed live preview and compare with the prescribed offline decisions.",
+                "Run each role control and the candidate initial-default profile against this same finite packet; inspect count/byte/time limits and evidence."
+              ],
+              "expected": [
+                "Valid complete inputs match offline selections without writes; changed relevant proof holds and mixed profiles reject. Hidden external changes are not claimed detected or execution-ready.",
+                "Supported initial defaults name the verified finite envelope and bounds; the result claims neither support for every parser maximum nor untested live customer acceptance."
+              ],
+              "evidence": [
+                "Exact tested revision/pin, prepared commands, sanitized source/copied/offline comparison and bounded count/byte/time results; separate simulated from actual evidence."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain sanitized evidence, then remove only disposable local fixtures/build output; do not alter live records or shared setup."
                 ]
               }
             }
@@ -6322,6 +8563,185 @@
     }
   },
   {
+    "id": "R1-29",
+    "title": "Retain and inspect original transition proof",
+    "contract": {
+      "schema": "pigboard-ticket/v1",
+      "problem_to_solve": "An uncertain Jira transition cannot be settled safely from its current status or history alone. The manager needs to retain the exact request and its original response so an operator can inspect what is known without repeating the request.",
+      "prerequisites": [
+        {
+          "ticket": "R1-14",
+          "required_outcome": "ai_qa_complete"
+        }
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "A trusted writer can retain a verified publication reference and prepare one transition capture for the matching pending attempt; inspection shows its identity, request commitment and whether a response was received."
+        },
+        {
+          "id": "AC2",
+          "requirement": "A trusted writer can save the original completed response once, and inspection after restart preserves it without changing the pending outcome or calling Jira."
+        },
+        {
+          "id": "AC3",
+          "requirement": "Stale revisions, changed references, duplicate capture or response, disabled writer controls and exceeded record limits cannot overwrite proof or grant permission to send again; uncertain persistence remains explicit."
+        }
+      ],
+      "technical_acceptance_criteria": {
+        "repository": {
+          "url": "https://github.com/danielchappell/Pigboard",
+          "base_branch": "main",
+          "change_boundary": "Own original transition-proof persistence and inspection in the production state adapter, bounded attempt contract, local conformance driver and guide; PGB-85 owns reconciliation and PGB-87 owns the future Jira sender.",
+          "out_of_scope": [
+            "Plexus/customer code changes",
+            "Archived runtime reuse",
+            "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+          ],
+          "related_repositories": []
+        },
+        "accepted_decisions": [
+          {
+            "id": "D03",
+            "decision": "Story writing and human-invoked request-rework are separate skills.",
+            "reference": "docs/architecture/manager-human-rework.md"
+          },
+          {
+            "id": "D04",
+            "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+            "reference": "docs/architecture/pig-boss-operations.md"
+          }
+        ],
+        "constraints": [
+          {
+            "id": "TAC1",
+            "requirement": "Use the existing four-record v1 store, ten agreed scalar capture keys and conditional installation, stream and attempt revisions; preserve unrelated fields within the existing 16-key and 32 KiB limits."
+          },
+          {
+            "id": "TAC2",
+            "requirement": "Retain verified publication before pointer publication, then prepare capture before sending; bind the exact transition request and publication observations to the immutable attempt identity, and save only its original response."
+          },
+          {
+            "id": "TAC3",
+            "requirement": "Do not add a store, raw request or response bodies, imported operator proof, a send/retry command, or a finalization bypass; missing or unsupported proof stays distinguishable from rejection."
+          }
+        ]
+      },
+      "testing_strategy": {
+        "testing_types": [],
+        "environment": {
+          "source": "configured_target",
+          "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+          "required_capabilities": []
+        },
+        "actors": [],
+        "fixtures": [
+          {
+            "id": "DATA-01",
+            "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+            "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+            "reference": null,
+            "preparation_id": "PREP-01",
+            "owner": "implementer"
+          }
+        ],
+        "preparation": [
+          {
+            "id": "PREP-01",
+            "owner": "implementer",
+            "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+            "used_by": [
+              "DATA-01",
+              "R1-29-H01",
+              "R1-29-H02"
+            ],
+            "preserves": [
+              "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+            ]
+          }
+        ],
+        "dispatch_order": [],
+        "cases": [],
+        "human_review": {
+          "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+          "cases": [
+            {
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "evidence": [
+                "Command/output transcript, exact tested PR revision, fixture before/after state and provider call audit."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              },
+              "id": "R1-29-H01",
+              "requirements": [
+                "AC1",
+                "AC2",
+                "TAC1",
+                "TAC2"
+              ],
+              "prerequisites": [
+                "Two fresh pending-attempt fixtures with verified publication observations, dummy credentials and simulated providers; final inspection uses the actual PGB-83/84 composition.",
+                "Implementer supplies exact local driver commands and fixture inputs bound to the PR revision."
+              ],
+              "steps": [
+                "Retain the verified publication reference and prepare capture.",
+                "Inspect prepared-only state, then record the original 204 response in one fixture and 409 in the other.",
+                "Restart and inspect readable and JSON output."
+              ],
+              "expected": [
+                "Matching proof is retained once; the same attempt and outcome remain pending; unrelated fields are preserved.",
+                "Zero Jira mutations or worker calls; prepared-only and completed-response states are distinguishable."
+              ]
+            },
+            {
+              "execution": "human",
+              "owner_role": "developer and human QA reviewer",
+              "evidence": [
+                "Command/output transcript, exact tested PR revision, fixture before/after state and provider call audit."
+              ],
+              "cleanup": {
+                "mode": "prescribed",
+                "reason": null,
+                "owner": "human QA reviewer",
+                "steps": [
+                  "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                ]
+              },
+              "id": "R1-29-H02",
+              "requirements": [
+                "AC3",
+                "TAC1",
+                "TAC2",
+                "TAC3"
+              ],
+              "prerequisites": [
+                "Fresh fixture per variant: stale revision, changed retained reference, duplicate preparation, duplicate response, disabled writer controls, exceeded extension capacity, exceeded record-size limit, and persistence failure before or after a write."
+              ],
+              "steps": [
+                "Run each prescribed operation once.",
+                "Restart and inspect the same attempt and provider audit."
+              ],
+              "expected": [
+                "Conflicts or bounded failures cannot overwrite proof.",
+                "Uncertain writes may be absent or durably present; neither result authorizes resending or finalizes the pending attempt.",
+                "No live records, Jira mutations or worker calls."
+              ]
+            }
+          ]
+        },
+        "automated_regression": "Production-adapter and command tests for exact request/publication binding, one-time persistence, revision fences, record limits and inspect-after-uncertainty behavior."
+      },
+      "open_questions": []
+    }
+  },
+  {
     "id": "R1-15",
     "title": "Reconcile an uncertain attempt with evidence",
     "contract": {
@@ -6334,6 +8754,10 @@
         },
         {
           "ticket": "R1-14",
+          "required_outcome": "ai_qa_complete"
+        },
+        {
+          "ticket": "R1-29",
           "required_outcome": "ai_qa_complete"
         }
       ],

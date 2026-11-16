@@ -24,7 +24,13 @@
       "docs/architecture/contracts/check_work_examples.py",
       "docs/architecture/manager-work-contract.md",
       "docs/architecture/examples/manager-ticket.yaml"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-71",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-02",
@@ -41,7 +47,13 @@
       "test/case-graph.test.mjs",
       "test/fixtures/work-semantics.json",
       "docs/authoring.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-72",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-03",
@@ -60,7 +72,13 @@
       "skills/write-pr-sized-stories/references/ticket.yaml",
       "test/story-authoring.test.mjs",
       "docs/authoring.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-73",
+      "min_days": "1.25",
+      "max_days": "1.25",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-04",
@@ -89,7 +107,13 @@
       "docs/architecture/manager-handoff-contract.md",
       "docs/architecture/contracts/check_work_examples.py",
       "docs/architecture/examples/handoffs/admission.yaml"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-74",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-21",
@@ -108,7 +132,13 @@
       "test/fixtures/project-configs.json",
       "docs/configuration.md",
       "config/pigboss.example.yaml"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-99",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-31",
@@ -117,10 +147,6 @@
       "R1-21"
     ],
     "days": 1.90625,
-    "hours": {
-      "min": 12.25,
-      "max": 15.25
-    },
     "files": [
       "contracts/config-v1.schema.json",
       "lib/config/parse.mjs",
@@ -145,13 +171,132 @@
     ],
     "delivery_state": "PGB-145 In Progress; two exact-base plan reviews CLEAN. Local implementation/checks are separate from independent committed-code reviews, human acceptance, hosted checks, merge and activation. Human cases NOT_RUN (0/4).",
     "source_base": "e54fa4b55a8f2b01a7ef0ae90a038efe94d6c655",
-    "plan_sha256": "6ee1739214d48e5a1d58a74c8a882513bd694c7cfa8188487aee2dc4aa60bcee"
+    "plan_sha256": "6ee1739214d48e5a1d58a74c8a882513bd694c7cfa8188487aee2dc4aa60bcee",
+    "forecast_provenance": {
+      "native_key": "PGB-145",
+      "min_days": "1.53125",
+      "max_days": "1.90625",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
+  },
+  {
+    "id": "R1-38",
+    "title": "Read native Jira observations accurately",
+    "dependencies": [
+      "R1-31"
+    ],
+    "days": 0.75,
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-152",
+      "min_days": "0.4375",
+      "max_days": "0.75",
+      "plan_sha256": "53ed8317173824d822e2c55f3030837f1ac1e02785228d4470e0bff4b26a789c"
+    }
+  },
+  {
+    "id": "R1-40",
+    "title": "Reject duplicate Jira comment targets",
+    "dependencies": [
+      "R1-31"
+    ],
+    "days": 0.6375,
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 3,
+      "max": 5.1
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-154",
+      "min_days": "0.375",
+      "max_days": "0.6375",
+      "plan_sha256": "a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b"
+    }
+  },
+  {
+    "id": "R1-41",
+    "title": "Reconcile the source inspection delivery record",
+    "dependencies": [
+      "R1-31"
+    ],
+    "days": 1.08125,
+    "files": [
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 5.45,
+      "max": 8.65
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-155",
+      "min_days": "0.68125",
+      "max_days": "1.08125",
+      "provenance": "actual e82 catalog whole_hours and director d3a3 handoff; one allocation per Story",
+      "plan_sha256": "64089b7feb21d36a4ed2fce8d2923c98d2475c6b27d433d92833dc1ee5ccd9e1"
+    }
+  },
+  {
+    "id": "R1-42",
+    "title": "Keep Jira inspection within its original bounds",
+    "dependencies": [
+      "R1-31"
+    ],
+    "days": 1.175,
+    "files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-tls.json",
+      "docs/manager-preview.md"
+    ],
+    "hours": {
+      "min": 5.55,
+      "max": 9.4
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-156",
+      "min_days": "0.69375",
+      "max_days": "1.175",
+      "provenance": "actual e82 native_boundary_repair.whole_hours, supersedes dated receipt4.3–7.1h",
+      "plan_sha256": "a675a0addb7d4acb639ea237096d0d3a2d63ea68ac69344cd5a6425d51651f3e"
+    }
   },
   {
     "id": "R1-36",
     "title": "Inspect named Jira issues from source",
     "dependencies": [
-      "R1-31"
+      "R1-31",
+      "R1-38",
+      "R1-40",
+      "R1-41",
+      "R1-42"
     ],
     "days": 1.7875,
     "hours": {
@@ -164,9 +309,9 @@
       "test/fixtures/jira-preview-harness.mjs",
       "test/fixtures/jira-preview-cases.json",
       "test/fixtures/jira-preview-tls.json",
-      "docs/manager-preview.md",
       "README.md",
       "ARCHITECTURE.md",
+      "docs/manager-preview.md",
       "docs/delivery/manager-r1/stories.md",
       "docs/delivery/manager-r1/README.md",
       "docs/delivery/manager-r1/coverage.md",
@@ -178,7 +323,7 @@
       "test/story-authoring.test.mjs",
       "test/qa-helper-contract.test.mjs"
     ],
-    "delivery_state": "The complete source-inspection runtime includes the reviewed PGB-156 child merge at fd5b04eaa2cd7265f4528a8be37beb75ff463254. PGB-155 owns the separate ten-path delivery catalog; the parent comparison remains eighteen paths against the State/main base. Source human acceptance remains NOT_RUN (0/4), PGB-156 NOT_RUN (0/4), and PGB-152/PGB-154 retain their separate NOT_RUN decisions. Catalog checks, independent committed-code review, current PR112 CI/Codex, Director main merge and activation remain separate.",
+    "delivery_state": "Source runtime/catalog integration retained; full scoped mapping composed by PGB-81",
     "source_base": "da39e3762f31704a832e0cbc503c3b0d6d2284dc",
     "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47",
     "native_observation_repair": {
@@ -587,7 +732,36 @@
           "max": 54.2475
         }
       }
-    }
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-150",
+      "min_days": "1.24375",
+      "max_days": "1.7875",
+      "provenance": "actual e82 catalog whole_hours and director d3a3 handoff; one allocation per Story",
+      "plan_sha256": "64089b7feb21d36a4ed2fce8d2923c98d2475c6b27d433d92833dc1ee5ccd9e1"
+    },
+    "owned_runtime_files": [
+      "lib/jira/read.mjs",
+      "test/jira-read.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "test/fixtures/jira-preview-tls.json",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/manager-preview.md"
+    ],
+    "inherited_catalog_files": [
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ]
   },
   {
     "id": "R1-05",
@@ -608,7 +782,13 @@
       "test/implementer-contract.test.mjs",
       "test/fixtures/implementer-transcripts.json",
       "docs/workflow.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-75",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-06",
@@ -627,7 +807,13 @@
       "test/reviewer-contract.test.mjs",
       "test/fixtures/reviewer-transcripts.json",
       "docs/workflow.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-76",
+      "min_days": "1.25",
+      "max_days": "1.25",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-07",
@@ -645,7 +831,13 @@
       "test/qa-helper-contract.test.mjs",
       "test/fixtures/qa-helper-cases.json",
       "docs/qa-cases.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-77",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-24",
@@ -657,10 +849,6 @@
       "PGB-108"
     ],
     "days": 4.5625,
-    "hours": {
-      "min": 26.75,
-      "max": 36.5
-    },
     "forecast_note": "Previous forecast 26.5–36 familiar-human hours is historical. Add only 0.25–0.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
     "files": [
       "skills/qa-jira/SKILL.md",
@@ -693,6 +881,12 @@
       "scope": "Existing standalone prepared QA publisher; one PR; exact approved 20 files; all acceptance cases and review/QA/CI gates retained",
       "reason": "Required integration with merged engineering methods and coherent fixed mock access preparation; estimate is a forecast, not a replacement hourly authorization cap",
       "base_commit": "6595e645bd91cec263a5ee0eaf1a3db95e7b9109"
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-110",
+      "min_days": "3.34375",
+      "max_days": "4.5625",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
     }
   },
   {
@@ -706,10 +900,6 @@
       "R1-24"
     ],
     "days": 1.5625,
-    "hours": {
-      "min": 8.5,
-      "max": 12.5
-    },
     "files": [
       "skills/write-pr-sized-stories/SKILL.md",
       "skills/write-pr-sized-stories/references/basic-workflow-ticket.md",
@@ -731,7 +921,13 @@
       "docs/product/README.md"
     ],
     "delivery_state": "Three-input source implementation; independent committed-code review, installed binding, human acceptance and merge remain separate.",
-    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4–12.275h, B6.6–9.475h; conservative forecasts A8.5–12.5h/B6.75–9.75h."
+    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4–12.275h, B6.6–9.475h; conservative forecasts A8.5–12.5h/B6.75–9.75h.",
+    "forecast_provenance": {
+      "native_key": "PGB-138",
+      "min_days": "1.0625",
+      "max_days": "1.5625",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-27",
@@ -759,10 +955,6 @@
       "docs/product/coverage.md",
       "docs/product/README.md"
     ],
-    "hours": {
-      "min": 8.5,
-      "max": 12.75
-    },
     "delivery_state": "Residual source candidate: one producer supplies all 51 prescribed inputs in 14 families, including the corrected three shared controls; fresh final-integration committed-code review and current checks remain separate; actual PGB-138 is merged, while PR100 publication waits for the coordinated Core136 PR107 actual merge. Original human cases NOT_RUN; owner10765 accepted helper/publisher evidence gap remains specific and unchanged.",
     "historical_forecast": {
       "days": 1.875,
@@ -791,7 +983,13 @@
         "docs/product/README.md"
       ]
     },
-    "estimate_basis": "Historical residual allocation on 15 November 2026: 6.75–9.75h; proof/size control repair checkpoint on 16 November: 7.5–11.25h, adding 0.75–1.5h. Current whole residual 8.5–12.75h adds 1–1.5h for original child-operation-history and current-forecast correction, including diagnosis/plan, tests, docs, ordinary correction, independent review and PR evidence. Prior allocations remain counted; no other Story forecast or source ownership changes."
+    "estimate_basis": "Historical residual allocation on 15 November 2026: 6.75–9.75h; proof/size control repair checkpoint on 16 November: 7.5–11.25h, adding 0.75–1.5h. Current whole residual 8.5–12.75h adds 1–1.5h for original child-operation-history and current-forecast correction, including diagnosis/plan, tests, docs, ordinary correction, independent review and PR evidence. Prior allocations remain counted; no other Story forecast or source ownership changes.",
+    "forecast_provenance": {
+      "native_key": "PGB-132",
+      "min_days": "1.0625",
+      "max_days": "1.59375",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-08",
@@ -824,10 +1022,6 @@
       "docs/delivery/manager-r1/README.md",
       "docs/delivery/manager-r1/plan-metadata.json"
     ],
-    "hours": {
-      "min": 10.5,
-      "max": 14.5
-    },
     "delivery_state": "Source composed with actual reviewed PGB-132 original-child-history and forecast correction; final source/input/index checks, unchanged installed applicability, fresh exact-code review and distinct runtime/hosted/publication/merge gates remain required.",
     "development_binding": {
       "base_commit": "0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a",
@@ -901,6 +1095,12 @@
         "max": 48.24125
       },
       "evidence_boundary": "Case-only original history prefix precedes unchanged78 composer invocation; raw prior unknown effects are supplied input, not actual refusal/zero-call evidence. Rebind existing bf10 installation only on final81/config/dependency equality; no new installation/waiver/activation."
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-78",
+      "min_days": "1.3125",
+      "max_days": "1.8125",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
     }
   },
   {
@@ -918,7 +1118,13 @@
       "test/fixtures/human-rework.json",
       "docs/using-pigboard.md",
       "docs/workflow.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-79",
+      "min_days": "1.25",
+      "max_days": "1.25",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-10",
@@ -937,7 +1143,13 @@
       "test/manager-preview.test.mjs",
       "test/fixtures/manager-candidates.json",
       "docs/manager-preview.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-80",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-25",
@@ -962,7 +1174,13 @@
       "docs/product/README.md",
       "docs/product/coverage.md",
       "test/qa-helper-contract.test.mjs"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-113",
+      "min_days": "1.98",
+      "max_days": "1.98",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-26",
@@ -989,7 +1207,13 @@
       "docs/product/README.md",
       "docs/product/coverage.md",
       "test/qa-helper-contract.test.mjs"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-129",
+      "min_days": "1.28",
+      "max_days": "1.28",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-28",
@@ -1019,7 +1243,128 @@
       "docs/product/README.md",
       "docs/product/coverage.md",
       "test/qa-helper-contract.test.mjs"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-136",
+      "min_days": "1.92",
+      "max_days": "1.92",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
+  },
+  {
+    "id": "R1-37",
+    "title": "Keep repair proposals current",
+    "dependencies": [],
+    "days": 0.55,
+    "files": [
+      "lib/manager/repair-policy.mjs",
+      "test/repair-policy.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-151",
+      "min_days": "0.55",
+      "max_days": "0.55",
+      "plan_sha256": "88b737dab61feab436bf91021031047b56dcecd370b654246de874c895a9c71d"
+    }
+  },
+  {
+    "id": "R1-39",
+    "title": "Preserve published repairs across identical QA copies",
+    "dependencies": [],
+    "days": 0.65,
+    "files": [
+      "lib/manager/repair-policy.mjs",
+      "test/repair-policy.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-153",
+      "min_days": "0.65",
+      "max_days": "0.65",
+      "plan_sha256": "91819fcd235c9c3209ced8a1a3a603e3d57a476f1a68a9f26e88238a1376b078"
+    }
+  },
+  {
+    "id": "R1-35",
+    "title": "Preview complete repairs as structured data",
+    "dependencies": [
+      "R1-10",
+      "R1-25",
+      "R1-26",
+      "R1-28",
+      "R1-31",
+      "R1-37",
+      "R1-39"
+    ],
+    "days": 1.965,
+    "files": [
+      "lib/contracts/receipts.mjs",
+      "lib/manager/availability.mjs",
+      "lib/manager/decisions.mjs",
+      "lib/manager/repair-policy.mjs",
+      "lib/manager/snapshot.mjs",
+      "scripts/manager-preview.mjs",
+      "test/fixtures/manager-candidates.json",
+      "test/fixtures/manager-repairs.json",
+      "test/manager-preview.test.mjs",
+      "test/receipt-chain.test.mjs",
+      "test/repair-policy.test.mjs",
+      "config/skill-bundle.json",
+      "test/cursor-environment.test.mjs",
+      "docs/manager-preview.md",
+      "docs/delivery/manager-r1/publication.json",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/README.md",
+      "ARCHITECTURE.md",
+      "README.md",
+      "docs/architecture/manager-handoff-contract.md"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-149",
+      "min_days": "1.965",
+      "max_days": "1.965",
+      "plan_sha256": "1f4a246acc83b121f25aa80b3fc263198cc35c410fc3b1cc25b7d45948824a3a"
+    }
+  },
+  {
+    "id": "R1-32",
+    "title": "Preview repairs from a source checkout",
+    "dependencies": [
+      "R1-10",
+      "R1-25",
+      "R1-26",
+      "R1-28",
+      "R1-35"
+    ],
+    "days": 0.86,
+    "files": [
+      "ARCHITECTURE.md",
+      "README.md",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/manager-preview.md",
+      "docs/product/README.md",
+      "scripts/manager-preview.mjs",
+      "test/cursor-environment.test.mjs",
+      "test/manager-preview.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/repair-policy.test.mjs"
+    ],
+    "hours": {
+      "min": 6.88,
+      "max": 6.88
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-146",
+      "min_days": "0.86",
+      "max_days": "0.86",
+      "provenance": "accepted0.46 prior +0.40 integration; ten paths",
+      "plan_sha256": "5abde8e2a7ae224450755a22411b2a7a973c338c6cf43697a310d284aed21a74"
+    }
   },
   {
     "id": "R1-11",
@@ -1028,31 +1373,106 @@
       "R1-10",
       "R1-25",
       "R1-26",
-      "R1-28"
+      "R1-28",
+      "R1-32"
     ],
-    "days": 1.53,
+    "days": 1.91,
     "files": [
-      "lib/manager/repair-policy.mjs",
-      "lib/manager/availability.mjs",
-      "lib/manager/decisions.mjs",
-      "lib/manager/snapshot.mjs",
-      "lib/contracts/receipts.mjs",
-      "scripts/manager-preview.mjs",
-      "test/repair-policy.test.mjs",
-      "test/fixtures/manager-repairs.json",
-      "test/receipt-chain.test.mjs",
-      "test/manager-preview.test.mjs",
-      "docs/manager-preview.md",
-      "docs/handoffs.md",
-      "docs/architecture/manager-handoff-contract.md",
       "config/skill-bundle.json",
       "scripts/install-cursor-skills.mjs",
       "test/cursor-environment.test.mjs",
+      "docs/manager-preview.md",
       "docs/install.md",
       "README.md",
       "ARCHITECTURE.md",
-      "test/fixtures/manager-candidates.json"
-    ]
+      "docs/handoffs.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-81",
+      "min_days": "1.91",
+      "max_days": "1.91",
+      "provenance": "this actual-parent plan: prior1.83 +156full-row0.05 +82actual-role-row0.03; all incurred work retained; pending independent reviews"
+    },
+    "delivery_state": "Prepared installed repair fixture and semantic eighth check; local suite, reviews and delivery gates pending"
+  },
+  {
+    "id": "R1-33",
+    "title": "Inspect named Jira issues safely",
+    "dependencies": [
+      "R1-31",
+      "R1-36"
+    ],
+    "days": 1.28125,
+    "files": [
+      "ARCHITECTURE.md",
+      "README.md",
+      "config/skill-bundle.json",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/manager-preview.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "test/story-authoring.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-147",
+      "min_days": "0.94375",
+      "max_days": "1.28125",
+      "plan_sha256": "5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47"
+    }
+  },
+  {
+    "id": "R1-34",
+    "title": "Inspect complete scoped Jira inventory",
+    "dependencies": [
+      "R1-33"
+    ],
+    "days": 1.8125,
+    "files": [
+      "lib/jira/read.mjs",
+      "lib/jira/inventory.mjs",
+      "test/jira-inventory.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "config/skill-bundle.json",
+      "test/skill-distribution.test.mjs",
+      "docs/manager-preview.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs",
+      "docs/product/coverage.md"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-148",
+      "min_days": "1.34375",
+      "max_days": "1.8125",
+      "plan_sha256": "858c3e8d02a8ae0b3cd810f1e2e00a70dedcd3515cfe18f415a98ef0828f3cb4"
+    }
   },
   {
     "id": "R1-12",
@@ -1060,23 +1480,38 @@
     "dependencies": [
       "R1-11",
       "R1-21",
-      "R1-31"
+      "R1-31",
+      "R1-34",
+      "PGB-162",
+      "PGB-163"
     ],
-    "days": 1.75,
+    "days": 1.875,
     "files": [
-      "contracts/config-v1.schema.json",
       "config/pigboss.example.yaml",
-      "lib/config/parse.mjs",
-      "lib/jira/client.mjs",
-      "lib/jira/inventory.mjs",
-      "lib/jira/receipts.mjs",
-      "scripts/manager-preview.mjs",
-      "test/jira-preview.test.mjs",
-      "test/jira-security.test.mjs",
-      "test/fixtures/jira-pages.json",
+      "lib/manager/live-preview.mjs",
+      "test/manager-jira-preview.test.mjs",
+      "test/fixtures/jira-preview-harness.mjs",
+      "test/fixtures/jira-preview-cases.json",
+      "config/skill-bundle.json",
+      "scripts/install-cursor-skills.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/configuration.md",
       "docs/manager-preview.md",
-      "docs/configuration.md"
-    ]
+      "docs/install.md",
+      "README.md",
+      "ARCHITECTURE.md"
+    ],
+    "hours": {
+      "min": 11,
+      "max": 15
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-82",
+      "min_days": "1.375",
+      "max_days": "1.875",
+      "provenance": "Director-authorized delivery-plan.md SHA98916b2ab8dab5e36fc2f753c97b94e2f0e49fe3f188e8a09dbacdc00f397aa4 and core-path-cost.json; replacement of dated82 row once",
+      "scope": "Reviewed residual82 only; excludes separately allocated CORE-C and four Core foundations, not a complete Core/project forecast"
+    }
   },
   {
     "id": "R1-13",
@@ -1099,7 +1534,13 @@
       "docs/configuration.md",
       "package.json",
       "package-lock.json"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-83",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-14",
@@ -1119,25 +1560,77 @@
       "test/fixtures/state-history.json",
       "docs/manager-state.md",
       "docs/install-manager.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-84",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
+  },
+  {
+    "id": "R1-29",
+    "title": "Retain and inspect original transition proof",
+    "dependencies": [
+      "R1-14"
+    ],
+    "days": 1.5625,
+    "files": [
+      "lib/state/contract.mjs",
+      "lib/aws/dynamodb.mjs",
+      "test/manager-state-contract.test.mjs",
+      "test/fixtures/transition-proof.json",
+      "scripts/test-transition-proof.mjs",
+      "scripts/manager-state.mjs",
+      "test/manager-state-cli.test.mjs",
+      "docs/manager-state.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-137",
+      "min_days": "1.5625",
+      "max_days": "1.5625",
+      "plan_sha256": "24bc98921434dca075072703ef2b696badf43242170d0c6e9a709cb366d3a376"
+    }
   },
   {
     "id": "R1-15",
     "title": "Reconcile an uncertain attempt with evidence",
     "dependencies": [
       "R1-12",
-      "R1-14"
+      "R1-14",
+      "R1-29"
     ],
     "days": 1.5,
     "files": [
       "lib/manager/reconcile.mjs",
-      "scripts/manager-state.mjs",
+      "lib/state/contract.mjs",
       "lib/aws/dynamodb.mjs",
+      "scripts/manager-state.mjs",
+      "lib/aws/reconcile-context.mjs",
       "test/reconciliation.test.mjs",
       "test/fixtures/reconciliation.json",
+      "scripts/test-manager-state.mjs",
       "docs/manager-state.md",
-      "docs/install-manager.md"
-    ]
+      "docs/install-manager.md",
+      "infra/aws/template.yaml",
+      "test/manager-state-cli.test.mjs"
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-85",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan",
+      "plan_sha256": "6d5f77c22a52bf877a88b8c69d5292da484711ac7433efc5e6589cb013897c3f"
+    }
   },
   {
     "id": "R1-16",
@@ -1156,7 +1649,13 @@
       "test/fixtures/upgrade-state.json",
       "docs/install-manager.md",
       "docs/manager-state.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-86",
+      "min_days": "1.25",
+      "max_days": "1.25",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-22",
@@ -1179,7 +1678,13 @@
       "test/fixtures/health-results.json",
       "docs/operate-pigboss.md",
       "contracts/config-v1.schema.json"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-100",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-23",
@@ -1200,7 +1705,13 @@
       "docs/operate-pigboss.md",
       "docs/install-manager.md",
       "contracts/config-v1.schema.json"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-101",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-17",
@@ -1226,7 +1737,13 @@
       "test/fixtures/admission-traces.json",
       "docs/manager-operations.md",
       "docs/install-manager.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-87",
+      "min_days": "1.75",
+      "max_days": "1.75",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-18",
@@ -1242,7 +1759,13 @@
       "test/repair-admission.test.mjs",
       "test/fixtures/repair-admissions.json",
       "docs/manager-operations.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-88",
+      "min_days": "1.25",
+      "max_days": "1.25",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-19",
@@ -1257,7 +1780,13 @@
       "test/stack-queue.test.mjs",
       "test/fixtures/stack-traces.json",
       "docs/manager-operations.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-89",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   },
   {
     "id": "R1-20",
@@ -1289,6 +1818,12 @@
       "docs/install-manager.md",
       "docs/workflow.md",
       "docs/using-pigboard.md"
-    ]
+    ],
+    "forecast_provenance": {
+      "native_key": "PGB-90",
+      "min_days": "1.5",
+      "max_days": "1.5",
+      "provenance": "exact24f58 metadata, except residual81 this plan"
+    }
   }
 ]

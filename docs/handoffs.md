@@ -758,3 +758,14 @@ explicit resolution may cite that same validated current QA only when it actuall
 consumes the request. An older or unrelated completion cannot waive a cause. If
 authorization or consumption proof is missing, supply the authentic matching
 evidence; preserve published history rather than rewriting a blocker or result.
+
+### Offline manager history and current authority
+
+The manager's internal `inspectManagerHistory` route authenticates existing
+receipt envelopes through the shared canonical evaluator, including exact retained
+metadata and explicit admission ancestry. It projects only reachable plain-data
+facts and exact parent/cutoff root segments. It neither publishes records nor
+establishes current completion. `validateReceiptChain` retains its strict current
+pointer, requirements, PR, role/resume, evidence and complete QA-ledger checks.
+Only independently accepted current QA enters the manager's prerequisite proofs.
+No CLI flag or editable validated-history summary can waive those checks.

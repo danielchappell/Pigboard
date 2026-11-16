@@ -18,7 +18,7 @@ The installer prepares the twenty-two folders in
 [config/skill-bundle.json](../config/skill-bundle.json), including their references,
 scripts and lockfiles, plus the separate `work-validator` payload with canonical
 Epic/ticket and trusted-context schemas, semantic/graph modules, the source skill
-manifest, CLI, guide and examples. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 3.0.1
+manifest, CLI, guides, examples and complete synthetic manager repair fixture. Its locked YAML 2.9.1/Ajv 8.20.0/ajv-formats 3.0.1
 dependencies and the Bruno/PostgreSQL helper dependencies use
 `npm ci --ignore-scripts --no-audit --no-fund` before agents run. This installs
 execution tools, not database instances, test environments or service credentials.
@@ -87,7 +87,7 @@ skills with a host or prove that host's supported execution capabilities.
 
 ## Install a verified stable path
 
-The installer adds source-hash and dependency verification and the seven checks
+The installer adds source-hash and dependency verification and the eight checks
 below before exposing a stable `skills` symlink:
 
 ```sh
@@ -101,7 +101,7 @@ node "$PIGBOARD_SETUP/scripts/install-cursor-skills.mjs" \
 The default root is `/opt/pigboard`; the example chooses a user-writable root.
 The returned JSON contains the preparation fields plus `stableSkills` and
 `verification`. Inspect the expected commit, all twenty-two entrypoints,
-`dependencies: "verified"`, and these seven ordered `smokeChecks` values:
+`dependencies: "verified"`, and these eight ordered `smokeChecks` values:
 
 1. `pg.Client`
 2. `bru --version`
@@ -110,9 +110,11 @@ The returned JSON contains the preparation fields plus `stableSkills` and
 5. `handoff-validator admission record`
 6. `config-validator project scope`
 7. `manager-preview nonexecuting selection`
+8. `manager-preview nonexecuting repair queue`
 
-The manager preview check executes a synthetic selection through the copied runtime
-and verifies zero writes and no execution authority. It does not establish provider
+The manager preview checks execute synthetic selection and repair queue decisions
+through the copied runtime before replacing the stable skills link. They verify
+zero writes and no execution authority. They do not establish provider
 permissions, live freshness, human acceptance or activation. The configuration
 check runs the shipped synthetic two-project example through the real installed CLI
 and checks resolved mappings and independent stream keys. The admission check
@@ -259,6 +261,12 @@ On failure, the command exits nonzero with a blocked message and no success rece
 Resolve the named source, dependency, path or access issue during setup, then rerun.
 Missing/corrupt validator sources, lockfiles, wrong dependency versions or runtime
 smoke failures also block installation and preserve the previous stable binding.
+This includes ordinary selection and the eighth repair queue semantic check.
+Keep the previous receipt and versioned skills path. A failed verification can
+leave a candidate release under `releases`; retain its manifest and files while
+resolving the named failure. An early preparation failure may leave no candidate
+release. Internal staging and smoke temporary files are removed by the scripts;
+the public failure is not a raw transcript of those internal checks.
 Agents executing a ticket report missing preparation instead of installing packages
 or finding replacement tools. Reconcile uncertain external actions before retrying.
 
@@ -385,3 +393,11 @@ for each run; refresh only outside delivery, preserving the previous verified
 release and retained evidence. Never repair dependencies or switch a running QA
 to a new stable link. PGB-90/PGB-58 compatible installed/live acceptance and
 owner activation remain separate gates.
+
+The eighth smoke evaluates an authentic synthetic stale-child queue through the
+actual copied offline preview. It checks the queue-only edge, exact covering
+parent/cause, missing-publication payload and false execution authority with zero
+writes. Like the other smokes, this is local supplied-data capability, not live
+Jira/Cursor acceptance, deployment or automation activation. A missing/corrupt
+repair module, fixture or semantic result blocks installation before replacing
+the prior stable skills link. Preparation remains separate from delivery runs.

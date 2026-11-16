@@ -1,6 +1,65 @@
-# Pig Boss release one: complete delivery plan
+# Pig Boss release one: scoped delivery plan
 
-**Current partial 31-Story/136-group source checkpoint including PGB-150/R1-36 on its reviewed PGB-156 runtime merge.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69’s baseline. This source composes the approved publisher, repeated-parent, current-proof consistency, QA preparation, three-input control, own-ticket selection, read-configuration and PGB-150 source-inspection amendments. PGB-137/R1-29 source composition remains pending. Jira owns the queue.
+42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. The 42 included Stories contain 166 complete human groups, all NOT_RUN, and zero AI cases. This checkpoint reconciles settled source contracts; it is not a complete Epic inventory or a claim that the manager has shipped.
+
+## Current scoped order and forecast
+
+[Complete Story bodies](stories.md) · [Requirement and scenario coverage](coverage.md) · [Frozen provenance and history](publication.json)
+
+| ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
+| --- | --- | --- | ---: | ---: |
+| R1-01 / [PGB-71](https://scubapig.atlassian.net/browse/PGB-71) | Validate an editable work document | Reviewed design | 1.5 | 19 |
+| R1-02 / [PGB-72](https://scubapig.atlassian.net/browse/PGB-72) | Check the complete prescribed test plan | R1-01 | 1.5 | 7 |
+| R1-03 / [PGB-73](https://scubapig.atlassian.net/browse/PGB-73) | Write complete Epic and ticket YAML | R1-01, R1-02 | 1.25 | 8 |
+| R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | Validate assignment and handoff evidence | R1-01, R1-02 | 1.75 | 18 |
+| R1-21 / [PGB-99](https://scubapig.atlassian.net/browse/PGB-99) | Configure Pig Boss for multiple projects | R1-04 | 1.5 | 9 |
+| R1-31 / [PGB-145](https://scubapig.atlassian.net/browse/PGB-145) | Check Jira read configuration before use | R1-21 | 1.53125–1.90625 | 20 |
+| R1-38 / [PGB-152](https://scubapig.atlassian.net/browse/PGB-152) | Read native Jira observations accurately | R1-31 | 0.4375–0.75 | 8 |
+| R1-40 / [PGB-154](https://scubapig.atlassian.net/browse/PGB-154) | Reject duplicate Jira comment targets | R1-31 | 0.375–0.6375 | 8 |
+| R1-41 / [PGB-155](https://scubapig.atlassian.net/browse/PGB-155) | Reconcile the source inspection delivery record | R1-31 | 0.68125–1.08125 | 10 |
+| R1-42 / [PGB-156](https://scubapig.atlassian.net/browse/PGB-156) | Keep Jira inspection within its original bounds | R1-31 | 0.69375–1.175 | 5 |
+| R1-36 / [PGB-150](https://scubapig.atlassian.net/browse/PGB-150) | Inspect named Jira issues from source | R1-31, R1-38, R1-40, R1-41, R1-42 | 1.24375–1.7875 | 18 |
+| R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
+| R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
+| R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
+| R1-24 / [PGB-110](https://scubapig.atlassian.net/browse/PGB-110) | Publish prepared QA evidence safely | R1-04, R1-06, R1-07, PGB-108 | 3.34375–4.5625 | 20 |
+| R1-30 / [PGB-138](https://scubapig.atlassian.net/browse/PGB-138) | Prepare mixed QA inputs and two boundary controls | R1-04, R1-06, R1-07, PGB-108, R1-24 | 1.0625–1.5625 | 18 |
+| R1-27 / [PGB-132](https://scubapig.atlassian.net/browse/PGB-132) | Prepare the prescribed QA inputs | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-30 | 1.0625–1.59375 | 12 |
+| R1-08 / [PGB-78](https://scubapig.atlassian.net/browse/PGB-78) | Execute prescribed QA and hand off complete evidence | R1-04, R1-06, R1-07, PGB-108, R1-24, R1-27 | 1.3125–1.8125 | 17 |
+| R1-09 / [PGB-79](https://scubapig.atlassian.net/browse/PGB-79) | Request rework through the human’s assistant | R1-04 | 1.25 | 7 |
+| R1-10 / [PGB-80](https://scubapig.atlassian.net/browse/PGB-80) | Preview ready work from a complete snapshot | R1-02, R1-04, R1-21 | 1.75 | 7 |
+| R1-25 / [PGB-113](https://scubapig.atlassian.net/browse/PGB-113) | Validate repeated-parent repairs | R1-10 | 1.98 | 15 |
+| R1-26 / [PGB-129](https://scubapig.atlassian.net/browse/PGB-129) | Reject conflicting completion receipts | R1-25 | 1.28 | 17 |
+| R1-28 / [PGB-136](https://scubapig.atlassian.net/browse/PGB-136) | Preview own-ticket repairs | R1-26 | 1.92 | 20 |
+| R1-37 / [PGB-151](https://scubapig.atlassian.net/browse/PGB-151) | Keep repair proposals current | Reviewed design | 0.55 | 5 |
+| R1-39 / [PGB-153](https://scubapig.atlassian.net/browse/PGB-153) | Preserve published repairs across identical QA copies | Reviewed design | 0.65 | 5 |
+| R1-35 / [PGB-149](https://scubapig.atlassian.net/browse/PGB-149) | Preview complete repairs as structured data | R1-10, R1-25, R1-26, R1-28, R1-31, R1-37, R1-39 | 1.965 | 20 |
+| R1-32 / [PGB-146](https://scubapig.atlassian.net/browse/PGB-146) | Preview repairs from a source checkout | R1-10, R1-25, R1-26, R1-28, R1-35 | 0.86 | 10 |
+| R1-11 / [PGB-81](https://scubapig.atlassian.net/browse/PGB-81) | Preview the complete repair order | R1-10, R1-25, R1-26, R1-28, R1-32 | 1.91 | 18 |
+| R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 0.94375–1.28125 | 16 |
+| R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33 | 1.34375–1.8125 | 20 |
+| R1-12 / [PGB-82](https://scubapig.atlassian.net/browse/PGB-82) | Preview current Jira work with bounded reads | R1-11, R1-21, R1-31, R1-34, PGB-162, PGB-163 | 1.375–1.875 | 13 |
+| R1-13 / [PGB-83](https://scubapig.atlassian.net/browse/PGB-83) | Install a disabled AWS preview | R1-12 | 1.75 | 13 |
+| R1-14 / [PGB-84](https://scubapig.atlassian.net/browse/PGB-84) | Inspect durable scheduling state | R1-13 | 1.75 | 10 |
+| R1-29 / [PGB-137](https://scubapig.atlassian.net/browse/PGB-137) | Retain and inspect original transition proof | R1-14 | 1.5625 | 17 |
+| R1-15 / [PGB-85](https://scubapig.atlassian.net/browse/PGB-85) | Reconcile an uncertain attempt with evidence | R1-12, R1-14, R1-29 | 1.5 | 12 |
+| R1-16 / [PGB-86](https://scubapig.atlassian.net/browse/PGB-86) | Upgrade and remove the AWS installation safely | R1-14, R1-15 | 1.25 | 8 |
+| R1-22 / [PGB-100](https://scubapig.atlassian.net/browse/PGB-100) | Inspect Pig Boss operating health | R1-13, R1-14, R1-21 | 1.75 | 11 |
+| R1-23 / [PGB-101](https://scubapig.atlassian.net/browse/PGB-101) | Install Pig Boss health alarms | R1-16, R1-22 | 1.5 | 10 |
+| R1-17 / [PGB-87](https://scubapig.atlassian.net/browse/PGB-87) | Admit a ready Story or Bug safely | R1-05, R1-06, R1-08, R1-12, R1-14, R1-15, R1-16 | 1.75 | 10 |
+| R1-18 / [PGB-88](https://scubapig.atlassian.net/browse/PGB-88) | Admit queued rework on its existing PR | R1-09, R1-17 | 1.25 | 5 |
+| R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
+| R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
+
+Current scoped source-row forecast: **58.33375–64.76500 days**. Exact Decimal inputs use scale 100000 and sum to 5833375/6476500. This excludes the eight later Core Stories, their separately allocated C/foundation work, seven Tasks and unmeasured shared planning. It is not a complete Epic/Core estimate, net saving or elapsed effort. PGB-82 is its approved residual 13-path/11–15h allocation only. PGB-150 charges 9.95–14.30h runtime work once (8 owned paths plus 10 inherited catalog paths); PGB-155 charges 5.45–8.65h/10 paths and PGB-156 5.55–9.40h/5 paths.
+
+PGB-81 delivers the complete prepared-installed repair fixture, receipt-bound export route and eighth semantic smoke before stable-link replacement. At the scoped source checkpoint, its whole forecast was **18 paths / 1.91 days / 15.28 hours**, including all incurred planning/support, authoring, checks, reviews and PR preparation. The amended PR #120 changes 19 paths against main `9dfbe436`, adding `docs/using-pigboard.md` for the current smoke-count correction. The 18-path metadata and publication forecast retain that planning checkpoint; the actual PR footprint is 19 paths. This documentation correction is charged to ordinary support within the same 15.28-hour whole forecast. Only 0.72h remains below the strict two-day boundary; a concrete increase reaching 16h requires a same-scope split. All 42 original human cases remain NOT_RUN. Local tests, retained-evidence QA, exact-commit reviews, hosted CI/Codex, Director merge, live acceptance and activation remain separate gates.
+
+The observed deferred rows retain their raw descriptions, IDs, links and date in publication metadata. They are not translated, rendered, forecast or assessed for delivery here. External prerequisites PGB-108, PGB-162 and PGB-163 keep their native keys and do not imply completed work.
+
+## Earlier delivery record — dated history
+
+**Dated pre-PGB-81 partial source checkpoint.** The material below retains the preceding 31-Story/136-group history; its pending source compositions are resolved in the scoped checkpoint above.
 
 The owned 20-path PGB-136 change is composed onto verified merged PGB-138 main `b6b863476d9f07eee2702991f336def7ff38cd36`, tree `ebbfca1688f0aa954e29913dc72ceb6e74055fe0`. It preserves every incoming PGB-132/R1-27 and PGB-138/R1-30 contract. The residual PGB-132 source candidate extends the same producer to all 51 inputs in 14 families; final review, current checks and merge remain separate. The Director’s separately dated native inventory is 30 Stories/130 cases; this source does not claim a fresh all-ticket status audit or acceptance. Earlier development/source checkpoints remain historical in [publication.json](publication.json).
 
@@ -14,7 +73,11 @@ In scope addition: [Pig Boss multi-project identity and basic health](../../arch
 
 Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatcher, transcript storage, cancellation/automatic recovery, SaaS, other-cloud packages, automatic Jira/Cursor provisioning, new QA engines, PR-environment provisioning, human-unblock producer and legacy runtime reuse. The product uses one customer configuration, customer-owned secrets/state and no Scuba Pig runtime access.
 
-## Ordered Stories
+## Dated partial source plan — before PGB-81
+
+The following 31-Story/136-group table and its file forecasts are retained history. The current scoped table is above.
+
+## Ordered Stories (historical)
 
 [Complete Story bodies and 136 prescribed groups](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current stages and assignments are native Jira facts; this source mirror makes no fresh all-ticket status claim.
 
@@ -385,7 +448,7 @@ child-operation history, current forecast agreement, diagnosis/plan, tests/docs,
 ordinary correction and independent review/PR evidence. Prior allocations remain
 counted. The residual has nine authored paths within twelve maximum paths;
 unchanged publication bodies are not edited merely to fill that list.
-Current metadata aggregate: **45.49125–48.24125 days**, derived from all Story
+Dated 29-Story metadata aggregate: **45.49125–48.24125 days**, derived from all Story
 minimum hours and upper days (upper 48.05375 + 1.5/8). Only R1-27's forecast changes;
 other Story forecasts and source ownership stay unchanged.
 Both I11 partial controls remove actual environment proof and preserve current

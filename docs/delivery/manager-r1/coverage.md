@@ -35,22 +35,22 @@
 | M05 | R1-11-S12, R1-11-S13, R1-11-S14, R1-11-S15, R1-11-S16, R1-18-H01; R1-28-OC04 |
 | M06 | R1-11-S07, R1-11-S08, R1-11-S09, R1-11-S10, R1-11-S37, R1-18-H01; R1-28-OC01, R1-28-OC03, R1-28-OC06 |
 | M07 | R1-11-S05, R1-11-S06, R1-11-S34; R1-28-OC03 |
-| M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01 |
-| M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01 |
-| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05 |
-| M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03 |
+| M08 | R1-11-S19, R1-11-S20, R1-11-S21, R1-09-H01, R1-18-H01; R1-32-H01, R1-35-H01 |
+| M09 | R1-11-S22, R1-11-S23, R1-11-S24, R1-19-H01; R1-32-H01, R1-35-H01, R1-37-D2, R1-37-D3, R1-39-H01 |
+| M10 | R1-11-S25, R1-11-S29, R1-18-H02, R1-19-H02, R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-28-OC02, R1-28-OC05; R1-32-H01, R1-35-H01, R1-37-D4, R1-39-H01, R1-39-H02 |
+| M11 | R1-11-S24, R1-11-S26, R1-11-S27, R1-11-S28, R1-19-H03; R1-32-H01, R1-35-H01, R1-39-H01 |
 | M12 | R1-11-S02, R1-11-S40, R1-19-H03 |
-| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01 |
-| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02 |
+| M13 | R1-11-S30, R1-11-S31, R1-11-S32, R1-11-S33, R1-11-S34, R1-11-S35, R1-11-S36, R1-12-H02, R1-14-H01; R1-33-H01, R1-33-H02, R1-34-H01, R1-34-H02, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05 |
+| M14 | R1-11-S37, R1-11-S38, R1-11-S41, R1-12-H01, R1-17-H02, R1-18-H03, R1-19-H03; R1-31-H04; R1-36-H01, R1-36-H02; R1-32-H01, R1-32-H02, R1-33-H04, R1-34-H04, R1-35-H01, R1-35-H02, R1-37-D1, R1-37-D2, R1-37-D3, R1-37-D4, R1-37-D5, R1-39-H02, R1-12-H05 |
 | O01 | R1-13-H01, R1-13-H02 |
 | O02 | R1-10-H01, R1-13-H01 |
-| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04 |
+| O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04; R1-33-H03, R1-34-H03, R1-12-H05 |
 | O04 | R1-20-H01 |
 | O05 | R1-14-H01, R1-14-H02 |
 | O06 | R1-14-H02, R1-17-H01, R1-17-H02, R1-19-H01 |
 | O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03 |
-| O08 | R1-15-H01, R1-15-H02 |
-| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04 |
+| O08 | R1-15-H01, R1-15-H02; R1-29-H01, R1-29-H02 |
+| O09 | R1-12-H03, R1-13-H02, R1-15-H02; R1-31-H02, R1-31-H04; R1-36-H02, R1-36-H03, R1-36-H04; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05 |
 | O10 | R1-13-H02, R1-15-H02, R1-16-H02, R1-17-H03 |
 | O11 | R1-14-H01, R1-15-H02, R1-16-H01, R1-16-H02 |
 | O12 | R1-20-H01, R1-20-H02, R1-20-H03 |
@@ -106,10 +106,10 @@ The original 50-requirement reviews remain historical evidence. The historical 5
 | Requirement | Additional Story cases | Installed acceptance |
 | --- | --- | --- |
 | M01, M02, M04, M05 | R1-04-H04, R1-10-H03, R1-21-H01, R1-21-H02 | AT-01.7 |
-| M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 | AT-01.7 |
+| M07, M13, O03, O05, O07 | R1-12-H04, R1-14-H03, R1-21-H03 | AT-01.7; R1-33-H01, R1-33-H02, R1-33-H03, R1-34-H01, R1-34-H02, R1-34-H03, R1-38-H01, R1-38-H02, R1-42-H01, R1-12-H05 |
 | O13 | R1-04-H04, R1-10-H03, R1-12-H04, R1-14-H03, R1-21-H01–H03 | AT-01.7; R1-31-H01 |
 | O14 | R1-22-H01–H04 | AT-01.8 |
-| O15, O09–O12 | R1-23-H01–H04, R1-20-H04 | AT-01.8 |
+| O15, O09–O12 | R1-23-H01–H04, R1-20-H04 | AT-01.8; R1-29-H02, R1-33-H02, R1-33-H03, R1-33-H04, R1-34-H02, R1-34-H03, R1-34-H04, R1-38-H01, R1-38-H02, R1-40-H01, R1-42-H01, R1-42-H02, R1-42-H03, R1-42-H04, R1-12-H05 |
 
 The original 41 scheduling scenarios remain; these additional explicit cases cover
 project identity and health without renumbering them. Capacity/worker monitoring
@@ -141,3 +141,7 @@ PGB-150/R1-36 adds four source inspection groups. The source checkpoint is 31 St
 The current catalog composes the same 31/136 source contract with State’s six complete repair-preview histories. PGB-155/R1-41 is a native-only catalog child (0/1 human group NOT_RUN), not a 32nd source entry. The State 30/132 capture and its native observations remain dated. Source inspection, partial results, bounded transport and private-source controls retain all 35 variants, eight controls and the L06 projection.
 
 PGB-156/R1-42 is a native-only boundary repair with four separate NOT_RUN human groups and nine fixed subcases. Its source entry is pending; the source mapping stays 31 Stories/136 groups, 53 requirements and 41 original scenarios. The reviewed PGB-156 runtime merge fixes request snapshot, exact-limit stop, provider ADF and certificate diagnostics. The PGB-155 catalog still owns the ten-path source record, and its own one human group remains NOT_RUN.
+
+## Settled source checkpoint — 16 November 2026
+
+42-Story scoped source checkpoint; 50 Stories and 7 Tasks observed in the dated native capture; eight later Story mappings and Task167 publication remain Core-owned. The 166 human groups remain NOT_RUN; this mapping is not acceptance. All 53 existing requirements and 41 original scenarios remain. R1-41-H01 is catalog-only preservation, recorded in [publication.json](publication.json); it does not prove runtime selection. Later Core requirements and mappings are outside this checkpoint.
