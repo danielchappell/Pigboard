@@ -1,6 +1,6 @@
 # Pig Boss release one: complete delivery plan
 
-**Dated partial 30-Story/132-case source checkpoint after PGB-145/R1-31.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69’s baseline. This source composes the approved publisher, repeated-parent, current-proof consistency, QA preparation, three-input control, own-ticket selection and read-configuration amendments. PGB-137/R1-29 source composition remains pending. Jira owns the queue.
+**Current partial 31-Story/136-group source checkpoint including PGB-150/R1-36 on its reviewed PGB-156 runtime merge.** PGB-66 owns the release; PGB-93 owns the company/health addition to PGB-69’s baseline. This source composes the approved publisher, repeated-parent, current-proof consistency, QA preparation, three-input control, own-ticket selection, read-configuration and PGB-150 source-inspection amendments. PGB-137/R1-29 source composition remains pending. Jira owns the queue.
 
 The owned 20-path PGB-136 change is composed onto verified merged PGB-138 main `b6b863476d9f07eee2702991f336def7ff38cd36`, tree `ebbfca1688f0aa954e29913dc72ceb6e74055fe0`. It preserves every incoming PGB-132/R1-27 and PGB-138/R1-30 contract. The residual PGB-132 source candidate extends the same producer to all 51 inputs in 14 families; final review, current checks and merge remain separate. The Director’s separately dated native inventory is 30 Stories/130 cases; this source does not claim a fresh all-ticket status audit or acceptance. Earlier development/source checkpoints remain historical in [publication.json](publication.json).
 
@@ -16,7 +16,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 
 ## Ordered Stories
 
-[Complete Story bodies and 132 prescribed cases](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current stages and assignments are native Jira facts; this source mirror makes no fresh all-ticket status claim.
+[Complete Story bodies and 136 prescribed groups](stories.md) · [53-requirement coverage and the 41 original scenarios](coverage.md). All Stories target `danielchappell/Pigboard`, `main`, one PR. Current stages and assignments are native Jira facts; this source mirror makes no fresh all-ticket status claim.
 
 | ID / Jira Story | Complete usable outcome | Depends on | Estimated human days | Forecast files |
 | --- | --- | --- | ---: | ---: |
@@ -26,6 +26,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-04 / [PGB-74](https://scubapig.atlassian.net/browse/PGB-74) | Validate assignment and handoff evidence | R1-01, R1-02 | 1.75 | 18 |
 | R1-21 / [PGB-99](https://scubapig.atlassian.net/browse/PGB-99) | Configure Pig Boss for multiple projects | R1-04 | 1.5 | 9 |
 | R1-31 / [PGB-145](https://scubapig.atlassian.net/browse/PGB-145) | Check Jira read configuration before use | R1-21 | 1.53125–1.90625 | 20 |
+| R1-36 / [PGB-150](https://scubapig.atlassian.net/browse/PGB-150) | Inspect named Jira issues from source | R1-31 | 1.24375–1.7875 | 18 |
 | R1-05 / [PGB-75](https://scubapig.atlassian.net/browse/PGB-75) | Hand an implemented PR to review | R1-03, R1-04 | 1.5 | 10 |
 | R1-06 / [PGB-76](https://scubapig.atlassian.net/browse/PGB-76) | Review and hand off the current PR | R1-04, R1-05 | 1.25 | 8 |
 | R1-07 / [PGB-77](https://scubapig.atlassian.net/browse/PGB-77) | Execute prescribed QA helper steps | R1-02, R1-04 | 1.5 | 7 |
@@ -51,7 +52,7 @@ Out of scope: worker monitoring, duplicate Cursor launches, launch proxy/dispatc
 | R1-19 / [PGB-89](https://scubapig.atlassian.net/browse/PGB-89) | Queue a completed dependent PR for repair | R1-18 | 1.5 | 5 |
 | R1-20 / [PGB-90](https://scubapig.atlassian.net/browse/PGB-90) | Check a compatible release before enabling delivery | R1-03, R1-05, R1-06, R1-07, R1-08, R1-09, R1-19, R1-23 | 1.5 | 15 |
 
-Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total: **47.02–50.15 human working days**, with separate release-level installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
+Estimates include implementation, tests, docs and PR preparation by a developer familiar with this repository. Total for this partial 31-Story source set: **48.27–51.94 human working days** (48.26625–51.93500 before rounding), with separate release-level installed acceptance; this is effort, not calendar duration or an agent-token forecast. The per-slice estimates are planning judgments grounded in the exact contracts and current files, not measured implementation times. Independent review must challenge them. All Stories retain the 20-file limit. PGB-110 alone has the fixed-scope time exception recorded below; other Stories retain the ordinary time limit. Count deletions/moves and all supporting files; if a concrete implementation plan cannot fit, revise/split and re-review the plan before code. Do not hide supporting changes.
 
 ### Why this order
 
@@ -518,8 +519,8 @@ I02-child now supplies original submitted/unknown child-operation history before
 the actual78 composer introduction. The generic composer suffix is unchanged;
 other 50 invocation views, earlier I11/I14 corrections and all original bodies/
 case IDs remain. This is supplied/mock past input, not a helper result or proof
-of zero calls. Current source remains 29 Stories/128 cases and 53 requirements/41
-scenarios, with PGB-137 pending. The current metadata aggregate above is
+of zero calls. At that dated checkpoint the source remained 29 Stories/128 cases and 53 requirements/41
+scenarios, with PGB-137 pending. That dated metadata aggregate was
 45.49125–48.24125 days. PGB-78 retains 17 authored paths and10.5–14.5 hours.
 
 Final producer/input/index hashes, one composed-source suite, unchanged81-file
@@ -536,3 +537,13 @@ PGB-145/R1-31 follows only PGB-99/R1-21 and adds a prerequisite to final PGB-82/
 The dated e54 source was partial29/128. This A-only composition is partial30/132 against the dated PGB-145 native publication snapshot31/134; PGB-137/R1-29 source composition remains pending. R1-32 is separate parallel work and is not composed or counted here. The prior checkpoint/native30/130 is retained in publication history.
 
 This increment adds no Jira reads, resolver, provider proof, policy or PGB-144 decision. All original PGB-82 5 AC, 3 TAC and 4 human cases are preserved. Subsequent acquisition, receipt and integrated preview work remains **Provisional — not ready for delivery** outside this PR. Final PGB-82 retains supported initial defaults and measured source/copied small-domain acceptance. Current stage, exact revisions, local checks, independent reviews, human outcomes, hosted CI, merge and activation are distinct gates; Jira remains the one active queue.
+
+## PGB-150 source inspection catalog — 16 November 2026
+
+The current partial source composition adds the complete [R1-36 Story](stories.md), original five acceptance criteria, four technical constraints and four human groups to the State checkpoint. The source inspection API and fixture packet include the reviewed PGB-156 repair at merged runtime commit `fd5b04eaa2cd7265f4528a8be37beb75ff463254` (tree `879a3382edafc52989446a67d93508a16e44bec5`); this catalog child owns ten publication and guard paths. The final parent comparison covers eighteen paths: eight runtime and ten catalog. It retains every State repair-preview amendment and the three PGB-150 source/repair amendments as complete dated objects. PGB-155/R1-41 is a native-only child with one NOT_RUN human group; its own source entry remains pending.
+
+The source-only R1-36 forecast is **9.95–14.30 hours** (1.24375–1.7875 days). The partial source set is **48.26625–51.93500 days**. Including the PGB-155 catalog child once gives **48.94750–53.01625 days**; including PGB-152 and PGB-154 once gives **49.76000–54.40375 days**; including the native-only PGB-156 repair once gives **50.45375–55.57875 days**. PGB-155 is estimated at 5.45–8.65 hours; PGB-156 at 5.55–9.40 hours, including review and support. These are scoped source-stream forecasts, not an exhaustive native Epic estimate. Prior 9.70–13.85-hour and 48.23500–51.87875-day values, as well as older 11.25–15.70-hour and 48.42875–52.11000-day values, remain dated history.
+
+Verified native PGB-155 ID 10615 has PGB-145→PGB-155 link 10752 and PGB-155→PGB-150 link 10753. The native-only PGB-156/R1-42 repair has ID 10616, PGB-145→PGB-156 link 10754 and PGB-156→PGB-150 link 10755; its one five-path outcome fixes the four validated invocation boundaries. Existing PGB-145/PGB-152/PGB-154→PGB-150, PGB-150→PGB-147 and PGB-148→PGB-82 links remain. PGB-150 keeps its original 5 AC, 4 TAC and 4 human groups; PGB-147 keeps its original source/copied contract and later installed CLI/copy responsibility. PGB-137/146/147/148/149/151/152/153/154/155/156 source entries remain uncomposed. Dated native31/134 and34/144 snapshots, State30/132 and PGB-149 recorded comparison are historical, not a fresh native inventory. PGB-82 original criteria/cases and PGB-110 specific exception are unchanged.
+
+PGB-150 human acceptance remains NOT_RUN (0/4), PGB-152 NOT_RUN (0/2), PGB-154 NOT_RUN (0/1), PGB-155 NOT_RUN (0/1), and PGB-156 NOT_RUN (0/4). Local guard checks, independent committed-code reviews, current hosted CI/Codex, actual main integration and activation are distinct gates. The [source guide](../../manager-preview.md) covers normal use, partial results and source-damage recovery; the [publication record](publication.json) binds each historical receipt and the current reconciliation.

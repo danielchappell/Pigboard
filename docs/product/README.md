@@ -127,7 +127,7 @@ PGB-136 adds bounded own-ticket selection in the existing offline preview before
 
 ## Local Jira read-configuration increment — 16 November 2026
 
-The current partial source checkpoint is **30 Stories/132 cases** after PGB-145/R1-31, based on merged e54. The dated PGB-145 native publication snapshot is separately **31 Stories/134 cases**; PGB-137/R1-29 source composition remains pending. Earlier29/128 and native30/130 figures remain dated history. The local checker gains optional complete connection/reference and explicit budget checks plus safe change previews. This does not read Jira or prove credentials, visibility, supported live capacity or readiness. Four new human cases remain NOT_RUN; every original PGB-82 criterion and case remains. Final live-read defaults, measured acceptance, independent code review, hosted checks and owner merge/release gates remain separate.
+The dated PGB-145 partial source checkpoint was **30 Stories/132 cases** after PGB-145/R1-31, based on merged e54. The dated PGB-145 native publication snapshot is separately **31 Stories/134 cases**; PGB-137/R1-29 source composition remains pending. Earlier29/128 and native30/130 figures remain dated history. The local checker gains optional complete connection/reference and explicit budget checks plus safe change previews. This does not read Jira or prove credentials, visibility, supported live capacity or readiness. Four new human cases remain NOT_RUN; every original PGB-82 criterion and case remains. Final live-read defaults, measured acceptance, independent code review, hosted checks and owner merge/release gates remain separate.
 
 ## Source machine repair preview — 16 November 2026
 
@@ -139,7 +139,7 @@ full digest in the same order as the machine result. The full installed fixture
 kit, eighth semantic smoke and complete source/native publication reconciliation
 remain PGB-81.
 
-The current partial source inventory remains **30 Stories/132 cases**, including
+The dated State partial source inventory was **30 Stories/132 cases**, including
 actual merged PGB-145. The preceding PGB-146 capture retains its earlier source
 29/128 and dated native32/136 unchanged, including its historical unmatched six
 and pre-integration runtime map. Those dated observations are not current counts.
@@ -158,3 +158,9 @@ PGB-146 criteria/testing and its two human routes, and all original PGB-81
 criteria/testing and42 human cases, remain intact and NOT_RUN. R1-35's two human
 routes are also NOT_RUN. Local developer evidence, independent review, hosted
 checks, merge, human acceptance and activation retain their separate gates.
+
+## Source inspection catalog — 16 November 2026
+
+The current partial source contract is **31 Stories/136 human groups**, with all 53 requirements and 41 original scenarios retained. PGB-150/R1-36 provides bounded source Jira issue inspection through `inspectJiraIssues`; the [source guide](../manager-preview.md) explains trusted inputs, partial results and recovery. Its existing 35 variants, eight controls and L06 private projection map to four human groups, all NOT_RUN (0/4). PGB-152 and PGB-154 repairs, plus native-only PGB-156, are in the reviewed source runtime merge `fd5b04eaa2cd7265f4528a8be37beb75ff463254`. Their source entries remain uncomposed; human groups remain NOT_RUN (0/2, 0/1 and 0/4).
+
+PGB-155/R1-41 owns the ten-path catalog comparison, including the original PGB-150 contract and preserved State history. Its one human group is NOT_RUN (0/1) and its source entry remains pending. PGB-156 fixes four bounded read/diagnostic defects in five runtime and guide paths. The final catalog records the reviewed merge and native links without adding a 32nd source Story. The 30/132 State checkpoint and older native counts are dated captures, not a current native inventory. [Publication metadata](../delivery/manager-r1/publication.json) separates the source and State histories, native links, current forecasts and remaining gates. Local validation does not establish installed or live Jira acceptance, hosted CI, Director merge or activation.

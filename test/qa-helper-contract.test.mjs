@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import canonicalize from 'canonicalize';
 import { validateWork } from '../lib/contracts/work.mjs';
 import { readDatabase, connectionConfig, safeError, QaError } from '../skills/qa-database/scripts/read-postgres.mjs';
 import { prepareFixture, serveFixture, query } from './fixtures/qa-helper-case.mjs';
@@ -1114,9 +1115,273 @@ test('PGB-136 partial source publication binds the exact own-selection split and
 
 const readConfigHash=v=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 
+// Reconcile only the reviewed runtime/catalog split. Every predecessor is a complete object.
+const catalogStateKeys=['source_repair_preview_amendment','machine_repair_preview_amendment','current_pr_repair_amendment','duplicate_qa_repair_amendment','readable_repair_preview_amendment','readable_repair_integration_amendment'];
+const catalogSourceKeys=['native_source_issue_inspection_amendment','native_observation_repair_amendment','native_target_identity_repair_amendment'];
+const catalogReceiptLinks=[{from:'PGB-145',to:'PGB-150',id:'10744',preserved:true},{from:'PGB-150',to:'PGB-147',id:'10745',preserved:true},{from:'PGB-152',to:'PGB-150',id:'10748',preserved:true},{from:'PGB-154',to:'PGB-150',id:'10751',preserved:true},{from:'PGB-145',to:'PGB-155',id:'10752',preserved:false},{from:'PGB-155',to:'PGB-150',id:'10753',preserved:false}];
+// Reverse only the named PGB-156 final runtime rebind before the reviewed catalog layers.
+function beforeFinalRuntimeRebind(value,kind){
+ const prior=structuredClone(value);
+ if(kind==='drafts'){
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  assert.equal(prior.length,31);assert(!prior.some(x=>x.id==='R1-41'||x.id==='R1-42'));return prior;
+ }
+ const expectedBoundary='ad6e348269539dc109e048e9ec1adaf7c2d02b99cfb341c3a604d92257b148d5';
+ if(kind==='metadata'){
+  assert.equal(readConfigHash(prior),'eb58c13c50f7acfe1610b73abe139703b4c92e312f8034c96d897843f41fe1b1');
+  const rows=prior.filter(x=>x.id==='R1-36');assert.equal(rows.length,1);const r=rows[0],a=r.source_catalog_integration;assert(a);
+  assert.equal(readConfigHash(a),'9100bfd70281c9b6c1351d7995300aa11a5b1f2d803fc96cfdbf41ab0e328dc3');
+  assert.deepEqual(r.hours,{min:9.95,max:14.3});assert.equal(r.days,1.7875);
+  assert.equal(a.runtime.commit,'fd5b04eaa2cd7265f4528a8be37beb75ff463254');assert.equal(a.runtime.tree,'879a3382edafc52989446a67d93508a16e44bec5');
+  assert.deepEqual(a.runtime.parents,['23bb352b4d9f945f65e34d3d15d28dced51d9b80','0c61e80151ffcc7cb4d319f6048d46357dc650dd']);
+  assert.deepEqual(a.whole_hours,{runtime:{min:9.95,max:14.3},catalog:{min:5.45,max:8.65},boundary_repair:{min:5.55,max:9.4}});
+  assert.deepEqual(a.source_forecast_days,{min:48.26625,max:51.935});assert.deepEqual(a.source_plus_catalog_days,{min:48.9475,max:53.01625});
+  assert.deepEqual(a.known_repair_total_days,{min:49.76,max:54.40375});assert.deepEqual(a.including_boundary_repair_days,{min:50.45375,max:55.57875});
+  assert.equal(readConfigHash(a.native_boundary_repair),expectedBoundary);assert.equal(a.native_boundary_repair.native_key,'PGB-156');
+  assert.equal(a.native_boundary_repair.receipt_sha256,'05c33a85cbc7f4e3d381fbc354df15b4f4c2324105de863a0a51ec8e4cf1e908');
+  assert.deepEqual(a.native_boundary_repair.links.map(x=>[x.id,x.from,x.to]),[['10754','PGB-145','PGB-156'],['10755','PGB-156','PGB-150']]);
+  assert.equal(Object.keys(a.native_boundary_repair.changed_artifacts_sha256).length,5);assert.equal(readConfigHash(a.historical23bb),'40770768832a0205576b59ae0fce850c17c9a32ad5e14a7f736ee7f8631c49c0');
+  const h=a.historical23bb;r.hours=h.hours;r.days=h.days;r.delivery_state=h.delivery_state;
+  a.runtime=h.runtime;a.whole_hours=h.whole_hours;a.source_forecast_days=h.source_forecast_days;a.source_plus_catalog_days=h.source_plus_catalog_days;a.known_repair_total_days=h.known_repair_total_days;
+  delete a.including_boundary_repair_days;delete a.native_boundary_repair;delete a.historical23bb;
+  assert.equal(readConfigHash(prior),'af020bceb570fb00c5b7632c3262cd048f7c6ea2b72cfa48141d47f80bd92c4d');return prior;
+ }
+ assert.equal(kind,'publication');assert.equal(readConfigHash(prior),'8624d22abca43b0f9929c7de5df31edbebc1a3e858269677cdae5b0f6fb907ad');
+ const a=prior.source_inspection_catalog_integration_amendment;assert(a);assert.equal(readConfigHash(a),'92b3753b354125107f6c62bc56f784aa8b1669a2e28b764c6f967efa94a3fe62');
+ assert.equal(readConfigHash(a.native_boundary_repair),expectedBoundary);assert.equal(a.native_boundary_repair.receipt_sha256,'05c33a85cbc7f4e3d381fbc354df15b4f4c2324105de863a0a51ec8e4cf1e908');
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);assert.equal(prior.stories['R1-36'],'PGB-150');assert(!Object.hasOwn(prior.stories,'R1-42'));
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments.at(-1),'PGB-156');assert.equal(prior.current_source_scope.pending_source_dependencies.at(-1).native_link_id,'10755');
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.26625,max:51.935});assert.deepEqual(a.including_boundary_repair_days,{min:50.45375,max:55.57875});
+ assert.deepEqual(a.whole_hours,{runtime:{min:9.95,max:14.3},catalog:{min:5.45,max:8.65},boundary_repair:{min:5.55,max:9.4}});
+ assert.equal(readConfigHash(a.historical23bb),'4624d7d8e719b2ddb8e40b69101d013080455569fb2ce78759ff6d427ddf31ca');
+ const h=a.historical23bb;prior.status=h.status;prior.current_source_scope=h.current_source_scope;
+ a.runtime=h.runtime;a.current_source_status=h.status;a.source_forecast_days=h.source_forecast_days;a.source_plus_catalog_days=h.source_plus_catalog_days;a.known_repair_total_days=h.known_repair_total_days;a.whole_hours=h.whole_hours;a.human=h.human;a.pending_source_dependencies=h.pending_source_dependencies;
+ delete a.including_boundary_repair_days;delete a.native_boundary_repair;delete a.historical23bb;
+ assert.equal(readConfigHash(prior),'a5d3adc6dc53cf4640b8887b2955fff11e88142ef3e1f9a5597dfee0efe9bddd');return prior;
+}
+
+const catalogCurrentKeys=["date","epic","grooming","status","stories","operational_tasks","story_count","case_count","requirement_count","scenario_count","dependency_links","baseline_publication","follow_on_tasks","health_precedence_correction","baseline_design_commit","reviewed_design_artifacts","startup_alarm_correction","history","qa_split","repeated_parent_amendment","current_source_scope","baseline_before_amendments","current_proof_conflict_amendment","qa_input_preparation_amendment","qa_input_controls_amendment","own_ticket_selection_amendment","read_configuration_amendment","native_source_issue_inspection_amendment","native_observation_repair_amendment","native_target_identity_repair_amendment","source_repair_preview_amendment","machine_repair_preview_amendment","current_pr_repair_amendment","duplicate_qa_repair_amendment","readable_repair_preview_amendment","readable_repair_integration_amendment","source_inspection_catalog_integration_amendment"];
+function beforeCatalogIntegration(value,kind){
+ const prior=structuredClone(value);
+ if(kind==='drafts'){
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  assert.equal(prior.length,31);assert(!prior.some(x=>x.id==='R1-41'));return prior;
+ }
+ if(kind==='metadata'){
+  assert.equal(readConfigHash(prior),'af020bceb570fb00c5b7632c3262cd048f7c6ea2b72cfa48141d47f80bd92c4d');
+  const rows=prior.filter(x=>x.id==='R1-36');assert.equal(rows.length,1);const r=rows[0],a=r.source_catalog_integration;assert(a);
+  assert.deepEqual(r.hours,{min:9.7,max:13.85});assert.equal(r.days,1.73125);
+  assert.equal(a.plan_sha256,'64089b7feb21d36a4ed2fce8d2923c98d2475c6b27d433d92833dc1ee5ccd9e1');
+  assert.deepEqual(a.whole_hours,{runtime:{min:9.7,max:13.85},catalog:{min:5,max:7.85}});
+  assert.deepEqual(a.source_forecast_days,{min:48.235,max:51.87875});assert.deepEqual(a.source_plus_catalog_days,{min:48.86,max:52.86});
+  assert.deepEqual(a.known_repair_total_days,{min:49.6725,max:54.2475});
+  assert.deepEqual(a.native_catalog.source_id,'R1-41');assert.deepEqual(a.native_catalog.native_key,'PGB-155');
+  assert.equal(a.native_catalog.receipt_sha256,'bb881eb154977a84b49b758fe6d4b42d109831dc153a14bc6bdd416e6cda2dd2');
+  assert.deepEqual(a.native_catalog.links,catalogReceiptLinks);assert.equal(a.native_catalog.source_composed,false);
+  assert.equal(a.runtime_paths.length,8);assert.equal(a.catalog_paths.length,10);assert.equal(a.final_parent_union_paths.length,18);
+  assert.deepEqual([...new Set([...a.runtime_paths,...a.catalog_paths])].sort(),[...r.files].sort());
+  assert.deepEqual(a.historical449.hours,{min:11.25,max:15.7});assert.equal(a.historical449.days,1.9625);
+  r.hours=a.historical449.hours;r.days=a.historical449.days;r.delivery_state=a.historical449.delivery_state;delete r.source_catalog_integration;
+  assert.equal(readConfigHash(prior),'163c5a517dfa878043db4db2e209e7e69e7da37a0015d87574bf06a45e14e54c');return prior;
+ }
+ assert.equal(kind,'publication');assert.equal(readConfigHash(prior),'a5d3adc6dc53cf4640b8887b2955fff11e88142ef3e1f9a5597dfee0efe9bddd');
+ assert.deepEqual(Object.keys(prior),catalogCurrentKeys);const a=prior.source_inspection_catalog_integration_amendment;assert(a);
+ assert.equal(readConfigHash(a),'3be54e0d258212aa0dea0bda8fb46092a15efb008bd622f787121ef0db3b6541');
+ assert.equal(a.plan_sha256,'64089b7feb21d36a4ed2fce8d2923c98d2475c6b27d433d92833dc1ee5ccd9e1');
+ assert.deepEqual([a.runtime.commit,a.runtime.actual_state_main,a.runtime.actual_state_main_tree,a.runtime.same_tree],['23bb352b4d9f945f65e34d3d15d28dced51d9b80','a17841ee3e9e1a08a0ad3c322ae98fbff1cb41a9','de9fbb160b016fefcac70424761fa9905520cb58',true]);
+ assert.equal(a.runtime.tree,'8ba753f6ab12405e87d03ce5eda30bcd4876535f');
+ assert.equal(a.predecessor_publications.source449.json_sha256,'5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116');
+ assert.equal(a.predecessor_publications.state_main.json_sha256,'549c5f4913e4be75a72c16e0f985dcc534b01c7b1cc40901d744f61f9af8c8a6');
+ assert.deepEqual(Object.keys(a.amendment_hashes.source),catalogSourceKeys);assert.deepEqual(Object.keys(a.amendment_hashes.state),catalogStateKeys);
+ for(const k of catalogSourceKeys)assert.equal(readConfigHash(prior[k]),a.amendment_hashes.source[k],k);
+ for(const k of catalogStateKeys)assert.equal(readConfigHash(prior[k]),a.amendment_hashes.state[k].json_sha256,k);
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);
+ assert.equal(prior.status,a.current_source_status);assert.equal(prior.current_source_scope.status,a.current_source_status);
+ assert.deepEqual(a.counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments,['PGB-137','PGB-146','PGB-147','PGB-148','PGB-149','PGB-152','PGB-154','PGB-151','PGB-153','PGB-155']);
+ assert.deepEqual(prior.current_source_scope.pending_source_dependencies.at(-1),a.pending_source_dependencies[0]);
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.235,max:51.87875});
+ assert.deepEqual(a.source_plus_catalog_days,{min:48.86,max:52.86});assert.deepEqual(a.known_repair_total_days,{min:49.6725,max:54.2475});
+ assert.deepEqual(a.catalog.links,catalogReceiptLinks);assert.deepEqual(a.packet,{variants:35,controls:8,private_projection:1});assert.equal(a.paths.runtime.length,8);assert.equal(a.paths.catalog.length,10);assert.equal(a.paths.final_parent_union.length,18);
+ assert.equal(new Set([...a.paths.runtime,...a.paths.catalog]).size,18);
+ assert.deepEqual([a.human.p150,a.human.p152,a.human.p154,a.human.p155],Array(4).fill('NOT_RUN (0/4)').map((x,i)=>['NOT_RUN (0/4)','NOT_RUN (0/2)','NOT_RUN (0/1)','NOT_RUN (0/1)'][i]));
+ assert.equal(a.verification.activation_authorized,false);
+ for(const k of catalogStateKeys)delete prior[k];delete prior.source_inspection_catalog_integration_amendment;
+ prior.status=a.historical449.status;prior.story_count=a.historical449.story_count;prior.case_count=a.historical449.case_count;
+ prior.current_source_scope=a.historical449.current_source_scope;
+ assert.equal(readConfigHash(prior),'5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116');return prior;
+}
+function stateCheckpoint(value,kind){
+ const state=kind==='publication'?Object.fromEntries(catalogStateKeys.map(k=>[k,structuredClone(value[k])])):null;
+ const prior=beforeSourceIssueInspection(value,kind);
+ if(kind==='publication'){
+  for(const k of catalogStateKeys)prior[k]=state[k];
+  assert.equal(readConfigHash(prior),'549c5f4913e4be75a72c16e0f985dcc534b01c7b1cc40901d744f61f9af8c8a6');
+  assert.equal(createHash('sha256').update(canonicalize(prior)).digest('hex'),'7e999933eba22d8c7109df7a23aaae4715a60a97fc9abb6ea96ef6f53f887a7b');
+ }else assert.equal(readConfigHash(prior),kind==='drafts'?'2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62':'47ee11ec184c11874371e80cfe78653ac933c963d62199b88ae002a0c2d5a088');
+ return prior;
+}
+
+// A dated State projection is never passed back through the current-catalog assertion.
+function stateBeforeReadConfiguration(value,kind){
+ const state=stateCheckpoint(value,kind),earlier=beforeReadConfiguration(value,kind);
+ if(kind==='publication')for(const k of catalogStateKeys)earlier[k]=structuredClone(state[k]);
+ return earlier;
+}
+async function stateRawFile(file){
+ assert(['ticket-drafts.json','plan-metadata.json'].includes(file));
+ const kind=file==='ticket-drafts.json'?'drafts':'metadata';
+ const current=JSON.parse(await read('docs/delivery/manager-r1/'+file));
+ return JSON.stringify(stateCheckpoint(current,kind),null,2)+'\n';
+}
+
+// Assert and reverse only the verified native-only R1-40 repair before the unchanged R1-38 and source-history guards.
+function beforeNativeTargetIdentityRepair(value,kind) {
+ const prior=beforeCatalogIntegration(beforeFinalRuntimeRebind(value,kind),kind);
+ if(kind==='drafts') {
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  assert(!prior.some(x=>x.id==='R1-40'));return prior;
+ }
+ if(kind==='metadata') {
+  assert.equal(readConfigHash(prior),'163c5a517dfa878043db4db2e209e7e69e7da37a0015d87574bf06a45e14e54c');
+  const rows=prior.filter(x=>x.id==='R1-36');assert.equal(rows.length,1);const story=rows[0],a=story.native_target_identity_repair;assert(a);
+  assert.equal(readConfigHash(a),'7bbac5ed143e0e846c9d607736298754bd3632385902eb35b63a1eebbf2a9f22');
+  assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent,a.source_composed],['R1-40','PGB-154','10614','PGB-66',false]);
+  assert.equal(a.reviewed_plan_sha256,'a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b');
+  assert.equal(a.receipt_sha256,'be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a');
+  assert.deepEqual([a.native_prerequisite.link_id,a.native_child_to_feature.link_id],['10750','10751']);
+  assert.deepEqual(a.verified_parent_body_sha256,{before:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9',after:'758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b'});
+  assert.deepEqual([a.pinned_feature_revision,a.pinned_feature_tree],['1524127c6d9ffbad8481cf7ce86bcc19cb712f52','b35fa3cb57dbdd133d61f76f6b6d1ba19ebb43a2']);
+  assert.deepEqual(a.changed_files,['lib/jira/read.mjs','test/jira-read.test.mjs','docs/manager-preview.md','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','test/story-authoring.test.mjs','test/qa-helper-contract.test.mjs']);
+  assert.equal(a.changed_file_count,8);assert.equal(new Set(a.changed_files).size,8);assert.deepEqual(a.child_hours,{min:3,max:5.1});assert.deepEqual(a.child_days,{min:0.375,max:0.6375});
+  assert.deepEqual(a.child_human_groups,{count:1,status:'NOT_RUN'});assert.deepEqual(a.source_counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+  assert.deepEqual(a.source_forecast_days,{min:48.42875,max:52.11});assert.deepEqual(a.historical152_delivery_forecast_days,{min:48.86625,max:52.86});assert.deepEqual(a.current_delivery_forecast_days,{min:49.24125,max:53.4975});
+  assert.equal(readConfigHash(story.delivery_state),'814d9fe0a1b515e87a978ef16d3ae80c443baff732d85f5738e4c065e67eec9c');
+  assert.equal(readConfigHash(a.historical_parent.delivery_state),'ae47ae3d15c37da54fc083efac4df17e72dd26b06ffb3231a8717d87dcc32e6e');
+  assert.equal(readConfigHash(story.native_observation_repair),'683a1a5ff5cdcd8f5ac3eef9ace2f61ed080496b3b213f27708cdd7b8fb62012');
+  story.delivery_state=a.historical_parent.delivery_state;delete story.native_target_identity_repair;
+  assert.equal(readConfigHash(prior),'349721b5858c1fbb3494371c3c41ac8a464e3a463c435245558f7636759c9c67');return prior;
+ }
+ assert.equal(kind,'publication');assert.equal(readConfigHash(prior),'5919293a6640bd5952577f3a21793089fba7087fcbe80d4e4a5aa4dffbdad116');
+ assert.equal(readConfigHash(prior.status),'958477720aa43c0814539a4158e6e207673c698280cada83296e260fb36e0487');
+ assert.equal(readConfigHash(prior.current_source_scope.status),'958477720aa43c0814539a4158e6e207673c698280cada83296e260fb36e0487');
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);assert(!Object.hasOwn(prior.stories,'R1-40'));
+ const a=prior.native_target_identity_repair_amendment;assert(a);assert.equal(readConfigHash(a),'841ed253700348ceb1a572ec7a5a379f9ded8e15a04ebcdc238af421e8dfdb48');
+ assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent],['R1-40','PGB-154','10614','PGB-66']);assert.deepEqual(a.source_composed,[]);assert.deepEqual(a.source_counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+ assert.equal(a.reviewed_plan_sha256,'a479bb57472cabb565e34133fdecdc9923396223c1ba7db909c267b58f68bf8b');assert.equal(a.receipt_sha256,'be2202f8398ef5f511a11afd4209f2ae083cbed4121d3e35f619c84521867d8a');
+ assert.deepEqual(a.parent_body_sha256,{before:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9',after:'758552ba1ff16df8570e751ca7ef303e247cb5598d0835adb3c89ccc7646937b'});assert.equal(a.parent_contract_preserved_except_child_prerequisite,true);
+ assert.deepEqual(a.native_links.map(x=>[x.from,x.to,x.id]),[['PGB-145','PGB-150','10744'],['PGB-150','PGB-147','10745'],['PGB-152','PGB-150','10748'],['PGB-145','PGB-154','10750'],['PGB-154','PGB-150','10751']]);
+ assert.deepEqual(a.child_hours,{min:3,max:5.1});assert.deepEqual(a.child_days,{min:0.375,max:0.6375});assert.equal(a.child_changed_files.length,8);assert.deepEqual(a.child_human_groups,{count:1,status:'NOT_RUN'});
+ const pending={source_id:'R1-36',native_key:'PGB-150',prerequisite_source_id:'R1-40',prerequisite_native_key:'PGB-154',required_outcome:'ai_qa_complete',native_link_id:'10751',status:'native_verified_source_pending'};
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments,['PGB-137','PGB-146','PGB-147','PGB-148','PGB-149','PGB-152','PGB-154']);
+ assert.deepEqual(prior.current_source_scope.pending_source_dependencies.at(-1),pending);assert.equal(prior.current_source_scope.pending_source_dependencies.length,4);assert.deepEqual(a.pending_source_dependency,pending);
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.42875,max:52.11});assert.deepEqual(a.source_forecast_days,prior.current_source_scope.forecast_days);
+ assert.deepEqual(a.historical152_delivery_forecast_days,{min:48.86625,max:52.86});assert.deepEqual(a.current_delivery_forecast_days,{min:49.24125,max:53.4975});
+ assert.equal(Number((48.42875+3.5/8+3/8).toFixed(5)),49.24125);assert.equal(Number((52.11+6/8+5.1/8).toFixed(5)),53.4975);
+ assert.equal(readConfigHash(a.historical_parent.status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.equal(readConfigHash(a.historical_parent.current_source_scope_status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.equal(readConfigHash(prior.native_observation_repair_amendment),'de763f9470c3feb256bfb07acbe89395b83b81b2c8c731b2807937b7c7803cd9');
+ prior.current_source_scope.pending_source_amendments.pop();prior.current_source_scope.pending_source_dependencies.pop();prior.status=a.historical_parent.status;prior.current_source_scope.status=a.historical_parent.current_source_scope_status;delete prior.native_target_identity_repair_amendment;
+ assert.equal(readConfigHash(prior),'803a89019366f32951d2be2e34fb237c5977a3526f6101daeb6a1f4bc7584081');return prior;
+}
+
+// Assert and reverse the verified native-only R1-38 repair before the unchanged source/history guards.
+function beforeNativeObservationRepair(value,kind) {
+ const prior=beforeNativeTargetIdentityRepair(value,kind);
+ if(kind==='drafts') {
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  assert(!prior.some(x=>x.id==='R1-38'));return prior;
+ }
+ if(kind==='metadata') {
+  assert.equal(readConfigHash(prior),'349721b5858c1fbb3494371c3c41ac8a464e3a463c435245558f7636759c9c67');
+  const r=prior.filter(x=>x.id==='R1-36');assert.equal(r.length,1);const story=r[0],a=story.native_observation_repair;assert(a);
+  assert.equal(readConfigHash(a),'683a1a5ff5cdcd8f5ac3eef9ace2f61ed080496b3b213f27708cdd7b8fb62012');
+  assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent,a.source_composed],['R1-38','PGB-152','10612','PGB-66',false]);
+  assert.deepEqual([a.native_prerequisite.link_id,a.native_child_to_feature.link_id],['10747','10748']);
+  assert.deepEqual(a.verified_parent_body_sha256,{before:'afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94',after:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9'});
+  assert.equal(a.reviewed_plan_sha256,'53ed8317173824d822e2c55f3030837f1ac1e02785228d4470e0bff4b26a789c');assert.equal(a.receipt_sha256,'4879f236fe516d8d5fe31e93da48d7be6f3ea1f522301bd3b26e6cd6b4a2b8ae');
+  assert.deepEqual(a.changed_files,['lib/jira/read.mjs','test/jira-read.test.mjs','docs/manager-preview.md','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','test/story-authoring.test.mjs','test/qa-helper-contract.test.mjs']);
+  assert.equal(a.changed_file_count,8);assert.equal(new Set(a.changed_files).size,8);assert.deepEqual(a.child_hours,{min:3.5,max:6});assert.deepEqual(a.child_days,{min:0.4375,max:0.75});
+  assert.deepEqual(story.hours,{min:11.25,max:15.7});assert.equal(story.days,1.9625);assert.equal(readConfigHash(story.delivery_state),'ae47ae3d15c37da54fc083efac4df17e72dd26b06ffb3231a8717d87dcc32e6e');
+  assert.deepEqual(a.current_source_forecast_days,{min:48.42875,max:52.11});assert.deepEqual(a.current_delivery_forecast_days,{min:48.86625,max:52.86});
+  assert.equal(a.historical95.revision,'95c711999b90b20842dfd172f7966f73c8cfde34');assert.equal(a.historical95.tree,'63632cbb9b184c0cc7af3b833d35ce043190b185');
+  assert.deepEqual(a.historical95.hours,{min:10.85,max:15});assert.equal(a.historical95.days,1.875);assert.equal(readConfigHash(a.historical95.delivery_state),'2c71d86620a6393593857ff8e9c64813ced56b3e20757eaf50ab6e4941b5fef5');
+  assert.deepEqual(a.historical95.source_forecast_days,{min:48.37875,max:52.0225});assert.deepEqual(a.historical95.native_source_forecast_days,{base_min:47.0225,base_max:50.1475,added_min:1.35625,added_max:1.875,current_min:48.37875,current_max:52.0225});
+  assert.deepEqual(story.dependencies,['R1-31']);assert.equal(story.files.length,18);assert.equal(story.plan_sha256,'5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47');
+  story.hours=a.historical95.hours;story.days=a.historical95.days;story.delivery_state=a.historical95.delivery_state;delete story.native_observation_repair;
+  assert.equal(readConfigHash(prior),'c0acb72e06de6270229fe4e3d534a89166bd142f854b216c0992e0402b292c20');return prior;
+ }
+ assert.equal(kind,'publication');assert.equal(readConfigHash(prior),'803a89019366f32951d2be2e34fb237c5977a3526f6101daeb6a1f4bc7584081');
+ assert.equal(readConfigHash(prior.status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.equal(readConfigHash(prior.current_source_scope.status),'6818d30efc77711a9a30184178c893391c6e09cadc03ae56c00b1d2236f80f5b');
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);assert.equal(prior.stories['R1-36'],'PGB-150');assert(!Object.hasOwn(prior.stories,'R1-38'));
+ const a=prior.native_observation_repair_amendment;assert(a);assert.equal(readConfigHash(a),'de763f9470c3feb256bfb07acbe89395b83b81b2c8c731b2807937b7c7803cd9');
+ assert.equal(readConfigHash(a.historical95.status),'a07a1b9bc0d41b8c55e0992fb7515e311538d35f3149ecea3a70ec1b7f15b750');
+ assert.equal(readConfigHash(a.historical95.current_source_scope_status),'a07a1b9bc0d41b8c55e0992fb7515e311538d35f3149ecea3a70ec1b7f15b750');
+ assert.deepEqual([a.source_id,a.native_key,a.native_id,a.parent],['R1-38','PGB-152','10612','PGB-66']);assert.deepEqual(a.source_composed,[]);assert.deepEqual(a.source_counts,{stories:31,human_groups:136,requirements:53,scenarios:41});
+ assert.equal(a.reviewed_plan_sha256,'53ed8317173824d822e2c55f3030837f1ac1e02785228d4470e0bff4b26a789c');assert.equal(a.receipt_sha256,'4879f236fe516d8d5fe31e93da48d7be6f3ea1f522301bd3b26e6cd6b4a2b8ae');
+ assert.deepEqual(a.parent_body_sha256,{before:'afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94',after:'5aa49be36a16b0bc8077796aa62033c6a1793018a830653e9e077f249d252ea9'});
+ assert.deepEqual(a.native_links.map(x=>[x.from,x.to,x.id]),[['PGB-145','PGB-150','10744'],['PGB-150','PGB-147','10745'],['PGB-145','PGB-152','10747'],['PGB-152','PGB-150','10748']]);
+ assert.deepEqual(a.child_hours,{min:3.5,max:6});assert.deepEqual(a.child_days,{min:0.4375,max:0.75});assert.equal(a.child_changed_files.length,8);assert.deepEqual(a.child_human_groups,{count:2,status:'NOT_RUN'});
+ const pending={source_id:'R1-36',native_key:'PGB-150',prerequisite_source_id:'R1-38',prerequisite_native_key:'PGB-152',required_outcome:'ai_qa_complete',native_link_id:'10748',status:'native_verified_source_pending'};
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments,['PGB-137','PGB-146','PGB-147','PGB-148','PGB-149','PGB-152']);
+ assert.deepEqual(prior.current_source_scope.pending_source_dependencies.at(-1),pending);assert.equal(prior.current_source_scope.pending_source_dependencies.length,3);assert.deepEqual(a.pending_source_dependency,pending);
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.42875,max:52.11});assert.deepEqual(prior.native_source_issue_inspection_amendment.forecast_days,{base_min:47.0225,base_max:50.1475,added_min:1.40625,added_max:1.9625,current_min:48.42875,current_max:52.11});
+ assert.deepEqual(a.source_forecast_days,prior.current_source_scope.forecast_days);assert.deepEqual(a.current_delivery_forecast_days,{min:48.86625,max:52.86});
+ assert.equal(Number((47.0225+11.25/8).toFixed(5)),48.42875);assert.equal(Number((50.1475+15.7/8).toFixed(5)),52.11);assert.equal(Number((48.42875+3.5/8).toFixed(5)),48.86625);assert.equal(Number((52.11+6/8).toFixed(5)),52.86);
+ assert.deepEqual(a.historical95.metadata.hours,{min:10.85,max:15});assert.equal(a.historical95.metadata.days,1.875);assert.equal(readConfigHash(a.historical95.metadata.delivery_state),'2c71d86620a6393593857ff8e9c64813ced56b3e20757eaf50ab6e4941b5fef5');
+ assert.deepEqual(a.historical95.source_forecast_days,{min:48.37875,max:52.0225});assert.deepEqual(a.historical95.native_source_forecast_days,{base_min:47.0225,base_max:50.1475,added_min:1.35625,added_max:1.875,current_min:48.37875,current_max:52.0225});
+ prior.current_source_scope.pending_source_amendments.pop();prior.current_source_scope.pending_source_dependencies.pop();prior.current_source_scope.forecast_days=a.historical95.source_forecast_days;prior.native_source_issue_inspection_amendment.forecast_days=a.historical95.native_source_forecast_days;prior.status=a.historical95.status;prior.current_source_scope.status=a.historical95.current_source_scope_status;delete prior.native_observation_repair_amendment;
+ assert.equal(readConfigHash(prior),'2905e297fb57297a652f9fbc1eee8a4a4b319b74430adab5e01e319a6e2072b7');return prior;
+}
+
+// Assert and reverse only R1-36 before exercising the unchanged historical guards.
+function beforeSourceIssueInspection(value,kind) {
+ const prior=beforeNativeObservationRepair(value,kind);
+ if(kind==='drafts') {
+  assert.equal(readConfigHash(prior),'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+  const added=prior.filter(x=>x.id==='R1-36');assert.equal(added.length,1);
+  assert.equal(readConfigHash(added[0]),'edd0ee2f2be6bcee256fddff8b8f39de729115a88684c69990fa42ec643c94ed');
+  assert.equal(readConfigHash(added[0].contract),'8694885ffd4d05bd7aec9a7f951aa99a4bf3d9ab4d2465a6081a20f2a6e839e3');
+  assert.deepEqual(added[0].contract.prerequisites,[{ticket:'R1-31',required_outcome:'ai_qa_complete'}]);
+  assert.deepEqual([added[0].contract.acceptance_criteria.length,added[0].contract.technical_acceptance_criteria.constraints.length,added[0].contract.testing_strategy.human_review.cases.length,added[0].contract.testing_strategy.cases.length],[5,4,4,0]);
+  assert.deepEqual(added[0].contract.testing_strategy.human_review.cases.map(x=>x.id),['R1-36-H01','R1-36-H02','R1-36-H03','R1-36-H04']);
+  assert.equal(prior[prior.findIndex(x=>x.id==='R1-31')+1].id,'R1-36');
+  const result=prior.filter(x=>x.id!=='R1-36');assert.equal(readConfigHash(result),'2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62');return result;
+ }
+ if(kind==='metadata') {
+  assert.equal(readConfigHash(prior),'c0acb72e06de6270229fe4e3d534a89166bd142f854b216c0992e0402b292c20');
+  const added=prior.filter(x=>x.id==='R1-36');assert.equal(added.length,1);
+  assert.deepEqual(added[0].dependencies,['R1-31']);assert.deepEqual(added[0].hours,{min:10.85,max:15});assert.equal(added[0].days,1.875);
+  assert.deepEqual(added[0].files,['lib/jira/read.mjs','test/jira-read.test.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json','docs/manager-preview.md','README.md','ARCHITECTURE.md','docs/delivery/manager-r1/stories.md','docs/delivery/manager-r1/README.md','docs/delivery/manager-r1/coverage.md','docs/delivery/manager-r1/plan-metadata.json','docs/delivery/manager-r1/publication.json','docs/delivery/manager-r1/ticket-drafts.json','docs/product/README.md','docs/product/coverage.md','test/story-authoring.test.mjs','test/qa-helper-contract.test.mjs']);
+  assert.equal(added[0].files.length,18);assert.equal(new Set(added[0].files).size,18);assert.equal(prior[prior.findIndex(x=>x.id==='R1-31')+1].id,'R1-36');
+  const result=prior.filter(x=>x.id!=='R1-36');assert.equal(readConfigHash(result),'47ee11ec184c11874371e80cfe78653ac933c963d62199b88ae002a0c2d5a088');return result;
+ }
+ assert.equal(readConfigHash(prior),'2905e297fb57297a652f9fbc1eee8a4a4b319b74430adab5e01e319a6e2072b7');
+ assert.deepEqual([prior.story_count,prior.case_count,prior.requirement_count,prior.scenario_count],[31,136,53,41]);
+ assert.equal(prior.stories['R1-36'],'PGB-150');assert.equal(Object.keys(prior.stories).length,31);
+ const a=prior.native_source_issue_inspection_amendment;assert(a);assert.deepEqual(a.source_composed,['R1-36']);
+ assert.deepEqual([a.native_id,a.parent,a.receipt_sha256,a.plan_sha256],['10610','PGB-66','93029aad4c561c70072d96eb542780a72540bd69ba172650325885149f0b226a','5f94612e3ae7d77210daba67361cef2ef3e8cb3fcf662156d74d825b648c1e47']);
+ assert.equal(a.source_contract_sha256,'edd0ee2f2be6bcee256fddff8b8f39de729115a88684c69990fa42ec643c94ed');assert.equal(a.current_drafts_sha256,'eb14a9bbd25c649d209e2743e869ed613745f84db6e5629252b4d3abea92d653');
+ assert.deepEqual(a.description_sha256,{source:'afdea52dc57999eea105106f57fc540ba10f25c6318832237aba9d5ed9450c94',amended147:'1b1f744f9ba73466a814315896bcb68d64bf10495edfc4d623408828ea0e8ee6'});
+ assert.deepEqual(a.dependency_links.map(x=>[x.id,x.from,x.to]),[['10735','PGB-145','PGB-147'],['10736','PGB-147','PGB-148'],['10737','PGB-148','PGB-82'],['10744','PGB-145','PGB-150'],['10745','PGB-150','PGB-147']]);
+ assert.deepEqual(prior.dependency_links.filter(x=>x.id==='10744'),[{id:'10744',type_id:'10000',from:'PGB-145',to:'PGB-150'}]);
+ assert.deepEqual(prior.current_source_scope.pending_source_amendments,['PGB-137','PGB-146','PGB-147','PGB-148','PGB-149']);
+ assert.deepEqual(prior.current_source_scope.pending_source_dependencies,[{source_id:'R1-33',native_key:'PGB-147',prerequisite_source_id:'R1-36',prerequisite_native_key:'PGB-150',required_outcome:'ai_qa_complete',native_link_id:'10745',status:'native_verified_source_pending'},{source_id:'R1-12',native_key:'PGB-82',prerequisite_source_id:'R1-34',prerequisite_native_key:'PGB-148',required_outcome:'ai_qa_complete',native_link_id:'10737',status:'native_verified_source_pending'}]);
+ assert.deepEqual(prior.current_source_scope.forecast_days,{min:48.37875,max:52.0225});
+ assert.equal(Number((47.0225+10.85/8).toFixed(5)),48.37875);assert.equal(Number((50.1475+15/8).toFixed(5)),52.0225);
+ assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);assert.equal(a.original82_source_unchanged,true);assert.equal(a.original82_cases,4);
+ assert.deepEqual(a.historical_native_snapshots.map(x=>[x.story_count,x.case_count]),[[31,134],[34,144]]);
+ assert.equal(prior.current_source_scope.prior_source_scope.story_count,30);assert.equal(prior.current_source_scope.prior_source_scope.case_count,132);
+ prior.status=prior.current_source_scope.prior_source_scope.status;prior.current_source_scope=prior.current_source_scope.prior_source_scope;
+ delete prior.native_source_issue_inspection_amendment;delete prior.stories['R1-36'];prior.story_count=30;prior.case_count=132;
+ prior.dependency_links=prior.dependency_links.filter(x=>x.id!=='10744');
+ assert.equal(readConfigHash(prior),'edf9a584ffb7e9bdbc6fe1fa494aa7883bf6834af21d5427aab683af8f2ba132');return prior;
+}
+
 // Reverse only the asserted PGB-145 additive amendment for dated historical guards.
 function beforeReadConfiguration(value,kind) {
- const prior=structuredClone(value);
+ const prior=beforeSourceIssueInspection(value,kind);
  if(kind==='drafts') {
   const added=prior.filter(x=>x.id==='R1-31');assert.equal(added.length,1);
   assert.equal(readConfigHash(added[0]),'c8edf2b1a30c246b6010c8427c5253f66dcd2b43579509f17e758e3b6cf17a81');
@@ -1135,7 +1400,7 @@ function beforeReadConfiguration(value,kind) {
 
 test('PGB-145 current source independently binds the complete published amendment and retained original82 contract',async()=>{
  const load=async name=>JSON.parse(await readFile(new URL('../docs/delivery/manager-r1/'+name,import.meta.url),'utf8'));
- const drafts=await load('ticket-drafts.json'),metadata=await load('plan-metadata.json'),p=await load('publication.json'),a=p.read_configuration_amendment;
+ const drafts=beforeSourceIssueInspection(await load('ticket-drafts.json'),'drafts'),metadata=beforeSourceIssueInspection(await load('plan-metadata.json'),'metadata'),p=beforeSourceIssueInspection(await load('publication.json'),'publication'),a=p.read_configuration_amendment;
  assert.equal(drafts.length,30);assert.equal(new Set(drafts.map(x=>x.id)).size,30);assert.deepEqual(drafts.map(x=>x.id),metadata.map(x=>x.id));assert.equal(drafts[drafts.findIndex(x=>x.id==='R1-21')+1].id,'R1-31');
  assert.equal(readConfigHash(drafts),'2346cacf0b501580a2f9284d49068a82926c0b04ee9f5e74e0c1bc50104f8f62');assert.equal(a.current_drafts_sha256,readConfigHash(drafts));
  const story=drafts.find(x=>x.id==='R1-31'),plan=metadata.find(x=>x.id==='R1-31'),contract=story.contract;
@@ -1145,15 +1410,14 @@ test('PGB-145 current source independently binds the complete published amendmen
  assert.equal(a.native_id,'10605');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);assert.equal(a.human_acceptance,'NOT_RUN');assert.equal(a.activation_authorized,false);assert.equal(a.original82_body_preserved_except_prerequisite,true);assert.equal(a.original82_cases,4);
  assert.deepEqual(a.dependency_links,[{id:'10728',type_id:'10000',from:'PGB-99',to:'PGB-145'},{id:'10729',type_id:'10000',from:'PGB-145',to:'PGB-82'}]);for(const edge of a.dependency_links)assert(p.dependency_links.some(x=>JSON.stringify(x)===JSON.stringify(edge)));
  assert.equal(a.description_sha256.body,'365029d6439052f74217db9f4b56bfdb535234cb20901fc785a55891027fe483');assert.equal(a.description_sha256.original82_before,'d5357e7018361264d0d730b56b8dedf419efcba0c42202463ba035aef399c1de');assert.equal(a.description_sha256.original82_after,'682017a9f3efa4c70bdc4f903edcd5c77c3587c65b72bd1f18ff891e57003c7b');
- const old=beforeReadConfiguration(drafts,'drafts').find(x=>x.id==='R1-12').contract;assert.equal(readConfigHash(old),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');assert.equal(old.acceptance_criteria.length,5);assert.equal(old.technical_acceptance_criteria.constraints.length,3);assert.equal(old.testing_strategy.human_review.cases.length,4);
+ const old=beforeReadConfiguration(await load('ticket-drafts.json'),'drafts').find(x=>x.id==='R1-12').contract;assert.equal(readConfigHash(old),'b33f93b3b47fa68e023c06e2e340047219090ee365712633823d19deab9d7813');assert.equal(old.acceptance_criteria.length,5);assert.equal(old.technical_acceptance_criteria.constraints.length,3);assert.equal(old.testing_strategy.human_review.cases.length,4);
  const result=validateWork(JSON.stringify(contract),{mode:'structure'});assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.equal(result.readiness,'not_evaluated');
  for(const f of ['docs/product/coverage.md','docs/delivery/manager-r1/coverage.md']){const text=await readFile(new URL('../'+f,import.meta.url),'utf8');for(const [id,cases]of Object.entries({O03:['H01','H02','H03'],O09:['H02','H04'],A12:['H02','H04'],O13:['H01'],M14:['H04']}))for(const c of cases)assert(text.split('\n').find(l=>l.startsWith('| '+id+' |')).includes('R1-31-'+c));}
  const stories=await readFile(new URL('../docs/delivery/manager-r1/stories.md',import.meta.url),'utf8');assert(stories.indexOf('## R1-21:')<stories.indexOf('## R1-31:'));assert(stories.indexOf('## R1-31:')<stories.indexOf('## R1-05:'));assert(stories.includes(JSON.stringify(contract,null,2)));
 });
 
-// The d34 source receipt remains an immutable dated capture after actual PGB-145 composition.
 test('PGB-146 dated partial receipt preserves actual source inventory and complete native omissions',async()=>{
- const publication=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),drafts=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=beforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),a=publication.source_repair_preview_amendment,n=a.latest_native_receipt;
+ const publication=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),drafts=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=stateBeforeReadConfiguration(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),a=publication.source_repair_preview_amendment,n=a.latest_native_receipt;
  assert.equal(a.date,'2026-11-16');assert.equal(a.story_id,'R1-32');assert.equal(a.native_key,'PGB-146');assert.equal(a.native_id,'10606');assert.equal(a.parent,'PGB-66');assert.equal(a.native_publication_verified,true);assert.equal(a.partial_publication,true);assert.equal(a.plan_sha256,'fdf2dd3397f17aed6816760660b202517f3109acaa199aa4da82ea98817e8f03');assert.equal(a.literal_sha256,'86b435b4431abcef7c57853de804d9d14e5d9e7b4503bac2c11b176173a32649');
  assert.equal(drafts.length,29);assert.equal(metadata.length,29);assert.equal(drafts.reduce((c,d)=>c+d.contract.testing_strategy.human_review.cases.length,0),128);assert.equal(publication.story_count,29);assert.equal(publication.case_count,128);assert(!drafts.some(d=>d.id==='R1-32'));assert(!Object.hasOwn(publication.stories,'R1-32'));assert.equal(hash(JSON.stringify(drafts,null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(a.source_inventory.plan_metadata_sha256,'d2309a2e6c76787b98f439ec4f5e1605b900c9d0204d20017dec183e69ea496e');
  assert.equal(n.date,'2026-11-16');assert.equal(n.isLast,true);assert.equal(n.native_story_count,32);assert.equal(n.native_case_count,136);assert.equal(n.native_readback_sha256,'674dd6c195575459f3ebb0a0b68bf8351389bbf47b4b9da33a802fee55ba00d3');assert.equal(n.observed_stories.length,32);assert.equal(new Set(n.observed_stories.map(i=>i.key)).size,32);assert.equal(n.observed_stories.reduce((sum,i)=>sum+i.human_cases,0),136);assert.deepEqual(n.unmatched_native_bodies_or_dependencies.map(i=>i.key),['PGB-81','PGB-82','PGB-85','PGB-137','PGB-145','PGB-146']);assert.equal(n.full_reconciliation_owner,'PGB-81');
@@ -1167,13 +1431,13 @@ test('PGB-146 dated partial receipt preserves actual source inventory and comple
 });
 
 test('R1-35 machine source integration preserves complete historical receipts and runtime maps',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.machine_repair_preview_amendment,old=p.source_repair_preview_amendment;
+ const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.machine_repair_preview_amendment,old=p.source_repair_preview_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=v=>hash(canonicalize(v));
- const drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json'));
+ const drafts=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),metadata=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata');
  assert.equal(a.story_id,'R1-35');assert.equal(a.native_key,'PGB-149');assert.equal(a.native_id,'10609');assert.equal(a.parent,'PGB-66');assert.equal(a.plan_sha256,'a2668b38252feb7227432d67bc2dd88e6feea4a8b69dddc1ab86bc44d0189e68');assert.equal(a.partial_publication,true);assert.equal(a.native_publication_verified,true);
  assert.equal(canonicalHash(old),'03026e5fa6c3443556bee62262311d5ebd88cdf78c6629c8388c187d200e7425');assert.equal(hash(old),'8efd0c844d9bcfbaf7f7ee99e0c272b29f32e8c9e60fb8e19b0c394d1873c10e');assert.equal(a.historical_source_capture.canonical_sha256,canonicalHash(old));assert.equal(a.historical_source_capture.json_sha256,hash(old));assert(a.historical_source_capture.meaning.includes('historical'));
  assert.equal(a.source_provenance.base_commit,'da39e3762f31704a832e0cbc503c3b0d6d2284dc');assert.equal(a.source_provenance.base_tree,'0a5c210464bd041cd2e70f4ce2475e4a8ca9c800');assert.equal(a.source_provenance.reused_machine_commit,'d34b2bb0e26ad58ae1e7564e32acfadaa9d9f45f');assert.equal(a.source_provenance.PGB145_included,true);assert.equal(canonicalHash(p.read_configuration_amendment),'82bd2f1594e142f513c5c1d1ddd2189e9eb97022a761529f54d161cc6018094d');assert.equal(a.source_provenance.read_configuration_amendment_sha256,canonicalHash(p.read_configuration_amendment));
- assert.deepEqual([drafts.length,metadata.length,p.story_count,p.case_count],[30,30,30,132]);assert.equal(drafts.reduce((n,d)=>n+d.contract.testing_strategy.human_review.cases.length,0),132);assert(!drafts.some(d=>['R1-32','R1-35','R1-33','R1-34'].includes(d.id)));assert(!Object.hasOwn(p.stories,'R1-35'));assert.deepEqual([a.source_inventory.story_count,a.source_inventory.case_count],[30,132]);assert.equal(hash(await read('docs/delivery/manager-r1/ticket-drafts.json')),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(await read('docs/delivery/manager-r1/plan-metadata.json')),a.source_inventory.plan_metadata_sha256);
+ assert.deepEqual([drafts.length,metadata.length,p.story_count,p.case_count],[30,30,30,132]);assert.equal(drafts.reduce((n,d)=>n+d.contract.testing_strategy.human_review.cases.length,0),132);assert(!drafts.some(d=>['R1-32','R1-35','R1-33','R1-34'].includes(d.id)));assert(!Object.hasOwn(p.stories,'R1-35'));assert.deepEqual([a.source_inventory.story_count,a.source_inventory.case_count],[30,132]);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
  const bundle=JSON.parse(await read('config/skill-bundle.json')),paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort(),runtime=a.source_runtime_revision;assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);assert.equal(canonicalHash(a),'0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3');assert.equal(hash(a),'9dccea4120ef740ed1b59dc2a4d72bb5fa2c7ecc432154fb245a4c5c657de013');assert.equal(canonicalHash(runtime),'bcd999e01ea89308aaad5b7c295b26a3454ac387a49139689abb83eae2a7d1ae');assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(runtime.source_fixture_sha256,'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);
  assert.deepEqual(paths.filter(f=>runtime.artifacts_sha256[f]!==old.source_runtime_revision.artifacts_sha256[f]),['contracts/config-v1.schema.json','lib/config/diff.mjs','lib/config/parse.mjs','lib/config/projects.mjs','scripts/check-config.mjs']);assert(bundle.validatorPayload.sources.includes('lib/manager/repair-policy.mjs'));assert(!bundle.validatorPayload.sources.includes('test/fixtures/manager-repairs.json'));
  const publication=a.native_publication;assert.equal(publication.receipt_sha256,'f20cb80be5248db901dc6d06d6125e2d515cc179191702f2660aae8017238777');assert.equal(publication.readback_sha256,'43bbfab38e74c7c9a029b0f2b2f3493ed5fc28e772beaf38055275e6149eefc1');
@@ -1188,7 +1452,7 @@ test('R1-35 machine source integration preserves complete historical receipts an
 });
 
 test('R1-37 current PR repair preserves its complete historical runtime and native amendment',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.current_pr_repair_amendment,old=p.machine_repair_preview_amendment;
+ const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.current_pr_repair_amendment,old=p.machine_repair_preview_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  assert.equal(canonicalHash(a),'4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d');
  assert.deepEqual([a.story_id,a.native_key,a.native_id,a.parent],['R1-37','PGB-151','10611','PGB-66']);
@@ -1204,7 +1468,7 @@ test('R1-37 current PR repair preserves its complete historical runtime and nati
  assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert.equal(runtime.source_fixture_sha256,old.source_runtime_revision.source_fixture_sha256);
  assert.deepEqual(paths.filter(file=>runtime.artifacts_sha256[file]!==old.source_runtime_revision.artifacts_sha256[file]),['lib/manager/repair-policy.mjs']);
  assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);
- assert.equal(hash(await read('docs/delivery/manager-r1/ticket-drafts.json')),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(await read('docs/delivery/manager-r1/plan-metadata.json')),a.source_inventory.plan_metadata_sha256);
+ assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json')),'drafts'),null,2)+'\n'),a.source_inventory.ticket_drafts_sha256);assert.equal(hash(JSON.stringify(stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),'metadata'),null,2)+'\n'),a.source_inventory.plan_metadata_sha256);
  assert(!Object.hasOwn(p.stories,'R1-37'));assert(a.source_inventory.meaning.includes('no exhaustive current native inventory'));
  const n=a.native_publication;assert.equal(n.receipt_sha256,'44d8b0e88cfdde7ba459b540a9355663080c5af88f35c7e7e0ea030272a404b4');assert.equal(hash(JSON.stringify(n.receipt,null,2)+'\n'),n.receipt_sha256);assert.equal(n.readback_sha256,'1b8e111b78a79e921c92b677541720bf99d1c5fb3e41fc8866b95c65fb92487b');assert.equal(n.receipt.native_readback_sha256,n.readback_sha256);assert.equal(n.receipt.work_sha256,'ce27bc1678a1137f4888820a9d7be9e2458ac6d4e6abf1ed3a90dbb2a4635b42');
  const bound={'PGB-151':['10611','756707e48cbe4aab24dd51748f637cd90d72d5c799a9f29bcda9f12995e15a3c','da6a1977ecb12d1e43f0ce89bcc2fabd6d4c483edf2442f1fdb8d7feb788c3e2'],'PGB-149':['10609','27edc3e6f35d957de95fcaf7ed77b6fd359c6bb24e8fcc55f9fb1c6b1abe65b9','5ada6d116a0aee07eca88fba6a19eaf7c24079cdc4744623998b1789a2b4004d'],'PGB-146':['10606','45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d','1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc'],'PGB-81':['10541','2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17','5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f']};
@@ -1222,7 +1486,7 @@ test('R1-37 current PR repair preserves its complete historical runtime and nati
 });
 
 test('R1-39 duplicate QA repair preserves complete historical captures',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.duplicate_qa_repair_amendment,old=p.current_pr_repair_amendment;
+ const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.duplicate_qa_repair_amendment,old=p.current_pr_repair_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=v=>hash(canonicalize(v));
  assert.equal(canonicalHash(a),'e54c5650f1b2ec7cf6b9702128f65baf94f118d2bbf5fb91c072c07785ff2f1c');assert.deepEqual([a.story_id,a.native_key,a.native_id,a.parent],['R1-39','PGB-153','10613','PGB-66']);
  assert.equal(a.date,'2026-11-16');assert.equal(a.plan_sha256,'91819fcd235c9c3209ced8a1a3a603e3d57a476f1a68a9f26e88238a1376b078');assert.equal(a.partial_publication,true);assert.equal(a.native_publication_verified,true);
@@ -1233,7 +1497,7 @@ test('R1-39 duplicate QA repair preserves complete historical captures',async()=
  // Complete immutable153 capture; current bytes are bound by the repaired-parent integration guard.
  assert.equal(runtime.revision_sha256,'sha256:fc6e56b9c892d04af56f1679bfade4420ac3ee1142a8eac3068c0eabf1c8e556');
  assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert.equal(runtime.source_fixture_sha256,old.source_runtime_revision.source_fixture_sha256);assert.deepEqual(paths.filter(file=>runtime.artifacts_sha256[file]!==old.source_runtime_revision.artifacts_sha256[file]),['lib/manager/repair-policy.mjs']);
- assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']])assert.equal(hash(await read('docs/delivery/manager-r1/'+file)),a.source_inventory[field]);assert(!Object.hasOwn(p.stories,'R1-39'));assert(a.source_inventory.meaning.includes('no exhaustive native inventory'));
+ assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']])assert.equal(hash(await stateRawFile(file)),a.source_inventory[field]);assert(!Object.hasOwn(p.stories,'R1-39'));assert(a.source_inventory.meaning.includes('no exhaustive native inventory'));
  const n=a.native_publication;assert.equal(n.receipt_sha256,'4bb4ed4d3adcea23d2493046116c29f4875f00a3e096b8bc5cac81e4d5f4506f');assert.equal(hash(JSON.stringify(n.receipt,null,2)+'\n'),n.receipt_sha256);assert.equal(n.readback_sha256,'315a8d7c8fa6b5c12b52138f622df19bdb3244d18d68202851409c16f87eecd1');assert.equal(n.receipt.native_readback_sha256,n.readback_sha256);assert.equal(n.receipt.work_sha256,'200dcddd0ff147e4e16cb6f957a1cd4f85dd52cc8d84a9ce595e78b3f70dec17');
  const bound={'PGB-153':['10613','59c2b5fe721c26d22d666087d3c88459c3f5e7ec04e1464fd35ad63b9c4710e4','0b9c78b511db03f49c14dff20ad9e16d7094a8bf10786429efd94ba3f4a5d56e'],'PGB-149':['10609','04045bdb1015f5ac75ecb6c65afaf260a3de75c459579bda129fa452031b387c','4576fdfe550451e5ecbd671cdf1c8a7a76bd62dff407a1fd5ed091d21cc46f39'],'PGB-151':['10611','756707e48cbe4aab24dd51748f637cd90d72d5c799a9f29bcda9f12995e15a3c','da6a1977ecb12d1e43f0ce89bcc2fabd6d4c483edf2442f1fdb8d7feb788c3e2'],'PGB-146':['10606','45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d','1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc'],'PGB-81':['10541','2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17','5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f']};
  assert.deepEqual(Object.keys(n.contracts),Object.keys(bound));for(const [key,[id,description,digest]]of Object.entries(bound)){const row=n.contracts[key];assert.equal(row.native_id,id);assert.equal(row.description_sha256,description);assert.equal(row.canonical_contract_sha256,digest);assert.equal(canonicalHash(row.contract),digest,key);}
@@ -1246,7 +1510,7 @@ test('R1-39 duplicate QA repair preserves complete historical captures',async()=
 });
 
 test('PGB-146 readable completion preserves its complete historical capture',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.readable_repair_preview_amendment,machine=p.machine_repair_preview_amendment,current=p.current_pr_repair_amendment;
+ const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.readable_repair_preview_amendment,machine=p.machine_repair_preview_amendment,current=p.current_pr_repair_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  const parent=structuredClone(p);delete parent.readable_repair_preview_amendment;delete parent.duplicate_qa_repair_amendment;delete parent.readable_repair_integration_amendment;
  assert.equal(canonicalHash(parent),'448d1c187e99926790dcad16ceb797fc55188edf5c77b4ed33874c3add9ccc1d','complete9767 publication object preserved, including every dated capture');
@@ -1264,14 +1528,14 @@ test('PGB-146 readable completion preserves its complete historical capture',asy
  const differences=(left,right)=>paths.filter(file=>left.artifacts_sha256[file]!==right.artifacts_sha256[file]);
  assert.deepEqual(differences(runtime,current.source_runtime_revision),['scripts/manager-preview.mjs']);assert.deepEqual(differences(current.source_runtime_revision,machine.source_runtime_revision),['lib/manager/repair-policy.mjs']);assert.deepEqual(differences(runtime,machine.source_runtime_revision),['lib/manager/repair-policy.mjs','scripts/manager-preview.mjs']);
  assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);
- for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']]){assert.equal(hash(await read('docs/delivery/manager-r1/'+file)),a.source_inventory[field]);assert.equal(a.source_inventory[field],current.source_inventory[field]);}
+ for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']]){assert.equal(hash(await stateRawFile(file)),a.source_inventory[field]);assert.equal(a.source_inventory[field],current.source_inventory[field]);}
  assert(a.source_inventory.meaning.includes('not an exhaustive current native inventory'));assert(a.source_inventory.meaning.includes('later82/147/148'));assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');
  assert.equal(a.readable_cause_parity.owner,'PGB-146');assert.equal(a.readable_cause_parity.status,'SOURCE_COMPLETE');assert.deepEqual(a.readable_cause_parity.fields,['ticket_id','comment_id','record_id','digest']);assert.equal(a.readable_cause_parity.order,'Canonical proposal.roots order; no sorting or deduplication.');
  for(const field of ['human_acceptance','original149_human_acceptance','original151_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');for(const field of ['hosted_checks','merge','release'])assert.equal(a[field],'NOT_CLAIMED');assert.equal(a.activation_authorized,false);
 });
 
 test('PGB-146 repaired-parent integration binds current artifacts and preserves both captures',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.readable_repair_integration_amendment;
+ const p=stateCheckpoint(JSON.parse(await read('docs/delivery/manager-r1/publication.json')),'publication'),a=p.readable_repair_integration_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  assert.deepEqual(Object.keys(p),["date", "epic", "grooming", "status", "stories", "operational_tasks", "story_count", "case_count", "requirement_count", "scenario_count", "dependency_links", "baseline_publication", "follow_on_tasks", "health_precedence_correction", "baseline_design_commit", "reviewed_design_artifacts", "startup_alarm_correction", "history", "qa_split", "repeated_parent_amendment", "current_source_scope", "baseline_before_amendments", "current_proof_conflict_amendment", "qa_input_preparation_amendment", "qa_input_controls_amendment", "own_ticket_selection_amendment", "read_configuration_amendment", "source_repair_preview_amendment", "machine_repair_preview_amendment", "current_pr_repair_amendment", "duplicate_qa_repair_amendment", "readable_repair_preview_amendment", "readable_repair_integration_amendment"]);assert.equal(Object.keys(p).length,33);
  const parent153=structuredClone(p);delete parent153.readable_repair_preview_amendment;delete parent153.readable_repair_integration_amendment;
@@ -1289,7 +1553,7 @@ test('PGB-146 repaired-parent integration binds current artifacts and preserves 
  assert.equal(paths.length,25);for(const captured of [runtime,source153,source146,source151]){assert.deepEqual(Object.keys(captured.artifacts_sha256),paths);assert.equal(captured.revision_sha256,'sha256:'+canonicalHash(captured.artifacts_sha256));assert.equal(captured.source_fixture_sha256,'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');}
  assert.equal(runtime.revision_sha256,'sha256:c9bb78fbb34077cc7e7c114885fa1f014566acd20acb4aa3903e13ebb8038e8d');for(const file of paths)assert.equal(hash(await read(file)),runtime.artifacts_sha256[file],file+' current integration artifact');assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);
  const differences=(left,right)=>paths.filter(file=>left.artifacts_sha256[file]!==right.artifacts_sha256[file]);assert.deepEqual(differences(runtime,source153),['scripts/manager-preview.mjs']);assert.deepEqual(differences(runtime,source146),['lib/manager/repair-policy.mjs']);assert.deepEqual(differences(runtime,source151),['lib/manager/repair-policy.mjs','scripts/manager-preview.mjs']);
- assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);assert.deepEqual(a.source_inventory,p.readable_repair_preview_amendment.source_inventory);for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']])assert.equal(hash(await read('docs/delivery/manager-r1/'+file)),a.source_inventory[field]);
+ assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);assert.deepEqual(a.source_inventory,p.readable_repair_preview_amendment.source_inventory);for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']])assert.equal(hash(await stateRawFile(file)),a.source_inventory[field]);
  assert(a.source_inventory.meaning.includes('not an exhaustive current native inventory'));assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');assert.deepEqual(a.readable_cause_parity,p.readable_repair_preview_amendment.readable_cause_parity);assert.equal(a.readable_cause_parity.status,'SOURCE_COMPLETE');assert.deepEqual(a.readable_cause_parity.fields,['ticket_id','comment_id','record_id','digest']);assert.equal(a.readable_cause_parity.order,'Canonical proposal.roots order; no sorting or deduplication.');
  assert.equal(a.preview_execution_authorized,false);assert.equal(a.preview_writes,0);for(const field of ['human_acceptance','original149_human_acceptance','original151_human_acceptance','original153_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');for(const field of ['hosted_checks','merge','release'])assert.equal(a[field],'NOT_CLAIMED');assert.equal(a.activation_authorized,false);
 });
