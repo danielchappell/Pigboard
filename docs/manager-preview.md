@@ -868,6 +868,20 @@ confirm `pointer: {state: "absent", value: null}` at that observation. A listed
 work-context property requires a validated value. A raw property 404 remains
 unknown, with `POINTER_UNKNOWN`; it never proves absence.
 
+Retained ownership or pending intents can name a label outside the current
+configured worker prefixes and numbered suffixes. Those historical tuples stay
+visible with their old IDs and a shared `SCOPE_UNKNOWN` hold. The collector can
+still read their exact known identities and references within configured projects;
+it does not search the unsupported label or infer complete occupancy. Reconcile
+the intended configuration and retained ownership with their actual owner. Keep
+uncertain attempts; do not clear State or broaden queries automatically.
+
+A missing resolver capability returns `status: "setup_failed"` with `SETUP_MISSING`
+and no provider requests. Prepare the trusted resolver, then start a fresh bounded
+invocation. Known retained tuples remain visible; missing setup does not turn them
+into an empty inventory. A resolver failure keeps its own diagnostic and
+incomplete status.
+
 For example, `status: "incomplete"` with `RETAINED_INCOMPLETE` holds every reported
 scope even when native observations succeeded. An isolated comment/reference
 failure holds all proved dependent scopes; unknown reach and exhausted resources

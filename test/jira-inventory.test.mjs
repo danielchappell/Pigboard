@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { runFixture } from './fixtures/jira-preview-harness.mjs';
+import { inspectJiraInventory } from '../lib/jira/inventory.mjs';
 
 const packet=JSON.parse(readFileSync(new URL('./fixtures/jira-inventory-cases.json',import.meta.url),'utf8'));
 const runtime=fileURLToPath(new URL('../',import.meta.url));
@@ -75,5 +76,44 @@ test('inventory enforces scan timeout during late composition',async t=>{
  }finally{
   if(original)Object.defineProperty(performance,'now',original);else delete performance.now;
   t.diagnostic(triggerStack??'No late clock trigger observed.');
+ }
+});
+
+// Historical ownership is retained without authorizing out-of-domain label searches.
+test('inventory preserves unsupported retained scopes without label queries',async()=>{
+ const authored=structuredClone(packet.variants.find(v=>v.variant==='complete-domain'));
+ const oldLabel=authored.config.defaults.worker_prefixes[0]+'x',pendingLabel='retired-worker';
+ authored.request.retained_members.push({ticket_id:'103',project_id:'10001',epic_id:'100',label:oldLabel,assignment:null});
+ authored.request.pending_intents.push({project_id:'10001',label:pendingLabel,ticket_id:'101',attempt_id:'00000000-0000-4000-8000-000000000009'});
+ authored.oracle.status='incomplete';authored.oracle.domain_complete=false;authored.oracle.code='SCOPE_UNKNOWN';
+ authored.oracle.scopes[0].complete=false;
+ authored.oracle.scopes.push(
+  {project_id:'10001',label:oldLabel,complete:false,old_issue_ids:['103'],current_issue_ids:[]},
+  {project_id:'10001',label:pendingLabel,complete:false,old_issue_ids:[],current_issue_ids:[]},
+ );
+ authored.oracle.counters.streams=3;
+ const run=await runFixture(authored.case,authored.variant,runtime,{authoredFixture:authored});
+ assert.deepEqual(run.trace,authored.oracle.trace);
+ assert.equal(run.report.retained_complete,true);
+ const holds=run.report.diagnostics.filter(d=>d.code==='SCOPE_UNKNOWN');
+ assert.equal(holds.length,2);assert(holds.every(d=>d.scope===null));
+ assert.equal(run.effects,0);assert.equal(run.cleanup_complete,true);
+});
+
+test('inventory reports setup failure for missing resolver capability',async()=>{
+ const authored=packet.variants.find(v=>v.variant==='complete-domain');
+ const results=[];
+ for(const dependencies of [undefined,{}])results.push(await inspectJiraInventory(JSON.stringify(authored.config),structuredClone(authored.request),dependencies));
+ for(const result of results){
+  assert.equal(result.report.status,'setup_failed');
+  assert(result.report.diagnostics.some(d=>d.code==='SETUP_MISSING'&&d.scope===null));
+  assert.equal(result.report.domain_complete,false);assert.equal(result.report.retained_complete,true);
+  assert.equal(result.report.counters.requests_attempted,0);
+  assert.deepEqual(result.report.cleanup,{jira:'not_started',resolver:'settled'});
+  assert.deepEqual(result.report.scopes,[{project_id:'10001',label:'AI-Daniel-1',complete:false,old_issue_ids:['103'],current_issue_ids:[]}]);
+  assert.deepEqual(result.observations,{issues:[],comment_pages:[],exact_comments:[],references:[],provenance:[
+   {ticket_id:'103',source:'retained',source_ticket_id:null,project_id:'10001',label:'AI-Daniel-1'},
+   {ticket_id:'100',source:'retained',source_ticket_id:'103',project_id:'10001',label:'AI-Daniel-1'},
+  ]});
  }
 });
