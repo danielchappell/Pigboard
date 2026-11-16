@@ -234,3 +234,28 @@ manager admission authority.
 ### Supplied handoff candidate inspection
 
 `extractHandoffCandidate(adfInput)` in the existing handoff module classifies supplied ADF only. A source-order AST pass binds aliases to prior anchors; one visited root-schema graph identifies attempted records. The existing strict parser then validates the selected original whole wrapper and canonical record. Strict receipt consumers retain their existing contract. This pure synchronous API has fixed bounds and no provider, resolver or deadline parameter. A later inventory caller owns discovery and checks its own deadline before and after inspection; synchronous parsing cannot be timer-preempted. Source and prepared-copy use and recovery are in the [guide](docs/manager-preview.md#inspect-a-supplied-handoff-comment).
+
+## Complete ordinary Jira acquisition
+
+`lib/jira/inventory.mjs` composes the existing Jira read session/acquirer and
+PGB-172 handoff-candidate recognizer. One configured session owns fixed native
+searches, identity/alias resolution, property-key/value reads, complete comments
+and exact schema-owned reference closure. Search and comment pages share budgets;
+resource exhaustion stops further requests. Old retained ownership and positively
+observed current membership remain distinct in each project/full-label scope.
+
+The enumerable report is safe to serialize. Non-enumerable read-only observations
+preserve original bounded ADF and native metadata for trusted in-memory use.
+Pointer state distinguishes validated present, enumerated absent and unknown.
+A raw 404 cannot establish absence. Exact record/digest matches establish
+acquisition consistency and do not grant receipt or admission authority.
+
+State PGB-84/83 supplies confirmed `retained_members`, `pending_intents` and
+`retained_complete` through its inventory projection. Core PGB-162 owns raw-fact
+normalization, semantic snapshot/envelope construction, recorded parser behavior
+and existing policy evaluation. PGB-175 owns ordinary worker proof compatibility.
+PGB-87 owns conditional original-attempt admission/publication/transition; State
+PGB-84/137 retains durable attempt and outcome evidence. PGB-83 packages the
+disabled customer runtime and PGB-90 verifies the actual installed journey.
+The source acquisition library does not add an installer payload, CLI, evaluator
+or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
