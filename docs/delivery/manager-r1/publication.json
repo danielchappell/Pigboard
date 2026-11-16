@@ -5825,5 +5825,2221 @@
     "original146_human_acceptance": "NOT_RUN",
     "PGB81_human_acceptance": "NOT_RUN",
     "activation_authorized": false
+  },
+  "current_pr_repair_amendment": {
+    "date": "2026-11-16",
+    "story_id": "R1-37",
+    "native_key": "PGB-151",
+    "native_id": "10611",
+    "parent": "PGB-66",
+    "native_publication_verified": true,
+    "partial_publication": true,
+    "plan_sha256": "88b737dab61feab436bf91021031047b56dcecd370b654246de874c895a9c71d",
+    "source_provenance": {
+      "base_commit": "90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379",
+      "base_tree": "62b8e8b4754e504a7ca75a7d7cb983b8d19f3ffe",
+      "branch": "codex/pgb151-current-pr",
+      "target_branch": "codex/pgb149-machine-preview",
+      "integration": "Repair must integrate into PGB-149 before parent main merge; neither Story is Done before combined main integration.",
+      "changed_paths": [
+        "lib/manager/repair-policy.mjs",
+        "test/repair-policy.test.mjs",
+        "docs/manager-preview.md",
+        "docs/delivery/manager-r1/publication.json",
+        "test/qa-helper-contract.test.mjs"
+      ]
+    },
+    "historical_machine_capture": {
+      "canonical_sha256": "0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3",
+      "json_sha256": "9dccea4120ef740ed1b59dc2a4d72bb5fa2c7ecc432154fb245a4c5c657de013",
+      "runtime_canonical_sha256": "bcd999e01ea89308aaad5b7c295b26a3454ac387a49139689abb83eae2a7d1ae",
+      "meaning": "The complete machine_repair_preview_amendment, including its exact-five native contract and entire runtime map, is immutable dated history at candidate90c92; it is not the current runtime binding."
+    },
+    "source_inventory": {
+      "story_count": 30,
+      "case_count": 132,
+      "ticket_drafts_sha256": "03ef93ec3a8d80262ac417f68c2975d517aeb0237b3a3459d82aace15887a92c",
+      "plan_metadata_sha256": "41a5933d86482e4e522d224de1a1b86f80cb1f1c4e1a13b90dffc39df1149a16",
+      "meaning": "Unchanged current partial source30 Stories/132 cases. R1-37 and revised149 are dated native amendments only; no exhaustive current native inventory or complete reconciliation is claimed."
+    },
+    "source_runtime_revision": {
+      "kind": "Content-addressed current repair source runtime; exact Git head is bound by independent review",
+      "artifacts_sha256": {
+        "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+        "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+        "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+        "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+        "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+        "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+        "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+        "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+        "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+        "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+        "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+        "lib/contracts/receipts.mjs": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+        "lib/contracts/work-semantics.mjs": "ba1a3acadba6d169ec3bad52a3689c9b4b78b713dbac9fe408b949b966f2cc8d",
+        "lib/contracts/work.mjs": "50dbbd8a11237b1b90508a059a5ca9be44c4a39662e94ffbe39ab89db2808df4",
+        "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+        "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+        "lib/manager/repair-policy.mjs": "84667ee0171238ac4a03f11216d12304536f088305d552c51b776b08ec032989",
+        "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+        "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+        "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+        "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+        "scripts/manager-preview.mjs": "228323528c356ffe1447fc42cf6ce27f64c7451a10a5220384440058c9a8fdb0",
+        "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+        "scripts/validate-handoff.mjs": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+        "scripts/validate-work.mjs": "46023df5916da4ab7d5eaa8c44fec19e8aef708eb3e5ab76343662ddde06776d"
+      },
+      "revision_sha256": "sha256:5714b94f17855020d619ae63a10883e50008a1b5d5504e5444cfa5333bcb3740",
+      "source_fixture_sha256": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7"
+    },
+    "native_publication": {
+      "receipt_sha256": "44d8b0e88cfdde7ba459b540a9355663080c5af88f35c7e7e0ea030272a404b4",
+      "readback_sha256": "1b8e111b78a79e921c92b677541720bf99d1c5fb3e41fc8866b95c65fb92487b",
+      "receipt": {
+        "status": "VERIFIED",
+        "issue": {
+          "key": "PGB-151",
+          "id": "10611",
+          "story_id": "R1-37",
+          "parent": "PGB-66"
+        },
+        "plan_sha256": "88b737dab61feab436bf91021031047b56dcecd370b654246de874c895a9c71d",
+        "work_sha256": "ce27bc1678a1137f4888820a9d7be9e2458ac6d4e6abf1ed3a90dbb2a4635b42",
+        "native_readback": "/private/tmp/pgb151-publication-native-readback.json",
+        "native_readback_sha256": "1b8e111b78a79e921c92b677541720bf99d1c5fb3e41fc8866b95c65fb92487b",
+        "prepared_source": {
+          "head": "90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379",
+          "tree": "62b8e8b4754e504a7ca75a7d7cb983b8d19f3ffe",
+          "branch": "codex/pgb149-machine-preview"
+        },
+        "new_edge": {
+          "id": "10746",
+          "type_id": "10000",
+          "type": "Blocks",
+          "from": "PGB-151",
+          "to": "PGB-149"
+        },
+        "parent_amendment": "Original five prerequisites retained; append PGB-151 ai_qa_complete and matching TAC3 wording only. Reversal deep-equals original entire contract.",
+        "preservation": "All six original149 edges retained; original146 and81 description bytes unchanged;149→146→81 retained; no reverse149→151 completion dependency.",
+        "source_inventory": "Unchanged; no complete native inventory claim",
+        "status_at_readback": "PGB-151 To Do; subsequent transition recorded separately",
+        "human_cases": "PGB-151 five /149 two /146 two /81 forty-two NOT_RUN",
+        "code_changes": 0
+      },
+      "contracts": {
+        "PGB-151": {
+          "native_id": "10611",
+          "description_sha256": "756707e48cbe4aab24dd51748f637cd90d72d5c799a9f29bcda9f12995e15a3c",
+          "canonical_contract_sha256": "da6a1977ecb12d1e43f0ce89bcc2fabd6d4c483edf2442f1fdb8d7feb788c3e2",
+          "contract": {
+            "schema": "pigboard-ticket/v1",
+            "problem_to_solve": "The preview can return an old PR revision after observing a newer one. Consumers then receive a proposal that the receipt contract cannot accept.",
+            "prerequisites": [],
+            "acceptance_criteria": [
+              {
+                "id": "AC1",
+                "requirement": "Eligible repair admission uses the current observed PR source and target while preserving its existing identity, requests and parent requirements."
+              },
+              {
+                "id": "AC2",
+                "requirement": "A new stack publication is withheld when its recorded child completion differs from current PR source or target, with an actionable explanation and no replacement QA claim."
+              },
+              {
+                "id": "AC3",
+                "requirement": "Already-published valid requests remain usable history, unaffected cases keep their fixed results, and previews retain zero writes and false execution authority."
+              }
+            ],
+            "technical_acceptance_criteria": {
+              "repository": {
+                "url": "https://github.com/danielchappell/Pigboard",
+                "base_branch": "codex/pgb149-machine-preview",
+                "change_boundary": "Change only these five existing paths: lib/manager/repair-policy.mjs, test/repair-policy.test.mjs, docs/manager-preview.md, docs/delivery/manager-r1/publication.json, test/qa-helper-contract.test.mjs. Deliver current PR admission references, safe new stack publication, regression coverage, guide recovery and a dated partial publication amendment.",
+                "out_of_scope": [
+                  "Receipt-validator or schema changes; original fixture/input/oracle changes; renderer or snapshot-normalization changes.",
+                  "Provider operations, dependency installation, deployment or activation; other repositories or paths.",
+                  "Changes to original PGB-149/PGB-146/PGB-81 criteria or human cases, except the explicitly authorized added repair prerequisite and matching PGB-149 TAC amendment."
+                ],
+                "related_repositories": []
+              },
+              "accepted_decisions": [],
+              "constraints": [
+                {
+                  "id": "TAC1",
+                  "requirement": "Use one repair PR based on prepared PGB-149 candidate 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379, tree 62b8e8b4754e504a7ca75a7d7cb983b8d19f3ffe, targeting codex/pgb149-machine-preview; integrate it there before any parent main merge."
+                },
+                {
+                  "id": "TAC2",
+                  "requirement": "Stay within the five named paths; preserve receipt validators, original fixtures/oracles, current/history authority, original PGB-149/PGB-146/PGB-81 requirements and human objects, and the guide exporter; retain zero writes and false execution authority."
+                },
+                {
+                  "id": "TAC3",
+                  "requirement": "This repair blocks PGB-149 without a reverse completion prerequisite; retain its original five prerequisites, amend its matching TAC, preserve historical publication captures, and append exact native/readback/Blocks/branch/plan/current-runtime bindings as a dated partial amendment. Full source/native reconciliation remains PGB-81."
+                }
+              ]
+            },
+            "testing_strategy": {
+              "testing_types": [],
+              "environment": {
+                "source": "configured_target",
+                "target_reference": "Exact reviewed repair source revision based on prepared 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379; unchanged synthetic manager-repairs.json, prepared Node dependencies and complete copied runtime from an unrelated cwd. No deployed target.",
+                "required_capabilities": []
+              },
+              "actors": [],
+              "fixtures": [
+                {
+                  "id": "DATA-01",
+                  "description": "The four fixed cases OC01-selection, H02-02-a2-full-qa-before-u1, H02-06-a3-full-qa-u2-unpublished, H02-07-u2-published-b-not-admitted, each unchanged control and its independent source-only/source-plus-target copies; full fixed expectations and complete prepared copied-runtime closure.",
+                  "initial_state": "PREP-01 records absolute config/input/options/expectation paths, exact source API and copied JSON commands, input/runtime/dependency hashes and complete fixed expectations before execution. Original cases and receipts remain untouched.",
+                  "reference": null,
+                  "preparation_id": "PREP-01",
+                  "owner": "implementer"
+                }
+              ],
+              "preparation": [
+                {
+                  "id": "PREP-01",
+                  "owner": "implementer",
+                  "supplies": "Supply the exact reviewed source revision, prepared Node dependencies, unchanged test/fixtures/manager-repairs.json and complete copied runtime/unrelated cwd. For OC01-selection join inherited_own_preview.original.cases inputs/config/options to inherited_own_preview.cases full current expected by exact ID; use named cases records/full expected for H02-02-a2-full-qa-before-u1, H02-06-a3-full-qa-u2-unpublished and H02-07-u2-published-b-not-admitted. Prepare each control plus two separate fresh copies. For D1 change PR10; for D2–D4 change PR11. In every repair_receipts/completion_receipts envelope containing that provider/repository/number, require exactly one matching current observation, retain it with only current:false, and append its clone with current:true and source_revision:9999999999999999999999999999999999999999. Source-only keeps the target; source-plus-target sets only the appended target_branch to repair-current-target. Apply each variant independently to the control, consistently across envelopes; preserve original comments/evidence/references/config and all other observations. Use original options, retaining expectedSite and all supplied keys; if expectedSnapshotDigest exists, bind it independently to the variant digest, and do not add an absent guard. Forward API options and existing CLI flag mappings. Independently calculate the output snapshot digest and freeze complete expected reports from the existing full oracles plus specified contract outcomes, including exact reason text, repair_order, eligibility and unchanged fields, before execution; never capture runtime output as an oracle. Record absolute paths, exact commands/options, prescribed exits and manifests. Prepare existing publication guard commands and historical/current binding evidence for D5 inspection; no additional product scenario.",
+                  "used_by": [
+                    "DATA-01",
+                    "R1-37-D1",
+                    "R1-37-D2",
+                    "R1-37-D3",
+                    "R1-37-D4",
+                    "R1-37-D5"
+                  ],
+                  "preserves": [
+                    "Original fixture inputs/full expected results, receipt bodies/references/evidence and guide exporter remain unchanged; never rewrite QA or fabricate same-revision target conflicts.",
+                    "Every admission PR reference contains exactly provider, repository, number, source_revision and target_branch; no state/current observation fields.",
+                    "D1–D4 total 12 API evaluations once; D5 adds only 2 copied-runtime JSON evaluations once. No diagnostic or broad scenario campaign, dependency fetch or repair.",
+                    "Original PGB-149 two, PGB-146 two and PGB-81 forty-two human objects remain untouched; all new designated human routes remain NOT_RUN until a human performs them.",
+                    "Direct developer checks, human acceptance, independent reviews, local checks, hosted CI, merge and release evidence remain separately attributed."
+                  ]
+                }
+              ],
+              "dispatch_order": [],
+              "cases": [],
+              "human_review": {
+                "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this local CLI/internal API contract. Authorized direct developer checks produce separate evidence; the five designated human routes remain NOT_RUN until performed by a human.",
+                "cases": [
+                  {
+                    "id": "R1-37-D1",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "AC3",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                      "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                      "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+                    ],
+                    "steps": [
+                      "From PREP-01 select OC01-selection with its complete current oracle and unchanged options.",
+                      "Run the unchanged control through the source API; then run the independently prepared source-only and source-plus-target PR10 variants once each.",
+                      "Compare each complete report to its fixed expectation and inspect the exact five-field existing_pr, retained assignment/requests/roots/parent requirements and authority."
+                    ],
+                    "expected": [
+                      "Control equals its complete frozen report: select/admit_repair for1000 with no new publication.",
+                      "Both variants retain the same admission and full report except the independently derived input digest and current five-field existing_pr; source is9999999999999999999999999999999999999999, and only source-plus-target uses repair-current-target.",
+                      "Assignment, requests, roots and parent requirements remain exact; writes stay0 and execution_authorized staysfalse."
+                    ],
+                    "evidence": [
+                      "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                      "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-37-D2",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC2",
+                      "AC3",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                      "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                      "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+                    ],
+                    "steps": [
+                      "From PREP-01 select H02-02-a2-full-qa-before-u1 with its unchanged control, fixed reports and options.",
+                      "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                      "Compare complete reports and inspect the variant issue-scoped reason, repair_order, eligibility and null proposal."
+                    ],
+                    "expected": [
+                      "Control equals its complete frozen report: queue/queue_stack_update for1001 with required publication.",
+                      "Only the two variants wait with null proposal, actionable issue-scoped PR_HUMAN_HANDLING requiring coherent child-completion evidence, and a human_hold repair-order entry; no stale/invented payload or unrelated bypass is returned.",
+                      "Historical child QA, comments, references and causes remain exact; writes stay0 and execution authority staysfalse."
+                    ],
+                    "evidence": [
+                      "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                      "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-37-D3",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC2",
+                      "AC3",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                      "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                      "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+                    ],
+                    "steps": [
+                      "From PREP-01 select H02-06-a3-full-qa-u2-unpublished with its unchanged control, fixed reports and options.",
+                      "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                      "Compare complete reports and inspect current parent proof, historical child evidence, variant reason and human_hold entry."
+                    ],
+                    "expected": [
+                      "Control equals its complete frozen report: select/admit_repair for1001 with required publication.",
+                      "Only the two variants wait with null proposal, actionable issue-scoped PR_HUMAN_HANDLING and a human_hold entry because new publication would bind stale child QA; no unrelated admission bypass occurs.",
+                      "Current parent proof and historical child evidence remain exact; no QA rewrite occurs, writes stay0 and execution authority staysfalse."
+                    ],
+                    "evidence": [
+                      "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                      "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-37-D4",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "AC3",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                      "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                      "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+                    ],
+                    "steps": [
+                      "From PREP-01 select H02-07-u2-published-b-not-admitted with its unchanged control, fixed reports and options.",
+                      "Run the control through the source API; then run its independently prepared PR11 source-only and source-plus-target variants once each.",
+                      "Compare complete reports and inspect the exact current five-field admission PR and retained published request/root/parent references."
+                    ],
+                    "expected": [
+                      "Control equals its complete frozen report: select/admit_repair for1001 with no new publication.",
+                      "Both variants retain that admission and full report except the independently derived input digest and current five-field existing_pr; exact published requests, roots and parent references remain unchanged.",
+                      "There is no new stack payload or invented hold; writes stay0 and execution_authorized staysfalse."
+                    ],
+                    "evidence": [
+                      "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                      "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-37-D5",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "AC2",
+                      "AC3",
+                      "TAC1",
+                      "TAC2",
+                      "TAC3"
+                    ],
+                    "prerequisites": [
+                      "Use PREP-01 and DATA-01 at the exact reviewed repair revision based on prepared source 90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379. All input/config/options/complete expectation paths and exact commands must be supplied before execution.",
+                      "Use prepared Node dependencies and synthetic local fixtures only. No account, credentials, UI, HTTP/Postman or live target is required.",
+                      "QA skills: []. Authorized direct developer checks are separate evidence; this designated human route remains NOT_RUN until a human performs it."
+                    ],
+                    "steps": [
+                      "After D1–D4, use only the already-prepared D1 and D2 source-plus-target inputs and options; do not derive another scenario.",
+                      "From the unrelated cwd run each input once through copied-runtime JSON with the complete prepared closure; compare the complete JSON value to its already-fixed D1/D2 expected report and check its prescribed exit.",
+                      "Inspect exact source/branch/plan/native/readback/Blocks bindings and affected publication-guard evidence, complete closure/runtime/dependency manifests, and before/after inventories."
+                    ],
+                    "expected": [
+                      "The two copied JSON values equal their fixed full source expectations: D1 admits1000 using current source and repair-current-target without new publication; D2 waits with null proposal and actionable child-QA handling.",
+                      "Prepared dependency/package-lock equality and complete runtime closure hold; exactly lib/manager/repair-policy.mjs differs from the90c92 runtime map.",
+                      "Historical captures/maps remain fixed history; the new partial amendment binds every current allowlisted artifact, fixture/aggregate hashes, revised149 prerequisite/TAC and actual repair→149 Blocks link. Source inventory stays30 Stories/132 cases; full reconciliation remains81.",
+                      "The repair PR targets codex/pgb149-machine-preview from prepared90c92, within five paths; neither repair nor149 is Done before main integration. No product scenario or authority is added."
+                    ],
+                    "evidence": [
+                      "Retain exact source revision, commands/options, input and fixed-expectation hashes, complete outputs and exits.",
+                      "Retain before/after input inventories and evidence that original fixtures, receipt comments, references and evidence remain unchanged; verify zero product writes and false execution authority.",
+                      "Retain complete copied-runtime and dependency/package-lock manifests, unrelated cwd, current/historical publication guard results and exact native/branch/readback/Blocks bindings."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence before cleanup, then remove only worker-owned synthetic exports and runtime copies; preserve original fixtures and historical evidence."
+                      ]
+                    }
+                  }
+                ]
+              },
+              "automated_regression": "Retain the bounded current-admission/child-completion-publication table, unchanged full-case controls and historical/current publication binding guards."
+            },
+            "open_questions": []
+          }
+        },
+        "PGB-149": {
+          "native_id": "10609",
+          "description_sha256": "27edc3e6f35d957de95fcaf7ed77b6fd359c6bb24e8fcc55f9fb1c6b1abe65b9",
+          "canonical_contract_sha256": "5ada6d116a0aee07eca88fba6a19eaf7c24079cdc4744623998b1789a2b4004d",
+          "contract": {
+            "schema": "pigboard-ticket/v1",
+            "problem_to_solve": "Agents and tools need the full repair decision before any live action. They must see the actual parent, every unresolved cause and any required publication without inferring authority from readable summaries.",
+            "prerequisites": [
+              {
+                "ticket": "PGB-80",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-113",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-129",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-136",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-145",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-151",
+                "required_outcome": "ai_qa_complete"
+              }
+            ],
+            "acceptance_criteria": [
+              {
+                "id": "AC1",
+                "requirement": "The source API and JSON CLI return the complete approved reports for the existing repair fixtures, including actual dependency order, capacity, pause and current-parent requirements."
+              },
+              {
+                "id": "AC2",
+                "requirement": "Structured proposals identify target, exact canonical causes, parent revision and required publication, with false execution authority and zero writes."
+              },
+              {
+                "id": "AC3",
+                "requirement": "The guide makes source API/JSON use and recovery usable; existing copied-runtime compatibility is retained and readable cause parity is explicitly assigned to PGB-146."
+              }
+            ],
+            "technical_acceptance_criteria": {
+              "repository": {
+                "url": "https://github.com/danielchappell/Pigboard",
+                "base_branch": "main",
+                "change_boundary": "Own the complete cloud-neutral source API/JSON repair preview, required copied-runtime compatibility, guides and dated partial publication receipt within the20 reviewed R1-35 paths.",
+                "out_of_scope": [
+                  "Customer repository changes, provider operations, worker monitoring, run cancellation, deployment or activation.",
+                  "Readable cause parity remains PGB-146; the full installed repair fixture kit, eighth semantic smoke and complete source/native publication reconciliation remain PGB-81.",
+                  "Changes outside the20 reviewed R1-35 paths or to unrelated configuration/source/native contracts."
+                ],
+                "related_repositories": []
+              },
+              "accepted_decisions": [],
+              "constraints": [
+                {
+                  "id": "TAC1",
+                  "requirement": "Repository: danielchappell/Pigboard, main; own the listed20-path cloud-neutral source/JSON outcome and its required compatibility, docs and partial receipt."
+                },
+                {
+                  "id": "TAC2",
+                  "requirement": "Preserve all existing raw inputs/independent full expectations, the three typed edges and strict current/history boundaries; add no provider operation, worker monitoring, cancellation or activation."
+                },
+                {
+                  "id": "TAC3",
+                  "requirement": "Compose verified merged145 without changing its contracts; preserve all original146 and81 criteria/human objects and name PGB-81 as full publication/installed-kit owner. Preserve native prerequisites PGB-80, PGB-113, PGB-129, PGB-136 and PGB-145, each requiring ai_qa_complete; additionally require PGB-151 ai_qa_complete for the current-PR repair. Publish/read back the original five incoming Blocks links, the repair→PGB-149 Blocks link and R1-35→146 as specified in the delivery plan."
+                }
+              ]
+            },
+            "testing_strategy": {
+              "testing_types": [],
+              "environment": {
+                "source": "configured_target",
+                "target_reference": "Exact approved Pigboard PR source revision composed with verified merged PGB-145, already prepared Node dependencies and unchanged complete local fixtures; copied-runtime checks use one complete prepared closure from an unrelated cwd. No deployed target or live account.",
+                "required_capabilities": []
+              },
+              "actors": [],
+              "fixtures": [
+                {
+                  "id": "DATA-01",
+                  "description": "Existing H02-06-a3-full-qa-u2-unpublished, OC01-selection and S06-second-configured-accepted-stage inputs/options and independent full expected reports; complete copied-runtime closure and retained seven-smoke evidence.",
+                  "initial_state": "Fresh read-only exported inputs per case and a worker-owned allowlisted runtime copy with prepared dependency bytes; preserve frozen expectations and historical evidence.",
+                  "reference": null,
+                  "preparation_id": "PREP-01",
+                  "owner": "implementer"
+                }
+              ],
+              "preparation": [
+                {
+                  "id": "PREP-01",
+                  "owner": "implementer",
+                  "supplies": "At the exact PR revision, prepare source-guide exports for DATA-01, independent complete expected reports, exact API/JSON/copied-runtime commands and options, Node/dependency hashes, before/after manifests and zero-effects evidence; supply dated/current receipt guard commands and attributable existing seven-smoke evidence.",
+                  "used_by": [
+                    "DATA-01",
+                    "R1-35-H01",
+                    "R1-35-H02"
+                  ],
+                  "preserves": [
+                    "All existing raw inputs, full expected outcomes and required compatibility coverage; no new scenario or dependency installation.",
+                    "All original PGB-146 criteria, testing strategy and two human routes and all original PGB-81 criteria and42 human cases remain unchanged.",
+                    "Readable cause parity remains pending PGB-146; the full installed kit and final publication reconciliation remain PGB-81.",
+                    "Human routes remain NOT_RUN until a human performs them; developer checks, independent review and CI are separate."
+                  ]
+                }
+              ],
+              "dispatch_order": [],
+              "cases": [],
+              "human_review": {
+                "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this CLI/internal API contract; use authorized requirement-based direct developer checks and retain designated human review separately.",
+                "cases": [
+                  {
+                    "id": "R1-35-H01",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "AC2",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Exact approved source revision, PREP-01/DATA-01, prepared Node dependencies and unchanged exported fixtures are available. No account, credentials, UI, HTTP/Postman or live target is required."
+                    ],
+                    "steps": [
+                      "Export the fixed H02-06-a3-full-qa-u2-unpublished, OC01-selection and S06-second-configured-accepted-stage inputs and options using the source guide.",
+                      "Run the existing source API full comparison for H02-06 and the source JSON CLI full comparisons for H02-06, OC01 and S06."
+                    ],
+                    "expected": [
+                      "Complete reports match their independent fixed expectations, including correct targets, exact canonical causes, actual dependency order, current parent revision and required publication.",
+                      "Every result retains false execution authority and zero product writes."
+                    ],
+                    "evidence": [
+                      "Retain exact commands/options, complete reports, tested revision, input/runtime hashes and before/after input inventories."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence, then remove only the worker-owned disposable exports and runtime copy."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-35-H02",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC3",
+                      "TAC1",
+                      "TAC2",
+                      "TAC3"
+                    ],
+                    "prerequisites": [
+                      "Use the same exact approved revision and PREP-01/DATA-01 with a complete worker-owned copied runtime, prepared dependency bytes and unrelated cwd; retain existing seven-smoke evidence with its original revision attribution. No credentials or live target are required."
+                    ],
+                    "steps": [
+                      "Run the existing copied-runtime JSON CLI full comparisons for H02-06-a3-full-qa-u2-unpublished and OC01-selection from the unrelated cwd.",
+                      "Inspect the complete closure manifests, attributable existing seven-smoke evidence, source guide and dated/current receipt guard outputs."
+                    ],
+                    "expected": [
+                      "Complete copied-runtime reports match the independent fixed expectations with zero effects.",
+                      "Current source30 Stories/132 cases is preserved; the earlier native32/136 snapshot and the five differences against the hash-bound recorded comparison set remain explicitly dated, not an exhaustive current native inventory.",
+                      "The guide and partial receipt keep readable cause parity pending PGB-146 and name PGB-81 as the full publication/installed-kit owner.",
+                      "Later PGB-82→PGB-148 and native PGB-147/PGB-148 source omissions remain deferred to PGB-81 full reconciliation."
+                    ],
+                    "evidence": [
+                      "Retain complete manifests, commands/options, reports, source/runtime/input hashes, before/after inventories, guard output and original attribution for reused smoke evidence."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence, then remove only the worker-owned disposable exports and runtime copy."
+                      ]
+                    }
+                  }
+                ]
+              },
+              "automated_regression": "Retain existing complete policy/API/JSON, strict-history/current, no-effects, fixture-preservation and installed-compatibility coverage; add only actual integration/publication binding guards."
+            },
+            "open_questions": []
+          }
+        },
+        "PGB-146": {
+          "native_id": "10606",
+          "description_sha256": "45932a2a2b29fca7ff67dc235a7c3f6b29bd8b3609fad26a9c1c755d9bb5af6d",
+          "canonical_contract_sha256": "1d7bc7075c214b6eed4d4d9280c30f39fee35454a2efd1ce075860cc9afa6fcc",
+          "contract": {
+            "schema": "pigboard-ticket/v1",
+            "problem_to_solve": "Operators and agents need to inspect the complete repair decision before any live action. The source preview must explain actual parent dependencies, preserve every unresolved cause and distinguish queueing from admission.",
+            "prerequisites": [
+              {
+                "ticket": "PGB-80",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-113",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-129",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-136",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-149",
+                "required_outcome": "ai_qa_complete"
+              }
+            ],
+            "acceptance_criteria": [
+              {
+                "id": "AC1",
+                "requirement": "The source API and CLI return the approved complete repair decisions for the existing PGB-81 fixtures, including priority, capacity, pause and current-parent requirements."
+              },
+              {
+                "id": "AC2",
+                "requirement": "Structured and readable results name the same target, actual dependency order, parent revision, causes and required publication, with no execution authority or writes."
+              },
+              {
+                "id": "AC3",
+                "requirement": "The source guide is sufficient to prepare inputs, run the preview and resolve common waits; existing installed behavior retains a working closure and regression coverage."
+              }
+            ],
+            "technical_acceptance_criteria": {
+              "repository": {
+                "url": "https://github.com/danielchappell/Pigboard",
+                "base_branch": "main",
+                "change_boundary": "Own the complete cloud-neutral source repair preview, its required installed compatibility, source tests, guides and explicitly dated partial delivery-publication receipt.",
+                "out_of_scope": [
+                  "Customer repository changes, provider writes, worker monitoring, run cancellation, deployment or activation.",
+                  "The full installed repair fixture kit, eighth semantic smoke and complete source/native publication reconciliation remain PGB-81 outcomes.",
+                  "Changes outside the20 reviewed R1-32 paths or to unrelated State A/source/native contracts."
+                ],
+                "related_repositories": []
+              },
+              "accepted_decisions": [],
+              "constraints": [
+                {
+                  "id": "TAC1",
+                  "requirement": "Repository: danielchappell/Pigboard, default main; change only cloud-neutral source preview, its required compatibility, tests and listed documentation/publication receipt."
+                },
+                {
+                  "id": "TAC2",
+                  "requirement": "Keep the three existing typed proposal edges and strict current-versus-history authority; add no provider calls, worker monitoring, cancellation, publication or activation."
+                },
+                {
+                  "id": "TAC3",
+                  "requirement": "Preserve all original PGB-81 human cases; the dated partial publication receipt names PGB-81 as the full reconciliation owner."
+                }
+              ]
+            },
+            "testing_strategy": {
+              "testing_types": [],
+              "environment": {
+                "source": "configured_target",
+                "target_reference": "Exact approved Pigboard PR source revision with already prepared Node dependencies and existing complete local fixtures; existing installed compatibility tests use the complete copied runtime from an unrelated cwd. No deployed customer target or live account.",
+                "required_capabilities": []
+              },
+              "actors": [],
+              "fixtures": [
+                {
+                  "id": "DATA-01",
+                  "description": "The existing PGB-81 source fixture matrix, seven corrected cases, unchanged H02-06 contrast and required installed compatibility fixtures; no new product scenario.",
+                  "initial_state": "Fresh read-only local files per case; frozen snapshots retain their existing independent facts and expected reports.",
+                  "reference": null,
+                  "preparation_id": "PREP-01",
+                  "owner": "implementer"
+                }
+              ],
+              "preparation": [
+                {
+                  "id": "PREP-01",
+                  "owner": "implementer",
+                  "supplies": "At the exact PR revision, prepare the source-guide exports, existing complete fixtures, independent full expected reports, exact source/API/CLI and compatibility commands, prepared dependency/runtime hashes and zero-effects/input-inventory evidence.",
+                  "used_by": [
+                    "DATA-01",
+                    "R1-32-H01",
+                    "R1-32-H02"
+                  ],
+                  "preserves": [
+                    "All existing fixture inputs, expected outcomes and required source/installed compatibility coverage; no new scenario.",
+                    "All original PGB-81 AC1–AC4, TAC1–TAC2 and42 human cases remain unchanged.",
+                    "Human routes remain NOT_RUN until a human performs them; developer regression, independent review and CI are separate."
+                  ]
+                }
+              ],
+              "dispatch_order": [],
+              "cases": [],
+              "human_review": {
+                "no_ai_cases_reason": "QA skills: []. Approved QA skills do not execute this CLI/internal API contract; use the authorized requirement-based direct checks and retain designated human review separately.",
+                "cases": [
+                  {
+                    "id": "R1-32-H01",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "AC2",
+                      "AC3",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Approved source revision, PREP-01/DATA-01, prepared Node dependencies and existing complete fixtures are available. No credentials, live account, UI or Postman are required."
+                    ],
+                    "steps": [
+                      "Export the fixed inputs using the source guide.",
+                      "Run the existing source/API/CLI matrix tests and inspect JSON/readable outputs for the seven corrected cases plus the unchanged H02-06-a3-full-qa-u2-unpublished contrast."
+                    ],
+                    "expected": [
+                      "Full reports match their independent fixed expectations, including S06 selecting1100, A/B/C dependency order, the retained queue-capacity explanation and active/Blocked suppression.",
+                      "Structured and readable results retain the same targets, parent revisions, causes and required publication, with zero writes and false execution authority."
+                    ],
+                    "evidence": [
+                      "Retain exact commands, complete outputs, input/runtime hashes and the tested source revision."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence, then remove only the worker-owned disposable export directory."
+                      ]
+                    }
+                  },
+                  {
+                    "id": "R1-32-H02",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC2",
+                      "AC3",
+                      "TAC1",
+                      "TAC2",
+                      "TAC3"
+                    ],
+                    "prerequisites": [
+                      "Use the same approved revision and prepared fixtures as R1-32-H01, including the complete runtime closure for existing installed compatibility tests. No provider credentials or live target are required."
+                    ],
+                    "steps": [
+                      "Run the existing source no-effects/history/current-boundary tests and complete npm test, including existing installed regressions with the complete runtime closure.",
+                      "Check that the dated partial publication receipt names PGB-81 as the full reconciliation owner and preserves its original42 human objects."
+                    ],
+                    "expected": [
+                      "No product writes or provider calls occur, and historical evidence never grants strict current-proof authority.",
+                      "Prior installation behavior remains compatible and reports its existing seven smokechecks honestly.",
+                      "The dated partial receipt assigns full publication reconciliation to PGB-81 while preserving all original42 PGB-81 human cases."
+                    ],
+                    "evidence": [
+                      "Retain complete test output, exact revision, input/runtime hashes and temporary-directory inventories."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Remove only the worker-owned disposable fixtures after evidence capture."
+                      ]
+                    }
+                  }
+                ]
+              },
+              "automated_regression": "Update the existing complete source/API/CLI matrices, exact fixture-preservation assertions, current/history authority checks and required installed compatibility tests; run the prescribed complete repository checks."
+            },
+            "open_questions": []
+          }
+        },
+        "PGB-81": {
+          "native_id": "10541",
+          "description_sha256": "2fc67b655eb29893408d9dfca2ca7b7c567e05740c75b2e417a3a143333d1c17",
+          "canonical_contract_sha256": "5514508fe0c18a500dbe4a3939bcd0e193fbf123eb09b1299e26612d779fff5f",
+          "contract": {
+            "schema": "pigboard-ticket/v1",
+            "problem_to_solve": "The manager must finish active work and repair actual dependencies oldest first. Operators need to see the exact queue/admission decision before any live mutation.",
+            "prerequisites": [
+              {
+                "ticket": "PGB-80",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-113",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-129",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-136",
+                "required_outcome": "ai_qa_complete"
+              },
+              {
+                "ticket": "PGB-146",
+                "required_outcome": "ai_qa_complete"
+              }
+            ],
+            "acceptance_criteria": [
+              {
+                "id": "AC1",
+                "requirement": "Preview covers all 41 approved scenarios, selecting repair prerequisites, queued repairs, Bugs then Stories with correct capacity."
+              },
+              {
+                "id": "AC2",
+                "requirement": "It proposes queueing B only from actual stale parent lineage after A’s full repaired completion; active or Blocked B is left alone."
+              },
+              {
+                "id": "AC3",
+                "requirement": "It preserves old/new unresolved repair roots, recognizes consumed roots and never infers a cascade from order, merge or retargeting."
+              },
+              {
+                "id": "AC4",
+                "requirement": "Paused Epics suppress queue-only and admission decisions; missing lineage or unresolved repair inputs hold instead of admitting unrelated work."
+              }
+            ],
+            "technical_acceptance_criteria": {
+              "repository": {
+                "url": "https://github.com/danielchappell/Pigboard",
+                "base_branch": "main",
+                "change_boundary": "Own cloud-neutral repair selection only; no PR polling, run cancellation or provider writes.",
+                "out_of_scope": [
+                  "Plexus/customer code changes",
+                  "Archived runtime reuse",
+                  "Activation, worker monitoring, Cursor deduplication, automatic recovery and new QA engines"
+                ],
+                "related_repositories": []
+              },
+              "accepted_decisions": [
+                {
+                  "id": "D03",
+                  "decision": "Story writing and human-invoked request-rework are separate skills.",
+                  "reference": "docs/architecture/manager-human-rework.md"
+                },
+                {
+                  "id": "D04",
+                  "decision": "Pig Boss is the manager. A stream is Jira site + immutable project ID + full label; equal labels in different projects are independent. One customer installation supports multiple projects. Basic manager health is in release one; worker monitoring and scaling implementation remain follow-ons.",
+                  "reference": "docs/architecture/pig-boss-operations.md"
+                }
+              ],
+              "constraints": [
+                {
+                  "id": "TAC1",
+                  "requirement": "Own cloud-neutral repair selection only; no PR polling, run cancellation or provider writes."
+                },
+                {
+                  "id": "TAC2",
+                  "requirement": "Return typed decisions for only Ready to Work→In Progress, Rework Queued→In Progress and Human Review→Rework Queued."
+                }
+              ]
+            },
+            "testing_strategy": {
+              "testing_types": [],
+              "environment": {
+                "source": "configured_target",
+                "target_reference": "Current Pigboard PR checkout and prepared disposable local fixtures; no deployed customer target.",
+                "required_capabilities": []
+              },
+              "actors": [],
+              "fixtures": [
+                {
+                  "id": "DATA-01",
+                  "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+                  "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+                  "reference": null,
+                  "preparation_id": "PREP-01",
+                  "owner": "implementer"
+                }
+              ],
+              "preparation": [
+                {
+                  "id": "PREP-01",
+                  "owner": "implementer",
+                  "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+                  "used_by": [
+                    "DATA-01",
+                    "R1-11-S01",
+                    "R1-11-S02",
+                    "R1-11-S03",
+                    "R1-11-S04",
+                    "R1-11-S05",
+                    "R1-11-S06",
+                    "R1-11-S07",
+                    "R1-11-S08",
+                    "R1-11-S09",
+                    "R1-11-S10",
+                    "R1-11-S11",
+                    "R1-11-S12",
+                    "R1-11-S13",
+                    "R1-11-S14",
+                    "R1-11-S15",
+                    "R1-11-S16",
+                    "R1-11-S17",
+                    "R1-11-S18",
+                    "R1-11-S19",
+                    "R1-11-S20",
+                    "R1-11-S21",
+                    "R1-11-S22",
+                    "R1-11-S23",
+                    "R1-11-S24",
+                    "R1-11-S25",
+                    "R1-11-S26",
+                    "R1-11-S27",
+                    "R1-11-S28",
+                    "R1-11-S29",
+                    "R1-11-S30",
+                    "R1-11-S31",
+                    "R1-11-S32",
+                    "R1-11-S33",
+                    "R1-11-S34",
+                    "R1-11-S35",
+                    "R1-11-S36",
+                    "R1-11-S37",
+                    "R1-11-S38",
+                    "R1-11-S39",
+                    "R1-11-S40",
+                    "R1-11-S41",
+                    "R1-11-H02"
+                  ],
+                  "preserves": [
+                    "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+                  ]
+                }
+              ],
+              "dispatch_order": [],
+              "cases": [],
+              "human_review": {
+                "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+                "cases": [
+                  {
+                    "id": "R1-11-S01",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Opted-in Epic is In Progress; A is Ready to Work; stream empty; zero Human Review"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S01; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Select A for new admission"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S02",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Epic has no configured opt-in label, or is not In Progress"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S02; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No admission; active workers may finish their own permitted cycle. Without opt-in, no manager authority. For an opted-in paused Epic, suppress all manager transitions, including queue-only mutations (owner confirmed 14 November 2026)"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S03",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Earlier A is in refinement; later independent B is Ready to Work"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S03; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Ignore A as candidate; select B"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S04",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A is Ready to Work but has a required null; independent B is an otherwise eligible Ready to Work Story/Bug with a complete contract"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S04; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Report A's field error; B can be selected; no agent launched to finish A's specification"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S05",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "B requires A's AI-QA completion; A is unready, unfinished or lacks coherent current evidence"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S05; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "B is ineligible; do not invent completion or a different prerequisite condition"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S06",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Complete prerequisite A is Human Review, Product Acceptance or Done, with matching completion evidence and no unresolved repair affecting B"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S06; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "A's prerequisite is satisfied; human merge/testing is not an extra implicit admission gate"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S07",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Ready Bug B and independent ready Story A are both eligible"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S07; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Select B; Epic order breaks ties between eligible Bugs"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S08",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Bug B is unready; Story A is eligible and independent"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S08; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Ignore B as candidate; select A"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S09",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Understood repair A is queued; new Bug B is ready"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S09; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Repair A precedes B; a missing repair input holds the repair chain rather than opening a bypass"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S10",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Ready prerequisite P is needed to execute the queued repair; it is otherwise eligible"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S10; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "P precedes the repair; unrelated new work does not replace it"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S11",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A occupies In Progress, In Review or QA"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S11; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No second admission in that stream; changing worker type does not free it"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S12",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "One stream has four Human Review tickets, no active cycle and an eligible candidate"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S12; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "One candidate can start; its return would make five"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S13",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "One stream has five Human Review tickets and an eligible Story or Bug"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S13; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No admission; Bugs obey the same cap"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S14",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Rework A is queued and four other tickets are in Human Review"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S14; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "A can start if other gates pass; reserve its return as the fifth ticket"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S15",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Rework A is queued and five other tickets are in Human Review"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S15; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "A waits for human work to free capacity; no repair exception to the cap"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S16",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A leaves Human Review for a configured later accepted stage"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S16; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "It no longer occupies the five-ticket Human Review count; retain facts needed for dependencies and lineage"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S17",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A is genuinely Blocked, or the stream has an unresolved manager intent"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S17; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Hold the stream; no autonomous unblock, expiry or replay"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S18",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "AI-Daniel-1 is occupied; AI-Daniel-2 has an eligible ticket and no shared uncertainty"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S18; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Daniel-2 can proceed independently; full labels identify streams"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S19",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A is in Human Review and needs confirmed repair while B is already active"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S19; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "The authorized human-request automation records A in Rework Queued; B's existing cycle continues; no concurrent A implementer. B's workers have no authority to transition A"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S20",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "B can finish its assigned cases without depending on the unresolved A repair"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S20; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "B can reach Human Review; then A repair is considered before new C"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S21",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A's known defect makes B's required checks impossible"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S21; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Responsible B worker records dependency wait and unfinished checks, moves B to Rework Queued; manager does not repair it or start A concurrently"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S22",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A's repair is implemented but review/AI QA is incomplete"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S22; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Do not queue completed B on implementation evidence alone"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S23",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A completes its repaired revision; B's recorded actual parent is A at an older affected revision; B is in Human Review"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S23; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Manager queues B with the repair roots and required parent completion; preserve B's old assignment pointer until admission"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S24",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Same evidence as S23, but B is active"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S24; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Do not interrupt or move active B; later re-evaluate its published result and current stage"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S25",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "B has already consumed the applicable repair roots at the required parent completion"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S25; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Do not queue B again"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S26",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "B is next in Epic order but does not record a code dependency on A"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S26; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No stack update merely from order or a shared stream"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S27",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A is normally merged/retargeted without a recorded repair"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S27; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No stack update merely from the merge/retarget; humans own PR maintenance"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S28",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "B must update its stack, but its PR is already merged, lineage is absent, or the fix needs more scope"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S28; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Human handling; no replacement/multi-PR job inferred. Implementer PR preflight owns the actual open-PR check"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S29",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A second parent repair arrives before B starts"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S29; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "B waits until the newer parent repair also completes implementation, review and AI QA; consume the latest verified parent revision covering every applicable repair request, preserve all causes and do not drop older findings"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S30",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "One full label appears in two active opted-in Epics"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S30; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Hold that stream and show both Epics; do not choose one by timestamp/order"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S31",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A known live/queued/blocked/Human Review ticket loses its label, changes parent or disappears from the Epic list"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S31; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Continue reading its retained stable ID; hold its previous stream until a human reconciles the mismatch; do not free capacity from a filtered search"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S32",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "The same known ticket is relabelled into another configured stream"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S32; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Include both old and proposed scopes in the mismatch diagnostic; do not admit it under the new label while its previous ownership is unresolved"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S33",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "An unstarted independent preparation/Ready ticket is removed from the Epic plan"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S33; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "It is no longer a candidate; removal is allowed only when no required dependency refers to it"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S34",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A prerequisite is removed or cancelled"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S34; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "This does not satisfy its required outcome; dependent work stays ineligible pending revised human requirements"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S35",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A ticket enters an unmapped or ambiguous native status"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S35; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Hold the affected scope; Jira's broad To Do/In Progress/Done category cannot determine product meaning"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S36",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "A required known ID is inaccessible/deleted, a page is missing, or a search is incomplete"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S36; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Hold affected scope; shared discovery uncertainty holds the scan; never count missing as finished"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S37",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Human reorders eligible independent tickets before admission"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S37; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "New Epic order controls future ties; do not rewrite an existing assignment or actual parent lineage"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S38",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Requirements, relevant Epic membership or completion revision changes before durable intent"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S38; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Return changed-input/no-write; use a later fresh evaluation rather than continuing an old selection"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S39",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Two tickets are already active in one stream"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S39; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Report inconsistent occupancy and hold new manager mutations; do not stop either Cursor run automatically"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S40",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Epic is paused after one worker cycle started"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S40; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "No new admission; that cycle may reach Human Review if it needs no correction. Also suppress manager queue-only operations (owner confirmed 14 November 2026)"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-S41",
+                    "execution": "human",
+                    "owner_role": "human QA reviewer",
+                    "requirements": [
+                      "AC1",
+                      "TAC1",
+                      "TAC2"
+                    ],
+                    "prerequisites": [
+                      "Relevant inputs change after durable intent or comment/pointer publication but before transition"
+                    ],
+                    "steps": [
+                      "Preview DATA-01 S41; check decision, reason and zero writes."
+                    ],
+                    "expected": [
+                      "Send no transition; preserve the intent and already-published evidence as a human hold. A fresh scan cannot clear it or replay publication"
+                    ],
+                    "evidence": [
+                      "Preview output, zero-write audit and tested PR revision."
+                    ],
+                    "cleanup": {
+                      "mode": "none",
+                      "reason": "Read-only local snapshot; retain output.",
+                      "owner": null,
+                      "steps": null
+                    }
+                  },
+                  {
+                    "id": "R1-11-H02",
+                    "execution": "human",
+                    "owner_role": "developer and human QA reviewer",
+                    "requirements": [
+                      "AC2",
+                      "AC3",
+                      "AC4"
+                    ],
+                    "prerequisites": [
+                      "A a1→a2 repair, B old completion, C actual child; second A root arrives while B queued; independent D."
+                    ],
+                    "steps": [
+                      "Preview before A completes.",
+                      "Preview after first and second repaired completions.",
+                      "Supply B completion consuming all causes and preview again."
+                    ],
+                    "expected": [
+                      "No early queue, pointer mutation or duplicated cause; latest coherent parent/all roots required; consumed update not requeued; only actual descendants qualify."
+                    ],
+                    "evidence": [
+                      "command/output transcript and fixture before/after diff; tested PR revision and exact command."
+                    ],
+                    "cleanup": {
+                      "mode": "prescribed",
+                      "reason": null,
+                      "owner": "human QA reviewer",
+                      "steps": [
+                        "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+                      ]
+                    }
+                  }
+                ]
+              },
+              "automated_regression": "Full scenario matrix and repeated-root/descendant policy traces with no provider side effects."
+            },
+            "open_questions": []
+          }
+        }
+      },
+      "dependency_links": [
+        {
+          "id": "10746",
+          "type_id": "10000",
+          "from": "PGB-151",
+          "to": "PGB-149"
+        }
+      ],
+      "preserved_149_edges": [
+        {
+          "id": "10738",
+          "type_id": "10000",
+          "from": "PGB-80",
+          "to": "PGB-149"
+        },
+        {
+          "id": "10739",
+          "type_id": "10000",
+          "from": "PGB-113",
+          "to": "PGB-149"
+        },
+        {
+          "id": "10740",
+          "type_id": "10000",
+          "from": "PGB-129",
+          "to": "PGB-149"
+        },
+        {
+          "id": "10741",
+          "type_id": "10000",
+          "from": "PGB-136",
+          "to": "PGB-149"
+        },
+        {
+          "id": "10742",
+          "type_id": "10000",
+          "from": "PGB-145",
+          "to": "PGB-149"
+        },
+        {
+          "id": "10743",
+          "type_id": "10000",
+          "from": "PGB-149",
+          "to": "PGB-146"
+        }
+      ],
+      "preserved_146_edges": [
+        {
+          "id": "10730",
+          "type_id": "10000",
+          "from": "PGB-80",
+          "to": "PGB-146"
+        },
+        {
+          "id": "10731",
+          "type_id": "10000",
+          "from": "PGB-113",
+          "to": "PGB-146"
+        },
+        {
+          "id": "10732",
+          "type_id": "10000",
+          "from": "PGB-129",
+          "to": "PGB-146"
+        },
+        {
+          "id": "10733",
+          "type_id": "10000",
+          "from": "PGB-136",
+          "to": "PGB-146"
+        },
+        {
+          "id": "10734",
+          "type_id": "10000",
+          "from": "PGB-146",
+          "to": "PGB-81"
+        }
+      ],
+      "original149_unchanged_except_added151_prerequisite_and_TAC3": true,
+      "original146_and81_complete_descriptions_unchanged": true,
+      "meaning": "Bounded actual151/149/146/81 readback after create, link and149 prerequisite/TAC amendment; no complete current native inventory."
+    },
+    "full_reconciliation_owner": "PGB-81",
+    "full_installed_fixture_kit_owner": "PGB-81",
+    "readable_cause_parity": {
+      "owner": "PGB-146",
+      "status": "PENDING",
+      "guidance": "Use source API or --json for every exact cause identity; readable output remains available but incomplete for cause identities."
+    },
+    "human_acceptance": "NOT_RUN",
+    "original149_human_acceptance": "NOT_RUN",
+    "original146_human_acceptance": "NOT_RUN",
+    "PGB81_human_acceptance": "NOT_RUN",
+    "activation_authorized": false
   }
 }
