@@ -115,6 +115,7 @@ are not one coherent inventory; use `readInventory` for scheduling inputs.
 
 Member inputs contain site, immutable project ID, full label, Epic/ticket IDs,
 assignment reference (or null) and expected revision (null only when absent).
+A non-null assignment must reference the same immutable ticket ID as its member; null remains allowed.
 Attempt inputs contain UUID `attempt_id`, immutable ticket/Epic IDs, issue key,
 operation, exact source/target status IDs, configuration digest and bounded
 `cause`/`publication` reference lists. Ordinary callers use `admit_ready`.

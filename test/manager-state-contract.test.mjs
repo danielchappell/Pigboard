@@ -89,7 +89,11 @@ export function stateConformance(name, make) {
     assert.deepEqual(reordered, unchangedMember.assignment);
     assert.notEqual(JSON.stringify(reordered), JSON.stringify(unchangedMember.assignment));
     const nonNullBefore = nonNull.provider.snapshot(), nonNullWrites = nonNull.provider.audit.filter(a => a.name === 'TransactWriteCommand').length;
-    for (const [field, value] of Object.entries({ ticket_id: '1002', comment_id: '701', record_id: '33333333-3333-4333-8333-333333333333', digest: 'sha256:' + 'b'.repeat(64) })) {
+    const nonNullCalls = nonNull.provider.audit.length;
+    const crossTicket = await nonNull.state.begin(beginInput({ expected_installation_revision: 1, required_members: [{ ...fixture.memberA, expected_revision: 0, assignment: { ...assignment, ticket_id: '1002' } }] }));
+    assert.equal(crossTicket.status, 'invalid'); assert.equal(crossTicket.code, 'INVALID_INPUT'); assert.equal(crossTicket.data, null);
+    assert.equal(nonNull.provider.snapshot(), nonNullBefore); assert.equal(nonNull.provider.audit.length, nonNullCalls);
+    for (const [field, value] of Object.entries({ comment_id: '701', record_id: '33333333-3333-4333-8333-333333333333', digest: 'sha256:' + 'b'.repeat(64) })) {
       const changed = await nonNull.state.begin(beginInput({ expected_installation_revision: 1, required_members: [{ ...fixture.memberA, expected_revision: 0, assignment: { ...assignment, [field]: value } }] }));
       assert.equal(changed.status, 'conflict', field); assert.equal(changed.code, 'REVISION_CONFLICT', field); assert.equal(changed.data, null, field);
       assert.equal(nonNull.provider.snapshot(), nonNullBefore, field);
@@ -159,6 +163,20 @@ test('invalid inputs, duplicate targets, oversized batches and revision overflow
   const invalid = [beginInput({ required_members: [fixture.memberA, fixture.memberA] }), beginInput({ expected_installation_revision: Number.MAX_SAFE_INTEGER }), beginInput({ stream: { ...fixture.streamA, site: 'https://user:secret@example.atlassian.net' } }), beginInput({ attempt: { ...fixture.attemptA, raw_body: 'secret' } }), beginInput({ required_members: Array.from({ length: 98 }, () => fixture.memberA) }), beginInput({ attempt: { ...fixture.attemptA, cause: Array(100).fill(fixture.evidence.references[0]), publication: Array(100).fill(fixture.evidence.references[0]) } })];
   for (const value of invalid) assert.equal((await state.begin(value)).status, 'invalid');
   assert.equal(provider.audit.length, calls);
+  for (const existing of [false, true]) {
+    const { state: memberState, provider: memberProvider } = await prepared();
+    if (existing) assert.equal((await memberState.retainMembers({ expected_installation_revision: 0, members: [{ ...fixture.memberA, assignment: fixture.evidence.references[0] }], now: fixture.now })).status, 'confirmed');
+    const member = { ...fixture.memberA, expected_revision: existing ? 0 : null, assignment: { ...fixture.evidence.references[0], ticket_id: '1002' } };
+    const before = memberProvider.snapshot(), memberCalls = memberProvider.audit.length;
+    for (const operation of ['retainMembers', 'begin']) {
+      const value = operation === 'retainMembers'
+        ? { expected_installation_revision: existing ? 1 : 0, members: [member], now: fixture.now }
+        : beginInput({ expected_installation_revision: existing ? 1 : 0, required_members: [member] });
+      const result = await memberState[operation](value);
+      assert.equal(result.status, 'invalid', operation + '/' + existing); assert.equal(result.code, 'INVALID_INPUT'); assert.equal(result.data, null);
+      assert.equal(memberProvider.audit.length, memberCalls); assert.equal(memberProvider.snapshot(), before);
+    }
+  }
 });
 test('missing, unsupported, malformed and incomplete state are distinct with no usable payload', async () => {
   const { state, provider } = await prepared();
