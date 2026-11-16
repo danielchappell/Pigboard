@@ -172,3 +172,22 @@ not replace these checks. Source publication, local validation, prescribed human
 cases, installed/live acceptance, hosted CI, current-head Codex review, owner
 merge/release and activation are separate gates. This Task claims no automated or
 human runtime acceptance and leaves the recorded automation inactive.
+
+
+## Adopted ordinary MVP guarantee cut — 16 November 2026
+
+For the ordinary manager path, the current authenticated Jira handoff and complete
+relevant chain may establish recorded completion without prior capture of every
+historical worker comment's metadata. This supersedes this amendment's stronger
+mandatory prior-capture promise for ordinary recorded proof only. Current exact
+references, configured actors, native edit indicators, slots, requirements,
+assignment and lineage/root checks remain. Any genuine supplied retained tuple
+must match; missing prior capture alone no longer rejects. A change that passes
+current authentication can go undetected without an earlier observation.
+
+No metadata collector, new store or fabricated retained tuple is introduced.
+Strict worker/current-manager proof and own admission/attempt, conditional State,
+publication/readback and original transition/unknown-effect retention are unchanged.
+PGB-175 owns ordinary worker compatibility; this source increment does not prove
+that integration. PGB-162's two human cases remain NOT_RUN. Recorded proof does
+not establish external freshness, live delivery, activation or permission to merge.

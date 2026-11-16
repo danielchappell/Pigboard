@@ -1,5 +1,15 @@
 # Pig Boss release one: complete approved delivery catalogue
 
+> Current reduced release boundary (16 November 2026): the dated catalogue,
+> allocations and publication records below remain historical evidence. Current
+> delivery scope and status live in [Jira PGB](https://scubapig.atlassian.net/jira/software/projects/PGB/boards/70).
+> The remaining journey uses PGB-173, 162, 175, 84, 137, 87, 83, 100 and 90.
+> Automatic repair/stack admission, reconciliation automation, general upgrades
+> and removal, rich monitoring and standalone inspection packaging are deferred.
+> Historical row counts and forecasts are not a current delivery queue or a
+> release-readiness claim. Runtime/install integrity and review gates still apply.
+
+
 Current integrated source catalogue: **53 Stories, 189 full human cases, zero AI cases and125 prerequisite occurrences**. All133 unique typed links are retained, including existing172→173/10776; this integration adds zero links. The53 requirements and41 original scenarios are unchanged. PGB-173 is the sole pending source amendment.
 
 The current source composes53 Stories/189 designated human groups with inherited R1-43 acquisition, PGB-160 recorded-handoff behavior and the PGB-172 pure candidate API. PGB-173 alone is pending source composition; final148 delivery remains later. R's outer and nested160 maps remain dated171 evidence; P's nested parent_integration current25/27/41 maps bind this final source. Only handoff differs from actual171 runtime; handoff and the unchanged P guide differ in payload. Original R/160/P suite claims belong to their own revisions. The new shared-helper revision requires its own full result; local checks, human acceptance, current-head review/CI, merge and activation remain separate.

@@ -816,3 +816,138 @@ Each root prints P01 null, P03 the complete literal value and digest `sha256:87b
 Ordinary ADF has a 262144-byte, 32-container, 1000-list-item and 1000-typed-node bound. A selected candidate rechecks the original whole wrapper at 65536 bytes, 32 containers and 100 children; its record remains limited to 16384 bytes, 16 containers and 100 list items. Code language does not hide an attempted record: selected blocks must be yaml/yml and text-only. Root `schema` values alone identify the family; unrelated fields, comments and keys do not. Aliases use the latest prior anchor, never a later declaration. Cycles and missing targets terminate without expansion.
 
 For a diagnostic, retain its safe code/path and correct the supplied comment. Do not select one block from an ambiguous comment, truncate content, retry with looser limits or treat failure as ordinary. A missing copied module or dependency is a setup failure: stop and ask the operator for a complete prepared release; never fall back to source or fetch dependencies. Record actual commands, roots, input hashes and results; developer evidence does not replace designated human acceptance R1-44-H01/H02, both NOT_RUN.
+
+## Complete ordinary Jira inventory library
+
+A prepared source caller can collect the configured ordinary Jira facts with
+`inspectJiraInventory` from `lib/jira/inventory.mjs`. This is a library capability;
+there is no inventory CLI or separately installed inspection package. Customer
+Lambda packaging belongs to PGB-83 and installed acceptance belongs to PGB-90.
+The source fixture results do not establish either outcome.
+
+Prepare the canonical configuration, Node dependencies, a trusted credential
+resolver and operator-confirmed Jira visibility before calling. The credential
+needs the existing Jira issue/comment/property read permissions. State's
+`readInventory`/`projectRetainedInventory` owner supplies the retained members,
+pending intents and explicit completeness; a missing or false completeness flag
+never means an empty complete State.
+
+```js
+import { inspectJiraInventory } from './lib/jira/inventory.mjs';
+
+const result = await inspectJiraInventory(configText, {
+  retained_members: [],
+  pending_intents: [],
+  retained_complete: true, // Only after State confirms the empty initial inventory.
+}, { resolveSecret });
+console.log(JSON.stringify(result.report));
+```
+
+`resolveSecret(reference, signal)` is the prepared in-process resolver; it returns
+the credential and cooperates with cancellation. The library makes fixed verified
+HTTPS reads, including fixed search POSTs, without Jira or State mutations. It
+unions opted-in and paused Epics, children, exact full-label occupants, declared
+members, prerequisites, retained ownership, pending subjects and typed references.
+A complete result has `status: "complete"`, `domain_complete: true` and complete
+project/label rows. Each row preserves old retained IDs and positively established
+current IDs separately. A fully observed move preserves both scopes. An incomplete
+row's empty ID set does not prove absence.
+
+Trusted callers access `result.observations` in memory. Its issue descriptions and
+comment pages retain bounded original ADF strings and native author/time metadata;
+exact references retain immutable ticket/comment/record IDs and matched digests.
+The property is read-only and non-enumerable: serializing the result emits only
+its safe report. Keep private observations within the customer process. Raw bodies
+and digest consistency authenticate neither an author nor a receipt. Pass these
+facts to the Core owner (PGB-162) for normalization, recorded-proof composition
+and policy evaluation. The collector constructs no semantic snapshot or admission
+decision; `admission` and `receipt_proof` remain `not_evaluated`.
+
+An authenticated complete property-key enumeration for a verified issue can
+confirm `pointer: {state: "absent", value: null}` at that observation. A listed
+work-context property requires a validated value. A raw property 404 remains
+unknown, with `POINTER_UNKNOWN`; it never proves absence.
+
+For example, `status: "incomplete"` with `RETAINED_INCOMPLETE` holds every reported
+scope even when native observations succeeded. An isolated comment/reference
+failure holds all proved dependent scopes; unknown reach and exhausted resources
+hold the whole observation. Successful private facts and known old/current IDs
+remain available. Correct the named configuration, visibility, changed input or
+bound before starting a fresh bounded invocation. Do not retry automatically or
+clear retained attempts to obtain a complete report. If resolver cleanup is
+`cancel_unconfirmed`, the caller must confirm its cleanup before trying again.
+The library has no effects to undo; State retains any prior uncertain attempt.
+
+Developer verification uses the existing HTTPS fixture harness, for example:
+
+```sh
+node test/fixtures/jira-preview-harness.mjs --case R1-45-H01 --variant complete-domain --runtime /absolute/pigboard/source --json
+node --test test/jira-inventory.test.mjs
+```
+
+The fixed packet has 28 variants and four paired controls. These developer
+observations remain separate from designated-human acceptance (NOT_RUN, 0/4),
+live Jira visibility, hosted CI, release and activation.
+
+## Ordinary recorded policy
+
+PGB-162 adds a pure source and prepared-copy route for ordinary Ready to Work
+Stories/Bugs. It reuses the existing policy with scheduling declarations and
+current authenticated recorded handoffs. Complete native membership, exact full
+project/stream identity, Epic order, Bug priority, occupancy, pause, Blocked holds
+and the five-ticket Human Review cap still apply. Required rework or stack repair
+holds for human handling; no ordinary proposal can schedule around it.
+
+```js
+import { previewSnapshot } from './lib/manager/decisions.mjs';
+import { composeOrdinarySnapshot } from './lib/manager/snapshot.mjs';
+// configInput is the one canonical raw YAML/JSON configuration.
+// inspection is173's trusted in-memory InspectionResult; State supplies confirmed
+// retained_members, pending_intents, retained_complete and genuine retained tuples.
+const composed = composeOrdinarySnapshot(configInput, inspection, state);
+if (!composed.valid) console.log(JSON.stringify(composed.diagnostics));
+else console.log(JSON.stringify(previewSnapshot(configInput,
+  JSON.stringify(composed.snapshot), {mode:'ordinary'})));
+```
+
+Composition performs no I/O and does not authorize admission. It preserves original
+ADF strings and native metadata, every known member and prior ownership, explicit
+pending attempts, complete comment pages and exact reference closure. It derives
+recorded obligations from actual records; a verified empty set is never inferred
+from a missing page.173's contract is consumed as supplied facts here; live
+acquisition/State/AWS integration and installed delivery acceptance remain separate.
+Print the safe acquisition report or policy result, not private observations.
+
+The explicit snapshot is `pigboard-manager-snapshot/v2`: it retains the legacy
+closed fields and bounds but removes every issue's `context_body`. Issue `pointer`
+is a canonical pointer, confirmed absence `null`, or exactly
+`{state:'unknown',value:null}`. Unknown is held, never treated as absent.
+`completion_receipts` and optional `repair_receipts` contain original JSON strings
+using `pigboard-manager-handoff-input/v1`; execution contexts, PR observations and
+external evidence observations are rejected. Retained member and pending-intent
+shapes remain unchanged. A shared/unknown acquisition failure yields no composed
+snapshot; proved isolated failures preserve members and hold affected stream
+checks while independent complete scopes remain eligible.
+
+```sh
+node scripts/manager-preview.mjs --mode ordinary --config /absolute/config.json --input /absolute/snapshot-v2.json --json
+node <receipt.skills>/work-validator/scripts/manager-preview.mjs --mode ordinary --config /absolute/config.json --input /absolute/snapshot-v2.json
+```
+
+The result is `pigboard-manager-preview/v2`, `mode: ordinary`,
+`proof_basis: authenticated_recorded_handoffs`, with external/live freshness and
+permissions `not_evaluated`, execution authority false and writes0. Configuration
+and snapshot digests bind complete supplied inputs. Hidden external PR changes
+are not detected. Current authentication does not promise comparison with every
+earlier metadata observation: `metadata_continuity: supplied_prior_tuples_only`.
+Missing prior tuples alone are allowed; genuine supplied mismatch rejects. Never
+create fake prior tuples or a capture store. Workers still check applicable current
+execution prerequisites. H01/H02 remain NOT_RUN; local checks are developer evidence.
+
+For `STRUCTURE`, use explicit ordinary mode with v2 and remove mixed legacy fields.
+For incomplete reads or unknown pointers, obtain a fresh bounded complete
+observation through its owner. Retain pending attempt identity and ask its owner
+to resolve uncertainty; never clear/replay it. For `REPAIR_REQUIRED`, leave the
+stream held for human handling. Missing/conflicting lineage keeps its precise
+failure. Omitted mode continues the unchanged legacy v1 offline fixture/repair
+route; its result cannot authorize the ordinary admission path.

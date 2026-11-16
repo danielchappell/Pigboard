@@ -401,3 +401,17 @@ writes. Like the other smokes, this is local supplied-data capability, not live
 Jira/Cursor acceptance, deployment or automation activation. A missing/corrupt
 repair module, fixture or semantic result blocks installation before replacing
 the prior stable skills link. Preparation remains separate from delivery runs.
+
+
+### Ordinary recorded preview in a prepared validator
+
+The same prepared `work-validator` carries the source ordinary API and CLI. Use
+`node <receipt.skills>/work-validator/scripts/manager-preview.mjs --mode ordinary
+--config /absolute/config.json --input /absolute/snapshot-v2.json --json` (one line).
+The explicit ordinary route requires snapshot/v2; omitted mode retains the legacy
+snapshot/v1 repair fixture route used by existing installer smoke checks. No new
+installation setting, export command or provider access is needed. Follow the
+[ordinary contract and recovery](manager-preview.md#ordinary-recorded-policy).
+Installer payload/dependency verification, semantic checks, candidate evidence and
+previous stable-link protection remain required. A copied fixture check proves
+local compatibility, not complete173/State/AWS integration or human acceptance.

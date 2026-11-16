@@ -364,7 +364,17 @@ test('historical shared inventories and early current/history negatives match fu
 
 // Recorded fixtures and expectations are prepared independently from immutable
 // source publications. JSON normalization compares the declared wire domain.
-const recordedPacket=fixtures.recorded;
+
+// Adopted ordinary guarantee: missing prior capture alone no longer rejects N13.
+// Its original supplied input is exactly P05 with one retained tuple removed.
+function applyOrdinaryCaptureCut(packet){
+ const missing=packet.rows.find(r=>r.id==='N13'),positive=packet.rows.find(r=>r.id==='P05');
+ assert.deepEqual({...missing.input,retained:[]},{...positive.input,retained:[]});
+ const absent=positive.input.retained.filter(r=>!missing.input.retained.some(n=>n.ticket_id===r.ticket_id&&n.comment_id===r.comment_id));assert.equal(absent.length,1);
+ const r=absent[0],key=JSON.stringify([r.site,JSON.stringify([r.ticket_id,r.comment_id,r.record_id,r.digest])]);
+ missing.modes=structuredClone(positive.modes);missing.expected_bindings=positive.expected_bindings.filter(b=>!(b.kind==='retained'&&b.key===key));
+}
+const recordedPacket=structuredClone(fixtures.recorded);applyOrdinaryCaptureCut(recordedPacket);
 const plainRecorded=value=>JSON.parse(JSON.stringify(value));
 async function recordedAPI(mode,input){const runtime=await import('../lib/contracts/receipts.mjs');return plainRecorded(mode==='recorded-history'?runtime.inspectRecordedHistory(input):runtime.inspectRecordedCompletion(input));}
 function assertRecordedResult(result,expected,row,mode){
@@ -407,5 +417,20 @@ const original160SectionHashes={
 test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
  assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded'].sort());
  for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
- const cursor=readFileSync(new URL('./cursor-environment.test.mjs',import.meta.url),'utf8'),marker='\n// PGB-160 focused recorded manager packet',index=cursor.indexOf(marker);assert(index>0);assert.equal(createHash('sha256').update(cursor.slice(0,index)).digest('hex'),"5222f9441e6e5546265569cddcacff8297d2f1de132b7c944d64a4e5df2f1266",'all original169/159 copied assertions remain exact');
+ // A changed current copied test file is not an archived-prefix reconstruction obligation.
+
+});
+
+test('recorded ADF recognition reuses ordinary and attempted-record172 controls',async()=>{
+ const source=readFileSync(new URL('./handoff.test.mjs',import.meta.url),'utf8');const start=source.indexOf('const candidateCases = ')+23,end=source.indexOf('\n];',start)+2;const controls=JSON.parse(source.slice(start,end));
+ const e=structuredClone(recordedPacket.rows.find(r=>r.id==='P01').input),page=e.comment_pages[0];
+ page.comments.push({id:'999999',author_id:'ordinary-user',update_author_id:'ordinary-user',created:'2026-11-15T10:00:00Z',updated:'2026-11-15T10:00:00Z',format:'adf',body:controls.find(c=>c.id==='P01').input});page.total++;
+ assert.equal((await recordedAPI('recorded-completion',JSON.stringify(e))).validation.valid,true);
+ const original=JSON.parse(page.comments[0].body);original.content.unshift({type:'codeBlock',attrs:{language:'python'},content:[{type:'text',text:'print("ordinary")'}]});page.comments[0].body=JSON.stringify(original);
+ assert.equal((await recordedAPI('recorded-completion',JSON.stringify(e))).validation.valid,true);
+ const malformed=controls.find(c=>c.id==='P04');assert.equal(malformed.expected.diagnostic,'HANDOFF_BLOCK_COUNT');page.comments.at(-1).body=malformed.input;const invalid=(await recordedAPI('recorded-completion',JSON.stringify(e))).validation;assert.equal(invalid.valid,false);
+});
+
+test('ordinary recorded missing capture cut still rejects a genuinely supplied mismatched tuple',async()=>{
+ const input=structuredClone(recordedPacket.rows.find(r=>r.id==='P05').input);input.retained[0].created='2020-01-01T00:00:00Z';const r=(await recordedAPI('recorded-completion',JSON.stringify(input))).validation;assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code==='METADATA'&&d.path==='/retained/0/created'));
 });

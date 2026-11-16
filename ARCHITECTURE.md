@@ -250,3 +250,47 @@ The local three-group API packet preserves installed and human acceptance as
 pending. No historical worker-metadata collector, recovery automation or runtime
 activation is introduced. Existing state evidence and original installed checks
 remain distinct; PGB-83/90 owns the retained installed release journey.
+
+## Complete ordinary Jira acquisition
+
+`lib/jira/inventory.mjs` composes the existing Jira read session/acquirer and
+PGB-172 handoff-candidate recognizer. One configured session owns fixed native
+searches, identity/alias resolution, property-key/value reads, complete comments
+and exact schema-owned reference closure. Search and comment pages share budgets;
+resource exhaustion stops further requests. Old retained ownership and positively
+observed current membership remain distinct in each project/full-label scope.
+
+The enumerable report is safe to serialize. Non-enumerable read-only observations
+preserve original bounded ADF and native metadata for trusted in-memory use.
+Pointer state distinguishes validated present, enumerated absent and unknown.
+A raw 404 cannot establish absence. Exact record/digest matches establish
+acquisition consistency and do not grant receipt or admission authority.
+
+State PGB-84/83 supplies confirmed `retained_members`, `pending_intents` and
+`retained_complete` through its inventory projection. Core PGB-162 owns raw-fact
+normalization, semantic snapshot/envelope construction, recorded parser behavior
+and existing policy evaluation. PGB-175 owns ordinary worker proof compatibility.
+PGB-87 owns conditional original-attempt admission/publication/transition; State
+PGB-84/137 retains durable attempt and outcome evidence. PGB-83 packages the
+disabled customer runtime and PGB-90 verifies the actual installed journey.
+The source acquisition library does not add an installer payload, CLI, evaluator
+or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
+
+## Ordinary recorded policy boundary
+
+`composeOrdinarySnapshot` in the existing snapshot module converts173's supplied
+private original observations and confirmed State projection into snapshot/v2;
+`previewSnapshot(...,{mode:'ordinary'})` uses the same normalizer/policy with
+structural scheduling and recorded validators. It performs no acquisition or
+State writes. Shared/unknown incompleteness rejects composition; proved isolated
+scope failures retain known membership and hold only affected scope checks.
+No synthetic execution context, PR observations, earlier metadata or new store is
+created. Missing earlier capture is allowed under the adopted ordinary guarantee;
+provided genuine tuples still must match. Current authentication and external
+freshness are separate. Required repair holds before external PR/publication logic.
+
+Explicit mode/version/proof fields prevent legacy v1 proposals from entering the
+ordinary admission caller. The existing CLI and actual prepared-copy payload use
+the same route. Strict execution APIs and legacy repair fixtures remain separate.
+This increment does not prove live173/State/AWS composition, worker compatibility,
+human acceptance, activation or a release; their owning delivery gates remain.
