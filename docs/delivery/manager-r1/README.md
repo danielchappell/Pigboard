@@ -1,6 +1,6 @@
 # Pig Boss release one: complete approved delivery catalogue
 
-Current source composition is **52 Stories, 187 full human cases, 125 prerequisite occurrences and 133 captured native links**. R1-43/PGB-171 gives the existing named-issue reader one acquisition owner; its two human groups remain NOT_RUN. PGB-172/R1-44 and PGB-173/R1-45 still require their own full source Stories, and final PGB-148 remains pending. This is source code/catalogue work, not a refreshed native inventory or activated manager.
+Current integrated source catalogue: **53 Stories, 189 full human cases, zero AI cases and125 prerequisite occurrences**. All133 unique typed links are retained, including existing172→173/10776; this integration adds zero links. The53 requirements and41 original scenarios are unchanged. PGB-173 is the sole pending source amendment.
 
 The current source now composes that R1-43 reader with the reviewed PGB-160 recorded-handoff changes delivered on main at `da92a4e1d7839f815e661ffe7709f1891038b454`. The R1-43 publication keeps its original 159-based 41-payload/27-runtime maps as dated evidence; its named parent-integration record owns the current maps, changing only PGB-160's three payload and two runtime hashes. The 52/187 catalogue and R's named-reader behavior are unchanged. R's 692/692 local suite and 12/12 independent QA observations, and PGB-160's 694/694 suite, belong to their original revisions. The composed candidate has separate affected checks; current-head review, CI, human acceptance, merge and activation remain separate.
 
@@ -46,6 +46,7 @@ Read [all complete Story bodies](stories.md), the [machine contracts](ticket-dra
 | PGB-161 / [PGB-161](https://scubapig.atlassian.net/browse/PGB-161) | Check current worker proof and truthful inability | PGB-160 | 1.3125–1.8125 | 9 |
 | R1-33 / [PGB-147](https://scubapig.atlassian.net/browse/PGB-147) | Inspect named Jira issues safely | R1-31, R1-36 | 1.16875–1.65000 | 12 |
 | R1-43 / [PGB-171](https://scubapig.atlassian.net/browse/PGB-171) | Preserve named-issue reads in one acquisition session | R1-33 | 0.43750–0.66250 | 13 |
+| R1-44 / [PGB-172](https://scubapig.atlassian.net/browse/PGB-172) | Inspect handoff candidates from ordinary comments | Reviewed design; no technical prerequisites | 0.56250–0.88750 | 16 |
 | R1-34 / [PGB-148](https://scubapig.atlassian.net/browse/PGB-148) | Inspect complete scoped Jira inventory | R1-33, pending PGB-173 | 0.53750–0.73750 | 12 |
 | PGB-162 / [PGB-162](https://scubapig.atlassian.net/browse/PGB-162) | Preview scheduling and repairs from recorded proof | PGB-160, PGB-81 | 1.375–1.9375 | 15 |
 | PGB-163 / [PGB-163](https://scubapig.atlassian.net/browse/PGB-163) | Read exact handoffs and reconciliation facts | PGB-160, PGB-147, PGB-148, PGB-150 | 1.375–1.875 | 14 |
@@ -76,8 +77,8 @@ The pre-integration PGB-169 whole-work forecast was **7.25–11.25 familiar-huma
 Use the accepted source and prepared dependencies. Do not fetch or repair dependencies inside a delivery run. The first command checks every complete native-bound contract/case, ordering and dependency before expensive installation checks:
 
 ```sh
-node --test --test-name-pattern='PGB-169 current catalogue matches approved native contracts and complete rendered Stories' test/story-authoring.test.mjs
-node --test --test-name-pattern='PGB-169 current catalogue coverage and forecast retain historical evidence|PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+node --test --test-name-pattern='PGB-169 dated catalogue matches approved native contracts and complete rendered Stories' test/story-authoring.test.mjs
+node --test --test-name-pattern='PGB-169 dated catalogue coverage and forecast retain historical evidence|PGB-81 scoped current source matches every frozen native contract and complete rendered Story|PGB-81 current scoped forecast, preserved history and installed closure have independent bindings|PGB-146 historical integration receipt preserves both captures and unchanged State runtime compatibility' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
 node --test --test-name-pattern='PGB-169 every current source payload byte matches its installed copy and manifest|real installed validator runs outside checkout and failed runtime variants preserve stable link|installed repair preview preserves complete checkpoint and historical contracts|repair closure and eighth semantic smoke preserve the previous stable link on failure' test/cursor-environment.test.mjs
 npm test
 ```
@@ -713,3 +714,17 @@ PGB-150 human acceptance remains NOT_RUN (0/4), PGB-152 NOT_RUN (0/2), PGB-154 N
 ## Actual147 installed-inspection checkpoint — dated history
 
 The actual14742-row checkpoint had a58.55875–65.13375 days allocation (5855875/6513375 units). Its exact12-path R1-33 row was9.35–13.2hours, replacing only the earlier16-path row. Installed named-issue inspection and the test-only HTTPS fixture CLI are inherited from that reviewed parent:35 variants,8 controls and1 private projection, human NOT_RUN (0/4). The source guide explains finite inputs, partial outcomes and recovery. Original81 human42 cases and169 human0/2 remain NOT_RUN; developer evidence is separate. This integration adds no runtime beyond inherited147 and authorizes no activation.
+
+<!-- PGB-172 integrated current start -->
+
+Current actual171 + PGB-172 source allocation (53 rows): **68.72125–79.60875 days**, integer units6872125/7960875 at scale100000. This preserves the one R171 residual148 replacement and adds P once. Pending S173 is excluded; this is a source allocation, not remaining project effort. PGB-172 current forecast remains4.50–7.10h, with its original3.90–6.10h allocation retained as history. All189 human groups, including R1-44-H01/H02, remain NOT_RUN.
+
+For the current composition plus dated preservation, this selector executes six named catalogue guards:
+
+```sh
+node --test --test-name-pattern='PGB-171 current|PGB-172 current|PGB-169 dated catalogue' test/story-authoring.test.mjs test/qa-helper-contract.test.mjs
+```
+
+Verify all six names execute without skips; local checks, exact committed review, human acceptance, hosted CI/Codex, merge and activation remain separate. The pure [supplied-comment API guide](../../manager-preview.md#inspect-a-supplied-handoff-comment) remains complete.
+
+<!-- PGB-172 integrated current end -->

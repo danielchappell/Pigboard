@@ -732,3 +732,87 @@ If a case fails or its diagnostic is missing, record that gap; a green parent
 summary alone is not the human observation receipt. Do not retry, fetch
 dependencies or infer live Jira, installed-runtime or human acceptance from this
 source-only packet.
+
+## Inspect a supplied handoff comment
+
+Import `extractHandoffCandidate(adfInput)` from `lib/contracts/handoff.mjs` in a reviewed source checkout or `skills/work-validator/lib/contracts/handoff.mjs` in a complete prepared copy. It accepts UTF-8 string or Uint8Array ADF JSON, with no resolver or other options. Use the already prepared Node dependencies; do not install them during delivery.
+
+It returns `null` for ordinary content, `{value, record_digest}` for exactly one valid candidate, or throws an error with safe `diagnostic` and `diagnostics` fields for a recognizable malformed or ambiguous attempt. This checks syntax and canonical digest only. It grants no receipt proof, identity, permission, completion or admission authority. Inventory discovery is separate.
+
+Set an absolute source root and prepared skills root, then run the same three literal inputs once per root. The copied invocation uses an unrelated directory and unsets NODE_PATH. Replace the two example paths with your actual prepared roots.
+
+```sh
+SOURCE_ROOT=/absolute/path/to/reviewed/Pigboard
+SKILLS_ROOT=/absolute/path/to/prepared/skills
+RUN_DIRECTORY=$(mktemp -d)
+for HANDOFF_MODULE in "$SOURCE_ROOT/lib/contracts/handoff.mjs" "$SKILLS_ROOT/work-validator/lib/contracts/handoff.mjs"; do
+  (cd "$RUN_DIRECTORY" && env -u NODE_PATH HANDOFF_MODULE="$HANDOFF_MODULE" node --input-type=module <<'NODE'
+import { pathToFileURL } from 'node:url';
+import assert from 'node:assert/strict';
+const { extractHandoffCandidate } = await import(pathToFileURL(process.env.HANDOFF_MODULE));
+const cases = [
+  {
+    "id": "P01",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"python\"},\"content\":[{\"type\":\"text\",\"text\":\"print(\\\"ordinary\\\")\\n\"}]}]}",
+    "input_sha256": "a0c8ab6a3a4af1e561be1745c30eb4fad8c88e0ac33a5e9eaa0c9d60cd462b08",
+    "expected": null
+  },
+  {
+    "id": "P03",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"python\"},\"content\":[{\"type\":\"text\",\"text\":\"print(\\\"ordinary\\\")\\n\"}]},{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"{\\\"schema\\\":\\\"pigboard-handoff/v1\\\",\\\"record_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"operation_id\\\":\\\"00000000-0000-4000-8000-000000000001\\\",\\\"ticket_id\\\":\\\"1\\\",\\\"requirements_digest\\\":\\\"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\\\",\\\"assignment\\\":null,\\\"role\\\":\\\"manager\\\",\\\"kind\\\":\\\"admission\\\",\\\"from_stage\\\":\\\"Ready to Work\\\",\\\"to_stage\\\":\\\"In Progress\\\",\\\"payload\\\":{\\\"project_id\\\":\\\"100\\\",\\\"stream\\\":\\\"stream-1\\\",\\\"mode\\\":\\\"new_work\\\",\\\"previous_assignment\\\":null,\\\"requests\\\":[],\\\"existing_pr\\\":null},\\\"resume_authorization\\\":null}\"}]}]}",
+    "input_sha256": "52de5621e4aab0f8f03a09c77a6c8790dfd083e7e7f84fca2e01aa1cb79eeeaa",
+    "expected": {
+      "value": {
+        "schema": "pigboard-handoff/v1",
+        "record_id": "00000000-0000-4000-8000-000000000001",
+        "operation_id": "00000000-0000-4000-8000-000000000001",
+        "ticket_id": "1",
+        "requirements_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "assignment": null,
+        "role": "manager",
+        "kind": "admission",
+        "from_stage": "Ready to Work",
+        "to_stage": "In Progress",
+        "payload": {
+          "project_id": "100",
+          "stream": "stream-1",
+          "mode": "new_work",
+          "previous_assignment": null,
+          "requests": [],
+          "existing_pr": null
+        },
+        "resume_authorization": null
+      },
+      "record_digest": "sha256:87b713f187502f9a81591171ab1252d8f8a614044ebcaa660598d42e7923fc11"
+    }
+  },
+  {
+    "id": "P07",
+    "input": "{\"type\":\"doc\",\"version\":1,\"content\":[{\"type\":\"codeBlock\",\"attrs\":{\"language\":\"yaml\"},\"content\":[{\"type\":\"text\",\"text\":\"schema: {value: pigboard-handoff/v1}\\n\"}]}]}",
+    "input_sha256": "e7ed1aceeb0234ffa0e4b17dc49ff12775692c2d855074829bd6040deabd63d9",
+    "expected": {
+      "diagnostic": "STRUCTURE"
+    }
+  }
+];
+for (const item of cases) {
+  if (item.expected?.diagnostic) {
+    assert.throws(() => extractHandoffCandidate(item.input), error => error.diagnostic?.code === item.expected.diagnostic);
+    console.log(item.id, item.expected.diagnostic);
+  } else {
+    const result = extractHandoffCandidate(item.input);
+    assert.deepEqual(JSON.parse(JSON.stringify(result)), item.expected);
+    console.log(item.id, JSON.stringify(result));
+  }
+}
+NODE
+  )
+done
+rmdir "$RUN_DIRECTORY"
+```
+
+Each root prints P01 null, P03 the complete literal value and digest `sha256:87b713f187502f9a81591171ab1252d8f8a614044ebcaa660598d42e7923fc11`, and P07 STRUCTURE. The JSON comparison above ignores object prototypes while retaining every field and the literal digest.
+
+Ordinary ADF has a 262144-byte, 32-container, 1000-list-item and 1000-typed-node bound. A selected candidate rechecks the original whole wrapper at 65536 bytes, 32 containers and 100 children; its record remains limited to 16384 bytes, 16 containers and 100 list items. Code language does not hide an attempted record: selected blocks must be yaml/yml and text-only. Root `schema` values alone identify the family; unrelated fields, comments and keys do not. Aliases use the latest prior anchor, never a later declaration. Cycles and missing targets terminate without expansion.
+
+For a diagnostic, retain its safe code/path and correct the supplied comment. Do not select one block from an ambiguous comment, truncate content, retry with looser limits or treat failure as ordinary. A missing copied module or dependency is a setup failure: stop and ask the operator for a complete prepared release; never fall back to source or fetch dependencies. Record actual commands, roots, input hashes and results; developer evidence does not replace designated human acceptance R1-44-H01/H02, both NOT_RUN.

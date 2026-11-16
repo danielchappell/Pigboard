@@ -253,3 +253,5 @@ composes ordered execution with one final publisher call. Install all siblings f
 one reviewed release; actual Grok High, bounded clock and qualified helper execution
 need their own evidence. Installed/live release acceptance and automation activation
 remain separate gates.
+
+Inspect an ordinary supplied comment from source or a complete prepared copy with the pure [handoff candidate API](docs/manager-preview.md#inspect-a-supplied-handoff-comment). It distinguishes ordinary content, one canonical candidate and malformed attempts without provider calls, writes or receipt authority.

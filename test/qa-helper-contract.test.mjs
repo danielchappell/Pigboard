@@ -4859,17 +4859,16 @@ async function historicalArtifactBytes(file) {
  return historical169Capture[file].utf8;
 }
 async function assertCurrentCatalogueCoverage() {
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),r=p.named_issue_acquisition_amendment;
- assert(r,'dated169 coverage requires exact R predecessor');
- const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json')),drafts=JSON.parse(await read('docs/delivery/manager-r1/ticket-drafts.json'));
- metadata.splice(metadata.findIndex(x=>x.id==='R1-43'),1);drafts.splice(drafts.findIndex(x=>x.id==='R1-43'),1);
- metadata[metadata.findIndex(x=>x.id==='R1-34')]=structuredClone(r.prior_148.metadata);
- drafts[drafts.findIndex(x=>x.id==='R1-34')]=structuredClone(r.prior_148.draft);
- for(const [key,value]of Object.entries(r.prior_publication.values))p[key]=structuredClone(value);
- delete p.named_issue_acquisition_amendment;
- assert.equal(hash(JSON.stringify(p,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb','whole dated169 publication');
- const a=p.approved_delivery_catalogue_amendment;
- const datedText=async file=>{const value=r.prior_catalogue_text[file];assert(value,file+' named predecessor');assert.equal(hash(value.utf8),value.sha256);return value.utf8;};
+ const read=read172Dated;
+ const livePublication=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),amendment=livePublication.candidate_inspection_amendment;
+ const datedRead=async file=>{
+  if(file==='docs/delivery/manager-r1/publication.json')return JSON.stringify(restore172Publication(livePublication));
+  const text=await read(file);
+  if(file==='docs/delivery/manager-r1/plan-metadata.json'||file==='docs/delivery/manager-r1/ticket-drafts.json')return JSON.stringify(restore172Rows(JSON.parse(text),amendment,file.split('/').at(-1)));
+  if(amendment.text_edits.replacements[file]||amendment.text_edits.appends[file])return restore172Text(file,text,amendment);
+  return text;
+ };
+ const p=JSON.parse(await datedRead('docs/delivery/manager-r1/publication.json')),a=p.approved_delivery_catalogue_amendment,metadata=JSON.parse(await datedRead('docs/delivery/manager-r1/plan-metadata.json')),drafts=JSON.parse(await datedRead('docs/delivery/manager-r1/ticket-drafts.json'));
  assertHistoricalCapture(a.historical_file_bytes,catalogue169Expected);
  const tampered=structuredClone(a.historical_file_bytes);tampered['lib/contracts/work.mjs'].utf8+='\nchanged historical byte';
  assert.throws(()=>assertHistoricalCapture(tampered,catalogue169Expected),/complete43-entry historical capture/);
@@ -4897,80 +4896,17 @@ async function assertCurrentCatalogueCoverage() {
  }
  assert.deepEqual(empty.sort(),['PGB-169-H01','R1-41-H01']);
  for(const [file,expectedRows]of Object.entries(installed81CoverageExpected)) {
-  const text=await datedText(file),lines=text.split('\n'),rows=lines.filter(l=>/^\| [AWMO]\d{2}/.test(l)),ids=new Set(rows.flatMap(l=>l.split('|')[1].match(/[AWMO]\d{2}/g)??[]));assert.equal(ids.size,53);
+  const text=await datedRead(file),lines=text.split('\n'),rows=lines.filter(l=>/^\| [AWMO]\d{2}/.test(l)),ids=new Set(rows.flatMap(l=>l.split('|')[1].match(/[AWMO]\d{2}/g)??[]));assert.equal(ids.size,53);
   for(const expected of expectedRows){const matches=rows.filter(line=>{const ids=line.split('|')[1].match(/[AWMO]\d{2}/g)??[];return ids.length===expected.ids.length&&ids.every((id,i)=>id===expected.ids[i]);});assert.equal(matches.length,1,file+' exact requirement row');assert.equal(matches[0].split('|').slice(1,-2).join('|'),expected.prefix);for(const ref of expected.references)assert(matches[0].includes(ref),file+' retains '+ref);}
   for(const ref of text.matchAll(/(?:R1-\d{2}|PGB-\d+)-(?:H\d{2}|S\d{2}|C\d{2}|OC\d{2}|PC\d{2}|D\d)/g))assert(known.has(ref[0]),file+' unknown case '+ref[0]);
   const dispositionRows=lines.filter(l=>/^\| PGB-(?:159|160|161|162|163|164|165|166|169)-H\d{2} \|/.test(l)&&l.split('|').length===7);assert.equal(dispositionRows.length,19,file+' complete disposition table');
   for(const route of a.case_dispositions){const line=dispositionRows.find(l=>l.startsWith('| '+route.case_id+' |'));assert(line);const fields=line.split('|').slice(1,-1).map(s=>s.trim());assert.deepEqual(fields.slice(0,4),[route.case_id,route.requirements.join(', ')||'none',route.scenario_support.join(', ')||'none',route.disposition]);for(const id of route.requirements)assert(rows.find(l=>l.startsWith('| '+id+' |')).includes(route.case_id));}
   assert(text.includes('51 Stories'));assert(text.includes('185 full human cases'));assert(text.includes('68.3025–78.765'));
  }
- const historicalCoverage=await historicalArtifactBytes('docs/delivery/manager-r1/coverage.md'),currentCoverage=await datedText('docs/delivery/manager-r1/coverage.md'),scenarioRows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));assert.equal(scenarioRows(currentCoverage).length,41);assert.deepEqual(scenarioRows(currentCoverage),scenarioRows(historicalCoverage),'all41 original scenario rows unchanged');
- const delivery=await datedText('docs/delivery/manager-r1/README.md'),product=await datedText('docs/product/README.md');for(const text of [delivery,product]){assert(text.includes('68.3025–78.765'));assert(text.includes('6.75–10.5'));assert(text.includes('11.5–15'));assert(text.includes('NOT_RUN'));}assert(delivery.includes('original 43-entry historical byte closure'));assert(delivery.includes('six additional147 bodies'));assert(delivery.includes('68.5275–79.13375'));assert(delivery.includes('9.75–15.25'));assert(delivery.includes('actual PR footprint is 19 paths'));assert(delivery.includes('eighth semantic smoke'));assert.equal(a.verification.activation_authorized,false);
+ const historicalCoverage=await historicalArtifactBytes('docs/delivery/manager-r1/coverage.md'),currentCoverage=await datedRead('docs/delivery/manager-r1/coverage.md'),scenarioRows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));assert.equal(scenarioRows(currentCoverage).length,41);assert.deepEqual(scenarioRows(currentCoverage),scenarioRows(historicalCoverage),'all41 original scenario rows unchanged');
+ const delivery=await datedRead('docs/delivery/manager-r1/README.md'),product=await datedRead('docs/product/README.md');for(const text of [delivery,product]){assert(text.includes('68.3025–78.765'));assert(text.includes('6.75–10.5'));assert(text.includes('11.5–15'));assert(text.includes('NOT_RUN'));}assert(delivery.includes('original 43-entry historical byte closure'));assert(delivery.includes('six additional147 bodies'));assert(delivery.includes('68.5275–79.13375'));assert(delivery.includes('9.75–15.25'));assert(delivery.includes('actual PR footprint is 19 paths'));assert(delivery.includes('eighth semantic smoke'));assert.equal(a.verification.activation_authorized,false);
 }
-test('PGB-169 current catalogue coverage and forecast retain historical evidence',assertCurrentCatalogueCoverage);
-
-test('PGB-171 current coverage and actual159 payload retain dated evidence',async()=>{
- const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.named_issue_acquisition_amendment;
- assert(a,'current R amendment');
- const originalHashes={'docs/delivery/manager-r1/stories.md':'7afd4e4ac5bd6103769e869ed3f726bc9a5e13822c6f7f3aaf664ebed509a784','docs/delivery/manager-r1/README.md':'0ce6c007c51f8a3c161ef96eaa1f3c04c2140ca6027c33bd71ae5b14431cc0e0','docs/delivery/manager-r1/coverage.md':'b298c54ead6925f53c15f145bd737cb13979cac33b7eeb28fd36b078b5f0c6fb','docs/product/README.md':'83678127dcf811b51d58b4bfaaa6dcbd96ef4ff266771fbf7f1e434ea5016f41','docs/product/coverage.md':'982cf750aed25cc0396b026df91f17ae126f4b0d804c3d2b192c008d148d6057'};
- assert.deepEqual(Object.keys(a.prior_catalogue_text).sort(),Object.keys(originalHashes).sort());
- for(const [file,digest]of Object.entries(originalHashes)){assert.equal(hash(a.prior_catalogue_text[file].utf8),digest,file+' exact predecessor');assert.equal(a.prior_catalogue_text[file].sha256,digest);}
- const expected159={'scripts/validate-work.mjs':'794a5c19d8cf39da3e547d9ea9e4d04249b8838073cefbeef43fe10dd4a0e51f','lib/contracts/work.mjs':'fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329','docs/authoring.md':'26836a1971faf4d39705133bdf1b57283427c980af67dd47886963c9b313784b','lib/contracts/work-semantics.mjs':'2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772'};
- const rRead='5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7';
- const old=p.installed_issue_inspection_amendment;
- assert.equal(a.payload.count,41);assert.equal(a.runtime.count,27);
- assert.deepEqual(Object.keys(a.payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
- assert.deepEqual(Object.keys(a.runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
- for(const file of old.payload.sources){
-  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.payload.artifacts_sha256[file];
-  assert.equal(a.payload.artifacts_sha256[file],expected,file+' R payload map');
- }
- for(const file of old.runtime.paths){
-  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.runtime.artifacts_sha256[file];
-  assert.equal(a.runtime.artifacts_sha256[file],expected,file+' R runtime map');
- }
- assert.equal(a.payload.only_changed_path,'lib/jira/read.mjs');
- assert.equal(a.runtime.only_changed_path,'lib/jira/read.mjs');
- const parentFiles={'docs/architecture/manager-handoff-contract.md':'e1ad3802988275d124c38ee592063fae81aa3de91601931e7ee2596561f7f972','docs/handoffs.md':'72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915','lib/contracts/receipts.mjs':'918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b','scripts/validate-handoff.mjs':'109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe','test/cursor-environment.test.mjs':'ddc994ad97549f1b9a94585851e32ab05f941d1dac48d467146759b6d8e794d3','test/fixtures/handoff-chains.json':'f2077a69dadb16da0d9d7b7556611d7d128f57cdd507f722cb218f187dd717bc','test/handoff.test.mjs':'014ca334466bde44b3bd4836d3a8d3450e2c6ebf8f48846feca43a76970f2dbe','test/receipt-chain.test.mjs':'8986730b40ee3282b512c1a74204e0db7027db042a1af61c62be45db79211612'};
- const payloadChanges=['lib/contracts/receipts.mjs','scripts/validate-handoff.mjs','docs/handoffs.md'];
- const runtimeChanges=payloadChanges.filter(file=>file!=='docs/handoffs.md');
- const integration=a.parent_integration;
- const assertComposed=record=>{
-  assert.equal(record.kind,'ordinary_actual_pgb160_merge');
-  assert.deepEqual(record.original_r,{commit:'e7c9f022f9ada9799b26e85364b991e2d42947f8',tree:'13580b59308ccb67852ce3260bd8e6325d244f83',amendment_json_sha256:'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a',amendment_canonical_sha256:'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844',publication_raw_sha256:'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541'});
-  assert.deepEqual(record.actual_160,{reviewed_commit:'44f148f1f445a9490f314c9b2213ec3e087a855c',reviewed_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',delivered_main_commit:'da92a4e1d7839f815e661ffe7709f1891038b454',delivered_main_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',original_parent_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',changed_path_sha256:parentFiles});
-  assert.deepEqual(record.same_tree_base159,{candidate_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',delivered_commit:'52718e641ad7360e9fbb03b74bced05412fd5160',tree:'46aa208fe2c963dbe4360ccbd99049aef0310aac'});
-  assert.equal(record.reader_sha256,rRead);
-  assert.deepEqual(Object.keys(record.current_payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
-  assert.deepEqual(Object.keys(record.current_runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
-  assert.deepEqual([record.current_payload.count,record.current_runtime.count],[41,27]);
-  assert.deepEqual(Object.keys(record.authorized_payload_substitutions).sort(),payloadChanges.slice().sort());
-  assert.deepEqual(Object.keys(record.authorized_runtime_substitutions).sort(),runtimeChanges.slice().sort());
-  for(const file of old.payload.sources){const expected=payloadChanges.includes(file)?parentFiles[file]:a.payload.artifacts_sha256[file];assert.equal(record.current_payload.artifacts_sha256[file],expected,file+' composed payload');}
-  for(const file of old.runtime.paths){const expected=runtimeChanges.includes(file)?parentFiles[file]:a.runtime.artifacts_sha256[file];assert.equal(record.current_runtime.artifacts_sha256[file],expected,file+' composed runtime');assert.equal(record.current_runtime.artifacts_sha256[file],record.current_payload.artifacts_sha256[file],file+' runtime/payload agreement');}
-  for(const file of payloadChanges)assert.deepEqual(record.authorized_payload_substitutions[file],{before:a.payload.artifacts_sha256[file],after:parentFiles[file]});
-  for(const file of runtimeChanges)assert.deepEqual(record.authorized_runtime_substitutions[file],{before:a.runtime.artifacts_sha256[file],after:parentFiles[file]});
- };
- assertComposed(integration);
- const originalR=structuredClone(a);delete originalR.parent_integration;
- assert.equal(hash(JSON.stringify(originalR)),'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a');
- assert.equal(hash(canonicalize(originalR)),'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844');
- const originalPublication=structuredClone(p);delete originalPublication.named_issue_acquisition_amendment.parent_integration;
- assert.equal(hash(JSON.stringify(originalPublication,null,2)+'\n'),'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541');
- for(const [file,digest]of Object.entries(parentFiles))assert.equal(hash(await read(file)),digest,file+' reviewed160 source bytes');
- for(const file of old.payload.sources)assert.equal(hash(await read(file)),integration.current_payload.artifacts_sha256[file],file+' current composed source bytes');
- const changedParent=structuredClone(integration);changedParent.current_payload.artifacts_sha256['lib/contracts/receipts.mjs']='0';assert.throws(()=>assertComposed(changedParent),/composed payload/);
- const changedSibling=structuredClone(integration);changedSibling.current_payload.artifacts_sha256['lib/config/parse.mjs']='0';assert.throws(()=>assertComposed(changedSibling),/composed payload/);
- for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){
-  const current=await read(file),prior=a.prior_catalogue_text[file].utf8;
-  const rows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));
-  assert.deepEqual(rows(current),rows(prior),file+' original scenario rows');if(file==='docs/delivery/manager-r1/coverage.md')assert.equal(rows(current).length,41);
-  for(const [requirement,caseId]of [['M13','R1-43-H01'],['M14','R1-43-H01'],['A12','R1-43-H02'],['O09','R1-43-H02']])assert(current.split('\n').find(l=>l.startsWith('| '+requirement+' |')).includes(caseId),file+' '+requirement);
-  for(const c of ['R1-43-H01','R1-43-H02'])assert(current.includes('| '+c+' |'),file+' '+c+' disposition');
- }
- assert.deepEqual(a.case_dispositions.map(c=>[c.case_id,c.requirements]),[['R1-43-H01',['M13','M14']],['R1-43-H02',['A12','O09']]]);
- assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
-});
+test('PGB-169 dated catalogue coverage and forecast retain historical evidence',assertCurrentCatalogueCoverage);
 
 // Exact pre-PGB-147 snapshot: four complete JSON objects and two changed text inputs.
 const pre147Digests={"publication.json": ["f0a3a38292404fa1d180cfe2ae791f41bef8b5fca84c0e20b4c6737462042a31", "870f438e41a5acb8f4fcd9e087952dea8ea25d6dc7a0b2b636d42575ff4e8710"], "plan-metadata.json": ["e6f6e565292473e1e5060856778e265ebfe85368504f98669b94a95bcdbbb681", "32fb888754fbad25b9c44575fb42d49247fd07c7c8778cd821a417640c7fdc03"], "ticket-drafts.json": ["cbfbe1b2363e67989eec0f3837547627e377b3104f043ef74119502824f0dd3f", "51d888ce1ae1e046b29298d46594bd3fb9216ad7770ac48dfaeb91363a8fd4c3"], "config/skill-bundle.json": ["aa84523d0236fe00eeebe1fdcfafefd5669fd8c64754b666a9a15c07714c72bc", "3c032b634a068017464c7b2b9e2b0b83059678a76cc18a1099a2d18da772632b"], "docs/delivery/manager-r1/README.md": ["8360bb12066e95e230632716eeb1f8c724ab46a4c0e3b8fac84cdc003f3b27f6", null], "docs/manager-preview.md": ["e81605c01a69ef69cb7710742d838852b163dca6266d1448fc1abb8446b0d707", null]};
@@ -5177,3 +5113,156 @@ test('PGB-147 current installed payload and forecast preserve complete PGB-81 hi
  const oldDelivery=await pre147Capture('docs/delivery/manager-r1/README.md');assert(oldDelivery.includes('58.33375–64.76500 days'));assert((await read('docs/delivery/manager-r1/README.md')).includes('58.55875–65.13375 days'));assert((await read('docs/product/README.md')).includes('58.55875–65.13375-day forecast'));
  await assertHistorical147PayloadClosure();
 });
+
+// Explicit inverse of the bounded PGB-172 publication additions. No archived
+// parent publication or global historical read substitution is used.
+function assert172Predecessor(a) {
+ assert.equal(sha172(canonicalize(a.predecessor)),'85075b2b2e0a69440949a40f0726bd3f5f40ee4e93abcb29d69f40e11a25bdd2','complete independently sealed PGB-172 predecessor');
+ return a.predecessor;
+}
+function restore172Publication(live) {
+ const result=structuredClone(live),a=result.candidate_inspection_amendment;
+ assert172Predecessor(a);
+ assert(a);assert.equal(result.stories['R1-44'],'PGB-172');
+ const links=result.dependency_links.filter(l=>l.id==='10776');
+ assert.deepEqual(links,[{id:'10776',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-172',to:'PGB-173'}]);
+ delete result.candidate_inspection_amendment;delete result.stories['R1-44'];result.dependency_links=result.dependency_links.filter(l=>l.id!=='10776');
+ Object.assign(result,a.prior_fields);
+ assert.equal(sha172(JSON.stringify(result,null,2)+'\n'),'7356431d2e24e7a0cc871fdcfcc7dd5b0d2bbfb6eac057a84c9ec86bd57891cb');
+ assert.equal(sha172(canonicalize(result)),'a9711f4ce6c6318f013deee5d96893ea4eb29ae3a6690b52e525d20f64cd20c1');return result;
+}
+const sha172=value=>createHash('sha256').update(value).digest('hex');
+function restore172Text(file,text,a) {
+ assert172Predecessor(a);
+ const e=a.text_edits;
+ if(e.appends[file]){assert(text.endsWith(e.appends[file]));text=text.slice(0,-e.appends[file].length);}
+ for(const insertion of e.insertions[file]??[]){assert.equal(text.split(insertion).length,2);text=text.replace(insertion,'');}
+ if(e.section_removal?.[file]){const {start,end}=e.section_removal[file],from=text.indexOf(start),to=text.indexOf(end,from+start.length);assert(from>=0&&to>from);text=text.slice(0,from)+text.slice(to);}
+ for(const item of [...(e.replacements[file]??[])].reverse()){assert.equal(text.split(item.new).length,2);text=text.replace(item.new,item.old);}
+ if(e.append_boundaries[file]!==undefined)text=Buffer.from(text).subarray(0,e.append_boundaries[file]).toString('utf8');
+ assert.equal(sha172(text),a.predecessor.paths[file].sha256,file+' full predecessor text');return text;
+}
+function restore172Rows(rows,a,file) {
+ assert172Predecessor(a);
+ assert.equal(rows.filter(r=>r.id==='R1-44').length,1);const restored=rows.filter(r=>r.id!=='R1-44');
+ assert.equal(sha172(JSON.stringify(restored,null,2)+'\n'),a.predecessor.paths['docs/delivery/manager-r1/'+file].sha256,file+' whole predecessor raw');
+ assert.equal(sha172(canonicalize(restored)),a.predecessor.paths['docs/delivery/manager-r1/'+file].canonical_sha256,file+' whole predecessor canonical');return restored;
+}
+
+async function assert172Coverage(p) {
+ const read=read172Dated;
+ const a=p.candidate_inspection_amendment;restore172Publication(p);
+ assert.deepEqual(p.current_source_scope.forecast_days,{min:69.09,max:80.02125});
+ assert.deepEqual(a.current_forecast.derivation,{scale:100000,integer_sums:{min_days:6909000,max_days:8002125},min_days:'69.09000',max_days:'80.02125'});
+ const metadata=JSON.parse(await read('docs/delivery/manager-r1/plan-metadata.json'));
+ let min=0,max=0;for(const r of metadata){min+=Math.round(Number(r.forecast_provenance.min_days)*100000);max+=Math.round(Number(r.forecast_provenance.max_days)*100000);}assert.deepEqual([min,max],[6909000,8002125]);
+ const own=metadata.find(r=>r.id==='R1-44');assert.equal(own.files.length,16);assert.deepEqual(own.hours,{min:4.5,max:7.1});assert.equal(own.days,0.8875);
+ for(const [map,oldMap]of [['live25','live25'],['live27','live27'],['payload41','payload41']]){
+  assert.deepEqual(Object.keys(a[map]),Object.keys(a.predecessor[oldMap]));
+  for(const [file,digest]of Object.entries(a[map])){assert.equal(hash(await read(file)),digest,file+' actual current bytes');if(!['lib/contracts/handoff.mjs','docs/manager-preview.md'].includes(file))assert.equal(digest,a.predecessor[oldMap][file],file+' predecessor preserved');}
+ }
+ assert.equal(Object.keys(a.live25).length,25);assert.equal(Object.keys(a.live27).length,27);assert.equal(Object.keys(a.payload41).length,41);
+ for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){
+  const text=await read(file),old=restore172Text(file,text,a),scenarios=t=>t.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));assert.deepEqual(scenarios(text),scenarios(old));assert.equal(scenarios(text).length,{'docs/delivery/manager-r1/coverage.md':41,'docs/product/coverage.md':0}[file]);
+  for(const id of ['A12','W12','O04']){const row=text.split('\n').find(l=>l.startsWith('| '+id+' |'));assert(row.includes('R1-44-H01'));assert(row.includes('R1-44-H02'));}
+  for(const c of a.case_dispositions){assert.equal(c.disposition,'existing_requirement_support');assert(text.includes('| '+c.case_id+' | A12, W12, O04 | none | existing_requirement_support |'));}
+ }
+ for(const file of ['docs/delivery/manager-r1/README.md','docs/product/README.md']){const text=await read(file);restore172Text(file,text,a);assert(text.includes('69.09000–80.02125'));assert(text.includes('NOT_RUN'));}
+ assert.deepEqual(a.human,{'R1-44-H01':'NOT_RUN','R1-44-H02':'NOT_RUN'});assert.equal(a.verification.activation_authorized,false);
+}
+test('PGB-172 current catalogue coverage forecast and runtime bindings preserve history',async()=>{
+ await assertIntegrated172();const p=JSON.parse(await read172Dated('docs/delivery/manager-r1/publication.json'));await assert172Coverage(p);
+ const stale=structuredClone(p);stale.current_source_scope.forecast_days.min=0;await assert.rejects(assert172Coverage(stale));
+ const changed=structuredClone(p);changed.candidate_inspection_amendment.live25['lib/contracts/work.mjs']='0'.repeat(64);await assert.rejects(assert172Coverage(changed));
+});
+
+test('PGB-171 current coverage and actual159 payload retain dated evidence',async()=>{
+ const read=read171Dated;
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.named_issue_acquisition_amendment;
+ assert(a,'current R amendment');
+ const originalHashes={'docs/delivery/manager-r1/stories.md':'7afd4e4ac5bd6103769e869ed3f726bc9a5e13822c6f7f3aaf664ebed509a784','docs/delivery/manager-r1/README.md':'0ce6c007c51f8a3c161ef96eaa1f3c04c2140ca6027c33bd71ae5b14431cc0e0','docs/delivery/manager-r1/coverage.md':'b298c54ead6925f53c15f145bd737cb13979cac33b7eeb28fd36b078b5f0c6fb','docs/product/README.md':'83678127dcf811b51d58b4bfaaa6dcbd96ef4ff266771fbf7f1e434ea5016f41','docs/product/coverage.md':'982cf750aed25cc0396b026df91f17ae126f4b0d804c3d2b192c008d148d6057'};
+ assert.deepEqual(Object.keys(a.prior_catalogue_text).sort(),Object.keys(originalHashes).sort());
+ for(const [file,digest]of Object.entries(originalHashes)){assert.equal(hash(a.prior_catalogue_text[file].utf8),digest,file+' exact predecessor');assert.equal(a.prior_catalogue_text[file].sha256,digest);}
+ const expected159={'scripts/validate-work.mjs':'794a5c19d8cf39da3e547d9ea9e4d04249b8838073cefbeef43fe10dd4a0e51f','lib/contracts/work.mjs':'fce3c8991d10ad37ab7d4b07ef740e0b029dd3c19caa940580131d2c6cc14329','docs/authoring.md':'26836a1971faf4d39705133bdf1b57283427c980af67dd47886963c9b313784b','lib/contracts/work-semantics.mjs':'2c53f2d4704ce389061805b9a63b8ebb9b188b2bab73e312d02c2a0b6bc29772'};
+ const rRead='5cf9ce19a3ad2a5b88cc55541439cd06f7d32fc3e88244b88c6da9ae8f148cc7';
+ const old=p.installed_issue_inspection_amendment;
+ assert.equal(a.payload.count,41);assert.equal(a.runtime.count,27);
+ assert.deepEqual(Object.keys(a.payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
+ assert.deepEqual(Object.keys(a.runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
+ for(const file of old.payload.sources){
+  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.payload.artifacts_sha256[file];
+  assert.equal(a.payload.artifacts_sha256[file],expected,file+' R payload map');
+ }
+ for(const file of old.runtime.paths){
+  const expected=file==='lib/jira/read.mjs'?rRead:expected159[file]??old.runtime.artifacts_sha256[file];
+  assert.equal(a.runtime.artifacts_sha256[file],expected,file+' R runtime map');
+ }
+ assert.equal(a.payload.only_changed_path,'lib/jira/read.mjs');
+ assert.equal(a.runtime.only_changed_path,'lib/jira/read.mjs');
+ const parentFiles={'docs/architecture/manager-handoff-contract.md':'e1ad3802988275d124c38ee592063fae81aa3de91601931e7ee2596561f7f972','docs/handoffs.md':'72ccfa9552694cede0ee2d949defe7baaef1baf1bbf8abc889f9e4b9ab163915','lib/contracts/receipts.mjs':'918a18045b83fce766a3e0b1dceb02970fb62a78a7a1c3a86536bebc6456118b','scripts/validate-handoff.mjs':'109c7d4c497021bb3c740ce108045999a493efbd162f148e4cee96a9c66552fe','test/cursor-environment.test.mjs':'ddc994ad97549f1b9a94585851e32ab05f941d1dac48d467146759b6d8e794d3','test/fixtures/handoff-chains.json':'f2077a69dadb16da0d9d7b7556611d7d128f57cdd507f722cb218f187dd717bc','test/handoff.test.mjs':'014ca334466bde44b3bd4836d3a8d3450e2c6ebf8f48846feca43a76970f2dbe','test/receipt-chain.test.mjs':'8986730b40ee3282b512c1a74204e0db7027db042a1af61c62be45db79211612'};
+ const payloadChanges=['lib/contracts/receipts.mjs','scripts/validate-handoff.mjs','docs/handoffs.md'];
+ const runtimeChanges=payloadChanges.filter(file=>file!=='docs/handoffs.md');
+ const integration=a.parent_integration;
+ const assertComposed=record=>{
+  assert.equal(record.kind,'ordinary_actual_pgb160_merge');
+  assert.deepEqual(record.original_r,{commit:'e7c9f022f9ada9799b26e85364b991e2d42947f8',tree:'13580b59308ccb67852ce3260bd8e6325d244f83',amendment_json_sha256:'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a',amendment_canonical_sha256:'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844',publication_raw_sha256:'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541'});
+  assert.deepEqual(record.actual_160,{reviewed_commit:'44f148f1f445a9490f314c9b2213ec3e087a855c',reviewed_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',delivered_main_commit:'da92a4e1d7839f815e661ffe7709f1891038b454',delivered_main_tree:'5cd564baa4e78480dc0c433a4ac15465918635f3',original_parent_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',changed_path_sha256:parentFiles});
+  assert.deepEqual(record.same_tree_base159,{candidate_commit:'e1dc7a4f3309a9d25cd665a69e4f47eed1c02b48',delivered_commit:'52718e641ad7360e9fbb03b74bced05412fd5160',tree:'46aa208fe2c963dbe4360ccbd99049aef0310aac'});
+  assert.equal(record.reader_sha256,rRead);
+  assert.deepEqual(Object.keys(record.current_payload.artifacts_sha256).sort(),old.payload.sources.slice().sort());
+  assert.deepEqual(Object.keys(record.current_runtime.artifacts_sha256).sort(),old.runtime.paths.slice().sort());
+  assert.deepEqual([record.current_payload.count,record.current_runtime.count],[41,27]);
+  assert.deepEqual(Object.keys(record.authorized_payload_substitutions).sort(),payloadChanges.slice().sort());
+  assert.deepEqual(Object.keys(record.authorized_runtime_substitutions).sort(),runtimeChanges.slice().sort());
+  for(const file of old.payload.sources){const expected=payloadChanges.includes(file)?parentFiles[file]:a.payload.artifacts_sha256[file];assert.equal(record.current_payload.artifacts_sha256[file],expected,file+' composed payload');}
+  for(const file of old.runtime.paths){const expected=runtimeChanges.includes(file)?parentFiles[file]:a.runtime.artifacts_sha256[file];assert.equal(record.current_runtime.artifacts_sha256[file],expected,file+' composed runtime');assert.equal(record.current_runtime.artifacts_sha256[file],record.current_payload.artifacts_sha256[file],file+' runtime/payload agreement');}
+  for(const file of payloadChanges)assert.deepEqual(record.authorized_payload_substitutions[file],{before:a.payload.artifacts_sha256[file],after:parentFiles[file]});
+  for(const file of runtimeChanges)assert.deepEqual(record.authorized_runtime_substitutions[file],{before:a.runtime.artifacts_sha256[file],after:parentFiles[file]});
+ };
+ assertComposed(integration);
+ const originalR=structuredClone(a);delete originalR.parent_integration;
+ assert.equal(hash(JSON.stringify(originalR)),'402dd0f7201ba61931fc3cf8fce7ddd52f8ab282905cbf5857b2c8b8ebb0de2a');
+ assert.equal(hash(canonicalize(originalR)),'956fa835d6a6094c846bfcb2fe9328ff0575cc500ab860f186570cd5f30ac844');
+ const originalPublication=structuredClone(p);delete originalPublication.named_issue_acquisition_amendment.parent_integration;
+ assert.equal(hash(JSON.stringify(originalPublication,null,2)+'\n'),'37b034dc125013fe05d6a55d6a0f8299f7f77da04ad85bb84b48b83f09c0f541');
+ for(const [file,digest]of Object.entries(parentFiles))assert.equal(hash(await read(file)),digest,file+' reviewed160 source bytes');
+ for(const file of old.payload.sources)assert.equal(hash(await read(file)),integration.current_payload.artifacts_sha256[file],file+' current composed source bytes');
+ const changedParent=structuredClone(integration);changedParent.current_payload.artifacts_sha256['lib/contracts/receipts.mjs']='0';assert.throws(()=>assertComposed(changedParent),/composed payload/);
+ const changedSibling=structuredClone(integration);changedSibling.current_payload.artifacts_sha256['lib/config/parse.mjs']='0';assert.throws(()=>assertComposed(changedSibling),/composed payload/);
+ for(const file of ['docs/delivery/manager-r1/coverage.md','docs/product/coverage.md']){
+  const current=await read(file),prior=a.prior_catalogue_text[file].utf8;
+  const rows=text=>text.split('\n').filter(l=>/^\| S\d{2} \|/.test(l));
+  assert.deepEqual(rows(current),rows(prior),file+' original scenario rows');if(file==='docs/delivery/manager-r1/coverage.md')assert.equal(rows(current).length,41);
+  for(const [requirement,caseId]of [['M13','R1-43-H01'],['M14','R1-43-H01'],['A12','R1-43-H02'],['O09','R1-43-H02']])assert(current.split('\n').find(l=>l.startsWith('| '+requirement+' |')).includes(caseId),file+' '+requirement);
+  for(const c of ['R1-43-H01','R1-43-H02'])assert(current.includes('| '+c+' |'),file+' '+c+' disposition');
+ }
+ assert.deepEqual(a.case_dispositions.map(c=>[c.case_id,c.requirements]),[['R1-43-H01',['M13','M14']],['R1-43-H02',['A12','O09']]]);
+ assert.deepEqual(a.verification.human_acceptance,{'R1-43-H01':'NOT_RUN','R1-43-H02':'NOT_RUN'});
+});
+
+
+// Bounded actual171 and isolated172 projections; live checks remain separate.
+const integrationSha172=value=>createHash('sha256').update(value).digest('hex');
+const integrationCanon172=value=>integrationSha172(canonicalize(value));
+const liveRead172=file=>readFile(new URL('../'+file,import.meta.url),'utf8');
+let integrated172Promise;
+function integrated172(){return integrated172Promise??=loadintegrated172();}
+async function loadintegrated172(){const base='docs/delivery/manager-r1/';return{publication:JSON.parse(await liveRead172(base+'publication.json')),metadata:JSON.parse(await liveRead172(base+'plan-metadata.json')),drafts:JSON.parse(await liveRead172(base+'ticket-drafts.json')),stories:await liveRead172(base+'stories.md')};}
+function integration172(p){const a=p.candidate_inspection_amendment,i=a.parent_integration;assert.equal(integrationCanon172(i.binding),'ddcfd1acf24e2d2be6352bc9cf49b4d20486c5255154a4c70eae733b50750a12');const old=structuredClone(a);delete old.parent_integration;assert.equal(integrationCanon172(old),'68d98995904bf3f7b62ec6a9b6122586a5c8c706d510224e42596241fcee4bc0');assert.equal(integrationCanon172(p.named_issue_acquisition_amendment),'ef6cb42641631cca63641a6d3569b3bb951ee6f046ef93f80f1876564d4a068e');return i;}
+function rText172(file,text,i){if(file.endsWith('stories.md')){const start=text.indexOf('## R1-44:'),end=text.indexOf('## R1-34:',start);assert(start>=0&&end>start);text=text.slice(0,start)+text.slice(end);}for(const h of [...i.text_hunks[file]].reverse()){assert.equal(text.split(h.new).length,2);text=text.replace(h.new,h.old);}assert.equal(integrationSha172(text),i.binding.actual171.files[file]);return text;}
+let projection171Promise;
+function projection171(){return projection171Promise??=loadprojection171();}
+async function loadprojection171(){const c=await integrated172(),i=integration172(c.publication),p=structuredClone(c.publication);delete p.candidate_inspection_amendment;delete p.stories['R1-44'];Object.assign(p,structuredClone(i.actual171_top_fields));assert.equal(integrationSha172(JSON.stringify(p,null,2)+'\n'),'0c21f9f324c1c202c58ac03ea706048a18f26a5ac4491932fe357be14254ea83');assert.equal(integrationCanon172(p),'1666eb2e212aee24ef4f08e948231fdf49ede90b35067ce7c3b1508a29d234cb');const result={publication:p,metadata:c.metadata.filter(r=>r.id!=='R1-44'),drafts:c.drafts.filter(r=>r.id!=='R1-44'),stories:rText172('docs/delivery/manager-r1/stories.md',c.stories,i)};for(const [key,file]of [['metadata','plan-metadata.json'],['drafts','ticket-drafts.json']])assert.equal(integrationSha172(JSON.stringify(result[key],null,2)+'\n'),i.binding.actual171.files['docs/delivery/manager-r1/'+file]);return result;}
+function pForward172(file,text,a,section){for(const h of a.text_edits.replacements[file]??[]){assert(text.includes(h.old));text=text.replace(h.old,h.new);}for(const addition of a.text_edits.insertions[file]??[]){assert(file.endsWith('README.md'));const anchor='| R1-34 /';text=text.replace(anchor,addition+anchor);}if(file.endsWith('stories.md'))text=text.replace('## R1-34:',section+'## R1-34:');if(a.text_edits.appends[file])text+=a.text_edits.appends[file];return text;}
+let projection172Promise;
+function projection172(){return projection172Promise??=loadprojection172();}
+async function loadprojection172(){const live=await integrated172(),i=integration172(live.publication),r=await projection171(),ra=r.publication.named_issue_acquisition_amendment,a=structuredClone(live.publication.candidate_inspection_amendment);delete a.parent_integration;const p=structuredClone(r.publication);for(const [k,v]of Object.entries(ra.prior_publication.values))p[k]=structuredClone(v);delete p.named_issue_acquisition_amendment;Object.assign(p,structuredClone(i.binding.original172.top_fields));p.stories['R1-44']='PGB-172';p.dependency_links.push({id:'10776',type_id:'10000',type_name:'Blocks',inward_label:'is blocked by',outward_label:'blocks',from:'PGB-172',to:'PGB-173'});p.candidate_inspection_amendment=a;assert.deepEqual(p.candidate_inspection_amendment.current_forecast.second_correction_support_hours,[0.6,1]);
+const serialized = JSON.stringify(p,null,2)+'\n';
+const serializedHunk = "      \"second_correction_support_hours\": [\n        0.6,\n        1\n      ],\n      \"current_repair_plan_sha256\": \"3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3\"";
+const originalHunk = "      \"second_correction_support_hours\": [\n        0.6,\n        1.0\n      ],\n      \"current_repair_plan_sha256\": \"3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3\"";
+assert.equal(serialized.split(serializedHunk).length,2);
+const originalRaw = serialized.replace(serializedHunk,originalHunk);
+assert.equal(integrationSha172(originalRaw),'0aea27d95d05d17e23ca2ab375364b0fc7339ea3e7b7cd672bc35161da22fa9b');assert.equal(integrationCanon172(p),'438e372c7d3ed4e049d525046a6758bfdcbd7876170fc5526b3f62006b3443bb');const result={publication:p};for(const [key,file]of [['metadata','plan-metadata.json'],['drafts','ticket-drafts.json']]){const rows=r[key].filter(x=>x.id!=='R1-43');rows[rows.findIndex(x=>x.id==='R1-34')]=structuredClone(ra.prior_148[key==='drafts'?'draft':'metadata']);rows.splice(rows.findIndex(x=>x.id==='R1-34'),0,structuredClone(live[key].find(x=>x.id==='R1-44')));result[key]=rows;assert.equal(integrationSha172(JSON.stringify(rows,null,2)+'\n'),i.binding.original172.files['docs/delivery/manager-r1/'+file]);}const section=live.stories.slice(live.stories.indexOf('## R1-44:'),live.stories.indexOf('## R1-34:'));result.stories=pForward172('docs/delivery/manager-r1/stories.md',ra.prior_catalogue_text['docs/delivery/manager-r1/stories.md'].utf8,a,section);assert.equal(integrationSha172(result.stories),i.binding.original172.files['docs/delivery/manager-r1/stories.md']);return result;}
+async function read172Dated(file){const c=await projection172(),a=c.publication.candidate_inspection_amendment;if(file==='docs/delivery/manager-r1/publication.json')return JSON.stringify(c.publication);if(file==='docs/delivery/manager-r1/plan-metadata.json')return JSON.stringify(c.metadata);if(file==='docs/delivery/manager-r1/ticket-drafts.json')return JSON.stringify(c.drafts);if(file.endsWith('/stories.md'))return c.stories;const live=await integrated172(),ra=live.publication.named_issue_acquisition_amendment;if(ra.prior_catalogue_text[file]){const text=pForward172(file,ra.prior_catalogue_text[file].utf8,a,'');assert.equal(integrationSha172(text),live.publication.candidate_inspection_amendment.parent_integration.binding.original172.files[file]);return text;}if(['lib/jira/read.mjs','lib/contracts/receipts.mjs','scripts/validate-handoff.mjs','docs/handoffs.md'].includes(file))return historical147File(file);return liveRead172(file);}
+async function read171Dated(file){const c=await projection171(),live=await integrated172(),i=integration172(live.publication);if(file==='docs/delivery/manager-r1/publication.json')return JSON.stringify(c.publication);if(file==='docs/delivery/manager-r1/plan-metadata.json')return JSON.stringify(c.metadata);if(file==='docs/delivery/manager-r1/ticket-drafts.json')return JSON.stringify(c.drafts);if(i.text_hunks[file])return rText172(file,await liveRead172(file),i);if(file==='lib/contracts/handoff.mjs')return historical147File(file);if(file==='docs/manager-preview.md'){const a=live.publication.candidate_inspection_amendment;return Buffer.from(await liveRead172(file)).subarray(0,a.text_edits.append_boundaries[file]).toString('utf8');}if(file==='test/handoff.test.mjs'){let text=await liveRead172(file);const start=text.indexOf('\nconst candidateCases ='),end=text.indexOf("test('recorded CLI rejects mixed purposes",start);text=text.slice(0,start)+'\n'+text.slice(end);for(const h of [...i.handoff_test_hunks].reverse()){assert.equal(text.split(h.new).length,2);text=text.replace(h.new,h.old);}assert.equal(integrationSha172(text),i.binding.actual171.files[file]);return text;}return liveRead172(file);}
+async function assertIntegrated172(){const c=await integrated172(),i=integration172(c.publication);assert.deepEqual([c.drafts.length,c.metadata.length,c.publication.story_count,c.publication.case_count,c.publication.dependency_links.length],[53,53,53,189,133]);assert.deepEqual(c.drafts.map(r=>r.id),i.current_order);assert.deepEqual(c.metadata.map(r=>r.id),i.current_order);assert.deepEqual([...c.stories.matchAll(/^## ([^:]+):/gm)].map(m=>m[1]),i.current_order);assert.equal(c.drafts.reduce((n,r)=>n+r.contract.prerequisites.length,0),125);const cases=c.drafts.flatMap(r=>r.contract.testing_strategy.human_review.cases);assert.equal(cases.length,189);assert.equal(new Set(cases.map(x=>x.id)).size,189);assert.deepEqual(c.publication.current_source_scope.pending_source_amendments,['PGB-173']);assert.deepEqual(c.publication.current_source_scope.forecast_days,{min:68.72125,max:79.60875});let min=0,max=0;for(const row of c.metadata){min+=Math.round(Number(row.forecast_provenance.min_days)*100000);max+=Math.round(Number(row.forecast_provenance.max_days)*100000);}assert.deepEqual([min,max],[6872125,7960875]);for(const [map,values]of Object.entries(i.binding.expected_current).filter(([key])=>['live25','live27','payload41'].includes(key))){assert.deepEqual(i.current_maps[map],values);for(const [file,digest]of Object.entries(values))assert.equal(integrationSha172(await liveRead172(file)),digest,file+' live composed bytes');}await projection171();await projection172();}

@@ -1598,6 +1598,58 @@
     "delivery_state": "Named-issue acquisition refactor is implemented in source; exact code review, hosted checks, human acceptance and delivery remain separate. Human acceptance NOT_RUN (0/2); no activation."
   },
   {
+    "id": "R1-44",
+    "title": "Inspect handoff candidates from ordinary comments",
+    "dependencies": [],
+    "days": 0.8875,
+    "files": [
+      "lib/contracts/handoff.mjs",
+      "test/handoff.test.mjs",
+      "test/skill-distribution.test.mjs",
+      "docs/manager-preview.md",
+      "README.md",
+      "ARCHITECTURE.md",
+      "docs/delivery/manager-r1/stories.md",
+      "docs/delivery/manager-r1/README.md",
+      "docs/delivery/manager-r1/coverage.md",
+      "docs/delivery/manager-r1/plan-metadata.json",
+      "docs/delivery/manager-r1/publication.json",
+      "docs/delivery/manager-r1/ticket-drafts.json",
+      "docs/product/README.md",
+      "docs/product/coverage.md",
+      "test/story-authoring.test.mjs",
+      "test/qa-helper-contract.test.mjs"
+    ],
+    "hours": {
+      "min": 4.5,
+      "max": 7.1
+    },
+    "forecast_provenance": {
+      "native_key": "PGB-172",
+      "min_days": "0.56250",
+      "max_days": "0.88750",
+      "plan_sha256": "690be6a8012e27c490f435bfc412a9548e9187185c021575a7b0e3c4b80f8612",
+      "historical_approved_allocation": {
+        "hours": [
+          3.9,
+          6.1
+        ],
+        "min_days": "0.48750",
+        "max_days": "0.76250"
+      },
+      "current_repair_plan_sha256": "3a7f619c5c72e74a92fc6712d30e45b5b4aff45053ab9622e47f04e4273247d3"
+    },
+    "delivery_state": {
+      "code": "candidate implementation; checks and independent committed review remain separate",
+      "human": {
+        "R1-44-H01": "NOT_RUN",
+        "R1-44-H02": "NOT_RUN"
+      },
+      "hosted_ci": "NOT_RUN",
+      "merge": "NOT_AUTHORIZED"
+    }
+  },
+  {
     "id": "R1-34",
     "title": "Inspect complete scoped Jira inventory",
     "dependencies": [

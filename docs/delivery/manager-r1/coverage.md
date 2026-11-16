@@ -15,7 +15,7 @@
 | A09 | R1-02-H02, R1-05-H01, R1-07-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-164-H01; PGB-166-H02 |
 | A10 | R1-01-H02, R1-02-H02; PGB-159-H02 |
 | A11 | R1-01-H01, R1-02-H01, R1-02-H03, R1-03-H02; PGB-159-H01; PGB-159-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H02 |
-| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03; PGB-159-H01; PGB-159-H02; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; R1-43-H02 |
+| A12 | R1-02-H01, R1-03-H02, R1-12-H03; R1-31-H02, R1-31-H04; R1-36-H03; PGB-159-H01; PGB-159-H02; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; R1-43-H02; R1-44-H01, R1-44-H02 |
 | W01 | R1-05-H01, R1-06-H01, R1-08-H01, R1-20-H01; PGB-164-H01; PGB-165-H01 |
 | W02 | R1-05-H01 |
 | W03 | R1-05-H01, R1-05-H02; R1-27-H01, R1-27-H02; R1-30-H01, R1-30-H02; PGB-161-H01; PGB-164-H01; PGB-165-H01 |
@@ -27,7 +27,7 @@
 | W09 | R1-05-H02, R1-06-H02, R1-08-H02, R1-09-H01, R1-18-H01; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; PGB-161-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; PGB-166-H03 |
 | W10 | R1-09-H01, R1-09-H02, R1-20-H03; PGB-161-H01; PGB-166-H03 |
 | W11 | R1-08-H03, R1-20-H03; R1-24-H01, R1-24-H02, R1-24-H03; R1-27-H03; R1-30-H03; PGB-166-H01 |
-| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03; R1-28-OC02, R1-28-OC05, R1-28-OC06; PGB-160-H01; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H01; PGB-166-H02; PGB-166-H03 |
+| W12 | R1-04-H01, R1-04-H02, R1-04-H03, R1-05-H02, R1-06-H02, R1-08-H03, R1-09-H02; R1-24-H01, R1-24-H02, R1-24-H03; R1-26-PC01–PC06; R1-25-C01, R1-25-C02, R1-25-C03; R1-27-H03; R1-30-H03; R1-28-OC02, R1-28-OC05, R1-28-OC06; PGB-160-H01; PGB-160-H02; PGB-161-H01; PGB-161-H02; PGB-164-H01; PGB-164-H02; PGB-165-H01; PGB-165-H02; PGB-166-H01; PGB-166-H02; PGB-166-H03; R1-44-H01, R1-44-H02 |
 | M01 | R1-11-S01, R1-11-S02, R1-17-H01; R1-28-OC04 |
 | M02 | R1-11-S18, R1-11-S30; R1-28-OC04; PGB-162-H02 |
 | M03 | R1-11-S03, R1-11-S04, R1-11-S08, R1-11-S09; R1-28-OC01, R1-28-OC05; PGB-162-H01 |
@@ -45,7 +45,7 @@
 | O01 | R1-13-H01, R1-13-H02 |
 | O02 | R1-10-H01, R1-13-H01 |
 | O03 | R1-12-H01, R1-12-H03, R1-13-H01, R1-16-H01, R1-20-H02; R1-31-H01, R1-31-H02, R1-31-H03; R1-36-H01, R1-36-H04; R1-33-H03, R1-34-H03, R1-12-H05; PGB-163-H01 |
-| O04 | R1-20-H01; PGB-162-H01; PGB-169-H02 |
+| O04 | R1-20-H01; PGB-162-H01; PGB-169-H02; R1-44-H01, R1-44-H02 |
 | O05 | R1-14-H01, R1-14-H02; PGB-163-H01 |
 | O06 | R1-14-H02, R1-17-H01, R1-17-H02, R1-19-H01 |
 | O07 | R1-14-H02, R1-17-H02, R1-18-H03, R1-19-H03; PGB-161-H02; PGB-162-H02; PGB-163-H02; PGB-164-H02; PGB-165-H02; PGB-166-H02; PGB-166-H03 |
@@ -202,3 +202,14 @@ Current source: **52 Stories, 187 full human cases, 125 prerequisite occurrences
 | --- | --- | --- | --- | --- |
 | R1-43-H01 | M13, M14 | none | existing_requirement_support | Named issue and exact comment behavior preserves existing manager observation support; not full inventory acceptance. |
 | R1-43-H02 | A12, O09 | none | existing_requirement_support | Invalid input, byte bounds and private retention preserve existing safe inspection support; not provider or full inventory acceptance. |
+
+<!-- PGB-172 support start -->
+
+PGB-172 adds two existing-requirement support dispositions; all53 requirement identities and41 scenario rows remain unchanged. Human acceptance is NOT_RUN (0/2).
+
+| Case | Requirements | Scenario support | Disposition | Rationale |
+| --- | --- | --- | --- | --- |
+| R1-44-H01 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |
+| R1-44-H02 | A12, W12, O04 | none | existing_requirement_support | Source/copied classification and safe strict parsing support existing work-text and installation boundaries; no admission or receipt-proof completion. |
+
+<!-- PGB-172 support end -->
