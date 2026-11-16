@@ -1187,7 +1187,7 @@ test('R1-35 machine source integration preserves complete historical receipts an
  assert.deepEqual(a.readable_cause_parity,{owner:'PGB-146',status:'PENDING',guidance:'Use source API or --json for every exact cause identity; readable output remains available but incomplete for cause identities.'});assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');for(const field of ['human_acceptance','original146_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');assert.equal(a.activation_authorized,false);
 });
 
-test('R1-37 current PR repair binds current runtime and native amendment without rewriting history',async()=>{
+test('R1-37 current PR repair preserves complete historical runtime and native amendment',async()=>{
  const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.current_pr_repair_amendment,old=p.machine_repair_preview_amendment;
  const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
  assert.equal(canonicalHash(a),'4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d');
@@ -1200,7 +1200,8 @@ test('R1-37 current PR repair binds current runtime and native amendment without
  assert.equal(a.historical_machine_capture.canonical_sha256,canonicalHash(old));assert.equal(a.historical_machine_capture.json_sha256,hash(old));assert.equal(a.historical_machine_capture.runtime_canonical_sha256,canonicalHash(old.source_runtime_revision));assert(a.historical_machine_capture.meaning.includes('immutable dated history'));
  const bundle=JSON.parse(await read('config/skill-bundle.json')),paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort(),runtime=a.source_runtime_revision;
  assert.equal(paths.length,25);assert.deepEqual(Object.keys(runtime.artifacts_sha256),paths);
- for(const file of paths)assert.equal(hash(await read(file)),runtime.artifacts_sha256[file],file);
+ // Complete immutable151 capture; current bytes are bound by the readable146 guard below.
+ assert.equal(runtime.revision_sha256,'sha256:5714b94f17855020d619ae63a10883e50008a1b5d5504e5444cfa5333bcb3740');
  assert.equal(runtime.revision_sha256,'sha256:'+canonicalHash(runtime.artifacts_sha256));assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);assert.equal(runtime.source_fixture_sha256,old.source_runtime_revision.source_fixture_sha256);
  assert.deepEqual(paths.filter(file=>runtime.artifacts_sha256[file]!==old.source_runtime_revision.artifacts_sha256[file]),['lib/manager/repair-policy.mjs']);
  assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);
@@ -1219,4 +1220,29 @@ test('R1-37 current PR repair binds current runtime and native amendment without
  assert.equal(n.original149_unchanged_except_added151_prerequisite_and_TAC3,true);assert.equal(n.original146_and81_complete_descriptions_unchanged,true);
  assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');assert.deepEqual(a.readable_cause_parity,old.readable_cause_parity);
  for(const field of ['human_acceptance','original149_human_acceptance','original146_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');assert.equal(a.activation_authorized,false);
+});
+
+test('PGB-146 readable completion preserves machine receipt and binds current artifacts',async()=>{
+ const p=JSON.parse(await read('docs/delivery/manager-r1/publication.json')),a=p.readable_repair_preview_amendment,machine=p.machine_repair_preview_amendment,current=p.current_pr_repair_amendment;
+ const {default:canonicalize}=await import('canonicalize'),canonicalHash=value=>hash(canonicalize(value));
+ const parent=structuredClone(p);delete parent.readable_repair_preview_amendment;
+ assert.equal(canonicalHash(parent),'448d1c187e99926790dcad16ceb797fc55188edf5c77b4ed33874c3add9ccc1d','complete9767 publication object preserved, including every dated capture');
+ assert.equal(a.historical_captures.parent_publication_canonical_sha256,canonicalHash(parent));
+ assert.equal(canonicalHash(machine),'0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3');assert.equal(canonicalHash(current),'4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d');
+ assert.equal(a.historical_captures.machine_amendment_canonical_sha256,canonicalHash(machine));assert.equal(a.historical_captures.current_pr_amendment_canonical_sha256,canonicalHash(current));
+ assert.equal(a.historical_captures.machine_runtime_revision_sha256,'sha256:e1e6614949fab7afaea835e2883f061572f0896c87649fff9bdb3be39c7c7028');assert.equal(a.historical_captures.current_pr_runtime_revision_sha256,'sha256:5714b94f17855020d619ae63a10883e50008a1b5d5504e5444cfa5333bcb3740');
+ assert.deepEqual([a.date,a.story_id,a.native_key,a.native_id,a.parent],['2026-11-16','R1-32','PGB-146','10606','PGB-66']);assert.equal(a.partial_publication,true);
+ assert.equal(a.plan_sha256,'a2668b38252feb7227432d67bc2dd88e6feea4a8b69dddc1ab86bc44d0189e68');assert.equal(a.stack_rebind_plan_sha256,'a9cfb76f048a34a60ef6fcd02ec17fdc350ac695be594d4c25847f39c18b85e2');
+ assert.deepEqual([a.source_provenance.base_commit,a.source_provenance.base_tree,a.source_provenance.machine_commit,a.source_provenance.current_pr_repair_commit],['9767adec408e0c14cadce8723969e91d6589f999','cd94c4be3e9b1ef5527307214d890701eba1f39c','90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379','9767adec408e0c14cadce8723969e91d6589f999']);
+ assert.equal(a.source_provenance.branch,'codex/pgb146-readable-parity');assert(a.source_provenance.integrated_parent_binding.includes('Pending Director verification'));assert(a.source_provenance.implementation_revision.includes('external committed evidence'));
+ const bundle=JSON.parse(await read('config/skill-bundle.json')),paths=bundle.validatorPayload.sources.filter(f=>f.endsWith('.mjs')||f.endsWith('.schema.json')||['package.json','package-lock.json'].includes(f)).sort(),runtime=a.source_runtime_revision;
+ assert.equal(paths.length,25);for(const captured of [machine.source_runtime_revision,current.source_runtime_revision,runtime]){assert.deepEqual(Object.keys(captured.artifacts_sha256),paths);assert.equal(captured.revision_sha256,'sha256:'+canonicalHash(captured.artifacts_sha256));assert.equal(captured.source_fixture_sha256,'26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7');}
+ for(const file of paths)assert.equal(hash(await read(file)),runtime.artifacts_sha256[file],file+' final readable runtime');assert.equal(hash(await read('test/fixtures/manager-repairs.json')),runtime.source_fixture_sha256);
+ const differences=(left,right)=>paths.filter(file=>left.artifacts_sha256[file]!==right.artifacts_sha256[file]);
+ assert.deepEqual(differences(runtime,current.source_runtime_revision),['scripts/manager-preview.mjs']);assert.deepEqual(differences(current.source_runtime_revision,machine.source_runtime_revision),['lib/manager/repair-policy.mjs']);assert.deepEqual(differences(runtime,machine.source_runtime_revision),['lib/manager/repair-policy.mjs','scripts/manager-preview.mjs']);
+ assert.deepEqual([p.story_count,p.case_count,a.source_inventory.story_count,a.source_inventory.case_count],[30,132,30,132]);
+ for(const [file,field]of [['ticket-drafts.json','ticket_drafts_sha256'],['plan-metadata.json','plan_metadata_sha256']]){assert.equal(hash(await read('docs/delivery/manager-r1/'+file)),a.source_inventory[field]);assert.equal(a.source_inventory[field],current.source_inventory[field]);}
+ assert(a.source_inventory.meaning.includes('not an exhaustive current native inventory'));assert(a.source_inventory.meaning.includes('later82/147/148'));assert.equal(a.full_reconciliation_owner,'PGB-81');assert.equal(a.full_installed_fixture_kit_owner,'PGB-81');
+ assert.equal(a.readable_cause_parity.owner,'PGB-146');assert.equal(a.readable_cause_parity.status,'SOURCE_COMPLETE');assert.deepEqual(a.readable_cause_parity.fields,['ticket_id','comment_id','record_id','digest']);assert.equal(a.readable_cause_parity.order,'Canonical proposal.roots order; no sorting or deduplication.');
+ for(const field of ['human_acceptance','original149_human_acceptance','original151_human_acceptance','PGB81_human_acceptance'])assert.equal(a[field],'NOT_RUN');for(const field of ['hosted_checks','merge','release'])assert.equal(a[field],'NOT_CLAIMED');assert.equal(a.activation_authorized,false);
 });

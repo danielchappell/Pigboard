@@ -8041,5 +8041,93 @@
     "original146_human_acceptance": "NOT_RUN",
     "PGB81_human_acceptance": "NOT_RUN",
     "activation_authorized": false
+  },
+  "readable_repair_preview_amendment": {
+    "date": "2026-11-16",
+    "story_id": "R1-32",
+    "native_key": "PGB-146",
+    "native_id": "10606",
+    "parent": "PGB-66",
+    "partial_publication": true,
+    "plan_sha256": "a2668b38252feb7227432d67bc2dd88e6feea4a8b69dddc1ab86bc44d0189e68",
+    "stack_rebind_plan_sha256": "a9cfb76f048a34a60ef6fcd02ec17fdc350ac695be594d4c25847f39c18b85e2",
+    "source_provenance": {
+      "base_commit": "9767adec408e0c14cadce8723969e91d6589f999",
+      "base_tree": "cd94c4be3e9b1ef5527307214d890701eba1f39c",
+      "machine_commit": "90c92fbcf9c8122bf03bcb5a9ee2f756e72dd379",
+      "current_pr_repair_commit": "9767adec408e0c14cadce8723969e91d6589f999",
+      "branch": "codex/pgb146-readable-parity",
+      "integrated_parent_binding": "Pending Director verification; recorded externally before PR publication.",
+      "implementation_revision": "Exact final commit/tree is recorded in external committed evidence; this receipt is not self-referential."
+    },
+    "historical_captures": {
+      "parent_publication_canonical_sha256": "448d1c187e99926790dcad16ceb797fc55188edf5c77b4ed33874c3add9ccc1d",
+      "machine_amendment_canonical_sha256": "0683f0b84c1cfc37c6ea9df15b35cbd9238bc03df4fa39b4f06a3227b5e2f9c3",
+      "current_pr_amendment_canonical_sha256": "4edbd5f22d7bf97c3a268e150c1c67254ca2eae7deeec08750a143d97378e89d",
+      "machine_runtime_revision_sha256": "sha256:e1e6614949fab7afaea835e2883f061572f0896c87649fff9bdb3be39c7c7028",
+      "current_pr_runtime_revision_sha256": "sha256:5714b94f17855020d619ae63a10883e50008a1b5d5504e5444cfa5333bcb3740",
+      "meaning": "Every prior publication object and both complete runtime maps remain immutable dated history, including their pending-readable state."
+    },
+    "source_inventory": {
+      "story_count": 30,
+      "case_count": 132,
+      "ticket_drafts_sha256": "03ef93ec3a8d80262ac417f68c2975d517aeb0237b3a3459d82aace15887a92c",
+      "plan_metadata_sha256": "41a5933d86482e4e522d224de1a1b86f80cb1f1c4e1a13b90dffc39df1149a16",
+      "meaning": "Unchanged partial source30 Stories/132 cases. Existing recorded comparisons are not an exhaustive current native inventory; later82/147/148 composition and full reconciliation remain PGB-81."
+    },
+    "source_runtime_revision": {
+      "kind": "Content-addressed readable source runtime; exact final Git head/tree is bound externally",
+      "artifacts_sha256": {
+        "contracts/config-v1.schema.json": "58a48a7e51bbee8c0dde0ffaaaed1479a531c2bbaa7919773931b43f355592b2",
+        "contracts/epic-v1.schema.json": "d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+        "contracts/handoff-v1.schema.json": "6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+        "contracts/ticket-v1.schema.json": "5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+        "contracts/work-pointer-v1.schema.json": "24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+        "contracts/work-validation-context-v1.schema.json": "19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+        "lib/config/diff.mjs": "07233ae79e7dd39386b3a70c4ca5f137310ae44d4f79bf5ad2742eccff72102d",
+        "lib/config/parse.mjs": "f5cf9845195725ada2761490f4b92ffad2de1c31ca979302d4066b7ef9c893b7",
+        "lib/config/projects.mjs": "b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+        "lib/contracts/case-graph.mjs": "9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+        "lib/contracts/handoff.mjs": "eeeca554108af3744c439e84a0487a1dda1dd48a925cec76000de17715889c3f",
+        "lib/contracts/receipts.mjs": "82bfee1c5a2174852ad1931fa872fe860ab9c170ba1f0af11bd9a3f96a54d9e7",
+        "lib/contracts/work-semantics.mjs": "ba1a3acadba6d169ec3bad52a3689c9b4b78b713dbac9fe408b949b966f2cc8d",
+        "lib/contracts/work.mjs": "50dbbd8a11237b1b90508a059a5ca9be44c4a39662e94ffbe39ab89db2808df4",
+        "lib/manager/availability.mjs": "d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+        "lib/manager/decisions.mjs": "adbd01534853836341ae9c45fd4deb28c21c6397bc3f007bc303b567c246536c",
+        "lib/manager/repair-policy.mjs": "84667ee0171238ac4a03f11216d12304536f088305d552c51b776b08ec032989",
+        "lib/manager/snapshot.mjs": "40a851769b5b1261cd070db1a7f330846aeb93433dfca819c0a292184db5cb17",
+        "package-lock.json": "25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+        "package.json": "ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+        "scripts/check-config.mjs": "b883334a57bf2e2b0abe4d96c3bb07dd117359a95c7814b3cf4685a95c1dd75c",
+        "scripts/manager-preview.mjs": "ba79458f2855bedbc34291a80168e049698b5f1477342dab3c20a012773e13f4",
+        "scripts/prepare-handoff.mjs": "5e47da76d68125fd66917af26a1256364501ac461ccd15bbac056c0e04e75eef",
+        "scripts/validate-handoff.mjs": "bf5bf6bfb1dcc3b217154c916a99e18502862a56bec5d0438a84e64aafb67807",
+        "scripts/validate-work.mjs": "46023df5916da4ab7d5eaa8c44fec19e8aef708eb3e5ab76343662ddde06776d"
+      },
+      "revision_sha256": "sha256:5f13f5993b82d23dfccb278e3f860e59aa80f4751f8ecbc056b7b4cdca06e06d",
+      "source_fixture_sha256": "26280bc8c5095b32fe1bd8279a060f7b6fdafec1b3fc442569c4916d1c1665a7"
+    },
+    "readable_cause_parity": {
+      "owner": "PGB-146",
+      "status": "SOURCE_COMPLETE",
+      "fields": [
+        "ticket_id",
+        "comment_id",
+        "record_id",
+        "digest"
+      ],
+      "order": "Canonical proposal.roots order; no sorting or deduplication.",
+      "scope": "Source readable preview and existing complete copied-runtime compatibility; no live acceptance or activation."
+    },
+    "full_reconciliation_owner": "PGB-81",
+    "full_installed_fixture_kit_owner": "PGB-81",
+    "human_acceptance": "NOT_RUN",
+    "original149_human_acceptance": "NOT_RUN",
+    "original151_human_acceptance": "NOT_RUN",
+    "PGB81_human_acceptance": "NOT_RUN",
+    "hosted_checks": "NOT_CLAIMED",
+    "merge": "NOT_CLAIMED",
+    "release": "NOT_CLAIMED",
+    "activation_authorized": false
   }
 }

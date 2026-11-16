@@ -155,10 +155,10 @@ proposes stack updates only along authenticated actual parent relationships.
 No provider/AWS/state client, discovery, publication, intent/apply operation or
 worker activation is added. Unproved repairs wait for authentic evidence.
 Supplied completeness and receipts do not establish live freshness or permissions.
-The complete structured API/JSON result is PGB-149/R1-35. Readable output currently
-summarizes retained causes; use `--json` for their exact identities until PGB-146
-completes readable parity. Human acceptance, hosted checks, merge and release
-remain separate.
+The complete structured API/JSON result is PGB-149/R1-35. PGB-146 completes
+readable source parity with every canonical cause's ticket, comment, record and
+full digest in the supplied order, including own repairs without a parent. Human
+acceptance, hosted checks, merge and release remain separate.
 
 ## Prescribed helper boundary
 
