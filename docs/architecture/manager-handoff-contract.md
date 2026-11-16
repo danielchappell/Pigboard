@@ -382,9 +382,12 @@ the call-local index. No provider action or execution authority is added.
 explicit historical purpose and requires the manager consumer. Exact retained
 metadata and authenticated target closure remain mandatory. It returns only
 `valid`, `validation_scope`, `live_freshness`, `completion_established:false`,
-`execution_authorized:false`, `target`, `records`, `bindings` and `diagnostics`.
-Invalid results export empty rows and bindings. There is no coverage-segment field
-or later-parent expansion in this increment.
+`execution_authorized:false`, `target`, `records`, `coverage_segments`, `bindings`
+and `diagnostics`. Invalid results export empty rows, segments and bindings.
+Each segment is `{parent_completion,cutoff_completion,roots}` authenticated within
+one envelope from an actual child incorporation and completed same-parent
+descendant lineage. Roots describe consumption between those exact completions;
+cumulative root subtraction and joining unrelated envelopes supply no proof.
 
 Each accepted row retains its exact reference, ticket, assignment, assigned
 requirements digest, own PR, actual requested refs and authenticated assignment
@@ -396,14 +399,16 @@ Own selection uses only completed same-ticket direct consumption on the lineage
 ending at the native current assignment. Retained request inventory stays intact;
 only exact consumed direct refs are excluded from the next own repair. Another
 ticket, future assignment, implementation/review-only witness or shared root does
-not discharge a request. Non-null actual stack parents remain deferred to PGB-81.
+not discharge a request. Actual stack parents and strict current covering parent
+QA determine stack repair. The next own admission excludes only proven completed
+direct requests; descendants still retain every root after their actual cutoff.
 
 Before using either a current baseline or historical consumption, own selection
 requires one coherent logical QA completion for each represented exact assignment
 in that current same-ticket lineage. Logical identity is ticket ID, record UUID
 and digest; identical publications with different comment IDs are one result.
 Distinct assignments remain separate. Competing completions preserve the existing
-pending wait independently of envelope order. Per-envelope private history
+`REPAIR_PROOF_INVALID` wait independently of envelope order. Per-envelope private history
 validity grants neither aggregated coherence nor current completion. Humans
 reconcile the supplied history through its owner and supply one coherent
 observation, preserving retained causes; agents receive the existing structured
@@ -417,3 +422,15 @@ accepting either history rows or strict current proofs. A current-valid envelope
 with empty retention still contributes current fingerprints if history fails; a
 valid history route cannot enter the current prerequisite-proof map. No public
 result, CLI flag or caller-controlled purpose changes this boundary.
+
+Missing stack publications are represented only as existing-schema payload inputs
+in the nonexecuting proposal. They contain no invented reference, UUID, operation,
+actor or timestamp. Queueing preserves the old assignment; only the authorized
+writer may publish and execute the later handoff. A private history projection
+never satisfies a current prerequisite or covering-parent requirement.
+
+The complete offline source API/JSON preview and its private history consumer are
+delivered by PGB-149/R1-35. Readable output does not yet identify every retained
+cause; use `--json` for the complete result until PGB-146 finishes readable parity. Existing installed runtime compatibility remains supported with
+its required policy closure. The full installed repair fixture kit and semantic
+repair smoke remain PGB-81; neither preview grants live publication authority.

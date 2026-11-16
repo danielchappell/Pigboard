@@ -146,15 +146,19 @@ configuration, raw work start validation and current receipt-chain validation.
 Optional preparation/cancelled native mappings live only in canonical configuration
 with explicit inheritance and backward-compatible empty resolution.
 
-The same four source modules/CLI, guide and executable fixtures ship in the existing
-prepared validator payload. Installer verification exercises a real nonexecuting
-selection before stable-link replacement. No provider/AWS/state client, discovery,
-intent/apply operation or worker activation is added. Own-ticket repairs on an
-existing open PR can be selected from authenticated history, including a necessary ready prerequisite. Full typed stack repair
-ordering and live bounded Jira discovery remain later increments; unsupported or
-unproved repairs still wait explicitly. Supplied completeness/receipts do not
-establish live freshness or
-permissions. Human acceptance, hosted checks, merge and release remain separate.
+The manager modules, CLI, guide and existing compatibility fixtures ship in the
+prepared validator payload. Installer verification exercises ordinary selection
+with the existing seven installer smoke checks. Full installed repair fixture
+verification and the eighth semantic queue check remain PGB-81. The complete
+offline source policy orders necessary prerequisites, queued repairs, Bugs and Stories, and
+proposes stack updates only along authenticated actual parent relationships.
+No provider/AWS/state client, discovery, publication, intent/apply operation or
+worker activation is added. Unproved repairs wait for authentic evidence.
+Supplied completeness and receipts do not establish live freshness or permissions.
+The complete structured API/JSON result is PGB-149/R1-35. PGB-146 completes
+readable source parity with every canonical cause's ticket, comment, record and
+full digest in the supplied order, including own repairs without a parent. Human
+acceptance, hosted checks, merge and release remain separate.
 
 ## Prescribed helper boundary
 
@@ -190,11 +194,14 @@ the same PR, and static zero-AI work keeps humans pending. Current proof, unique
 resume authority and no-replay rules remain publisher-owned. The manager remains a design;
 this worker boundary adds no manager state access or activation authority.
 
-The private canonical history route is consumed immediately by own-ticket
-selection. It preserves validated direct consumption and actual stack parents
-without granting current completion. The existing preview result shape and four
-packaged manager modules are unchanged. No later-parent coverage segment output,
-new public inspection command or installed fixture path is added.
+The offline repair policy consumes the canonical validator's private historical
+projection and independently strict current-QA proofs. Exact recorded stack
+parents and ancestry segments preserve every applicable repair cause; queue-only
+proposals remain distinct from new/repair admission. Historical authenticity never
+grants current completion. The same-ticket current-lineage coherence guard runs
+before baseline, consumption or completion-derived stack relationships: conflicting
+logical QA results cannot free a stream. Exact current assignment references keep
+their independent authority. See [offline preview](docs/manager-preview.md).
 
 ## Requested native Jira inspection from source
 

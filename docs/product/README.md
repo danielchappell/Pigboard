@@ -88,7 +88,7 @@ provide their detailed expression: [release boundary](../architecture/manager-re
 The existing [workflow](../workflow.md) describes the earlier basic bundle, including
 direct rework to In Progress; that behavior must change for this release.
 
-This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes the approved source inspection amendment at a partial 31-Story/136-case checkpoint after PGB-150. PGB-137/146/147/148/149 remain separate source compositions. This does not authorize further provider probes or activation.
+This consolidation has independent CLEAN product and technical design reviews in [the review records](../reviews/manager-design-product.md). The original 20-Story delivery set had two independent CLEAN plan reviews; those reviews remain historical. The [current delivery set](../delivery/manager-r1/README.md) composes the owner-approved amendments at a partial 30-Story/132-case source checkpoint after PGB-145; PGB-137/R1-29 source composition remains pending. This does not authorize implementation, further provider probes or activation.
 
 ## Approved company-scope addition
 
@@ -127,6 +127,34 @@ PGB-136 adds bounded own-ticket selection in the existing offline preview before
 
 ## Local Jira read-configuration increment — 16 November 2026
 
-The PGB-145 source checkpoint was **30 Stories/132 cases**, based on merged e54. Its dated native publication snapshot was separately **31 Stories/134 cases**; these are historical counts. The local checker gains optional complete connection/reference and explicit budget checks plus safe change previews. This does not read Jira or prove credentials, visibility, supported live capacity or readiness. Its four human cases remain NOT_RUN; every original PGB-82 criterion and case remains. Final live-read defaults, measured acceptance, independent code review, hosted checks and owner merge/release gates remain separate.
+The current partial source checkpoint is **30 Stories/132 cases** after PGB-145/R1-31, based on merged e54. The dated PGB-145 native publication snapshot is separately **31 Stories/134 cases**; PGB-137/R1-29 source composition remains pending. Earlier29/128 and native30/130 figures remain dated history. The local checker gains optional complete connection/reference and explicit budget checks plus safe change previews. This does not read Jira or prove credentials, visibility, supported live capacity or readiness. Four new human cases remain NOT_RUN; every original PGB-82 criterion and case remains. Final live-read defaults, measured acceptance, independent code review, hosted checks and owner merge/release gates remain separate.
 
-The current partial source checkpoint is **31 Stories/136 cases** after PGB-150/R1-36 on merged PGB-145 commit `da39e3762f31704a832e0cbc503c3b0d6d2284dc`. An authorized source caller can use the complete bounded Jira issue inspection API and its importable local fixture with prepared dependencies. The [source guide](../manager-preview.md) explains use, partial results and source-damage recovery. PGB-150's four source human groups remain NOT_RUN. Its published native key, ID and links are recorded in the [delivery publication record](../delivery/manager-r1/publication.json); the To Do creation readback precedes an In Progress stage receipt. PGB-147 still owns the later installed CLI/copy and its original five criteria, four technical constraints and four source/copied human groups. Its source entry, PGB-148's source entry and PGB-82's final integration remain pending. PGB-137/146/149 are also outside this source composition. Dated native34/144 is historical and not a current inventory. No local check or publication claims live Jira acceptance, CI, merge or activation.
+## Source machine repair preview — 16 November 2026
+
+PGB-149/R1-35 supplies the complete offline source API/JSON repair preview and its
+required copied-runtime compatibility. The source guide exports all fixed inputs,
+options and complete independent reports. PGB-146 completes readable source
+parity: proposals name every canonical cause with its ticket, comment, record and
+full digest in the same order as the machine result. The full installed fixture
+kit, eighth semantic smoke and complete source/native publication reconciliation
+remain PGB-81.
+
+The current partial source inventory remains **30 Stories/132 cases**, including
+actual merged PGB-145. The preceding PGB-146 capture retains its earlier source
+29/128 and dated native32/136 unchanged, including its historical unmatched six
+and pre-integration runtime map. Those dated observations are not current counts.
+
+The new partial receipt compares a hash-bound recorded set: that native32/136
+readback, overlaid only with the new PGB-146 body and PGB-149 body from this
+publication. Five differences against that recorded set are PGB-81, PGB-85,
+PGB-137, PGB-146 and PGB-149. This is not an exhaustive current native inventory.
+The later dated34/144 snapshot also records PGB-82's PGB-148 prerequisite and
+native PGB-147/PGB-148, whose source composition remains deferred to PGB-81.
+No later source or live-read behavior is imported by this receipt.
+
+PGB-149 requires PGB-80, PGB-113, PGB-129, PGB-136 and PGB-145, each at
+`ai_qa_complete`; its real native key is added before PGB-146. All original
+PGB-146 criteria/testing and its two human routes, and all original PGB-81
+criteria/testing and42 human cases, remain intact and NOT_RUN. R1-35's two human
+routes are also NOT_RUN. Local developer evidence, independent review, hosted
+checks, merge, human acceptance and activation retain their separate gates.
