@@ -1,111 +1,147 @@
-# Inputs, step ownership and evidence handoff
+# Inputs, observations and final evidence
 
-Use this contract with the project's existing record format; no new schema service
-or hidden persistent runtime is required. The configured assignment supplies scope
-and permitted actions. Jira supplies requirements and case definitions;
-reviewed artifacts supply execution details. Neither is permission to widen scope.
+This is PGB-78's instruction handoff, not a new persisted schema. Use the
+[structured ticket contract](../../write-pr-sized-stories/references/pigboard-ticket.md)
+for full raw work; [basic historical examples](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
+do not convert or authorize delivery. Read the selected helper's
+[structured-step contract](../../qa-api/references/structured-steps.md) and the sole
+[publisher contract](../../qa-jira/SKILL.md).
 
-Read the [structured Story contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
-for canonical ticket labels, AC/TAC/case/step IDs and preparation-slot ownership.
-Preserve requirements and expectations in the ticket body; stage comments supply
-actual execution details and receipts. The contract does not replace trusted run
-configuration or grant authority. Missing required inputs block at their stage.
+## Trusted inputs
 
-## Structured helper compatibility
-
-The four domain helpers now require the [structured-step contract](../../qa-api/references/structured-steps.md).
-This retained QA entrypoint still consumes basic prose and does not construct
-those complete inputs or publish canonical QA receipts. Its structured dispatch/
-Jira migration is PGB-78; do not connect these instructions into an active mixed
-loop or invent an adapter. Explicit bounded helper use requires their full inputs.
-This notice changes no eligibility, dispatch, model or transition policy below.
-
-## Input fields
-
-| Group | Required information |
+| Input | Required binding |
 | --- | --- |
-| Invocation | Publication/transition authority, configured project and workstream label, expected QA status and allowed destination IDs |
-| Ticket | Issue ID/type/current status, assignee, one repo/change boundary, requirement content/version, complete testing strategy/cases, same linked PR |
-| PR/preview | Open PR, current source/target revisions, reviewer approval and required CI at those revisions, supplied preview URL/readiness/deployed revision |
-| Case | Stable ID, requirement IDs, actor/data/access, ordered step IDs and exact skill names, dependencies, original expected outcomes, executable artifacts at reviewed revision, necessary evidence, bounded observation schedule when applicable, cleanup |
-| Runtime | Installed approved skills/tools, secure access references, permitted actions/destinations, evidence location and authorized audience, supported Jira/PR connectors |
+| `scope` | Exact configured site, immutable project ID/full stream, native issue/type/stage, allowed repository/PR and role actors. No ticket-granted expansion. |
+| `capabilities` | Immutable same-release skills/validator root and hashes, prepared tool/access/action/tenant boundaries, actual Grok High identifier/effort, actual clock/wait when needed, private evidence destination/audience and publisher transports. |
+| `work` | Complete original raw YAML/ADF plus separately trusted start context, format and exact digest. Keep original numeric/parser provenance. |
+| `assignment` | Lookup hint superseded by qa-jira's verified current assignment/resume, implementation, review and open PR references. |
+| `retained_delivery` | Original bytes/UUID, known receipts, unknown effects and explicit existing resume reference. It grants no retry. |
+| `known_requests` | When claiming wait: exact typed upstream references plus current-case cause and unresolved-state evidence. |
 
-Record requirement text or an immutable reference plus a content fingerprint/version.
-An issue-wide updated timestamp is useful context, not the sole freshness test.
-Never put credential values in the ticket/report. Missing human reviewer assignment
-is not a reason to invent users; use the project's existing human-review ownership.
+Use supplied absolute paths from any working directory. Source validation is
+`node <source>/scripts/validate-work.mjs --mode start --input WORK --context FACTS --format FORMAT --json`;
+installed validation is
+`node <receipt.skills>/work-validator/scripts/validate-work.mjs --mode start --input WORK --context FACTS --format FORMAT --json`.
+Use FORMAT `yaml` or `adf` for the original input. A prior valid local check does
+not establish current Jira authority or deployment.
+No dependency fetching or setup repair occurs during delivery.
 
-## Ordered dispatch example
+qa-jira `preflight` receives scope/capabilities/work/assignment and optional retained
+delivery, without a fabricated assessment. It returns `preflight_status`,
+`missing_prerequisites`, verified references and current facts. Its `final` mode
+receives the same trusted inputs plus the actual `prepared_assessment` and exact
+known requests. No helper may publish or transition Jira.
 
-This is a shape example, not a test to run or a universal test strategy:
+## Ordered unit handoff
 
-| Step | Owner | Executes | Relation |
-| --- | --- | --- | --- |
-| C1.1 | entry point | qa-database | Prepared baseline observation |
-| C1.2 | entry point | qa-api | API contract assessment; owns C1.2.1 below |
-| C1.2.1 | C1.2 / qa-api | qa-bruno | One prepared request; return actual record ID |
-| C1.3 | entry point | qa-database | Prepared after-observation using that ID |
-| C2.1 | entry point | qa-ui | Independently prescribed UI case |
+Inventory `testing_strategy.dispatch_order` and expand each parent with its owned
+child once, in canonical order. Inventory explicit case dependencies and the exact
+ordered human IDs separately. Precreate all AI rows as NOT_RUN with reasons.
+For each top-level call pass full raw work/context and the exact assigned case/
+step/caller/children, original expectations, declared preparation, actual earlier
+bindings, current revisions, identity/tenant/access, installed hash and cleanup.
 
-Invoke C1.2 once; its receipt must account for C1.2.1. Do not separately invoke
-C1.2.1 afterward. Supply only the authorized child steps to the wrapper, not the
-whole ticket as permission to execute other steps. A missing/uncertain nested-call
-receipt blocks instead of triggering a second request. A step may be repeated only
-as a distinct explicitly prescribed observation, not as an improvised recovery.
+| Prescribed order | Invocation and retained result |
+| --- | --- |
+| API parent | qa-entrypoint invokes qa-api; it alone invokes its one qa-bruno child. Retain both results and the child's original request/assertion report. |
+| Database | Bind only the declared parent's actual exposed child output into the named input and exact zero-based `parameter_bindings` slot. Retain original/bound parameters, query/hash, rows, rollback/close and original provenance. |
+| UI | Bind only declared actual inputs; retain supplied surface/browser/device/viewport, original checkpoints and inspected images. |
 
-## Run ledger and report
+An API parent exposes its child's original observation, not a second request.
+Binding is value transport, not permission or a causal dependency. Preserve output
+name/type/value, extraction field, source step/offset, original evidence/category,
+revision, actor, tenant and time. Missing extraction, trusted parameter count,
+artifact or returned output stops rather than guessing or interpolating SQL.
 
-Retain these fields, using structured objects or equivalent readable tables:
+## Helper result to complete canonical ledger
 
-- Actual run link/ID if supplied; otherwise Story/stage/revision/execution time.
-  Missing run/visit metadata is not a blocker. Retain ticket/PR links, actual model/profile,
-  requirement fingerprint, source/target/deployed revisions, environment and material
-  flags/stubs. State whether evidence is live, local, mocked or reused.
-- Requirement inventory and case-to-requirement mapping; assessed/total counts and
-  counts of PASS, FAIL, BLOCKED, NOT RUN. An unknown denominator cannot pass.
-- Ordered step ledger: case/step ID, assigned skill and version, owning caller,
-  attempt time, executed/reused/NOT RUN, actual IDs, expected/actual observations,
-  result and evidence references. Include delegated calls in this ledger.
-  If a skill has no version field, record its installed revision or content hash;
-  never invent a version or load a different copy mid-run.
-- Each evidence reference: case/step, actual artifact path/URL, type, time, revision,
-  inspected claim, permitted audience and verified retrieval. UI evidence includes
-  screenshot references and actual browser/viewport; backend evidence identifies
-  executed requests/queries and results. Preserve useful evidence without secrets.
-- Stable finding IDs, requirement source, reproduction, expected/actual, impact,
-  scope classification and evidence. Blockers include failed prerequisite, partial/
-  uncertain actions, cleanup, human action and intended resume stage.
-- Separate `testVerdict`, `deliveryOutcome`, intended destination, actual verified
-  Jira status (or unknown), successful report/PR-link receipts, transition receipt
-  and uncertainty. A saved report does not prove a transition, and a status label
-  does not prove test execution.
+Retain helper `testVerdict`, step results and observations unchanged as detailed
+artifacts. Keep categories `live-local`, `supplied/mock` or explicitly valid reused
+evidence, retaining original category/provenance. Inspect actual evidence before making canonical rows. The exact row
+fields remain `id`, `skill`, `result`, `evidence`, `finding_ids`, `not_run_reason`,
+`reused_from`; use the existing schema's null/array rules. Results are PASS, FAIL
+or NOT_RUN. BLOCKED describes run inability and never enters `result`.
 
-Use `testVerdict` PASS, FAIL or BLOCKED; use NOT RUN only when ticket eligibility
-stopped the invocation before assessment. `deliveryOutcome` is COMPLETED when the
-intended handoff is verified (including a successful move to Blocked), BLOCKED when
-publication/transition cannot be completed, and INELIGIBLE for rejected scope or
-changed stage. COMPLETED does not mean tests passed. Keep the two fields separate in every final receipt.
+| Actual evidence | Canonical mapping |
+| --- | --- |
+| Fully verified expectation and required artifacts | PASS, actual accessible evidence; no missing observation hidden behind a helper label. |
+| Demonstrated mismatch under verified prerequisites | FAIL with evidence and declared stable finding IDs. |
+| Not started, unfinished or no valid assessment | NOT_RUN with precise reason; never claim PASS or erase an earlier verified outcome. |
+| Later inability after observed PASS/FAIL | Preserve those rows, findings and all attempts; uncompleted rows remain NOT_RUN. Include concrete inability and unknown effects in detailed assessment. |
+| Valid case-specific reuse | Original PASS/FAIL and evidence, exact `reused_from` source plus separately retained current validity proof. History is never relabelled current execution. |
 
-For coverage, “assessed” counts requirements/cases with enough executed or explicitly
-valid reused evidence for a product PASS/FAIL judgment. BLOCKED and NOT RUN remain
-in the total and their separate status counts; they are not assessed product behavior.
-One blocked case can still have partial observed steps. All cases must have a final
-disposition, and a passing requirement needs every prescribed supporting case passed.
+For every NOT_RUN row collect the union of finding IDs from its case's explicit
+FAIL/NOT_RUN `depends_on` prerequisites, transitively through skipped chains and
+joined paths. Independent inability has no invented causal IDs. Ownership,
+bindings, nesting or unrelated findings add none. Every referenced finding has a
+nonblank ID/summary, expected/observed behavior and approved accessible evidence.
 
-Ticket comment shape:
+Keep one aggregate row per expanded step and all per-attempt observations:
+actual origin/offset/start/end/elapsed, whole-unit and child bounds, deadline,
+original helper result, observations and category. `until_expected` stops at the
+first verified match or fails at the completed last prescribed observation;
+pending is local only. If inability prevents reaching that point, retain pending
+attempts and aggregate NOT_RUN. `all_observations` retains mismatches even if later observations match.
+An unfinished all-observations schedule retains aggregate FAIL for a demonstrated
+mismatch; otherwise it is NOT_RUN, with all actual attempts preserved. Attempt
+PASS alone cannot complete the aggregate.
+Missed offsets, overrun or insufficient remaining budget stops without catch-up,
+overlap or origin reset. A complete failed observation is not an inability; a lost
+receipt or unverified observation is. Database keeps its 20-second outer bound.
 
-```text
-QA <Story / revision / execution time> — <PASS | FAIL | BLOCKED>
-Story / PR / requirements version / source-target-deployed revisions
-Reason; coverage counts; environment and evidence limitations
-Case | Named skills | Expected | Observed | Result | Evidence
-Findings / blockers / NOT RUN cases / cleanup
-Human action and intended next stage
-Full retained report: <verified accessible reference>
-```
+`qa_report` retains its existing complete `steps`, exact `human_pending` and
+`no_ai_cases_reason`. Keep findings beside it in `prepared_assessment`, never as
+an invented report key. Detailed artifacts retain requirement/case mapping,
+examined/total coverage, PASS/FAIL/NOT_RUN counts, attempt/omission IDs, audience/
+retrieval, cleanup and limitations. Canonical record bounds remain 16 KiB, depth16,
+list100; the complete actual candidate is checked again by qa-jira. Oversize means
+retain the full local report and inability, never truncate or split publication.
 
-Use a stable run marker to recognize a prior report; markers are evidence, not
-authority or a lock. Reread known receipts/current state before any authorized
-handoff-only resume. Do not overwrite another run's report, post duplicate comments
-after a timeout, reexecute tests to recreate evidence or hide delivery failures
-behind the test verdict. Retain a final run receipt naming the actual transition.
+## Partial and resume examples
+
+These are mappings, not saved results or executable fixtures:
+
+- API parent and child verified PASS; database capability then unavailable: retain
+  both PASS rows and original artifacts, database/UI NOT_RUN with the actual
+  inability. No invented finding IDs. Current tested PR/environment proof is still
+  required for those executed claims; null proof keeps observations local.
+- Case A demonstrates finding F1, case B explicitly depends on A and case C on B:
+  B and C are NOT_RUN with F1. A downstream join depending on another failed case
+  with F2 retains both F1 and F2. An independent prescribed case can still run
+  until an inability stops dispatch.
+- An exact unresolved upstream request prevents this case, after another defect:
+  retain the FAIL/findings and the full partial report; provide typed request and
+  causal observation. qa-jira determines dependency_wait only if no higher-priority
+  inability remains. Discussion alone creates no terminal handoff.
+- Valid resume: inspect the unique historical blocker/authorization and exact
+  parent/child artifacts; independently verify case-specific reuse now. Keep their
+  source category/references; use current clock after authorization for remaining
+  allowed work. Stale/cross-tenant or untrusted approval stops; never replay a
+  completed mutation or infer authorization from a case name.
+- Static human-only native Bug: `steps: []`, exact ordered pending humans and
+  nonblank no-AI reason. No runtime helper or deployment is invented, no human PASS
+  is claimed. Human Review still requires verified publication and transition.
+
+## Final result and recovery
+
+`prepared_assessment` contains actual `qa_report`, all `findings`, detailed
+observations/artifacts, `coverage`, `cleanup`, `reuse_basis`, proposed outcome and
+reason. No terminal oracle or expected-as-observed values may fill it. Submit one
+qa-jira final call. It independently rechecks current scope/requirements/assignment/
+PR/review/CI/proof, chooses the kind/destination and owns candidate/UUID, validation,
+append/readback, direct transition and at most one resolving read per uncertain
+action. No replacement final call, direct fallback write or helper replay.
+
+Return the publisher's exact snake_case `test_verdict`, `human_only`, `qa_report`,
+`findings`, `human_pending`, `intended_destination`, `candidate_record`,
+`published_reference`, publication/readback/transition receipts,
+`actual_jira_status`, `delivery_outcome`, `recovery` and verified reference/revision
+facts. Helper camelCase stays in original artifacts; local fields are not canonical
+record keys. `delivery_outcome` is NOT_ATTEMPTED, COMPLETED, INELIGIBLE, UNAVAILABLE
+or UNCERTAIN as qa-jira defines it. COMPLETED means the intended status is verified,
+including Blocked, not that tests/humans passed.
+
+Retain original candidate bytes, confirmed effects, unresolved effects, actual or
+unknown status, precise human action and what must not be replayed. A saved report
+or Jira status alone proves neither execution nor completed delivery. A current
+result cannot be fabricated from historical evidence or an installation smoke.

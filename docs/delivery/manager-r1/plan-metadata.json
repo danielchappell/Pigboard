@@ -182,7 +182,7 @@
       "min": 26.75,
       "max": 36.5
     },
-    "forecast_note": "Previous forecast 26.5–36 familiar-human hours is historical. Add only 0.25–0.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
+    "forecast_note": "Previous forecast 26.5\u201336 familiar-human hours is historical. Add only 0.25\u20130.5h for F2 operator wording, regression and review evidence. Private alignment completes already-planned preparation and is not added again. This is a forecast, not a new hourly cap or approval.",
     "files": [
       "skills/qa-jira/SKILL.md",
       "config/skill-bundle.json",
@@ -252,7 +252,7 @@
       "docs/product/README.md"
     ],
     "delivery_state": "Three-input source implementation; independent committed-code review, installed binding, human acceptance and merge remain separate.",
-    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4–12.275h, B6.6–9.475h; conservative forecasts A8.5–12.5h/B6.75–9.75h."
+    "estimate_basis": "Allocation of prior work plus split overhead is counted once. Reviewed plan54e057ca2bdc36bc0cfb9ba4663b436a834429d7d1cfe02b5811026d315bc593; unrounded A8.4\u201312.275h, B6.6\u20139.475h; conservative forecasts A8.5\u201312.5h/B6.75\u20139.75h."
   },
   {
     "id": "R1-27",
@@ -348,11 +348,86 @@
     "hours": {
       "min": 10.5,
       "max": 14.5
+    },
+    "delivery_state": "Source composed with actual reviewed PGB-132 original-child-history and forecast correction; final source/input/index checks, unchanged installed applicability, fresh exact-code review and distinct runtime/hosted/publication/merge gates remain required.",
+    "development_binding": {
+      "base_commit": "0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a",
+      "base_tree": "991e23fff8ac436e4f0bcfb92e82df2743f5d628",
+      "native_description_sha256": "6a553206c0768143f0b478fc787c98140a233cc937189b6818cb83a5db02c97a",
+      "stage": "In Progress",
+      "start_comment": "10803",
+      "plan_reviews": "Two complementary affected plan reviews CLEAN before implementation; exact980 development code reviews subsequently CLEAN; historical checkpoint retained.",
+      "scope": {
+        "paths": 17,
+        "criteria": 7,
+        "original_cases": 3,
+        "direct_prerequisites": 6,
+        "input_families": 14,
+        "inputs": 51
+      },
+      "acceptance": "Actual Grok High/helper/clock behavior unproven; no exception transferred from PGB-132 or PGB-110; no activation"
+    },
+    "final_composition_binding": {
+      "incoming_commit": "87600339ac7c739c2c6066b6161abe5f3f92f319",
+      "incoming_tree": "544d3a9969befef2a0fc6fdf7bb96b803ed32918",
+      "ancestry_commit": "c2f935f944503a938c488d309c3790cbcb66cb3a",
+      "actual_core_main": "58230d7779e7595738ca94643c3863d02c4b1483",
+      "integration_plan_sha256": "ff262df462f5719faa3b5ef59e226913e34f45cfb9b304634c54034561ed8eb7",
+      "review_state": "Both exact876 prerequisite code reviews and both final integration-plan reviews CLEAN before composition; fresh final78 code review remains required.",
+      "incoming_paths": 24,
+      "shared_authored_paths": 7,
+      "authored_paths": 17,
+      "source_story_count": 29,
+      "source_case_count": 128,
+      "requirement_count": 53,
+      "scenario_count": 41,
+      "acceptance": "Source/test/install evidence only; actual required Grok/helper/clock and resulting publisher behavior remain separate; no transferred evidence exception or activation."
+    },
+    "controls_correction_binding": {
+      "incoming_commit": "003160f4fa4bb4ba744ee0d5a1af9a686033e38c",
+      "incoming_tree": "e4a833ce1b4d0038e1866112678524100f04d9dc",
+      "prior_source_commit": "bf10e04cf8955fdd6fcfb4e62e3993192ac76d87",
+      "integration_plan_sha256": "5fa592a264b4bfe0f31fb17dc53bc974656641fe2bae6d6ae5799c3228bce207",
+      "review_state": "Both exact prerequisite code reviews and both affected controls-integration plan reviews CLEAN before composition; fresh final78 committed-code review remains required.",
+      "incoming_paths": 5,
+      "shared_authored_paths": 5,
+      "residual_authored_paths": 17,
+      "source_story_count": 29,
+      "source_case_count": 128,
+      "requirement_count": 53,
+      "scenario_count": 41,
+      "current_aggregate_days": {
+        "min": 45.36625,
+        "max": 48.05375
+      },
+      "installed_evidence": "Check final81 source/installed/manifest hashes and config/dependency closure; reuse original bf10 22/81/7-smoke evidence only on exact identity, without rewriting its receipt or claiming a new installation.",
+      "acceptance": "Actual Grok/helpers/clock/resulting publisher evidence or authorized disposition remains separate; no transferred exception or activation."
+    },
+    "child_history_composition_binding": {
+      "incoming_commit": "ac22d02365ad970d1ce627fb52f96501d161a2a6",
+      "incoming_tree": "335d4ae8be3a6ab6752053212136e493f31fbcb0",
+      "prior78_commit": "952883492a2e053c5ca399d22b65079a75ea4e44",
+      "integration_plan_sha256": "c2e316cc6a2603de3274e2e9a05bb0aadd784cc16cf5de4bb56fe08ac788c316",
+      "review_state": "Both exact prerequisite code reviews and both affected child-history integration-plan reviews CLEAN before normal composition; fresh composed-code review remains separate.",
+      "incoming_paths": 6,
+      "owned_overlaps": 5,
+      "authored_paths": 17,
+      "other_authored_paths_preserved": 12,
+      "source_story_count": 29,
+      "source_case_count": 128,
+      "requirement_count": 53,
+      "scenario_count": 41,
+      "current_aggregate_days": {
+        "min": 45.49125,
+        "max": 48.24125
+      },
+      "evidence_boundary": "Case-only original history prefix precedes unchanged78 composer invocation; raw prior unknown effects are supplied input, not actual refusal/zero-call evidence. Rebind existing bf10 installation only on final81/config/dependency equality; no new installation/waiver/activation."
     }
   },
+
   {
     "id": "R1-09",
-    "title": "Request rework through the human’s assistant",
+    "title": "Request rework through the human\u2019s assistant",
     "dependencies": [
       "R1-04"
     ],

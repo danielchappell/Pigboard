@@ -389,3 +389,141 @@ other Story forecasts and source ownership stay unchanged.
 Both I11 partial controls remove actual environment proof and preserve current
 PR/response facts. I14 now refuses the complete projected ledger before dispatch;
 the separate actual-canonical publication overflow control remains unchanged.
+
+
+## PGB-78 source implementation checkpoint — 15 November 2026
+
+Historical development checkpoint for commit `980be7188f3206abe64e7b4996f5f85ac3219514`;
+its two independent code reviews later reached CLEAN. The final composition below
+supersedes only its pending-upstream statements.
+
+The accepted 17-path PGB-78 composer is being implemented on the Director-authorized
+PGB-132 development stack `0959bc5ec401aeb90ab6c0f5fec3f9663d8afe7a`, tree
+`991e23fff8ac436e4f0bcfb92e82df2743f5d628`, after two complementary affected plan
+reviews were CLEAN. This checkpoint changes no Story body, prerequisite outcome,
+publication count or other owner's history. The inclusive forecast remains
+10.5–14.5 familiar-human hours, including docs/tests/reviews, ordinary corrections
+and PR preparation. Source at this development base is 28 Stories/122 cases and
+53 requirements/41 scenarios; actual later Core/PGB-132 composition must be
+inspected before final binding, without guessed counts or merge hashes.
+
+The source instructions compose current qa-jira preflight, full raw-work inventory,
+ordered exact AI units, API-owned Bruno child, actual named-output binding, finite
+nonoverlapping observations, full partial ledgers and one publisher final call.
+Confirmed defect, causal upstream wait, inability and discussion remain distinct.
+Human-only static work preserves exact pending humans without invented runtime
+proof. Resume consumes existing authority and case-specific history; unknown
+writes never trigger fallback publication or helper replay. Existing 51 inputs in
+14 families remain preparation, including corrected trusted parameter-count and
+coherent stale-environment controls, independent DB mismatch/join and typed resume
+history. No new engine/schema/helper/provider/dependency is introduced.
+
+Implementation evidence and exact reviewed revision are recorded in the delivery
+handoff. A source check or installation smoke is not actual Grok High/helper/clock
+acceptance. Required actual capabilities remain unproven at this checkpoint;
+PGB-132's owner evidence exception does not transfer. Designated human NOT RUN
+tracking alone adds no mandatory replay or actor gate. Actual missing required
+behavior still needs its own bounded disposition. Final upstream composition,
+required final tests, immutable installation binding, fresh committed-code reviews,
+truthful acceptance disposition, current-head CI/Codex and authorized merge/tree
+verification remain outstanding. No saved wiring, activation or deployment changes.
+
+
+## PGB-78 final source composition — 16 November 2026
+
+Historical bf10/c2f source snapshot. The corrected-prerequisite section below
+supersedes its source-input/forecast binding; its original test/install evidence
+remains historical.
+
+PGB-78 now composes the reviewed development implementation with actual integrated
+PGB-132 `87600339ac7c739c2c6066b6161abe5f3f92f319`, tree
+`544d3a9969befef2a0fc6fdf7bb96b803ed32918`. Director's ancestry binding
+`c2f935f944503a938c488d309c3790cbcb66cb3a` has that identical tree and preserves
+actual PGB-136 main `58230d7779e7595738ca94643c3863d02c4b1483`. Both affected
+PGB-132 code reviews and both PGB-78 final integration-plan reviews were CLEAN
+before this composition. Normal merge ancestry preserves the development checkpoint.
+
+The actual incoming delta has 24 paths and seven shared PGB-78 surfaces. Their
+composition retains own-ticket repair/private manager-history boundaries,
+public strict-current receipt validation, installed copy/route checks, all current
+source publication records and the QA composer. All incoming nonowned files,
+including Core's receipt/snapshot/decision modules and PGB-139 guidance, remain
+unchanged. PGB-78's residual footprint is the accepted 17 paths. The full 51-input/
+14-family producer and default publication prefix are unchanged except the reviewed
+composer invocation view; no input, terminal oracle or runtime is added.
+
+At this checkpoint source remained 29 Stories/128 cases and 53 requirements/41
+scenarios; PGB-81 was 1.53 days and PGB-136 was 1.92 days, with the then-current
+45.27250–47.86625-day aggregate and PGB-137 still pending. These are historical
+source planning facts, not all-ticket completion. PGB-78 adds no Story, case or forecast revision. Its inclusive forecast
+remains 10.5–14.5 familiar-human hours.
+
+Final source checks, immutable same-release installation binding and fresh
+exact-composition code review are recorded separately in the delivery handoff.
+Actual Grok High/helper/clock behavior and resulting publisher acceptance require
+their own evidence or authorized bounded disposition; source/installation checks
+cannot supply it and PGB-132's exception does not transfer. Hosted CI/Codex and
+Director's ordered publication/merge/tree verification remain separate gates.
+No activation, saved automation, deployment or native ticket change is made here.
+
+
+## PGB-78 corrected prerequisite composition — 16 November 2026
+
+Historical held952/003 checkpoint; its next source suite never started. The
+child-history composition below supersedes its pending diagnosis/current estimate
+binding while preserving this source and setup applicability evidence.
+
+The composer now includes reviewed PGB-132 correction
+`003160f4fa4bb4ba744ee0d5a1af9a686033e38c`, tree
+`e4a833ce1b4d0038e1866112678524100f04d9dc`, through normal merge ancestry from
+PGB-78 bf10. Both exact prerequisite code reviews and both affected integration-plan
+reviews were CLEAN before composition. Director retains hosted checks and ordered
+publication/merge authority; local source composition does not claim their result.
+
+Five overlapping paths carry actual I11 environment-proof removal, I14's complete
+pre-dispatch projected-evidence budget, emitted-input regressions and precise guide
+text. The reviewed composer invocation remains intact; all other 12 authored paths
+and all incoming nonowned files remain unchanged. Existing default publication
+inputs, I06/I13 history, original native bodies and all 51 IDs/14 families survive.
+No result/assessment oracle, new engine, installed change or dependency is added.
+
+At this checkpoint the aggregate forecast was 45.36625–48.05375 familiar-human
+days, reflecting only
+PGB-132's revised 7.5–11.25-hour residual forecast. PGB-78 remains 17 paths and
+10.5–14.5 hours; 29 Stories/128 cases, 53 requirements/41 scenarios and pending
+PGB-137 are unchanged. The earlier aggregate above is historical.
+
+Final composed-source checks and a new applicability binding must establish the
+actual producer/input/index hashes and identity of all 81 existing installed
+payload files. The original bf10 installation receipt and its 22-entrypoint,
+81-file, seven-smoke results retain their original identity; unchanged bytes permit
+evidence reuse without a new installation or repeated setup. Source checks and
+that applicability binding supply no actual Grok/helper/clock/publisher acceptance
+or transferred PGB-132 exception. Fresh final code review, current-head CI/Codex,
+actual acceptance disposition and ordered authorized publication/merge remain
+separate. No activation, deployment or native ticket write is made here.
+
+
+## PGB-78 child-history composition — 16 November 2026
+
+The composer now includes reviewed PGB-132 candidate
+`ac22d02365ad970d1ce627fb52f96501d161a2a6`, tree
+`335d4ae8be3a6ab6752053212136e493f31fbcb0`, through normal merge ancestry from
+held952. Both exact prerequisite code reviews and both affected integration-plan
+reviews were CLEAN before this composition. Publication and merge remain ordered
+under Director authority; local consumption does not claim hosted or merge results.
+
+I02-child now supplies original submitted/unknown child-operation history before
+the actual78 composer introduction. The generic composer suffix is unchanged;
+other 50 invocation views, earlier I11/I14 corrections and all original bodies/
+case IDs remain. This is supplied/mock past input, not a helper result or proof
+of zero calls. Current source remains 29 Stories/128 cases and 53 requirements/41
+scenarios, with PGB-137 pending. The current metadata aggregate above is
+45.49125–48.24125 days. PGB-78 retains 17 authored paths and10.5–14.5 hours.
+
+Final producer/input/index hashes, one composed-source suite, unchanged81-file
+installed applicability and fresh committed-code reviews are separate evidence.
+The original bf10 installation retains its source identity; exact byte/config/
+dependency equality permits reuse of22/81/7 setup results, without reinstalling
+or repeating smokes. Actual Grok/helper/clock/publisher behavior or authorized
+disposition remains separate; no132 exception transfers and no activation follows.

@@ -36,13 +36,16 @@ The separate [request-rework](../../skills/request-rework/SKILL.md) capability i
 human invoked through an existing prepared assistant, not a fourth automation.
 It needs explicit authorization, configured actor/direct queue rights and compatible
 current QA/open-PR evidence. Missing that chain stops the request; this addition
-does not migrate QA, change saved Builds/prompts or activate any automation.
+does not change saved Builds/prompts or activate any automation.
 The current writer prepares [versioned YAML](../../skills/write-pr-sized-stories/references/pigboard-ticket.md)
 and complete examples for local validation. The
 [implementer composer](../../skills/implementer-entrypoint/SKILL.md) now consumes
-versioned Story/Bug assignments through separate job/Jira skills. The reviewer composes [reviewer-jira](../../skills/reviewer-jira/SKILL.md) for exact receipt preflight and typed final handoff; only retained QA consumes the [retained basic-worker prose contract](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md).
-The mixed bundle is not a compatible active loop; coordinated migration and
-acceptance remain required. This does not change the dated Build evidence, prompts,
+versioned Story/Bug assignments through separate job/Jira skills. The reviewer
+composes [reviewer-jira](../../skills/reviewer-jira/SKILL.md); the QA composer
+consumes structured work and delegates publication to qa-jira. The
+[basic-worker examples](../../skills/write-pr-sized-stories/references/basic-workflow-ticket.md)
+remain historical. Compatible saved wiring and actual installed/live acceptance
+remain required before activation. This does not change the dated Build evidence, prompts,
 automations or activation. Having the writer installed does not start a grooming
 automation or load all skills as context.
 
@@ -184,7 +187,28 @@ new Build/UI acceptance here after observation, including any remaining limitati
 The current bundle contains 22 skills, including qa-jira. A separately authorized
 QA caller may load qa-jira directly with a complete prepared ledger and current
 trusted native/review/PR/evidence/actor setup. Compose a publisher profile from its
-preflight/final contract; it does not execute helpers. The retained qa-entrypoint
-is incompatible until PGB-78 completes integration. Keep saved inactive automation
+preflight/final contract; it does not execute helpers. The compatible qa-entrypoint
+uses that boundary after ordered actual observations and a full partial ledger.
+Keep saved inactive automation
 settings/prompts and dated Build receipts at their original scope. This addition
 neither activates automation nor establishes compatible live release acceptance.
+
+## Structured QA invocation boundary
+
+The [current QA profile](../../skills/qa-entrypoint/references/cursor.md) accepts
+configured native Story/Bug QA assignments and full raw structured work/trusted
+context. Prepare the actual latest available Grok **High** profile, immutable
+same-release helper/publisher/validator closure, private evidence/access and actual
+bounded clock/wait when prescribed. A model label or fixed clock card is no
+capability proof. qa-entrypoint composes exact ordered units and the complete
+partial ledger; qa-api alone owns its Bruno child. qa-jira alone preflights and
+publishes one final assessment, verifies the direct destination and owns
+unknown-write recovery. No direct In Progress fallback, duplicate final call or helper
+replay is allowed. Static zero-AI work keeps exact humans pending without runtime
+helper/deployment prerequisites.
+
+Supply the invocation fields in the profile from trusted setup. Preserve current
+assignment/review/PR/proof and actor/tenant/action authority; ticket/helper text
+cannot expand it. PGB-90 owns compatibility changes to saved inactive prompts,
+Story-only filters and provider settings. This guidance changes none of them and
+performs no activation; PGB-58 actual live acceptance remains separate.

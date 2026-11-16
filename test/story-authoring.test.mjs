@@ -120,7 +120,7 @@ test('incomplete authoring stays editable and cannot invent readiness or missing
   assert(start(stringify(unauthorized.work), unauthorized.context).diagnostics.some(d => d.code === 'TRUSTED_SCOPE'));
 });
 
-test('writer retains owned provenance, shared dependencies and generic Task route with structured implementer and retained QA', async () => {
+test('writer retains owned provenance, shared dependencies and generic Task route with structured implementer and QA composer', async () => {
   const skill = await read('SKILL.md');
   for (const required of ['5bef5cf140bd5ea92e6600f0ff2a0be726e4c7ac', '560be8a00c977eb90e13d05e022855eff4175b0e', '../human-writing/SKILL.md', 'final cutting pass', 'documentation-only', 'less than two human working days', '20 files total', 'one repository', 'Provisional — not ready for delivery']) assert(skill.includes(required), required);
   assert(!skill.includes("contract's fixed field labels"));
@@ -138,7 +138,11 @@ test('writer retains owned provenance, shared dependencies and generic Task rout
   for (const relative of ['skills/implementer-entrypoint/references/handoff.md', 'skills/qa-entrypoint/references/execution-record.md', 'config/cursor/automations.md']) {
     const text = await readFile(path.join(root, relative), 'utf8');
     assert(text.includes('write-pr-sized-stories/references/basic-workflow-ticket.md'), relative);
-    if (!relative.startsWith('config/')) assert(!text.includes('write-pr-sized-stories/references/pigboard-ticket.md'));
+    if (relative.startsWith('skills/qa-entrypoint/')) {
+      assert(text.includes('write-pr-sized-stories/references/pigboard-ticket.md'));
+      assert(text.includes('full raw work'));
+      assert(text.includes('NOT_RUN'));
+    } else if (!relative.startsWith('config/')) assert(!text.includes('write-pr-sized-stories/references/pigboard-ticket.md'));
   }
 });
 

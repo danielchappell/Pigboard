@@ -8,8 +8,9 @@ description: Check a configured native QA Story/Bug in read-only preflight, or i
 Use explicit `preflight` or `final` mode with the trusted inputs below. This skill
 is the sole QA Jira publication and failure boundary. The caller owns execution,
 observations and evidence retention. Never run QA helpers to fill missing evidence.
-The retained `qa-entrypoint` is incompatible with this protocol; PGB-78 supplies
-its integration. Do not activate mixed delivery.
+The compatible [qa-entrypoint](../qa-entrypoint/SKILL.md) composes execution and
+supplies its actual assessment; standalone callers use the same inputs.
+Installation does not establish live acceptance or activate delivery.
 
 Resolve these guides only in the layout being used:
 

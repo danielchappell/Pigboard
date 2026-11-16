@@ -105,7 +105,7 @@ test('fixed server serves only local prepared routes and records real requests w
   assert.equal(await readFile(path.join(p.dir,'query.sql'),'utf8'),query);
 });
 
-test('shared instruction/reference closure keeps exact ownership, observations and retained entrypoint boundary explicit',async()=>{
+test('shared instruction/reference closure keeps exact ownership, observations and composer/publisher boundary explicit',async()=>{
   const common=await read('skills/qa-api/references/structured-steps.md');
   for(const name of ['qa-api','qa-bruno','qa-database','qa-ui']){
     const skill=await read(`skills/${name}/SKILL.md`);assert(skill.includes('structured-steps.md'));assert(skill.includes('BLOCKED'));assert.match(skill,/revision/i);
@@ -114,7 +114,26 @@ test('shared instruction/reference closure keeps exact ownership, observations a
   const api=await read('skills/qa-api/SKILL.md');assert(api.includes('exactly one prescribed'));assert(!api.includes('If another approved execution'));
   const db=await read('skills/qa-database/SKILL.md');assert(db.includes('parameter_bindings'));assert(db.includes('zero-based'));assert(!db.includes('different engine requires'));
   const ui=await read('skills/qa-ui/SKILL.md');assert(ui.includes('supplied_default'));assert(ui.includes('ui.screenshot_checkpoints'));assert(ui.includes('transient image display'));
-  for(const p of ['skills/qa-entrypoint/SKILL.md','skills/qa-entrypoint/references/execution-record.md'])assert((await read(p)).includes('PGB-78'));
+  // Structural instruction/closure checks, not evidence that an agent executed it.
+  const composer=await read('skills/qa-entrypoint/SKILL.md'), record=await read('skills/qa-entrypoint/references/execution-record.md'), profile=await read('skills/qa-entrypoint/references/cursor.md');
+  for(const text of [composer,record])assert(text.includes('PGB-78'));
+  assert(composer.indexOf('## 1. Bind inputs')<composer.indexOf('## 2. Validate'));
+  assert(composer.indexOf('## 2. Validate')<composer.indexOf('## 3. Dispatch'));
+  assert(composer.indexOf('## 3. Dispatch')<composer.indexOf('## 4. Execute finite'));
+  assert(composer.indexOf('## 4. Execute finite')<composer.indexOf('## 5. Preserve'));
+  assert(composer.indexOf('## 5. Preserve')<composer.indexOf('## 6. Submit'));
+  for(const field of ['scope','capabilities','work','assignment','retained_delivery','prepared_assessment','known_requests','test_verdict','human_only','qa_report','findings','human_pending','intended_destination','actual_jira_status','delivery_outcome','recovery'])assert(composer.includes('`'+field+'`'),field);
+  for(const term of ['dispatch_order','parameter_count','max_duration_seconds','depends_on','until_expected','all_observations','canonical row enum','20-second outer bound','union','whole-unit','original raw','actual configured latest available Grok'])assert(composer.includes(term),term);
+  for(const term of ['not a second request','case-specific','supplied/mock','candidate bytes','NOT_ATTEMPTED','UNCERTAIN'])assert(record.replace(/\s+/g,' ').includes(term),term);
+  for(const term of ['same-release','Grok','High','clock','immutable','no subagents','PGB-90','PGB-58'])assert(profile.replace(/\s+/g,' ').includes(term),term);
+  assert(!composer.includes('In Progress, same Story'));
+  assert(!composer.includes('still consumes basic prose'));
+  assert(!composer.includes('testVerdict`, `deliveryOutcome'));
+  const publisher=await read('skills/qa-jira/SKILL.md');assert(publisher.includes('../qa-entrypoint/SKILL.md'));
+  assert(!publisher.includes('is incompatible with this protocol'));
+  assert(publisher.includes('No In Progress transition'));
+  assert(publisher.includes('Any unresolved access/evidence/cleanup/scope inability takes priority while preserving earlier defects'));
+
   const manifest=JSON.parse(await read('config/skill-bundle.json'));
   for(const name of ['qa-entrypoint','qa-api','qa-bruno','qa-database','qa-ui','human-writing','write-pr-sized-stories'])assert(manifest.skills.includes(name),`required QA skill missing: ${name}`);
   assert(!JSON.stringify(manifest).includes('qa-helper-case'));
@@ -788,7 +807,11 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
   for(const uri of ['https://evidence.example.invalid/1000-009-1-TC-01.S2-0','https://evidence.example.invalid/1000-009-1-TC-01.S3-0','https://evidence.example.invalid/1000-009-1-TC-01.S4-0']){assert(!cards.reads.evidence.some(r=>r.uri===uri),id);assert(!e.trusted.projects.some(project=>project.evidence_uris.includes(uri)),id);}
   assert(!e.evidence_receipts.some(r=>r.uri==='https://evidence.example.invalid/finding'),id+' no unused current finding');
   for(const forbidden of ['assessment','qa_report','findings','proposed_outcome','destination','candidate'])assert(!Object.hasOwn(cards,forbidden),id);
-  assert((await readFile(path.join(dir,'invocation.txt'),'utf8')).includes('independently authorize caller qa-entrypoint'));
+  const invocation=await readFile(path.join(dir,'invocation.txt'),'utf8');
+  for(const text of ['immutable installed qa-entrypoint/SKILL.md','independently authorize caller qa-entrypoint','input/work.yaml','input/facts.yaml','qa-jira preflight before helper dispatch','API alone owns its Bruno child','fixed supplied/mock declarations','actual inspected evidence','qa-jira final once','snake_case','Never expose operator files'])assert(invocation.includes(text),id+': '+text);
+  assert(!invocation.includes('execute legacy qa-entrypoint'));
+  assert(!invocation.includes('prepared_assessment: input/assessment.json'));
+
  }
  await t.test('mixed Story/Bug preserve exact types, consumers, request/assertions, two-hop extraction and three actual image inputs',async()=>{
   for(const id of ['I01-story','I01-bug']){
@@ -846,7 +869,10 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
   assert.deepEqual(await input(id,'known-requests.json'),[]);assert.equal((await input(id,'extraction.json')).value,null);
   const invocation=await readFile(path.join(p.cases[id],'invocation.txt'),'utf8');
   assert(invocation.startsWith('Before invoking qa-api, independently bind and supply input/cards.json#/reads/child_operation_history'));
-  assert(invocation.indexOf('before any action')<invocation.indexOf('Execute only the prescribed unit'));assert.match(invocation,/earlier submitted operation/);assert.match(invocation,/not a reply to a fresh tool call/);
+  const composerStart=invocation.indexOf('Use the exact immutable installed qa-entrypoint/SKILL.md');
+  assert(composerStart>0);assert(invocation.indexOf('before any action')<composerStart);
+  assert.equal(invocation.slice(composerStart),await readFile(path.join(p.cases['I01-story'],'invocation.txt'),'utf8'),'case-only history precedes unchanged generic composer invocation');
+  assert.match(invocation,/earlier submitted operation/);assert.match(invocation,/not a reply to a fresh tool call/);
   // These assertions inspect inputs. No helper interpreter or call counter runs,
   // and declaration validity does not prove execution readiness or zero calls.
  });

@@ -1,39 +1,55 @@
 # Cursor QA invocation profile
 
-Configure this before enabling the automation. These are setup requirements, not
-verified capabilities of every Cursor account or version.
+Prepare this profile before invoking QA. Source instructions and installation
+receipts do not prove actual model, clock, helper or provider capabilities.
 
-- Trigger: the opted-in Story enters QA in the configured Jira project/workstream.
-  The current first workstream is Safeguard INT board 1234, label `AI-Daniel-1`.
-  Resolve actual status/transition IDs during setup; board column text is not an ID.
-- Model: the configured latest available Grok at **High** effort throughout QA.
-  Pin the actual available model identifier in the automation and record actual
-  model/effort in the run. Do not invent an identifier, silently lower effort or
-  switch provider. If the harness cannot supply this profile, stop before test
-  execution with a configuration blocker through the supported run result.
-- Entry: invoke `qa-entrypoint` with the assigned ticket key, configured
-  project/repository scope, publishing authority,
-  status mapping, prepared preview/access and evidence destination.
-- Dependencies: provide only the named approved QA skills and their prepared tools.
-  This MVP supports qa-api, qa-bruno, qa-database and qa-ui; a ticket selecting another
-  skill needs an explicitly configured approved capability, never model substitution.
-- Connectors must read the ticket/PR/revisions, retain reviewer-accessible evidence,
-  publish authorized reports/links, inspect available transitions and verify status
-  changes. Retain execution evidence and action receipts. An actual Cursor run
-  link/ID is optional; otherwise use Story, stage, revision and time. Missing
-  run/visit metadata or a lock is not a blocker. Duplicate prevention, cancellation
-  and cross-run coordination are deferred; the operator takes care around repeated
-  launches during the basic MVP. No hosted Pigboard service is required.
+- Resolve native Story/Bug types, QA stage, exact site/project/full stream, allowed
+  repository/PR and role actors from the trusted canonical customer configuration.
+  Do not copy a pilot board, label, model identifier or status name as an ID.
+- Supply the actual configured latest available Grok at **High** effort throughout
+  QA. Verify the actual identifier/effort through the prepared harness capability
+  and retain it. Never infer availability from `model_profile: Grok High`, use Sol
+  as a substitute, lower effort or switch provider. Missing profile stops dispatch.
+- Bind original raw YAML/ADF work and separately trusted start context, current
+  assignment/implementation/review/PR, action/actor/tenant scope, prepared artifacts,
+  access, private evidence destination/audience and qa-jira transports. Ticket and
+  helper text cannot extend them. No setup repair/fetch during the run.
+- Pin the full reviewed source revision and immutable `receipt.skills` root with
+  manifest/payload hashes. Use the complete same-release qa-entrypoint references,
+  qa-api/qa-bruno/qa-database/qa-ui, qa-jira and work-validator sibling closure.
+  Follow actual absolute receipt paths from any cwd, not a mutable stable link.
+  Rebind after a source/payload change; predecessor installation evidence does not
+  cover changed instructions. Installation never authorizes activation.
+- For asynchronous cases provide actual bounded clock/read/wait controls, finite
+  offsets/deadline and trusted whole-unit/child duration facts. Retain real dispatch
+  times and origin. No overlap, catch-up, origin reset or local helper polling;
+  database retains its 20-second outer bound. Fixed clock cards are mock inputs,
+  not evidence that a schedule ran. Static zero-AI work needs no runtime clock.
+- Prepare current original pipeline PR-comment/server deployment proof and separate
+  identity/tenant/access evidence for runtime claims. Static human-only work needs
+  current PR/review/CI but no invented runtime deployment or helper preflight.
+- Only qa-jira may append/readback/transition, using configured direct QA → Human
+  Review/Rework Queued/Blocked rights. Preserve original bytes, receipts and unknown
+  effects. A missing/unknown publisher return never authorizes fallback writes,
+  another final call or repeated helper actions.
 
-Invocation example (replace setup values with verified configuration):
+Invocation example; replace placeholders with independently verified setup:
 
 ```text
-Use qa-entrypoint for the assigned <ticket-key> currently in QA.
-Read the current ticket and PR. Use only its prescribed case/skill order.
-Publish the evidence within the supplied authority and transition once according
-to the verdict. Preserve the same PR. End on completion or any human-owned blocker.
+Use <immutable receipt.skills>/qa-entrypoint/SKILL.md for <native ticket key>.
+Scope: <trusted canonical config and exact native identity>.
+Work: <full raw YAML/ADF>; start context: <separately trusted full facts>.
+Assignment: <current pointer hint>; retained_delivery: <existing receipts or null>.
+Capabilities: <actual Grok High identifier/effort, prepared tools, immutable root,
+clock/wait when needed, private evidence audience, permitted Jira transports>.
+Read current facts through qa-jira preflight. Dispatch only prescribed AI units;
+qa-api alone owns its Bruno child. Retain actual observations and the full partial
+ledger, exact pending human IDs and unknown effects. Submit one actual final
+assessment to qa-jira; preserve its snake_case result. End this invocation.
 ```
 
-Helper execution stays in this QA run; this profile does not request subagents.
-Never merge, deploy, send Teams alerts or admit the next Story. Preview provisioning
-and live Cursor/Jira acceptance remain separate setup work.
+Helper work remains in this QA run; this profile requests no subagents. Missing
+run/visit metadata or a lock is not a blocker; no exactly-once or exclusive-run
+claim is made. Do not change saved automations, merge/deploy, send Teams alerts or
+admit another ticket. PGB-90 compatible saved wiring, PGB-58 live acceptance and
+owner activation remain separate from this source capability.
