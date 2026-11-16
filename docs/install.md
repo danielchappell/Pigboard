@@ -87,7 +87,7 @@ skills with a host or prove that host's supported execution capabilities.
 
 ## Install a verified stable path
 
-The installer adds source-hash and dependency verification and the seven checks
+The installer adds source-hash and dependency verification and the eight checks
 below before exposing a stable `skills` symlink:
 
 ```sh
