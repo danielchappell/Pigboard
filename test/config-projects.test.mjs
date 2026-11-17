@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parseConfig, CONFIG_LIMITS } from '../lib/config/parse.mjs';
+import { hostConfig } from '../lib/aws/installation.mjs';
 import { resolveProjects, resolveProject, streamKey, inspectStreams } from '../lib/config/projects.mjs';
 import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
 const base=JSON.parse(readFileSync(new URL('./fixtures/project-configs.json',import.meta.url))).two_project;
@@ -103,5 +104,6 @@ test('all eleven finite integer bounds and six deterministic cross-field relatio
 test('manager host settings remain optional and enforce canonical role, cadence and mapping bounds',()=>{
  const v=JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config;assert.equal(check(base).valid,true);assert.equal(check(v).valid,true);
  for(const mutate of [x=>x.manager.aws.operator_role_arn=x.manager.aws.deployer_role_arn,x=>x.manager.aws.account_id='000000000000',x=>x.manager.schedule_minutes=2,x=>x.manager.invocation_timeout_seconds=901,x=>x.manager.log_retention_days=2,x=>x.manager.transition_edges=[{project_id:'999',transition_id:'1',source_status_ids:['10'],target_status_id:'11',global:false}],x=>x.manager.controls.unknown=true]){const c=structuredClone(v);mutate(c);assert.equal(check(c).valid,false);}
+ for(const field of ['operator_role_arn','deployer_role_arn']){const c=structuredClone(v);c.manager.aws[field]=c.manager.aws[field].replace(':role/',':role/team/');const rejected=check(c);assert.equal(rejected.valid,false);assert.deepEqual(rejected.diagnostics.map(({code,path})=>({code,path})),[{code:'FORMAT',path:'/manager/aws/'+field}]);assert(!JSON.stringify(rejected.diagnostics).includes(c.manager.aws[field]));assert.throws(()=>hostConfig(JSON.stringify(c)),error=>error.code==='INVALID_CONFIG');}
  const edge={project_id:v.projects[0].id,transition_id:'1',source_status_ids:['10'],target_status_id:'11',global:false};v.manager.transition_edges=[edge];assert.equal(check(v).valid,true);v.manager.transition_edges.push(structuredClone(edge));assert.equal(check(v).valid,false);
 });
