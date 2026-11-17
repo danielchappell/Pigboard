@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {configureMissingCompletionJourney,boundedConcurrencyJourney,configureCompletionJourney,resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
+import {manifestConfigurationJourney,scheduleDriftJourney,configureMissingCompletionJourney,boundedConcurrencyJourney,configureCompletionJourney,resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {controlOnlyChange,roleMatches} from '../lib/aws/installation.mjs';
 import {runInstallationCommand} from '../scripts/manager-installation.mjs';
@@ -10,6 +10,7 @@ test('normal installation rejects unsafe effective async settings before effects
 test('recovery inspection and stop bypass unsafe or unavailable async settings',async(t)=>{for(const row of await asyncConfigRecoveryJourney())t.diagnostic(JSON.stringify(row));});
 test('configure preserves original recovery authority after post-update async drift',async(t)=>{t.diagnostic(JSON.stringify(await asyncConfigPostUpdateJourney()));});
 test('configure rejects invalid local assets before service acquisition',async(t)=>{for(const row of await configureAssetRefusalJourney())t.diagnostic(JSON.stringify(row));});
+test('schedule drift refusal preserves diagnostic and control callers',async(t)=>{for(const row of await scheduleDriftJourney())t.diagnostic(JSON.stringify(row));});
 test('actual configure producer uses deployer only for bounded change set and commits controls last',async()=>{await configureJourney();await configureJourney({partial:true});});
 test('preview event rejects authority overrides before creating clients',async()=>{let calls=0;const r=await runPreview({operation:'preview',writes_enabled:true},{createState:()=>{calls++;}});assert.equal(r.code,'PREVIEW_EVENT_REQUIRED');assert.equal(calls,0);});
 test('actual retained State to Jira acquisition to ordinary composition stays write-free',async()=>{await wrapperJourney();});
@@ -48,3 +49,5 @@ test('ordinary apply prepared host projects actual success and disabled zero eff
 test('configure waits for its own terminal stack event before restoring preview',async(t)=>{for(const row of await configureCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('configure preserves original authority when completion proof is unavailable',async(t)=>{for(const row of await configureMissingCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('normal observation enforces bounded concurrency without blocking stopped recovery',async(t)=>{for(const row of await boundedConcurrencyJourney())t.diagnostic(JSON.stringify(row));});
+
+test('manifest canonical configuration rejects unusable receipts before services',async(t)=>{for(const row of await manifestConfigurationJourney())t.diagnostic(JSON.stringify(row));});

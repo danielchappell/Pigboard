@@ -120,14 +120,17 @@ A non-null assignment must reference the same immutable ticket ID as its member;
 Attempt inputs contain UUID `attempt_id`, immutable ticket/Epic IDs, issue key,
 operation, exact source/target status IDs, configuration digest and bounded
 `cause`/`publication` reference lists. Initial `publication` passed to `begin`
+allows at most 99 references, reserving one slot for the manager within the 100 total.
+The independent 32 KiB record limit still applies; fitting the count does not
+guarantee that the record fits the byte limit. Initial publication
 must not contain a reference whose `record_id` equals this attempt's `attempt_id`,
 regardless of the reference's ticket. Empty lists and prior references with other
 record UUIDs remain allowed; prior references must have distinct complete
 `ticket_id`/`comment_id`/`record_id`/`digest` tuples. Retain the current manager reference
 only after confirmed begin and append/readback validation, using
-`retainPublication` before pointer publication. A matching initial reference or duplicate tuple
-returns `invalid`/`INVALID_INPUT` with `data:null`, before any provider read or
-write. Correct that never-persisted input; this does not authorize recreating an
+`retainPublication` before pointer publication. A matching initial reference, duplicate tuple
+or initial list exceeding 99 references returns `invalid`/`INVALID_INPUT` with
+`data:null`, before any provider read or write. Correct that never-persisted input; this does not authorize recreating an
 attempt or replaying Jira after an earlier uncertain write.
 Ordinary callers use `admit_ready`.
 The retained schema also recognizes earlier designed operation names; this API
@@ -283,12 +286,14 @@ internal package APIs; there is no capture/import/send CLI or editable proof fil
 Trusted producer provenance comes from the reviewed bound package and state/IAM
 boundary, not from a digest or an asserted caller flag.
 
-1. `begin` persists the pending intent before publication. Start without the new
-   manager reference: no initial entry may use this attempt's `attempt_id` as
+1. `begin` persists the pending intent before publication. Supply at most 99 initial
+   references, reserving one slot for the manager within the 100 total. The independent
+   32 KiB record limit still applies; count eligibility does not guarantee byte eligibility.
+   Start without the new manager reference: no initial entry may use this attempt's `attempt_id` as
    `record_id`, on any ticket. Empty lists and prior references with other record
    UUIDs remain allowed; prior references must have distinct complete
    `ticket_id`/`comment_id`/`record_id`/`digest` tuples. Invalid initial references
-   reject before provider I/O. Append/readback and confirmed retention
+   or a list exceeding 99 return `invalid`/`INVALID_INPUT` with `data:null` before provider I/O. Append/readback and confirmed retention
    happen after begin, as follows.
 2. After actual append/readback validation of the typed manager comment, call
    `retainPublication({attempt_id, expected_installation_revision,
