@@ -1,9 +1,10 @@
 # Install the disabled customer runtime
 
-PGB-83 packages an ordinary decision preview in your AWS account. It does not
-include an admission sender. Local fixture evidence is separate from installed
-acceptance, human review and permission verification. No vendor principal,
-telemetry, public endpoint or runtime source download is configured.
+The customer runtime supports write-free decision preview and reviewed
+sender-capable packages for ordinary admission. Every new installation starts
+with scheduling and writes disabled. Local fixture evidence is separate from
+installed acceptance, human review and permission verification. No vendor
+principal, vendor telemetry, public endpoint or runtime source download is configured.
 
 Prepare a reviewed clean Git revision, Node 24, `/usr/bin/zip`, the locked root
 and `runtime/aws` dependencies, and AWS CLI before packaging or deployment.
@@ -46,6 +47,24 @@ No source branch is resolved later. Packaging rejects dirty source, missing pinn
 dependencies and existing output directories. JSON results name the output or a
 safe failure code.
 
+Generated physical names use `pigboard-`, up to 12 readable characters from the
+installation ID, then a hyphen and the first 32 hexadecimal SHA256 characters of
+the complete unchanged ID. The base is at most 54 characters; the longest role
+name is at most 64. All six resources and their scoped policy targets use this
+same derivation. It is deterministic and collision-resistant, not proof of AWS
+resource availability. Read actual names from generated outputs and receipts;
+do not reconstruct or copy them into canonical configuration.
+
+This pre-release correction changes every generated physical name, including
+short IDs. It applies to newly generated packages. For an existing installation,
+keep its original pinned package, receipt and matching source/tooling together
+for inspection and stop. New strict tooling rejects old named resources; it has
+no legacy-name fallback or migration path. Do not apply the new template to an
+old stack to make it match: it could request replacements. Do not rewrite receipts,
+reinitialize or delete retained State. No deployed-installation inventory has
+been performed, and the controller still rejects source migration/replacement.
+
+
 Initial provisioning is an explicitly authorized customer operation outside the
 source/fixture checks. Upload the exact zip to your prepared versioned artifact
 bucket using AWS CLI and the deployer profile. Record the returned object version,
@@ -64,10 +83,13 @@ not be copied to the operator role. Real customer grants, permission boundaries,
 service control policies, bucket permissions and installed IAM behavior need live
 acceptance. Synthesized allow/deny checks cannot establish them.
 
-The function has reserved concurrency one, Node 24, a bounded timeout and no
-sender. The schedule starts DISABLED, with fixed preview input and no flexible
-window. Scheduler and asynchronous Lambda retry attempts are zero with a bounded
-60-second event age. AWS may still deliver duplicates; preview performs no writes.
+The function has reserved concurrency one, Node 24 and a bounded timeout. A
+reviewed `sender:true` package includes the ordinary sender; a preview-only package
+cannot acquire it through configuration. The schedule starts DISABLED, with the
+operation-only input selected by canonical mode (`preview` or `apply`) and no
+flexible window. Writes start disabled in both modes. Scheduler and asynchronous
+Lambda retry attempts are zero with a bounded 60-second event age. AWS may still
+deliver duplicates; preview performs no writes.
 The state table has no TTL, stream or secondary index and is retained on deletion
 and replacement. Logs use the configured finite retention.
 
@@ -110,7 +132,10 @@ Use [state inspection](manager-state.md) for all four kinds, pagination and hold
 CLI exit zero confirms the reported operation and required receipt publication;
 one means conflict/incomplete, partial work or failed receipt publication, and
 two means invalid, unavailable or uncertain. Readable and JSON
-output expose the same facts. Preserve partial results and inspect the same
+output expose the same facts. For installation commands, `--json` anywhere in
+the arguments also selects JSON for malformed input; unknown commands/options,
+missing values and duplicate flags still return safe `INVALID_INPUT` with exit
+two before output reservation or service access. Preserve partial results and inspect the same
 installation; do not repeat an uncertain write to make output look complete.
 
 ## Deliberate scheduling and stop
@@ -192,10 +217,11 @@ intent later, set desired controls disabled and use the supported control rebuil
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
 
-Apply mode is refused: this pinned package has no sender. Future apply support
-must also require explicit writes, all three operator confirmations, current
+Preview-only packages refuse apply mode. A reviewed sender-capable package permits
+ordinary apply only with explicit writes, all three operator confirmations, current
 reviewed inventory, supported non-global source-specific transition mappings and
-compatible retained state. Operator assertions are not automated proofs of full
+compatible retained state, through the existing deliberate configure procedure.
+Operator assertions are not automated proofs of full
 Jira visibility or absence of another installation. Check project permissions,
 issue security, service-account access and sole admission ownership; Jira search
 completeness cannot prove invisible issues do not exist. Reconfirm after scope,

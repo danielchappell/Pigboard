@@ -187,6 +187,10 @@ test('C04/C05 matching supplied ordinary package, binding and initial disabled h
   assert.equal(report.configuration_digest, fixture.manager_configuration_digest);
   assert.equal(check(report, 'C05_HEALTH').observed.current.evidence_revision, null);
   assert.equal(check(report, 'C05_HEALTH').observed.metric_evidence.status, 'not_applicable');
+  const independentBase = 'pigboard-fixture-' + createHash('sha256').update('fixture').digest('hex').slice(0, 32);
+  assert.equal(independentBase, 'pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78');
+  assert.equal(input.installation.binding.table_name, independentBase + '-state');
+  assert.equal(input.installation.original.table_name, input.installation.binding.table_name);
   assert.equal(check(report, 'C08_INSTALLED_ACCEPTANCE').status, 'UNVERIFIED');
   assert.deepEqual(report.activation, fixture.expected.activation);
 });

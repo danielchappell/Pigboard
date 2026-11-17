@@ -878,8 +878,8 @@
         "package_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "region": "eu-west-1",
         "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/00000000-0000-4000-8000-000000000001",
-        "table_name": "fixture-state",
-        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/fixture-state",
+        "table_name": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
         "installation_generation": "fixture-generation-001"
       },
       "manifest": {
@@ -1050,8 +1050,8 @@
       },
       "original": {
         "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/00000000-0000-4000-8000-000000000001",
-        "table_name": "fixture-state",
-        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/fixture-state",
+        "table_name": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
         "installation_generation": "fixture-generation-001"
       },
       "observed_at": "2026-11-16T12:00:00.000Z"
@@ -1107,7 +1107,7 @@
       "ignored_historical_scans": 0,
       "omissions": [],
       "links": {
-        "logs": "https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logsV2:log-groups/log-group/fixture-log-group"
+        "logs": "https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logsV2:log-groups/log-group/%2Faws%2Flambda%2Fpigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78"
       },
       "next_step": "Use the existing stop procedure to confirm stopped execution; retained work is not drained.",
       "writes": 0,
@@ -1146,6 +1146,14 @@
       "next_step": "Use the existing stop procedure to confirm stopped execution; retained work is not drained.",
       "writes": 0,
       "worker_health": "not_observed"
+    },
+    "resource_names": {
+      "Function": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78",
+      "Schedule": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78",
+      "StateTable": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+      "RuntimeRole": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-runtime",
+      "SchedulerRole": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-scheduler",
+      "LogGroup": "/aws/lambda/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78"
     }
   }
 }
