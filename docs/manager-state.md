@@ -214,10 +214,21 @@ Exit zero confirms the observation, one reports conflict/incomplete inventory,
 and two reports invalid, unavailable or uncertain results. No resource, credential,
 freshness, force, purge or unlock override exists.
 
-Initialize only the original fresh disabled stack. Missing original creation
-proof, an updated stack, an empty replacement or uncertain prior initialization
-requires diagnosis and inspection of the same retained resources. Never generate
-another installation to bypass it. Actual init/inspect use the explicitly verified
+Initialize only the original fresh disabled stack. The resolver requires a
+complete first events page with exact stack creation milestones and the original
+table completion between them. AWS's creation-time `LastUpdatedTime` is accepted
+only when it equals that stack's CREATE_IN_PROGRESS instant; an unexplained update
+time refuses. Missing, invalid or paginated creation proof and incompatible event
+statuses return `FRESH_INSTALLATION_REQUIRED` before State initialization. The
+State adapter still independently refuses existing installation records and
+nonempty tables. Success creates one disabled record with `confirmed`/`OK`, exit zero.
+
+An updated stack, an empty replacement or uncertain prior initialization requires
+diagnosis and inspection of the same retained resources. Never generate another
+installation to bypass it. For a proved pre-State refusal, follow the installation
+guide's [reviewed host-tooling repair](manager-installation.md#reviewed-host-tooling-repair)
+using the original receipt and package; an uncertain write is not permission to
+repeat init. Actual init/inspect use the explicitly verified
 operator's injected State client, which the command closes even after failure;
 ambient credentials cannot replace it. Operator IAM includes exact-table fresh
 emptiness Scan and transactional Put/Update privileges for initialization/control
