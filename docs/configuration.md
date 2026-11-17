@@ -290,3 +290,26 @@ ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
 this preview package never turns them into execution authority.
+
+## Optional manager health settings
+
+The same canonical `manager` object may contain:
+
+```json
+"health": { "freshness_seconds": 900, "warning_percent": 80 }
+```
+
+Omitting it preserves existing configurations: effective freshness is three schedule
+cadences (`schedule_minutes * 180` seconds), and warning is 80 percent. Freshness
+must be an integer from 1 to 259200 and strictly greater than one cadence plus the
+full invocation timeout. Warning is finite, greater than 0 and at most 100. Explicit
+settings participate in the existing canonical digest; no separate monitoring
+configuration or SNS setting exists. Defaults require deployed acceptance and do
+not promise capacity or detection latency.
+
+Health measures each scan budget separately and reports the maximum measured
+percentage. Exactly the threshold warns. Page size is a batch size. Missing request
+peaks/counters remain null/not observed. Generated health generation and enablement
+time are outputs retained in the existing installation extensions, not customer
+authored configuration. Use the existing verified configure lifecycle to change
+enabled settings. See [health states and safe recovery](manager-health.md).

@@ -360,6 +360,22 @@
               "global"
             ]
           }
+        },
+        "health": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "freshness_seconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 259200
+            },
+            "warning_percent": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            }
+          }
         }
       },
       "required": [
