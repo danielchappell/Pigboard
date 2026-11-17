@@ -269,10 +269,11 @@ Profiles select credentials for those exact roles, never substitute resource IDs
 outputs, not another configuration file to author.
 
 `controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,
-`writes_enabled` and `maintenance`. This package supports preview with writes false;
-initial packaging requires scheduling and maintenance false. Apply is refused.
+`writes_enabled` and `maintenance`. Preview requires writes false. Initial
+packaging requires scheduling, writes and maintenance false. The included sender
+supports ordinary apply after deliberate activation with the prerequisites below.
 `schedule_minutes` is 1–1440, `invocation_timeout_seconds` is 30–900, and schedule
-interval must exceed timeout. The function budget must cover the 30-second State
+interval must exceed timeout. The preview budget must cover the 30-second State
 read bound, Jira scan bound and ten seconds of headroom. Excessive read budgets
 fail packaging without clipping. `log_retention_days` uses the declared finite
 CloudWatch values (for example 14), never unlimited retention.
@@ -287,12 +288,13 @@ file, including manager controls; rebuild the pinned package for control updates
 `transition_edges` may be empty for preview. Each closed row has numeric
 `project_id`, `transition_id`, explicit unique nonempty `source_status_ids`,
 `target_status_id` and boolean `global`. Project/transition pairs are unique and
-refer to configured projects. Future ordinary apply requires the configured Ready
+refer to configured projects. Ordinary apply requires the configured Ready
 to Work source and In Progress target with `global: false`; an available transition
 ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
-the scheduled event never turns them into execution authority without the reviewed sender capability.
+preview never turns them into execution authority. The package includes the
+ordinary sender, but apply additionally requires the activation controls below.
 
 Ordinary apply uses the existing manager activation attestations and configured
 non-global, source-restricted Ready to Work → In Progress transition edge. The
@@ -315,13 +317,18 @@ The same canonical `manager` object may contain:
 "health": { "freshness_seconds": 900, "warning_percent": 80 }
 ```
 
-Omitting it preserves existing configurations: effective freshness is three schedule
-cadences (`schedule_minutes * 180` seconds), and warning is 80 percent. Freshness
-must be an integer from 1 to 259200 and strictly greater than one cadence plus the
-full invocation timeout. Warning is finite, greater than 0 and at most 100. Explicit
-settings participate in the existing canonical digest; no separate monitoring
-configuration or SNS setting exists. Defaults require deployed acceptance and do
-not promise capacity or detection latency.
+Omitting it uses the existing defaults subject to the bounds below: effective
+freshness is three schedule cadences (`schedule_minutes * 180` seconds), and warning
+is 80 percent. Explicit freshness must be an integer from 1 to 259200. Effective
+freshness, including the default, must be strictly greater than one cadence plus
+the full invocation timeout and no greater than `log_retention_days * 86400`
+seconds. Equality with retention is allowed: the freshness window must fit the
+retained logs. Correct incompatible settings in the canonical configuration before
+packaging or configuration, choosing supported retention or freshness/cadence
+values. Warning is finite, greater than 0 and at most 100. Explicit settings
+participate in the existing canonical digest; no separate monitoring configuration
+or SNS setting exists. Defaults require deployed acceptance and do not promise
+capacity or detection latency.
 
 Detailed preview-scan health measures each scan budget separately and reports the maximum measured
 percentage. Exactly the threshold warns. Page size is a batch size. Missing request

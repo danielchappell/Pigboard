@@ -83,21 +83,54 @@ not be copied to the operator role. Real customer grants, permission boundaries,
 service control policies, bucket permissions and installed IAM behavior need live
 acceptance. Synthesized allow/deny checks cannot establish them.
 
+The operator policy includes a separate `lambda:GetFunctionEventInvokeConfig`
+read grant for only the generated function ARN qualified with `:$LATEST`. Attach
+that reviewed grant to the operator role; it does not extend invocation or
+mutation permissions. The control-update deployer does not need this read grant:
+configure observes through the operator profile.
+
 The function has reserved concurrency one, Node 24 and a bounded timeout. A
 reviewed `sender:true` package includes the ordinary sender; a preview-only package
-cannot acquire it through configuration. The schedule starts DISABLED, with the
+cannot acquire it through configuration. Its runtime transaction permissions stay
+scoped to the generated State table even while writes are disabled. The schedule
+starts DISABLED, with the
 operation-only input selected by canonical mode (`preview` or `apply`) and no
 flexible window. Writes start disabled in both modes. Scheduler and asynchronous
 Lambda retry attempts are zero with a bounded 60-second event age. AWS may still
 deliver duplicates; preview performs no writes.
 The state table has no TTL, stream or secondary index and is retained on deletion
-and replacement. Logs use the configured finite retention.
+and replacement. The generated template sets finite log retention from canonical configuration.
 
 ## Bind, initialize and preview
 
 Take the exact stack ARN from deployment output. Bind verifies actual stack,
 resources, code hash, template-owned configuration metadata, roles, table identity
-and scheduler target before writing a new receipt:
+and scheduler target before writing a new receipt. Normal binding, initialization,
+inspection and configure also verify the latest Lambda asynchronous configuration
+and Scheduler target: retry attempts must be exactly zero and event age exactly
+60 seconds. Missing values, configuration or read permission refuse normal
+acceptance. An unsafe pre-update observation refuses configure before fencing;
+an unsafe post-update observation returns partial before restoring preview or
+committing desired controls. Normal observation accepts only an exact numeric reserved
+concurrency of zero (stopped) or one (running); an absent reservation or a larger
+reservation refuses acceptance. Fresh initialization still requires one. Recovery
+inspection and stop remain available when that reservation is unsafe or unavailable.
+Binding refuses an ENABLED actual schedule when the supplied verified configuration
+requires it disabled. Normal inspection and configure apply the same refusal to
+the receipt's applied configuration, even when the new desired file asks for
+scheduling. Desired intent cannot replace the receipt's installed baseline.
+An enabled receipt can still be inspected while the host is stopped; health
+observations, explicit recovery inspection and stop remain available for schedule-state
+drift. These observations report facts without repairing or enabling the host.
+Bind rejects missing, invalid or different embedded canonical configuration with
+`PACKAGE_MISMATCH` before service access. Use the matching generated manifest and
+canonical configuration from the pinned package; do not hand-fill missing
+`canonical_config` or replay an uncertain cloud operation. Bind/inspect verifies
+the documented resource and control facts, not manual cadence changes or effective
+log retention: log-group identity is checked, retention is not queried. Manual AWS
+or template mutations are outside the supported setup/update path.
+Bind and initialize the installation with these
+commands:
 
 ```sh
 node scripts/manager-installation.mjs bind --config /absolute/customer.json --manifest /absolute/new-package/manifest.json --stack EXACT_STACK_ARN --operator-profile customer-operator --output /absolute/installation.json --json
@@ -120,7 +153,7 @@ Invoke the generated function name from stack outputs, using the operator profil
 aws lambda invoke --profile customer-operator --function-name GENERATED_FUNCTION_NAME --cli-binary-format raw-in-base64-out --payload '{"operation":"preview"}' /absolute/preview.json
 ```
 
-Only that exact event is accepted. Runtime reads retained identities, acquires
+Preview accepts only that exact event. Runtime reads retained identities, acquires
 Jira facts, composes the ordinary snapshot and invokes the actual ordinary policy.
 Incomplete state never becomes empty input. Renames, moves, removed projects,
 pending attempts and missing historical facts preserve holds. This release has no
@@ -144,7 +177,10 @@ To schedule preview, change only canonical `manager.controls.schedule_enabled`,
 keep mode preview and writes false, then rebuild the same clean source with the
 original generation using `--generation ORIGINAL_GENERATION`. Upload that exact
 zip and save its generated asset receipt as JSON with `bucket`, `key`, `version`
-and `zip_digest`. Source/dependency/package migration, identity/scope/secret
+and `zip_digest`. Each of `bucket`, `key` and `version` must be a nonempty string;
+valid strings are passed unchanged. A digest mismatch or invalid field refuses
+configure before credential resolution, service access or stopping the host.
+Source/dependency/package migration, identity/scope/secret
 changes, table replacement and role changes are unsupported by this controller.
 A separately authorized release owns source upgrades.
 
@@ -158,7 +194,17 @@ installation revision with writes and schedule disabled, disables actual
 scheduling, sets concurrency zero and waits the previous timeout plus ten seconds.
 It inspects a bounded CloudFormation change set, rejects replacement/deletion or
 changes outside function configuration/code, schedule and retention, and applies
-while quiesced. It observes code/configuration and original resources, restores
+while quiesced. Before restoration, it proves this update completed using its
+invocation-local operation token and the newest matching terminal event for the
+exact stack, alongside the completed stack status. It reads only the first event
+page through the operator profile within the existing bounded wait; an old or
+unrelated completion cannot prove success. Missing proof (including when a later
+page exists), a failed operation or an unreadable event page leaves configure
+partial/uncertain with the original recovery receipt. Preserve that result and
+inspect/stop; do not replay configure to obtain completion proof.
+
+After proof, it observes code/configuration and original resources, requires
+concurrency zero and the schedule disabled, then restores
 preview concurrency and desired schedule, verifies them and commits final applied
 controls last. Successful output creates a new receipt retaining original anchors.
 Use that receipt subsequently and preserve its predecessors. Bind/configure
@@ -195,6 +241,12 @@ host update. Recovery inspection and stop do not reconstruct that authority or
 provide apply, rollback, replay, initialization or state-clearing permission. If
 normal binding remains unresolved, retain the evidence for the operator/owner's
 release decision. No mutation is automatically retried.
+
+Recovery inspection and stop skip the latest Lambda async read and both mutable
+async/Scheduler retry-age checks, so drift, absent async configuration or a denied
+new read does not obstruct stopping the original installation. Original account,
+role, resources, generation and retained State checks still apply. This recovery
+does not verify package or runtime safety and grants no replay authority.
 
 For emergency stop, only the operator profile is needed:
 
@@ -282,8 +334,10 @@ the account, role and identity values once; do not copy generated resource IDs.
 
 ## Ordinary sender packages
 
-A reviewed package with `sender:true` contains the ordinary sender. Preview-only
-packages cannot be enabled for sending by changing an event or configuration.
+The packaging command above includes the ordinary sender and records `sender:true`
+in its manifest. Packaging and deployment do not activate admission. An older
+preview-only package cannot gain sender capability by changing an event or
+configuration.
 Initial installation requires schedule and writes disabled, retains the same
 State table and resources, and keeps both Scheduler and Lambda automatic retries
 at zero. Runtime transaction permissions apply only to that generated table.

@@ -105,7 +105,7 @@ test('production health emission is one raw JSON line consumable by the health r
   }});
   assert.deepEqual(returned,[writes[0]]);assert.equal(result.query_coverage.complete,true);assert.deepEqual(result.latest_complete,summaries[0]);
   assert.equal(result.state,'disabled');assert.equal(result.exit_code,0);assert.equal(f.provider.snapshot(),before);
-  assert(f.audit.slice(auditStart).every(row=>!row.action.match(/Write|Update|Put|Invoke|Execute/)));assert(f.telemetry.every(row=>row.identity==='SELECTED_OPERATOR'));
+  assert(f.audit.slice(auditStart).every(row=>row.action==='GetFunctionEventInvokeConfigCommand'||!row.action.match(/Write|Update|Put|Invoke|Execute/)));assert(f.telemetry.every(row=>row.identity==='SELECTED_OPERATOR'));
   t.diagnostic(JSON.stringify({production_lines:writes,invalid:{status:invalid.status,summary_absent:invalid.summary===undefined,emissions:0},reader:{state:result.state,exit_code:result.exit_code,coverage:result.query_coverage,latest_complete:result.latest_complete},actions:f.audit.slice(auditStart),telemetry:f.telemetry,state_unchanged:true}));
  }finally{f.cleanup();}
 });
