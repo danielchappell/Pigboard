@@ -36,6 +36,19 @@ test('disabled package IAM allows concrete intended transactions and denies unre
 
 });
 
+test('configure deployer reads only the generated runtime role',()=>{
+ const {config}=fixture(),text=JSON.stringify(config),f=fixtureCloud(config),role=kind=>`arn:aws:iam::${config.manager.aws.account_id}:role/${fixtureBase}-${kind}`;
+ for(const initial of [true,false]){
+  const t=synthesizeTemplate(text,f.manifest,{initial}),deployer=t.Metadata.Pigboard.configure_deployer_policy.Statement;
+  assert.deepEqual(deployer.filter(s=>[s.Action].flat().some(action=>action.startsWith('iam:'))),[
+   {Effect:'Allow',Action:'iam:PassRole',Resource:[role('runtime'),role('scheduler')]},
+   {Effect:'Allow',Action:'iam:GetRole',Resource:role('runtime')}
+  ]);
+  assert(deployer.every(s=>[s.Action].flat().every(action=>!action.includes('*'))));
+  for(const policy of [t.Metadata.Pigboard.operator_policy,t.Resources.RuntimeRole.Properties.Policies[0].PolicyDocument,t.Resources.SchedulerRole.Properties.Policies[0].PolicyDocument])assert(!policy.Statement.some(s=>[s.Action].flat().includes('iam:GetRole')));
+ }
+});
+
 test('generated installation names distinguish valid IDs and bind exact resources',async()=>{
  assert.equal(installationResourceBase('fixture'),fixtureBase);
  const ids=['team:prod','team.prod','a'.repeat(40)+'-one','a'.repeat(40)+'-two'],generated=[];
@@ -50,6 +63,7 @@ test('generated installation names distinguish valid IDs and bind exact resource
   const permits=(policy,action,resource)=>policy.Statement.some(s=>[s.Action].flat().includes(action)&&[s.Resource].flat().includes(resource));
   assert(permits(t.Metadata.Pigboard.operator_policy,'dynamodb:GetItem',tableArn));assert(permits(t.Metadata.Pigboard.operator_policy,'lambda:GetFunction',functionArn));assert(permits(t.Metadata.Pigboard.operator_policy,'scheduler:GetSchedule',scheduleArn));assert(permits(t.Metadata.Pigboard.operator_policy,'iam:PassRole',role('SchedulerRole')));
   assert(permits(t.Metadata.Pigboard.configure_deployer_policy,'lambda:UpdateFunctionCode',functionArn));assert(permits(t.Metadata.Pigboard.configure_deployer_policy,'logs:PutRetentionPolicy',logArn));assert(permits(t.Metadata.Pigboard.configure_deployer_policy,'iam:PassRole',role('RuntimeRole')));
+  assert(permits(t.Metadata.Pigboard.configure_deployer_policy,'iam:GetRole',role('RuntimeRole')));for(const other of [role('SchedulerRole'),role('RuntimeRole')+'-unrelated'])assert(!permits(t.Metadata.Pigboard.configure_deployer_policy,'iam:GetRole',other));
   assert(permits(r.RuntimeRole.Properties.Policies[0].PolicyDocument,'dynamodb:GetItem',tableArn));assert(permits(r.RuntimeRole.Properties.Policies[0].PolicyDocument,'logs:PutLogEvents',logArn));assert(permits(r.SchedulerRole.Properties.Policies[0].PolicyDocument,'lambda:InvokeFunction',functionArn));
   assert.equal(t.Outputs.ScheduleArn.Value,scheduleArn);for(const [output,resource] of [['FunctionName','Function'],['ScheduleName','Schedule'],['TableName','StateTable'],['LogGroupName','LogGroup']])assert.deepEqual(t.Outputs[output].Value,{Ref:resource});for(const [output,resource] of [['FunctionArn','Function'],['TableArn','StateTable']])assert.deepEqual(t.Outputs[output].Value,{'Fn::GetAtt':[resource,'Arn']});assert.deepEqual(r.Schedule.Properties.Target.Arn,{'Fn::GetAtt':['Function','Arn']});assert.deepEqual(r.Schedule.Properties.Target.RoleArn,{'Fn::GetAtt':['SchedulerRole','Arn']});
   assert.equal(r.Function.Properties.Environment.Variables.PB_INSTALLATION_ID,id);assert.equal(f.environment.PB_INSTALLATION_ID,id);assert.equal(f.binding.table_name,names.StateTable);generated.push({id,config,names});
