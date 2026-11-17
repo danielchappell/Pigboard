@@ -933,3 +933,66 @@ node --test test/jira-inventory.test.mjs
 The fixed packet has 28 variants and four paired controls. These developer
 observations remain separate from designated-human acceptance (NOT_RUN, 0/4),
 live Jira visibility, hosted CI, release and activation.
+
+## Ordinary recorded policy
+
+PGB-162 adds a pure source and prepared-copy route for ordinary Ready to Work
+Stories/Bugs. It reuses the existing policy with scheduling declarations and
+current authenticated recorded handoffs. Complete native membership, exact full
+project/stream identity, Epic order, Bug priority, occupancy, pause, Blocked holds
+and the five-ticket Human Review cap still apply. Required rework or stack repair
+holds for human handling; no ordinary proposal can schedule around it.
+
+```js
+import { previewSnapshot } from './lib/manager/decisions.mjs';
+import { composeOrdinarySnapshot } from './lib/manager/snapshot.mjs';
+// configInput is the one canonical raw YAML/JSON configuration.
+// inspection is173's trusted in-memory InspectionResult; State supplies confirmed
+// retained_members, pending_intents, retained_complete and genuine retained tuples.
+const composed = composeOrdinarySnapshot(configInput, inspection, state);
+if (!composed.valid) console.log(JSON.stringify(composed.diagnostics));
+else console.log(JSON.stringify(previewSnapshot(configInput,
+  JSON.stringify(composed.snapshot), {mode:'ordinary'})));
+```
+
+Composition performs no I/O and does not authorize admission. It preserves original
+ADF strings and native metadata, every known member and prior ownership, explicit
+pending attempts, complete comment pages and exact reference closure. It derives
+recorded obligations from actual records; a verified empty set is never inferred
+from a missing page.173's contract is consumed as supplied facts here; live
+acquisition/State/AWS integration and installed delivery acceptance remain separate.
+Print the safe acquisition report or policy result, not private observations.
+
+The explicit snapshot is `pigboard-manager-snapshot/v2`: it retains the legacy
+closed fields and bounds but removes every issue's `context_body`. Issue `pointer`
+is a canonical pointer, confirmed absence `null`, or exactly
+`{state:'unknown',value:null}`. Unknown is held, never treated as absent.
+`completion_receipts` and optional `repair_receipts` contain original JSON strings
+using `pigboard-manager-handoff-input/v1`; execution contexts, PR observations and
+external evidence observations are rejected. Retained member and pending-intent
+shapes remain unchanged. A shared/unknown acquisition failure yields no composed
+snapshot; proved isolated failures preserve members and hold affected stream
+checks while independent complete scopes remain eligible.
+
+```sh
+node scripts/manager-preview.mjs --mode ordinary --config /absolute/config.json --input /absolute/snapshot-v2.json --json
+node <receipt.skills>/work-validator/scripts/manager-preview.mjs --mode ordinary --config /absolute/config.json --input /absolute/snapshot-v2.json
+```
+
+The result is `pigboard-manager-preview/v2`, `mode: ordinary`,
+`proof_basis: authenticated_recorded_handoffs`, with external/live freshness and
+permissions `not_evaluated`, execution authority false and writes0. Configuration
+and snapshot digests bind complete supplied inputs. Hidden external PR changes
+are not detected. Current authentication does not promise comparison with every
+earlier metadata observation: `metadata_continuity: supplied_prior_tuples_only`.
+Missing prior tuples alone are allowed; genuine supplied mismatch rejects. Never
+create fake prior tuples or a capture store. Workers still check applicable current
+execution prerequisites. H01/H02 remain NOT_RUN; local checks are developer evidence.
+
+For `STRUCTURE`, use explicit ordinary mode with v2 and remove mixed legacy fields.
+For incomplete reads or unknown pointers, obtain a fresh bounded complete
+observation through its owner. Retain pending attempt identity and ask its owner
+to resolve uncertainty; never clear/replay it. For `REPAIR_REQUIRED`, leave the
+stream held for human handling. Missing/conflicting lineage keeps its precise
+failure. Omitted mode continues the unchanged legacy v1 offline fixture/repair
+route; its result cannot authorize the ordinary admission path.

@@ -260,6 +260,25 @@ disabled customer runtime and PGB-90 verifies the actual installed journey.
 The source acquisition library does not add an installer payload, CLI, evaluator
 or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
 
+## Ordinary recorded policy boundary
+
+`composeOrdinarySnapshot` in the existing snapshot module converts173's supplied
+private original observations and confirmed State projection into snapshot/v2;
+`previewSnapshot(...,{mode:'ordinary'})` uses the same normalizer/policy with
+structural scheduling and recorded validators. It performs no acquisition or
+State writes. Shared/unknown incompleteness rejects composition; proved isolated
+scope failures retain known membership and hold only affected scope checks.
+No synthetic execution context, PR observations, earlier metadata or new store is
+created. Missing earlier capture is allowed under the adopted ordinary guarantee;
+provided genuine tuples still must match. Current authentication and external
+freshness are separate. Required repair holds before external PR/publication logic.
+
+Explicit mode/version/proof fields prevent legacy v1 proposals from entering the
+ordinary admission caller. The existing CLI and actual prepared-copy payload use
+the same route. Strict execution APIs and legacy repair fixtures remain separate.
+This increment does not prove live173/State/AWS composition, worker compatibility,
+human acceptance, activation or a release; their owning delivery gates remain.
+
 ## Conditional State API
 
 The [State guide](docs/manager-state.md) documents the callable production API in

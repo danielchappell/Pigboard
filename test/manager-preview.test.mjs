@@ -24,8 +24,9 @@ function verificationAPI(c,config,snapshot,actual){if(!verificationRoot)return;v
 import canonicalize from 'canonicalize';
 import { createHash } from 'node:crypto';
 import { previewSnapshot } from '../lib/manager/decisions.mjs';
-import { SNAPSHOT_LIMITS } from '../lib/manager/snapshot.mjs';
-import { inspectManagerHistory } from '../lib/contracts/receipts.mjs';
+import { SNAPSHOT_LIMITS, composeOrdinarySnapshot, normalizeSnapshot } from '../lib/manager/snapshot.mjs';
+import { inspectManagerHistory, inspectRecordedCompletion, inspectRecordedHistory } from '../lib/contracts/receipts.mjs';
+import { parseConfig } from '../lib/config/parse.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).cases;
 const repairPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-repairs.json',import.meta.url))),compatibility=repairPacket.inherited_current_preview;
 const legacyFullById=new Map(repairPacket.legacy_native_full.cases.map(c=>[c.id,c.expected]));
@@ -53,10 +54,17 @@ test('structural and bounds failures produce no partial selections or raw diagno
 });
 test('raw finite floating literals retain canonical work parser provenance in YAML and ADF',()=>{for(const format of ['yaml','adf']){const c=fresh('S01'),i=c.snapshot.issues[1];const w=JSON.parse(i.body),ctx=JSON.parse(i.context_body);/* human-only contract has no arbitrary numeric slots; use allowed database parameter in mixed canonical fixture. */const mixed=JSON.parse(readFileSync(new URL('./fixtures/work-semantics.json',import.meta.url))).mixed;mixed.context.subject_key=i.key;mixed.context.prerequisite_graph=[{ticket:i.key,prerequisites:[]}];mixed.work.testing_strategy.cases[0].steps[2].database.parameters[0]=1e20;mixed.context.operations[2].contract.database.parameters[0]=1e20;const body=JSON.stringify(mixed.work).replaceAll('100000000000000000000','1e20');i.format=format;i.body=format==='yaml'?body:JSON.stringify({version:1,type:'doc',content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:body}]}]});i.context_body=JSON.stringify(mixed.context).replaceAll('100000000000000000000','1e20');assert.deepEqual(selected(run(c)),['1001']);}});
 test('CLI is strict, finite, nonwriting and equivalent to the pure API',()=>{const temp=mkdtempSync(path.join(tmpdir(),'pgb-preview-')),cli=new URL('../scripts/manager-preview.mjs',import.meta.url);try{const c=fresh('S01'),config=path.join(temp,'config.json'),input=path.join(temp,'snapshot.json');writeFileSync(config,JSON.stringify(c.config));writeFileSync(input,JSON.stringify(c.snapshot));const before=readdirSync(temp).map(p=>[p,readFileSync(path.join(temp,p),'utf8')]);const args=[cli.pathname,'--config',config,'--input',input];assert.deepEqual(JSON.parse(execFileSync(process.execPath,[...args,'--json'],{cwd:temp,encoding:'utf8'})),run(c));const human=execFileSync(process.execPath,args,{cwd:temp,encoding:'utf8'});assert.match(human,/Local supplied snapshot only/);assert.match(human,/selected EX-2/);assert.deepEqual(readdirSync(temp).map(p=>[p,readFileSync(path.join(temp,p),'utf8')]),before);
- for(const extra of [['--input',input],['--unknown'],['stray'],['--expected-snapshot-digest','bad']]){const r=spawnSync(process.execPath,[...args,...extra,'--json'],{encoding:'utf8'});assert.equal(r.status,2);assert.equal(JSON.parse(r.stdout).scope_diagnostics[0].code,'USAGE');}
- for(const file of [temp,path.join(temp,'missing')])assert.equal(spawnSync(process.execPath,[cli.pathname,'--config',config,'--input',file,'--json'],{encoding:'utf8'}).status,2);
- execFileSync('mkfifo',[path.join(temp,'fifo')]);assert.equal(spawnSync(process.execPath,[cli.pathname,'--config',config,'--input',path.join(temp,'fifo'),'--json'],{encoding:'utf8',timeout:2000}).status,2);
- const isolated=path.join(temp,'isolated');mkdirSync(isolated);cpSync(cli,path.join(isolated,'preview.mjs'));assert.equal(spawnSync(process.execPath,[path.join(isolated,'preview.mjs'),'--help','--json'],{encoding:'utf8'}).status,0);const missing=spawnSync(process.execPath,[path.join(isolated,'preview.mjs'),'--config',config,'--input',input,'--json'],{encoding:'utf8'});assert.equal(missing.status,2);assert.equal(JSON.parse(missing.stdout).scope_diagnostics[0].code,'SETUP');
+ const failure=(child,code,ordinary)=>{assert.equal(child.status,2);const result=JSON.parse(child.stdout);assert.equal(result.schema,ordinary?'pigboard-manager-preview/v2':'pigboard-manager-preview/v1');if(ordinary){assert.equal(result.mode,'ordinary');assert.equal(result.proof_basis,'authenticated_recorded_handoffs');assert.equal(result.external_freshness,'not_evaluated');assert.equal(result.metadata_continuity,'supplied_prior_tuples_only');}else assert.equal(Object.hasOwn(result,'mode'),false);assert.equal(Object.hasOwn(result,'purpose'),false);assert.equal(Object.hasOwn(result,'trust_limitations'),false);assert.equal(result.valid,false);assert.equal(result.status,'invalid');assert.equal(result.validation_scope,'supplied_snapshot');for(const field of ['live_freshness','permission','destination_authority'])assert.equal(result[field],'not_evaluated');assert.equal(result.execution_authorized,false);assert.equal(result.writes,0);assert.equal(result.configuration_digest,null);assert.equal(result.snapshot_digest,null);assert.deepEqual(result.streams,[]);assert.equal(result.scope_diagnostics[0].code,code);};
+ execFileSync('mkfifo',[path.join(temp,'fifo')]);
+ const isolated=path.join(temp,'isolated');mkdirSync(isolated);cpSync(cli,path.join(isolated,'preview.mjs'));assert.equal(spawnSync(process.execPath,[path.join(isolated,'preview.mjs'),'--help','--json'],{encoding:'utf8'}).status,0);
+ for(const ordinary of [false,true]){const mode=ordinary?['--mode','ordinary']:[],failureArgs=[cli.pathname,...mode,'--config',config,'--input',input];
+  for(const extra of [['--input',input],['--unknown'],['stray'],['--expected-snapshot-digest','bad']])failure(spawnSync(process.execPath,[...failureArgs,...extra,'--json'],{encoding:'utf8'}),'USAGE',ordinary);
+  for(const file of [temp,path.join(temp,'missing')])failure(spawnSync(process.execPath,[cli.pathname,...mode,'--config',config,'--input',file,'--json'],{encoding:'utf8'}),'INPUT',ordinary);
+  failure(spawnSync(process.execPath,[cli.pathname,...mode,'--config',config,'--input',path.join(temp,'fifo'),'--json'],{encoding:'utf8',timeout:2000}),'INPUT',ordinary);
+  failure(spawnSync(process.execPath,[path.join(isolated,'preview.mjs'),...mode,'--config',config,'--input',input,'--json'],{encoding:'utf8'}),'SETUP',ordinary);
+ }
+ failure(spawnSync(process.execPath,[cli.pathname,'--unknown','--mode','ordinary','--json'],{encoding:'utf8'}),'USAGE',false);
+ failure(spawnSync(process.execPath,[cli.pathname,'--mode','unknown','--config',config,'--input',input,'--json'],{encoding:'utf8'}),'USAGE',false);
  }finally{rmSync(temp,{recursive:true,force:true});}});
 
 test('counts depend on known native facts, independently of repair-inventory and ownership holds',()=>{for(const id of ['S30','S31','S32'])assert.ok(run(fresh(id)).streams.every(s=>s.counts_complete&&s.return_count===1));const c=fresh('S12');c.snapshot.stream_checks[0].repair_inventory_complete=false;const r=run(c);assert.equal(r.streams[0].decision,'hold');assert.equal(r.streams[0].return_count,5);c.snapshot.stream_checks[0].known_ids_complete=false;assert.equal(run(c).streams[0].return_count,null);});
@@ -66,7 +74,7 @@ test('native full numbered suffix, opt-in pause and per-project maps preserve ex
 test('no other targeted proof or incomplete/partial result waives member obligations',()=>{for(const mutate of [c=>{const e=JSON.parse(c.snapshot.completion_receipts[0]);e.target.ticket_id='1001';c.snapshot.completion_receipts[0]=JSON.stringify(e);},c=>{const e=JSON.parse(c.snapshot.completion_receipts[0]);e.trusted.manager_assignments[0].assignment.digest='sha256:'+'f'.repeat(64);c.snapshot.completion_receipts[0]=JSON.stringify(e);},c=>{const e=JSON.parse(c.snapshot.completion_receipts[0]);e.pr_receipts[0].source_revision='f'.repeat(40);c.snapshot.completion_receipts[0]=JSON.stringify(e);},c=>{const e=JSON.parse(c.snapshot.completion_receipts[0]);e.comment_pages[0].comments[0].updated='2030-01-01T00:00:00Z';c.snapshot.completion_receipts[0]=JSON.stringify(e);},c=>c.snapshot.completion_receipts.push(c.snapshot.completion_receipts[0])]){const c=fresh('repair-independent-complete');mutate(c);assert.deepEqual(selected(run(c)),[]);}const c=fresh('stack-independent-complete');const target=c.snapshot.issues.find(i=>i.id==='1001');const unrelated=c.snapshot.issues.find(i=>i.id==='1000');unrelated.required_requests=structuredClone(target.required_requests);assert.deepEqual(selected(run(c)),[]);});
 test('finite issue/Epic/project/embedded-work/depth/list boundaries reject one-over without sampling',()=>{const c=fresh('S01');const native=c.snapshot.issues[1];for(let n=0;n<998;n++){const i=structuredClone(native);i.id=String(3000+n);i.key='N-'+n;i.status_id='9';i.body=null;i.context_body=null;c.snapshot.issues.push(i);}assert.equal(c.snapshot.issues.length,1000);assert.equal(run(c).valid,true);c.snapshot.issues.push({...native,id:'9999',key:'OVER'});assert.equal(run(c).scope_diagnostics[0].code,'LIMIT');const epics=fresh('S01');for(let n=0;n<99;n++)epics.snapshot.issues.push({...structuredClone(epics.snapshot.issues[0]),id:String(3000+n),key:'E-'+n,body:null,context_body:null,labels:[]});assert.equal(run(epics).valid,true);epics.snapshot.issues.push({...epics.snapshot.issues[0],id:'9999',key:'OVER'});assert.equal(run(epics).scope_diagnostics[0].code,'LIMIT');const projects=fresh('S01');projects.config.projects=Array.from({length:100},(_,i)=>({...structuredClone(projects.config.projects[0]),id:String(100+i)}));projects.snapshot.projects=projects.config.projects.map(p=>({project_id:p.id,complete:true}));assert.equal(run(projects).valid,true);projects.config.projects.push({...projects.config.projects[0],id:'200'});projects.snapshot.projects.push({project_id:'200',complete:true});assert.equal(run(projects).scope_diagnostics[0].code,'LIMIT');for(const field of ['body','context_body']){const n=fresh('S01');n.snapshot.issues[1][field]=' '.repeat(65537);assert.equal(run(n).scope_diagnostics[0].code,'LIMIT');}const raw=JSON.stringify({x:Array.from({length:49}).reduce(v=>[v],'x')});assert.equal(previewSnapshot(JSON.stringify(fresh('S01').config),raw).scope_diagnostics[0].code,'LIMIT');});
 
-test('pure invocation cannot call provider, network, process or filesystem mutation APIs',()=>{const temp=mkdtempSync(path.join(tmpdir(),'pgb-pure-audit-'));try{const specs=obligationCases(fixtures),pathSpecs=prerequisitePathCases(fixtures),c=[fresh('S01'),...specs.map(s=>s.c),...pathSpecs.map(s=>s.c)],inputs=path.join(temp,'fixture.json');writeFileSync(inputs,JSON.stringify(c));const script=`import fs from 'node:fs';import fsp from 'node:fs/promises';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';const raw=JSON.parse(fs.readFileSync(process.argv[1]));let attemptedEffects=0;const stop=()=>{attemptedEffects++;throw Error('SIDE_EFFECT_ATTEMPT')};for(const k of ['writeFileSync','appendFileSync','renameSync','unlinkSync','mkdirSync','rmSync','createWriteStream'])fs[k]=stop;for(const k of ['writeFile','appendFile','rename','unlink','mkdir','rm'])fsp[k]=stop;for(const k of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[k]=stop;http.request=stop;http.get=stop;https.request=stop;https.get=stop;net.connect=stop;net.createConnection=stop;globalThis.fetch=stop;syncBuiltinESMExports();const {previewSnapshot}=await import(${JSON.stringify(new URL('../lib/manager/decisions.mjs',import.meta.url).href)});const r=raw.map(c=>previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot)));if(attemptedEffects!==0||r[0].streams[0]?.selected_ticket_id!=='1001')throw Error('SIDE_EFFECT_OR_CONTROL_FAILURE');console.log(JSON.stringify(r));`;const result=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',script,inputs],{encoding:'utf8'}));assert.equal(result[0].writes,0);assert.equal(result.length,31);for(const [index,spec]of specs.entries())assertObligationResult(result[index+1],spec);for(const [index,spec]of pathSpecs.entries())assertPrerequisitePathResult(result[1+specs.length+index],spec);assert.deepEqual(readdirSync(temp),['fixture.json']);assert.equal(readFileSync(inputs,'utf8'),JSON.stringify(c));}finally{rmSync(temp,{recursive:true,force:true});}});
+test('pure invocation cannot call provider, network, process or filesystem mutation APIs',()=>{const temp=mkdtempSync(path.join(tmpdir(),'pgb-pure-audit-'));try{const specs=obligationCases(fixtures),pathSpecs=prerequisitePathCases(fixtures),c=[fresh('S01'),...specs.map(s=>s.c),...pathSpecs.map(s=>s.c),ordinaryFresh('S01'),ordinaryFresh('S06')],inputs=path.join(temp,'fixture.json');writeFileSync(inputs,JSON.stringify(c));const script=`import fs from 'node:fs';import fsp from 'node:fs/promises';import cp from 'node:child_process';import http from 'node:http';import https from 'node:https';import net from 'node:net';import {syncBuiltinESMExports} from 'node:module';const raw=JSON.parse(fs.readFileSync(process.argv[1]));let attemptedEffects=0;const stop=()=>{attemptedEffects++;throw Error('SIDE_EFFECT_ATTEMPT')};for(const k of ['writeFileSync','appendFileSync','renameSync','unlinkSync','mkdirSync','rmSync','createWriteStream'])fs[k]=stop;for(const k of ['writeFile','appendFile','rename','unlink','mkdir','rm'])fsp[k]=stop;for(const k of ['exec','execSync','execFile','execFileSync','spawn','spawnSync','fork'])cp[k]=stop;http.request=stop;http.get=stop;https.request=stop;https.get=stop;net.connect=stop;net.createConnection=stop;globalThis.fetch=stop;syncBuiltinESMExports();const {previewSnapshot}=await import(${JSON.stringify(new URL('../lib/manager/decisions.mjs',import.meta.url).href)});const r=raw.map(c=>previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot),c.options));if(attemptedEffects!==0||r[0].streams[0]?.selected_ticket_id!=='1001')throw Error('SIDE_EFFECT_OR_CONTROL_FAILURE');console.log(JSON.stringify(r));`;const result=JSON.parse(execFileSync(process.execPath,['--input-type=module','-e',script,inputs],{encoding:'utf8'}));assert.equal(result[0].writes,0);assert.equal(result.length,33);assert.equal(result.at(-2).streams[0].selected_ticket_id,'1001');assert.equal(result.at(-1).streams[0].selected_ticket_id,'1100');for(const [index,spec]of specs.entries())assertObligationResult(result[index+1],spec);for(const [index,spec]of pathSpecs.entries())assertPrerequisitePathResult(result[1+specs.length+index],spec);assert.deepEqual(readdirSync(temp),['fixture.json']);assert.equal(readFileSync(inputs,'utf8'),JSON.stringify(c));}finally{rmSync(temp,{recursive:true,force:true});}});
 
 test('malformed scheduling fields on an independent Ready candidate are skipped without hiding valid work',()=>{for(const prerequisites of [{ticket:'fake'},'fake',42,[null],['fake']]){const c=fresh('S04'),i=c.snapshot.issues[2],body=JSON.parse(c.snapshot.issues[1].body);body.prerequisites=prerequisites;i.body=JSON.stringify(body);assert.deepEqual(selected(run(c)),['1001']);}const c=fresh('S04'),i=c.snapshot.issues[2];i.body=c.snapshot.issues[1].body;i.context_body='{"prerequisite_graph":42}';assert.deepEqual(selected(run(c)),['1001']);});
 
@@ -365,7 +373,7 @@ test('the original66 inputs and provenance survive exactly five approved full-or
  assert.equal(packet.cases.length,66);assert.equal(packet.repair_reason_amendment.source_sha256,preservation.baseline_file_sha256);assert.equal(packet.repair_reason_amendment.changes.length,5);
  assert.deepEqual(packet.repair_reason_amendment.changes.map(c=>c.id),preservation.replacements.map(c=>c.id));
  for(const replacement of preservation.replacements){const c=packet.cases.find(c=>c.id===replacement.id),change=packet.repair_reason_amendment.changes.find(c=>c.id===replacement.id);assert.deepEqual(c.expected,replacement.expected);assert.deepEqual(change.original_expected,replacement.original_expected);c.expected=structuredClone(replacement.original_expected);}
- delete packet.repair_reason_amendment;assert.equal(createHash('sha256').update(JSON.stringify(packet)).digest('hex'),preservation.baseline_json_stringify_sha256);
+ delete packet.ordinary_recorded;delete packet.repair_reason_amendment;assert.equal(createHash('sha256').update(JSON.stringify(packet)).digest('hex'),preservation.baseline_json_stringify_sha256);
 });
 
 const ownSuccessors=repairPacket.inherited_own_preview,ownOriginal=ownSuccessors.original,ownById=new Map(ownSuccessors.cases.map(c=>[c.id,c.expected]));
@@ -440,4 +448,188 @@ test('focused obligation provenance regression',()=>{
  for(const spec of boundedNativeCases(fixtures))check(spec,assertBoundedNativeResult);
  check(prerequisites.find(s=>s.id==='Q4'),assertPrerequisitePathResult);
  check(obligations.find(s=>s.id==='B4'),assertObligationResult);
+});
+
+// PGB-162: retained ordinary controls use the explicit recorded contract.
+const ordinaryPacket=JSON.parse(readFileSync(new URL('./fixtures/manager-candidates.json',import.meta.url))).ordinary_recorded;
+for(const c of ordinaryPacket.cases)test(`ordinary recorded ${c.id}`,()=>{
+ const before=JSON.stringify(c),r=run(c);assert.equal(r.valid,true,JSON.stringify(r));
+ assert.equal(r.schema,'pigboard-manager-preview/v2');assert.equal(r.mode,'ordinary');assert.equal(r.proof_basis,'authenticated_recorded_handoffs');assert.equal(r.external_freshness,'not_evaluated');assert.equal(r.live_freshness,'not_evaluated');assert.equal(r.metadata_continuity,'supplied_prior_tuples_only');assert.equal(r.execution_authorized,false);assert.equal(r.writes,0);
+ for(const e of c.expected.streams){const s=r.streams.find(s=>s.scope.project_id===e.project_id&&s.scope.label===e.label);assert(s);assert.equal(s.decision,e.decision);assert.equal(s.selected_ticket_id,e.selected_ticket_id);assert.equal(s.return_count,e.return_count);if(e.reason)assert(s.reasons.some(r=>r.code===e.reason));}
+ assert.equal(JSON.stringify(c),before);assert.deepEqual(run(c),r);
+});
+const ordinaryFresh=id=>structuredClone(ordinaryPacket.cases.find(c=>c.id===id));
+function acquired(c){
+ const scopes=c.snapshot.stream_checks.map(s=>({project_id:s.project_id,label:s.label,complete:true,old_issue_ids:c.snapshot.retained_members.filter(r=>r.project_id===s.project_id&&r.label===s.label).map(r=>r.ticket_id).sort(),current_issue_ids:c.snapshot.issues.filter(i=>i.labels.includes(s.label)&&i.project_id===s.project_id).map(i=>i.id).sort()}));
+ const adf=body=>JSON.stringify({version:1,type:'doc',content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:body}]}]});
+ const observations={issues:c.snapshot.issues.map(({required_requests,...i})=>({...i,format:'adf',body:adf(i.body),pointer:i.pointer?{state:'present',value:i.pointer}:{state:'absent',value:null}})),comment_pages:c.snapshot.issues.map(i=>({site:c.snapshot.site,ticket_id:i.id,start_at:0,total:0,is_last:true,comments:[]})),exact_comments:[],references:[],provenance:[]};
+ for(const raw of c.snapshot.completion_receipts){const e=JSON.parse(raw);for(const page of e.comment_pages){const at=observations.comment_pages.findIndex(p=>p.ticket_id===page.ticket_id);observations.comment_pages[at]={...page,comments:page.comments.map(({format,...comment})=>comment)};}}
+ // Original exact-comment fixtures supply the same server tuples as complete discovery.
+ for(const page of observations.comment_pages)for(const comment of page.comments)observations.exact_comments.push({ticket_id:page.ticket_id,...comment});
+ return {inspection:{report:{schema:'pigboard-jira-inventory/v1',status:'complete',inspection_scope:'configured_inventory',domain_complete:true,retained_complete:true,scopes,diagnostics:[]},observations},state:{retained_members:c.snapshot.retained_members,pending_intents:c.snapshot.pending_intents,retained_complete:true,retained:[]}};
+}
+test('ordinary composition preserves original native bodies and recorded prerequisite without capture',()=>{
+ for(const id of ['S01','S06']){const c=ordinaryFresh(id),{inspection,state}=acquired(c),before=JSON.stringify({inspection,state}),composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);assert.equal(composed.valid,true,JSON.stringify(composed));const r=previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(r.valid,true,JSON.stringify(r));assert.deepEqual(selected(r),c.expected.streams.map(s=>s.selected_ticket_id));assert.equal(JSON.stringify({inspection,state}),before);assert.equal(composed.snapshot.issues[0].body,inspection.observations.issues[0].body);}
+ // Reuse the original admission comment as observed history on a pointer-null
+ // Ready member. No assigned target or envelope may hide its retained tuple.
+ const c=ordinaryFresh('S18');c.snapshot.issues.find(i=>i.id==='1002').status_id='1';
+ const {inspection,state}=acquired(c),source=acquired(ordinaryFresh('S06')).inspection.observations.comment_pages.find(p=>p.ticket_id==='1000').comments[0],comment=structuredClone(source),wrapper=JSON.parse(comment.body),record=JSON.parse(wrapper.content[0].content[0].text);
+ record.ticket_id='1001';wrapper.content[0].content[0].text=JSON.stringify(record);comment.body=JSON.stringify(wrapper);
+ const page=inspection.observations.comment_pages.find(p=>p.ticket_id==='1001');page.comments=[comment];page.total=1;inspection.observations.exact_comments.push({ticket_id:'1001',...comment});
+ const retained={site:c.snapshot.site,ticket_id:'1001',comment_id:comment.id,record_id:record.record_id,digest:'sha256:'+createHash('sha256').update(canonicalize(record)).digest('hex'),...Object.fromEntries(['author_id','update_author_id','created','updated'].map(k=>[k,comment[k]]))};
+ const check=(input,retainedRows)=>{const supplied={...state,retained:retainedRows},before=JSON.stringify({input,supplied}),result=composeOrdinarySnapshot(JSON.stringify(c.config),input,supplied);assert.equal(JSON.stringify({input,supplied}),before);return result;};
+ const matching=check(inspection,[retained]);assert.equal(matching.valid,true,JSON.stringify(matching));assert.deepEqual(matching.snapshot.completion_receipts,[]);assert.deepEqual(matching.snapshot.repair_receipts,[]);assert.equal(matching.snapshot.issues.find(i=>i.id==='1001').pointer,null);assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(matching.snapshot),{mode:'ordinary'})),['1001','1002']);
+ for(const rows of [null,{},[{}],[{...retained,extra:'private-invalid-value'}],[{...retained,ticket_id:'not-native'}],[{...retained,record_id:'not-a-uuid'}],[{...retained,created:'2026-02-30T10:00:00Z'}],[{...retained,site:'https://foreign.example.invalid'}],[retained,retained]]){const invalid=check(inspection,rows);assert.equal(invalid.snapshot,null);assert.deepEqual(invalid.diagnostics,[{code:'STRUCTURE',path:'',message:'Supply every declared snapshot field once with its supported type; remove unknown fields.'}]);}
+ for(const [field,value]of [['author_id','other'],['update_author_id','other'],['created','2020-01-01T00:00:00Z'],['updated','2020-01-01T00:00:00Z'],['record_id','40000000-0000-4000-8000-000000000003'],['digest','sha256:'+'0'.repeat(64)],['comment_id','9999']]){const held=check(inspection,[{...retained,[field]:value}]);assert.equal(held.valid,true,JSON.stringify(held));assert.deepEqual(held.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:false,repair_inventory_complete:false},{project_id:'100',label:'stream-2',known_ids_complete:true,repair_inventory_complete:true}]);assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(held.snapshot),{mode:'ordinary'})),['1002']);}
+ const missing=structuredClone(inspection);missing.observations.comment_pages=missing.observations.comment_pages.filter(p=>p.ticket_id!=='1001');const unavailable=check(missing,[retained]);assert.equal(unavailable.valid,true);assert.equal(unavailable.snapshot.stream_checks[0].known_ids_complete,false);
+ const outside=check(inspection,[{...retained,ticket_id:'9999'}]);assert.equal(outside.snapshot,null);assert.equal(outside.diagnostics[0].code,'INCOMPLETE_SNAPSHOT');
+ // The already-demonstrated four-issue witness: closure Epic facts cannot
+ // declare another stream or deprive independent ready work of its owner.
+ {
+  const rootCase=ordinaryFresh('S01'),[root,first]=rootCase.snapshot.issues;
+  root.id='100';root.key='EX-100';first.id='101';first.key='EX-101';first.parent_id='100';
+  const independent={...structuredClone(first),id:'102',key:'EX-102'},rootWork=JSON.parse(root.body);rootWork.workstreams[0].story_order=['EX-101','EX-102'];root.body=JSON.stringify(rootWork);
+  const firstWork=JSON.parse(first.body);firstWork.prerequisites=[{ticket:'EX-300',required_outcome:'ai_qa_complete'}];first.body=JSON.stringify(firstWork);
+  const closure={...structuredClone(root),id:'300',key:'EX-300',labels:[],status_id:'9'},closureWork=JSON.parse(closure.body);closureWork.workstreams=[{label:'stream-2',story_order:['EX-101']}];closure.body=JSON.stringify(closureWork);rootCase.snapshot.issues.push(independent,closure);
+  const {inspection:input,state:supplied}=acquired(rootCase);input.observations.provenance=[
+   {ticket_id:'100',source:'seed',source_ticket_id:null,project_id:null,label:null},
+   ...['101','102'].map(id=>({ticket_id:'EX-'+id,source:'declared',source_ticket_id:'100',project_id:'100',label:'stream-1'})),
+   {ticket_id:'EX-300',source:'prerequisite',source_ticket_id:'101',project_id:null,label:null},
+   ...['101','102'].map(id=>({ticket_id:id,source:'label',source_ticket_id:null,project_id:'100',label:'stream-1'}))
+  ];
+  const before=JSON.stringify({rootCase,input,supplied}),composed=composeOrdinarySnapshot(JSON.stringify(rootCase.config),input,supplied);assert.equal(composed.valid,true,JSON.stringify(composed));
+  assert.deepEqual(composed.snapshot.issues.map(i=>i.body),input.observations.issues.map(i=>i.body));assert.equal(composed.snapshot.issues.length,4);
+  const result=previewSnapshot(JSON.stringify(rootCase.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(result.streams.map(s=>s.scope.label),['stream-1']);assert.deepEqual(selected(result),['102']);assert(result.streams[0].candidates.find(i=>i.ticket_id==='101').reasons.some(r=>r.code==='PREREQUISITE_UNSATISFIED'));assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);assert.equal(JSON.stringify({rootCase,input,supplied}),before);
+ }
+ // A real retained mismatch on one nonmember prerequisite holds both reached
+ // consumer scopes, while the independent ready scope remains usable.
+ {
+  const reach=ordinaryFresh('S18'),second=reach.snapshot.issues.find(i=>i.id==='1002');second.status_id='1';
+  const third={...structuredClone(second),id:'1003',key:'EX-4',parent_id:'902',labels:['stream-3']},thirdRoot={...structuredClone(reach.snapshot.issues.find(i=>i.id==='901')),id:'902',key:'EX-92'},thirdWork=JSON.parse(thirdRoot.body);thirdWork.workstreams=[{label:'stream-3',story_order:['EX-4']}];thirdRoot.body=JSON.stringify(thirdWork);
+  const prerequisite=structuredClone(ordinaryFresh('S06').snapshot.issues.find(i=>i.id==='1000'));prerequisite.labels=[];prerequisite.parent_id=null;prerequisite.pointer=null;
+  for(const member of [second,third]){const work=JSON.parse(member.body);work.prerequisites=[{ticket:prerequisite.key,required_outcome:'ai_qa_complete'}];member.body=JSON.stringify(work);}
+  reach.snapshot.issues.push(thirdRoot,third,prerequisite);reach.snapshot.stream_checks.push({project_id:'100',label:'stream-3',known_ids_complete:true,repair_inventory_complete:true});
+  const {inspection:input,state:supplied}=acquired(reach),original=acquired(ordinaryFresh('S06')).inspection.observations.comment_pages.find(p=>p.ticket_id==='1000');
+  input.observations.comment_pages[input.observations.comment_pages.findIndex(p=>p.ticket_id==='1000')]=structuredClone(original);for(const comment of original.comments)input.observations.exact_comments.push({ticket_id:'1000',...structuredClone(comment)});
+  input.observations.provenance=['1002','1003'].map(source_ticket_id=>({ticket_id:prerequisite.key,source:'prerequisite',source_ticket_id,project_id:null,label:null}));
+  const admission=original.comments[0],record=JSON.parse(JSON.parse(admission.body).content[0].content[0].text),prior={site:reach.snapshot.site,ticket_id:'1000',comment_id:admission.id,record_id:record.record_id,digest:'sha256:'+createHash('sha256').update(canonicalize(record)).digest('hex'),...Object.fromEntries(['author_id','update_author_id','created','updated'].map(k=>[k,admission[k]]))};
+  supplied.retained=[prior];const before=JSON.stringify({reach,input,supplied}),matching=composeOrdinarySnapshot(JSON.stringify(reach.config),input,supplied);assert.equal(matching.valid,true,JSON.stringify(matching));assert(matching.snapshot.stream_checks.every(c=>c.known_ids_complete&&c.repair_inventory_complete));
+  const changed={...supplied,retained:[{...prior,updated:'2020-01-01T00:00:00Z'}]},changedBefore=JSON.stringify(changed),held=composeOrdinarySnapshot(JSON.stringify(reach.config),input,changed);assert.equal(held.valid,true,JSON.stringify(held));assert.deepEqual(held.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:true,repair_inventory_complete:true},...['stream-2','stream-3'].map(label=>({project_id:'100',label,known_ids_complete:false,repair_inventory_complete:false}))]);
+  for(const composed of [matching,held]){assert.deepEqual(composed.snapshot.issues.map(i=>i.body),input.observations.issues.map(i=>i.body));assert.deepEqual(composed.snapshot.retained_members,[]);assert.deepEqual(composed.snapshot.completion_receipts,[]);assert.deepEqual(composed.snapshot.repair_receipts,[]);assert(composed.snapshot.issues.find(i=>i.id==='1000').pointer===null);const result=previewSnapshot(JSON.stringify(reach.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(selected(result),['1001']);for(const stream of result.streams){for(const field of ['occupied_ids','human_review_ids','blocked_ids'])assert(!stream[field].includes('1000'));assert(!stream.candidates.some(i=>i.ticket_id==='1000'));if(composed===held&&stream.scope.label!=='stream-1')assert.equal(stream.decision,'hold');}assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);}
+  assert(input.report.scopes.every(s=>!s.old_issue_ids.includes('1000')&&!s.current_issue_ids.includes('1000')));assert.deepEqual(input.report.diagnostics,[]);assert.equal(JSON.stringify({reach,input,supplied}),before);assert.equal(JSON.stringify(changed),changedBefore);
+ }
+ // An assigned prerequisite-only issue retains its invalid history, while only
+ // its scheduling consumer holds and independent ready work remains selectable.
+ {
+  const proofCase=ordinaryFresh('S18'),sourceCase=ordinaryFresh('S06'),second=proofCase.snapshot.issues.find(i=>i.id==='1002');second.status_id='1';
+  const originalIssue=sourceCase.snapshot.issues.find(i=>i.id==='1000'),prerequisite=structuredClone(originalIssue);prerequisite.labels=[];prerequisite.parent_id=null;
+  const work=JSON.parse(second.body);work.prerequisites=[{ticket:prerequisite.key,required_outcome:'ai_qa_complete'}];second.body=JSON.stringify(work);proofCase.snapshot.issues.push(prerequisite);
+  const {inspection:input,state:supplied}=acquired(proofCase),original=acquired(sourceCase).inspection.observations.comment_pages.find(p=>p.ticket_id==='1000'),admission=structuredClone(original.comments[0]),page=input.observations.comment_pages.find(p=>p.ticket_id==='1000');
+  page.comments=[admission];page.total=1;input.observations.exact_comments.push({ticket_id:'1000',...structuredClone(admission)});
+  input.observations.provenance=[{ticket_id:prerequisite.key,source:'prerequisite',source_ticket_id:'1002',project_id:null,label:null}];
+  const before=JSON.stringify({proofCase,input,supplied}),composed=composeOrdinarySnapshot(JSON.stringify(proofCase.config),input,supplied);assert.equal(composed.valid,true,JSON.stringify(composed));assert.equal(composed.snapshot.repair_receipts.length,1);assert.deepEqual(composed.snapshot.completion_receipts,[]);
+  const raw=composed.snapshot.repair_receipts[0],envelope=JSON.parse(raw),model=normalizeSnapshot(composed.snapshot,parseConfig(JSON.stringify(proofCase.config)).resolved_scope,'ordinary'),result=previewSnapshot(JSON.stringify(proofCase.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});
+  assert.equal(envelope.target.ticket_id,'1000');assert.equal(model.envelopes[0].bound,false);assert.equal(inspectRecordedHistory(raw).valid,false);assert([...model.streams.values()].every(s=>!s.members.has('1000')));
+  assert.equal(result.valid,true,JSON.stringify(result));assert.deepEqual(selected(result),['1001']);const independent=result.streams.find(s=>s.scope.label==='stream-1'),consumer=result.streams.find(s=>s.scope.label==='stream-2');
+  assert(!independent.reasons.some(r=>r.code==='REPAIR_PROOF_INVALID'));assert.equal(consumer.decision,'hold');assert.equal(consumer.selected_ticket_id,null);assert(consumer.reasons.some(r=>r.code==='REPAIR_PROOF_INVALID'&&r.path==='/repair_receipts/0'));assert(consumer.candidates.find(i=>i.ticket_id==='1002').reasons.some(r=>r.code==='PREREQUISITE_UNSATISFIED'));assert(!model.shared.some(d=>d.code==='REPAIR_PROOF_INVALID'));assert(!result.scope_diagnostics.some(d=>d.code==='REPAIR_PROOF_INVALID'&&d.scope===null));
+  for(const stream of result.streams){for(const field of ['occupied_ids','human_review_ids','blocked_ids'])assert(!stream[field].includes('1000'));assert(!stream.candidates.some(i=>i.ticket_id==='1000'));}
+  const observed=input.observations.issues.find(i=>i.id==='1000'),actual=composed.snapshot.issues.find(i=>i.id==='1000');assert.equal(canonicalize(actual),canonicalize({...observed,pointer:observed.pointer.value,required_requests:[]}));assert.equal(canonicalize(actual.pointer),canonicalize(originalIssue.pointer));assert.equal(actual.status_id,originalIssue.status_id);assert.equal(admission.body,original.comments[0].body);assert.deepEqual(composed.snapshot.retained_members,[]);assert.deepEqual(supplied.retained,[]);assert(input.report.scopes.every(s=>s.complete&&!s.old_issue_ids.includes('1000')&&!s.current_issue_ids.includes('1000')));assert.deepEqual(input.report.diagnostics,[]);assert.equal(JSON.stringify({proofCase,input,supplied}),before);assert.equal(result.writes,0);assert.equal(result.execution_authorized,false);
+ }
+});
+test('ordinary composition keeps isolated unknowns and refuses shared or mismatched completeness',()=>{
+ const c=ordinaryFresh('S18'),prerequisite=structuredClone(ordinaryFresh('S06').snapshot.issues.at(-1));
+ // Dependency reach does not make this native issue a capacity member.
+ prerequisite.labels=[];prerequisite.parent_id=null;prerequisite.pointer=null;c.snapshot.issues.push(prerequisite);
+ const member=c.snapshot.issues.find(i=>i.id==='1002'),work=JSON.parse(member.body);work.prerequisites=[{ticket:prerequisite.key,required_outcome:'ai_qa_complete'}];member.body=JSON.stringify(work);
+ c.snapshot.stream_checks.push({project_id:'100',label:'stream-3',known_ids_complete:true,repair_inventory_complete:true});
+ const {inspection,state}=acquired(c);inspection.report.status='incomplete';inspection.report.domain_complete=false;
+ for(const row of inspection.report.scopes)if(row.label!=='stream-1')row.complete=false;
+ inspection.report.diagnostics=[{scope:{project_id:'100',label:'stream-2'}},...['stream-2','stream-3'].map(label=>({issue_id:prerequisite.id,scope:{project_id:'100',label}}))];
+ for(const id of ['1002',prerequisite.id])inspection.observations.issues.find(i=>i.id===id).pointer={state:'unknown',value:null};
+ const before=JSON.stringify({inspection,state}),members=inspection.report.scopes.map(row=>({old:row.old_issue_ids,current:row.current_issue_ids}));
+ assert(members.every(row=>!row.old.includes(prerequisite.id)&&!row.current.includes(prerequisite.id)));
+ const composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);assert.equal(composed.valid,true,JSON.stringify(composed));
+ for(const id of ['1002',prerequisite.id]){const observed=inspection.observations.issues.find(i=>i.id===id),issue=composed.snapshot.issues.find(i=>i.id===id);assert.deepEqual(issue,{...observed,required_requests:[]});}
+ assert.deepEqual(composed.snapshot.retained_members,state.retained_members);
+ assert.deepEqual(composed.snapshot.stream_checks,[{project_id:'100',label:'stream-1',known_ids_complete:true,repair_inventory_complete:true},...['stream-2','stream-3'].map(label=>({project_id:'100',label,known_ids_complete:false,repair_inventory_complete:false}))]);
+ assert.deepEqual(selected(previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'})),['1001']);
+ const shared=structuredClone(inspection);shared.report.diagnostics.push({scope:null});assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),shared,state).snapshot,null);
+ const unknown=structuredClone(inspection);unknown.report.diagnostics[1].scope.label='stream-99';assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),unknown,state).snapshot,null);
+ const unlocated=structuredClone(inspection);for(const d of unlocated.report.diagnostics)if(d.issue_id===prerequisite.id)d.issue_id=prerequisite.key;assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),unlocated,state).snapshot,null);
+ assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),inspection,{...state,retained_complete:false}).snapshot,null);
+ const mismatch=structuredClone(inspection);mismatch.report.scopes[0].current_issue_ids=[];assert.equal(composeOrdinarySnapshot(JSON.stringify(c.config),mismatch,state).snapshot,null);
+ assert.equal(JSON.stringify({inspection,state}),before);assert.deepEqual(inspection.report.scopes.map(row=>({old:row.old_issue_ids,current:row.current_issue_ids})),members);
+});
+test('ordinary rejects old and mixed inputs and preserves uncertain attempt identity',()=>{
+ let getterCalls=0;const unsafe=Object.defineProperty({},'mode',{enumerable:true,get(){getterCalls++;throw Error('MODE_GETTER_CALLED');}});let invalid;assert.doesNotThrow(()=>{invalid=previewSnapshot('{}','{}',unsafe);});assert.equal(getterCalls,0);assert.equal(invalid.valid,false);assert.equal(invalid.scope_diagnostics[0].code,'VALUE_DOMAIN');assert.deepEqual(invalid.streams,[]);assert.equal(invalid.writes,0);
+ const c=ordinaryFresh('S01');assert.equal(previewSnapshot(JSON.stringify(c.config),JSON.stringify(c.snapshot)).valid,false);const old=fresh('S01');assert.equal(previewSnapshot(JSON.stringify(old.config),JSON.stringify(old.snapshot),{mode:'ordinary'}).scope_diagnostics[0].code,'STRUCTURE');c.snapshot.issues[1].context_body='{}';assert.equal(run(c).valid,false);delete c.snapshot.issues[1].context_body;
+ c.snapshot.pending_intents=[{project_id:'100',label:'stream-1',ticket_id:'1001',attempt_id:'original-uncertain-attempt'}];const before=JSON.stringify(c);assert(codes(run(c)).includes('PENDING_INTENT'));assert.deepEqual(selected(run(c)),[]);assert.equal(JSON.stringify(c),before);
+});
+test('ordinary queued authenticated repair holds before external PR or prerequisite scheduling',()=>{
+ const c=structuredClone(ordinaryPacket.repair_control),e=JSON.parse(c.snapshot.completion_receipts[0]),i=c.snapshot.issues.at(-1);i.status_id='6';e.issues.find(r=>r.id===i.id).stage_id='6';c.snapshot.repair_receipts=[JSON.stringify(e)];c.snapshot.completion_receipts=[];
+ const r=run(c);assert.equal(r.streams[0].decision,'hold');assert.equal(r.streams[0].proposal,null);assert.equal(r.streams[0].selected_ticket_id,null);assert(r.streams[0].reasons.some(r=>r.code==='REPAIR_REQUIRED'&&r.path==='/issues/2'));assert.deepEqual(run(c),r,'Unobserved external PR changes cannot change recorded input decisions.');
+});
+
+test('ordinary retained scheduling cycle missing-root and changed-requirements controls',()=>{
+ const cycle=ordinaryFresh('S01'),i=cycle.snapshot.issues[1],w=JSON.parse(i.body);w.prerequisites=[{ticket:i.key,required_outcome:'ai_qa_complete'}];i.body=JSON.stringify(w);assert.deepEqual(selected(run(cycle)),[]);assert(codes(run(cycle)).includes('INVALID_WORK'));
+ const missing=structuredClone(ordinaryPacket.repair_control),e=JSON.parse(missing.snapshot.completion_receipts[0]),own=missing.snapshot.issues.at(-1),extra={ticket_id:own.id,comment_id:'9998',record_id:'40000000-0000-4000-8000-000000000003',digest:'sha256:'+'3'.repeat(64)};own.required_requests.push(extra);e.issues.find(r=>r.id===own.id).required_requests.push(extra);missing.snapshot.completion_receipts[0]=JSON.stringify(e);assert.deepEqual(selected(run(missing)),[]);assert(codes(run(missing)).includes('REPAIR_PROOF_INVALID'));
+ const changed=ordinaryFresh('S06');changed.snapshot.issues.at(-1).body+=' ';assert.deepEqual(selected(run(changed)),[]);assert(codes(run(changed)).includes('PREREQUISITE_UNSATISFIED'));
+});
+
+test('ordinary composition retains transitive declared prerequisites in recorded completion',()=>{
+ const c=ordinaryFresh('S06'),original=JSON.parse(c.snapshot.completion_receipts[0]),template=c.snapshot.issues.at(-1),originalWork=JSON.parse(template.body);
+ const sha=value=>'sha256:'+createHash('sha256').update(canonicalize(value)).digest('hex');
+ function completion(id,key,prerequisites){
+  const work={...structuredClone(originalWork),prerequisites},references=new Map();
+  const transform=value=>{
+   if(Array.isArray(value))return value.map(transform);
+   if(value&&typeof value==='object'){
+    if(Object.keys(value).sort().join(',')==='comment_id,digest,record_id,ticket_id'){
+     const reference=references.get(canonicalize(value));if(reference)return reference;
+    }
+    return Object.fromEntries(Object.entries(value).map(([field,item])=>[field,
+     field==='ticket_id'&&item==='1000'?id:
+     ['record_id','operation_id'].includes(field)?(id==='1003'?item.replace(/^00000000/,'10000000'):item):
+     field==='requirements_digest'?sha(work):transform(item)]));
+   }
+   return value;
+  };
+  const comments=original.comment_pages[0].comments.map(old=>{
+   const wrapper=JSON.parse(old.body),record=JSON.parse(wrapper.content[0].content[0].text),next=transform(record);
+   const comment_id=id==='1003'?String(Number(old.id)+10000):old.id;
+   references.set(canonicalize({ticket_id:'1000',comment_id:old.id,record_id:record.record_id,digest:sha(record)}),{ticket_id:id,comment_id,record_id:next.record_id,digest:sha(next)});
+   wrapper.content[0].content[0].text=JSON.stringify(next);
+   return {...old,id:comment_id,body:JSON.stringify(wrapper)};
+  });
+  const pointer={...template.pointer,assignment:references.get(canonicalize(template.pointer.assignment))};
+  return {issue:{...structuredClone(template),id,key,body:JSON.stringify(work),pointer},comments};
+ }
+ const current=completion('1000','EX-1',[{ticket:'EX-99',required_outcome:'ai_qa_complete'}]),upstream=completion('1003','EX-99',[]);
+ c.snapshot.issues[c.snapshot.issues.length-1]=current.issue;c.snapshot.issues.push(upstream.issue);
+ const epic=JSON.parse(c.snapshot.issues[0].body);epic.workstreams[0].story_order.unshift('EX-99');c.snapshot.issues[0].body=JSON.stringify(epic);
+ c.snapshot.retained_members[0].assignment=current.issue.pointer.assignment;
+ c.snapshot.retained_members.push({...structuredClone(c.snapshot.retained_members[0]),ticket_id:'1003',assignment:upstream.issue.pointer.assignment});
+ c.snapshot.completion_receipts=[];
+ const {inspection,state}=acquired(c);
+ for(const item of [current,upstream]){
+  const page=inspection.observations.comment_pages.find(page=>page.ticket_id===item.issue.id);
+  page.comments=item.comments.map(({format,...comment})=>comment);page.total=page.comments.length;
+ }
+ inspection.observations.exact_comments=inspection.observations.comment_pages.flatMap(page=>page.comments.map(comment=>({ticket_id:page.ticket_id,...comment})));
+ const before=JSON.stringify({inspection,state}),composed=composeOrdinarySnapshot(JSON.stringify(c.config),inspection,state);
+ assert.equal(composed.valid,true,JSON.stringify(composed.diagnostics));
+ const raw=composed.snapshot.completion_receipts.find(raw=>JSON.parse(raw).target.ticket_id==='1000'),envelope=JSON.parse(raw);
+ assert.deepEqual(envelope.issues.map(issue=>issue.id).sort(),['1000','1003']);
+ assert.deepEqual(envelope.requirements.map(row=>row.ticket_id).sort(),['1000','1003']);
+ assert.deepEqual(envelope.comment_pages.map(page=>page.ticket_id).sort(),['1000','1003']);
+ for(const id of ['1000','1003']){
+  const observed=inspection.observations.issues.find(issue=>issue.id===id),requirements=envelope.requirements.find(row=>row.ticket_id===id),page=inspection.observations.comment_pages.find(page=>page.ticket_id===id);
+  assert.equal(requirements.body,observed.body);assert.equal(requirements.format,observed.format);
+  assert.deepEqual(envelope.comment_pages.find(row=>row.ticket_id===id),{...page,comments:page.comments.map(comment=>({...comment,format:'adf'}))});
+  assert.deepEqual(envelope.trusted.manager_assignments.find(row=>row.ticket_id===id).assignment,observed.pointer.value.assignment);
+ }
+ const validation=inspectRecordedCompletion(raw).validation;assert.equal(validation.valid,true,JSON.stringify(validation.diagnostics));assert.equal(validation.recorded_completion_established,true);
+ const result=previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'});
+ assert.deepEqual(selected(result),['1100']);assert.equal(result.proof_basis,'authenticated_recorded_handoffs');assert.equal(result.external_freshness,'not_evaluated');assert.equal(result.execution_authorized,false);assert.equal(result.writes,0);
+ assert.equal(JSON.stringify({inspection,state}),before);
 });
