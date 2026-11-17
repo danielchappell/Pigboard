@@ -251,16 +251,17 @@ test('a different package can inspect the mismatch but cannot mutate retained st
 });
 
 test('begin rejects current-attempt publication before I/O and preserves prior references', async () => {
-  for (const reference of [proofFixture.reference, { ...proofFixture.reference, ticket_id: '1002' }]) {
+  const reference = { ...proofFixture.preserved_assignment, comment_id: '699' };
+  const fullPublication = Array.from({ length: 100 }, (_, index) => ({ ...reference, comment_id: String(index + 1) }));
+  for (const publication of [[proofFixture.reference], [{ ...proofFixture.reference, ticket_id: '1002' }], [reference, reference], fullPublication]) {
     const rejected = await prepared();
     try {
       const before = rejected.provider.snapshot(), calls = rejected.provider.audit.length;
-      const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
+      const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication } }));
       assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
       assert.equal(rejected.provider.snapshot(), before); assert.equal(rejected.provider.audit.length, calls);
     } finally { rejected.state.close(); }
   }
-  const reference = { ...proofFixture.preserved_assignment, comment_id: '699' };
   const accepted = await prepared();
   try {
     const outcome = await accepted.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
@@ -283,6 +284,31 @@ test('begin rejects current-attempt publication before I/O and preserves prior r
     assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference, proofFixture.reference]);
     assert.equal(transitionProof(row(accepted.provider, 'attempt', fixture.attemptA)).state, 'prepared');
   } finally { accepted.state.close(); }
+  const boundary = await prepared();
+  try {
+    const prior = fullPublication.slice(0, 99);
+    const outcome = await boundary.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: prior } }));
+    assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
+    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, prior);
+    const input = extra => ({
+      attempt_id: fixture.attemptA.attempt_id,
+      expected_installation_revision: row(boundary.provider, 'installation', fixture.binding).revision,
+      expected_stream_revision: row(boundary.provider, 'stream', fixture.streamA).revision,
+      expected_attempt_revision: row(boundary.provider, 'attempt', fixture.attemptA).revision,
+      now: fixture.now, ...extra
+    });
+    assert.equal((await boundary.state.retainPublication(input({ reference: proofFixture.reference }))).status, 'confirmed');
+    const retained = [...prior, proofFixture.reference];
+    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, retained);
+    const observations = structuredClone(proofFixture.publication_observations);
+    observations.comments = retained.map(reference => ({ ...observations.comments[0], reference }));
+    assert.equal((await boundary.state.prepareTransitionCapture(input({
+      transition_id: proofFixture.transition_id, producer_invocation_id: proofFixture.producer_invocation_id,
+      publication_observations: observations
+    }))).status, 'confirmed');
+    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, retained);
+    assert.equal(transitionProof(row(boundary.provider, 'attempt', fixture.attemptA)).state, 'prepared');
+  } finally { boundary.state.close(); }
 });
 
 test('capture ordering requires retained publication and freezes it after preparation', async () => {
