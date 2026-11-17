@@ -221,3 +221,43 @@ test('H04 missing resource uses the actual reader unknown shape and cannot becom
   assert.equal(check(report, 'C05_HEALTH').observed.query_coverage, null);
   assert.deepEqual(check(report, 'C05_HEALTH').observed.omissions, fixture.manager_evidence.missing_resource_health.omissions);
 });
+
+test('C01 distinguishes explicit malformed manager roots from omitted and valid embedded evidence', async t => {
+  const base = await inputs(t);
+  const nullManifest = await checkReadiness({ ...managerInputs(base), packageManifest: null });
+  assert.equal(check(nullManifest, 'C04_PACKAGE').status, 'ERROR');
+  assert.equal(check(nullManifest, 'C04_PACKAGE').code, 'PACKAGE_INPUT_INVALID');
+  assert.equal(check(nullManifest, 'C04_PACKAGE').observed, null);
+  assert.equal(nullManifest.status, 'input_error');
+  assert.equal(nullManifest.exit_code, 2);
+  assert.equal(check(nullManifest, 'C03_CONFIGURATION').status, 'PASS');
+  assert.notEqual(check(nullManifest, 'C04_INSTALLATION').status, 'PASS');
+  assert.equal(nullManifest.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
+
+  const falseInstallation = await checkReadiness({ ...managerInputs(base), installation: false });
+  assert.equal(check(falseInstallation, 'C04_INSTALLATION').status, 'ERROR');
+  assert.equal(check(falseInstallation, 'C04_INSTALLATION').code, 'INSTALLATION_INPUT_INVALID');
+  assert.equal(check(falseInstallation, 'C04_INSTALLATION').observed, null);
+  assert.equal(falseInstallation.status, 'input_error');
+  assert.equal(falseInstallation.exit_code, 2);
+  assert.equal(check(falseInstallation, 'C03_CONFIGURATION').status, 'PASS');
+  assert.equal(check(falseInstallation, 'C04_PACKAGE').status, 'PASS');
+  assert.equal(falseInstallation.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
+
+  const omitted = managerInputs(base);
+  delete omitted.packageManifest;
+  delete omitted.installation;
+  const omittedReport = await checkReadiness(omitted);
+  for (const id of ['C04_PACKAGE', 'C04_INSTALLATION']) {
+    assert.equal(check(omittedReport, id).status, 'UNVERIFIED');
+    assert.equal(check(omittedReport, id).code, 'EVIDENCE_MISSING');
+  }
+  const embedded = await checkReadiness(managerInputs(base, revision, false));
+  for (const id of ['C04_PACKAGE', 'C04_INSTALLATION']) assert.equal(check(embedded, id).status, 'PASS');
+  const recoveryInput = managerInputs(base);
+  recoveryInput.installation = { recovery_receipt: recoveryInput.installation, recovery_metadata: { package_verified: false } };
+  const recovery = await checkReadiness(recoveryInput);
+  assert.equal(check(recovery, 'C04_PACKAGE').status, 'PASS');
+  assert.equal(check(recovery, 'C04_INSTALLATION').status, 'FAIL');
+  assert.equal(recovery.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
+});
