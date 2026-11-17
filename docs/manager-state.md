@@ -119,7 +119,16 @@ assignment reference (or null) and expected revision (null only when absent).
 A non-null assignment must reference the same immutable ticket ID as its member; null remains allowed.
 Attempt inputs contain UUID `attempt_id`, immutable ticket/Epic IDs, issue key,
 operation, exact source/target status IDs, configuration digest and bounded
-`cause`/`publication` reference lists. Ordinary callers use `admit_ready`.
+`cause`/`publication` reference lists. Initial `publication` passed to `begin`
+must not contain a reference matching both this attempt's `ticket_id` and its
+`attempt_id` as the reference's `record_id`. Empty lists and prior references
+that do not match both fields remain allowed. Retain the current manager reference
+only after confirmed begin and append/readback validation, using
+`retainPublication` before pointer publication. A matching initial reference
+returns `invalid`/`INVALID_INPUT` with `data:null`, before any provider read or
+write. Correct that never-persisted input; this does not authorize recreating an
+attempt or replaying Jira after an earlier uncertain write.
+Ordinary callers use `admit_ready`.
 The retained schema also recognizes earlier designed operation names; this API
 neither selects nor executes repair admission.
 
@@ -273,8 +282,11 @@ internal package APIs; there is no capture/import/send CLI or editable proof fil
 Trusted producer provenance comes from the reviewed bound package and state/IAM
 boundary, not from a digest or an asserted caller flag.
 
-1. `begin` persists the pending intent before publication. Its publication list
-   may be empty.
+1. `begin` persists the pending intent before publication. Start without the new
+   manager reference: no initial entry may match both this attempt's `ticket_id`
+   and its `attempt_id` as `record_id`. Empty lists and other prior references
+   remain allowed under that condition. Append/readback and confirmed retention
+   happen after begin, as follows.
 2. After actual append/readback validation of the typed manager comment, call
    `retainPublication({attempt_id, expected_installation_revision,
    expected_stream_revision, expected_attempt_revision, reference, now})`.

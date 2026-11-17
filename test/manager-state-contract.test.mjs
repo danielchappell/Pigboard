@@ -250,6 +250,27 @@ test('a different package can inspect the mismatch but cannot mutate retained st
   assert.equal(provider.audit.filter(a => a.name === 'TransactWriteCommand').length, writes);
 });
 
+test('begin rejects current-attempt publication before I/O and preserves prior references', async () => {
+  const rejected = await prepared();
+  try {
+    const before = rejected.provider.snapshot(), calls = rejected.provider.audit.length;
+    const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [proofFixture.reference] } }));
+    assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
+    assert.equal(rejected.provider.snapshot(), before); assert.equal(rejected.provider.audit.length, calls);
+  } finally { rejected.state.close(); }
+  for (const reference of [
+    { ...proofFixture.reference, record_id: proofFixture.preserved_assignment.record_id },
+    { ...proofFixture.reference, ticket_id: '1002' }
+  ]) {
+    const accepted = await prepared();
+    try {
+      const outcome = await accepted.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
+      assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
+      assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference]);
+    } finally { accepted.state.close(); }
+  }
+});
+
 test('capture ordering requires retained publication and freezes it after preparation', async () => {
   const c = await transitionFixture(); const before = c.provider.snapshot();
   assert.equal((await c.prepare()).code, 'PUBLICATION_MISMATCH'); assert.equal(c.provider.snapshot(), before);
