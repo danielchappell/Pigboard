@@ -1,10 +1,10 @@
 # Install the disabled customer runtime
 
-The package includes ordinary decision preview and the admission sender for your
-AWS account, with its schedule and writes initially disabled. Local fixture
-evidence is separate from installed acceptance, human review and permission
-verification. No vendor principal,
-telemetry, public endpoint or runtime source download is configured.
+The customer runtime supports write-free decision preview and reviewed
+sender-capable packages for ordinary admission. Every new installation starts
+with scheduling and writes disabled. Local fixture evidence is separate from
+installed acceptance, human review and permission verification. No vendor
+principal, vendor telemetry, public endpoint or runtime source download is configured.
 
 Prepare a reviewed clean Git revision, Node 24, `/usr/bin/zip`, the locked root
 and `runtime/aws` dependencies, and AWS CLI before packaging or deployment.
@@ -89,12 +89,15 @@ that reviewed grant to the operator role; it does not extend invocation or
 mutation permissions. The control-update deployer does not need this read grant:
 configure observes through the operator profile.
 
-The function has reserved concurrency one, Node 24, a bounded timeout and the
-ordinary sender. Its runtime role includes transaction permissions scoped to the
-generated State table even while writes are disabled. The schedule starts DISABLED,
-with fixed preview input and no flexible window. Scheduler and asynchronous
-Lambda retry attempts are zero with a bounded
-60-second event age. AWS may still deliver duplicates; preview performs no writes.
+The function has reserved concurrency one, Node 24 and a bounded timeout. A
+reviewed `sender:true` package includes the ordinary sender; a preview-only package
+cannot acquire it through configuration. Its runtime transaction permissions stay
+scoped to the generated State table even while writes are disabled. The schedule
+starts DISABLED, with the
+operation-only input selected by canonical mode (`preview` or `apply`) and no
+flexible window. Writes start disabled in both modes. Scheduler and asynchronous
+Lambda retry attempts are zero with a bounded 60-second event age. AWS may still
+deliver duplicates; preview performs no writes.
 The state table has no TTL, stream or secondary index and is retained on deletion
 and replacement. The generated template sets finite log retention from canonical configuration.
 
@@ -266,10 +269,11 @@ intent later, set desired controls disabled and use the supported control rebuil
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
 
-Ordinary apply requires separate deliberate activation through configure:
-explicit writes, all three operator confirmations, current
+Preview-only packages refuse apply mode. A reviewed sender-capable package permits
+ordinary apply only with explicit writes, all three operator confirmations, current
 reviewed inventory, supported non-global source-specific transition mappings and
-compatible retained state. Operator assertions are not automated proofs of full
+compatible retained state, through the existing deliberate configure procedure.
+Operator assertions are not automated proofs of full
 Jira visibility or absence of another installation. Check project permissions,
 issue security, service-account access and sole admission ownership; Jira search
 completeness cannot prove invisible issues do not exist. Reconfirm after scope,

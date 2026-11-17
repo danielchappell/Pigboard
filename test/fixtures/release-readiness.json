@@ -1,0 +1,1159 @@
+{
+  "schema": "pigboard-readiness-fixtures/v1",
+  "preparation_id": "PREP-01",
+  "fixture_id": "DATA-01",
+  "config": {
+    "schema": "pigboard-config/v1",
+    "jira": {
+      "site": "https://jira.example.invalid"
+    },
+    "defaults": {
+      "stages": {
+        "Ready to Work": "11",
+        "In Progress": "12",
+        "In Review": "13",
+        "QA": "14",
+        "Human Review": "15",
+        "Rework Queued": "16",
+        "Blocked": "17"
+      },
+      "accepted_later_stage_ids": [
+        "18"
+      ],
+      "types": {
+        "epic": "21",
+        "story": "22",
+        "bug": "23"
+      },
+      "actors": {
+        "manager": [
+          "operator-demo"
+        ],
+        "implementer": [
+          "operator-demo"
+        ],
+        "reviewer": [
+          "operator-demo"
+        ],
+        "qa": [
+          "operator-demo"
+        ],
+        "human_request": [
+          "operator-demo"
+        ]
+      },
+      "repositories": [
+        "https://git.example.invalid/team/app"
+      ],
+      "worker_prefixes": [
+        "AI-Daniel-"
+      ],
+      "opt_in_label": "pigboard"
+    },
+    "projects": [
+      {
+        "id": "10001",
+        "key": "APP",
+        "board_ids": [
+          "101"
+        ],
+        "inherit": [
+          "stages",
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "repositories",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {}
+      },
+      {
+        "id": "10002",
+        "key": "OPS",
+        "board_ids": [
+          "102"
+        ],
+        "inherit": [
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {
+          "stages": {
+            "Ready to Work": "31",
+            "In Progress": "32",
+            "In Review": "33",
+            "QA": "34",
+            "Human Review": "35",
+            "Rework Queued": "36",
+            "Blocked": "37"
+          },
+          "repositories": [
+            "https://code.example.invalid/ops/service"
+          ]
+        }
+      }
+    ]
+  },
+  "configuration_digest": "sha256:2f6c903ab39017a117b48b4d63c89111470f292ecfcb74acd7342e31ab1b85b0",
+  "routes": [
+    {
+      "project_id": "10001",
+      "full_label": "AI-Daniel-1",
+      "role": "implementer",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "12",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    },
+    {
+      "project_id": "10001",
+      "full_label": "AI-Daniel-1",
+      "role": "reviewer",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "13",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    },
+    {
+      "project_id": "10001",
+      "full_label": "AI-Daniel-1",
+      "role": "qa",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "14",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    },
+    {
+      "project_id": "10002",
+      "full_label": "AI-Daniel-1",
+      "role": "implementer",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "32",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    },
+    {
+      "project_id": "10002",
+      "full_label": "AI-Daniel-1",
+      "role": "reviewer",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "33",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    },
+    {
+      "project_id": "10002",
+      "full_label": "AI-Daniel-1",
+      "role": "qa",
+      "story_type_id": "22",
+      "bug_type_id": "23",
+      "stage_id": "34",
+      "jira_rule_enabled": false,
+      "cursor_automation_enabled": false,
+      "evidence_ids": [
+        "setup"
+      ]
+    }
+  ],
+  "expected": {
+    "projects": [
+      "10001",
+      "10002"
+    ],
+    "stream_keys": [
+      "[\"https://jira.example.invalid\",\"10001\",\"AI-Daniel-1\"]",
+      "[\"https://jira.example.invalid\",\"10002\",\"AI-Daniel-1\"]"
+    ],
+    "ordinary_stages": [
+      [
+        "12",
+        "13",
+        "14"
+      ],
+      [
+        "32",
+        "33",
+        "34"
+      ]
+    ],
+    "roles": [
+      "implementer",
+      "reviewer",
+      "qa"
+    ],
+    "human_status": "NOT_RUN",
+    "activation": {
+      "authorized": false,
+      "performed": false
+    }
+  },
+  "human_cases": [
+    {
+      "id": "R1-20-H01",
+      "variants": [
+        "complete_external_bundle_inactive_setup"
+      ],
+      "status": "NOT_RUN",
+      "original_human_case": {
+        "id": "R1-20-H01",
+        "execution": "human",
+        "owner_role": "developer and human QA reviewer",
+        "requirements": [
+          "AC1",
+          "AC2",
+          "AC3",
+          "TAC1",
+          "TAC2"
+        ],
+        "prerequisites": [
+          "Disposable external skill install from the reviewed build; inactive saved Jira/Cursor fixture configuration."
+        ],
+        "steps": [
+          "Fetch/prepare/refresh through the existing setup scripts.",
+          "Run readiness check and inspect all required skills/references/contracts.",
+          "Inspect app fixture repository diff."
+        ],
+        "expected": [
+          "Complete compatible bundle and minimal prompts, full stream routing, inactive flags, no application-repository copies."
+        ],
+        "evidence": [
+          "installer/readiness receipts and app diff; tested PR revision and exact command."
+        ],
+        "cleanup": {
+          "mode": "prescribed",
+          "reason": null,
+          "owner": "human QA reviewer",
+          "steps": [
+            "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+          ]
+        }
+      }
+    },
+    {
+      "id": "R1-20-H02",
+      "variants": [
+        "old_worker_contract",
+        "missing_helper",
+        "model_capability_mismatch",
+        "active_rule_flag",
+        "absent_installed_acceptance"
+      ],
+      "status": "NOT_RUN",
+      "original_human_case": {
+        "id": "R1-20-H02",
+        "execution": "human",
+        "owner_role": "developer and human QA reviewer",
+        "requirements": [
+          "AC2",
+          "AC5",
+          "TAC1",
+          "TAC3"
+        ],
+        "prerequisites": [
+          "Old worker contract, missing helper, mismatched model/capability, active-rule flag and missing installed acceptance receipts."
+        ],
+        "steps": [
+          "Run checker for each variant.",
+          "Inspect diagnostics and side effects."
+        ],
+        "expected": [
+          "Each mismatch or missing receipt reported; no live setting changes or implicit activation."
+        ],
+        "evidence": [
+          "command/output transcript and fixture before/after diff; tested PR revision and exact command."
+        ],
+        "cleanup": {
+          "mode": "prescribed",
+          "reason": null,
+          "owner": "human QA reviewer",
+          "steps": [
+            "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+          ]
+        }
+      }
+    },
+    {
+      "id": "R1-20-H03",
+      "variants": [
+        "designated_humans_pending_walkthrough"
+      ],
+      "status": "NOT_RUN",
+      "original_human_case": {
+        "id": "R1-20-H03",
+        "execution": "human",
+        "owner_role": "developer and human QA reviewer",
+        "requirements": [
+          "AC4",
+          "AC5"
+        ],
+        "prerequisites": [
+          "Representative complete automated evidence plus pending human cases and designated developer/QA reviewers."
+        ],
+        "steps": [
+          "Follow guide from Human Review to recorded human review/testing.",
+          "Inspect UAT/Done and unblock instructions."
+        ],
+        "expected": [
+          "Human responsibilities are explicit; no worker claims human PASS or moves acceptance/deployment stages."
+        ],
+        "evidence": [
+          "walkthrough notes and saved readiness output; tested PR revision and exact command."
+        ],
+        "cleanup": {
+          "mode": "prescribed",
+          "reason": null,
+          "owner": "human QA reviewer",
+          "steps": [
+            "Retain evidence then remove disposable local fixtures/build output; do not change live records/resources."
+          ]
+        }
+      }
+    },
+    {
+      "id": "R1-20-H04",
+      "variants": [
+        "two_project_configuration",
+        "missing_health_resource",
+        "old_evidence_revision"
+      ],
+      "status": "NOT_RUN",
+      "original_human_case": {
+        "id": "R1-20-H04",
+        "execution": "human",
+        "owner_role": "developer and human QA reviewer",
+        "requirements": [
+          "AC6"
+        ],
+        "prerequisites": [
+          "Pinned compatible release with two-project config, missing health resource and old evidence-revision variants.",
+          "Current PR checkout; prepared local simulated provider data; no live customer actions."
+        ],
+        "steps": [
+          "Run readiness in each variant.",
+          "Inspect output and compare Jira/operational-state traces."
+        ],
+        "expected": [
+          "Only complete compatible mapping/resources pass; mismatch is actionable; no scan, activation or delivery mutation occurs."
+        ],
+        "evidence": [
+          "Tested PR revision, exact prepared commands/fixtures and sanitized outputs."
+        ],
+        "cleanup": {
+          "mode": "prescribed",
+          "reason": null,
+          "owner": "human QA reviewer",
+          "steps": [
+            "Retain evidence then remove disposable fixture/build output; no live changes."
+          ]
+        }
+      }
+    }
+  ],
+  "worker_setup": {
+    "implementer": {
+      "model": "grok-4.7-high",
+      "effort": "High",
+      "fast": false,
+      "phase_bindings": [
+        {
+          "phase": "review",
+          "subagent_type": "generalPurpose",
+          "model": "grok-4.7-high",
+          "machine": "same_machine",
+          "foreground": true,
+          "fresh_context": true,
+          "accepted_agent_id": "fixture-review-001",
+          "setup_evidence_ids": [
+            "setup"
+          ],
+          "telemetry": "not_returned"
+        },
+        {
+          "phase": "execution",
+          "subagent_type": "generalPurpose",
+          "model": "grok-4.7-medium",
+          "machine": "same_machine",
+          "foreground": true,
+          "fresh_context": false,
+          "accepted_agent_id": "fixture-execution-001",
+          "setup_evidence_ids": [
+            "setup"
+          ],
+          "telemetry": "not_returned"
+        }
+      ]
+    },
+    "reviewer": {
+      "model": "grok-4.7-high",
+      "effort": "High",
+      "fast": false
+    },
+    "qa": {
+      "model": "grok-4.7-high",
+      "effort": "High",
+      "fast": false
+    }
+  },
+  "reviewers": {
+    "developer": "Designated fixture developer",
+    "human_qa": "Designated fixture human QA"
+  },
+  "variant_details": {
+    "complete_external_bundle_inactive_setup": {
+      "expected_checks": {
+        "C02_RELEASE": "PASS",
+        "C03_CONFIGURATION": "PASS",
+        "C03_ROUTES": "PASS",
+        "C06_APPLICATION": "UNVERIFIED",
+        "C07_WORKERS": "PASS",
+        "C08_INSTALLED_ACCEPTANCE": "UNVERIFIED",
+        "C08_PGB58": "UNVERIFIED"
+      },
+      "assertion": "external_bundle_and_ordinary_routes"
+    },
+    "old_worker_contract": {
+      "expected_checks": {
+        "C07_WORKERS": "FAIL"
+      },
+      "expected_worker_reason": "WORKER_CONTRACT_MISMATCH",
+      "mutation": {
+        "role": "reviewer",
+        "profile_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    },
+    "missing_helper": {
+      "expected_checks": {
+        "C02_RELEASE": "ERROR"
+      },
+      "mutation": {
+        "remove_owned_release_path": "skills/qa-bruno/scripts/node_modules"
+      },
+      "requires": "verified_prepared_release"
+    },
+    "model_capability_mismatch": {
+      "expected_checks": {
+        "C07_WORKERS": "FAIL"
+      },
+      "expected_worker_reason": "WORKER_SELECTION_MISMATCH",
+      "mutation": {
+        "role": "qa",
+        "effort": "Medium",
+        "capability_status": "partial"
+      }
+    },
+    "active_rule_flag": {
+      "expected_checks": {
+        "C03_ROUTES": "FAIL"
+      },
+      "expected_route_code": "ACTIVE_TRIGGER",
+      "mutation": {
+        "route_index": 0,
+        "jira_rule_enabled": true
+      }
+    },
+    "absent_installed_acceptance": {
+      "expected_checks": {
+        "C08_INSTALLED_ACCEPTANCE": "UNVERIFIED"
+      },
+      "expected_code": {
+        "C08_INSTALLED_ACCEPTANCE": "ACCEPTANCE_MISSING"
+      },
+      "mutation": {
+        "omit_acceptance": "installed_package"
+      }
+    },
+    "designated_humans_pending_walkthrough": {
+      "expected_checks": {
+        "C08_PGB58": "UNVERIFIED"
+      },
+      "assertion": "human_handoff"
+    },
+    "two_project_configuration": {
+      "expected_checks": {
+        "C03_CONFIGURATION": "PASS",
+        "C03_ROUTES": "PASS"
+      },
+      "assertion": "two_project_identity"
+    },
+    "missing_health_resource": {
+      "expected_checks": {
+        "C04_PACKAGE": "PASS",
+        "C04_INSTALLATION": "PASS",
+        "C05_HEALTH": "UNVERIFIED"
+      },
+      "expected_health_state": "unknown",
+      "mutation": {
+        "health": "actual_reader_unknown_shape"
+      }
+    },
+    "old_evidence_revision": {
+      "expected_checks": {
+        "C04_PACKAGE": "FAIL",
+        "C04_INSTALLATION": "FAIL",
+        "C05_HEALTH": "FAIL"
+      },
+      "expected_code": {
+        "C04_PACKAGE": "MANAGER_REVISION_MISMATCH",
+        "C04_INSTALLATION": "MANAGER_REVISION_MISMATCH",
+        "C05_HEALTH": "MANAGER_REVISION_MISMATCH"
+      },
+      "routes": [
+        "explicit_manifest",
+        "receipt_embedded_only"
+      ],
+      "control_expected_checks": {
+        "C04_PACKAGE": "PASS",
+        "C04_INSTALLATION": "PASS",
+        "C05_HEALTH": "PASS"
+      }
+    }
+  },
+  "no_ai_cases_reason": "Acceptance concerns CLI/IaC or instruction contracts, which the currently approved automated QA skills do not execute. Human reviewers run these cases; developer CI and PR review remain required.",
+  "preparation": {
+    "id": "PREP-01",
+    "owner": "implementer",
+    "supplies": "Executable local fixtures and exact commands for all human cases below, bound to the PR revision.",
+    "used_by": [
+      "DATA-01",
+      "R1-20-H01",
+      "R1-20-H02",
+      "R1-20-H03",
+      "R1-20-H04"
+    ],
+    "preserves": [
+      "All case inputs, order, expected outcomes, evidence and cleanup. No live provider data or changed test expectations."
+    ]
+  },
+  "data": {
+    "id": "DATA-01",
+    "description": "Prescribed isolated fixture set for all cases below; each case states its input and expected outcome. All unmentioned snapshot facts are complete/valid and no earlier-priority work exists.",
+    "initial_state": "Fresh per case; only explicitly sequenced actions share state. Providers/tool receipts are simulated, credentials dummy.",
+    "reference": null,
+    "preparation_id": "PREP-01",
+    "owner": "implementer"
+  },
+  "manager_config": {
+    "schema": "pigboard-config/v1",
+    "jira": {
+      "site": "https://jira.example.invalid",
+      "connection": {
+        "credential_kind": "atlassian_scoped_service_account_token",
+        "cloud_id": "00000000-0000-0000-0000-000000000001",
+        "secret_reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef"
+      },
+      "read_bounds": {
+        "max_epics": 4,
+        "max_streams": 8,
+        "max_known_issues": 32,
+        "max_comments": 256,
+        "max_pages": 64,
+        "max_requests": 256,
+        "page_size": 25,
+        "max_response_bytes": 1048576,
+        "max_total_response_bytes": 8388608,
+        "request_timeout_ms": 5000,
+        "scan_timeout_ms": 60000
+      }
+    },
+    "defaults": {
+      "stages": {
+        "Ready to Work": "11",
+        "In Progress": "12",
+        "In Review": "13",
+        "QA": "14",
+        "Human Review": "15",
+        "Rework Queued": "16",
+        "Blocked": "17"
+      },
+      "accepted_later_stage_ids": [
+        "18"
+      ],
+      "types": {
+        "epic": "21",
+        "story": "22",
+        "bug": "23"
+      },
+      "actors": {
+        "manager": [
+          "operator-demo"
+        ],
+        "implementer": [
+          "operator-demo"
+        ],
+        "reviewer": [
+          "operator-demo"
+        ],
+        "qa": [
+          "operator-demo"
+        ],
+        "human_request": [
+          "operator-demo"
+        ]
+      },
+      "repositories": [
+        "https://git.example.invalid/team/app"
+      ],
+      "worker_prefixes": [
+        "AI-Daniel-"
+      ],
+      "opt_in_label": "pigboard"
+    },
+    "projects": [
+      {
+        "id": "10001",
+        "key": "APP",
+        "board_ids": [
+          "101"
+        ],
+        "inherit": [
+          "stages",
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "repositories",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {}
+      },
+      {
+        "id": "10002",
+        "key": "OPS",
+        "board_ids": [
+          "102"
+        ],
+        "inherit": [
+          "accepted_later_stage_ids",
+          "types",
+          "actors",
+          "worker_prefixes",
+          "opt_in_label"
+        ],
+        "mappings": {
+          "stages": {
+            "Ready to Work": "31",
+            "In Progress": "32",
+            "In Review": "33",
+            "QA": "34",
+            "Human Review": "35",
+            "Rework Queued": "36",
+            "Blocked": "37"
+          },
+          "repositories": [
+            "https://code.example.invalid/ops/service"
+          ]
+        }
+      }
+    ],
+    "manager": {
+      "installation_id": "fixture",
+      "domain_id": "fixture-domain",
+      "aws": {
+        "account_id": "123456789012",
+        "region": "eu-west-1",
+        "stack_name": "pigboard-fixture",
+        "operator_role_arn": "arn:aws:iam::123456789012:role/pigboard-operator",
+        "deployer_role_arn": "arn:aws:iam::123456789012:role/pigboard-deployer"
+      },
+      "controls": {
+        "mode": "preview",
+        "schedule_enabled": false,
+        "writes_enabled": false,
+        "maintenance": false
+      },
+      "schedule_minutes": 5,
+      "invocation_timeout_seconds": 120,
+      "log_retention_days": 14,
+      "activation": {
+        "full_visibility_confirmed": false,
+        "sole_admitting_installation_confirmed": false,
+        "inventory_reviewed": false
+      },
+      "transition_edges": []
+    }
+  },
+  "manager_configuration_digest": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+  "manager_evidence": {
+    "simulated": true,
+    "provenance": "Literal saved shapes from actual package/installation/health contracts; no provider producer runs. Dummy metadata is not a deployed package claim.",
+    "old_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "manifest": {
+      "schema": "pigboard-manager-package/v1",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "configuration_digest": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+      "installation_id": "fixture",
+      "domain_id": "fixture-domain",
+      "installation_generation": "fixture-generation-001",
+      "runtime": "nodejs24.x",
+      "sender": true,
+      "canonical_config": {
+        "schema": "pigboard-config/v1",
+        "jira": {
+          "site": "https://jira.example.invalid",
+          "connection": {
+            "credential_kind": "atlassian_scoped_service_account_token",
+            "cloud_id": "00000000-0000-0000-0000-000000000001",
+            "secret_reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef"
+          },
+          "read_bounds": {
+            "max_epics": 4,
+            "max_streams": 8,
+            "max_known_issues": 32,
+            "max_comments": 256,
+            "max_pages": 64,
+            "max_requests": 256,
+            "page_size": 25,
+            "max_response_bytes": 1048576,
+            "max_total_response_bytes": 8388608,
+            "request_timeout_ms": 5000,
+            "scan_timeout_ms": 60000
+          }
+        },
+        "defaults": {
+          "stages": {
+            "Ready to Work": "11",
+            "In Progress": "12",
+            "In Review": "13",
+            "QA": "14",
+            "Human Review": "15",
+            "Rework Queued": "16",
+            "Blocked": "17"
+          },
+          "accepted_later_stage_ids": [
+            "18"
+          ],
+          "types": {
+            "epic": "21",
+            "story": "22",
+            "bug": "23"
+          },
+          "actors": {
+            "manager": [
+              "operator-demo"
+            ],
+            "implementer": [
+              "operator-demo"
+            ],
+            "reviewer": [
+              "operator-demo"
+            ],
+            "qa": [
+              "operator-demo"
+            ],
+            "human_request": [
+              "operator-demo"
+            ]
+          },
+          "repositories": [
+            "https://git.example.invalid/team/app"
+          ],
+          "worker_prefixes": [
+            "AI-Daniel-"
+          ],
+          "opt_in_label": "pigboard"
+        },
+        "projects": [
+          {
+            "id": "10001",
+            "key": "APP",
+            "board_ids": [
+              "101"
+            ],
+            "inherit": [
+              "stages",
+              "accepted_later_stage_ids",
+              "types",
+              "actors",
+              "repositories",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {}
+          },
+          {
+            "id": "10002",
+            "key": "OPS",
+            "board_ids": [
+              "102"
+            ],
+            "inherit": [
+              "accepted_later_stage_ids",
+              "types",
+              "actors",
+              "worker_prefixes",
+              "opt_in_label"
+            ],
+            "mappings": {
+              "stages": {
+                "Ready to Work": "31",
+                "In Progress": "32",
+                "In Review": "33",
+                "QA": "34",
+                "Human Review": "35",
+                "Rework Queued": "36",
+                "Blocked": "37"
+              },
+              "repositories": [
+                "https://code.example.invalid/ops/service"
+              ]
+            }
+          }
+        ],
+        "manager": {
+          "installation_id": "fixture",
+          "domain_id": "fixture-domain",
+          "aws": {
+            "account_id": "123456789012",
+            "region": "eu-west-1",
+            "stack_name": "pigboard-fixture",
+            "operator_role_arn": "arn:aws:iam::123456789012:role/pigboard-operator",
+            "deployer_role_arn": "arn:aws:iam::123456789012:role/pigboard-deployer"
+          },
+          "controls": {
+            "mode": "preview",
+            "schedule_enabled": false,
+            "writes_enabled": false,
+            "maintenance": false
+          },
+          "schedule_minutes": 5,
+          "invocation_timeout_seconds": 120,
+          "log_retention_days": 14,
+          "activation": {
+            "full_visibility_confirmed": false,
+            "sole_admitting_installation_confirmed": false,
+            "inventory_reviewed": false
+          },
+          "transition_edges": []
+        }
+      },
+      "dependency_hashes": {
+        "root": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+        "aws": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+      },
+      "payload_hashes": {
+        "lib/aws/manager-lambda.mjs": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+      },
+      "logical_resources": [
+        "Function",
+        "Schedule",
+        "LogGroup",
+        "StateTable",
+        "RuntimeRole",
+        "SchedulerRole"
+      ],
+      "zip_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    },
+    "installation": {
+      "schema": "pigboard-installation-receipt/v1",
+      "binding": {
+        "schema": "pigboard-aws-installation/v1",
+        "installation_id": "fixture",
+        "domain_id": "fixture-domain",
+        "site": "https://jira.example.invalid",
+        "configuration_digest": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+        "package_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "region": "eu-west-1",
+        "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/00000000-0000-4000-8000-000000000001",
+        "table_name": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "installation_generation": "fixture-generation-001"
+      },
+      "manifest": {
+        "schema": "pigboard-manager-package/v1",
+        "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "configuration_digest": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+        "installation_id": "fixture",
+        "domain_id": "fixture-domain",
+        "installation_generation": "fixture-generation-001",
+        "runtime": "nodejs24.x",
+        "sender": true,
+        "canonical_config": {
+          "schema": "pigboard-config/v1",
+          "jira": {
+            "site": "https://jira.example.invalid",
+            "connection": {
+              "credential_kind": "atlassian_scoped_service_account_token",
+              "cloud_id": "00000000-0000-0000-0000-000000000001",
+              "secret_reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef"
+            },
+            "read_bounds": {
+              "max_epics": 4,
+              "max_streams": 8,
+              "max_known_issues": 32,
+              "max_comments": 256,
+              "max_pages": 64,
+              "max_requests": 256,
+              "page_size": 25,
+              "max_response_bytes": 1048576,
+              "max_total_response_bytes": 8388608,
+              "request_timeout_ms": 5000,
+              "scan_timeout_ms": 60000
+            }
+          },
+          "defaults": {
+            "stages": {
+              "Ready to Work": "11",
+              "In Progress": "12",
+              "In Review": "13",
+              "QA": "14",
+              "Human Review": "15",
+              "Rework Queued": "16",
+              "Blocked": "17"
+            },
+            "accepted_later_stage_ids": [
+              "18"
+            ],
+            "types": {
+              "epic": "21",
+              "story": "22",
+              "bug": "23"
+            },
+            "actors": {
+              "manager": [
+                "operator-demo"
+              ],
+              "implementer": [
+                "operator-demo"
+              ],
+              "reviewer": [
+                "operator-demo"
+              ],
+              "qa": [
+                "operator-demo"
+              ],
+              "human_request": [
+                "operator-demo"
+              ]
+            },
+            "repositories": [
+              "https://git.example.invalid/team/app"
+            ],
+            "worker_prefixes": [
+              "AI-Daniel-"
+            ],
+            "opt_in_label": "pigboard"
+          },
+          "projects": [
+            {
+              "id": "10001",
+              "key": "APP",
+              "board_ids": [
+                "101"
+              ],
+              "inherit": [
+                "stages",
+                "accepted_later_stage_ids",
+                "types",
+                "actors",
+                "repositories",
+                "worker_prefixes",
+                "opt_in_label"
+              ],
+              "mappings": {}
+            },
+            {
+              "id": "10002",
+              "key": "OPS",
+              "board_ids": [
+                "102"
+              ],
+              "inherit": [
+                "accepted_later_stage_ids",
+                "types",
+                "actors",
+                "worker_prefixes",
+                "opt_in_label"
+              ],
+              "mappings": {
+                "stages": {
+                  "Ready to Work": "31",
+                  "In Progress": "32",
+                  "In Review": "33",
+                  "QA": "34",
+                  "Human Review": "35",
+                  "Rework Queued": "36",
+                  "Blocked": "37"
+                },
+                "repositories": [
+                  "https://code.example.invalid/ops/service"
+                ]
+              }
+            }
+          ],
+          "manager": {
+            "installation_id": "fixture",
+            "domain_id": "fixture-domain",
+            "aws": {
+              "account_id": "123456789012",
+              "region": "eu-west-1",
+              "stack_name": "pigboard-fixture",
+              "operator_role_arn": "arn:aws:iam::123456789012:role/pigboard-operator",
+              "deployer_role_arn": "arn:aws:iam::123456789012:role/pigboard-deployer"
+            },
+            "controls": {
+              "mode": "preview",
+              "schedule_enabled": false,
+              "writes_enabled": false,
+              "maintenance": false
+            },
+            "schedule_minutes": 5,
+            "invocation_timeout_seconds": 120,
+            "log_retention_days": 14,
+            "activation": {
+              "full_visibility_confirmed": false,
+              "sole_admitting_installation_confirmed": false,
+              "inventory_reviewed": false
+            },
+            "transition_edges": []
+          }
+        },
+        "dependency_hashes": {
+          "root": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+          "aws": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        "payload_hashes": {
+          "lib/aws/manager-lambda.mjs": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+        },
+        "logical_resources": [
+          "Function",
+          "Schedule",
+          "LogGroup",
+          "StateTable",
+          "RuntimeRole",
+          "SchedulerRole"
+        ],
+        "zip_digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+      },
+      "original": {
+        "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/00000000-0000-4000-8000-000000000001",
+        "table_name": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "table_arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+        "installation_generation": "fixture-generation-001"
+      },
+      "observed_at": "2026-11-16T12:00:00.000Z"
+    },
+    "health": {
+      "schema": "pigboard-manager-health/v1",
+      "state": "disabled",
+      "exit_code": 0,
+      "current": {
+        "installation_id": "fixture",
+        "package_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "configuration_digest": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+        "health_generation": null,
+        "health_enabled_at": null,
+        "evidence_revision": null
+      },
+      "observed_at": "2026-11-16T12:00:00.000Z",
+      "desired_enabled": false,
+      "observed_enabled": false,
+      "applied_controls": {
+        "schedule_enabled": false,
+        "writes_enabled": false,
+        "maintenance": false,
+        "revision": 0
+      },
+      "settings": {
+        "freshness_seconds": 900,
+        "warning_percent": 80
+      },
+      "latest_complete": null,
+      "latest_attempt": null,
+      "latest_failure": null,
+      "latest_unbound_failure": null,
+      "maximum_budget_utilization": null,
+      "holds": null,
+      "counts_complete": false,
+      "reasons": [],
+      "query_coverage": {
+        "start": "2026-11-15T12:00:00.000Z",
+        "end": "2026-11-16T12:00:00.000Z",
+        "pages": 1,
+        "fetched_events": 0,
+        "decoded_bytes": 0,
+        "complete": true,
+        "last_complete_absence": "within_query_window_only"
+      },
+      "metric_evidence": {
+        "status": "not_applicable",
+        "reason": "No retained enablement epoch; no metric dimension is invented.",
+        "statistics": "Maximum",
+        "metrics": {}
+      },
+      "ignored_historical_scans": 0,
+      "omissions": [],
+      "links": {
+        "logs": "https://eu-west-1.console.aws.amazon.com/cloudwatch/home?region=eu-west-1#logsV2:log-groups/log-group/%2Faws%2Flambda%2Fpigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78"
+      },
+      "next_step": "Use the existing stop procedure to confirm stopped execution; retained work is not drained.",
+      "writes": 0,
+      "worker_health": "not_observed"
+    },
+    "missing_resource_health": {
+      "schema": "pigboard-manager-health/v1",
+      "state": "unknown",
+      "exit_code": 2,
+      "current": {
+        "evidence_revision": null
+      },
+      "observed_at": "2026-11-16T12:00:00.000Z",
+      "desired_enabled": null,
+      "observed_enabled": null,
+      "applied_controls": null,
+      "settings": {
+        "freshness_seconds": 900,
+        "warning_percent": 80
+      },
+      "latest_complete": null,
+      "latest_attempt": null,
+      "latest_failure": null,
+      "latest_unbound_failure": null,
+      "maximum_budget_utilization": null,
+      "holds": null,
+      "counts_complete": false,
+      "reasons": [],
+      "query_coverage": null,
+      "metric_evidence": null,
+      "ignored_historical_scans": 0,
+      "omissions": [
+        "Required installation or telemetry observation unavailable; check selected profile access."
+      ],
+      "links": {},
+      "next_step": "Use the existing stop procedure to confirm stopped execution; retained work is not drained.",
+      "writes": 0,
+      "worker_health": "not_observed"
+    },
+    "resource_names": {
+      "Function": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78",
+      "Schedule": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78",
+      "StateTable": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state",
+      "RuntimeRole": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-runtime",
+      "SchedulerRole": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-scheduler",
+      "LogGroup": "/aws/lambda/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78"
+    }
+  }
+}
