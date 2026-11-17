@@ -188,27 +188,50 @@ node /absolute/pigboard-setup/scripts/manager-health.mjs \
   --operator-profile PREPARED_PROFILE --json
 ```
 
-Retain that original output as the `--health` file; readiness never invokes the
-reader. It compares installation/revision/configuration identity and the producer's
-health-generation digest. A compatible inactive observation is `disabled`, exit0,
-with desired/observed schedule and applied writes/schedule false, complete query
-coverage, zero writes and worker health `not_observed`. The producer observes the
-existing Function, Schedule, LogGroup, StateTable and roles before health queries;
-readiness preserves its logs link, query window, reasons and omissions. Unknown or
-missing resource reads remain unverified. No alarm inventory is invented.
+Retain that complete original output as the `--health` file; readiness never
+invokes the reader. It compares installation/revision/configuration identity and
+the producer's health-generation digest. A compatible inactive observation is
+`disabled`, exit 0, with desired/observed schedule and applied writes/schedule
+false, zero writes and worker health `not_observed`. Unknown, healthy, starting,
+stale or degraded observations remain unverified for this inactive comparison.
+The producer observes the existing Function, Schedule, LogGroup, StateTable and
+roles before health queries; readiness does not repeat those reads or invent an
+alarm inventory.
 
-An initially disabled installation can have null health generation/enabled time,
-null evidence revision and metric status `not_applicable`. With an epoch, retain
-the producer's observed five metric entries. Each record needs `points`, `maximum`
-and `latest_at`. Points must be an integer from 0 through 1440. Zero points use
-`maximum:null` and `latest_at:null`; mixed zero and observed records are valid.
-Positive points need a finite nonnegative maximum and a parseable timestamp;
-Presence maxima cannot exceed 1. Missing or inconsistent records remain
-UNVERIFIED: supply the complete original saved health output. Readiness does not
-fetch or reconstruct observations or repeat configure. Zero datapoints alone do
-not prove a resource missing. Saved timestamps and stale/starting/degraded states are shown
-without recalculating freshness using today's clock. This compares saved supplied
-evidence; it neither authenticates it nor probes enablement.
+The saved `observed_at`, query `start`/`end` and retained `health_enabled_at` must
+be canonical ISO timestamps, such as `2026-11-16T12:00:00.000Z`. The query starts
+before it ends, and its end equals `observed_at`. Retained enablement must be no
+later than that saved observation; it may predate the query. Readiness checks
+these saved relationships without deriving a lookback or using today's clock.
+Coverage must be complete, with integer `pages` from 1 through 10,
+`fetched_events` from 0 through 1000 and `decoded_bytes` from 0 through 1048576.
+Zero events require zero bytes; positive events require at least one byte per
+event. `last_complete_absence` must be `within_query_window_only`: absence is
+bounded to the saved query window. The checker does not reconstruct logs or
+certify their exact byte totals.
+
+An initially disabled installation uses explicit null health generation,
+enabled time and evidence revision, with metric `status:'not_applicable'`,
+`statistics:'Maximum'` and an empty `metrics` map. A retained epoch needs a valid
+generation and matching non-null evidence digest, with metric `status:'observed'`,
+`statistics:'Maximum'` and all five metric entries. Each record needs `points`,
+`maximum` and `latest_at`. Points must be an integer from 0 through 1440. Zero
+points use `maximum:null` and `latest_at:null`; mixed zero and observed records
+are valid. Positive points need a finite nonnegative maximum and a canonical
+timestamp from the query start rounded down to a minute, through but excluding
+the query end. Presence maxima cannot exceed 1. Zero datapoints alone do not
+prove a resource missing.
+
+Missing or inconsistent comparison fields remain UNVERIFIED. A malformed outer
+report (schema, object `current`, declared state or exit code) is ERROR; explicit
+identity/digest mismatches or active controls remain FAIL even when other fields
+are incomplete. Supply the complete original saved health output to recover;
+do not repeat configure, query providers or enable anything to fill a gap.
+Readiness preserves supplied reasons, omissions, links, extra applied controls
+and metric reason text as information. It does not certify their meaning or
+resource authenticity. Other producer fields are outside this inactive
+comparison. A match does not certify the complete producer report, current
+freshness, provenance, delivery or activation.
 
 Versioned detailed scan-health summaries currently cover preview execution.
 Ordinary apply keeps its existing outcome logs and native metrics. Missing apply

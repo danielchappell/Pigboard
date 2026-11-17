@@ -329,6 +329,14 @@ test('Codex C05 checks retained metric tuples while preserving zero observations
     { name: 'zero count with maximum', mutation: 'zero_maximum', expected: 'UNVERIFIED' },
     { name: 'retained zero observations', mutation: null, expected: 'PASS' },
     { name: 'mixed observed and zero records', mutation: 'mixed', expected: 'PASS' },
+    { name: 'invalid enablement and truncated coverage', mutation: 'epoch_coverage', expected: 'UNVERIFIED', reasons: ['HEALTH_EPOCH_INCOMPLETE', 'HEALTH_WINDOW_INCOMPLETE'] },
+    { name: 'invalid saved observation timestamp', mutation: 'observation', expected: 'UNVERIFIED', reasons: ['HEALTH_OBSERVATION_INCOMPLETE'] },
+    { name: 'enablement after saved observation', mutation: 'future_epoch', expected: 'UNVERIFIED', reasons: ['HEALTH_EPOCH_INCOMPLETE'] },
+    { name: 'retained generation cannot bind', mutation: 'generation', expected: 'UNVERIFIED', reasons: ['HEALTH_EPOCH_INCOMPLETE'] },
+    { name: 'reversed and observation-mismatched window', mutation: 'window', expected: 'UNVERIFIED', reasons: ['HEALTH_WINDOW_INCOMPLETE'] },
+    { name: 'invalid coverage counters and absence declaration', mutation: 'counters', expected: 'UNVERIFIED', reasons: ['HEALTH_WINDOW_INCOMPLETE'] },
+    { name: 'invalid metric statistic and window timestamp', mutation: 'metric_window', expected: 'UNVERIFIED', reasons: ['METRIC_COVERAGE_INCOMPLETE'] },
+    { name: 'observed metrics without an epoch', mutation: 'no_epoch', expected: 'UNVERIFIED', reasons: ['INITIAL_DISABLED_METRIC_EVIDENCE_MISSING'] },
   ];
   for (const row of cases) {
     const input = managerInputs(await inputs(t));
@@ -343,14 +351,40 @@ test('Codex C05 checks retained metric tuples while preserving zero observations
       metrics.DurationMilliseconds = { maximum: 25, points: 2, latest_at: '2026-11-16T11:59:00.000Z' };
     }
     input.health.metric_evidence = { status: 'observed', reason: null, statistics: 'Maximum', metrics };
+    if (row.mutation === 'epoch_coverage') {
+      input.health.current.health_enabled_at = 'not-a-date';
+      input.health.query_coverage = { complete: true };
+    }
+    if (row.mutation === 'observation') input.health.observed_at = 'not-a-date';
+    if (row.mutation === 'future_epoch') input.health.current.health_enabled_at = '2026-11-16T12:01:00.000Z';
+    if (row.mutation === 'generation') {
+      input.health.current.health_generation = 'invalid generation';
+      input.health.current.evidence_revision = evidenceRevision(input.health.current);
+    }
+    if (row.mutation === 'window') Object.assign(input.health.query_coverage, { start: '2026-11-16T12:00:00.000Z', end: '2026-11-16T11:59:00.000Z' });
+    if (row.mutation === 'counters') {
+      Object.assign(input.health.query_coverage, { pages: '1', fetched_events: 0, decoded_bytes: 1 });
+      delete input.health.query_coverage.last_complete_absence;
+    }
+    if (row.mutation === 'metric_window') {
+      input.health.metric_evidence.statistics = 'Average';
+      metrics.CompletePresence = { maximum: 1, points: 1, latest_at: '2026-11-16T12:00:00.000Z' };
+    }
+    if (row.mutation === 'no_epoch') {
+      input.health = structuredClone(fixture.manager_evidence.health);
+      input.health.current.package_revision = revision;
+      input.health.metric_evidence = { status: 'observed', reason: null, statistics: 'Maximum', metrics };
+    }
     const report = await checkReadiness(input);
     assert.equal(check(report, 'C04_PACKAGE').status, 'PASS', row.name);
     assert.equal(check(report, 'C04_INSTALLATION').status, 'PASS', row.name);
     const health = check(report, 'C05_HEALTH');
     assert.equal(health.status, row.expected, row.name);
-    assert.equal(health.observed.comparison_reasons.includes('METRIC_COVERAGE_INCOMPLETE'), row.expected === 'UNVERIFIED', row.name);
+    if (row.reasons) for (const reason of row.reasons) assert.ok(health.observed.comparison_reasons.includes(reason), `${row.name}: ${reason}`);
+    else assert.equal(health.observed.comparison_reasons.includes('METRIC_COVERAGE_INCOMPLETE'), row.expected === 'UNVERIFIED', row.name);
     assert.equal(health.observed.observed_at, input.health.observed_at);
     assert.ok(report.human_cases.every(human => human.status === 'NOT_RUN'));
     assert.deepEqual(report.activation, fixture.expected.activation);
+    t.diagnostic(JSON.stringify({ row: row.name, status: health.status, comparison_reasons: health.observed.comparison_reasons }));
   }
 });
