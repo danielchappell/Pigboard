@@ -125,7 +125,13 @@ revision, ticket/PR and code revisions, requirement/case coverage, observed resu
 artifact references, limitations and confirmed or uncertain external actions.
 Installation receipts and local paths alone are not live acceptance evidence.
 
-| Outcome | Current handling |
+Current publication and transition authority comes from the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and pinned entrypoint contract. The broader historical routes below are not a
+current capability list. Their rows grant no ordinary wait, Blocked or resume
+authority.
+
+| Outcome | Historical route reference |
 | --- | --- |
 | Complete implementation with current required CI | Publish the implementation handoff and verify In Review transition. |
 | Complete passing PR review | Publish reports, verify current-revision approval, then verify QA transition. |
@@ -138,10 +144,15 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
-The implementer retains `implementationOutcome` READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN
-and separate `deliveryOutcome` NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE.
-COMPLETED describes a verified intended handoff, including wait/blocked, not code
-success. Delivery failure preserves revision-bound READY but never claims Jira moved.
+The implementer must retain `implementationOutcome`
+READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN and separate `deliveryOutcome`
+NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE in its durable result.
+These remain current result fields and values; they do not authorize publication,
+a Jira transition or resume. Unsupported routes remain deferred under the selected
+release’s ordinary worker support matrix and pinned entrypoint contract.
+COMPLETED means publication and the selected release's supported native destination
+were verified; it does not mean code success. Delivery failure preserves
+revision-bound READY but never claims Jira moved.
 See the [durable result](../skills/implementer-entrypoint/references/handoff.md#durable-result).
 
 A PASS label without current complete evidence is insufficient. Human review,
@@ -325,8 +336,8 @@ work:
   start_context: /private/run/facts.yaml # separately trusted original bytes
 assignment: /private/run/current-pointer.json # lookup hint; actual verified pointer wins
 prepared_assessment: null # final: /private/run/assessment.json
-known_requests: [] # final wait: exact typed request references + unresolved evidence
-retained_delivery: null # if present, original bytes/UUID/known receipts/uncertainty and explicit existing resume
+known_requests: [] # retained exact typed references and unresolved evidence; not permission to publish a wait
+retained_delivery: null # original bytes/UUID/receipts/uncertainty and any authentic legacy authorization; no retry or resume authority
 ```
 
 Preflight requires no invented finished assessment or deployment for static work.
@@ -334,22 +345,32 @@ For final, supply the complete actual `qa_report`, declared findings, detailed
 observations/artifacts, coverage counts, cleanup and case-specific reuse basis.
 For example, static human-only work has `steps: []`, the exact two prescribed human
 IDs and the original `no_ai_cases_reason`; its result reports zero AI work and
-pending humans. It still needs the current PR/review/CI. A partial assessment
-retains an earlier FAIL/finding and all later NOT_RUN rows/reasons. If a later
-access inability remains unresolved, propose Blocked while retaining the defect;
-if a real unresolved typed upstream request prevents completion without inability,
-propose dependency_wait. The skill verifies the actual evidence and route itself.
-PASS/FAIL claims always require their actual tested PR and environment proof.
+pending humans. It still needs the current PR/review/CI.
+
+A partial assessment retains every earlier PASS or FAIL, each finding and all
+later NOT_RUN rows with their reasons. Use the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and its pinned `qa-jira` contract to determine which outcomes can be published.
+The publisher independently checks the complete assessment, current proof and
+exact permitted transition; a caller's FAIL, BLOCKED or wait label does not select
+a Jira destination. Independent access, evidence, cleanup or scope inability and
+causal upstream wait retain the full assessment locally when unsupported by that
+release. Do not propose a Blocked or dependency_wait publication from this ordinary
+invocation. PASS/FAIL claims always require their actual tested PR and environment
+proof.
 
 The returned structured object separates `test_verdict` from `delivery_outcome`,
 includes complete rows/findings/humans, counts/cleanup/evidence/limitations and
-known publication/transition/status receipts. `COMPLETED` means the intended native
-status was independently observed, including delivery to Blocked. Preflight and
-discussion have `NOT_ATTEMPTED`. Preserve UNAVAILABLE/UNCERTAIN results and full
-original evidence locally. Never replay an attempted append or transition. One
-bounded resolving read may establish conclusive success; otherwise stop with the
-known actions, uncertainty and exact human recovery required. Only an existing
-valid explicit canonical resume chain permits a later result slot.
+known publication/transition/status receipts. `COMPLETED` means publication and
+the selected release's supported native destination were independently verified;
+it does not mean tests or human cases passed. Preflight and discussion have
+`NOT_ATTEMPTED`; an unsupported outcome retains its complete local evidence
+without a candidate or transition. Preserve UNAVAILABLE/UNCERTAIN results and
+original evidence. Never replay an attempted append or transition. One bounded
+resolving read may establish conclusive success; otherwise stop with the known
+actions, uncertainty and exact human recovery required. An authentic legacy resume
+reference is retained evidence, not authority to resume or publish another result
+in this invocation.
 
 ### Prepare source-only simulated publisher inputs
 
@@ -619,7 +640,11 @@ does not transfer. Authorized independent agent verification can establish
 applicable developer requirements with truthful actor/category evidence. Designated
 human tracking stays honest; its NOT RUN label alone adds no replay requirement.
 
-Expected routes below describe the contract, not completed acceptance results:
+Use the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and pinned qa-entrypoint/qa-jira contracts for current routes. The broader
+historical reference below grants no ordinary wait, Blocked or resume authority.
+Its examples are not completed acceptance results:
 
 | Actual run | Retained result and handoff |
 | --- | --- |
@@ -642,5 +667,6 @@ remains detailed evidence, with one aggregate canonical row per step.
 Return qa-jira's exact `test_verdict`, `human_only`, `qa_report`, `findings`,
 `human_pending`, `intended_destination`, receipts, `actual_jira_status`,
 `delivery_outcome` and `recovery`. Local fields are not new canonical keys.
-COMPLETED means the intended handoff was verified, including Blocked; tests,
-human acceptance, hosted CI, merge and activation have separate evidence.
+COMPLETED means publication and the selected release's supported native
+destination were independently verified; it does not mean tests or human cases
+passed. Hosted CI, merge and activation have separate evidence.
