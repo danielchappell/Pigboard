@@ -297,6 +297,7 @@ input is exactly `{"operation":"apply"}` in apply mode. See the
 one-stream choice, outcomes and recovery. Later invocations may select another
 eligible stream after fresh evaluation. Stop preserves pending attempts and their
 publication/proof evidence; it does not clear or replay them.
+
 ## Basic health and enablement evidence
 
 Use [the health command](manager-health.md) with the same canonical configuration,
@@ -328,3 +329,9 @@ GetMetricStatistics. The latter requires Resource `*`; AWS IAM does not enforce
 per-installation metric dimensions, so the reader fixes requests in code. Existing
 operator lifecycle permissions remain. No new resource, alarm, SNS action, runtime
 metric-write permission, second State store or activation is installed by health.
+
+Detailed scan health applies to preview scans. The ordinary apply sender keeps
+its basic sanitized invocation/result logs and native Lambda metrics; it emits no
+preview scan summary or completion metric. Inspect apply outcomes through those
+logs and retained attempt evidence. A saved preview success does not prove apply
+completion or allow an old configuration/enablement identity to become healthy.

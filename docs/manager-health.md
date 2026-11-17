@@ -1,6 +1,11 @@
 # Inspect manager health
 
-This source command inspects the customer-owned Pig Boss installation. It reads
+This source command inspects the customer-owned Pig Boss installation.
+Detailed scan summaries and completion health cover preview scans. The ordinary
+apply sender retains basic sanitized invocation/result logs and native Lambda
+metrics; it does not emit a preview scan summary or completion metric. This command
+does not certify apply execution. Old preview evidence cannot satisfy a changed
+apply configuration/enablement identity. It reads
 binding, applied State, the existing log group and fixed CloudWatch metrics. It
 performs no scan, Jira transition, State write or schedule change. Source fixtures
 do not prove deployed AWS permissions, human acceptance or activation. Alarms and

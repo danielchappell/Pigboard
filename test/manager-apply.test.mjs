@@ -14,3 +14,25 @@ for(const fault of packet.oracle.fault_positions)test('R1-17-H02 prescribed boun
 test('R1-17-H03 existing six holds forbid ordinary effects',async()=>{for(const hold of packet.oracle.holds){const e=await runApplyFixture({hold});assert.equal(e.result.writes,0,hold);assert.equal(e.result.code,packet.oracle.hold_expectations[hold],hold);assert.equal(e.records.filter(r=>r.kind==='attempt').length,0,hold);assert.equal(e.worker_calls,0);}});
 
 test('R1-17-H01 ordinary Bug admission and no replay',async()=>{const e=await runApplyFixture({bug:true,repeat:true});const oracle=packet.oracle.bug;assert.equal(packet.bug_issue.fields.issuetype.id,oracle.type_id);assert.equal(e.result.status,oracle.status,JSON.stringify(e.result));assert.equal(e.result.apply.ticket_id,oracle.ticket_id);assert.equal(e.result.writes,oracle.writes);assert.equal(e.second.writes,oracle.repeat_writes);assert.deepEqual(e.mutations,packet.oracle.mutations);assert.equal(e.records.find(r=>r.kind==='attempt').outcome,'applied');});
+
+test('R1-17-H01 native member ownership excludes Epic roots',async()=>{
+ const e=await runApplyFixture({variant:'native-members',fault:'intent:after'}),oracle=packet.regressions['native-members'].oracle;
+ const retain=e.state_calls.find(c=>c.name==='retainMembers'),begin=e.state_calls.find(c=>c.name==='begin');
+ assert.deepEqual(retain?.input.members,oracle.members,'retain only real ticket members with their native Epic ownership');
+ assert.deepEqual(begin?.input.required_members,oracle.required_members);
+ assert.deepEqual(e.records.filter(r=>r.kind==='member').map(r=>Object.fromEntries(['site','project_id','label','ticket_id','epic_id','assignment','revision'].map(k=>[k,r[k]]))).sort((a,b)=>a.ticket_id<b.ticket_id?-1:1),oracle.stored_members);
+ assert(!e.records.some(r=>r.kind==='member'&&oracle.excluded_member_ids.includes(r.ticket_id)));
+ assert.equal(begin.input.attempt.ticket_id,oracle.ticket_id);assert.equal(begin.input.attempt.epic_id,oracle.epic_id);
+ assert.deepEqual(e.state_calls.map(c=>c.name),oracle.state_calls);assert.equal(e.records.filter(r=>r.kind==='attempt'&&r.outcome==='pending').length,oracle.attempts);
+ assert.equal(e.result.status,oracle.status);assert.equal(e.result.code,oracle.code);assert.equal(e.result.apply.stage,oracle.stage);assert.equal(e.result.writes,oracle.writes);assert.equal(e.mutations.length,0);assert.equal(e.worker_calls,0);
+});
+
+test('R1-17-H01 isolated scoped recheck preserves selected safety',async()=>{
+ const positive=await runApplyFixture({variant:'isolated-comments'}),oracle=packet.regressions['isolated-comments'].oracle;
+ assert.equal(positive.result.status,oracle.status,JSON.stringify(positive.result));assert.equal(positive.result.code,oracle.code);assert.equal(positive.result.apply.stage,oracle.stage);assert.equal(positive.result.writes,oracle.writes);
+ assert.deepEqual(positive.trace.filter(t=>t.status===403).map(t=>t.path),oracle.denied_paths);assert.deepEqual(positive.mutations,packet.oracle.mutations);assert.deepEqual(positive.result.apply.effects,packet.oracle.effects);
+ const begins=positive.state_calls.filter(c=>c.name==='begin');assert.equal(begins.length,1);assert.equal(begins[0].input.attempt.ticket_id,oracle.selected_ticket_id);assert.equal(begins[0].input.attempt.epic_id,oracle.selected_epic_id);assert(!positive.mutations.some(m=>m.path.includes('/'+oracle.unselected_ticket_id+'/')));
+ const held=await runApplyFixture({variant:'selected-recheck-comments'}),hold=packet.regressions['selected-recheck-comments'].oracle;
+ assert.equal(held.result.status,hold.status);assert.equal(held.result.code,hold.code);assert.equal(held.result.apply.stage,hold.stage);assert.equal(held.result.writes,hold.writes);assert.deepEqual(held.trace.filter(t=>t.status===403).map(t=>t.path),hold.denied_paths);assert.deepEqual(held.mutations,packet.oracle.mutations.slice(0,2));
+ assert.equal(held.result.apply.effects.intent,'confirmed');assert.equal(held.result.apply.effects.comment,'confirmed');assert.equal(held.result.apply.effects.pointer,'confirmed');assert.equal(held.result.apply.effects.transition,'not_attempted');assert.equal(held.result.apply.effects.finalization,'not_attempted');assert.equal(held.records.filter(r=>r.kind==='attempt'&&r.outcome==='pending').length,hold.pending_attempts);assert.equal(held.state_calls.filter(c=>c.name==='begin').length,1);assert.equal(held.result.apply.ticket_id,hold.selected_ticket_id);assert(!held.mutations.some(m=>m.path.includes('/'+hold.unselected_ticket_id+'/')));assert.equal(held.worker_calls,0);
+});

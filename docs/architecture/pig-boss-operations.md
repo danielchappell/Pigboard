@@ -60,7 +60,7 @@ waiting, and is this installation approaching its configured limits? This is
 manager health only. Cursor heartbeats, transcript collection, cancellation and
 worker recovery remain deferred.
 
-Preview execution returns a versioned scan summary. The AWS wrapper writes
+The portable preview application returns a versioned scan summary. The AWS wrapper writes
 one sanitized completion event to the existing log group and emits CloudWatch
 embedded metrics. No second operational database or worker ledger is introduced.
 Ordinary apply retains its existing outcome logs and native metrics; it does not
@@ -176,6 +176,9 @@ See [health use and recovery](../manager-health.md) and the
 [installation lifecycle](../manager-installation.md). Customer-owned deployed
 acceptance, human acceptance and activation remain separate from source fixtures.
 No health observation retries uncertain Jira operations or starts another scan.
+Detailed scan health covers preview scans. The apply sender retains basic result
+logs and native Lambda metrics without a preview summary/completion metric; old
+preview identity is not proof of apply completion or apply health.
 
 ## Capacity and the path to 50 projects
 
