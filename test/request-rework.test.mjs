@@ -8,10 +8,10 @@ import path from 'node:path';
 import { stringify } from 'yaml';
 import { validateWork } from '../lib/contracts/work.mjs';
 import { validateHandoff, extractHandoff, digestValue } from '../lib/contracts/handoff.mjs';
-import { validateReceiptChain } from '../lib/contracts/receipts.mjs';
+import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory } from '../lib/contracts/receipts.mjs';
 import { parseConfig } from '../lib/config/parse.mjs';
 import { resolveProject, inspectStreams } from '../lib/config/projects.mjs';
-import { CASE_IDS, packet, prepare } from './fixtures/human-rework.mjs';
+import { CASE_IDS,P166_CASE_IDS, packet, prepare } from './fixtures/human-rework.mjs';
 const root = new URL('../', import.meta.url).pathname;
 const plain = value => JSON.parse(JSON.stringify(value));
 const chain = e => validateReceiptChain(JSON.stringify(e));
@@ -157,9 +157,29 @@ test('actual formatter retains human findings and rejects record/summary/wrapper
 test('installed instruction contract is bounded and keeps live/provider claims separate from local checks',async()=>{
   const skill=await readFile(new URL('../skills/request-rework/SKILL.md',import.meta.url),'utf8');
   const example=await readFile(new URL('../skills/request-rework/references/example.md',import.meta.url),'utf8');
-  for(const required of ['human-writing/SKILL.md','consumer: worker','completion_established:true','new repair request as target','transition ID','already Rework','unknown append','REQUEST_PREPARED','ALREADY_QUEUED','deliveryOutcome','same PR','No Blocked producer']) assert(skill.includes(required),required);
+  for(const required of ['human-writing/SKILL.md','consumer: worker','worker-current','new repair request as target','transition ID','already Rework','unknown append','REQUEST_PREPARED','ALREADY_QUEUED','deliveryOutcome','same PR','No Blocked producer']) assert(skill.includes(required),required);
   for(const id of CASE_IDS)assert(example.includes(id),id);
   assert(example.includes('default locked dependency preparation'));assert(example.includes('NOT RUN'));
   assert(example.includes('R1-09-H01/H02'));assert(example.includes('BIND_ACTUAL_ASSISTANT_PUBLICATION_BODY'));
   // Wording/link guards support, but never replace, independent instruction episodes.
+});
+
+// Current-human tests keep the legacy strict tests above unchanged in purpose.
+for(const id of P166_CASE_IDS)test('P166-HUMAN packet '+id,()=>{
+ const p=packet(id),raw=JSON.stringify(p.currentPreflight),queued=id.endsWith('queued'),r=queued?inspectRecordedHistory(raw):validateWorkerCurrent(raw);
+ const refused=['closed','source','actor','edge','conflicting-qa'].some(s=>id.endsWith(s));
+ assert.equal(r.valid,!refused,id+JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(JSON.stringify(p.currentPreflight),raw);
+ if(id.endsWith('current')||id.endsWith('repeated')){const leaf=validateWorkerCurrent(JSON.stringify(p.currentPublished));assert.equal(leaf.valid,true,JSON.stringify(leaf.diagnostics));assert.equal(leaf.outcome,'repair_request');assert.equal(Object.hasOwn(leaf,'completion_established'),false);assert.equal(p.oracle.status,'NOT RUN');}
+});
+test('P166-HUMAN exporter separates actual subjects from future responses',async t=>{
+ const dir=await mkdtemp(path.join(os.tmpdir(),'pgb166-human-export-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ await prepare(path.join(dir,'current'),'P166-H03-current');await prepare(path.join(dir,'repeated'),'P166-H03-repeated');
+ for(const name of ['current','repeated']){const e=JSON.parse(await readFile(path.join(dir,name,'assistant/preflight-chain.json')));assert.equal(validateWorkerCurrent(JSON.stringify(e)).valid,true);await assert.rejects(readFile(path.join(dir,name,'assistant/oracle.json')));await assert.rejects(readFile(path.join(dir,name,'assistant/record.yaml')));}
+});
+test('P166-SUBJECT packets retain actual operation contracts and opaque operator-only image bytes',async t=>{
+ const {readdir}=await import('node:fs/promises'),dir=await mkdtemp(path.join(os.tmpdir(),'pgb166-worker-export-'));t.after(()=>rm(dir,{recursive:true,force:true}));
+ await prepare(path.join(dir,'H01'),'P166-H01');const out=path.join(dir,'H01'),cards=JSON.parse(await readFile(path.join(out,'operator/operation-cards.json')));
+ for(const operation of ['model_phase','update_pr','ci','publish_artifact','read_comment','progression'])assert(cards.dynamic_operations[operation],operation);
+ const screenshot=cards.helper_observations['TC-01.S4'].screenshot,bytes=Buffer.from(await readFile(path.join(out,screenshot.source_file),'utf8'),'base64');assert.equal(createHash('sha256').update(bytes).digest('hex'),screenshot.decoded_sha256);assert.deepEqual([...bytes.subarray(0,8)],[137,80,78,71,13,10,26,10]);
+ assert.deepEqual(await readdir(path.join(out,'output')),[]);for(const file of ['oracle.json','operation-cards.json','ui-observation.png.base64'])await assert.rejects(readFile(path.join(out,'assistant',file)));assert.equal(JSON.parse(await readFile(path.join(out,'metadata.json'))).subject_execution,'NOT_RUN');await assert.rejects(prepare(out,'P166-H01'));
 });

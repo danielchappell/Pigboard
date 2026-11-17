@@ -239,3 +239,16 @@ test('formatter shape success cannot authorize a flattened transitive-root candi
   assert.equal(result.valid, false);
   assert(result.diagnostics.some(d => d.code === 'REPAIR' && d.path.endsWith('/payload/consumed_requests')));
 });
+
+test('P166-IMPLEMENTER consumes all ancestor requests once with fresh current evidence',async()=>{
+ const {validateWorkerCurrent}=await import('../lib/contracts/receipts.mjs');
+ const fixtures=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))),input=fixtures.repair_loop_p166.inputs.ancestor_union_implementation;
+ assert.equal(validateWorkerCurrent(JSON.stringify(input)).valid,true);
+ const target=entries(input).find(x=>x.r.record_id===input.target.record_id),assignment=entries(input).find(x=>x.r.record_id===target.r.assignment.record_id);
+ assert.equal(target.r.payload.consumed_requests.length,2);assert.deepEqual(target.r.payload.consumed_requests,assignment.r.payload.requests);
+ for(const [name,change]of [['omit',r=>r.payload.consumed_requests.shift()],['duplicate',r=>r.payload.consumed_requests.push(structuredClone(r.payload.consumed_requests[0]))]]){
+  const e=structuredClone(input),x=entries(e).find(x=>x.r.record_id===e.target.record_id),r=structuredClone(x.r);change(r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:stringify(r)}]}]});e.target.digest=digestValue(r);
+  const result=validateWorkerCurrent(JSON.stringify(e));assert.equal(result.valid,false,name);assert(result.diagnostics.some(d=>['REPAIR','STRUCTURE'].includes(d.code)),JSON.stringify(result.diagnostics));
+ }
+ const stale=structuredClone(input);stale.evidence_receipts.filter(e=>e.kind==='ci').forEach(e=>e.details.status='failed');assert.equal(validateWorkerCurrent(JSON.stringify(stale)).valid,false);
+});

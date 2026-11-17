@@ -176,3 +176,51 @@ test('PGB-172 copied candidate',async t=>{
  assert.deepEqual(JSON.parse(runs[0].stdout).observations,JSON.parse(runs[1].stdout).observations);
  for(const [relative,digest]of Object.entries(bindings))assert.equal(hash(await readFile(new URL('../'+relative,import.meta.url))),digest,relative+' unchanged after calls');
 });
+
+// Opt-in prepared dependency roots make this a genuine source-byte audit, never
+// the placeholder SKILL mechanics exercised by fixture() above.
+test('P166-COPY real instruction bytes and finite source/copied proof',{
+ skip:!process.env.PIGBOARD_PREPARED_HELPER_ROOT&&'Prepared physical helper dependency copies are required for the real-source audit.'
+},async t=>{
+ const {createHash}=await import('node:crypto'),{spawnSync}=await import('node:child_process'),{validateWorkerCurrent}=await import('../lib/contracts/receipts.mjs');
+ const hash=bytes=>createHash('sha256').update(bytes).digest('hex'),root=await mkdtemp(path.join(os.tmpdir(),'pigboard166-real-copy-'));
+ // Optional external evidence retains this one audit's actual receipt and bundle
+ // for the contributor operator. It is never read as a test verdict.
+ const evidence=process.env.PIGBOARD_P166_COPY_EVIDENCE;
+ if(!evidence)t.after(()=>rm(root,{recursive:true,force:true}));
+ const source=path.join(root,'source'),app=path.join(root,'app'),cache=path.join(root,'cache'),cwd=path.join(root,'unrelated');
+ await mkdir(source);await mkdir(app);await mkdir(cwd);git(source,'init','-b','main');git(source,'config','user.name','Fixture');git(source,'config','user.email','fixture@example.invalid');
+ const sourceRoot=new URL('../',import.meta.url).pathname;
+ // Actual complete skill folders, including sibling references: no stub markers.
+ for(const name of bundle.skills)await cp(path.join(sourceRoot,'skills',name),path.join(source,'skills',name),{recursive:true,filter:p=>!p.split(path.sep).includes('node_modules')});
+ for(const relative of bundle.validatorPayload.sources){const dest=path.join(source,relative);await mkdir(path.dirname(dest),{recursive:true});await cp(path.join(sourceRoot,relative),dest);}
+ git(source,'add','.');git(source,'commit','-m','Disposable complete actual-source packaging snapshot');
+ const copies=[];
+ const prepared=await prepare({source,app,cache,ref:git(source,'rev-parse','HEAD')},async dir=>{
+  const component=path.basename(dir)==='work-validator'?'root':path.basename(path.dirname(dir)),dependencySource=component==='root'?sourceRoot:path.join(process.env.PIGBOARD_PREPARED_HELPER_ROOT,component);
+  const lock=await readFile(path.join(dir,'package-lock.json')),originalLock=await readFile(path.join(dependencySource,'package-lock.json'));assert.deepEqual(lock,originalLock,component+' exact dependency lock');
+  await cp(path.join(dependencySource,'node_modules'),path.join(dir,'node_modules'),{recursive:true,dereference:true});copies.push({component,dependency_source:dependencySource,lock_sha256:hash(lock),physical_copy:true,network_or_install:false});
+ });
+ const manifest=JSON.parse(await readFile(prepared.manifest)),sourceFiles={};
+ async function compare(relative){
+  const copied=await readFile(path.join(prepared.skills,relative)),original=await readFile(path.join(source,'skills',relative));assert.deepEqual(copied,original,relative);assert.equal(hash(original),manifest.sourceFiles[relative],relative+' manifest hash');sourceFiles[relative]=hash(original);
+ }
+ for(const relative of Object.keys(manifest.sourceFiles)){
+  if(relative.startsWith('work-validator/')&&bundle.validatorPayload.sources.includes(relative.slice('work-validator/'.length))){
+   const payload=relative.slice('work-validator/'.length),original=await readFile(path.join(source,payload)),copied=await readFile(path.join(prepared.skills,relative));assert.deepEqual(copied,original,relative);assert.equal(hash(original),manifest.sourceFiles[relative]);sourceFiles[relative]=hash(original);
+  }else await compare(relative);
+ }
+ const changedInstructions=['implementer-entrypoint/SKILL.md','implementer-jira/SKILL.md','implementer-entrypoint/references/handoff.md','request-rework/SKILL.md','request-rework/references/example.md'];
+ for(const relative of changedInstructions)assert(sourceFiles[relative],relative);
+ for(const name of ['pigboard-pr-review','reviewer-jira','qa-entrypoint','qa-jira'])assert(sourceFiles[name+'/SKILL.md'],name);
+ const packets=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).repair_loop_p166,results=[];
+ const env={...process.env};delete env.NODE_PATH;
+ for(const [name,input]of Object.entries({...packets.inputs,...Object.fromEntries(Object.entries(packets.refusals).map(([n,e])=>['refusal_'+n,e]))})){
+  const file=path.join(root,name+'.json'),raw=JSON.stringify(input);await writeFile(file,raw);const args=['--mode','worker-current','--input',file,'--json'];
+  const original=spawnSync(process.execPath,[path.join(sourceRoot,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'}),copied=spawnSync(process.execPath,[path.join(prepared.skills,'work-validator/scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'});
+  assert.equal(copied.status,name.startsWith('refusal_')?1:0,name+copied.stdout+copied.stderr);assert.equal(original.status,copied.status);assert.equal(copied.stderr,'');assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(original.stdout));assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(JSON.stringify(validateWorkerCurrent(raw))));assert.equal(await readFile(file,'utf8'),raw);results.push({name,input_sha256:hash(raw),exit:copied.status,result:JSON.parse(copied.stdout)});
+ }
+ const audit={category:'Actual source/copied byte and supplied-proof test; not subject/human/live acceptance',product_source_revision:git(sourceRoot,'rev-parse','HEAD'),disposable_snapshot_revision:prepared.commit,receipt:prepared,manifested_files:Object.keys(sourceFiles).length,source_files:sourceFiles,dependencies:copies,proof_results:results};
+ if(evidence){await mkdir(evidence,{recursive:true});await writeFile(path.join(evidence,'audit.json'),JSON.stringify(audit,null,2));await cp(prepared.manifest,path.join(evidence,'manifest.json'));}
+ t.diagnostic('Compared '+Object.keys(sourceFiles).length+' actual source/copied manifested files; '+results.length+' finite API/CLI parity cases. Disposable snapshot commit is separate from product revision.');
+});

@@ -10,9 +10,9 @@ description: Compose one authorized native Jira Story or Bug in In Progress thro
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
+immutable prepared release. It supports current `new_work` and the narrowly defined same-open-PR repair assignment.
 This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+grants no resume, wait, null-PR repair or inability publication authority.
 
 Follow the [shared ordinary worker boundary](references/handoff.md#ordinary-worker-release-boundary).
 Full proof/publication help is `<receipt.skills>/work-validator/docs/handoffs.md`
@@ -25,7 +25,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait, null-PR repair and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.
@@ -60,11 +60,13 @@ admit, lock, deduplicate, interrupt another ticket, merge, deploy or activate.
    or unknown. Early High-phase blockers remain local with no final Jira call,
    candidate or transition. Stop after the assigned handoff or local inability.
 
-Repair/resume invocation stops before dispatch; retain accepted work and receipts
-locally for human handling. Never infer a missing PR,
+A supported repair dispatches the same High plan, independent High review and Medium
+execution on the existing PR. Pass every assigned request and finding to each phase.
+Own assigned findings are work to repair, not an upstream dependency wait.
+Unsupported repair/resume stops before dispatch; retain accepted work and receipts locally. Never infer a missing PR,
 assignment, human authorization, CI success or provider write. Current local
 validation is supplied-fact checking, not live authority. Read the shared
 [publication and uncertainty rules](references/handoff.md#publication-protocol)
 when a final handoff is needed. This structured implementer does not convert old
-prose tickets. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Retained QA still requires its basic contract;
-this mixed bundle is not an active compatible delivery loop.
+prose tickets. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Reviewer and QA recheck the repaired current revision under the same-release matrix.
+Source capability does not establish installed/live acceptance or automatic admission.

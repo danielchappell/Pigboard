@@ -6,7 +6,7 @@ The prepared `work-validator` contains five read-only handoff checks:
 | --- | --- |
 | `record` | One complete handoff's encoding, structure and digest. |
 | `chain` | The separate legacy strict proof against supplied work/context, native and external observations; no ordinary-worker fallback. |
-| `worker-current` | Current ordinary new_work predecessor or real-leaf proof with current own/required-parent/action observations; see the ordinary contract below. |
+| `worker-current` | Current ordinary/supported same-PR repair worker or human predecessor/real-leaf proof with current own/required-parent/action observations; see the ordinary contract below. |
 | `recorded-history` | Authentication of one exact recorded target and its required ancestry, including manager admission and stack requests. It does not establish current completion. |
 | `recorded-completion` | A coherent exact current recorded QA leaf, current declarations/digest/assignment, accepted native stage and outstanding recorded obligations. |
 
@@ -907,8 +907,10 @@ keep their original contracts.
 
 ## Ordinary worker release boundary
 
-This pinned release supports current `new_work` with `resume_authorization:null`
-and no assigned repair requests. Its closed support matrix is authoritative for
+This pinned release supports current `new_work` and same-open-PR `repair` with
+`resume_authorization:null`. Repair requires a nonnull existing PR and only own
+repair_request references from the exact same-ticket previous-assignment lineage,
+current approved requirements and the complete unresolved ancestor union. Its closed support matrix is authoritative for
 all bundled worker entries and their references:
 
 | Publisher / `intent` | Actual preflight target | Actual readback target | Direct source → destination |
@@ -918,14 +920,34 @@ all bundled worker entries and their references:
 | reviewer / `repair_request` | implementation | reviewer repair_request | In Review → Rework Queued |
 | qa / `success` | review | qa | QA → Human Review |
 | qa / `repair_request` | review | qa repair_request | QA → Rework Queued |
+| human_request / explicit `repair_request` | current unique qa | human repair_request | Human Review → Rework Queued |
 
-Repair assignments, resume, wait, Blocked/inability and human-request publication
-remain deferred from these ordinary workers. Reject unsupported assignments before
+Null-PR repair, stack-request repair, resume, wait and Blocked/inability publication
+remain deferred from these workers. Reject unsupported assignments before
 execution and unsupported final results before candidate construction or append.
 Preserve the full findings, partial ledger and original receipts locally. Never
 fall back to strict chain, manager recorded proof or another source release. The
 implementer still publishes only ordinary READY. Queue delivery does not admit
 repair, replace the pointer, enter In Progress or mutate manager State.
+
+For each supported repair, the implementer consumes every direct assigned request
+exactly once on the same PR and carries all findings through fresh High planning,
+independent High review and Medium execution. Independent PR review and prescribed
+QA use the repaired current revision; authenticated history is not execution.
+Only coherent verified QA consumption resolves requests. Failed repairs and prior
+implementation alone leave all older causes unresolved. Duplicate refs, unrelated
+lineage, changed requirements, conflicting PR identity and omitted causes reject.
+A resolved ancestor is not consumed again. No intermediate failed repair needs a
+successful QA record to retain its unresolved causes.
+
+Human preflight selects the unique current QA in Human Review and requires an open
+PR, exact pending humans/no-AI reason and explicit record-and-queue permission.
+Readback selects the actual new human request and its exact same-assignment QA basis.
+Only that selected new request is excluded from its predecessor's prior obligations;
+any other competing/unaccounted request holds. A later successful repaired QA may
+receive another explicit human rejection. Already Rework Queued is recorded-history
+inspection plus native/current PR observations only, with zero append/transition and
+additional findings labelled unrecorded. No human or AI PASS is inferred.
 
 A reviewer request requires the complete applicable independent review and all
 confirmed in-scope findings, exact implementation basis/current open PR and verified
@@ -954,8 +976,11 @@ complete `comment_pages`, current `pr_receipts`/`evidence_receipts`, genuinely
 `action_receipt: {site, project_id, ticket_id, actor_id, stage_id, can_read_issue,
 can_append_comment, transitions}`. Each transition is an observed unique
 `{from_stage_id, to_stage_id}` direct pair. Read actual capabilities, never infer
-permission from a record. Optional `publisher.intent` is `success` or
-`repair_request`; omission preserves v1 success behavior. It selects exact proof,
+permission from a record. For implementer/reviewer/QA, optional `publisher.intent` is `success` or
+`repair_request`; omission preserves v1 success behavior. Human publication requires
+`publisher.role: human_request` and explicit `intent: repair_request`; omission or
+`success` rejects. The configured human actor and direct Human Review edge are
+checked independently, including when role accounts overlap. It selects exact proof,
 never grants permission or adds a field to the canonical handoff. Unknown intent,
 implementer repair_request and mismatched leaf role/source/destination reject.
 
@@ -1120,3 +1145,47 @@ above from any directory; select the matching expected validity from `.expected`
 Tests verify full source/copied parity and no input mutation. Do not use a broken
 copy's source checkout as fallback. Run repository `npm test` after affected checks;
 local tests do not establish hosted CI, merge, live delivery or activation.
+
+### Prepare the finite same-PR repair exercises
+
+With source dependencies already prepared, export one fresh private packet:
+
+```sh
+node "$PIGBOARD_SOURCE/test/fixtures/human-rework.mjs" prepare "$PIGBOARD_RUN/P166-H01" P166-H01
+node "$PIGBOARD_SOURCE/scripts/validate-handoff.mjs" --mode worker-current --input "$PIGBOARD_RUN/P166-H01/assistant/current-worker.json" --json
+node "$PIGBOARD_SKILLS/work-validator/scripts/validate-handoff.mjs" --mode worker-current --input "$PIGBOARD_RUN/P166-H01/assistant/current-worker.json" --json
+```
+
+All variables are absolute paths; `PIGBOARD_SKILLS` comes from the same immutable
+release receipt. Use the existing exporter for these fixed groups:
+
+| Group | Packet IDs and purpose |
+| --- | --- |
+| H01 | `P166-H01`: actual implementer plan/independent review/execution, PR review and QA subjects on one supplied repair; original API→Bruno, database, UI order |
+| H02 | `P166-H02-reviewer`, `P166-H02-qa`, `P166-H02-inability`, `P166-H02-unknown`: repaired current assessment, complete partial ledger and retained uncertainty |
+| H03 | `P166-H03-current`, `P166-H03-repeated` and the fixed controls in the [human example](../skills/request-rework/references/example.md#current-repaired-qa-and-a-repeated-rejection) |
+| H04 | `P166-H04`: actual preflight consumer retains older/new request union; source/copied tests independently check missing roots and coherent QA resolution |
+| H05 | `P166-H05`: actual unsupported null-PR preflight; finite source/copied controls also retain stack-request, wait/resume, stale proof and ordinary success |
+
+Worker exports have `assistant/`, separate `operator/` and empty `output/`.
+Human exports keep future responses under `tester-cards/` and sample records/oracle
+outside `assistant/`. Subjects see only initial assistant inputs, exact pinned skills
+and their empty output/scratch locations. The operator serves only each actually
+requested operation, retaining complete ordered arguments/results from the first
+call. Never send an expected terminal report to a subject.
+
+H01 operation cards specify dynamic responses for the actual scratch commit,
+current same-PR source and actual plan/review/check/artifact bytes and hashes.
+Historical receipts keep their original bases. A fresh independent contributor
+reviews the actual High plan before Medium execution; a profile card is not that
+review. Subsequent reviewer/QA subjects consume only actual prior publications.
+The fixed UI image is explicitly supplied/mock and is released only after the
+requested UI observation; it establishes no live browser or screenshot execution.
+
+Static export/tests, actual contributor skill execution with supplied/mock
+provider/helper/model controls, configured Grok acceptance, designated human cases
+and live delivery are separate evidence. Record actual executing models and
+whether High/Medium selection was real or simulated. Missing prescribed capability
+remains NOT_RUN/NOT_REACHED after the bounded attempt; do not replay helpers or
+uncertain writes. Automatic manager admission, customer acceptance and activation
+are not part of these exercises.

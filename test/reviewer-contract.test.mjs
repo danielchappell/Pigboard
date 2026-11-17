@@ -131,3 +131,13 @@ test('reviewer repair and blocked canonical receipts use implementation basis an
   x.c.updated='2026-11-15T12:00:00Z';assert.equal(chain(e).valid,false);
  }
 });
+
+test('P166-REVIEWER repaired predecessor requires current approval and complete findings on requeue',async()=>{
+ const {validateWorkerCurrent}=await import('../lib/contracts/receipts.mjs');
+ const f=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))),success=f.repair_loop_p166.inputs.repair_review;
+ assert.equal(validateWorkerCurrent(JSON.stringify(success)).valid,true);
+ const stale=structuredClone(success);stale.evidence_receipts.filter(e=>e.kind==='approval').forEach(e=>e.details.state='pending');assert.equal(validateWorkerCurrent(JSON.stringify(stale)).valid,false);
+ const e=JSON.parse(f.repair_loop_p166.packets['P166-H02-reviewer'].assistant_files['current-worker.json']),basis=entries(e).find(x=>x.r.record_id===e.target.record_id),r={...structuredClone(basis.r),record_id:'16630000-0000-4000-8000-000000000001',role:'reviewer',kind:'repair_request',from_stage:'In Review',to_stage:'Rework Queued',payload:{basis:structuredClone(e.target),pr:structuredClone(basis.r.payload.pr),findings:[{id:'F-new',summary:'The repaired current source still violates AC-01.',evidence:[structuredClone(basis.r.payload.verification[0])]}],qa_report:null}};
+ const comment={id:'16631',author_id:'reviewer',update_author_id:'reviewer',created:'2026-11-17T11:00:00Z',updated:'2026-11-17T11:00:00Z',format:'adf',body:JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:stringify(r)}]}]})};e.comment_pages[0].comments.push(comment);e.comment_pages[0].total++;e.publisher.intent='repair_request';e.target={ticket_id:r.ticket_id,comment_id:comment.id,record_id:r.record_id,digest:digestValue(r)};
+ assert.equal(validateWorkerCurrent(JSON.stringify(e)).valid,true,JSON.stringify(validateWorkerCurrent(JSON.stringify(e)).diagnostics));
+});

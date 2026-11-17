@@ -51,9 +51,11 @@ inside the invocation; report the missing preparation.
    update author and timestamps against configured actors. Reject missing, edited,
    conflicting, incomplete or ambiguous lineage; never select by newest timestamp,
    guessed admission or body-supplied actor labels. Use `consumer: worker`, no store
-   read. Validate predecessors with actual `validateReceiptChain`/chain CLI, selecting
-   the current **QA completion** as target in Human Review. Require `valid:true`, its
-   exact `validated_leaf` and `completion_established:true`. Preserve human-pending
+   read. Validate the actual current **QA completion** in `worker-current` mode, selecting
+   `publisher: {role: human_request, account_id: CONFIGURED_HUMAN, intent: repair_request}`
+   with full current start/action proof and the exact Human Review queue edge.
+   Require `valid:true` and its exact `validated_leaf`; there is no completion flag
+   in this result and no QA-actor substitution. Preserve human-pending
    cases; this skill performs none of them.
 3. Independently require the same PR to be **open**, with identical provider,
    repository, number, full source revision and target branch. Generic QA completion
@@ -97,8 +99,7 @@ Enforce existing 16-KiB record, depth 16, list 100, 2,000-byte summary and 64-Ki
 bounds. If all mandatory findings do not fit, preserve them and explain inability;
 never truncate, implicitly split or issue competing terminal records.
 
-Run actual record validation on the unpublished candidate and chain validation on
-actual predecessors. Never invent comment IDs/metadata to call a candidate a receipt.
+Run actual record validation on the unpublished candidate and `worker-current` validation on actual predecessors. Never invent comment IDs/metadata to call a candidate a receipt.
 Use same-release `prepare-handoff.mjs` and configured HTML append route. It validates
 and formats immutable body/record digest; it does no provider call or freshness check.
 ADF is available for local/provider validation, not permission for another transport.
@@ -117,8 +118,8 @@ Keep an audit of actual calls, arguments and returned receipts, without secrets.
    Retain the exact returned comment ID and candidate bytes/digest.
 3. Read that exact comment through supported exact-ID selection or complete bounded
    pages. Verify extracted record, digest, nulls and every finding ID, actual server
-   author/update metadata and configured human actor. Validate the full updated chain
-   with the **new repair request as target**, not the old QA target. The old completion
+   author/update metadata and configured human actor. Validate the full updated `worker-current` proof with the same explicit human
+   publisher/intent and the **new repair request as target**, not the old QA target. The old completion
    cannot stand in for completion consuming a newly unresolved request. Preserve
    all previous unresolved request references.
 4. Reread native stage, pointer/assignment, requirements, exact QA basis, open PR/
@@ -141,14 +142,20 @@ Local formatting/validation success is never publication evidence.
 ## Already queued and repeated requests
 
 If A is already Rework Queued, inspect its exact current assignment, existing
-unresolved request(s), same PR and preserved findings. Select the existing repair
-record as chain target, never the old QA completion. Report ALREADY_QUEUED and what
+unresolved request(s), same PR and preserved findings. Use `recorded-history` with the existing exact repair request as target, plus
+current native pointer/requirements/PR observations for inspection. Do not fabricate
+a Human Review action receipt while the ticket is queued; never fall back to strict
+chain or worker-current publication proof. Report ALREADY_QUEUED and what
 publication/status evidence is known, including gaps. Send no append or transition.
 Additional/conflicting findings remain in the private result as **unrecorded**.
 Explain that they need an explicitly prepared authorized request covering them;
 do not improvise an additional queued-record producer, overwrite old findings or
 claim the new findings were queued. Prior uncertain effects stay uncertain until
-inspected. Repeated invocation supplies no exactly-once guarantee.
+inspected. Repeated invocation supplies no exactly-once guarantee. After a later supported
+repair succeeds through independent review and QA, a new explicit human rejection
+may use that new current QA, assignment and same open PR. Generate a new request
+once for this new rejection and preserve prior resolved/unresolved facts; do not
+reuse the old QA or replay the prior request.
 
 ## Durable result and readable response
 
