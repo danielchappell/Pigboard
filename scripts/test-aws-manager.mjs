@@ -10,7 +10,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {StateProvider,fixture as stateFixture} from '../test/helpers/state-provider.mjs';
 import {recordId} from '../lib/state/contract.mjs';
-import {loadHostSDK,hostConfig,sha256,bindInstallation,resolveInstallation,stopInstallation,configureInstallation} from '../lib/aws/installation.mjs';
+import {loadHostSDK,hostConfig,sha256,installationResourceBase,bindInstallation,resolveInstallation,stopInstallation,configureInstallation} from '../lib/aws/installation.mjs';
 import {runStateCommand} from './manager-state.mjs';
 import {runInstallationCommand} from './manager-installation.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
@@ -22,7 +22,7 @@ const inventoryPacket=()=>JSON.parse(fs.readFileSync(path.join(root,'test/fixtur
 export function fixtureCloud(config=hostFixture().config,overrides={},packageManifest){
  const sdk=loadHostSDK(),m=config.manager,a=m.aws,{digest}=hostConfig(JSON.stringify(config));
  const manifest=packageManifest??{schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:m.installation_id,domain_id:m.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),runtime:'nodejs24.x',canonical_config:config,dependency_hashes:{root:'r',aws:'a'},payload_hashes:{'lib/aws/manager-lambda.mjs':'source','config/manager.json':digest}};
- const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,name='pigboard-'+m.installation_id,tableName=name+'-state',tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`;
+ const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,name=installationResourceBase(m.installation_id),tableName=name+'-state',tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`;
  const binding={schema:'pigboard-aws-installation/v1',installation_id:m.installation_id,domain_id:m.domain_id,site:config.jira.site,configuration_digest:digest,package_revision:manifest.source_revision,region:a.region,stack_id:stackId,table_name:tableName,table_arn:tableArn,installation_generation:manifest.installation_generation};
  const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableArn:tableArn,TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
  const env={PB_INSTALLATION_ID:m.installation_id,PB_DOMAIN_ID:m.domain_id,PB_INSTALLATION_GENERATION:manifest.installation_generation,PB_PACKAGE_REVISION:manifest.source_revision,PB_CONFIGURATION_DIGEST:digest,PB_MODE:'preview',PB_WRITES_ENABLED:'false',PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:stackId};
