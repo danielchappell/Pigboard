@@ -63,6 +63,13 @@ worker recovery remain deferred.
 The portable preview application returns a versioned scan summary. The AWS wrapper writes
 one sanitized completion event to the existing log group and emits CloudWatch
 embedded metrics. No second operational database or worker ledger is introduced.
+Ordinary apply retains its existing outcome logs and native metrics; it does not
+produce this scan-summary contract. Missing detailed apply health remains
+unverified and cannot imply healthy or complete execution. Keep mode, canonical
+configuration and package identities distinct; older preview evidence cannot
+establish current apply completion. The existing health evaluator may report
+starting or stale when no current completion exists; it adds no separate
+unsupported-apply state.
 Summary fields: scan ID, installation/configuration revision, start/end timestamps,
 mode, complete/incomplete/failed result, counts of scanned projects/streams/issues,
 Jira requests and pages, consumed time, configured bounds, selected/held counts and
@@ -84,7 +91,7 @@ it never scans or transitions Jira or changes scheduling state. Report:
 | --- | --- |
 | disabled | Desired schedule is disabled and observed scheduler is stopped; no periodic success is expected. |
 | starting | Enabled within the configured freshness window; no current-revision completion yet. |
-| healthy | Latest scan is complete and fresh, with no capacity warning. Work holds are listed separately. |
+| healthy | Latest supported preview scan is complete and fresh, with no capacity warning. Work holds are listed separately. |
 | degraded | Latest scan failed/incomplete, capacity is near its bound, or actual schedule differs from desired intent in either direction. |
 | stale | No current-revision complete scan within the freshness window. |
 | unknown | Health/configuration evidence cannot be read or validated; never report healthy. |
