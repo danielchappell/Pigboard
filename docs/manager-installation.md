@@ -208,16 +208,18 @@ and diagnosis, not another init.
    saved command intent. Record their hashes. Do not reconstruct a receipt, rebind,
    package, upload, deploy or configure to obtain a fresh installation.
 3. From the reviewed checkout, run the installation inspection shown above with
-   those original arguments. Continue only if it returns `MISSING_INSTALLATION`
-   and current observations still prove the same original creation, table,
-   generation, package and disabled controls. Stop if state exists, evidence is
-   incomplete, facts differ or the prior write remains uncertain.
-4. Run the init command above once with the original arguments. Preserve its
-   stdout, stderr, exit code and tool revision separately from the old failure.
-   Inspect that same installation once afterward. A confirmed result must retain
-   the original binding, package revision and generation with all controls false.
-   Verify the configuration and receipt hashes are unchanged. If the result is
-   uncertain or unavailable, preserve it and stop; do not repeat init or reset State.
+   those original arguments. Continue only if it returns `MISSING_INSTALLATION`.
+   This confirms missing retained installation state; inspection does not read
+   creation events. Stop if state exists, another result is returned or the prior
+   write remains uncertain.
+4. Run the init command above once with the original arguments. Init reads and
+   verifies current original-creation evidence, the original binding and disabled
+   controls before State mutation. Preserve its stdout, stderr, exit code and tool
+   revision separately from the old failure. Inspect that same installation once
+   afterward. A confirmed result must retain the original binding, package revision
+   and generation with all controls false. Verify the configuration and receipt
+   hashes are unchanged. If either result is invalid, uncertain, unavailable or
+   otherwise unconfirmed, preserve it and stop; do not repeat init or reset State.
 
 Initialization does not authorize scheduling, apply, package replacement or release.
 Live acceptance of this continuation remains separate from local simulations.
