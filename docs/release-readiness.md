@@ -101,7 +101,11 @@ actors, repositories, opt-in label, worker prefixes and these ordinary routes:
 
 Each observed full label must match its configured prefix followed by digits.
 Stream identity is `[Jira site, immutable project ID, full label]`; the same
-`AI-Daniel-1` label in two projects identifies two streams. All saved Jira-rule
+`AI-Daniel-1` label in two projects identifies two streams. Each observed stream
+needs implementer, reviewer and QA rows for that same full label and project.
+Missing roles remain unverified for that stream; a wholly absent configured
+project remains unverified too. Supply the complete saved inactive setup for each
+observed label. All saved Jira-rule
 and Cursor-automation flags must be false. A true flag fails; an absent flag
 remains unverified. The checker reports it without changing a hosted setting.
 Historical Story-only exports in [Jira setup](jira-setup.md) do not prepare current
@@ -163,7 +167,11 @@ uses the receipt's embedded manifest. Both routes require
 `MANAGER_REVISION_MISMATCH` remains a failure even when an older package, receipt
 and health report agree with one another. Package support requires `sender:true`,
 Node24 runtime and the six existing logical resources. Package hashes are saved
-metadata; readiness does not independently hash deployed Lambda code.
+metadata. Readiness requires valid `dependency_hashes.root` and
+`dependency_hashes.aws` digests, at least one `payload_hashes` entry, and valid
+digests for every supplied entry. These are minimum declared metadata checks;
+they do not prove that every payload file is listed or that deployed Lambda bytes
+match. Supply the complete original saved manifest when metadata is missing.
 
 The successful receipt's site, installation/domain, region, configuration digest,
 generation and original stack/table binding must agree with canonical controls.
@@ -191,8 +199,14 @@ missing resource reads remain unverified. No alarm inventory is invented.
 
 An initially disabled installation can have null health generation/enabled time,
 null evidence revision and metric status `not_applicable`. With an epoch, retain
-the producer's observed five metric entries. Zero datapoints alone do not prove a
-resource missing. Saved timestamps and stale/starting/degraded states are shown
+the producer's observed five metric entries. Each record needs `points`, `maximum`
+and `latest_at`. Points must be an integer from 0 through 1440. Zero points use
+`maximum:null` and `latest_at:null`; mixed zero and observed records are valid.
+Positive points need a finite nonnegative maximum and a parseable timestamp;
+Presence maxima cannot exceed 1. Missing or inconsistent records remain
+UNVERIFIED: supply the complete original saved health output. Readiness does not
+fetch or reconstruct observations or repeat configure. Zero datapoints alone do
+not prove a resource missing. Saved timestamps and stale/starting/degraded states are shown
 without recalculating freshness using today's clock. This compares saved supplied
 evidence; it neither authenticates it nor probes enablement.
 

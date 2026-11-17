@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { checkReadiness, readLocalInput } from '../lib/release/readiness.mjs';
 import { runReadinessCommand } from '../scripts/check-readiness.mjs';
 import { runFixtureCommand } from '../scripts/test-release-readiness.mjs';
+import { evidenceRevision } from '../lib/manager/health.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const fixture = JSON.parse(await readFile(new URL('./fixtures/release-readiness.json', import.meta.url)));
@@ -260,4 +261,96 @@ test('C01 distinguishes explicit malformed manager roots from omitted and valid 
   assert.equal(check(recovery, 'C04_PACKAGE').status, 'PASS');
   assert.equal(check(recovery, 'C04_INSTALLATION').status, 'FAIL');
   assert.equal(recovery.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
+});
+
+test('Codex C03 keeps all ordinary roles within each observed numbered stream', async t => {
+  const cases = [
+    { name: 'disjoint role labels', labels: ['AI-Daniel-1', 'AI-Daniel-2', 'AI-Daniel-3'], extra: [], expected: 'UNVERIFIED', missing: [['AI-Daniel-1', 'reviewer'], ['AI-Daniel-1', 'qa'], ['AI-Daniel-2', 'implementer'], ['AI-Daniel-2', 'qa'], ['AI-Daniel-3', 'implementer'], ['AI-Daniel-3', 'reviewer']] },
+    { name: 'complete stream plus partial stream', labels: null, extra: ['implementer'], expected: 'UNVERIFIED', missing: [['AI-Daniel-2', 'reviewer'], ['AI-Daniel-2', 'qa']] },
+    { name: 'two complete streams', labels: null, extra: ['implementer', 'reviewer', 'qa'], expected: 'PASS', missing: [] },
+  ];
+  for (const row of cases) {
+    const input = await inputs(t);
+    const firstProject = input.observations.routes.filter(route => route.project_id === '10001');
+    if (row.labels) for (const [index, route] of firstProject.entries()) route.full_label = row.labels[index];
+    for (const role of row.extra) input.observations.routes.push({ ...firstProject.find(route => route.role === role), full_label: 'AI-Daniel-2' });
+    const report = await checkReadiness(input);
+    const routes = check(report, 'C03_ROUTES');
+    assert.equal(routes.status, row.expected, row.name);
+    assert.ok(routes.observed.every(route => route.status !== 'FAIL'), row.name);
+    const missing = routes.observed.filter(route => route.code === 'STREAM_ROLE_MISSING');
+    assert.deepEqual(missing.map(route => [route.full_label, route.role]).sort(), row.missing.slice().sort(), row.name);
+    for (const route of missing) {
+      assert.equal(route.project_id, '10001');
+      assert.equal(route.stream_key, JSON.stringify(['https://jira.example.invalid', '10001', route.full_label]));
+      assert.equal(route.status, 'UNVERIFIED');
+    }
+    assert.equal(routes.observed.filter(route => route.code === 'PROJECT_ROLE_MISSING').length, 0);
+    assert.ok(report.inactive_setup.projects.every(project => project.routes.every(route => !route.jira_rule_enabled && !route.cursor_automation_enabled)));
+    assert.ok(report.human_cases.every(human => human.status === 'NOT_RUN'));
+    assert.deepEqual(report.activation, fixture.expected.activation);
+  }
+});
+
+test('Codex C04 requires minimum declared dependency and payload digests', async t => {
+  const cases = [
+    { name: 'empty payload map', explicit: true, mutation: 'empty_payload', expected: 'FAIL' },
+    { name: 'empty dependency map', explicit: false, mutation: 'empty_dependencies', expected: 'FAIL' },
+    { name: 'missing aws dependency', explicit: false, mutation: 'missing_aws', expected: 'FAIL' },
+    { name: 'illustrative saved metadata control', explicit: true, mutation: null, expected: 'PASS' },
+  ];
+  for (const row of cases) {
+    const input = managerInputs(await inputs(t), revision, row.explicit);
+    for (const manifest of [input.packageManifest, input.installation.manifest].filter(Boolean)) {
+      if (row.mutation === 'empty_payload') manifest.payload_hashes = {};
+      if (row.mutation === 'empty_dependencies') manifest.dependency_hashes = {};
+      if (row.mutation === 'missing_aws') delete manifest.dependency_hashes.aws;
+    }
+    const report = await checkReadiness(input);
+    assert.equal(check(report, 'C04_PACKAGE').status, row.expected, row.name);
+    if (row.expected === 'FAIL') {
+      assert.equal(check(report, 'C04_PACKAGE').code, 'PACKAGE_METADATA_MISMATCH', row.name);
+      assert.notEqual(check(report, 'C04_INSTALLATION').status, 'PASS', row.name);
+      assert.equal(report.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED', row.name);
+    } else {
+      assert.equal(check(report, 'C04_INSTALLATION').status, 'PASS');
+      assert.equal(Object.keys(check(report, 'C04_PACKAGE').observed.metadata.payload_hashes).length, 1);
+    }
+    assert.ok(report.human_cases.every(human => human.status === 'NOT_RUN'));
+    assert.deepEqual(report.activation, fixture.expected.activation);
+  }
+});
+
+test('Codex C05 checks retained metric tuples while preserving zero observations', async t => {
+  const names = ['CompletePresence', 'AttemptPresence', 'FailurePresence', 'MaximumBudgetUtilization', 'DurationMilliseconds'];
+  const cases = [
+    { name: 'five empty records', mutation: 'empty', expected: 'UNVERIFIED' },
+    { name: 'string point count', mutation: 'string_points', expected: 'UNVERIFIED' },
+    { name: 'zero count with maximum', mutation: 'zero_maximum', expected: 'UNVERIFIED' },
+    { name: 'retained zero observations', mutation: null, expected: 'PASS' },
+    { name: 'mixed observed and zero records', mutation: 'mixed', expected: 'PASS' },
+  ];
+  for (const row of cases) {
+    const input = managerInputs(await inputs(t));
+    Object.assign(input.health.current, { health_generation: 'retained-epoch-001', health_enabled_at: '2026-11-16T11:00:00.000Z' });
+    input.health.current.evidence_revision = evidenceRevision(input.health.current);
+    const metrics = Object.fromEntries(names.map(name => [name, { maximum: null, points: 0, latest_at: null }]));
+    if (row.mutation === 'empty') for (const name of names) metrics[name] = {};
+    if (row.mutation === 'string_points') metrics.CompletePresence.points = '0';
+    if (row.mutation === 'zero_maximum') metrics.CompletePresence.maximum = 0;
+    if (row.mutation === 'mixed') {
+      metrics.CompletePresence = { maximum: 1, points: 1, latest_at: '2026-11-16T11:59:00.000Z' };
+      metrics.DurationMilliseconds = { maximum: 25, points: 2, latest_at: '2026-11-16T11:59:00.000Z' };
+    }
+    input.health.metric_evidence = { status: 'observed', reason: null, statistics: 'Maximum', metrics };
+    const report = await checkReadiness(input);
+    assert.equal(check(report, 'C04_PACKAGE').status, 'PASS', row.name);
+    assert.equal(check(report, 'C04_INSTALLATION').status, 'PASS', row.name);
+    const health = check(report, 'C05_HEALTH');
+    assert.equal(health.status, row.expected, row.name);
+    assert.equal(health.observed.comparison_reasons.includes('METRIC_COVERAGE_INCOMPLETE'), row.expected === 'UNVERIFIED', row.name);
+    assert.equal(health.observed.observed_at, input.health.observed_at);
+    assert.ok(report.human_cases.every(human => human.status === 'NOT_RUN'));
+    assert.deepEqual(report.activation, fixture.expected.activation);
+  }
 });
