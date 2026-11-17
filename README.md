@@ -89,8 +89,8 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | Jira stage | Owner and result |
 | --- | --- |
 | In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Dependency wait and blockers stop locally before candidate/append, preserving full evidence; no Jira transition. |
-| In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA. |
-| QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review. |
+| In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA; complete confirmed defects queue on the same open PR. |
+| QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review; complete confirmed defects queue with the full partial ledger. |
 | Human Review | Responsible developer and human QA reviewer assess the PR before human merge; human rework is deferred from the ordinary invocation; retain findings for human handling. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
@@ -98,11 +98,14 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 The [structured reviewer](skills/pigboard-pr-review/SKILL.md) consumes the actual
 implementation record; only verified current approval permits QA through
 [reviewer-jira](skills/reviewer-jira/SKILL.md). The [QA composer](skills/qa-entrypoint/SKILL.md)
-retains all prescribed helper results and delegates successful ordinary publication
-to [qa-jira](skills/qa-jira/SKILL.md). Failed review/QA, causal waits, blockers,
-repair/resume and human rework are deferred: preserve full local findings, partial
-ledgers and original receipts, then stop before candidate construction or append
-with no Jira transition. Local outcome labels do not mean Jira moved.
+retains all prescribed helper results and delegates one final assessment to
+[qa-jira](skills/qa-jira/SKILL.md). Complete confirmed reviewer/QA defects can publish
+one repair_request and verify the direct Rework Queued transition. The
+[same-release support matrix](docs/handoffs.md#ordinary-worker-release-boundary)
+states exact proof and destinations. Independent inability, incomplete work, causal
+waits and unsupported repair/resume retain all findings and partial ledgers locally.
+Queueing grants no admission/pointer/State authority; live acceptance and later
+same-PR repair execution remain separate.
 
 Discussion stays in Review or QA. The separately prepared request-rework skill and
 legacy repair contracts do not provide an ordinary fallback. Saved wiring, provider
@@ -294,7 +297,7 @@ delivery. The source AWS wrapper composes173/State/ordinary policy; designated h
 
 ## Ordinary worker compatibility
 
-The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval and successful QA. It does not establish live freshness, execution authority or manager completion. Repair/resume and unsuccessful publication remain deferred with local findings and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
+The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval, successful QA and complete reviewer/QA repair requests. It does not establish live freshness, execution authority or manager completion. Repair assignments, resume and inability/wait publication remain deferred with full local evidence and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
 
 See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
 

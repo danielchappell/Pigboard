@@ -7,15 +7,14 @@ description: Validate current native Jira Story/Bug reviewer assignments in read
 
 ## Ordinary worker release boundary
 
-Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. Reject unsupported invocation before work or candidate construction: repair,
-resume, human request-rework, failed review/QA, blocked and dependency-wait
-publication are deferred. Preserve local findings, partial ledgers and original
-receipts; return precise inability and hold with no mutation. Required repair
-still holds. Do not fall back to strict chain or manager recorded proof.
+Use the explicit same-release support matrix: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release. It supports current `new_work` only.
+This skill retains its own role-specific proof and action boundaries; the matrix
+grants no repair-assignment, resume, wait or inability publication authority.
 
-Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
@@ -24,11 +23,10 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked caller/profile/reference instructions may describe legacy classification or
-repair/resume. Those descriptions are deferred and grant no ordinary mutation
-authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
-not Jira status. The owning publisher must reject unsupported final outcomes
-before candidate construction or append, regardless of an upstream label.
+Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+label grants no authority: the owning publisher independently checks the same-release
+matrix and actual evidence before candidate construction. Unsupported work retains
+all findings, partial ledgers and original receipts locally with no mutation.
 
 
 Read [the reviewer contract](../pigboard-pr-review/references/jira-handoff.md).
@@ -43,14 +41,16 @@ proof, current PR/evidence, prepared actor/tools and
 available direct edges. Return verified facts or honest inability with no writes.
 Unreadable eligibility is NOT RUN; do not speculate a blocker on an unverified issue.
 
-In `final`, accept only the wrapper's complete current approved PASS to QA.
-FAIL, REWORK_QUEUED, BLOCKED, INCOMPLETE, wait or resume stops before candidate
-construction or append; retain full local findings, coverage/gaps and original
-receipts with no transition. Follow the contract's publication protocol only for
-QA: independently compare complete candidate semantics, record-check the original
+In `final`, independently classify the complete wrapper assessment: current approved
+PASS publishes `review` to QA; complete confirmed in-scope defects publish one
+reviewer `repair_request` to Rework Queued after verified removal of the wrapper's
+own stale approval (or verified absence). Preserve every finding and pending reference.
+Incomplete review, discussion, inability, wait, scope increase or unsupported assignment
+has no candidate or transition. Follow the contract's publication protocol for the
+exact intended edge and selected intent (`success` or explicit `repair_request`): independently compare complete candidate semantics, record-check the original
 candidate and worker-current-check actual predecessors; append once; compare
 original canonical record bytes/digest/UUID and validate the real leaf in
-worker-current mode; freshness recheck; direct In Review -> QA; verify native status.
+worker-current mode; freshness recheck; direct In Review -> QA or Rework Queued for that intent; verify native status.
 Discussion has no final publication. Keep durable result and completed review evidence
 when publication is unavailable or uncertain. A formatter validates encoding, never
 authority, live freshness or successful delivery. Stop after failed/unknown writes

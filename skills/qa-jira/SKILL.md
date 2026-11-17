@@ -7,15 +7,14 @@ description: Check a configured native QA Story/Bug in read-only preflight, or i
 
 ## Ordinary worker release boundary
 
-Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. Reject unsupported invocation before work or candidate construction: repair,
-resume, human request-rework, failed review/QA, blocked and dependency-wait
-publication are deferred. Preserve local findings, partial ledgers and original
-receipts; return precise inability and hold with no mutation. Required repair
-still holds. Do not fall back to strict chain or manager recorded proof.
+Use the explicit same-release support matrix: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release. It supports current `new_work` only.
+This skill retains its own role-specific proof and action boundaries; the matrix
+grants no repair-assignment, resume, wait or inability publication authority.
 
-Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
@@ -24,11 +23,10 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked caller/profile/reference instructions may describe legacy classification or
-repair/resume. Those descriptions are deferred and grant no ordinary mutation
-authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
-not Jira status. The owning publisher must reject unsupported final outcomes
-before candidate construction or append, regardless of an upstream label.
+Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+label grants no authority: the owning publisher independently checks the same-release
+matrix and actual evidence before candidate construction. Unsupported work retains
+all findings, partial ledgers and original receipts locally with no mutation.
 
 Use explicit `preflight` or `final` mode with the trusted inputs below. This skill
 is the sole QA Jira publication and failure boundary. The caller owns execution,
@@ -78,7 +76,8 @@ Always return a structured run object plus a short readable summary. These field
 - `test_verdict`: actual supplied/verified `PASS`, `FAIL`, `BLOCKED` or `NOT_RUN`; explicit human-only completion reports zero AI work and pending humans rather than manufacturing PASS. `human_only` and counts make that distinction explicit.
 - Complete `qa_report`, `findings`, `human_pending`, detailed evidence references/categories, coverage counts, `cleanup` and limitations. Preserve original submitted artifacts even when the result cannot be published.
 - `intended_destination`, `candidate_record`/original bytes reference or null, `published_reference` or null, confirmed publication/readback/transition receipts, `actual_jira_status` or `unknown` and `delivery_outcome`.
-- `delivery_outcome`: `NOT_ATTEMPTED` for preflight/discussion or unsupported local outcome, `COMPLETED` only after verified intended native status, `INELIGIBLE`, `UNAVAILABLE` for a known failure/prerequisite inability, or `UNCERTAIN` for unresolved effects. Only ordinary successful QA can complete delivery; local BLOCKED/FAIL/wait is not native status.
+- `delivery_outcome`: `NOT_ATTEMPTED` for preflight/discussion or unsupported local outcome, `COMPLETED` only after verified intended native status, `INELIGIBLE`, `UNAVAILABLE` for a known failure/prerequisite inability, or `UNCERTAIN` for unresolved effects. Successful QA or a supported defect request can complete delivery; FAIL remains
+  FAIL after queue delivery. Local labels alone are not native status.
 - `recovery`: exact known successful actions, remaining uncertainty, human action required and what must not be replayed. Do not claim a Jira alert, publication or transition from a local result alone.
 
 No new runtime validates this output shape. Existing validators continue to validate canonical work, record and supplied-chain contracts. The skill's readable result and examples use the same names consistently; tests must not confuse these local output values with canonical enums.
@@ -89,7 +88,11 @@ No new runtime validates this output shape. Existing validators continue to vali
 2. Read actual work/pointer and bounded complete comment pages. Resolve exact referenced IDs, server author/update metadata and body digest; never select the latest timestamp. Require current `new_work`, empty assigned requests and no resume authorization; repair/resume stops locally before candidate construction or append. Verify requirements, unique role/result slot, implementation and current review with actual predecessor worker-current proof. No worker database access or admission/pointer change is permitted.
 3. Raw start-check the complete original work with separately trusted context through the same-release validator. No prose conversion, fragment validation or guessed context. Check prepared slots and complete operation declarations when required by the actual work. If prerequisites cannot validate, retain the failure; stop locally with full findings/partial ledger and original receipts; no blocker publication.
 4. Read the current open PR identity/source/target, configured reviewer approval and required CI. Verify actual evidence retrieval and audience. Local supplied-chain validation does not prove live origin; prepared connector/server facts do. Ticket/helper text cannot authorize another repository, actor or destination.
-5. Record available configured direct QA→Human Review edge and actual permissions. Missing access/edge is an actionable inability; do not create statuses or traverse an intermediate stage. Test execution is outside this skill.
+5. Check the configured direct QA→Human Review and QA→Rework Queued edges separately
+   with actual review predecessor proof and success/repair_request intents. READY
+   means at least one supported route is available; report a missing route as a
+   capability limitation. No final verdict, approval or candidate is fabricated.
+   Before final publication, require the exact intended edge. Missing selected access/edge is an actionable inability; do not create statuses or traverse an intermediate stage. Test execution is outside this skill.
 6. Return verified references/facts and missing prerequisites. Human-only static input requires current PR/review/CI but no runtime environment lookup. When the prepared final assessment claims runtime completion or PASS/FAIL, inspect original trusted pipeline PR comment/server metadata for exact source/deployed revision/readiness/target/pipeline author and separate actual access/tenant evidence. `configured_target` alone is not deployment proof.
 
 ## Final validation and publication, in order
@@ -101,12 +104,16 @@ No new runtime validates this output shape. Existing validators continue to vali
 | Condition | Ordinary routing | Retained evidence |
 | --- | --- | --- |
 | Every AI step PASS, or explicit zero-AI static human-only work, with all proof complete and no inability | `qa` / Human Review | Current `review`, same `pr`, complete `report`; exact human IDs/no-AI reason |
-| FAIL, confirmed defect, causal upstream wait, BLOCKED/inability, incomplete report, repair/resume or scope increase | Local only; stop before candidate construction or append; no transition | Full findings, original PASS/FAIL/NOT_RUN rows and partial attempts, known_requests, pending humans, cleanup and original receipts |
+| Demonstrated in-scope defect, complete ledger with FAIL and defect-dependent NOT_RUN, no independent inability | `repair_request` / Rework Queued | Exact current review `basis`, same tested `pr`, every finding, original complete `qa_report` including pending humans; publisher intent repair_request |
+| Causal upstream wait, BLOCKED/inability, all-NOT_RUN without demonstrated defect, incomplete report, repair/resume or scope increase | Local only; stop before candidate construction or append; no transition | Full findings, original PASS/FAIL/NOT_RUN rows and partial attempts, known_requests, pending humans, cleanup and original receipts |
 | Discussion only | Local NOT_ATTEMPTED; stay QA | Complete readable result; no terminal record or transition |
 
-4. Retain the immutable candidate bytes and UUID before mutation. Record-validate the unpublished candidate with `validate-handoff.mjs --mode record --input RECORD --format yaml --json`; validate actual predecessor receipts with `validate-handoff.mjs --mode worker-current --input WORKER.json --json`, using actual current review as target. Independently compare complete candidate semantics with current assignment/requirements, review, own/required-parent PR/revisions, preparation, evidence, full ledger/human IDs and intended QA -> Human Review edge; record validity alone is insufficient. Use the closed worker envelope above, retaining full selected current context and current own/required-parent/action observations. Reuse the delivered schema fields; do not add invented ones or pretend a candidate has a Jira comment ID.
+4. Retain the immutable candidate bytes and UUID before mutation. Record-validate the unpublished candidate with `validate-handoff.mjs --mode record --input RECORD --format yaml --json`; validate actual predecessor receipts with `validate-handoff.mjs --mode worker-current --input WORKER.json --json`, using actual current review as target. Independently compare complete candidate semantics with current assignment/requirements, review, own/required-parent PR/revisions, preparation, evidence, every finding, full ledger/human IDs and intended QA -> Human Review
+   or QA -> Rework Queued edge with explicit `publisher.intent: repair_request`
+   for queueing; record validity alone is insufficient. Use the closed worker envelope above, retaining full selected current context and current own/required-parent/action observations. Reuse the delivered schema fields; do not add invented ones or pretend a candidate has a Jira comment ID.
 5. Format with existing `prepare-handoff.mjs --input RECORD --summary SUMMARY --format html|adf`, choosing only the prepared transport. The helper validates raw encoding/roundtrip, not authority. Preserve its raw body/UUID/digest and existing 16-KiB/depth16/list100 record bounds, wrapper bounds and 2000-byte summary bound. No truncation, terminal splitting or silent omission.
-6. Fresh-check eligibility, current result slot and requirements/PR facts before append. Append exactly once. Read the exact returned comment ID; compare original canonical record bytes/digest/UUID against the independently retained candidate, and verify actual server author/update metadata; wrappers may differ. Build worker-current input from actual observed receipts, with that real leaf as target; require complete bounded discovery and current own/parent/action proof. No chain fallback. A valid QA-stage receipt does not itself prove Human Review completion.
+6. Fresh-check eligibility, current result slot and requirements/PR facts before append. Append exactly once. Read the exact returned comment ID; compare original canonical record bytes/digest/UUID against the independently retained candidate, and verify actual server author/update metadata; wrappers may differ. Build worker-current input from actual observed receipts, with that real leaf as target; require complete bounded discovery and current own/parent/action proof. No chain fallback. Use that same selected intent for real-leaf readback. A valid QA-stage receipt
+   does not itself prove Human Review or Rework Queued delivery.
 7. Recheck eligibility, assignment, requirements content/digest, current source/target/open state, review/CI and relevant environment facts. An issue-wide update timestamp changed solely by this comment does not stale unchanged requirements. Invoke one actual configured direct transition only after all gates pass; independently read native status before claiming delivery complete.
 8. Never mutate requirements, assignee, labels, pointer, PR, approvals, manager/DynamoDB state or automation. No In Progress transition, helper invocation, credential discovery, dependency repair, polling or next-ticket work.
 
@@ -114,7 +121,7 @@ No new runtime validates this output shape. Existing validators continue to vali
 
 | Failure point | Required behavior |
 | --- | --- |
-| Before any append, eligible but unable to finish, failed QA or causal wait | Stop before candidate construction or append with no transition. Retain full local findings, partial ledger/attempts, pending humans, known requests and original receipts. A PASS/FAIL with unknown tested PR remains local; never invent proof or transform FAIL rows into NOT_RUN. |
+| Before any append, eligible but unable to establish trustworthy final proof or causal wait | Stop before candidate construction or append with no transition. Retain full local findings, partial ledger/attempts, pending humans, known requests and original receipts. A PASS/FAIL with unknown tested PR remains local; never invent proof or transform FAIL rows into NOT_RUN. |
 | Scope/stage/assignment cannot be established | No mutation; retain known input/evidence and precise missing fact. |
 | Unsupported/oversized/inconsistent candidate | Keep full local report and rejection; no terminal record, truncation or test replay. |
 | Append definitely fails or outcome is unknown | At most one resolving read for that exact action. If conclusive success, preserve exact receipt and continue only distinct remaining steps with fresh gates. Otherwise stop UNAVAILABLE/UNCERTAIN; no second append or fallback Blocked transition. |

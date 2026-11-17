@@ -2,15 +2,14 @@
 
 ## Ordinary worker release boundary
 
-Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. Reject unsupported invocation before work or candidate construction: repair,
-resume, human request-rework, failed review/QA, blocked and dependency-wait
-publication are deferred. Preserve local findings, partial ledgers and original
-receipts; return precise inability and hold with no mutation. Required repair
-still holds. Do not fall back to strict chain or manager recorded proof.
+Use the explicit same-release support matrix: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release. It supports current `new_work` only.
+This skill retains its own role-specific proof and action boundaries; the matrix
+grants no repair-assignment, resume, wait or inability publication authority.
 
-Follow the [ordinary worker proof and publication contract](../../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
@@ -19,11 +18,10 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked caller/profile/reference instructions may describe legacy classification or
-repair/resume. Those descriptions are deferred and grant no ordinary mutation
-authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
-not Jira status. The owning publisher must reject unsupported final outcomes
-before candidate construction or append, regardless of an upstream label.
+Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+label grants no authority: the owning publisher independently checks the same-release
+matrix and actual evidence before candidate construction. Unsupported work retains
+all findings, partial ledgers and original receipts locally with no mutation.
 
 
 Both [entrypoint](../SKILL.md) and [reviewer-jira](../../reviewer-jira/SKILL.md)
@@ -87,12 +85,14 @@ overwrite. Retain full historical/local evidence; inability never permits a Bloc
 publication. Use actual expected-head guards where available;
 reads are not atomic or locks.
 
-Required gaps retain the actual core FAIL or INCOMPLETE result locally. Complete
-findings may retain local REWORK_QUEUED classification; it grants no publication
-or transition. Only complete current approved PASS may choose QA. All other
-outcomes stop before candidate construction or append with complete findings,
-pending references, gaps and original receipts. Discussion stays In Review locally.
-Preflight publication rights and direct configured QA edge before approval. Inspect
+Required gaps retain the actual core FAIL or INCOMPLETE result locally. A complete
+review with confirmed in-scope defects and no unresolved inability chooses
+REWORK_QUEUED on the same PR. Only complete current approved PASS chooses QA.
+Discussion stays In Review with no final publication. Initial preflight independently
+checks success and repair_request against the actual implementation; READY means at
+least one route is available and reports the missing route as a capability limitation.
+Before approval or final queueing, recheck the selected exact route. No preflight
+fabricates a verdict, approval, finding or unpublished receipt. Inspect
 actual configured-actor approval/revision binding; transport success is insufficient.
 Own invalid approval must be verifiably revoked using supported authority before
 a local stop. Never revoke another actor. No speculative rollback of a valid
@@ -100,9 +100,12 @@ approval because later Jira delivery failed.
 
 ## Typed candidates
 
-Before constructing a candidate, require ordinary current approved PASS to QA.
-Any unsupported outcome retains full local findings and original receipts and
-stops with no candidate, append or transition.
+Before constructing a candidate, require a complete current supported assessment:
+approved PASS for QA, or all confirmed in-scope defects and handled comments for
+Rework Queued with verified absence/removal of this reviewer's stale approval.
+Revocation is wrapper-owned, verified and limited to its own account; failed or
+unknown required revocation prevents append. Never invent approval for failed review.
+Unsupported outcomes retain full local evidence without a candidate or mutation.
 
 Use existing `pigboard-handoff/v1` schema, mandatory keys/nulls and actual assignment
 operation ID/requirements digest. Generate record UUID once before first publication;
@@ -111,7 +114,8 @@ retain exact bytes/digest. Common role is reviewer, from_stage In Review.
 | Decision | kind / to_stage | Exact payload |
 | --- | --- | --- |
 | QA | review / QA | implementation canonical reference, current pr, approval evidence, report evidence |
-| FAIL, REWORK_QUEUED, BLOCKED, INCOMPLETE, STAY, repair/resume | None / no transition | Stop before candidate construction or append; retain complete local findings, pending references, coverage/gaps and original receipts |
+| Complete FAIL / REWORK_QUEUED, no inability | repair_request / Rework Queued | exact implementation `basis`, same current `pr`, every confirmed `findings` ID/summary/evidence, `qa_report: null`; explicit publisher intent repair_request |
+| BLOCKED, INCOMPLETE, STAY, repair/resume, wait or scope increase | None / no transition | Stop before candidate construction or append; retain complete local findings, pending references, coverage/gaps and original receipts |
 
 Review approval observation must be approved by configured actor. Report observation
 must truthfully establish `criteria_complete:true, comments_handled:true`, backed by
@@ -139,12 +143,14 @@ formatter. Never install/fetch/repair dependencies in a delivery run.
 
 Final mode performs these distinct steps, preserving receipts:
 
-1. Reject every outcome except ordinary approved PASS to QA before candidate
-   construction or append. Preserve full local findings and original receipts.
-   Recheck eligibility/current assignment/requirements/PR/direct In Review -> QA edge.
+1. Reject unsupported outcomes before candidate construction or append. Recheck
+   eligibility/current assignment/requirements/PR and the exact In Review -> QA
+   (`success`) or In Review -> Rework Queued (`repair_request`) edge. Preserve
+   complete independent review coverage, all findings/threads and own-approval proof.
    Independently compare complete candidate semantics with current assignment,
    requirements, implementation, own/required-parent PR/revision, preparation,
-   approval/report evidence and intended edge. Record/formatter validity is insufficient. Validate
+   approval/report evidence for PASS, or every finding and verified own-approval
+   absence/revocation for repair, and intended edge. Record/formatter validity is insufficient. Validate
    unpublished candidate in record mode and actual predecessors in worker-current mode.
    Never invent comment IDs/metadata to make a candidate a published receipt.
 2. Append exactly one final canonical HTML record using configured Atlassian route.
@@ -173,8 +179,9 @@ uncertain receipts into continuation; absence of confirmation never permits repl
 Retain `reviewVerdict: PASS|FAIL|INCOMPLETE|NOT RUN`,
 `workflowDecision: QA|REWORK_QUEUED|BLOCKED|STAY|NONE`, and
 `deliveryOutcome: NOT_ATTEMPTED|COMPLETED|UNAVAILABLE|UNCERTAIN|INELIGIBLE` separately.
-COMPLETED means ordinary approved review plus direct QA transition verified;
-local repair/block labels are not delivery or Jira status. It is not code merge. Discussion is STAY/NOT_ATTEMPTED.
+COMPLETED means the supported canonical review/request and its direct QA or
+Rework Queued transition were separately verified; FAIL remains FAIL after queue
+delivery. Local labels alone are not delivery or Jira status. It is not code merge. Discussion is STAY/NOT_ATTEMPTED.
 Retain ticket_id, exact assignment, requirements_digest, implementation reference,
 PR/revisions, actual model/effort/independence, examined/reused coverage, all findings
 and pending finding references, unresolved gaps, approval state/actor and confirmed

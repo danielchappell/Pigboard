@@ -20,15 +20,10 @@ execution or publication authority. The strict/legacy schema, repair/resume
 examples and historical ancestry below remain validator documentation, not active
 ordinary invocation instructions or a failure fallback.
 
-The current ordinary producers support new_work implementer READY, reviewer
-approval and successful QA, including explicit static human-only QA. Other
-assignments/results retain full local findings, partial ledgers and original
-receipts and stop before candidate construction or append, with no transition.
-The owning publisher enforces that boundary even when an inherited caller or
-reference classifies local work as FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT.
-Installation activates no automation and authorizes no Jira/PR write. Workers
-need no database access; manager modes compare separately supplied stored
-assignments and never contact the operational store.
+The current ordinary producers follow the explicit same-release
+[worker support matrix](#ordinary-worker-release-boundary). Unsupported assignments
+and inability/wait outcomes remain local; a label alone grants no publication
+or transition authority.
 
 Choose the link for the copy you are reading; installed payloads preserve the same guide bytes.
 
@@ -692,7 +687,7 @@ and supplied-evidence coherence, not real approval, human execution or freshness
 [Source qa-jira](../skills/qa-jira/SKILL.md) and
 [installed qa-jira](../../qa-jira/SKILL.md) refer to the source and installed layouts
 respectively; use the link for your layout only. This is the sole permanent QA
-publication/failure protocol. Ordinary success-only routing is defined below;
+publication/failure protocol. Ordinary outcome routing is defined below;
 the following broader schema and legacy descriptions cannot authorize failure,
 wait, blocked or resume publication in that invocation. It consumes the incomplete-QA findings, declared
 prerequisite cause propagation, nonnull actual tested PR and claim-sensitive
@@ -912,16 +907,41 @@ keep their original contracts.
 
 ## Ordinary worker release boundary
 
-This invocation supports only the current `new_work` admission and ordinary
-implementer READY, reviewer approval or successful QA. This boundary controls the
-later general record mappings and recovery examples: repair admission, resume,
-human request-rework, failed review/QA, blocked and dependency-wait publication
-are deferred. Preserve findings, partial ledgers and receipts locally, return a
-precise inability and hold with no mutation. Reject unsupported assignments
-before execution and unsupported final results before candidate construction or
-append; do not publish an alternative result
-or fall back to strict chain or manager recorded proof. A stream with required
-repair remains held for human handling.
+This pinned release supports current `new_work` with `resume_authorization:null`
+and no assigned repair requests. Its closed support matrix is authoritative for
+all bundled worker entries and their references:
+
+| Publisher / `intent` | Actual preflight target | Actual readback target | Direct source → destination |
+| --- | --- | --- | --- |
+| implementer / `success` | admission | implementation | In Progress → In Review |
+| reviewer / `success` | implementation | review | In Review → QA |
+| reviewer / `repair_request` | implementation | reviewer repair_request | In Review → Rework Queued |
+| qa / `success` | review | qa | QA → Human Review |
+| qa / `repair_request` | review | qa repair_request | QA → Rework Queued |
+
+Repair assignments, resume, wait, Blocked/inability and human-request publication
+remain deferred from these ordinary workers. Reject unsupported assignments before
+execution and unsupported final results before candidate construction or append.
+Preserve the full findings, partial ledger and original receipts locally. Never
+fall back to strict chain, manager recorded proof or another source release. The
+implementer still publishes only ordinary READY. Queue delivery does not admit
+repair, replace the pointer, enter In Progress or mutate manager State.
+
+A reviewer request requires the complete applicable independent review and all
+confirmed in-scope findings, exact implementation basis/current open PR and verified
+removal of its own stale approval using supported authority. Never revoke another
+actor's approval. Missing/failed/unknown revocation prevents queue publication.
+QA independently classifies the complete actual assessment: confirmed defects with
+defect-dependent NOT_RUN and no independent inability may queue, retaining every
+original PASS/FAIL/NOT_RUN row, findings and pending human IDs. Transitive skipped
+chains and joins retain the union of explicit prerequisite finding IDs. Independent
+access/evidence/cleanup/scope inability takes priority and keeps the complete report
+local. All-NOT_RUN without demonstrated defect is not a repair request.
+
+Successful review still needs current own approval/report and reaches QA. Successful
+QA, including static zero-AI human-only QA, reaches Human Review with exact pending
+humans/no-AI reason. A completed queue delivery keeps review/test verdict FAIL;
+COMPLETED describes verified publication and destination, never test or human PASS.
 
 Use the same pinned installed `work-validator` with explicit `--mode worker-current`
 for actual predecessors before publication and the exact real published leaf at
@@ -930,13 +950,40 @@ readback. Its `pigboard-worker-handoff-input/v1` envelope has `consumer: worker`
 `manager_assignments`), native `issues`, current original `requirements` bodies
 (without old `context_body`), the selected issue's full `current_context_body`,
 complete `comment_pages`, current `pr_receipts`/`evidence_receipts`, genuinely
-`retained` metadata, `request_resolutions`, `publisher: {role, account_id}` and
+`retained` metadata, `request_resolutions`, `publisher: {role, account_id, intent?}` and
 `action_receipt: {site, project_id, ticket_id, actor_id, stage_id, can_read_issue,
 can_append_comment, transitions}`. Each transition is an observed unique
 `{from_stage_id, to_stage_id}` direct pair. Read actual capabilities, never infer
-permission from a record. Role edges are In Progress→In Review, In Review→QA and
-QA→Human Review. Run both checks before that transition; verify native status
+permission from a record. Optional `publisher.intent` is `success` or
+`repair_request`; omission preserves v1 success behavior. It selects exact proof,
+never grants permission or adds a field to the canonical handoff. Unknown intent,
+implementer repair_request and mismatched leaf role/source/destination reject.
+
+Initial preflight checks each available supported edge separately against the
+same actual predecessor, with no fabricated outcome/approval. READY requires at
+least one supported route and reports any missing route as a capability limitation.
+Before final publication, rerun the selected intended edge: a queue-only capability
+cannot authorize success, and success-only capability cannot authorize queueing.
+Run both proof checks while still in the source stage; verify destination status
 separately afterward.
+
+For example, reviewer queue preflight uses the actual published implementation:
+
+```json
+{"role":"reviewer","account_id":"configured-reviewer","intent":"repair_request"}
+```
+
+QA queue preflight uses the actual published review:
+
+```json
+{"role":"qa","account_id":"configured-qa","intent":"repair_request"}
+```
+
+These are the complete `publisher` objects inside the full envelope described
+above; the fixed packets below supply executable full input examples. At readback,
+retain the same intent and target the actual returned repair_request reference,
+with observed metadata and the exact role-specific basis. A request needs no
+invented reviewer approval; the success path still requires its actual approval.
 
 The checker uses full current start, own PR, preparation, evidence and action
 proof; required parent PR identity/head/target/state remains current at incorporation.
@@ -975,3 +1022,101 @@ QA fields. No `completion_established` or `recorded_completion_established` exis
 The separate strict `chain`, `recorded-history` and `recorded-completion` contracts
 retain their previous purpose and security checks. H01/H02 provider execution is
 required release evidence; fixture/API/CLI checks cannot establish that acceptance.
+
+
+## Fixed PGB-165 instruction packets
+
+These eight finite packets exercise the actual pinned wrapper/composer and
+publisher instructions with supplied/mock provider, model and helper observations.
+They do not establish hosted Grok, native Jira/PR acceptance or human acceptance.
+The subject independently reviews the raw diff or executes the prescribed helper
+boundaries, derives findings/ledger and generates its own immutable candidate.
+No terminal report or candidate is supplied to the subject.
+
+| Packet | Actual subject route / boundary |
+| --- | --- |
+| P165-R-QUEUE | pigboard-pr-review → reviewer-jira; full assessment and own stale approval removal |
+| P165-Q-QUEUE | qa-entrypoint → qa-jira; independent PASS, FAIL, transitive NOT_RUN and joined causes |
+| P165-R-REVOKE-UNKNOWN | reviewer; unresolved own approval removal prevents append |
+| P165-Q-INABILITY | QA; prior defects plus independent access inability remain local |
+| P165-R-APPEND-UNKNOWN | reviewer; retain original attempted UUID/bytes without replay |
+| P165-Q-TRANSITION-UNKNOWN | QA; preserve exact publication and unknown status without replay |
+| P165-R-SUCCESS | reviewer; ordinary approved review still reaches QA |
+| P165-Q-HUMAN-ONLY | QA; zero AI rows, exact no-AI reason and pending humans reach Human Review |
+
+Prepare Node20+ and dependencies before starting. Set an absolute immutable source
+or copied release root, one fixed packet ID and a fresh private destination. The
+following documented extractor rejects unknown IDs, unsafe filenames and existing
+destinations; it never overwrites a prepared release or existing evidence.
+
+```sh
+PIGBOARD_SOURCE=/private/tmp/pigboard-pgb165-queue-20261117
+PIGBOARD_CASE=P165-R-QUEUE
+PIGBOARD_PACKET=/private/tmp/p165-r-queue-run01
+node --input-type=module - "$PIGBOARD_SOURCE" "$PIGBOARD_CASE" "$PIGBOARD_PACKET" <<'NODE'
+import {readFile, mkdir, writeFile} from 'node:fs/promises';
+import path from 'node:path';
+const [root, id, out] = process.argv.slice(2);
+if (!path.isAbsolute(root) || !path.isAbsolute(out)) throw Error('Use absolute paths');
+const fixtures = JSON.parse(await readFile(path.join(root,'test/fixtures/handoff-chains.json'),'utf8'));
+const packet = fixtures.rework_queue_p165.packets[id];
+if (!packet) throw Error('Unknown fixed packet ID');
+const pending = [];
+for (const [area, key] of [['assistant','assistant_files'],['operator','operator_files']]) {
+  for (const [name, content] of Object.entries(packet[key])) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(name) || typeof content !== 'string') throw Error('Invalid packet file');
+    pending.push({area,name,content});
+  }
+}
+await mkdir(out,{mode:0o700});
+for (const area of ['assistant','operator']) await mkdir(path.join(out,area),{mode:0o700});
+for (const file of pending) await writeFile(path.join(out,file.area,file.name),file.content,{mode:0o600,flag:'wx'});
+console.log(JSON.stringify({case_id:id,packet:out,instruction_execution:'NOT_RUN'}));
+NODE
+```
+
+Give only `assistant/` to the subject and retain `operator/` separately. The
+operator reads the response/fault cards and serves only requested named mock
+operations through the existing collaboration channel, recording ordered arguments
+and results. Each request includes `{case_id, operation, args}`. Read operations
+return the corresponding supplied native/PR/evidence facts; helper requests return
+only that prescribed original observation and cleanup. Model eligibility remains
+explicitly simulated. Do not provide the oracle as observations or execute a
+live provider action.
+
+For an append request, retain the subject's actual publication body, UUID, digest
+and independent original candidate bytes; assign a mock server comment ID and
+return/read that exact body and actual mock author/update metadata. Bind those
+real generated bytes into the observed worker envelope, not an expected record.
+A transition changes only the mock native stage after the subject requests the
+allowed direct pair. Return the prescribed fault at its boundary; one bounded
+resolving read may remain inconclusive. The subject executes the actual record,
+formatter and worker-current CLIs and preserves their output. Pointer and manager
+State sentinels must remain unchanged. Never generate a prewritten call trace.
+
+Retain the source/copied revision and skill/file hashes, actual subject invocation,
+requested calls/results, independent assessment, candidate/readback/proof, result
+and sentinels in private evidence. Contributor deterministic checks, supplied/mock
+instruction execution and designated human execution have separate statuses;
+human groups PGB-165-H01–H03 remain NOT_RUN until people execute them. Preserve
+evidence before removing only disposable generated files.
+
+The deterministic controls include omitted/unknown intent, mismatched leaf/actor/
+basis, missing chosen edge, stale PR/assignment, absent evidence and unsupported
+assignment/resume/human publisher. Run the finite selectors from this checkout:
+
+```sh
+node --test --test-name-pattern '^P165-' test/receipt-chain.test.mjs test/reviewer-contract.test.mjs test/qa-helper-contract.test.mjs test/implementer-contract.test.mjs test/skill-distribution.test.mjs
+```
+
+The distribution check prepares the actual copied validator with already prepared
+dependencies and compares source/copied commands from an unrelated directory.
+This is local supplied-proof evidence; it grants no execution or release authority.
+
+
+The `proof_cases` full envelopes provide source/copied CLI examples. Write an
+individual `.input` to a fresh private JSON file and use the worker-current commands
+above from any directory; select the matching expected validity from `.expected`.
+Tests verify full source/copied parity and no input mutation. Do not use a broken
+copy's source checkout as fallback. Run repository `npm test` after affected checks;
+local tests do not establish hosted CI, merge, live delivery or activation.

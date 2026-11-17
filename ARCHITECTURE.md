@@ -42,7 +42,9 @@ recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns b
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
 new_work assignments and emits only ordinary READY implementation records.
 Reviewer accepts actual implementation receipts; only current approved PASS
-publishes to QA. Failure/wait/block and repair/resume retain full local findings,
+publishes to QA; complete confirmed defects queue a reviewer repair_request.
+QA can queue complete confirmed defects with its original full partial ledger.
+Independent inability/wait/block and repair/resume retain full local findings,
 partial ledgers and original receipts with no candidate/append or transition. The QA composer consumes current structured work and canonical predecessors; it
 delegates publication to qa-jira. Saved wiring, installed/live acceptance and owner
 activation remain separate gates. No provider adapter or manager state engine
@@ -192,9 +194,9 @@ prepared assessment; qa-jira independently checks current authority, canonical
 records/receipts, evidence, publication and one direct native transition. It never
 executes domain helpers. The compatible qa-entrypoint composes preflight and one
 final actual assessment; it never falls back to direct writes or replays helpers
-after uncertainty. Inability, defects and causal waits retain the full local
+after uncertainty. Independent inability and causal waits retain the full local
 assessment and stop before candidate construction or append, with no transition.
-Only successful ordinary QA or explicit static zero-AI completion may publish;
+Successful ordinary QA or explicit static zero-AI completion publishes to Human Review; complete confirmed defects with trustworthy final proof publish a QA repair_request to Rework Queued;
 humans remain pending. Repair/resume and human rework are deferred; linked legacy
 classification is not mutation authority. Current proof and original-identity
 no-replay rules remain publisher-owned. The manager remains a design;

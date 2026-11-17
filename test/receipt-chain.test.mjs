@@ -1,6 +1,6 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
-import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
+import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue, extractHandoff } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
 const entries=e=>e.comment_pages.flatMap(p=>p.comments.map(c=>({p,c,r:JSON.parse(JSON.parse(c.body).content[0].content[0].text)}))),target=e=>entries(e).find(x=>x.r.record_id===e.target.record_id);
 function seal(e){for(let round=0;round<20;round++){let changed=false;const map=new Map(entries(e).map(x=>[x.r.record_id,digestValue(x.r)]));function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='digest'&&v.record_id&&map.has(v.record_id)&&x!==map.get(v.record_id)){v[k]=map.get(v.record_id);changed=true;}else if(x&&typeof x==='object')walk(x);}}walk(e);for(const x of entries(e)){walk(x.r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(x.r)}]}]});}if(!changed&&round>0)return e;}return e;}
@@ -415,7 +415,7 @@ const original160SectionHashes={
   "repeated_parent": "sha256:e6a3cb5dd005083ec0d430bde53f6f116b23f908d7bc48d2a7d32d7d1cb5c94b"
 };
 test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
- assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current'].sort());
+ assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current','rework_queue_p165'].sort());
  for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
  // A changed current copied test file is not an archived-prefix reconstruction obligation.
 
@@ -464,4 +464,29 @@ for(const row of workerCases.artifacts.filter(r=>r.group<=7))test('ordinary work
   const identical={from_stage_id:edge.from_stage_id,to_stage_id:edge.to_stage_id},reordered={to_stage_id:edge.to_stage_id,from_stage_id:edge.from_stage_id};
   for(const duplicate of [identical,reordered]){const input=structuredClone(normal);input.action_receipt.transitions.push(duplicate);const original=JSON.stringify(input),rejected=validateWorkerCurrent(original);assert.equal(rejected.valid,false);assert(rejected.diagnostics.some(d=>d.code==='AUTHORITY'&&d.path==='/action_receipt/transitions'));for(const[key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(rejected[key],value,key);assert.equal(JSON.stringify(input),original);}
  }
+});
+
+// PGB-165 exact outcome paths. Expectations are independent fixture declarations.
+for(const row of fixturesP165())test(row.id,()=>{
+ const raw=JSON.stringify(row.input),result=validateWorkerCurrent(raw);
+ assert.equal(result.valid,row.expected.valid,row.id+JSON.stringify(result.diagnostics));
+ if(row.expected.code)assert(result.diagnostics.some(d=>d.code===row.expected.code),JSON.stringify(result.diagnostics));
+ assert.equal(JSON.stringify(row.input),raw);assert.equal(result.execution_authorized,false);
+ if(result.valid){assert.deepEqual(result.validated_leaf,row.input.target);assert.deepEqual(result.assignment,row.input.issues.find(i=>i.id===row.input.target.ticket_id).pointer.assignment);}
+ else for(const [key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(result[key],value,key);
+ if(row.id==='P165-PROOF-qa-partial'){assert.equal(result.qa_report.steps[0].result,'FAIL');assert.deepEqual(result.qa_report.steps[0].finding_ids,['F1','F2']);}
+});
+function fixturesP165(){return JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))).rework_queue_p165.proof_cases;}
+
+test('P165-PROOF-complete-transitive-ledger retains every result and joined finding',()=>{
+ const packet=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))).rework_queue_p165.packets['P165-Q-QUEUE'],input=JSON.parse(packet.assistant_files['current-worker.json']);
+ const rows=input.comment_pages.flatMap(page=>page.comments.map(comment=>({comment,record:extractHandoff(comment.body,{format:comment.format}).value})));
+ const predecessor=rows.find(x=>x.record.record_id===input.target.record_id).record;
+ const findingEvidence=rows.find(x=>x.record.kind==='implementation').record.payload.verification[0];
+ const record={...predecessor,record_id:'b1650000-0000-4000-8000-000000000001',role:'qa',kind:'repair_request',from_stage:'QA',to_stage:'Rework Queued',payload:{basis:input.target,pr:predecessor.payload.pr,findings:[{id:'F1',summary:'Negative count is accepted.',evidence:[findingEvidence]},{id:'F2',summary:'Zero is labelled positive.',evidence:[findingEvidence]}],qa_report:{steps:[['A.S1','PASS',[]],['B.S1','FAIL',['F1']],['C.S1','NOT_RUN',['F1']],['D.S1','NOT_RUN',['F1']],['E.S1','FAIL',['F2']],['F.S1','NOT_RUN',['F1','F2']],['G.S1','PASS',[]]].map(([id,result,finding_ids])=>({id,skill:'qa-database',result,evidence:result==='NOT_RUN'?[]:[findingEvidence],finding_ids,not_run_reason:result==='NOT_RUN'?'Explicit failed/skipped prerequisite.':null,reused_from:null})),human_pending:['HQA-01'],no_ai_cases_reason:null}}};
+ const comment={id:'99165',author_id:'qa',update_author_id:'qa',created:'2026-11-17T08:00:00Z',updated:'2026-11-17T08:00:00Z',format:'adf',body:JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(record)}]}]})};
+ const page=input.comment_pages[0];page.comments.push(comment);page.total++;input.publisher.intent='repair_request';input.target={ticket_id:record.ticket_id,comment_id:comment.id,record_id:record.record_id,digest:digestValue(record)};
+ const result=validateWorkerCurrent(JSON.stringify(input));assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.deepEqual(JSON.parse(JSON.stringify(result.qa_report)),JSON.parse(JSON.stringify(record.payload.qa_report)));assert.equal(result.ai_steps,7);assert.deepEqual(result.human_pending,['HQA-01']);
+ const changed=structuredClone(input),body=JSON.parse(changed.comment_pages[0].comments.at(-1).body),changedRecord=JSON.parse(body.content[0].content[0].text);changedRecord.payload.qa_report.steps[5].finding_ids=['F2'];body.content[0].content[0].text=JSON.stringify(changedRecord);changed.comment_pages[0].comments.at(-1).body=JSON.stringify(body);changed.target.digest=digestValue(changedRecord);
+ const rejected=validateWorkerCurrent(JSON.stringify(changed));assert.equal(rejected.valid,false);assert(rejected.diagnostics.some(d=>d.code==='LEDGER'&&d.path.endsWith('/steps/5/finding_ids')));
 });
