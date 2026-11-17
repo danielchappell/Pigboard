@@ -120,9 +120,9 @@ A non-null assignment must reference the same immutable ticket ID as its member;
 Attempt inputs contain UUID `attempt_id`, immutable ticket/Epic IDs, issue key,
 operation, exact source/target status IDs, configuration digest and bounded
 `cause`/`publication` reference lists. Initial `publication` passed to `begin`
-must not contain a reference matching both this attempt's `ticket_id` and its
-`attempt_id` as the reference's `record_id`. Empty lists and prior references
-that do not match both fields remain allowed. Retain the current manager reference
+must not contain a reference whose `record_id` equals this attempt's `attempt_id`,
+regardless of the reference's ticket. Empty lists and prior references with other
+record UUIDs remain allowed. Retain the current manager reference
 only after confirmed begin and append/readback validation, using
 `retainPublication` before pointer publication. A matching initial reference
 returns `invalid`/`INVALID_INPUT` with `data:null`, before any provider read or
@@ -283,9 +283,9 @@ Trusted producer provenance comes from the reviewed bound package and state/IAM
 boundary, not from a digest or an asserted caller flag.
 
 1. `begin` persists the pending intent before publication. Start without the new
-   manager reference: no initial entry may match both this attempt's `ticket_id`
-   and its `attempt_id` as `record_id`. Empty lists and other prior references
-   remain allowed under that condition. Append/readback and confirmed retention
+   manager reference: no initial entry may use this attempt's `attempt_id` as
+   `record_id`, on any ticket. Empty lists and prior references with other record
+   UUIDs remain allowed. Append/readback and confirmed retention
    happen after begin, as follows.
 2. After actual append/readback validation of the typed manager comment, call
    `retainPublication({attempt_id, expected_installation_revision,
@@ -314,9 +314,12 @@ boundary, not from a digest or an asserted caller flag.
    `recordTransitionResponse({attempt_id, expected_installation_revision,
    expected_stream_revision, expected_attempt_revision, request_digest,
    http_status, observed_at, provider_request_id})` once. A lost/partial transport
-   response must not call it. The status must be 100–599; absent or unsupported
-   provider request IDs are stored as null. Duplicate/conflicting responses fail
-   without replacing original proof. This method never changes the pending outcome.
+   response must not call it. The status must be 200–599; absent or unsupported
+   provider request IDs are stored as null. Retained interim (100–199) evidence
+   remains inspectable as raw records, but its capture is `unsupported` and the
+   attempt stays held pending. Do not rewrite that evidence or resend the request.
+   Duplicate/conflicting responses fail without replacing original proof.
+   This method never changes the pending outcome.
 
 Each operation uses one transaction: update installation and attempt, condition-check
 the matching pending stream without advancing its revision. Success returns
