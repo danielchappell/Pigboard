@@ -13,8 +13,8 @@ import {applyOrdinary} from '../lib/manager/apply.mjs';
 export const packet=JSON.parse(readFileSync(new URL('../test/fixtures/manager-apply.json',import.meta.url),'utf8'));
 const tls=JSON.parse(readFileSync(new URL('../test/fixtures/jira-preview-tls.json',import.meta.url),'utf8'));
 /** Disposable providers only. No live URL, credential or transport option. */
-export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false}={}){
- const p=structuredClone(packet),config=p.config;if(twoStreams)p.issues=p.dispatch_issues;if(bug)p.issues[1]=p.bug_issue;if(global||hold==='global-only transition')config.manager.transition_edges[0].global=true;
+export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false,variant=null}={}){
+ const p=structuredClone(packet),config=p.config;const regression=variant===null?null:p.regressions[variant];if(variant!==null)assert(regression,'Use a prescribed repair variant.');if(regression)p.issues=regression.issues;if(twoStreams)p.issues=p.dispatch_issues;if(bug)p.issues[1]=p.bug_issue;if(global||hold==='global-only transition')config.manager.transition_edges[0].global=true;
  if(hold==='paused Epic')p.issues[0].fields.status.id='1';
  if(hold==='unauthorized scope')p.issues[1].fields.project.id='999';
  if(['queued repair','five Human Review'].includes(hold)){const count=hold==='queued repair'?1:5;for(let n=0;n<count;n++){const issue=structuredClone(p.issues[1]);issue.id=String(1100+n);issue.key='EX-'+String(100+n);issue.fields.status.id=hold==='queued repair'?'6':'5';p.issues.push(issue);}}
@@ -36,14 +36,14 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if(body.jql.includes('labels = "pigboard"'))scan++;
    if(hold==='incomplete shared discovery'){res.writeHead(403);res.end('{}');return;}
    if(!injected&&fault?.startsWith('source-check:')&&scan===2){injected=true;if(fault.endsWith(':before')){req.socket.destroy();return;}res.writeHead(403);res.end('{}');return;}
-   const matches=body.jql.includes('labels = "pigboard"')?issues.filter(i=>i.fields.labels.includes('pigboard')):body.jql.includes('parent = "900"')?issues.filter(i=>i.fields.parent?.id==='900'):issues.filter(i=>i.fields.labels.includes(body.jql.match(/labels = "([^"]+)"/)?.[1]));
+   const parentId=body.jql.match(/parent = "([0-9]+)"/)?.[1];const matches=body.jql.includes('labels = "pigboard"')?issues.filter(i=>i.fields.labels.includes('pigboard')):parentId?issues.filter(i=>i.fields.parent?.id===parentId):issues.filter(i=>i.fields.labels.includes(body.jql.match(/labels = "([^"]+)"/)?.[1]));
    value={issues:matches,isLast:true};
   }else{
    const m=path.match(/^\/rest\/api\/3\/issue\/([^/?]+)(.*)$/);assert(m);const issue=issues.find(i=>i.id===m[1]||i.key===m[1]);assert(issue);const suffix=m[2],id=issue.id;
    if(mutation){events.push('jira:'+req.method+':'+path);const reservation=stateCalls.findLast(c=>c.name==='begin');assert.equal(reservation?.result?.status,'confirmed','Jira effects require confirmed original begin');if(suffix==='/comment'){const record=JSON.parse(body.body.content[0].content[0].text);if(record.record_id===p.fresh_attempt_id){currentComment=p.fresh_comment;currentMutationOracle=p.oracle.fresh_mutations;}}mutations.push({method:req.method,path,body});assert.deepEqual(mutations.at(-1),currentMutationOracle[mutations.length-1]);}
    if(suffix.startsWith('?fields='))value=issue;
    else if(suffix==='/properties')value={keys:pointers.has(id)?[{key:'pigboard.work-context',self:'https://api.atlassian.com/property'}]:[]};
-   else if(suffix.startsWith('/comment?')){const list=comments.get(id)??[];value={startAt:0,maxResults:25,total:list.length,comments:list};}
+   else if(suffix.startsWith('/comment?')){if(regression?.deny_comments.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}const list=comments.get(id)??[];value={startAt:0,maxResults:25,total:list.length,comments:list};}
    else if(suffix==='/comment'&&req.method==='POST'){comments.set(id,[currentComment]);value=currentComment;status=201;}
    else if(suffix==='/comment/700')value=currentComment;
    else if(suffix==='/properties/pigboard.work-context'&&req.method==='PUT'){pointers.set(id,body);status=201;value=null;}

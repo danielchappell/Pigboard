@@ -85,3 +85,18 @@ Actually persisted pending intents and uncertain Jira effects keep their existin
 holds. No record is cleared or finalized to obtain this result. This bounded
 pre-publication guarantee uses the existing conditional State protocol; it does
 not promise generic timeout cancellation or duplicate-worker prevention.
+
+Retention follows each actual Story or Bug's native Epic and the ordinary policy's
+complete member set. Acquiring an Epic to discover work does not make that Epic a
+member. Earlier-Epic members retain their own parent; the selected active Epic
+owns only the selected admission attempt. Missing or conflicting ownership holds
+before publication, and retained assignment/revision checks remain mandatory.
+
+The source recheck requires the selected stream complete in both acquisitions.
+An unchanged, positively isolated read refusal in an unrelated stream may remain
+held while the selected admission completes. Shared, unknown, newly changed or
+selected-stream failures still hold the original attempt before transition. All
+previously observed native facts, bodies, labels, comments, references and scope
+memberships must remain unchanged apart from this invocation's verified own
+publication. The sender never switches streams to bypass a refusal or replays an
+uncertain effect; inspect the original scope and attempt when held.
