@@ -325,8 +325,8 @@ work:
   start_context: /private/run/facts.yaml # separately trusted original bytes
 assignment: /private/run/current-pointer.json # lookup hint; actual verified pointer wins
 prepared_assessment: null # final: /private/run/assessment.json
-known_requests: [] # final wait: exact typed request references + unresolved evidence
-retained_delivery: null # if present, original bytes/UUID/known receipts/uncertainty and explicit existing resume
+known_requests: [] # retained exact typed references and unresolved evidence; not permission to publish a wait
+retained_delivery: null # original bytes/UUID/receipts/uncertainty and any authentic legacy authorization; no retry or resume authority
 ```
 
 Preflight requires no invented finished assessment or deployment for static work.
@@ -334,22 +334,32 @@ For final, supply the complete actual `qa_report`, declared findings, detailed
 observations/artifacts, coverage counts, cleanup and case-specific reuse basis.
 For example, static human-only work has `steps: []`, the exact two prescribed human
 IDs and the original `no_ai_cases_reason`; its result reports zero AI work and
-pending humans. It still needs the current PR/review/CI. A partial assessment
-retains an earlier FAIL/finding and all later NOT_RUN rows/reasons. If a later
-access inability remains unresolved, propose Blocked while retaining the defect;
-if a real unresolved typed upstream request prevents completion without inability,
-propose dependency_wait. The skill verifies the actual evidence and route itself.
-PASS/FAIL claims always require their actual tested PR and environment proof.
+pending humans. It still needs the current PR/review/CI.
+
+A partial assessment retains every earlier PASS or FAIL, each finding and all
+later NOT_RUN rows with their reasons. Use the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and its pinned `qa-jira` contract to determine which outcomes can be published.
+The publisher independently checks the complete assessment, current proof and
+exact permitted transition; a caller's FAIL, BLOCKED or wait label does not select
+a Jira destination. Independent access, evidence, cleanup or scope inability and
+causal upstream wait retain the full assessment locally when unsupported by that
+release. Do not propose a Blocked or dependency_wait publication from this ordinary
+invocation. PASS/FAIL claims always require their actual tested PR and environment
+proof.
 
 The returned structured object separates `test_verdict` from `delivery_outcome`,
 includes complete rows/findings/humans, counts/cleanup/evidence/limitations and
-known publication/transition/status receipts. `COMPLETED` means the intended native
-status was independently observed, including delivery to Blocked. Preflight and
-discussion have `NOT_ATTEMPTED`. Preserve UNAVAILABLE/UNCERTAIN results and full
-original evidence locally. Never replay an attempted append or transition. One
-bounded resolving read may establish conclusive success; otherwise stop with the
-known actions, uncertainty and exact human recovery required. Only an existing
-valid explicit canonical resume chain permits a later result slot.
+known publication/transition/status receipts. `COMPLETED` means publication and
+the selected release's supported native destination were independently verified;
+it does not mean tests or human cases passed. Preflight and discussion have
+`NOT_ATTEMPTED`; an unsupported outcome retains its complete local evidence
+without a candidate or transition. Preserve UNAVAILABLE/UNCERTAIN results and
+original evidence. Never replay an attempted append or transition. One bounded
+resolving read may establish conclusive success; otherwise stop with the known
+actions, uncertainty and exact human recovery required. An authentic legacy resume
+reference is retained evidence, not authority to resume or publish another result
+in this invocation.
 
 ### Prepare source-only simulated publisher inputs
 
