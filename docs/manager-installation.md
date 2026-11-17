@@ -91,19 +91,23 @@ that reviewed grant to the operator role; it does not extend invocation or
 mutation permissions. The control-update deployer does not need this read grant:
 configure observes through the operator profile.
 
-The control-update deployer policy separately grants `iam:GetRole` for only the
-generated runtime-role ARN. CloudFormation needs this metadata read to resolve the
-existing function's role ARN during configure; passing a role does not grant this
-read. The grant belongs to the deployer, not the operator or runtime, and does not
-include the scheduler role. A customer administrator must review and attach it;
-generated policy metadata alone grants no access.
+The control-update deployer policy grants `iam:GetRole` for only the generated
+runtime-role and scheduler-role ARNs, and `dynamodb:DescribeTable` for only the
+generated State-table ARN. These metadata reads let CloudFormation resolve the
+existing resources' ARNs during configure. Missing runtime-role and State-table
+reads caused observed configure failures; the scheduler-role read covers the same
+predicted role-resolution need, without a separately observed denial. The existing
+`lambda:GetFunction` grant already covers the generated function. Passing a role
+does not grant its metadata read. A customer administrator must review and attach
+these deployer grants; generated policy metadata alone grants no access. They add
+no operator, runtime or scheduler permissions, table-data reads or role mutations.
 
-For an existing installation missing this grant, use a reviewed additive
-policy-only correction for the original exact runtime-role ARN. Do not deploy a
+For an existing installation missing these reads, use a reviewed additive
+policy-only correction for its original exact table and role ARNs. Do not deploy a
 package from repaired source to make this permission correction. If configure
 already returned partial/uncertain, follow [partial configure recovery](#partial-configure-recovery)
 and preserve the original result, receipt and desired build outputs. Correcting
-the grant neither completes nor replays that operation. Obtain administrator/owner
+the grants neither completes nor replays that operation. Obtain administrator/owner
 disposition of the failed operation and strict verification of the original
 installation before any separately authorized, freshly recorded configure
 operation; retain the original runtime source and generation and use the verified
