@@ -287,12 +287,13 @@ file, including manager controls; rebuild the pinned package for control updates
 `transition_edges` may be empty for preview. Each closed row has numeric
 `project_id`, `transition_id`, explicit unique nonempty `source_status_ids`,
 `target_status_id` and boolean `global`. Project/transition pairs are unique and
-refer to configured projects. Future ordinary apply requires the configured Ready
+refer to configured projects. Ordinary apply requires the configured Ready
 to Work source and In Progress target with `global: false`; an available transition
 ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
-this preview package never turns them into execution authority.
+preview never turns them into execution authority. The package includes the
+ordinary sender, but apply additionally requires the activation controls below.
 
 Ordinary apply uses the existing manager activation attestations and configured
 non-global, source-restricted Ready to Work → In Progress transition edge. The
