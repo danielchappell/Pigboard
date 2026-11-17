@@ -107,3 +107,9 @@ test('manager host settings remain optional and enforce canonical role, cadence 
  for(const field of ['operator_role_arn','deployer_role_arn']){const c=structuredClone(v);c.manager.aws[field]=c.manager.aws[field].replace(':role/',':role/team/');const rejected=check(c);assert.equal(rejected.valid,false);assert.deepEqual(rejected.diagnostics.map(({code,path})=>({code,path})),[{code:'FORMAT',path:'/manager/aws/'+field}]);assert(!JSON.stringify(rejected.diagnostics).includes(c.manager.aws[field]));assert.throws(()=>hostConfig(JSON.stringify(c)),error=>error.code==='INVALID_CONFIG');}
  const edge={project_id:v.projects[0].id,transition_id:'1',source_status_ids:['10'],target_status_id:'11',global:false};v.manager.transition_edges=[edge];assert.equal(check(v).valid,true);v.manager.transition_edges.push(structuredClone(edge));assert.equal(check(v).valid,false);
 });
+
+test('manager health defaults preserve old configs and explicit health bounds enter canonical digest',()=>{
+ const source=JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config;
+ const old=check(source);assert.equal(old.valid,true);const c=structuredClone(source);c.manager.health={freshness_seconds:c.manager.schedule_minutes*180,warning_percent:80};const changed=check(c);assert.equal(changed.valid,true);assert.notEqual(changed.configuration_digest,old.configuration_digest);
+ for(const mutate of [v=>v.manager.health.freshness_seconds=v.manager.schedule_minutes*60+v.manager.invocation_timeout_seconds,v=>v.manager.health.warning_percent=0,v=>v.manager.health.warning_percent=101,v=>v.manager.health.sns_topic_arn='dummy']){const invalid=structuredClone(c);mutate(invalid);assert.equal(check(invalid).valid,false);}
+});

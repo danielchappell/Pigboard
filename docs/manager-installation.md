@@ -271,3 +271,34 @@ input is exactly `{"operation":"apply"}` in apply mode. See the
 one-stream choice, outcomes and recovery. Later invocations may select another
 eligible stream after fresh evaluation. Stop preserves pending attempts and their
 publication/proof evidence; it does not clear or replay them.
+## Basic health and enablement evidence
+
+Use [the health command](manager-health.md) with the same canonical configuration,
+verified installation receipt and explicit operator profile. The package includes
+portable health and AWS adapters through the real runtime import closure. Prepare
+its exact root and runtime/AWS lockfile dependencies before delivery; health adds
+matching pinned CloudWatch and CloudWatch Logs read clients. Do not fetch or repair
+dependencies inside a delivery invocation.
+
+The existing final conditional configure update owns two generated installation
+extension scalars: `health_generation` and `health_enabled_at`. It writes them only
+after host readiness when enabling from stopped, changing an enabled canonical
+configuration, or explicitly establishing a missing epoch. Compare the original
+applied record before the temporary disable fence: an unchanged enabled configure
+preserves its epoch. Stop preserves historical epoch; explicit re-enable rotates it.
+Unrelated extension fields, the 16-key/32-KiB limits and revision fencing remain.
+An extension capacity failure refuses the final write; inspect partial lifecycle
+state using the same receipt rather than replaying an uncertain update.
+
+Scans, failures, retries and health reads never create or rotate an epoch. Disabled
+initial installation can have none. Enabled installation without valid current
+code/configuration/generation evidence is unknown, and old completion cannot grant
+health. General source upgrades/removal remain deferred; configure does not expand
+its existing supported-change boundary. Health settings may change with the same
+bounded canonical configuration package update.
+
+The operator health grants add only exact-log-group FilterLogEvents and regional
+GetMetricStatistics. The latter requires Resource `*`; AWS IAM does not enforce
+per-installation metric dimensions, so the reader fixes requests in code. Existing
+operator lifecycle permissions remain. No new resource, alarm, SNS action, runtime
+metric-write permission, second State store or activation is installed by health.
