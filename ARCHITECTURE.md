@@ -40,8 +40,10 @@ The installed code consists of skills and setup scripts. A successful Build prov
 preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts native Story/Bug structured
-assignments and emits canonical implementation/dependency-wait/blocked records.
-Reviewer accepts native Story/Bug structured assignments and canonical implementation receipts, with approved QA or same-PR Rework Queued handoff. The QA composer consumes current structured work and canonical predecessors; it
+new_work assignments and emits only ordinary READY implementation records.
+Reviewer accepts actual implementation receipts; only current approved PASS
+publishes to QA. Failure/wait/block and repair/resume retain full local findings,
+partial ledgers and original receipts with no candidate/append or transition. The QA composer consumes current structured work and canonical predecessors; it
 delegates publication to qa-jira. Saved wiring, installed/live acceptance and owner
 activation remain separate gates. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
@@ -190,9 +192,12 @@ prepared assessment; qa-jira independently checks current authority, canonical
 records/receipts, evidence, publication and one direct native transition. It never
 executes domain helpers. The compatible qa-entrypoint composes preflight and one
 final actual assessment; it never falls back to direct writes or replays helpers
-after uncertainty. Inability retains defects, causal upstream wait/repair queues
-the same PR, and static zero-AI work keeps humans pending. Current proof, unique
-resume authority and no-replay rules remain publisher-owned. The manager remains a design;
+after uncertainty. Inability, defects and causal waits retain the full local
+assessment and stop before candidate construction or append, with no transition.
+Only successful ordinary QA or explicit static zero-AI completion may publish;
+humans remain pending. Repair/resume and human rework are deferred; linked legacy
+classification is not mutation authority. Current proof and original-identity
+no-replay rules remain publisher-owned. The manager remains a design;
 this worker boundary adds no manager state access or activation authority.
 
 The offline repair policy consumes the canonical validator's private historical
@@ -278,6 +283,12 @@ ordinary admission caller. The existing CLI and actual prepared-copy payload use
 the same route. Strict execution APIs and legacy repair fixtures remain separate.
 This increment does not prove live173/State/AWS composition, worker compatibility,
 human acceptance, activation or a release; their owning delivery gates remain.
+
+## Current worker proof and recorded ancestry
+
+`lib/contracts/receipts.mjs` keeps one evaluator with per-record effective proof. `validateWorkerCurrent` and explicit CLI mode `worker-current` accept a separate closed worker envelope, without manager State access. Full selected-current start, own PR/evidence/preparation and supplied action capabilities remain required; parent ancestry authenticates recorded semantics while parent incorporation checks current PR identity/head/target/state. Older assignments require no reconstructed contexts or mandatory prior capture; genuine supplied retained mismatches reject. The direct labelled result grants no completion or execution authority. Strict and manager recorded APIs retain their own contracts. No new publication service or candidate API exists.
+
+See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
 
 ## Conditional State API
 
