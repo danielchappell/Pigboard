@@ -1,0 +1,71 @@
+{
+  "schema": "pigboard-transition-proof-fixture/v1",
+  "reference": {
+    "ticket_id": "1001",
+    "comment_id": "700",
+    "record_id": "11111111-1111-4111-8111-111111111111",
+    "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "preserved_assignment": {
+    "ticket_id": "1001",
+    "comment_id": "700",
+    "record_id": "22222222-2222-4222-8222-222222222222",
+    "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  },
+  "producer_invocation_id": "33333333-3333-4333-8333-333333333333",
+  "transition_id": "31",
+  "received_at": "2026-11-15T12:00:01.000Z",
+  "provider_request_id": "fixture-request-1",
+  "publication_observations": {
+    "comments": [
+      {
+        "reference": {
+          "ticket_id": "1001",
+          "comment_id": "700",
+          "record_id": "11111111-1111-4111-8111-111111111111",
+          "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "author_id": "fixture-manager",
+        "update_author_id": "fixture-manager",
+        "created": "2026-11-15T12:00:00.000Z",
+        "updated": "2026-11-15T12:00:00.000Z"
+      }
+    ],
+    "pointer": {
+      "mode": "published",
+      "assignment": {
+        "ticket_id": "1001",
+        "comment_id": "700",
+        "record_id": "11111111-1111-4111-8111-111111111111",
+        "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    }
+  },
+  "h01_statuses": [
+    204,
+    409
+  ],
+  "h02_variants": [
+    "stale_revision",
+    "changed_reference",
+    "duplicate_preparation",
+    "duplicate_response",
+    "disabled_controls",
+    "extension_capacity",
+    "record_size",
+    "persistence_before",
+    "persistence_after"
+  ],
+  "record_size_cause_count": 44,
+  "expected": {
+    "attempt_outcome": "pending",
+    "stream_revision": 0,
+    "external_calls": {
+      "jira": 0,
+      "worker": 0,
+      "aws_live": 0
+    },
+    "publication_digest": "sha256:2cb570ea809da67e9bafd33bee6c0927e0233d411e5c296a1354cc49a58dabce",
+    "request_digest": "sha256:b14966e7ec6e15910d4722e026e5d5e08bd060ef6a77a96032c4df1cd48d0340"
+  }
+}
