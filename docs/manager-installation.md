@@ -63,6 +63,8 @@ no legacy-name fallback or migration path. Do not apply the new template to an
 old stack to make it match: it could request replacements. Do not rewrite receipts,
 reinitialize or delete retained State. No deployed-installation inventory has
 been performed, and the controller still rejects source migration/replacement.
+The [reviewed host-tooling repair](#reviewed-host-tooling-repair) below is limited
+to compatible original resources; it cannot make legacy names compatible.
 
 
 Initial provisioning is an explicitly authorized customer operation outside the
@@ -138,12 +140,26 @@ node scripts/manager-state.mjs init --config /absolute/customer.json --installat
 node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind installation --json
 ```
 
-Fresh initialization additionally requires the original CREATE_COMPLETE stack,
-its original table creation event, no stack update, disabled schedule, preview
-mode, no writes, concurrency one, and an empty exact active table. The State
-adapter independently checks identity and emptiness and conditionally creates the
-installation record. An empty replacement is never a fresh installation. Missing
-or paginated required creation evidence is a setup failure, not an inference.
+Fresh initialization requires the original CREATE_COMPLETE stack and a complete,
+nonempty first page of creation events. Both stack CREATE_IN_PROGRESS and
+CREATE_COMPLETE events must identify that exact stack ARN and have valid, ordered
+timestamps. The original StateTable CREATE_COMPLETE event must name the original
+table in that stack and fall between those times. A conflicting StateTable physical
+ID or any UPDATE, DELETE, ROLLBACK, IMPORT or FAILED status refuses initialization.
+Missing, invalid or paginated evidence returns `FRESH_INSTALLATION_REQUIRED` before
+State initialization; an empty table alone cannot establish original creation.
+
+AWS can populate `LastUpdatedTime` during an original CREATE change set. Init
+accepts it only when it is the same instant as that stack's CREATE_IN_PROGRESS
+event. Direct creation without `LastUpdatedTime` remains supported. This bounded
+proof does not detect every possible manual or out-of-band resource change.
+
+For the preview setup above, keep canonical controls false, actual scheduling
+disabled, writes off and concurrency one. The original package hash, revision,
+configuration, generation and resource binding must still match. The State adapter
+independently checks the exact active table, absence of an installation record and
+complete emptiness, then conditionally creates one disabled installation record.
+Success is `confirmed`/`OK` with exit zero. An empty replacement is never fresh.
 Keep the original receipt and generation; never reset or recreate state to resolve
 an uncertain initialization. Inspect the same retained table instead.
 
@@ -170,6 +186,43 @@ the arguments also selects JSON for malformed input; unknown commands/options,
 missing values and duplicate flags still return safe `INVALID_INPUT` with exit
 two before output reservation or service access. Preserve partial results and inspect the same
 installation; do not repeat an uncertain write to make output look complete.
+
+### Reviewed host-tooling repair
+
+A reviewed correction to the local init tool can use the original deployed package
+and receipt when resource names, binding/schema and locked dependency contracts
+remain compatible. The tool revision and deployed package revision are separate:
+init verifies deployed bytes against the original receipt's manifest. This is a
+narrow repair procedure, not support for arbitrary source upgrades.
+
+Use this continuation only after evidence establishes that the previous init
+refused before State initialization. A lost or uncertain write requires inspection
+and diagnosis, not another init.
+
+1. Preserve the original package, receipt, configuration, command intent and failed
+   result. Prepare a separate clean checkout at the exact reviewed repair revision
+   with physically prepared locked dependencies. Verify dependency lock identities
+   against the original setup; stop if compatibility differs. Record the tool
+   revision separately from the original manifest's package revision.
+2. Recover the original config/receipt paths and selected operator profile from the
+   saved command intent. Record their hashes. Do not reconstruct a receipt, rebind,
+   package, upload, deploy or configure to obtain a fresh installation.
+3. From the reviewed checkout, run the installation inspection shown above with
+   those original arguments. Continue only if it returns `MISSING_INSTALLATION`.
+   This confirms missing retained installation state; inspection does not read
+   creation events. Stop if state exists, another result is returned or the prior
+   write remains uncertain.
+4. Run the init command above once with the original arguments. Init reads and
+   verifies current original-creation evidence, the original binding and disabled
+   controls before State mutation. Preserve its stdout, stderr, exit code and tool
+   revision separately from the old failure. Inspect that same installation once
+   afterward. A confirmed result must retain the original binding, package revision
+   and generation with all controls false. Verify the configuration and receipt
+   hashes are unchanged. If either result is invalid, uncertain, unavailable or
+   otherwise unconfirmed, preserve it and stop; do not repeat init or reset State.
+
+Initialization does not authorize scheduling, apply, package replacement or release.
+Live acceptance of this continuation remains separate from local simulations.
 
 ## Deliberate scheduling and stop
 
