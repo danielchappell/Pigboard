@@ -140,6 +140,25 @@ export async function configureArrayOrderRefusal(){
   assert.equal(outcome.status,'unavailable');assert.equal(outcome.code,'UNSUPPORTED_CHANGE');assert.equal(outcome.phase,'resolve');assert.equal(f.audit.length,auditStart);assert.equal(f.provider.snapshot(),before);assert.equal(fs.readFileSync(f.installationPath,'utf8'),originalReceipt);return {outcome,before,after:f.provider.snapshot(),audit:f.audit.slice(auditStart)};
  }finally{f.cleanup();}
 }
+export async function configureAssetRefusalJourney(){
+ const observations=[];
+ for(const [variant,code] of [['missing','ENOENT'],['malformed','CONTROL_UNCERTAIN'],['zip_digest','ASSET_MISMATCH'],['bucket','ASSET_MISMATCH'],['key','ASSET_MISMATCH'],['version','ASSET_MISMATCH']]){
+  const f=await preparedCloud();try{
+   const {input}=await prepareControls(f);
+   if(variant==='missing')fs.unlinkSync(input.assetPath);else if(variant==='malformed')fs.writeFileSync(input.assetPath,'{');else{const asset=JSON.parse(fs.readFileSync(input.assetPath,'utf8'));if(variant==='zip_digest')asset.zip_digest=sha256('different zip');else delete asset[variant];fs.writeFileSync(input.assetPath,JSON.stringify(asset));}
+   const before=f.provider.snapshot(),schedule=structuredClone(f.cloud.schedule),originalReceipt=fs.readFileSync(f.installationPath),auditStart=f.audit.length,stateAuditStart=f.provider.audit.length,calls={fromIni:0,makeClient:0,wait:0};
+   assert.equal(f.provider.records().find(r=>r.kind==='installation').maintenance,false);assert.equal(f.cloud.schedule.State,'DISABLED');assert.equal(f.cloud.concurrency,1);
+   const dependencies={...f.dependencies,sdk:{...f.dependencies.sdk,fromIni:(...args)=>{calls.fromIni++;return f.dependencies.sdk.fromIni(...args);}},makeClient:(...args)=>{calls.makeClient++;return f.dependencies.makeClient(...args);},wait:(...args)=>{calls.wait++;return f.dependencies.wait(...args);}};
+   const outcome=await configureInstallation(input,dependencies);
+   assert.equal(outcome.status,'unavailable',variant);assert.equal(outcome.phase,'resolve',variant);assert.equal(outcome.code,code,variant);
+   for(const field of ['receipt','recovery_receipt','recovery_receipt_role','desired','applied','applied_confirmation','recovery_metadata'])assert.equal(Object.hasOwn(outcome,field),false,variant+': '+field);
+   assert.equal(f.provider.snapshot(),before,variant);assert.deepEqual(f.cloud.schedule,schedule,variant);assert.equal(f.cloud.concurrency,1,variant);assert.deepEqual(fs.readFileSync(f.installationPath),originalReceipt,variant);
+   assert.equal(f.audit.length,auditStart,variant);assert.equal(f.provider.audit.length,stateAuditStart,variant);assert.deepEqual(calls,{fromIni:0,makeClient:0,wait:0},variant);
+   observations.push({variant,status:outcome.status,phase:outcome.phase,code:outcome.code,calls,aws_audit_entries:f.audit.length-auditStart,state_audit_entries:f.provider.audit.length-stateAuditStart,state_unchanged:true,schedule_unchanged:true,concurrency:f.cloud.concurrency,receipt_unchanged:true});
+  }finally{f.cleanup();}
+ }
+ return observations;
+}
 export async function configureJourney({partial=false}={}){const f=await preparedCloud();try{
  const {digest,input}=await prepareControls(f);if(partial)f.cloud.fail='ExecuteChangeSetCommand';
  const outcome=await configureInstallation(input,f.dependencies);assert.equal(outcome.status,partial?'partial':'configured',JSON.stringify(outcome));assert(f.audit.filter(a=>['CreateChangeSetCommand','DescribeChangeSetCommand','ExecuteChangeSetCommand'].includes(a.action)).every(a=>a.identity==='SELECTED_DEPLOYER'));assert(f.audit.filter(a=>['TransactWriteCommand','UpdateScheduleCommand','PutFunctionConcurrencyCommand'].includes(a.action)).every(a=>a.identity==='SELECTED_OPERATOR'));
