@@ -55,8 +55,12 @@ deadline: no overlap, missed-offset catch-up or origin reset. It retains every
 attempt and one aggregate canonical PASS/FAIL/NOT_RUN row per expanded step.
 Local bounded helper exercises are not full-loop acceptance or activation.
 
-Complete reviewer and QA defects can queue under the same-release matrix below; discussion stays
-In Review or QA. No failure, wait or blocker candidate is constructed or appended. QA retains defects during later inability, marks every unfinished row NOT_RUN
+Complete confirmed reviewer and QA defects can queue under the same-release matrix
+below; discussion stays In Review or QA. Independent inability, incomplete or
+unproved assessments, causal waits, unsupported repair/resume and scope growth
+stay local without candidate construction, append or transition. A complete QA
+assessment may include defect-dependent NOT_RUN rows. QA retains defects during
+later independent inability, marks every unfinished row NOT_RUN
 and carries the union of finding IDs only through explicit failed/skipped case
 dependencies, including chains and joins. Actual causal upstream wait retains
 its typed unresolved request and findings; inability takes priority. These are
@@ -190,7 +194,11 @@ Use [qa-jira](../skills/qa-jira/SKILL.md) directly with a complete prepared
 assessment and trusted setup. Its read-only preflight establishes eligibility;
 final repeats current checks. Verified complete AI evidence or explicit static
 zero-AI work goes directly from QA to Human Review, with exact pending human IDs.
-A confirmed defect, real outstanding typed upstream request or unresolved
+Complete confirmed defects with the required current proof publish one QA
+repair_request against the current review and same tested PR, then verify the
+direct QA → Rework Queued transition. Retain every original row and finding,
+including defect-dependent NOT_RUN rows and pending humans; queue delivery does
+not change the FAIL test verdict. A real outstanding causal wait or unresolved
 access/evidence/cleanup/scope inability stops before candidate construction or
 append with no transition. Preserve complete local findings, partial rows/attempts,
 pending humans and original receipts. Discussion stays QA with no terminal record.
