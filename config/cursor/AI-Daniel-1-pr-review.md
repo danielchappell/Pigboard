@@ -20,10 +20,15 @@ The prepared entrypoint reads the shared 20 review criteria, eight report catego
 and comment handling. Prepare the configured latest available Grok High, Fast off,
 and retain actual selection evidence. A separate review run provides reasoning
 independence; eligible provider approval identity still needs verification.
-For the ordinary release, successful review approves the exact revision and moves
-to QA. Failure or missing prerequisites stop locally with findings/receipts;
-automatic repair admission remains deferred. The broader retained skill's repair
-capabilities do not create another trigger or a direct-In-Progress fallback. It never
+For supported ordinary `new_work`, complete current approved PASS moves the
+exact revision to QA. Complete confirmed in-scope defects, with required current
+proof and verified absence/removal of the reviewer's own stale approval, publish
+one reviewer `repair_request` on the same open PR and verify the direct
+In Review → Rework Queued transition. Independent inability, missing proof,
+incomplete review, discussion and unsupported assignments retain full findings
+and receipts locally without a canonical publication or transition. Only the
+manager later admits repair; automatic repair admission remains deferred.
+Queueing creates no new trigger or direct-In-Progress fallback. The role never
 patches code, creates another PR, merges, deploys or provisions environments.
 
 The pipeline-owned PR environment comment is defined in the

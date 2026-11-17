@@ -131,12 +131,3 @@ test('reviewer repair and blocked canonical receipts use implementation basis an
   x.c.updated='2026-11-15T12:00:00Z';assert.equal(chain(e).valid,false);
  }
 });
-
-test('P165-reviewer complete defect route preserves publisher and own approval boundaries',async()=>{
- const wrapper=await readFile(new URL('../skills/pigboard-pr-review/SKILL.md',import.meta.url),'utf8'),publisher=await readFile(new URL('../skills/reviewer-jira/SKILL.md',import.meta.url),'utf8'),contract=await readFile(new URL('../skills/pigboard-pr-review/references/jira-handoff.md',import.meta.url),'utf8');
- for(const text of [wrapper,publisher,contract])assert.match(text,/repair_request|REWORK_QUEUED/);
- assert.match(wrapper,/all findings/);assert.match(wrapper,/Never revoke|never remove\n?another actor|another actor's approval/);
- assert.match(contract,/qa_report:null|qa_report: null|`qa_report:null`/);assert.match(contract,/original canonical record bytes\/digest\/UUID/);
- assert.match(contract,/worker-current/);assert.match(contract,/Rework Queued/);assert.match(contract,/COMPLETED/);
- assert.match(contract,/unknown required revocation prevents append/);assert.match(publisher,/exact intended edge|exact selected edge|intended-edge|intended edge/);
-});

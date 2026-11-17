@@ -9,11 +9,16 @@ Plexus/master with the existing prepared Pigboard environment; Grok 4.7 High, Fa
 off. Keep inactive. The [automation matrix](automations.md) records actual saved
 state and distinguishes pending capabilities from configured settings.
 
-QA runs on the existing open PR. It retains screenshots/request/query evidence and
-records outcomes on the ticket. PASS moves to Human Review; confirmed in-scope
-implementation defects return to In Progress on the same PR; missing prerequisites,
-evidence or required scope decisions stop Blocked for a human. Discussion stays in
-QA. No patches, approvals, new PRs, merges, deployments or environment repair.
+QA runs on the existing open PR and retains screenshots/request/query evidence.
+Successful supported ordinary `new_work` QA moves to Human Review with the exact
+pending human cases; static zero-AI QA keeps its no-AI reason. Complete confirmed
+in-scope defects, with the full valid partial ledger and required current proof,
+publish one QA `repair_request` on the same open PR and verify the direct
+QA → Rework Queued transition. Independent inability, missing proof or required
+scope decisions retain every finding, row and receipt locally without Blocked
+publication. Discussion stays QA without publication. Only the manager later
+admits repair; no direct-In-Progress fallback. No patches, approvals, new PRs,
+merges, deployments or environment repair.
 
 Required before a live QA run: complete structured ticket; reviewed execution
 artifacts; exact current source/target and approval/CI; matching ready pipeline PR

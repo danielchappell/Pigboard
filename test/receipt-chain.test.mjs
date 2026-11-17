@@ -1,4 +1,4 @@
-import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';
+import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm,mkdir,cp } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync,execFileSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
 import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue, extractHandoff } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
@@ -489,4 +489,52 @@ test('P165-PROOF-complete-transitive-ledger retains every result and joined find
  const result=validateWorkerCurrent(JSON.stringify(input));assert.equal(result.valid,true,JSON.stringify(result.diagnostics));assert.deepEqual(JSON.parse(JSON.stringify(result.qa_report)),JSON.parse(JSON.stringify(record.payload.qa_report)));assert.equal(result.ai_steps,7);assert.deepEqual(result.human_pending,['HQA-01']);
  const changed=structuredClone(input),body=JSON.parse(changed.comment_pages[0].comments.at(-1).body),changedRecord=JSON.parse(body.content[0].content[0].text);changedRecord.payload.qa_report.steps[5].finding_ids=['F2'];body.content[0].content[0].text=JSON.stringify(changedRecord);changed.comment_pages[0].comments.at(-1).body=JSON.stringify(body);changed.target.digest=digestValue(changedRecord);
  const rejected=validateWorkerCurrent(JSON.stringify(changed));assert.equal(rejected.valid,false);assert(rejected.diagnostics.some(d=>d.code==='LEDGER'&&d.path.endsWith('/steps/5/finding_ids')));
+});
+
+test('P165-source copied runtime and documented private packet extraction',async t=>{
+ const {prepare}=await import('../scripts/prepare-pigboard-skills.mjs');
+ const bundle=JSON.parse(await readFile(new URL('../config/skill-bundle.json',import.meta.url)));
+ const git=(cwd,...args)=>execFileSync('git',args,{cwd,stdio:'pipe'}).toString().trim();
+ async function makeP165DistributionFixture(t){
+  const root=await mkdtemp(path.join(os.tmpdir(),'pigboard-p165-copied-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const source=path.join(root,'source'),app=path.join(root,'app'),cache=path.join(root,'cache');
+  await mkdir(source);await mkdir(app);git(source,'init','-b','main');
+  git(source,'config','user.name','Fixture');git(source,'config','user.email','fixture@example.invalid');
+  for(const name of bundle.skills){await mkdir(path.join(source,'skills',name),{recursive:true});await writeFile(path.join(source,'skills',name,'SKILL.md'),name);}
+  for(const d of bundle.dependencyDirectories)await mkdir(path.join(source,'skills',d),{recursive:true});
+  for(const relative of bundle.validatorPayload.sources){const target=path.join(source,relative);await mkdir(path.dirname(target),{recursive:true});await cp(new URL('../'+relative,import.meta.url),target);}
+  git(source,'add','.');git(source,'commit','-m','initial');
+  return {source,app,cache,ref:'main'};
+ }
+ const install=async dir=>{await mkdir(dir,{recursive:true});await writeFile(path.join(dir,'installed'),'yes');};
+ const {spawnSync}=await import('node:child_process'),{validateWorkerCurrent}=await import('../lib/contracts/receipts.mjs');
+ const o=await makeP165DistributionFixture(t),root=path.dirname(o.source),a=await prepare(o,async dir=>{if(path.basename(dir)==='work-validator')await cp(new URL('../node_modules/',import.meta.url),path.join(dir,'node_modules'),{recursive:true,dereference:true});else await install(dir);});
+ const runtime=path.join(a.skills,'work-validator'),cwd=path.join(root,'unrelated');await mkdir(cwd);
+ const sourceRoot=new URL('../',import.meta.url).pathname,packet=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).rework_queue_p165;
+ const env={...process.env};delete env.NODE_PATH;
+ for(const row of packet.proof_cases){
+  const input=path.join(root,row.id+'.json'),raw=JSON.stringify(row.input);await writeFile(input,raw);
+  const args=['--mode','worker-current','--input',input,'--json'],copied=spawnSync(process.execPath,[path.join(runtime,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'}),source=spawnSync(process.execPath,[path.join(sourceRoot,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'});
+  assert.equal(copied.status,row.expected.valid?0:1,row.id+copied.stdout+copied.stderr);assert.equal(source.status,copied.status);assert.equal(copied.stderr,'');assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(source.stdout));assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(JSON.stringify(validateWorkerCurrent(raw))));assert.equal(await readFile(input,'utf8'),raw);
+ }
+ const guide=await readFile(new URL('../docs/handoffs.md',import.meta.url),'utf8'),start=guide.indexOf("node --input-type=module - \"$PIGBOARD_SOURCE\" \"$PIGBOARD_CASE\" \"$PIGBOARD_PACKET\" <<'NODE'\n");assert(start>0);
+ const codeStart=guide.indexOf('\n',start)+1,code=guide.slice(codeStart,guide.indexOf('\nNODE',codeStart));
+ const extract=(id,out)=>spawnSync(process.execPath,['--input-type=module','-',sourceRoot,id,out],{input:code,cwd,env,encoding:'utf8'});
+ assert.equal(Object.keys(packet.packets).length,8);
+ for(const [id,p]of Object.entries(packet.packets)){
+  const out=path.join(root,id);assert.equal(extract(id,out).status,0);assert.equal((await (await import('node:fs/promises')).stat(out)).mode&0o777,0o700);
+  for(const [area,key]of [['assistant','assistant_files'],['operator','operator_files']])for(const [name,content]of Object.entries(p[key])){const file=path.join(out,area,name);assert.equal(await readFile(file,'utf8'),content);assert.equal((await (await import('node:fs/promises')).stat(file)).mode&0o777,0o600);}
+  for(const name of ['invocation.md','work.yaml','facts.yaml','observations.json','current-worker.json','change.diff'])assert(p.assistant_files[name]);
+  assert(!Object.keys(p.assistant_files).some(n=>/oracle|candidate|report/.test(n)));assert(p.operator_files['oracle.json']);assert(p.operator_files['operation-cards.json']);assert(p.operator_files['sentinels.json']);
+  const current=p.assistant_files['current-worker.json'],observations=JSON.parse(p.assistant_files['observations.json']);assert.equal(validateWorkerCurrent(current).valid,true,id);
+  assert.equal(observations.pr.provider,'bitbucket');assert.match(observations.pr.title,/EX-1/);assert.match(observations.pr.description,/EX-1/);assert.equal(observations.native.type_id,'22');assert.equal(observations.scope.config_file,'config.yaml');assert.match(observations.capabilities.prepared_route,/rovito-safeguard mock/);assert(p.assistant_files['config.yaml']);assert(p.assistant_files['query.sql']);
+  const currentFile=path.join(out,'assistant','current-worker.json'),args=['--mode','worker-current','--input',currentFile,'--json'];
+  const copied=spawnSync(process.execPath,[path.join(runtime,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'}),source=spawnSync(process.execPath,[path.join(sourceRoot,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'});assert.equal(copied.status,0,id+copied.stdout+copied.stderr);assert.equal(source.status,0,id+source.stdout+source.stderr);assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(source.stdout));
+  assert.equal(extract(id,out).status,1);assert.equal(await readFile(path.join(out,'assistant','current-worker.json'),'utf8'),current);
+ }
+ // These are the actual two documented layouts, not a fictional shared path.
+ assert.deepEqual(await readFile(path.join(runtime,'docs/handoffs.md')),await readFile(path.join(sourceRoot,'docs/handoffs.md')));assert.match(await readFile(path.join(runtime,'docs/handoffs.md'),'utf8'),/## Ordinary worker release boundary/);
+ const unknown=path.join(root,'unknown');assert.equal(extract('UNKNOWN',unknown).status,1);await assert.rejects(readFile(path.join(unknown,'assistant','invocation.md')));
+ const damaged=path.join(root,'damaged');await cp(runtime,damaged,{recursive:true});await rm(path.join(damaged,'lib/contracts/receipts.mjs'));const failed=spawnSync(process.execPath,[path.join(damaged,'scripts/validate-handoff.mjs'),'--mode','worker-current','--input',path.join(root,packet.proof_cases[0].id+'.json'),'--json'],{cwd,env,encoding:'utf8'});assert.notEqual(failed.status,0);
 });
