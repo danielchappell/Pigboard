@@ -26,7 +26,9 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
  const binding={schema:'pigboard-aws-installation/v1',installation_id:m.installation_id,domain_id:m.domain_id,site:config.jira.site,configuration_digest:digest,package_revision:manifest.source_revision,region:a.region,stack_id:stackId,table_name:tableName,table_arn:tableArn,installation_generation:manifest.installation_generation};
  const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableArn:tableArn,TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
  const env={PB_INSTALLATION_ID:m.installation_id,PB_DOMAIN_ID:m.domain_id,PB_INSTALLATION_GENERATION:manifest.installation_generation,PB_PACKAGE_REVISION:manifest.source_revision,PB_CONFIGURATION_DIGEST:digest,PB_MODE:'preview',PB_WRITES_ENABLED:'false',PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:stackId};
- const cloud={stack:{StackId:stackId,StackStatus:'CREATE_COMPLETE',Outputs:[{OutputKey:'FunctionArn',OutputValue:functionArn}]},events:[{LogicalResourceId:'StateTable',ResourceStatus:'CREATE_COMPLETE',PhysicalResourceId:tableName}],function:{FunctionArn:functionArn,Environment:{Variables:env},Role:`arn:aws:iam::${a.account_id}:role/${name}-runtime`,Runtime:'nodejs24.x',Handler:'lib/aws/manager-lambda.handler',Timeout:m.invocation_timeout_seconds,LastUpdateStatus:'Successful',State:'Active'},asyncConfig:{FunctionArn:functionArn+':$LATEST',MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60},codeHash:Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64'),concurrency:1,schedule:{Name:name,State:'DISABLED',ScheduleExpression:`rate(${m.schedule_minutes} minutes)`,FlexibleTimeWindow:{Mode:'OFF'},Target:{Arn:functionArn,RoleArn:`arn:aws:iam::${a.account_id}:role/${name}-scheduler`,Input:JSON.stringify({operation:'preview'}),RetryPolicy:{MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60}}},...overrides};
+ const created='2026-11-17T08:00:09.731Z',tableCreated='2026-11-17T08:00:24.908Z',completed='2026-11-17T08:00:45.078Z';
+ const stackEvent=(ResourceStatus,Timestamp)=>({StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus,Timestamp});
+ const cloud={stack:{StackId:stackId,StackStatus:'CREATE_COMPLETE',CreationTime:created,Outputs:[{OutputKey:'FunctionArn',OutputValue:functionArn}]},events:[stackEvent('CREATE_COMPLETE',completed),{StackId:stackId,LogicalResourceId:'StateTable',ResourceType:'AWS::DynamoDB::Table',ResourceStatus:'CREATE_COMPLETE',PhysicalResourceId:tableName,Timestamp:tableCreated},stackEvent('CREATE_IN_PROGRESS',created)],function:{FunctionArn:functionArn,Environment:{Variables:env},Role:`arn:aws:iam::${a.account_id}:role/${name}-runtime`,Runtime:'nodejs24.x',Handler:'lib/aws/manager-lambda.handler',Timeout:m.invocation_timeout_seconds,LastUpdateStatus:'Successful',State:'Active'},asyncConfig:{FunctionArn:functionArn+':$LATEST',MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60},codeHash:Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64'),concurrency:1,schedule:{Name:name,State:'DISABLED',ScheduleExpression:`rate(${m.schedule_minutes} minutes)`,FlexibleTimeWindow:{Mode:'OFF'},Target:{Arn:functionArn,RoleArn:`arn:aws:iam::${a.account_id}:role/${name}-scheduler`,Input:JSON.stringify({operation:'preview'}),RetryPolicy:{MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60}}},...overrides};
  const credentials=profile=>({accessKeyId:profile==='operator'?'SELECTED_OPERATOR':profile==='deployer'?'SELECTED_DEPLOYER':'WRONG_AMBIENT',secretAccessKey:'dummy'});
  const injectedSDK={...sdk,fromIni:({profile})=>async()=>credentials(profile)};
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
@@ -34,7 +36,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/fixture`};
   if(n==='DescribeStacksCommand')return {Stacks:[cloud.stack]};
   if(n==='DescribeStackResourcesCommand')return {StackResources:Object.entries({Function:name,Schedule:name,StateTable:tableName,RuntimeRole:name+'-runtime',SchedulerRole:name+'-scheduler',LogGroup:'/aws/lambda/'+name}).map(([LogicalResourceId,PhysicalResourceId])=>({LogicalResourceId,PhysicalResourceId}))};
-  if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);return {StackEvents:cloud.events};}
+  if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);return {StackEvents:cloud.events,...(cloud.eventsNextToken===undefined?{}:{NextToken:cloud.eventsNextToken})};}
   if(n==='GetFunctionCommand')return {Configuration:{FunctionArn:functionArn,...(cloud.codeHash===undefined?{}:{CodeSha256:cloud.codeHash})},Code:{Location:'https://unused.example.invalid/fixture'}};
   if(n==='GetFunctionConfigurationCommand')return structuredClone(cloud.function);
   if(n==='GetFunctionEventInvokeConfigCommand'){if(!cloud.asyncConfig)throw Object.assign(new Error('dummy missing async config'),{name:'ResourceNotFoundException'});return structuredClone(cloud.asyncConfig);}
@@ -77,6 +79,56 @@ export async function manifestConfigurationJourney(){
   }
  }
  return observations;
+}
+// Ten bounded local cases for original-create provenance; no provider campaign.
+export async function originalCreateInitializationJourney(){
+ const observations=[];
+ const kinds=['direct_create','create_change_set','unexplained_last_update','updated_stack','update_event','missing_stack_milestone','different_table','paginated_events','invalid_timestamp','nonempty_table'];
+ for(const kind of kinds){
+  const f=await preparedCloud();try{
+   if(kind!=='direct_create'){
+    f.cloud.stack.CreationTime='2026-11-17T08:00:04.419Z';
+    // SDK Date and an equivalent offset string must compare as the same instant.
+    f.cloud.stack.LastUpdatedTime=new Date('2026-11-17T08:00:09.731Z');
+    f.cloud.events.find(e=>e.ResourceStatus==='CREATE_IN_PROGRESS').Timestamp='2026-11-17T08:00:09.731000+00:00';
+    f.cloud.events.push({StackId:f.stackId,PhysicalResourceId:f.stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'REVIEW_IN_PROGRESS',Timestamp:f.cloud.stack.CreationTime});
+   }
+   if(kind==='unexplained_last_update')f.cloud.stack.LastUpdatedTime=new Date('2026-11-17T08:00:10.731Z');
+   if(kind==='updated_stack')f.cloud.stack.StackStatus='UPDATE_COMPLETE';
+   if(kind==='update_event')f.cloud.events.unshift({StackId:f.stackId,PhysicalResourceId:f.stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_IN_PROGRESS',Timestamp:'2026-11-17T08:01:00.000Z'});
+   if(kind==='missing_stack_milestone')f.cloud.events=f.cloud.events.filter(e=>e.ResourceStatus!=='CREATE_IN_PROGRESS');
+   if(kind==='different_table')f.cloud.events.find(e=>e.LogicalResourceId==='StateTable').PhysicalResourceId+='-replacement';
+   if(kind==='paginated_events')f.cloud.eventsNextToken='another-page';
+   if(kind==='invalid_timestamp')f.cloud.events.find(e=>e.ResourceStatus==='CREATE_IN_PROGRESS').Timestamp='invalid-time';
+   if(kind==='nonempty_table')seedRetained(f,{retained_members:[{...stateFixture.memberA,project_id:'10001',label:'AI-Daniel-1'}],pending_intents:[]});
+   const before=f.provider.snapshot(),receipt=fs.readFileSync(f.installationPath),auditStart=f.audit.length,stateStart=f.provider.audit.length;
+   const result=await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve});
+   const audit=f.audit.slice(auditStart),stateAudit=f.provider.audit.slice(stateStart),transactions=stateAudit.filter(a=>a.name==='TransactWriteCommand');
+   assert.deepEqual(JSON.parse(result.stdout),result.outcome,kind+' JSON output');
+   assert.deepEqual(fs.readFileSync(f.installationPath),receipt,kind+' preserves receipt bytes');
+   assert.equal(audit.filter(a=>a.action==='DescribeStackEventsCommand').length,1,kind+' bounded events read');
+   assert(audit.every(a=>/^(Get|Describe|Scan)/.test(a.action)||a.action==='TransactWriteCommand'),kind+' has no cloud control mutation');
+   assert(audit.every(a=>a.identity==='SELECTED_OPERATOR'),kind+' selected operator only');
+   assert(audit.filter(a=>a.kind==='DynamoDBDocument').every(a=>a.input.TableName===f.binding.table_name||a.input.TransactItems?.every(i=>i.Put?.TableName===f.binding.table_name)),kind+' original table only');
+   if(['direct_create','create_change_set'].includes(kind)){
+    assert.equal(result.exitCode,0,kind+': '+result.stdout);assert.equal(result.outcome.status,'confirmed',kind);
+    const records=f.provider.records();assert.equal(records.length,1,kind+' one installation');const record=records[0];
+    assert.equal(record.kind,'installation');
+    for(const field of ['table_name','table_arn','stack_id','installation_generation','package_revision','configuration_digest'])assert.equal(record[field],f.binding[field],kind+' original '+field);
+    for(const field of ['schedule_enabled','writes_enabled','maintenance'])assert.equal(record[field],false,kind+' disabled '+field);
+    assert.equal(f.manifest.source_revision,'a'.repeat(40));assert.notEqual(f.manifest.source_revision,execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
+    assert.equal(transactions.length,1,kind+' one conditional transaction');assert.equal(transactions[0].input.TransactItems.length,1);
+    assert.equal(transactions[0].input.TransactItems[0].Put.ConditionExpression,'attribute_not_exists(PK)');
+   }else{
+    assert.equal(result.outcome.code,'FRESH_INSTALLATION_REQUIRED',kind+': '+result.stdout);assert.equal(result.exitCode,kind==='nonempty_table'?1:2,kind);
+    assert.equal(f.provider.snapshot(),before,kind+' preserves retained state');assert.equal(transactions.length,0,kind+' no transaction');
+    if(kind==='nonempty_table'){assert(stateAudit.some(a=>a.name==='GetCommand'));assert(stateAudit.some(a=>a.name==='ScanCommand'));assert.equal(f.provider.records().length,1);}
+    else{assert.equal(stateAudit.length,0,kind+' no State initialization reads');assert.equal(audit.filter(a=>a.action==='DescribeTableCommand').length,1,kind+' observation only');}
+   }
+   observations.push({kind,status:result.outcome.status,code:result.outcome.code,exit_code:result.exitCode,event_requests:1,transactions:transactions.length,receipt_unchanged:true,cloud_control_mutations:0});
+  }finally{f.cleanup();}
+ }
+ assert.equal(observations.length,10);return observations;
 }
 export async function resolverJourney(){const f=await preparedCloud();try{
  const args=['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'];const init=await runStateCommand(args,{resolveInstallation:f.resolve});assert.equal(init.exitCode,0,init.stdout);assert.equal(f.provider.records()[0].schedule_enabled,false);
