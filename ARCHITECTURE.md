@@ -235,22 +235,6 @@ manager admission authority.
 
 `extractHandoffCandidate(adfInput)` in the existing handoff module classifies supplied ADF only. A source-order AST pass binds aliases to prior anchors; one visited root-schema graph identifies attempted records. The existing strict parser then validates the selected original whole wrapper and canonical record. Strict receipt consumers retain their existing contract. This pure synchronous API has fixed bounds and no provider, resolver or deadline parameter. A later inventory caller owns discovery and checks its own deadline before and after inspection; synchronous parsing cannot be timer-preempted. Source and prepared-copy use and recovery are in the [guide](docs/manager-preview.md#inspect-a-supplied-handoff-comment).
 
-## Conditional State API
-
-The [State guide](docs/manager-state.md) documents the callable production API in
-`lib/state/contract.mjs` and `lib/aws/dynamodb.mjs`. It retains installation, stream,
-member and original-attempt identity; performs bounded coherent inventory and
-conditional reservation/finalization; and keeps unknown effects held. Prepared
-Node callers use the actual pinned SDK with customer credentials. State success
-does not establish Jira authority or live readiness.
-
-PGB-83 owns actual installation/configuration/resource resolution and CLI binding;
-PGB-137 adds original transition capture and PGB-87 owns verified Jira effects.
-The local three-group API packet preserves installed and human acceptance as
-pending. No historical worker-metadata collector, recovery automation or runtime
-activation is introduced. Existing state evidence and original installed checks
-remain distinct; PGB-83/90 owns the retained installed release journey.
-
 ## Complete ordinary Jira acquisition
 
 `lib/jira/inventory.mjs` composes the existing Jira read session/acquirer and
@@ -294,3 +278,19 @@ ordinary admission caller. The existing CLI and actual prepared-copy payload use
 the same route. Strict execution APIs and legacy repair fixtures remain separate.
 This increment does not prove live173/State/AWS composition, worker compatibility,
 human acceptance, activation or a release; their owning delivery gates remain.
+
+## Conditional State API
+
+The [State guide](docs/manager-state.md) documents the callable production API in
+`lib/state/contract.mjs` and `lib/aws/dynamodb.mjs`. It retains installation, stream,
+member and original-attempt identity; performs bounded coherent inventory and
+conditional reservation/finalization; and keeps unknown effects held. Prepared
+Node callers use the actual pinned SDK with customer credentials. State success
+does not establish Jira authority or live readiness.
+
+PGB-83 owns actual installation/configuration/resource resolution and CLI binding;
+PGB-137 adds original transition capture and PGB-87 owns verified Jira effects.
+The local three-group API packet preserves installed and human acceptance as
+pending. No historical worker-metadata collector, recovery automation or runtime
+activation is introduced. Existing state evidence and original installed checks
+remain distinct; PGB-83/90 owns the retained installed release journey.

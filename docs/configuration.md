@@ -261,8 +261,11 @@ disabled manager example in the [installation guide](manager-installation.md).
 
 `installation_id` and `domain_id` are stable bounded tokens. `aws` supplies the
 12-digit account, region, stack name and distinct same-account operator/deployer
-role ARNs. Profiles select credentials for those roles, never substitute resource
-IDs. Generated stack/table/function/schedule IDs and installation receipts are
+role ARNs with no IAM path (for example `role/pigboard-operator`, not
+`role/team/pigboard-operator`). A path-bearing operator or deployer ARN is invalid
+configuration and fails before packaging or host operations; see the supported
+role/profile prerequisites in the [installation guide](manager-installation.md).
+Profiles select credentials for those exact roles, never substitute resource IDs. Generated stack/table/function/schedule IDs and installation receipts are
 outputs, not another configuration file to author.
 
 `controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,

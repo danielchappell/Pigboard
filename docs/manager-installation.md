@@ -21,10 +21,14 @@ Never put the token in configuration, command arguments or evidence.
 An authorized customer administrator prepares distinct operator and deployer
 roles and named profiles. Runtime and scheduler roles are separate generated
 roles. Profiles select credentials; the commands verify STS account and exact
-canonical role before service access. Role paths in assumed-role sessions are
-rejected when they cannot be matched unambiguously. A denied selected profile
-never falls back to ambient credentials. No role assumption or credential store is
-created by Pigboard.
+canonical role before service access. Operator and deployer roles must have no
+IAM path: use `arn:aws:iam::123456789012:role/pigboard-operator`, not
+`arn:aws:iam::123456789012:role/team/pigboard-operator`. Configure distinct exact
+role ARNs in the same account. Path-bearing role ARNs fail local configuration
+validation before packaging or host operations. Prepare named profiles for those
+supported roles; do not strip a path or substitute a basename to select another
+identity. A denied selected profile never falls back to ambient credentials. No
+role assumption or credential store is created by Pigboard.
 
 ## Build and deploy
 
