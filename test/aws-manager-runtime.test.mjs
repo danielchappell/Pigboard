@@ -1,11 +1,14 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {resolverJourney,stopJourney,configureJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
+import {resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {controlOnlyChange,roleMatches} from '../lib/aws/installation.mjs';
 import {runInstallationCommand} from '../scripts/manager-installation.mjs';
 test('actual selected-profile resolver accepts original disabled binding and refuses missing updated freshness',async()=>{await resolverJourney();});
 test('actual stop producer fences revision and retains applied digest before quiescing host',async()=>{await stopJourney();});
+test('normal installation rejects unsafe effective async settings before effects',async(t)=>{for(const row of await asyncConfigRefusalJourney())t.diagnostic(JSON.stringify(row));});
+test('recovery inspection and stop bypass unsafe or unavailable async settings',async(t)=>{for(const row of await asyncConfigRecoveryJourney())t.diagnostic(JSON.stringify(row));});
+test('configure preserves original recovery authority after post-update async drift',async(t)=>{t.diagnostic(JSON.stringify(await asyncConfigPostUpdateJourney()));});
 test('configure rejects invalid local assets before service acquisition',async(t)=>{for(const row of await configureAssetRefusalJourney())t.diagnostic(JSON.stringify(row));});
 test('actual configure producer uses deployer only for bounded change set and commits controls last',async()=>{await configureJourney();await configureJourney({partial:true});});
 test('preview event rejects authority overrides before creating clients',async()=>{let calls=0;const r=await runPreview({operation:'preview',writes_enabled:true},{createState:()=>{calls++;}});assert.equal(r.code,'PREVIEW_EVENT_REQUIRED');assert.equal(calls,0);});
