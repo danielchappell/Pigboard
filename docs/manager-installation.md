@@ -46,6 +46,24 @@ No source branch is resolved later. Packaging rejects dirty source, missing pinn
 dependencies and existing output directories. JSON results name the output or a
 safe failure code.
 
+Generated physical names use `pigboard-`, up to 12 readable characters from the
+installation ID, then a hyphen and the first 32 hexadecimal SHA256 characters of
+the complete unchanged ID. The base is at most 54 characters; the longest role
+name is at most 64. All six resources and their scoped policy targets use this
+same derivation. It is deterministic and collision-resistant, not proof of AWS
+resource availability. Read actual names from generated outputs and receipts;
+do not reconstruct or copy them into canonical configuration.
+
+This pre-release correction changes every generated physical name, including
+short IDs. It applies to newly generated packages. For an existing installation,
+keep its original pinned package, receipt and matching source/tooling together
+for inspection and stop. New strict tooling rejects old named resources; it has
+no legacy-name fallback or migration path. Do not apply the new template to an
+old stack to make it match: it could request replacements. Do not rewrite receipts,
+reinitialize or delete retained State. No deployed-installation inventory has
+been performed, and the controller still rejects source migration/replacement.
+
+
 Initial provisioning is an explicitly authorized customer operation outside the
 source/fixture checks. Upload the exact zip to your prepared versioned artifact
 bucket using AWS CLI and the deployer profile. Record the returned object version,
@@ -110,7 +128,10 @@ Use [state inspection](manager-state.md) for all four kinds, pagination and hold
 CLI exit zero confirms the reported operation and required receipt publication;
 one means conflict/incomplete, partial work or failed receipt publication, and
 two means invalid, unavailable or uncertain. Readable and JSON
-output expose the same facts. Preserve partial results and inspect the same
+output expose the same facts. For installation commands, `--json` anywhere in
+the arguments also selects JSON for malformed input; unknown commands/options,
+missing values and duplicate flags still return safe `INVALID_INPUT` with exit
+two before output reservation or service access. Preserve partial results and inspect the same
 installation; do not repeat an uncertain write to make output look complete.
 
 ## Deliberate scheduling and stop

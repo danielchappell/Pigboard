@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {resolverJourney,stopJourney,configureJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {controlOnlyChange,roleMatches} from '../lib/aws/installation.mjs';
+import {runInstallationCommand} from '../scripts/manager-installation.mjs';
 test('actual selected-profile resolver accepts original disabled binding and refuses missing updated freshness',async()=>{await resolverJourney();});
 test('actual stop producer fences revision and retains applied digest before quiescing host',async()=>{await stopJourney();});
 test('actual configure producer uses deployer only for bounded change set and commits controls last',async()=>{await configureJourney();await configureJourney({partial:true});});
@@ -21,6 +22,14 @@ test('canonical installation comparison preserves values and array order',async(
  for(const [field,value] of [['source_revision','b'.repeat(40)],['runtime','nodejs22.x'],['installation_generation','different-generation']])assert.equal(controlOnlyChange(previous,{...reordered,[field]:value}),false);
  const account='123456789012',role='arn:aws:iam::'+account+':role/pigboard-operator';assert.equal(roleMatches('arn:aws:sts::'+account+':assumed-role/pigboard-operator/session',role,account),true);assert.equal(roleMatches('arn:aws:sts::000000000000:assumed-role/pigboard-operator/session',role,account),false);assert.equal(roleMatches('arn:aws:sts::'+account+':assumed-role/another-role/session',role,account),false);
  await configureArrayOrderRefusal();
+});
+
+test('installation CLI renders invalid arguments as JSON regardless of flag position',async()=>{
+ let reservations=0,clients=0;const dependencies={fileOperations:{openSync:()=>{reservations++;throw Error('Unexpected output reservation');}},sdk:{fromIni:()=>{clients++;throw Error('Unexpected credentials');}},makeClient:()=>{clients++;throw Error('Unexpected service client');}};
+ for(const argv of [['unknown','--json'],['bind','--unknown','value','--json'],['bind','--config','--json'],['bind','--config','x','--config','y','--json']]){
+  const result=await runInstallationCommand(argv,dependencies);assert.equal(result.exitCode,2);assert.deepEqual(result.outcome,{status:'unavailable',code:'INVALID_INPUT'});assert.deepEqual(JSON.parse(result.stdout),result.outcome);
+ }
+ const readable=await runInstallationCommand(['unknown'],dependencies);assert.equal(readable.exitCode,2);assert.deepEqual(readable.outcome,{status:'unavailable',code:'INVALID_INPUT'});assert.equal(readable.stdout,'unavailable: '+JSON.stringify(readable.outcome)+'\n');assert.equal(reservations,0);assert.equal(clients,0);
 });
 
 test('ordinary apply host rejects stream overrides and preview package capability',async()=>{
