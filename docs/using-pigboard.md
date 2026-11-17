@@ -125,7 +125,13 @@ revision, ticket/PR and code revisions, requirement/case coverage, observed resu
 artifact references, limitations and confirmed or uncertain external actions.
 Installation receipts and local paths alone are not live acceptance evidence.
 
-| Outcome | Current handling |
+Current publication and transition authority comes from the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and pinned entrypoint contract. The broader historical routes below are not a
+current capability list. Their rows grant no ordinary wait, Blocked or resume
+authority.
+
+| Outcome | Historical route reference |
 | --- | --- |
 | Complete implementation with current required CI | Publish the implementation handoff and verify In Review transition. |
 | Complete passing PR review | Publish reports, verify current-revision approval, then verify QA transition. |
@@ -138,10 +144,13 @@ Installation receipts and local paths alone are not live acceptance evidence.
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
-The implementer retains `implementationOutcome` READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN
-and separate `deliveryOutcome` NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE.
-COMPLETED describes a verified intended handoff, including wait/blocked, not code
-success. Delivery failure preserves revision-bound READY but never claims Jira moved.
+The following broader implementation labels are historical reference; they grant
+no ordinary wait, Blocked or resume authority: `implementationOutcome`
+READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN and separate `deliveryOutcome`
+NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE. For current delivery,
+COMPLETED means publication and the selected release's supported native destination
+were verified; it does not mean code success. Delivery failure preserves
+revision-bound READY but never claims Jira moved.
 See the [durable result](../skills/implementer-entrypoint/references/handoff.md#durable-result).
 
 A PASS label without current complete evidence is insufficient. Human review,
@@ -629,7 +638,11 @@ does not transfer. Authorized independent agent verification can establish
 applicable developer requirements with truthful actor/category evidence. Designated
 human tracking stays honest; its NOT RUN label alone adds no replay requirement.
 
-Expected routes below describe the contract, not completed acceptance results:
+Use the selected release's
+[ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
+and pinned qa-entrypoint/qa-jira contracts for current routes. The broader
+historical reference below grants no ordinary wait, Blocked or resume authority.
+Its examples are not completed acceptance results:
 
 | Actual run | Retained result and handoff |
 | --- | --- |
@@ -652,5 +665,6 @@ remains detailed evidence, with one aggregate canonical row per step.
 Return qa-jira's exact `test_verdict`, `human_only`, `qa_report`, `findings`,
 `human_pending`, `intended_destination`, receipts, `actual_jira_status`,
 `delivery_outcome` and `recovery`. Local fields are not new canonical keys.
-COMPLETED means the intended handoff was verified, including Blocked; tests,
-human acceptance, hosted CI, merge and activation have separate evidence.
+COMPLETED means publication and the selected release's supported native
+destination were independently verified; it does not mean tests or human cases
+passed. Hosted CI, merge and activation have separate evidence.
