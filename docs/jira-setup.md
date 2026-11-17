@@ -1,5 +1,21 @@
 # Jira setup specification and rollout record
 
+For current ordinary-release setup, start with [release readiness](release-readiness.md).
+Its canonical-derived inactive projection lists every project's native Story/Bug
+IDs and three successful routes. Compare saved full numbered labels using Jira
+site + immutable project ID + full label; equal labels in different projects
+remain separate. Keep both Jira and Cursor flags false. The projection is local
+report output, not a provider import or second configuration. The unpublished
+PGB-90 milestone does not establish installed or hosted acceptance.
+
+## Historical pilot record — 13–14 November 2026
+
+The decisions, IDs, UI observations and exports below retain their dated meaning.
+Their Story-only rules and direct-In-Progress repair recipe are superseded for
+current ordinary-release setup. Do not import or activate them as a current recipe.
+The saved exports are unchanged; current source comparisons, installed acceptance,
+PGB-58 and explicit activation are separate evidence.
+
 This is the reproducible setup record for the Jira/Cursor MVP, started on
 13 November 2026. It records desired configuration separately from observed
 installation. It is not an installer or evidence that the delivery workflow works

@@ -1,5 +1,19 @@
 # Cursor automation setup matrix
 
+Current ordinary-release setup follows the [release-readiness guide](../../docs/release-readiness.md)
+and the pinned role profiles. Use one canonical configuration for each project's
+native Story/Bug IDs and ordinary In Progress → In Review → QA → Human Review
+journey. Keep Jira rules and Cursor automations inactive. Readiness compares saved
+observations; it does not provision or enable them. The current PGB-90 working
+milestone remains unpublished and incomplete pending actual manager integration.
+
+## Historical pilot setup — 13–14 November 2026
+
+The saved observations, Build pins and selected model versions below describe the
+dated pilot. They do not establish a current compatible release or latest model
+availability. Preserve them as history; follow the guide above for refresh,
+exact prompts, phase controls, missing evidence and human handoff.
+
 All three stage automations must stay **inactive** until explicit go-live. A saved
 configuration and selected successful Build are setup evidence, not a completed
 Story or authorization to invoke a webhook. Jira automation wiring comes after the

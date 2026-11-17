@@ -1,7 +1,10 @@
 # AI-Daniel-1 PR reviewer setup
 
 Current configuration and rollout gaps are recorded in the
-[three-stage automation matrix](automations.md). Older Build/pin observations below
+[release-readiness guide](../../docs/release-readiness.md) and pinned
+[review profile](../../skills/pigboard-pr-review/references/cursor.md).
+The [three-stage automation matrix](automations.md) retains dated pilot evidence.
+Older Build/pin observations below
 are dated history; they do not override the matrix or authorize activation.
 
 [Cursor automation](https://cursor.com/t/safeguardglobal-engineering/automations/d6870b65-df37-11f1-ba91-f63b1661ac50)
@@ -14,10 +17,13 @@ codebase is Plexus/master, using the existing Pigboard AI-Daniel-1 Plexus enviro
 
 Copy [pr-review-prompt.txt](pr-review-prompt.txt) as the exact agent instruction.
 The prepared entrypoint reads the shared 20 review criteria, eight report categories
-and comment handling. Grok 4.7 High, Fast off, is selected. A separate review run
-provides reasoning independence; eligible provider approval identity still needs
-verification. The role reviews and posts evidence, then approves and moves to QA,
-returns confirmed fixes to In Progress on the same PR, or records Blocked. It never
+and comment handling. Prepare the configured latest available Grok High, Fast off,
+and retain actual selection evidence. A separate review run provides reasoning
+independence; eligible provider approval identity still needs verification.
+For the ordinary release, successful review approves the exact revision and moves
+to QA. Failure or missing prerequisites stop locally with findings/receipts;
+automatic repair admission remains deferred. The broader retained skill's repair
+capabilities do not create another trigger or a direct-In-Progress fallback. It never
 patches code, creates another PR, merges, deploys or provisions environments.
 
 The pipeline-owned PR environment comment is defined in the
@@ -135,7 +141,7 @@ Before a full review test:
    merge, while CLI review policy and workflow disallow it. See
    [Atlassian permissions](https://support.atlassian.com/bitbucket-cloud/docs/api-token-permissions/).
 3. Supply the test Story/PR with complete requirements and passing CI, and configure
-   Jira reads, reports and direct QA/In Progress/Blocked transitions. Prepare
+   Jira reads, reports and the ordinary successful QA handoff. Prepare
    retained evidence/review state for the end-to-end handoff. Do not invent missing
    inputs. Missing optional run metadata is not a blocker.
 

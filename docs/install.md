@@ -144,6 +144,14 @@ capabilities do not establish an accepted delivery loop or activate saved wiring
 
 ## Check project configuration locally
 
+After an explicit refresh/Build, use the [release-readiness guide](release-readiness.md)
+from the clean approved source checkout with the retained external skill receipt.
+The checker reuses the existing verifier and eight smokes; it never fetches,
+installs or replaces a stable link. The unpublished PGB-90 milestone reports its
+remaining manager integration explicitly. Preserve the previous selected Build
+on failure. Local compatibility, hosted observations, installed acceptance,
+PGB-58, human review and activation remain separate.
+
 The same prepared `work-validator` includes the canonical scope schema, pure config
 modules, synthetic example and [configuration guide](configuration.md). It adds no
 new dependency directory or editable cloud bindings. Use the actual receipt path:
