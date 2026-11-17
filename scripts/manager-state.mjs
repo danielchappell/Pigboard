@@ -2,7 +2,7 @@
 import { pathToFileURL } from 'node:url';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { resolveInstallation as productionResolver } from '../lib/aws/installation.mjs';
-import { result } from '../lib/state/contract.mjs';
+import { result, transitionProof } from '../lib/state/contract.mjs';
 
 const help = `Usage:
   node scripts/manager-state.mjs init --config FILE --installation FILE --operator-profile NAME [--json]
@@ -15,6 +15,11 @@ Prepare pinned root and runtime/aws dependencies before use; commands never inst
 Select the prepared operator profile; its exact canonical role is verified.
 Use inspect --recovery only after partial configure: original resources remain
 verified, but package/runtime safety is unverified. It grants no enable/apply/replay.
+
+Trusted writers use retainPublication, prepareTransitionCapture and
+recordTransitionResponse through the internal API; these are not CLI commands.
+Capture states: none, prepared, response-captured or unsupported. HTTP status is
+an original response fact, not a final outcome or permission to send again.
 An unknown write must be inspected using the same installation and attempt ID.
 `;
 function parse(argv) {
@@ -51,7 +56,13 @@ function readable(outcome) {
     for (const record of outcome.data.records ?? (outcome.data.installation ? [outcome.data.installation] : [])) {
       rows.push(JSON.stringify(record));
       if (record.kind === 'stream' && record.pending_attempt_id) rows.push('Pending hold: ' + record.pending_attempt_id);
-      if (record.kind === 'attempt' && record.outcome === 'pending') rows.push('Pending hold: ' + record.attempt_id);
+      if (record.kind === 'attempt') {
+        const proof = transitionProof(record);
+        rows.push('Transition capture: ' + proof.state + '; attempt ' + record.attempt_id);
+        if (proof.request_digest) rows.push('Request commitment: ' + proof.request_digest);
+        if (proof.http_status !== null) rows.push('Original HTTP response: ' + proof.http_status + '; outcome remains ' + record.outcome);
+        if (record.outcome === 'pending') rows.push('Pending hold: ' + record.attempt_id);
+      }
     }
     if (outcome.data.complete === false) rows.push('More records: use --cursor ' + outcome.data.next_cursor + ' with the same kind and installation.');
   }

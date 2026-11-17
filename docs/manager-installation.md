@@ -46,6 +46,24 @@ No source branch is resolved later. Packaging rejects dirty source, missing pinn
 dependencies and existing output directories. JSON results name the output or a
 safe failure code.
 
+Generated physical names use `pigboard-`, up to 12 readable characters from the
+installation ID, then a hyphen and the first 32 hexadecimal SHA256 characters of
+the complete unchanged ID. The base is at most 54 characters; the longest role
+name is at most 64. All six resources and their scoped policy targets use this
+same derivation. It is deterministic and collision-resistant, not proof of AWS
+resource availability. Read actual names from generated outputs and receipts;
+do not reconstruct or copy them into canonical configuration.
+
+This pre-release correction changes every generated physical name, including
+short IDs. It applies to newly generated packages. For an existing installation,
+keep its original pinned package, receipt and matching source/tooling together
+for inspection and stop. New strict tooling rejects old named resources; it has
+no legacy-name fallback or migration path. Do not apply the new template to an
+old stack to make it match: it could request replacements. Do not rewrite receipts,
+reinitialize or delete retained State. No deployed-installation inventory has
+been performed, and the controller still rejects source migration/replacement.
+
+
 Initial provisioning is an explicitly authorized customer operation outside the
 source/fixture checks. Upload the exact zip to your prepared versioned artifact
 bucket using AWS CLI and the deployer profile. Record the returned object version,
@@ -110,7 +128,10 @@ Use [state inspection](manager-state.md) for all four kinds, pagination and hold
 CLI exit zero confirms the reported operation and required receipt publication;
 one means conflict/incomplete, partial work or failed receipt publication, and
 two means invalid, unavailable or uncertain. Readable and JSON
-output expose the same facts. Preserve partial results and inspect the same
+output expose the same facts. For installation commands, `--json` anywhere in
+the arguments also selects JSON for malformed input; unknown commands/options,
+missing values and duplicate flags still return safe `INVALID_INPUT` with exit
+two before output reservation or service access. Preserve partial results and inspect the same
 installation; do not repeat an uncertain write to make output look complete.
 
 ## Deliberate scheduling and stop
@@ -254,6 +275,24 @@ the account, role and identity values once; do not copy generated resource IDs.
 }
 ```
 
+## Ordinary sender packages
+
+A reviewed package with `sender:true` contains the ordinary sender. Preview-only
+packages cannot be enabled for sending by changing an event or configuration.
+Initial installation requires schedule and writes disabled, retains the same
+State table and resources, and keeps both Scheduler and Lambda automatic retries
+at zero. Runtime transaction permissions apply only to that generated table.
+
+Use the existing configure journey for deliberate activation after confirming
+visibility, sole admission ownership and reviewed inventory. Configure retains
+its revision fence, disabled schedule/quiescence checks and controls-last commit.
+It cannot turn a preview code package into a sender code release. The schedule
+input is exactly `{"operation":"apply"}` in apply mode. See the
+[ordinary sender guide](manager-apply.md) for source-restricted transition setup,
+one-stream choice, outcomes and recovery. Later invocations may select another
+eligible stream after fresh evaluation. Stop preserves pending attempts and their
+publication/proof evidence; it does not clear or replay them.
+
 ## Basic health and enablement evidence
 
 Use [the health command](manager-health.md) with the same canonical configuration,
@@ -285,3 +324,9 @@ GetMetricStatistics. The latter requires Resource `*`; AWS IAM does not enforce
 per-installation metric dimensions, so the reader fixes requests in code. Existing
 operator lifecycle permissions remain. No new resource, alarm, SNS action, runtime
 metric-write permission, second State store or activation is installed by health.
+
+Detailed scan health applies to preview scans. The ordinary apply sender keeps
+its basic sanitized invocation/result logs and native Lambda metrics; it emits no
+preview scan summary or completion metric. Inspect apply outcomes through those
+logs and retained attempt evidence. A saved preview success does not prove apply
+completion or allow an old configuration/enablement identity to become healthy.

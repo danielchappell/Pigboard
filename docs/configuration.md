@@ -292,7 +292,20 @@ to Work source and In Progress target with `global: false`; an available transit
 ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
-this preview package never turns them into execution authority.
+the scheduled event never turns them into execution authority without the reviewed sender capability.
+
+Ordinary apply uses the existing manager activation attestations and configured
+non-global, source-restricted Ready to Work → In Progress transition edge. The
+operation-only scheduled event cannot override configuration or scope. Sender
+capability comes from the reviewed package, with initial schedule and writes off.
+
+For apply mode, the host requires
+`310 + 2 * scan_timeout_ms / 1000 + 6 * request_timeout_ms / 1000 <= invocation_timeout_seconds`.
+This covers ten State calls, two acquisitions, five writer requests, credential
+resolution and the existing margin. Preview keeps its existing
+`40 + scan_timeout_ms / 1000` requirement. The 900-second maximum and cadence
+strictly exceeding the invocation timeout remain. Insufficient configuration is
+rejected before effects; the host never changes these settings automatically.
 
 ## Optional manager health settings
 
@@ -310,9 +323,14 @@ settings participate in the existing canonical digest; no separate monitoring
 configuration or SNS setting exists. Defaults require deployed acceptance and do
 not promise capacity or detection latency.
 
-Health measures each scan budget separately and reports the maximum measured
+Detailed preview-scan health measures each scan budget separately and reports the maximum measured
 percentage. Exactly the threshold warns. Page size is a batch size. Missing request
 peaks/counters remain null/not observed. Generated health generation and enablement
 time are outputs retained in the existing installation extensions, not customer
 authored configuration. Use the existing verified configure lifecycle to change
 enabled settings. See [health states and safe recovery](manager-health.md).
+
+Detailed scan summaries and their health states describe preview scans. Apply retains
+its basic invocation/result logs and native Lambda metrics; these do not become
+preview completion metrics or certify apply health. A mode/configuration change
+changes the evidence identity, so old preview success cannot establish apply health.

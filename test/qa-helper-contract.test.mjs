@@ -976,3 +976,22 @@ test('dispatch-inputs supplies the finite prescribed handoff without producing a
 // helper dispatch, authority, ledger, atomic-write, size and rollback checks above remain.
 // Current source/copy/manifest integrity stays in skill-distribution and
 // cursor-environment tests; historical hashes cannot validate a changed runtime.
+
+test('ordinary QA instructions retain current proof and no-mutation failure boundary',async()=>{
+ for(const name of ['qa-entrypoint','qa-jira']){const s=await read('skills/'+name+'/SKILL.md');for(const text of ['worker-current','failed review/QA','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay'])assert(s.includes(text),name+text);assert.match(s,/ordinary-worker-release-boundary/);}
+ const section=(s,from,to)=>s.slice(s.indexOf(from),to?s.indexOf(to,s.indexOf(from)):undefined).replace(/\s+/g,' ');
+ const publisher=await read('skills/qa-jira/SKILL.md'),composer=await read('skills/qa-entrypoint/SKILL.md');
+ const final=section(publisher,'## Final validation and publication','## Failure and recovery'),recovery=section(publisher,'## Failure and recovery','## Delivered ledger and proof rules');
+ assert.match(final,/Every AI step PASS, or explicit zero-AI static human-only work/);
+ assert.match(final,/FAIL, confirmed defect, causal upstream wait, BLOCKED\/inability, incomplete report, repair\/resume or scope increase \| Local only; stop before candidate construction or append; no transition/);
+ assert(!/\| `(?:repair_request|dependency_wait|blocked)` \//.test(final));
+ for(const term of ['Full findings','original PASS/FAIL/NOT_RUN rows','pending humans','original receipts','complete candidate semantics','record validity alone is insufficient','actual current review as target','own/required-parent/action','original canonical record bytes/digest/UUID','real leaf as target','No chain fallback'])assert(final.includes(term),term);
+ assert(final.indexOf('stop before candidate construction')<final.indexOf('4. Retain the immutable candidate'));
+ for(const term of ['Stop before candidate construction or append with no transition','full local findings','partial ledger/attempts','original receipts','Explicit existing resume or repair assignment','no append/transition','at most one resolving read','no second append','No alternate transition or replay'])assert(recovery.toLowerCase().includes(term.toLowerCase()),term);
+ const assessment=section(composer,'## 6. Submit');
+ for(const term of ['once** only for complete successful ordinary QA','static zero-AI','FAIL, BLOCKED/inability, causal wait, incomplete/discussion, repair or resume stops before candidate construction or append','no final publication call','complete local `prepared_assessment`','partial ledger','original receipts','actual status is observed or unknown','publisher return','no second final']){
+  const expected=term==='no second final'?'a second final call':term;assert(assessment.includes(expected),term);
+ }
+ assert(section(composer,'## 5. Preserve','## 6. Submit').includes('An explicit resume or repair assignment is unsupported: stop before helper execution or candidate construction'));
+
+});

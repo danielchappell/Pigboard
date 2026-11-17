@@ -171,3 +171,36 @@ test('writer scopes prose and structured-helper compatibility to the selected in
 
 // Dated catalogue/forecast reconstruction guards are withdrawn by the reduced
 // release boundary. Authoring, raw schema and invocation-authority checks above remain.
+
+test('ordinary implementer and reviewer share explicit worker proof and retained publication safety',async()=>{
+ for(const name of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md','implementer-jira/SKILL.md','pigboard-pr-review/references/jira-handoff.md','reviewer-jira/SKILL.md']){
+  const s=await readFile(new URL('../skills/'+name,import.meta.url),'utf8');
+  for(const text of ['worker-current','Required repair','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay','No\nmanager completion grant'])assert(s.includes(text),name+': '+text);
+  assert(s.includes('owning publisher must reject unsupported final outcomes\nbefore candidate construction or append'),name+': caller labels cannot authorize publication');
+ }
+ const section=(s,from,to)=>s.slice(s.indexOf(from),to?s.indexOf(to,s.indexOf(from)):undefined).replace(/\s+/g,' ');
+ const impl=await readFile(new URL('../skills/implementer-entrypoint/references/handoff.md',import.meta.url),'utf8');
+ const mapping=section(impl,'## Record mapping','## Publication protocol'), publication=section(impl,'## Publication protocol','## Durable result');
+ assert.match(mapping,/READY \| `kind: implementation`/);
+ assert.match(mapping,/DEPENDENCY_WAIT, BLOCKED, NOT_RUN, repair\/resume \| Local only: stop before candidate construction or append; no Jira transition/);
+ for(const term of ['complete findings','NOT_RUN with reason','original receipts','empty','current prepared facts','record mode','worker-current mode'])assert(mapping.includes(term),term);
+ assert(!/kind: (?:dependency_wait|blocked)/.test(mapping));
+ for(const term of ['direct In Progress -> In Review edge','original canonical record bytes/digest/UUID','independently retained','in worker-current mode','at most one resolving read','no append or transition','No fallback blocked record'])assert(publication.includes(term),term);
+ const review=await readFile(new URL('../skills/pigboard-pr-review/references/jira-handoff.md',import.meta.url),'utf8');
+ const decisions=section(review,'## Freshness and decisions','## Publication protocol'),reviewPublication=section(review,'## Publication protocol','## Durable result');
+ assert.match(decisions,/Only complete current approved PASS may choose QA/);
+ assert.match(decisions,/FAIL, REWORK_QUEUED, BLOCKED, INCOMPLETE, STAY, repair\/resume \| None \/ no transition/);
+ assert(!/\| (?:REWORK_QUEUED|BLOCKED) \| (?:repair_request|blocked)/.test(decisions));
+ for(const term of ['before candidate construction or append','complete findings','original receipts'])assert(decisions.includes(term),term);
+ for(const term of ['complete candidate semantics','record mode','actual predecessors in worker-current mode','original canonical record bytes/digest/UUID','real leaf in worker-current mode','without replay','no replacement'])assert(reviewPublication.includes(term),term);
+ const wrapper=await readFile(new URL('../skills/reviewer-jira/SKILL.md',import.meta.url),'utf8');
+ const final=section(wrapper,'In `final`');
+ assert(final.indexOf('stops before candidate')<final.indexOf('append once'));
+ assert(final.includes('complete current approved PASS to QA'));
+ assert(final.includes('retain full local findings'));
+ const composer=await readFile(new URL('../skills/implementer-entrypoint/SKILL.md',import.meta.url),'utf8');
+ assert(section(composer,'1. Read').includes('final** mode only for ordinary READY'));
+ assert(section(composer,'1. Read').includes('Early High-phase blockers remain local with no final Jira call'));
+ const publisher=await readFile(new URL('../skills/implementer-jira/SKILL.md',import.meta.url),'utf8');
+ assert(section(publisher,'**Final.**').includes('Reject any result other than ordinary READY before candidate construction or append'));
+});

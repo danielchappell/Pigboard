@@ -87,7 +87,7 @@ test('production health emission is one raw JSON line consumable by the health r
   try{
    process.stdout.write=function(chunk,encoding,callback){writes.push(Buffer.isBuffer(chunk)?chunk.toString('utf8'):chunk);const done=typeof encoding==='function'?encoding:callback;done?.();return true;};
    for(const record of records)emitHealthRecord(record);
-   const beforeInvalid=writes.length;invalid=await handler({operation:'apply'});assert.equal(writes.length,beforeInvalid);
+   const beforeInvalid=writes.length;invalid=await handler({operation:'apply',override:true});assert.equal(writes.length,beforeInvalid);
   }finally{process.stdout.write=original;}
   assert.equal(invalid.status,'invalid');assert.equal(invalid.summary,undefined);assert.equal(writes.length,3);
   for(let i=0;i<writes.length;i++){

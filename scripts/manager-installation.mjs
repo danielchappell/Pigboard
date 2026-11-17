@@ -13,6 +13,7 @@ Bind/configure reserve a new private output before dispatch. If publication fail
 preserve the emitted receipt in a new private file; do not repeat configure.
 `;
 export async function runInstallationCommand(argv,dependencies={}){
+ const jsonRequested=argv.includes('--json');
  if(argv.length===1&&['--help','-h'].includes(argv[0]))return {exitCode:0,stdout:help};
  let args={},reservation,result;
  const files={openSync,fstatSync,writeFileSync,fsyncSync,closeSync,lstatSync,unlinkSync,...dependencies.fileOperations};
@@ -22,7 +23,7 @@ export async function runInstallationCommand(argv,dependencies={}){
   try{if(!reservation.stat)return 'untrusted_incomplete_output';const current=files.lstatSync(args.output);if(current.dev!==reservation.stat.dev||current.ino!==reservation.stat.ino)return 'replaced_path_retained';files.unlinkSync(args.output);return 'owned_reservation_removed';}
   catch(error){return error.code==='ENOENT'?'absent':'untrusted_incomplete_output';}
  };
- const answer=(outcome,exitCode)=>({outcome,stdout:args.json?JSON.stringify(outcome)+'\n':outcome.status+': '+JSON.stringify(outcome)+'\n',exitCode});
+ const answer=(outcome,exitCode)=>({outcome,stdout:jsonRequested?JSON.stringify(outcome)+'\n':outcome.status+': '+JSON.stringify(outcome)+'\n',exitCode});
  try{
  const command=argv[0],fields={bind:['config','manifest','stack','operator-profile','output'],configure:['config','installation','manifest','asset','operator-profile','deployer-profile','output'],stop:['config','installation','operator-profile']}[command];if(!fields)throw hostError('INVALID_INPUT');
  const seen=new Set();for(let i=1;i<argv.length;i++){const flag=argv[i];if(seen.has(flag))throw hostError('INVALID_INPUT');seen.add(flag);if(flag==='--json'){args.json=true;continue;}const key=flag.slice(2);if(!flag.startsWith('--')||!fields.includes(key)||!argv[i+1]||argv[i+1].startsWith('--')||argv[i+1].length>4096)throw hostError('INVALID_INPUT');args[key]=argv[++i];}if(fields.some(k=>!args[k]))throw hostError('INVALID_INPUT');
