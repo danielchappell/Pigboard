@@ -315,13 +315,18 @@ The same canonical `manager` object may contain:
 "health": { "freshness_seconds": 900, "warning_percent": 80 }
 ```
 
-Omitting it preserves existing configurations: effective freshness is three schedule
-cadences (`schedule_minutes * 180` seconds), and warning is 80 percent. Freshness
-must be an integer from 1 to 259200 and strictly greater than one cadence plus the
-full invocation timeout. Warning is finite, greater than 0 and at most 100. Explicit
-settings participate in the existing canonical digest; no separate monitoring
-configuration or SNS setting exists. Defaults require deployed acceptance and do
-not promise capacity or detection latency.
+Omitting it uses the existing defaults subject to the bounds below: effective
+freshness is three schedule cadences (`schedule_minutes * 180` seconds), and warning
+is 80 percent. Explicit freshness must be an integer from 1 to 259200. Effective
+freshness, including the default, must be strictly greater than one cadence plus
+the full invocation timeout and no greater than `log_retention_days * 86400`
+seconds. Equality with retention is allowed: the freshness window must fit the
+retained logs. Correct incompatible settings in the canonical configuration before
+packaging or configuration, choosing supported retention or freshness/cadence
+values. Warning is finite, greater than 0 and at most 100. Explicit settings
+participate in the existing canonical digest; no separate monitoring configuration
+or SNS setting exists. Defaults require deployed acceptance and do not promise
+capacity or detection latency.
 
 Detailed preview-scan health measures each scan budget separately and reports the maximum measured
 percentage. Exactly the threshold warns. Page size is a batch size. Missing request
