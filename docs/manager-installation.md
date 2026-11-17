@@ -82,6 +82,12 @@ not be copied to the operator role. Real customer grants, permission boundaries,
 service control policies, bucket permissions and installed IAM behavior need live
 acceptance. Synthesized allow/deny checks cannot establish them.
 
+The operator policy includes a separate `lambda:GetFunctionEventInvokeConfig`
+read grant for only the generated function ARN qualified with `:$LATEST`. Attach
+that reviewed grant to the operator role; it does not extend invocation or
+mutation permissions. The control-update deployer does not need this read grant:
+configure observes through the operator profile.
+
 The function has reserved concurrency one, Node 24, a bounded timeout and no
 sender. The schedule starts DISABLED, with fixed preview input and no flexible
 window. Scheduler and asynchronous Lambda retry attempts are zero with a bounded
@@ -93,7 +99,14 @@ and replacement. Logs use the configured finite retention.
 
 Take the exact stack ARN from deployment output. Bind verifies actual stack,
 resources, code hash, template-owned configuration metadata, roles, table identity
-and scheduler target before writing a new receipt:
+and scheduler target before writing a new receipt. Normal binding, initialization,
+inspection and configure also verify the latest Lambda asynchronous configuration
+and Scheduler target: retry attempts must be exactly zero and event age exactly
+60 seconds. Missing values, configuration or read permission refuse normal
+acceptance. An unsafe pre-update observation refuses configure before fencing;
+an unsafe post-update observation returns partial before restoring preview or
+committing desired controls. Bind and initialize the installation with these
+commands:
 
 ```sh
 node scripts/manager-installation.mjs bind --config /absolute/customer.json --manifest /absolute/new-package/manifest.json --stack EXACT_STACK_ARN --operator-profile customer-operator --output /absolute/installation.json --json
@@ -191,6 +204,12 @@ host update. Recovery inspection and stop do not reconstruct that authority or
 provide apply, rollback, replay, initialization or state-clearing permission. If
 normal binding remains unresolved, retain the evidence for the operator/owner's
 release decision. No mutation is automatically retried.
+
+Recovery inspection and stop skip the latest Lambda async read and both mutable
+async/Scheduler retry-age checks, so drift, absent async configuration or a denied
+new read does not obstruct stopping the original installation. Original account,
+role, resources, generation and retained State checks still apply. This recovery
+does not verify package or runtime safety and grants no replay authority.
 
 For emergency stop, only the operator profile is needed:
 
