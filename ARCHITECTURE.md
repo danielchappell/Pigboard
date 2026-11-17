@@ -289,3 +289,19 @@ human acceptance, activation or a release; their owning delivery gates remain.
 `lib/contracts/receipts.mjs` keeps one evaluator with per-record effective proof. `validateWorkerCurrent` and explicit CLI mode `worker-current` accept a separate closed worker envelope, without manager State access. Full selected-current start, own PR/evidence/preparation and supplied action capabilities remain required; parent ancestry authenticates recorded semantics while parent incorporation checks current PR identity/head/target/state. Older assignments require no reconstructed contexts or mandatory prior capture; genuine supplied retained mismatches reject. The direct labelled result grants no completion or execution authority. Strict and manager recorded APIs retain their own contracts. No new publication service or candidate API exists.
 
 See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
+
+## Conditional State API
+
+The [State guide](docs/manager-state.md) documents the callable production API in
+`lib/state/contract.mjs` and `lib/aws/dynamodb.mjs`. It retains installation, stream,
+member and original-attempt identity; performs bounded coherent inventory and
+conditional reservation/finalization; and keeps unknown effects held. Prepared
+Node callers use the actual pinned SDK with customer credentials. State success
+does not establish Jira authority or live readiness.
+
+PGB-83 owns actual installation/configuration/resource resolution and CLI binding;
+PGB-137 adds original transition capture and PGB-87 owns verified Jira effects.
+The local three-group API packet preserves installed and human acceptance as
+pending. No historical worker-metadata collector, recovery automation or runtime
+activation is introduced. Existing state evidence and original installed checks
+remain distinct; PGB-83/90 owns the retained installed release journey.
