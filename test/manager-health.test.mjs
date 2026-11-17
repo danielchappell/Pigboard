@@ -1,9 +1,11 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {performance} from 'node:perf_hooks';
 import {buildScanSummary,validScanSummary,evaluateHealth,evidenceRevision} from '../lib/manager/health.mjs';
 import {embeddedMetricEvent} from '../lib/aws/health.mjs';
-import {runPreview} from '../lib/aws/manager-lambda.mjs';
+import {runPreview,handler,emitHealthRecord} from '../lib/aws/manager-lambda.mjs';
+import {openHostSession,awsSend,loadHostSDK} from '../lib/aws/installation.mjs';
 import {wrapperJourney,configureJourney,preparedCloud,ordinaryWireFixture,withJira} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 import {createDynamoState} from '../lib/aws/dynamodb.mjs';
@@ -31,3 +33,79 @@ test('R1-22-H04 selected-profile health reader, no-epoch disabled, denied reads 
 test('R1-22-H01 actual fixed metric reads use maximum duplicate points with scoped log traversal',async()=>{const {healthFixture,scanFixture}=await import('../scripts/test-manager-health.mjs'),{readManagerHealth}=await import('../lib/aws/health.mjs');const f=await healthFixture({epoch:true,events:identity=>[scanFixture(identity)],emptyPage:true});try{const result=await readManagerHealth(f.input,f.dependencies);assert.equal(result.state,'disabled',JSON.stringify(result));assert.equal(result.metric_evidence.metrics.CompletePresence.maximum,1);assert.equal(result.metric_evidence.metrics.CompletePresence.points,2);assert.equal(f.telemetry.filter(a=>a.action==='FilterLogEventsCommand').length,2);assert.equal(f.telemetry.filter(a=>a.action==='GetMetricStatisticsCommand').length,5);assert(f.telemetry.every(a=>a.identity==='SELECTED_OPERATOR'));}finally{f.cleanup();}});
 test('R1-22-H01 finite actual empty, five-ticket wait and retained-uncertainty wrapper cases',async()=>{const {runHumanCase}=await import('../scripts/test-manager-health.mjs');await runHumanCase('R1-22-H01');});
 test('invalid runtime events emit no fabricated scan summary',async()=>{const logs=[];const r=await runPreview({operation:'apply'},{log:record=>logs.push(record)});assert.equal(r.status,'invalid');assert.equal(r.summary,undefined);assert.deepEqual(logs,[]);});
+
+test('health document client shares the absolute acquisition deadline',async t=>{
+ const real=loadHostSDK(),config=JSON.parse(fs.readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config,rows=[];
+ for(const route of ['sdk','injected']){
+  const calls=[],credentials={accessKeyId:'AKIDEXAMPLE',secretAccessKey:'dummy-local-only'},destroyed=[];let raw,session;
+  const waitForAbort=(signal,action)=>new Promise((resolve,reject)=>{
+   assert(signal);assert.equal(signal.aborted,false);assert.equal(action,'DescribeTableCommand');
+   const call={action,signal_received:true,aborted:false,watchdog:false,network:false};calls.push(call);
+   const finish=error=>{clearTimeout(watchdog);signal.removeEventListener('abort',abort);reject(error);};
+   const abort=()=>{call.aborted=signal.aborted;finish(Object.assign(new Error('Local request aborted'),{name:'AbortError'}));};
+   const watchdog=setTimeout(()=>{call.watchdog=true;finish(new Error('TEST_WATCHDOG'));},1500);
+   signal.addEventListener('abort',abort,{once:true});
+  });
+  const requestHandler={handle:async(request,{abortSignal})=>{
+   assert.equal(request.headers['x-amz-target'],'DynamoDB_20120810.DescribeTable');
+   assert.deepEqual(JSON.parse(request.body),{TableName:'pigboard-deadline-fixture-state'});
+   return waitForAbort(abortSignal,'DescribeTableCommand');
+  },destroy:()=>destroyed.push('sdk-transport')};
+  const sdk={...real,fromIni:({profile})=>{assert.equal(profile,'operator');return async()=>credentials;},
+   STSClient:class{constructor(options){assert.equal(options.maxAttempts,1);}async send(command,{abortSignal}){assert.equal(command.constructor.name,'GetCallerIdentityCommand');assert(abortSignal);return {Account:config.manager.aws.account_id,Arn:config.manager.aws.operator_role_arn};}destroy(){destroyed.push('sts');}},
+   DynamoDBClient:class extends real.DynamoDBClient{constructor(options){super({...options,requestHandler});raw=this;}}
+  };
+  const makeClient=route==='injected'?(kind,options)=>{
+   assert.equal(options.maxAttempts,1);assert.equal(options.credentials,credentials);
+   const client={destroy:()=>destroyed.push(kind),send:async(command,{abortSignal})=>{
+    if(kind==='STS'){assert.equal(command.constructor.name,'GetCallerIdentityCommand');return {Account:config.manager.aws.account_id,Arn:config.manager.aws.operator_role_arn};}
+    assert.equal(kind,'DynamoDBDocument');assert.deepEqual(command.input,{TableName:'pigboard-deadline-fixture-state'});
+    return waitForAbort(abortSignal,command.constructor.name);
+   }};if(kind==='DynamoDB')raw=client;return client;
+  }:undefined;
+  const deadline=performance.now()+250;
+  try{
+   session=await openHostSession(config,{operatorProfile:'operator',health:true,deadline,sdk,...(makeClient?{makeClient}:{})});
+   assert.notEqual(session.operator.state,raw);if(route==='sdk')assert(session.operator.state instanceof real.DynamoDBDocumentClient);
+   await assert.rejects(awsSend(session.operator.state,sdk,'DescribeTableCommand',{TableName:'pigboard-deadline-fixture-state'}),error=>error.name==='AbortError');
+   assert.equal(calls.length,1);assert.equal(calls[0].aborted,true);assert.equal(calls[0].watchdog,false);
+   await new Promise(resolve=>setTimeout(resolve,Math.max(0,deadline-performance.now())+5));
+   await assert.rejects(awsSend(session.operator.state,sdk,'DescribeTableCommand',{TableName:'pigboard-deadline-fixture-state'}),error=>error.code==='HEALTH_DEADLINE');
+   assert.equal(calls.length,1);assert(calls.every(call=>call.action==='DescribeTableCommand'));
+  }finally{session?.dispose();}
+  assert(destroyed.length>0);rows.push({route,calls,expired_send_dispatched:false,disposed:true});
+ }
+ t.diagnostic(JSON.stringify({document_deadline_rows:rows}));
+});
+
+test('production health emission is one raw JSON line consumable by the health reader',{concurrency:false},async t=>{
+ const {healthFixture,scanFixture}=await import('../scripts/test-manager-health.mjs'),{readManagerHealth}=await import('../lib/aws/health.mjs');
+ const unsafe='DUMMY_SECRET_BODY_PROVIDER_ERROR',makeSummary=(identity,result)=>scanFixture(identity,{scan_id:'framing-'+result,result,reason_codes:[unsafe],provider_body:unsafe});
+ const f=await healthFixture({epoch:true,events:identity=>[makeSummary(identity,'complete')]});
+ try{
+  const summaries=['complete','incomplete','failed'].map(result=>makeSummary(f.identity,result)),records=summaries.map(embeddedMetricEvent),writes=[],original=process.stdout.write;let invalid;
+  try{
+   process.stdout.write=function(chunk,encoding,callback){writes.push(Buffer.isBuffer(chunk)?chunk.toString('utf8'):chunk);const done=typeof encoding==='function'?encoding:callback;done?.();return true;};
+   for(const record of records)emitHealthRecord(record);
+   const beforeInvalid=writes.length;invalid=await handler({operation:'apply'});assert.equal(writes.length,beforeInvalid);
+  }finally{process.stdout.write=original;}
+  assert.equal(invalid.status,'invalid');assert.equal(invalid.summary,undefined);assert.equal(writes.length,3);
+  for(let i=0;i<writes.length;i++){
+   assert.equal(writes[i],JSON.stringify(records[i])+'\n');assert.equal(writes[i].split('\n').length,2);assert.deepEqual(JSON.parse(writes[i]),records[i]);assert(!writes[i].includes(unsafe));
+   assert(validScanSummary(records[i].summary));assert.deepEqual(records[i]._aws.CloudWatchMetrics[0].Dimensions,[['InstallationId','EvidenceRevision']]);
+   assert.equal(records[i].InstallationId,f.identity.installation_id);assert.equal(records[i].EvidenceRevision,evidenceRevision(f.identity));
+  }
+  const originalMake=f.dependencies.makeClient,returned=[],before=f.provider.snapshot(),auditStart=f.audit.length;
+  const result=await readManagerHealth(f.input,{...f.dependencies,makeClient:(kind,options)=>{
+   const client=originalMake(kind,options);if(kind!=='CloudWatchLogs')return client;
+   const send=client.send.bind(client);client.send=async(command,options)=>{
+    assert.equal(command.constructor.name,'FilterLogEventsCommand');assert.equal(command.input.filterPattern,'{ $.summary.schema = "pigboard-scan-summary/v1" }');
+    const response=await send(command,options);assert.equal(response.events.length,1);response.events[0].message=writes[0];returned.push(response.events[0].message);return response;
+   };return client;
+  }});
+  assert.deepEqual(returned,[writes[0]]);assert.equal(result.query_coverage.complete,true);assert.deepEqual(result.latest_complete,summaries[0]);
+  assert.equal(result.state,'disabled');assert.equal(result.exit_code,0);assert.equal(f.provider.snapshot(),before);
+  assert(f.audit.slice(auditStart).every(row=>!row.action.match(/Write|Update|Put|Invoke|Execute/)));assert(f.telemetry.every(row=>row.identity==='SELECTED_OPERATOR'));
+  t.diagnostic(JSON.stringify({production_lines:writes,invalid:{status:invalid.status,summary_absent:invalid.summary===undefined,emissions:0},reader:{state:result.state,exit_code:result.exit_code,coverage:result.query_coverage,latest_complete:result.latest_complete},actions:f.audit.slice(auditStart),telemetry:f.telemetry,state_unchanged:true}));
+ }finally{f.cleanup();}
+});
