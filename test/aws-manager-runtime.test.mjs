@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
+import {configureMissingCompletionJourney,boundedConcurrencyJourney,configureCompletionJourney,resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {controlOnlyChange,roleMatches} from '../lib/aws/installation.mjs';
 import {runInstallationCommand} from '../scripts/manager-installation.mjs';
@@ -35,3 +35,7 @@ test('installation CLI renders invalid arguments as JSON regardless of flag posi
  }
  const readable=await runInstallationCommand(['unknown'],dependencies);assert.equal(readable.exitCode,2);assert.deepEqual(readable.outcome,{status:'unavailable',code:'INVALID_INPUT'});assert.equal(readable.stdout,'unavailable: '+JSON.stringify(readable.outcome)+'\n');assert.equal(reservations,0);assert.equal(clients,0);
 });
+
+test('configure waits for its own terminal stack event before restoring preview',async(t)=>{for(const row of await configureCompletionJourney())t.diagnostic(JSON.stringify(row));});
+test('configure preserves original authority when completion proof is unavailable',async(t)=>{for(const row of await configureMissingCompletionJourney())t.diagnostic(JSON.stringify(row));});
+test('normal observation enforces bounded concurrency without blocking stopped recovery',async(t)=>{for(const row of await boundedConcurrencyJourney())t.diagnostic(JSON.stringify(row));});

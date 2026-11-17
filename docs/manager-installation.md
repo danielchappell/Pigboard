@@ -105,7 +105,11 @@ and Scheduler target: retry attempts must be exactly zero and event age exactly
 60 seconds. Missing values, configuration or read permission refuse normal
 acceptance. An unsafe pre-update observation refuses configure before fencing;
 an unsafe post-update observation returns partial before restoring preview or
-committing desired controls. Bind and initialize the installation with these
+committing desired controls. Normal observation accepts only an exact numeric reserved
+concurrency of zero (stopped) or one (running); an absent reservation or a larger
+reservation refuses acceptance. Fresh initialization still requires one. Recovery
+inspection and stop remain available when that reservation is unsafe or unavailable.
+Bind and initialize the installation with these
 commands:
 
 ```sh
@@ -167,7 +171,17 @@ installation revision with writes and schedule disabled, disables actual
 scheduling, sets concurrency zero and waits the previous timeout plus ten seconds.
 It inspects a bounded CloudFormation change set, rejects replacement/deletion or
 changes outside function configuration/code, schedule and retention, and applies
-while quiesced. It observes code/configuration and original resources, restores
+while quiesced. Before restoration, it proves this update completed using its
+invocation-local operation token and the newest matching terminal event for the
+exact stack, alongside the completed stack status. It reads only the first event
+page through the operator profile within the existing bounded wait; an old or
+unrelated completion cannot prove success. Missing proof (including when a later
+page exists), a failed operation or an unreadable event page leaves configure
+partial/uncertain with the original recovery receipt. Preserve that result and
+inspect/stop; do not replay configure to obtain completion proof.
+
+After proof, it observes code/configuration and original resources, requires
+concurrency zero and the schedule disabled, then restores
 preview concurrency and desired schedule, verifies them and commits final applied
 controls last. Successful output creates a new receipt retaining original anchors.
 Use that receipt subsequently and preserve its predecessors. Bind/configure
