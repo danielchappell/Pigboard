@@ -7,15 +7,19 @@ description: Compose prescribed structured QA for an authorized native Jira Stor
 
 ## Ordinary worker release boundary
 
-Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. Reject unsupported invocation before work or candidate construction: repair,
-resume, human request-rework, failed review/QA, blocked and dependency-wait
-publication are deferred. Preserve local findings, partial ledgers and original
-receipts; return precise inability and hold with no mutation. Required repair
-still holds. Do not fall back to strict chain or manager recorded proof.
+Use the explicit same-release support matrix: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release.
 
-Follow the [ordinary worker proof and publication contract](../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
+
+Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
@@ -24,11 +28,10 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked caller/profile/reference instructions may describe legacy classification or
-repair/resume. Those descriptions are deferred and grant no ordinary mutation
-authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
-not Jira status. The owning publisher must reject unsupported final outcomes
-before candidate construction or append, regardless of an upstream label.
+Linked legacy resume, wait and Blocked examples are deferred. A local
+label grants no authority: the owning publisher independently checks the same-release
+matrix and actual evidence before candidate construction. Unsupported work retains
+all findings, partial ledgers and original receipts locally with no mutation.
 
 
 Own one current QA assessment: inventory the original work, dispatch its exact AI
@@ -61,7 +64,8 @@ A missing required profile stops helper dispatch with a precise inability.
 
 Invoke qa-jira once in `mode: preflight` with those trusted inputs. It verifies
 configured native Story/Bug eligibility, current QA stage, exact site/project/full
-stream, new_work assignment with no resume/assigned repair, raw work, current implementation/review/open PR,
+stream, current assignment supported by the pinned matrix and its actual referenced
+requests, raw work, current implementation/review/open PR,
 CI and actual publication permissions. Consume its verified references instead of
 unverified caller hints. `INELIGIBLE` or `UNAVAILABLE` means no helper dispatch;
 retain its diagnostics and complete any locally knowable inventory. An unreadable
@@ -180,10 +184,10 @@ its outcome or uncertainty. A real current-case outstanding upstream request mus
 have its exact typed reference, causal observation and unresolved-state evidence;
 ordinary discussion or a known defect alone is not dependency wait.
 
-An explicit resume or repair assignment is unsupported: stop before helper
-execution or candidate construction, preserving full local findings, partial
-ledgers, original history/artifacts and action receipts. Do not consume or guess
-resume authorization here. Legacy execution-record reuse/resume classifications
+An assignment unsupported by the selected matrix stops before helper execution
+or candidate construction. Preserve full local findings, partial ledgers, original
+history/artifacts and action receipts. Explicit resume remains unsupported; do not
+consume or guess resume authorization here. Legacy execution-record reuse/resume classifications
 are not an ordinary continuation path; never replay completed or uncertain actions.
 Current successful evidence reuse still requires exact case/skill/source and
 current requirements, PR/revision, actor/tenant/target and artifact validity.
@@ -198,16 +202,19 @@ basis and proposed outcome/reason. Use only PASS/FAIL/NOT_RUN row values and the
 existing row fields. Helper BLOCKED is run inability, not a canonical row enum.
 The execution record explains the exact mapping; no new persisted schema exists.
 
-Call qa-jira `mode: final` **once** only for complete successful ordinary QA or
-explicit static zero-AI human-only completion, with no unresolved inability, defect
-or causal wait. Supply trusted `scope`, `capabilities`, full raw `work`, verified
+Call qa-jira `mode: final` **once** for a complete supported assessment with no
+unresolved independent inability or causal upstream wait: successful ordinary QA,
+explicit static zero-AI human-only completion, or demonstrated in-scope defects
+with the original complete partial ledger. Defect-dependent NOT_RUN is supported;
+retain the transitive union of prerequisite finding IDs. Complete all prescribed
+independent work before the final call; do not submit a prepared terminal oracle. Supply trusted `scope`, `capabilities`, full raw `work`, verified
 `assignment`, actual `prepared_assessment`, empty `known_requests` and any
 `retained_delivery`. A successful preflight never waives fresh final checks.
 PASS/FAIL evidence, including reuse, requires actual tested PR/environment proof;
 missing proof stays local without changing original rows. Static zero-AI completion
 keeps exact pending humans and a no-AI reason, without a fabricated test PASS.
 
-FAIL, BLOCKED/inability, causal wait, incomplete/discussion, repair or resume stops
+Independent BLOCKED/inability, causal wait, incomplete/discussion, unsupported assignment or resume stops
 before candidate construction or append, with no final publication call or Jira
 transition. Return complete local `prepared_assessment`, findings, partial ledger,
 original receipts and precise inability; `candidate_record` and `published_reference`
@@ -215,7 +222,9 @@ are null, `delivery_outcome` is NOT_ATTEMPTED and actual status is observed or u
 Upstream local labels and the legacy execution record never grant mutation authority.
 
 qa-jira independently rejects unsupported final outcomes before candidate
-construction or append. Only successful QA may publish to Human Review. It owns
+construction or append. Successful QA publishes to Human Review; complete
+confirmed defects publish a QA repair_request to Rework Queued. It independently
+classifies the assessment and retains FAIL and every original PASS/FAIL/NOT_RUN row. It owns
 original candidate UUID/bytes/digest, semantic/record checks, actual predecessor
 and real-leaf worker-current validation, append/readback, direct transition and
 bounded reconciliation. Never write Jira, fall back to In Progress/Blocked, issue
@@ -229,5 +238,5 @@ Return its exact snake_case fields: `test_verdict`, `human_only`, `qa_report`,
 `actual_jira_status`, `delivery_outcome` and `recovery`, with verified identity/
 revision facts and local evidence limitations. Keep helper camelCase inside its
 original artifacts. These are local instruction results, not extra canonical
-keys. `COMPLETED` means ordinary successful QA and Human Review delivery were verified;
+keys. `COMPLETED` means supported Human Review or Rework Queued delivery was verified;
 it never means tests or human acceptance passed. End this QA invocation.

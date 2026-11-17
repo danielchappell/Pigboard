@@ -175,32 +175,52 @@ test('writer scopes prose and structured-helper compatibility to the selected in
 test('ordinary implementer and reviewer share explicit worker proof and retained publication safety',async()=>{
  for(const name of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md','implementer-jira/SKILL.md','pigboard-pr-review/references/jira-handoff.md','reviewer-jira/SKILL.md']){
   const s=await readFile(new URL('../skills/'+name,import.meta.url),'utf8');
-  for(const text of ['worker-current','Required repair','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay','No\nmanager completion grant'])assert(s.includes(text),name+': '+text);
-  assert(s.includes('owning publisher must reject unsupported final outcomes\nbefore candidate construction or append'),name+': caller labels cannot authorize publication');
+  for(const text of ['worker-current','same-release support matrix','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay','No\nmanager completion grant'])assert(s.includes(text),name+': '+text);
+  assert(s.includes('label grants no authority')&&s.includes('owning publisher independently checks')&&s.includes('Unsupported work retains'),name+': caller labels cannot authorize publication');
+  for(const term of ['`docs/handoffs.md`','`<receipt.skills>/work-validator/docs/handoffs.md`'])assert(s.includes(term),name+': '+term);
  }
+ for(const name of ['pigboard-pr-review/SKILL.md','reviewer-jira/SKILL.md','pigboard-pr-review/references/jira-handoff.md','qa-entrypoint/SKILL.md','qa-jira/SKILL.md']){
+  const s=await readFile(new URL('../skills/'+name,import.meta.url),'utf8');
+  for(const term of ['same-release support matrix defines supported assignments and publication','Unsupported assignments stop before execution or candidate construction','no mutation','no manager admission, pointer or State authority','strict/recorded','another release'])assert(s.replace(/\s+/g,' ').includes(term),name+': '+term);
+  for(const term of ['`docs/handoffs.md`','`<receipt.skills>/work-validator/docs/handoffs.md`'])assert(s.includes(term),name+': '+term);
+  assert(!/current `new_work` only|no resume\/assigned repairs|repair assignment is unsupported/.test(s),name+' independent assignment allowlist');
+ }
+ for(const name of ['AI-Daniel-1-pr-review.md','AI-Daniel-1-qa.md']){const s=await readFile(new URL('../config/cursor/'+name,import.meta.url),'utf8');assert(s.includes("For assignments supported by the selected release's pinned"));assert(s.includes('../../docs/handoffs.md#ordinary-worker-release-boundary'));assert(!s.includes('supported ordinary `new_work`'));}
+ const architecture=await readFile(new URL('../ARCHITECTURE.md',import.meta.url),'utf8');assert(architecture.includes('[worker support matrix](docs/handoffs.md#ordinary-worker-release-boundary)'));assert(!architecture.includes('new_work assignments and emits'));
  const section=(s,from,to)=>s.slice(s.indexOf(from),to?s.indexOf(to,s.indexOf(from)):undefined).replace(/\s+/g,' ');
  const impl=await readFile(new URL('../skills/implementer-entrypoint/references/handoff.md',import.meta.url),'utf8');
  const mapping=section(impl,'## Record mapping','## Publication protocol'), publication=section(impl,'## Publication protocol','## Durable result');
  assert.match(mapping,/READY \| `kind: implementation`/);
- assert.match(mapping,/DEPENDENCY_WAIT, BLOCKED, NOT_RUN, repair\/resume \| Local only: stop before candidate construction or append; no Jira transition/);
- for(const term of ['complete findings','NOT_RUN with reason','original receipts','empty','current prepared facts','record mode','worker-current mode'])assert(mapping.includes(term),term);
+ assert.match(mapping,/Local only: stop before candidate construction or append; no Jira transition/);
+ for(const term of ['complete findings','NOT_RUN with reason','original receipts','current prepared facts','record mode','worker-current mode'])assert(mapping.includes(term),term);
  assert(!/kind: (?:dependency_wait|blocked)/.test(mapping));
  for(const term of ['direct In Progress -> In Review edge','original canonical record bytes/digest/UUID','independently retained','in worker-current mode','at most one resolving read','no append or transition','No fallback blocked record'])assert(publication.includes(term),term);
  const review=await readFile(new URL('../skills/pigboard-pr-review/references/jira-handoff.md',import.meta.url),'utf8');
  const decisions=section(review,'## Freshness and decisions','## Publication protocol'),reviewPublication=section(review,'## Publication protocol','## Durable result');
- assert.match(decisions,/Only complete current approved PASS may choose QA/);
- assert.match(decisions,/FAIL, REWORK_QUEUED, BLOCKED, INCOMPLETE, STAY, repair\/resume \| None \/ no transition/);
- assert(!/\| (?:REWORK_QUEUED|BLOCKED) \| (?:repair_request|blocked)/.test(decisions));
- for(const term of ['before candidate construction or append','complete findings','original receipts'])assert(decisions.includes(term),term);
+ assert.match(decisions,/Only complete current approved PASS chooses QA/);
+ assert.match(decisions,/Complete FAIL \/ REWORK_QUEUED, no inability \| repair_request \/ Rework Queued/);
+ assert.match(decisions,/exact implementation `basis`, same current `pr`, every confirmed `findings` ID\/summary\/evidence, `qa_report: null`; explicit publisher intent repair_request/);
+ assert.match(decisions,/BLOCKED, INCOMPLETE, STAY, unsupported assignment, wait or scope increase \| None \/ no transition/);
+ for(const term of ['verified absence/removal','own account','unknown required revocation prevents append','Never revoke another actor'])assert(decisions.includes(term),term);
+ assert(!/\| BLOCKED \| (?:repair_request|blocked)/.test(decisions));
+ for(const term of ['before candidate construction or append','all confirmed in-scope defects','full local evidence'])assert(decisions.includes(term),term);
  for(const term of ['complete candidate semantics','record mode','actual predecessors in worker-current mode','original canonical record bytes/digest/UUID','real leaf in worker-current mode','without replay','no replacement'])assert(reviewPublication.includes(term),term);
  const wrapper=await readFile(new URL('../skills/reviewer-jira/SKILL.md',import.meta.url),'utf8');
  const final=section(wrapper,'In `final`');
- assert(final.indexOf('stops before candidate')<final.indexOf('append once'));
- assert(final.includes('complete current approved PASS to QA'));
- assert(final.includes('retain full local findings'));
+ assert(final.includes('independently classify the complete wrapper assessment'));
+ for(const term of ['current approved PASS publishes `review` to QA','complete confirmed in-scope defects','verified removal','own stale approval (or verified absence)','Preserve every finding and pending reference','Incomplete review, discussion, inability, wait, scope increase or unsupported assignment has no candidate or transition','exact intended edge','repair_request','complete candidate semantics','actual predecessors','real leaf','append once','direct In Review -> QA or Rework Queued'])assert(final.includes(term),term);
  const composer=await readFile(new URL('../skills/implementer-entrypoint/SKILL.md',import.meta.url),'utf8');
  assert(section(composer,'1. Read').includes('final** mode only for ordinary READY'));
  assert(section(composer,'1. Read').includes('Early High-phase blockers remain local with no final Jira call'));
  const publisher=await readFile(new URL('../skills/implementer-jira/SKILL.md',import.meta.url),'utf8');
  assert(section(publisher,'**Final.**').includes('Reject any result other than ordinary READY before candidate construction or append'));
+});
+
+test('P165-reviewer complete defect route preserves publisher and own approval boundaries',async()=>{
+ const wrapper=await readFile(new URL('../skills/pigboard-pr-review/SKILL.md',import.meta.url),'utf8'),publisher=await readFile(new URL('../skills/reviewer-jira/SKILL.md',import.meta.url),'utf8'),contract=await readFile(new URL('../skills/pigboard-pr-review/references/jira-handoff.md',import.meta.url),'utf8');
+ for(const text of [wrapper,publisher,contract])assert.match(text,/repair_request|REWORK_QUEUED/);
+ assert.match(wrapper,/all findings/);assert.match(wrapper,/Never revoke|never remove\n?another actor|another actor's approval/);
+ assert.match(contract,/qa_report:null|qa_report: null|`qa_report:null`/);assert.match(contract,/original canonical record bytes\/digest\/UUID/);
+ assert.match(contract,/worker-current/);assert.match(contract,/Rework Queued/);assert.match(contract,/COMPLETED/);
+ assert.match(contract,/unknown required revocation prevents append/);assert.match(publisher,/exact intended edge|exact selected edge|intended-edge|intended edge/);
 });

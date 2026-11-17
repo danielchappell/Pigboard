@@ -97,7 +97,16 @@ retrieval, cleanup and limitations. Canonical record bounds remain 16 KiB, depth
 list100; the complete actual candidate is checked again by qa-jira. Oversize means
 retain the full local report and inability, never truncate or split publication.
 
-## Partial and resume examples
+## Partial and deferred legacy examples
+
+The same-release ordinary worker matrix controls publication: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release. Complete demonstrated defects
+with defect-dependent NOT_RUN and no independent inability submit one final
+assessment for repair_request delivery; mixed defect plus access/evidence/cleanup
+inability keeps all rows/findings local. Wait/resume/Blocked examples below are
+legacy classification only, not supported execution or publication routes.
 
 These are mappings, not saved results or executable fixtures:
 
@@ -111,9 +120,8 @@ These are mappings, not saved results or executable fixtures:
   until an inability stops dispatch.
 - An exact unresolved upstream request prevents this case, after another defect:
   retain the FAIL/findings and the full partial report; provide typed request and
-  causal observation. qa-jira determines dependency_wait only if no higher-priority
-  inability remains. Discussion alone creates no terminal handoff.
-- Valid resume: inspect the unique historical blocker/authorization and exact
+  causal observation. ordinary invocation stops locally with no dependency_wait publication. Discussion alone creates no terminal handoff.
+- Deferred legacy resume (unsupported in this invocation): inspect the unique historical blocker/authorization and exact
   parent/child artifacts; independently verify case-specific reuse now. Keep their
   source category/references; use current clock after authorization for remaining
   allowed work. Stale/cross-tenant or untrusted approval stops; never replay a
@@ -139,7 +147,8 @@ Return the publisher's exact snake_case `test_verdict`, `human_only`, `qa_report
 facts. Helper camelCase stays in original artifacts; local fields are not canonical
 record keys. `delivery_outcome` is NOT_ATTEMPTED, COMPLETED, INELIGIBLE, UNAVAILABLE
 or UNCERTAIN as qa-jira defines it. COMPLETED means the intended status is verified,
-including Blocked, not that tests/humans passed.
+for supported Human Review or Rework Queued, not that tests/humans passed.
+FAIL remains FAIL and pending humans remain pending after queue delivery.
 
 Retain original candidate bytes, confirmed effects, unresolved effects, actual or
 unknown status, precise human action and what must not be replayed. A saved report

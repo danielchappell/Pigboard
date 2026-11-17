@@ -39,8 +39,8 @@ prepared testing information for review and QA.
 | Trigger | Entry point | Required outcome |
 | --- | --- | --- |
 | In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, one PR, passing current CI/artifacts, ordinary READY append/read-back and recheck before direct In Review; waits/blockers remain local with no mutation. |
-| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; current approved PASS moves to QA; failed/incomplete review retains full findings locally with no candidate/append or transition. |
-| QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs successful ordinary QA to Human Review; failure/wait/inability remains local before candidate/append. Humans stay pending. |
+| In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; current approved PASS moves to QA; complete confirmed defects queue on the same open PR; incomplete/evidence gaps remain local. |
+| QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs successful QA to Human Review or complete confirmed defects to Rework Queued; independent inability/wait remains local before candidate/append. Humans stay pending. |
 
 QA remains on the open PR. The four domain helpers now accept exact structured
 AI steps under their [common contract](../skills/qa-api/references/structured-steps.md).
@@ -55,8 +55,12 @@ deadline: no overlap, missed-offset catch-up or origin reset. It retains every
 attempt and one aggregate canonical PASS/FAIL/NOT_RUN row per expanded step.
 Local bounded helper exercises are not full-loop acceptance or activation.
 
-Reviewer and QA defects stay local in this ordinary release; discussion stays
-In Review or QA. No failure, wait or blocker candidate is constructed or appended. QA retains defects during later inability, marks every unfinished row NOT_RUN
+Complete confirmed reviewer and QA defects can queue under the same-release matrix
+below; discussion stays In Review or QA. Independent inability, incomplete or
+unproved assessments, causal waits, unsupported repair/resume and scope growth
+stay local without candidate construction, append or transition. A complete QA
+assessment may include defect-dependent NOT_RUN rows. QA retains defects during
+later independent inability, marks every unfinished row NOT_RUN
 and carries the union of finding IDs only through explicit failed/skipped case
 dependencies, including chains and joins. Actual causal upstream wait retains
 its typed unresolved request and findings; inability takes priority. These are
@@ -109,7 +113,7 @@ receipts. QA now composes the structured contract; dated pilot wiring still need
 its separate compatibility check.
 The matrix's [structured reviewer setup boundary](../config/cursor/automations.md#structured-reviewer-setup-boundary)
 describes broader prepared QA/Rework Queued/Blocked mappings, which cannot
-expand this ordinary success-only publication boundary, and the old Story-only filter and reviewer In Progress checklist. Following that
+expand this ordinary support matrix, and the old Story-only filter and reviewer In Progress checklist. Following that
 old checklist does not prepare the structured reviewer or QA composer. Use the
 current QA profile and same-release siblings for source invocation.
 
@@ -190,7 +194,11 @@ Use [qa-jira](../skills/qa-jira/SKILL.md) directly with a complete prepared
 assessment and trusted setup. Its read-only preflight establishes eligibility;
 final repeats current checks. Verified complete AI evidence or explicit static
 zero-AI work goes directly from QA to Human Review, with exact pending human IDs.
-A confirmed defect, real outstanding typed upstream request or unresolved
+Complete confirmed defects with the required current proof publish one QA
+repair_request against the current review and same tested PR, then verify the
+direct QA → Rework Queued transition. Retain every original row and finding,
+including defect-dependent NOT_RUN rows and pending humans; queue delivery does
+not change the FAIL test verdict. A real outstanding causal wait or unresolved
 access/evidence/cleanup/scope inability stops before candidate construction or
 append with no transition. Preserve complete local findings, partial rows/attempts,
 pending humans and original receipts. Discussion stays QA with no terminal record.
@@ -208,6 +216,6 @@ compatibility does not enable delivery or prove installed/live acceptance.
 
 ## Ordinary new-work delivery
 
-Ordinary implementer READY, reviewer approval and successful QA use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Repair/resume, human rework and unsuccessful/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
+Ordinary implementer READY, reviewer approval, successful QA and complete reviewer/QA repair requests use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Repair assignments/resume, human rework and inability/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
 
 See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

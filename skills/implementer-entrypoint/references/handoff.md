@@ -2,15 +2,14 @@
 
 ## Ordinary worker release boundary
 
-Only current `new_work` implementer READY, reviewer approval and successful QA
-are supported. Reject unsupported invocation before work or candidate construction: repair,
-resume, human request-rework, failed review/QA, blocked and dependency-wait
-publication are deferred. Preserve local findings, partial ledgers and original
-receipts; return precise inability and hold with no mutation. Required repair
-still holds. Do not fall back to strict chain or manager recorded proof.
+Use the explicit same-release support matrix: source repository
+`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release. It supports current `new_work` only.
+This skill retains its own role-specific proof and action boundaries; the matrix
+grants no repair-assignment, resume, wait or inability publication authority.
 
-Follow the [ordinary worker proof and publication contract](../../work-validator/docs/handoffs.md#ordinary-worker-release-boundary)
-(installed); source help is repository `docs/handoffs.md`.
+Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
 preflight and real-leaf readback. Current own/required-parent/action proof stays
 required; ancestry needs no old context or mandatory capture. Genuine retained
@@ -19,11 +18,10 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked caller/profile/reference instructions may describe legacy classification or
-repair/resume. Those descriptions are deferred and grant no ordinary mutation
-authority. Local FAIL/BLOCKED/REWORK_QUEUED/DEPENDENCY_WAIT labels preserve evidence,
-not Jira status. The owning publisher must reject unsupported final outcomes
-before candidate construction or append, regardless of an upstream label.
+Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+label grants no authority: the owning publisher independently checks the same-release
+matrix and actual evidence before candidate construction. Unsupported work retains
+all findings, partial ledgers and original receipts locally with no mutation.
 
 Read only the section required by the current phase. The composer dispatches; the
 job produces code/PR/evidence; the Jira skill owns preflight and publication.

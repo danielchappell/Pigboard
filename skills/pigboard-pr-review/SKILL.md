@@ -15,6 +15,23 @@ in `final` mode only for a terminal handoff. Read the shared
 Cursor runs require the verified [Grok High profile](references/cursor.md).
 Never fix code, create/replace/retarget PRs, change requirements, merge or deploy.
 
+## Ordinary worker release boundary
+
+Use the same-release support matrix: source repository `docs/handoffs.md`,
+heading `Ordinary worker release boundary`; installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
+immutable prepared release.
+
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
+Complete confirmed defects can queue the same open PR. The wrapper owns complete
+review, comments and its own approval; reviewer-jira independently owns Jira
+publication.
+
 ## Establish the exact review
 
 Obtain a successful read-only preflight before PR writes. Require the prepared
@@ -74,7 +91,10 @@ actual PR/report links; local cache alone cannot establish a ready QA handoff.
 - Discussion only: STAY/NOT_ATTEMPTED, ordinary authorized PR replies; no canonical
   approval/repair/block record and no transition. Unchanged inputs need no comment spam.
 
-Before approval, preflight Jira publication and the configured direct QA edge.
+Before approval, verify the success route and configured direct QA edge. Before
+queue publication, rerun predecessor proof with explicit `publisher.intent: repair_request`
+and the direct Rework Queued edge. Initial read-only preflight checks both routes
+separately; one missing route is a capability limitation, not failure of the other.
 Reuse only verified current approval by the configured independent actor; otherwise
 request approval once and inspect actual actor/revision-bound provider state.
 Transport success alone is insufficient. A stale own approval is revoked only with
