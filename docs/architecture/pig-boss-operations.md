@@ -60,28 +60,37 @@ waiting, and is this installation approaching its configured limits? This is
 manager health only. Cursor heartbeats, transcript collection, cancellation and
 worker recovery remain deferred.
 
-The portable preview application returns a versioned scan summary. The AWS wrapper writes
-one sanitized completion event to the existing log group and emits CloudWatch
-embedded metrics. No second operational database or worker ledger is introduced.
-Ordinary apply retains its existing outcome logs and native metrics; it does not
-produce this scan-summary contract. Missing detailed apply health remains
-unverified and cannot imply healthy or complete execution. Keep mode, canonical
-configuration and package identities distinct; older preview evidence cannot
-establish current apply completion. The existing health evaluator may report
-starting or stale when no current completion exists; it adds no separate
-unsupported-apply state.
+Current source completion health covers preview and ordinary apply processing.
+The preview application supplies a versioned scan summary; apply supplies bounded
+processing observations that the AWS wrapper turns into the same summary contract.
+The wrapper attempts one sanitized root JSON health record with embedded metrics
+for each finished valid invocation. Apply preserves its original outcome logs and
+admission result even if health or timing output fails. No second operational
+database, worker ledger or health-only provider call is introduced.
+
+Completion evidence must match the current mode, package, canonical configuration
+and retained enablement identity. Older preview evidence cannot establish current
+apply completion. Without current completion, the existing evaluator can report
+starting or stale; no separate unsupported-apply state is added.
+
 Summary fields: scan ID, installation/configuration revision, start/end timestamps,
 mode, complete/incomplete/failed result, counts of scanned projects/streams/issues,
-Jira requests and pages, consumed time, configured bounds, selected/held counts and
-bounded reason codes. Per-project results use stable IDs in logs, not metric
-dimensions. Never log ticket bodies, tokens, transcripts or raw provider errors.
+Jira requests and pages where observed, elapsed time, configured bounds,
+selected/held counts and bounded reason codes. Apply invocation-wide Jira, writer
+and State consumption remains `null`/`not_observed`; scope counts and policy
+proposals are separate from actual admission effects. Per-project results use
+stable IDs in logs, not metric dimensions. Never log ticket bodies, tokens, transcripts or raw provider errors.
 
-Completion means all required reads and decisions finished, and any attempted
-effects have a known or explicitly retained uncertain outcome. A normal wait, no
-ready work, five-ticket cap or retained human-reconciliation hold is a complete
-scan with separately visible work holds. Missing pages, denied reads, exhausted
-budgets or infrastructure failures are incomplete/failed scans, never healthy
-empty work. A crash emits no completion; absence must be detectable externally.
+Completion means all required acquisition and policy evaluation finished. Selected
+apply work also requires a complete unchanged-source recheck and confirmed
+finalization. A normal wait, no ready work, five-ticket cap or safe evaluation of
+a pre-existing uncertain attempt can be complete processing with separately
+visible work holds; the uncertain attempt remains unresolved. Newly uncertain
+effects, failed proof capture or unconfirmed finalization cannot supply completion.
+An admitted scope alongside another incomplete scope remains incomplete processing.
+Missing pages, denied reads, exhausted budgets or infrastructure failures are
+incomplete/failed scans, never healthy empty work. A crash emits no completion;
+absence must be detectable externally.
 
 Expose a read-only health command with readable and JSON output. It reads the
 deployed schedule/configuration, retained applied controls, current-revision summaries and metrics;
@@ -91,7 +100,7 @@ it never scans or transitions Jira or changes scheduling state. Report:
 | --- | --- |
 | disabled | Desired schedule is disabled and observed scheduler is stopped; no periodic success is expected. |
 | starting | Enabled within the configured freshness window; no current-revision completion yet. |
-| healthy | Latest supported preview scan is complete and fresh, with no capacity warning. Work holds are listed separately. |
+| healthy | A fresh complete processing result matches the current preview or apply mode, with no earlier health condition. Work holds are listed separately. |
 | degraded | Latest scan failed/incomplete, capacity is near its bound, or actual schedule differs from desired intent in either direction. |
 | stale | No current-revision complete scan within the freshness window. |
 | unknown | Health/configuration evidence cannot be read or validated; never report healthy. |
@@ -176,14 +185,13 @@ See [health use and recovery](../manager-health.md) and the
 [installation lifecycle](../manager-installation.md). Customer-owned deployed
 acceptance, human acceptance and activation remain separate from source fixtures.
 No health observation retries uncertain Jira operations or starts another scan.
-Current source completion health covers preview and ordinary apply processing.
-Apply observes existing acquisition/policy/recheck/finalization checkpoints, without
-health-only provider calls. Complete empty work and safely evaluated holds count;
-new uncertainty, mixed incomplete scopes and unconfirmed effects do not. Current
-mode, package, configuration and retained enablement identity must match. Existing
-admission outcomes survive telemetry-output failure. Invocation-wide Jira/writer/
-State workload remains unobserved, and worker monitoring, alarms and SNS remain
-deferred. This source capability does not establish installed or live acceptance.
+This apply-completion source addition is separate from the historical installed
+acceptance baseline `1af6f9387fa9e762530294012ec015f3c580aa32`, whose detailed
+completion coverage is preview-only. That package's apply outcome logs and retained
+attempt evidence remain the record of its effects; they do not supply apply
+completion summaries. Current source fixtures neither upgrade nor activate an
+installation or establish installed/live acceptance. Worker monitoring, alarms and
+SNS remain deferred.
 
 ## Capacity and the path to 50 projects
 
