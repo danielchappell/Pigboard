@@ -109,6 +109,13 @@ committing desired controls. Normal observation accepts only an exact numeric re
 concurrency of zero (stopped) or one (running); an absent reservation or a larger
 reservation refuses acceptance. Fresh initialization still requires one. Recovery
 inspection and stop remain available when that reservation is unsafe or unavailable.
+Binding refuses an ENABLED actual schedule when the supplied verified configuration
+requires it disabled. Normal inspection and configure apply the same refusal to
+the receipt's applied configuration, even when the new desired file asks for
+scheduling. Desired intent cannot replace the receipt's installed baseline.
+An enabled receipt can still be inspected while the host is stopped; health
+observations, explicit recovery inspection and stop remain available for schedule
+drift. These observations report facts without repairing or enabling the host.
 Bind and initialize the installation with these
 commands:
 
@@ -157,7 +164,10 @@ To schedule preview, change only canonical `manager.controls.schedule_enabled`,
 keep mode preview and writes false, then rebuild the same clean source with the
 original generation using `--generation ORIGINAL_GENERATION`. Upload that exact
 zip and save its generated asset receipt as JSON with `bucket`, `key`, `version`
-and `zip_digest`. Source/dependency/package migration, identity/scope/secret
+and `zip_digest`. Each of `bucket`, `key` and `version` must be a nonempty string;
+valid strings are passed unchanged. A digest mismatch or invalid field refuses
+configure before credential resolution, service access or stopping the host.
+Source/dependency/package migration, identity/scope/secret
 changes, table replacement and role changes are unsupported by this controller.
 A separately authorized release owns source upgrades.
 
