@@ -299,7 +299,7 @@ record is not completion. Missing/corrupt parser, canonicalizer, schema or scrip
 fails preparation/verification and keeps the previous stable skills binding.
 Validation/preparation writes nothing. The composed implementer is a configured
 producer of typed results, but installation activates no automation, manager or
-human-unblock path; the reviewer now uses [reviewer-jira](../skills/reviewer-jira/SKILL.md) for canonical receipt preflight and one final append/read-back/recheck/direct QA, Rework Queued or Blocked handoff. Prepare actual configured independent actor approval/own-revocation controls, exact receipt reads and direct transition rights before use. QA source composition is available; compatible saved wiring and live acceptance
+human-unblock path; ordinary reviewer delivery uses [reviewer-jira](../skills/reviewer-jira/SKILL.md) for actual predecessor worker-current preflight and one approved-PASS append/read-back/recheck/direct QA handoff. Unsupported failure/wait/block, repair/resume and human rework stop before candidate construction or append, retaining complete local findings/partial ledgers and original receipts with no transition. Separate strict-chain/legacy examples do not grant a fallback. Prepare actual configured independent actor approval/own-revocation controls, exact receipt reads and direct transition rights before use. QA source composition is available; compatible saved wiring and live acceptance
 remain separate. See the guide for the complete closed
 envelope, synthetic examples, exit meanings, budgets and recovery.
 
@@ -415,3 +415,9 @@ installation setting, export command or provider access is needed. Follow the
 Installer payload/dependency verification, semantic checks, candidate evidence and
 previous stable-link protection remain required. A copied fixture check proves
 local compatibility, not complete173/State/AWS integration or human acceptance.
+
+## Ordinary worker checker
+
+The prepared work-validator includes `--mode worker-current` and `validateWorkerCurrent`. Use the same pinned installed runtime for all three ordinary roles. Preparation and installation checks verify current copied files and dependencies; they do not prove provider publication or authorize activation. Missing or damaged runtime is a setup failure; do not fetch dependencies or fall back to source during delivery.
+
+See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
