@@ -34,7 +34,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/fixture`};
   if(n==='DescribeStacksCommand')return {Stacks:[cloud.stack]};
   if(n==='DescribeStackResourcesCommand')return {StackResources:Object.entries({Function:name,Schedule:name,StateTable:tableName,RuntimeRole:name+'-runtime',SchedulerRole:name+'-scheduler',LogGroup:'/aws/lambda/'+name}).map(([LogicalResourceId,PhysicalResourceId])=>({LogicalResourceId,PhysicalResourceId}))};
-  if(n==='DescribeStackEventsCommand')return {StackEvents:cloud.events};
+  if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);return {StackEvents:cloud.events};}
   if(n==='GetFunctionCommand')return {Configuration:{FunctionArn:functionArn,...(cloud.codeHash===undefined?{}:{CodeSha256:cloud.codeHash})},Code:{Location:'https://unused.example.invalid/fixture'}};
   if(n==='GetFunctionConfigurationCommand')return structuredClone(cloud.function);
   if(n==='GetFunctionEventInvokeConfigCommand'){if(!cloud.asyncConfig)throw Object.assign(new Error('dummy missing async config'),{name:'ResourceNotFoundException'});return structuredClone(cloud.asyncConfig);}
@@ -45,7 +45,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   if(n==='DescribeTableCommand')return {Table:table};
   if(n==='CreateChangeSetCommand'){cloud.changeInput=i;return {Id:'arn:aws:cloudformation:eu-west-1:123456789012:changeSet/pigboard-controls-fixture/id'};}
   if(n==='DescribeChangeSetCommand')return {Status:'CREATE_COMPLETE',Changes:cloud.changes??[{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',Details:[{Target:{Attribute:'Properties',Name:'Code'}}]}}]};
-  if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';return {};}
+  if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';cloud.executedToken=i.ClientRequestToken;cloud.completionReads=0;cloud.events.unshift({ClientRequestToken:i.ClientRequestToken,StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'});return {};}
   if(kind==='DynamoDBDocument'){if(n==='TransactWriteCommand'&&cloud.failCommitControls&&cloud.stack.StackStatus==='UPDATE_COMPLETE'&&cloud.schedule.State==='ENABLED'&&cloud.concurrency===1)throw Object.assign(new Error('dummy final commit unavailable'),{name:'TimeoutError'});return provider.send(command,sendOptions);}
   throw Error('Unexpected finite fixture command '+n);
  }};};
@@ -219,6 +219,63 @@ export async function configureAssetRefusalJourney(){
   }finally{f.cleanup();}
  }
  return observations;
+}
+function completionEvent(f,status='UPDATE_COMPLETE',changes={}){return {ClientRequestToken:f.cloud.executedToken,StackId:f.stackId,PhysicalResourceId:f.stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:status,...changes};}
+export async function configureCompletionJourney(){
+ const rows=[];
+ for(const variant of ['delayed','immediate']){const f=await preparedCloud();try{
+  const {input,digest}=await prepareControls(f),prior=structuredClone(f.provider.records().find(r=>r.kind==='installation')),original=fs.readFileSync(f.installationPath),auditStart=f.audit.length;let reads=0,proofIndex;
+  f.cloud.completionPage=count=>{
+   reads++;assert.equal(f.cloud.concurrency,0);assert.equal(f.cloud.schedule.State,'DISABLED');assert.deepEqual(fs.readFileSync(f.installationPath),original);
+   const applied=f.provider.records().find(r=>r.kind==='installation');assert.equal(applied.revision,prior.revision+1);assert.equal(applied.configuration_digest,prior.configuration_digest);assert.equal(applied.schedule_enabled,false);assert.equal(applied.maintenance,true);
+   assert(!f.audit.slice(auditStart).some(a=>a.action==='PutFunctionConcurrencyCommand'&&a.input.ReservedConcurrentExecutions===1||a.action==='UpdateScheduleCommand'&&a.input.State==='ENABLED'));
+   // Desired Lambda is already observable; it cannot substitute for operation proof.
+   assert.equal(f.cloud.function.Environment.Variables.PB_CONFIGURATION_DIGEST,digest);
+   if(variant==='delayed'&&count===1)return {StackEvents:[completionEvent(f,'UPDATE_COMPLETE',{ClientRequestToken:'old-token'}),completionEvent(f,'UPDATE_COMPLETE',{StackId:f.stackId+'-other'}),completionEvent(f,'UPDATE_COMPLETE',{PhysicalResourceId:f.stackId+'-other'}),completionEvent(f,'UPDATE_COMPLETE',{ResourceType:'AWS::Lambda::Function'})]};
+   if(variant==='delayed'&&count===2)return {StackEvents:[completionEvent(f,'UPDATE_IN_PROGRESS'),completionEvent(f,'UPDATE_COMPLETE')]};
+   proofIndex=f.audit.length-1;return {StackEvents:[completionEvent(f)]};
+  };
+  const outcome=await configureInstallation(input,f.dependencies);assert.equal(outcome.status,'configured',JSON.stringify(outcome));assert.equal(reads,variant==='delayed'?3:1);assert(outcome.receipt);assert.equal(outcome.applied.configuration_digest,digest);assert.equal(f.cloud.concurrency,1);assert.equal(f.cloud.schedule.State,'ENABLED');
+  const audit=f.audit.slice(auditStart),execute=audit.filter(a=>a.action==='ExecuteChangeSetCommand'),events=audit.filter(a=>a.action==='DescribeStackEventsCommand');assert.equal(execute.length,1);assert.equal(typeof execute[0].input.ClientRequestToken,'string');assert(execute[0].input.ClientRequestToken.length>0);assert.equal(execute[0].identity,'SELECTED_DEPLOYER');assert.equal(events.length,reads);for(const event of events){assert.equal(event.identity,'SELECTED_OPERATOR');assert.deepEqual(event.input,{StackName:f.stackId});}
+  for(let i=auditStart;i<f.audit.length;i++){const a=f.audit[i];if(a.action==='PutFunctionConcurrencyCommand'&&a.input.ReservedConcurrentExecutions===1||a.action==='UpdateScheduleCommand'&&a.input.State==='ENABLED'||a.action==='TransactWriteCommand'&&a.input.TransactItems[0].Update.ExpressionAttributeValues[':v0']===digest)assert(i>proofIndex);}
+  rows.push({variant,status:outcome.status,execute_calls:execute.length,event_reads:events.length,restore_after_proof:true});
+ }finally{f.cleanup();}}
+ return rows;
+}
+export async function configureMissingCompletionJourney(){
+ const rows=[];
+ for(const variant of ['rollback','denied','missing']){const f=await preparedCloud();try{
+  const {input}=await prepareControls(f),member=Object.fromEntries(Object.entries({...stateFixture.memberA,project_id:'10001',label:'AI-Daniel-1'}).filter(([key])=>!['expected_revision','site'].includes(key)));
+  seedRetained(f,{retained_members:[member],pending_intents:[{project_id:member.project_id,label:member.label,ticket_id:member.ticket_id,attempt_id:stateFixture.attemptA.attempt_id}]});
+  const prior=structuredClone(f.provider.records().find(r=>r.kind==='installation')),retained=f.provider.records().filter(r=>r.kind!=='installation'),original=fs.readFileSync(f.installationPath),auditStart=f.audit.length;let polls=0;
+  f.dependencies.wait=async ms=>{if(ms===1000)polls++;};
+  if(variant==='denied')f.cloud.fail='DescribeStackEventsCommand';
+  else f.cloud.completionPage=()=>({StackEvents:[completionEvent(f,variant==='rollback'?'UPDATE_ROLLBACK_COMPLETE':'UPDATE_COMPLETE',variant==='missing'?{ClientRequestToken:'old-token'}:{})],...(variant==='missing'?{NextToken:'unread-page'}:{})});
+  const outcome=await configureInstallation(input,f.dependencies);assert.equal(outcome.status,'partial',JSON.stringify(outcome));assert.equal(outcome.phase,'apply');assert.equal(outcome.code,variant==='denied'?'CONTROL_UNCERTAIN':'DEPLOYMENT_UNCERTAIN');assert.equal(Object.hasOwn(outcome,'receipt'),false);assert.deepEqual(outcome.recovery_receipt,f.receipt);assert.equal(outcome.recovery_metadata.package_verified,false);assert.deepEqual(fs.readFileSync(f.installationPath),original);assert.equal(f.cloud.concurrency,0);assert.equal(f.cloud.schedule.State,'DISABLED');
+  const after=f.provider.records().find(r=>r.kind==='installation');assert.equal(after.revision,prior.revision+1);for(const field of ['configuration_digest','package_revision','installation_generation','table_arn','stack_id'])assert.equal(after[field],prior[field]);assert.equal(after.maintenance,true);assert.equal(after.schedule_enabled,false);assert.equal(after.writes_enabled,false);assert.deepEqual(f.provider.records().filter(r=>r.kind!=='installation'),retained);assert.deepEqual(outcome.applied,after);
+  const audit=f.audit.slice(auditStart),events=audit.filter(a=>a.action==='DescribeStackEventsCommand'),execute=audit.filter(a=>a.action==='ExecuteChangeSetCommand');assert.equal(execute.length,1);assert(execute[0].input.ClientRequestToken);assert.equal(events.length,variant==='missing'?120:1);assert.equal(polls,variant==='missing'?120:0);for(const event of events){assert.equal(event.identity,'SELECTED_OPERATOR');assert.deepEqual(event.input,{StackName:f.stackId});}assert.equal(audit.filter(a=>a.action==='TransactWriteCommand').length,1);assert.deepEqual(audit.filter(a=>a.action==='PutFunctionConcurrencyCommand').map(a=>a.input.ReservedConcurrentExecutions),[0]);assert.deepEqual(audit.filter(a=>a.action==='UpdateScheduleCommand').map(a=>a.input.State),['DISABLED']);
+  rows.push({variant,status:outcome.status,phase:outcome.phase,code:outcome.code,event_reads:events.length,polls,execute_calls:1,retained_records:retained.length,restored:false,original_authority:true});
+ }finally{f.cleanup();}}
+ return rows;
+}
+export async function boundedConcurrencyJourney(){
+ const rows=[];
+ for(const value of [undefined,2]){const f=await preparedCloud();try{
+  const {input}=await prepareControls(f),original=fs.readFileSync(f.installationPath),before=f.provider.snapshot(),schedule=structuredClone(f.cloud.schedule),auditStart=f.audit.length;let waits=0;f.cloud.concurrency=value;f.dependencies.wait=async()=>{waits++;};
+  let error;try{await bindInstallation({configText:JSON.stringify(f.config),manifest:f.manifest,stackId:f.stackId,operatorProfile:'operator'},f.dependencies);}catch(caught){error=caught;}assert.equal(error?.code,'BINDING_MISMATCH');
+  const args=['inspect','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--kind','installation','--json'],inspected=await runStateCommand(args,{resolveInstallation:f.resolve});assert.equal(inspected.exitCode,1);assert.equal(inspected.outcome.status,'conflict');assert.equal(inspected.outcome.code,'BINDING_MISMATCH');
+  const configured=await configureInstallation(input,f.dependencies);assert.equal(configured.status,'unavailable');assert.equal(configured.phase,'resolve');assert.equal(configured.code,'BINDING_MISMATCH');for(const field of ['receipt','recovery_receipt','applied','recovery_metadata'])assert.equal(Object.hasOwn(configured,field),false);
+  assert.equal(f.provider.snapshot(),before);assert.deepEqual(f.cloud.schedule,schedule);assert.equal(f.cloud.concurrency,value);assert.deepEqual(fs.readFileSync(f.installationPath),original);assert.equal(waits,0);assert(f.audit.slice(auditStart).every(a=>/^(Get|Describe|Query|TransactGet)/.test(a.action)));
+  const recovery=await runStateCommand([...args,'--recovery'],{resolveInstallation:f.resolve});assert.equal(recovery.exitCode,0,recovery.stdout);assert.deepEqual(recovery.outcome.recovery.original,{binding:f.receipt.binding,zip_digest:f.manifest.zip_digest});assert.equal(recovery.outcome.recovery.package_verified,false);assert.equal(f.provider.snapshot(),before);
+  const prior=f.provider.records().find(r=>r.kind==='installation'),stopped=await stopInstallation(input,f.dependencies);assert.equal(stopped.status,'stopped',JSON.stringify(stopped));assert.deepEqual(stopped.recovery.original,{binding:f.receipt.binding,zip_digest:f.manifest.zip_digest});assert.equal(f.cloud.concurrency,0);assert.equal(f.cloud.schedule.State,'DISABLED');const after=f.provider.records().find(r=>r.kind==='installation');assert.equal(after.revision,prior.revision+1);for(const field of ['configuration_digest','package_revision','installation_generation','table_arn','stack_id'])assert.equal(after[field],prior[field]);assert.deepEqual(fs.readFileSync(f.installationPath),original);assert.equal(waits,1);
+  rows.push({value:value??'absent',bind:'BINDING_MISMATCH',inspect:inspected.outcome.code,configure:configured.code,preflight_mutations:0,recovery:recovery.outcome.status,stop:stopped.status,final_concurrency:0,original_authority:true});
+ }finally{f.cleanup();}}
+ const f=await preparedCloud();try{
+  const args=['inspect','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--kind','installation','--json'];assert.equal((await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve})).exitCode,0);
+  const running=await runStateCommand(args,{resolveInstallation:f.resolve});assert.equal(running.exitCode,0,running.stdout);f.cloud.concurrency=0;const before=f.provider.snapshot(),auditStart=f.audit.length,original=fs.readFileSync(f.installationPath),stopped=await runStateCommand(args,{resolveInstallation:f.resolve});assert.equal(stopped.exitCode,0,stopped.stdout);const init=await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve});assert.equal(init.outcome.code,'FRESH_INSTALLATION_REQUIRED');assert.equal(f.provider.snapshot(),before);assert.equal(f.cloud.concurrency,0);assert.deepEqual(fs.readFileSync(f.installationPath),original);assert(f.audit.slice(auditStart).every(a=>/^(Get|Describe|Query|TransactGet)/.test(a.action)));
+  rows.push({value:1,normal_inspect:running.outcome.status},{value:0,normal_inspect:stopped.outcome.status,init:init.outcome.code,post_update_zero:'covered by prescribed configure control'});
+ }finally{f.cleanup();}
+ return rows;
 }
 export async function configureJourney({partial=false}={}){const f=await preparedCloud();try{
  const {digest,input}=await prepareControls(f);if(partial)f.cloud.fail='ExecuteChangeSetCommand';
