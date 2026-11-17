@@ -251,24 +251,38 @@ test('a different package can inspect the mismatch but cannot mutate retained st
 });
 
 test('begin rejects current-attempt publication before I/O and preserves prior references', async () => {
-  const rejected = await prepared();
-  try {
-    const before = rejected.provider.snapshot(), calls = rejected.provider.audit.length;
-    const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [proofFixture.reference] } }));
-    assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
-    assert.equal(rejected.provider.snapshot(), before); assert.equal(rejected.provider.audit.length, calls);
-  } finally { rejected.state.close(); }
-  for (const reference of [
-    { ...proofFixture.reference, record_id: proofFixture.preserved_assignment.record_id },
-    { ...proofFixture.reference, ticket_id: '1002' }
-  ]) {
-    const accepted = await prepared();
+  for (const reference of [proofFixture.reference, { ...proofFixture.reference, ticket_id: '1002' }]) {
+    const rejected = await prepared();
     try {
-      const outcome = await accepted.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
-      assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
-      assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference]);
-    } finally { accepted.state.close(); }
+      const before = rejected.provider.snapshot(), calls = rejected.provider.audit.length;
+      const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
+      assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
+      assert.equal(rejected.provider.snapshot(), before); assert.equal(rejected.provider.audit.length, calls);
+    } finally { rejected.state.close(); }
   }
+  const reference = { ...proofFixture.preserved_assignment, comment_id: '699' };
+  const accepted = await prepared();
+  try {
+    const outcome = await accepted.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
+    assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
+    assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference]);
+    const input = extra => ({
+      attempt_id: fixture.attemptA.attempt_id,
+      expected_installation_revision: row(accepted.provider, 'installation', fixture.binding).revision,
+      expected_stream_revision: row(accepted.provider, 'stream', fixture.streamA).revision,
+      expected_attempt_revision: row(accepted.provider, 'attempt', fixture.attemptA).revision,
+      now: fixture.now, ...extra
+    });
+    assert.equal((await accepted.state.retainPublication(input({ reference: proofFixture.reference }))).status, 'confirmed');
+    const observations = structuredClone(proofFixture.publication_observations);
+    observations.comments.push({ ...observations.comments[0], reference });
+    assert.equal((await accepted.state.prepareTransitionCapture(input({
+      transition_id: proofFixture.transition_id, producer_invocation_id: proofFixture.producer_invocation_id,
+      publication_observations: observations
+    }))).status, 'confirmed');
+    assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference, proofFixture.reference]);
+    assert.equal(transitionProof(row(accepted.provider, 'attempt', fixture.attemptA)).state, 'prepared');
+  } finally { accepted.state.close(); }
 });
 
 test('capture ordering requires retained publication and freezes it after preparation', async () => {
@@ -283,6 +297,43 @@ test('capture ordering requires retained publication and freezes it after prepar
   assert.equal((await c.response(400, { provider_request_id: 'unsupported/provider/id' })).status, 'confirmed');
   assert.equal(c.records().attempt.extensions.pb_capture_provider_request_id, null);
   assert.equal(transitionProof(c.records().attempt).http_status, 400); assert.equal(c.records().attempt.outcome, 'pending');
+});
+test('completed responses reject interim statuses before I/O', async () => {
+  const c = await transitionFixture();
+  try {
+    assert.equal((await c.retain()).status, 'confirmed');
+    assert.equal((await c.prepare()).status, 'confirmed');
+    const before = c.provider.snapshot(), calls = c.provider.audit.length;
+    for (const status of [100, 199]) {
+      const outcome = await c.response(status);
+      assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
+      assert.equal(c.provider.snapshot(), before); assert.equal(c.provider.audit.length, calls);
+    }
+    assert.equal((await c.response(200)).status, 'confirmed');
+    assert.equal(transitionProof(c.records().attempt).state, 'response-captured');
+    assert.equal(transitionProof(c.records().attempt).http_status, 200);
+    assert.equal(c.records().attempt.attempt_id, fixture.attemptA.attempt_id);
+    assert.equal(c.records().attempt.outcome, 'pending');
+  } finally { c.state.close(); }
+});
+test('retained interim capture remains unsupported and inspectable', async () => {
+  const c = await transitionFixture();
+  try {
+    assert.equal((await c.retain()).status, 'confirmed');
+    assert.equal((await c.prepare()).status, 'confirmed');
+    const attempt = c.records().attempt;
+    c.provider.seed({ ...attempt, extensions: { ...attempt.extensions, pb_capture_status: 100, pb_capture_received_at: proofFixture.received_at, pb_capture_provider_request_id: proofFixture.provider_request_id } });
+    const before = c.provider.snapshot(), calls = c.provider.audit.length;
+    const inspected = await c.inspect();
+    assert.equal(inspected.status, 'confirmed');
+    assert.deepEqual(inspected.data.records, [c.records().attempt]);
+    assert.equal(inspected.data.records[0].extensions.pb_capture_status, 100);
+    assert.equal(inspected.data.records[0].extensions.pb_capture_received_at, proofFixture.received_at);
+    assert.deepEqual(transitionProof(inspected.data.records[0]), { state: 'unsupported', request_digest: null, http_status: null });
+    assert.equal(inspected.data.records[0].outcome, 'pending');
+    assert.equal(c.provider.snapshot(), before);
+    assert(c.provider.audit.slice(calls).every(call => /^(Get|Query|TransactGet)Command$/.test(call.name)));
+  } finally { c.state.close(); }
 });
 test('uncertain pre-pointer retention returns no continuation data and never retries', async () => {
   for (const fault of ['before', 'after']) {
