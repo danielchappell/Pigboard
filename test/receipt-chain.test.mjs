@@ -1,6 +1,6 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
-import { validateReceiptChain,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
+import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
 const entries=e=>e.comment_pages.flatMap(p=>p.comments.map(c=>({p,c,r:JSON.parse(JSON.parse(c.body).content[0].content[0].text)}))),target=e=>entries(e).find(x=>x.r.record_id===e.target.record_id);
 function seal(e){for(let round=0;round<20;round++){let changed=false;const map=new Map(entries(e).map(x=>[x.r.record_id,digestValue(x.r)]));function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='digest'&&v.record_id&&map.has(v.record_id)&&x!==map.get(v.record_id)){v[k]=map.get(v.record_id);changed=true;}else if(x&&typeof x==='object')walk(x);}}walk(e);for(const x of entries(e)){walk(x.r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(x.r)}]}]});}if(!changed&&round>0)return e;}return e;}
@@ -415,7 +415,7 @@ const original160SectionHashes={
   "repeated_parent": "sha256:e6a3cb5dd005083ec0d430bde53f6f116b23f908d7bc48d2a7d32d7d1cb5c94b"
 };
 test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
- assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded'].sort());
+ assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current'].sort());
  for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
  // A changed current copied test file is not an archived-prefix reconstruction obligation.
 
@@ -433,4 +433,35 @@ test('recorded ADF recognition reuses ordinary and attempted-record172 controls'
 
 test('ordinary recorded missing capture cut still rejects a genuinely supplied mismatched tuple',async()=>{
  const input=structuredClone(recordedPacket.rows.find(r=>r.id==='P05').input);input.retained[0].created='2020-01-01T00:00:00Z';const r=(await recordedAPI('recorded-completion',JSON.stringify(input))).validation;assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code==='METADATA'&&d.path==='/retained/0/created'));
+});
+
+// PGB-175: finite original H01/H02 supplied-proof inputs, prepared before production changes.
+const workerCases=fixtures.worker_current;
+test('ordinary worker final readback binds the configured publisher actor',()=>{
+ const original=workerCases.artifacts.find(r=>r.id==='mixed-implementer-readback').input,input=structuredClone(original),source=JSON.stringify(original);
+ const issue=input.issues.find(i=>i.id===input.target.ticket_id),project=input.trusted.projects.find(p=>p.id===issue.project_id),actor='second-configured-implementer';
+ assert(!project.actors.implementer.includes(actor));project.actors.implementer.push(actor);input.publisher.account_id=actor;input.action_receipt.actor_id=actor;
+ const before=JSON.stringify(input),r=validateWorkerCurrent(before);
+ assert.equal(r.valid,false);assert.deepEqual(r.diagnostics,[{code:'AUTHORITY',path:'/publisher/account_id',message:'Match the final target author and update author to the configured current publisher account.',reference:input.target}]);
+ for(const [key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(r[key],value,key);
+ for(const [key,value]of Object.entries(workerCases.common_result))assert.deepEqual(r[key],value,key);
+ for(const key of workerCases.omitted_result_fields)assert.equal(Object.hasOwn(r,key),false,key);
+ assert.equal(JSON.stringify(input),before);assert.equal(JSON.stringify(original),source);
+});
+for(const row of workerCases.artifacts.filter(r=>r.group<=7))test('ordinary worker supplied proof: '+row.id,()=>{
+ const before=JSON.stringify(row.input),mode=row.id==='mixed-version-worker-in-chain'?'chain':row.id==='mixed-version-worker-in-recorded-history'?'recorded-history':'worker-current';
+ const r=mode==='chain'?validateReceiptChain(before):mode==='recorded-history'?inspectRecordedHistory(before):validateWorkerCurrent(before);
+ assert.equal(JSON.stringify(row.input),before);assert.equal(r.valid,row.expected.valid,JSON.stringify(r));
+ if(mode==='worker-current'){
+  for(const [key,value]of Object.entries(workerCases.common_result))assert.deepEqual(r[key],value,key);
+  for(const key of workerCases.omitted_result_fields)assert.equal(Object.hasOwn(r,key),false,key);
+  if(!r.valid)for(const [key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(r[key],value,key);
+ }
+ if(row.expected.valid){assert.deepEqual(r.diagnostics,[]);assert.deepEqual(r.validated_leaf,row.input.target);assert.equal(r.record_digest,row.input.target.digest);for(const key of ['assignment','requirements_digest'])if(row.expected[key])assert.deepEqual(r[key],row.expected[key]);}
+ else{const d=r.diagnostics.find(d=>d.code===row.expected.code&&(!row.expected.path||d.path===row.expected.path)&&(!row.expected.path_suffix||d.path.endsWith(row.expected.path_suffix)));assert(d,JSON.stringify(r.diagnostics));if(row.group===3)assert.match(d.path,/\/(?:payload\/pr|payload\/stack_parent\/pr)(?:\/|$)/);} if(row.id==='missing-authority-direct-edge'){
+  const normal=workerCases.artifacts.find(r=>r.id===row.base).input;assert.equal(validateWorkerCurrent(JSON.stringify(normal)).valid,true);
+  const edge=normal.action_receipt.transitions[0];
+  const identical={from_stage_id:edge.from_stage_id,to_stage_id:edge.to_stage_id},reordered={to_stage_id:edge.to_stage_id,from_stage_id:edge.from_stage_id};
+  for(const duplicate of [identical,reordered]){const input=structuredClone(normal);input.action_receipt.transitions.push(duplicate);const original=JSON.stringify(input),rejected=validateWorkerCurrent(original);assert.equal(rejected.valid,false);assert(rejected.diagnostics.some(d=>d.code==='AUTHORITY'&&d.path==='/action_receipt/transitions'));for(const[key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(rejected[key],value,key);assert.equal(JSON.stringify(input),original);}
+ }
 });
