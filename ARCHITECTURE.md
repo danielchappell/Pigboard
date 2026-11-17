@@ -305,3 +305,12 @@ The local three-group API packet preserves installed and human acceptance as
 pending. No historical worker-metadata collector, recovery automation or runtime
 activation is introduced. Existing state evidence and original installed checks
 remain distinct; PGB-83/90 owns the retained installed release journey.
+
+Ordinary admission orchestration lives in `lib/manager/apply.mjs`. It consumes the
+complete Jira inventory collector and ordinary snapshot/policy, retains native
+membership and an original State attempt, publishes/verifies the existing handoff
+and pointer through `lib/jira/write.mjs`, rechecks source facts and retains the
+original transition proof before sending once. State owns conditional revisions
+and proof persistence; the AWS host owns prepared authority, lifetime and package
+capability. Jira and State effects are not atomic: uncertainty retains the original
+hold and never authorizes replay. See [ordinary admission](docs/manager-apply.md).

@@ -1,8 +1,9 @@
 # Install the disabled customer runtime
 
-PGB-83 packages an ordinary decision preview in your AWS account. It does not
-include an admission sender. Local fixture evidence is separate from installed
-acceptance, human review and permission verification. No vendor principal,
+The package includes ordinary decision preview and the admission sender for your
+AWS account, with its schedule and writes initially disabled. Local fixture
+evidence is separate from installed acceptance, human review and permission
+verification. No vendor principal,
 telemetry, public endpoint or runtime source download is configured.
 
 Prepare a reviewed clean Git revision, Node 24, `/usr/bin/zip`, the locked root
@@ -88,9 +89,11 @@ that reviewed grant to the operator role; it does not extend invocation or
 mutation permissions. The control-update deployer does not need this read grant:
 configure observes through the operator profile.
 
-The function has reserved concurrency one, Node 24, a bounded timeout and no
-sender. The schedule starts DISABLED, with fixed preview input and no flexible
-window. Scheduler and asynchronous Lambda retry attempts are zero with a bounded
+The function has reserved concurrency one, Node 24, a bounded timeout and the
+ordinary sender. Its runtime role includes transaction permissions scoped to the
+generated State table even while writes are disabled. The schedule starts DISABLED,
+with fixed preview input and no flexible window. Scheduler and asynchronous
+Lambda retry attempts are zero with a bounded
 60-second event age. AWS may still deliver duplicates; preview performs no writes.
 The state table has no TTL, stream or secondary index and is retained on deletion
 and replacement. The generated template sets finite log retention from canonical configuration.
@@ -147,7 +150,7 @@ Invoke the generated function name from stack outputs, using the operator profil
 aws lambda invoke --profile customer-operator --function-name GENERATED_FUNCTION_NAME --cli-binary-format raw-in-base64-out --payload '{"operation":"preview"}' /absolute/preview.json
 ```
 
-Only that exact event is accepted. Runtime reads retained identities, acquires
+Preview accepts only that exact event. Runtime reads retained identities, acquires
 Jira facts, composes the ordinary snapshot and invokes the actual ordinary policy.
 Incomplete state never becomes empty input. Renames, moves, removed projects,
 pending attempts and missing historical facts preserve holds. This release has no
@@ -263,8 +266,8 @@ intent later, set desired controls disabled and use the supported control rebuil
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
 
-Apply mode is refused: this pinned package has no sender. Future apply support
-must also require explicit writes, all three operator confirmations, current
+Ordinary apply requires separate deliberate activation through configure:
+explicit writes, all three operator confirmations, current
 reviewed inventory, supported non-global source-specific transition mappings and
 compatible retained state. Operator assertions are not automated proofs of full
 Jira visibility or absence of another installation. Check project permissions,
@@ -324,3 +327,23 @@ the account, role and identity values once; do not copy generated resource IDs.
   }
 }
 ```
+
+## Ordinary sender packages
+
+The packaging command above includes the ordinary sender and records `sender:true`
+in its manifest. Packaging and deployment do not activate admission. An older
+preview-only package cannot gain sender capability by changing an event or
+configuration.
+Initial installation requires schedule and writes disabled, retains the same
+State table and resources, and keeps both Scheduler and Lambda automatic retries
+at zero. Runtime transaction permissions apply only to that generated table.
+
+Use the existing configure journey for deliberate activation after confirming
+visibility, sole admission ownership and reviewed inventory. Configure retains
+its revision fence, disabled schedule/quiescence checks and controls-last commit.
+It cannot turn a preview code package into a sender code release. The schedule
+input is exactly `{"operation":"apply"}` in apply mode. See the
+[ordinary sender guide](manager-apply.md) for source-restricted transition setup,
+one-stream choice, outcomes and recovery. Later invocations may select another
+eligible stream after fresh evaluation. Stop preserves pending attempts and their
+publication/proof evidence; it does not clear or replay them.

@@ -37,6 +37,15 @@ test('installation CLI renders invalid arguments as JSON regardless of flag posi
  const readable=await runInstallationCommand(['unknown'],dependencies);assert.equal(readable.exitCode,2);assert.deepEqual(readable.outcome,{status:'unavailable',code:'INVALID_INPUT'});assert.equal(readable.stdout,'unavailable: '+JSON.stringify(readable.outcome)+'\n');assert.equal(reservations,0);assert.equal(clients,0);
 });
 
+test('ordinary apply host rejects stream overrides and preview package capability',async()=>{
+ const {runApply}=await import('../lib/aws/manager-lambda.mjs');let calls=0;const r=await runApply({operation:'apply',stream:'stream-1'},{createState:()=>{calls++;}});assert.equal(r.code,'APPLY_EVENT_REQUIRED');assert.equal(calls,0);
+ const {packet}=await import('../scripts/test-manager-apply.mjs');const c=structuredClone(packet.config);const {hostConfig}=await import('../lib/aws/installation.mjs');assert.throws(()=>hostConfig(JSON.stringify({...c,manager:{...c.manager,invocation_timeout_seconds:120}})),e=>e.code==='APPLY_BUDGET');
+ const noSender=await runApply({operation:'apply'},{configText:JSON.stringify(c),manifest:{source_revision:'a'.repeat(40),sender:false},createState:()=>{calls++;}});assert.equal(noSender.status,'unavailable');assert.equal(calls,0);
+});
+test('ordinary apply prepared host projects actual success and disabled zero effects',async()=>{
+ const {runApplyFixture}=await import('../scripts/test-manager-apply.mjs');const success=await runApplyFixture({host:true});assert.equal(success.result.schema,'pigboard-runtime-result/v1');assert.equal(success.result.status,'applied');assert.equal(success.result.writes,3);assert.equal(success.result.execution_authorized,false);assert.deepEqual(Object.keys(success.result.apply).sort(),['attempt_id','effects','hold','scope','stage','ticket_id']);const disabled=await runApplyFixture({host:true,enabled:false});assert.equal(disabled.result.status,'held');assert.equal(disabled.result.writes,0);assert.equal(disabled.mutations.length,0);
+});
+
 test('configure waits for its own terminal stack event before restoring preview',async(t)=>{for(const row of await configureCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('configure preserves original authority when completion proof is unavailable',async(t)=>{for(const row of await configureMissingCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('normal observation enforces bounded concurrency without blocking stopped recovery',async(t)=>{for(const row of await boundedConcurrencyJourney())t.diagnostic(JSON.stringify(row));});

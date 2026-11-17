@@ -43,7 +43,7 @@ for what Pigboard supports today.
 | Preview ready work and repairs from complete local facts | [Offline manager preview, examples and recovery](docs/manager-preview.md) |
 | Inspect requested Jira issues from a reviewed source or prepared installed validator | [Named-issue library and finite HTTPS packet](docs/manager-preview.md#inspect-named-jira-issues) |
 | Use the conditional State API or bound init/inspect CLI | [State API, prerequisites and recovery](docs/manager-state.md) |
-| Package the disabled customer-owned preview runtime | [AWS package, installation, preview and stop](docs/manager-installation.md) |
+| Package the disabled customer-owned runtime | [AWS package, installation, preview and stop](docs/manager-installation.md) |
 | Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 
@@ -56,11 +56,13 @@ complete implementation Story coverage.
 ## What is available
 
 The source State API and DynamoDB adapter are callable by prepared Node callers.
-Source also provides the disabled customer-owned AWS preview package, generated
+Source also provides the disabled customer-owned AWS runtime package, generated
 binding and operator init/inspect/configure/stop commands. See the
 [installation guide](docs/manager-installation.md) and [State guide](docs/manager-state.md).
 Local simulations do not establish installed acceptance, live IAM or activation;
-this package has no admission sender.
+the package includes the ordinary admission sender and scoped State transaction
+permissions, with schedule and writes initially disabled. Activation is a separate
+deliberate operator action.
 
 | Capability | State |
 | --- | --- |
@@ -70,7 +72,7 @@ this package has no admission sender.
 | Offline manager policy preview of supplied complete snapshots | Complete source and prepared-installed fixture preview of ordinary work, repair prerequisites and recorded-parent stack updates, with every readable cause identity in order. Installation verifies repair semantics with an eighth check before replacing the stable link. Local fixture evidence does not establish live discovery, delivery or activation; preview has no writes or execution authority. |
 | Requested Jira issue/pointer/comment inspection | Bounded library in source and the complete prepared installed validator, with a caller-supplied secret resolver. The local dummy-HTTPS packet has an importable API and test-only fixture CLI; neither is a live Jira command. No domain discovery, receipt proof or admission. [Limits and recovery](docs/manager-preview.md#inspect-named-jira-issues) |
 | Local multi-project configuration validation and change preview | Implemented in source and prepared validator; no provider writes or live readiness |
-| Customer-owned Lambda preview with retained DynamoDB State | Source package/template and bound operator tools; initially disabled and write-free. Human/installed acceptance and live permission verification remain separate; no sender or activation. [Guide](docs/manager-installation.md) |
+| Customer-owned Lambda preview and ordinary admission with retained DynamoDB State | Source package/template includes sender capability and scoped State transaction permissions; schedule and writes start disabled. Human/installed acceptance, live permission verification and deliberate activation remain separate. [Guide](docs/manager-installation.md) |
 | Structured prescribed API/Bruno, PostgreSQL and UI helpers | Bounded helper capability; composed by qa-entrypoint with ordered actual observations and a complete partial ledger |
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer and QA receipt handoffs are available; full-loop acceptance remains pending |
 | Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
@@ -280,7 +282,7 @@ shared holds; private observations remain in memory. Confirmed pointer absence
 requires a successful property-key enumeration; a 404 remains unknown.
 See the [inventory guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library)
 for prerequisites, use and recovery. Core PGB-162 owns semantic normalization and
-selection; the [AWS preview package](docs/manager-installation.md) composes these source APIs. Installed acceptance remains separate.
+selection; the [AWS runtime package](docs/manager-installation.md) composes these source APIs. Installed acceptance remains separate.
 This library neither authenticates receipts nor performs admission or activation.
 
 The [ordinary recorded preview](docs/manager-preview.md#ordinary-recorded-policy)
@@ -295,3 +297,8 @@ delivery. The source AWS wrapper composes173/State/ordinary policy; designated h
 The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval and successful QA. It does not establish live freshness, execution authority or manager completion. Repair/resume and unsuccessful publication remain deferred with local findings and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
 
 See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
+
+The [ordinary sender guide](docs/manager-apply.md) describes the bounded admission
+implementation and its prepared host prerequisites. Sender packages remain
+initially disabled; local developer checks do not establish installed delivery
+acceptance or authorize activation. Repair execution remains outside this slice.

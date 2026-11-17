@@ -996,3 +996,7 @@ to resolve uncertainty; never clear/replay it. For `REPAIR_REQUIRED`, leave the
 stream held for human handling. Missing/conflicting lineage keeps its precise
 failure. Omitted mode continues the unchanged legacy v1 offline fixture/repair
 route; its result cannot authorize the ordinary admission path.
+
+Ordinary admission effects belong to the separate [source-only ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/ae7a48ac5dcdea447da71631cb6531cd8090f953/docs/manager-apply.md); that sender is not part of this installed preview skill.
+Preview does not reserve intents, publish assignments or transition work. Its
+nonexecuting proposal is not permission to call a writer.

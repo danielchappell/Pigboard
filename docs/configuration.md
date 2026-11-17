@@ -269,10 +269,11 @@ Profiles select credentials for those exact roles, never substitute resource IDs
 outputs, not another configuration file to author.
 
 `controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,
-`writes_enabled` and `maintenance`. This package supports preview with writes false;
-initial packaging requires scheduling and maintenance false. Apply is refused.
+`writes_enabled` and `maintenance`. Preview requires writes false. Initial
+packaging requires scheduling, writes and maintenance false. The included sender
+supports ordinary apply after deliberate activation with the prerequisites below.
 `schedule_minutes` is 1–1440, `invocation_timeout_seconds` is 30–900, and schedule
-interval must exceed timeout. The function budget must cover the 30-second State
+interval must exceed timeout. The preview budget must cover the 30-second State
 read bound, Jira scan bound and ten seconds of headroom. Excessive read budgets
 fail packaging without clipping. `log_retention_days` uses the declared finite
 CloudWatch values (for example 14), never unlimited retention.
@@ -287,9 +288,23 @@ file, including manager controls; rebuild the pinned package for control updates
 `transition_edges` may be empty for preview. Each closed row has numeric
 `project_id`, `transition_id`, explicit unique nonempty `source_status_ids`,
 `target_status_id` and boolean `global`. Project/transition pairs are unique and
-refer to configured projects. Future ordinary apply requires the configured Ready
+refer to configured projects. Ordinary apply requires the configured Ready
 to Work source and In Progress target with `global: false`; an available transition
 ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
-this preview package never turns them into execution authority.
+preview never turns them into execution authority. The package includes the
+ordinary sender, but apply additionally requires the activation controls below.
+
+Ordinary apply uses the existing manager activation attestations and configured
+non-global, source-restricted Ready to Work → In Progress transition edge. The
+operation-only scheduled event cannot override configuration or scope. Sender
+capability comes from the reviewed package, with initial schedule and writes off.
+
+For apply mode, the host requires
+`310 + 2 * scan_timeout_ms / 1000 + 6 * request_timeout_ms / 1000 <= invocation_timeout_seconds`.
+This covers ten State calls, two acquisitions, five writer requests, credential
+resolution and the existing margin. Preview keeps its existing
+`40 + scan_timeout_ms / 1000` requirement. The 900-second maximum and cadence
+strictly exceeding the invocation timeout remain. Insufficient configuration is
+rejected before effects; the host never changes these settings automatically.
