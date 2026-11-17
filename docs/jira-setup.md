@@ -5,8 +5,8 @@ Its canonical-derived inactive projection lists every project's native Story/Bug
 IDs and three successful routes. Compare saved full numbered labels using Jira
 site + immutable project ID + full label; equal labels in different projects
 remain separate. Keep both Jira and Cursor flags false. The projection is local
-report output, not a provider import or second configuration. The unpublished
-PGB-90 milestone does not establish installed or hosted acceptance.
+report output, not a provider import or second configuration. Local diagnostics
+do not establish installed or hosted acceptance.
 
 ## Historical pilot record — 13–14 November 2026
 

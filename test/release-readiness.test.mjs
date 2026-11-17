@@ -30,6 +30,17 @@ async function inputs(t) {
   } };
 }
 
+function managerInputs(input, managerRevision = revision, explicit = true) {
+  const manifest = structuredClone(fixture.manager_evidence.manifest);
+  manifest.source_revision = managerRevision;
+  const installation = structuredClone(fixture.manager_evidence.installation);
+  installation.manifest = structuredClone(manifest);
+  installation.binding.package_revision = managerRevision;
+  const health = structuredClone(fixture.manager_evidence.health);
+  health.current.package_revision = managerRevision;
+  return { ...input, configText: JSON.stringify(fixture.manager_config), ...(explicit ? { packageManifest: manifest } : {}), installation, health, observations: { ...input.observations, configuration_digest: fixture.manager_configuration_digest, installation_id: 'fixture' } };
+}
+
 test('early H02: absent installed acceptance remains unverified and human/activation boundaries survive', async t => {
   const input = await inputs(t);
   const report = await checkReadiness(input);
@@ -167,4 +178,42 @@ test('C09 selects only original whole groups with explicit prepared receipt/revi
   assert.equal(fixture.preparation.id, 'PREP-01');
   assert.equal(fixture.data.id, 'DATA-01');
   assert.ok(fixture.human_cases.every(group => group.original_human_case.execution === 'human' && group.status === 'NOT_RUN'));
+});
+
+test('C04/C05 matching supplied ordinary package, binding and initial disabled health compare through actual pure owners', async t => {
+  const input = managerInputs(await inputs(t));
+  const report = await checkReadiness(input);
+  for (const id of ['C04_PACKAGE', 'C04_INSTALLATION', 'C05_HEALTH']) assert.equal(check(report, id).status, 'PASS', id);
+  assert.equal(report.configuration_digest, fixture.manager_configuration_digest);
+  assert.equal(check(report, 'C05_HEALTH').observed.current.evidence_revision, null);
+  assert.equal(check(report, 'C05_HEALTH').observed.metric_evidence.status, 'not_applicable');
+  assert.equal(check(report, 'C08_INSTALLED_ACCEPTANCE').status, 'UNVERIFIED');
+  assert.deepEqual(report.activation, fixture.expected.activation);
+});
+
+test('H04 old evidence retains approved manager revision failure for both manifest routes with matching control', async t => {
+  const base = await inputs(t);
+  const control = await checkReadiness(managerInputs(base));
+  for (const id of ['C04_PACKAGE', 'C04_INSTALLATION', 'C05_HEALTH']) assert.equal(check(control, id).status, 'PASS', `control ${id}`);
+  for (const explicit of [true, false]) {
+    const old = managerInputs(base, fixture.manager_evidence.old_revision, explicit);
+    const report = await checkReadiness(old);
+    for (const id of ['C04_PACKAGE', 'C04_INSTALLATION', 'C05_HEALTH']) {
+      assert.equal(check(report, id).status, 'FAIL', `${explicit ? 'explicit' : 'embedded'} ${id}`);
+      assert.equal(check(report, id).code, 'MANAGER_REVISION_MISMATCH');
+    }
+    assert.notEqual(report.status, 'compatible_supplied_evidence');
+    assert.equal(check(report, 'C03_ROUTES').status, 'PASS');
+  }
+});
+
+test('H04 missing resource uses the actual reader unknown shape and cannot become disabled health', async t => {
+  const input = managerInputs(await inputs(t));
+  input.health = structuredClone(fixture.manager_evidence.missing_resource_health);
+  const report = await checkReadiness(input);
+  assert.equal(check(report, 'C04_INSTALLATION').status, 'PASS');
+  assert.equal(check(report, 'C05_HEALTH').status, 'UNVERIFIED');
+  assert.equal(check(report, 'C05_HEALTH').observed.state, 'unknown');
+  assert.equal(check(report, 'C05_HEALTH').observed.query_coverage, null);
+  assert.deepEqual(check(report, 'C05_HEALTH').observed.omissions, fixture.manager_evidence.missing_resource_health.omissions);
 });

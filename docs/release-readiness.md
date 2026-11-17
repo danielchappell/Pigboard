@@ -1,10 +1,5 @@
 # Check Pig Boss release evidence
 
-**Unpublished implementation milestone.** Local configuration, routing, evidence
-and worker comparisons are being implemented against the reviewed PGB-90 plan.
-The actual manager package, installation and health integration and final fixture
-packet are pending. Do not use this working tree as a release approval.
-
 The readiness command compares a pinned external skill release, the canonical
 customer configuration and saved observations. It explains what agrees, what
 conflicts and what remains unverified. It never enables an automation. Its strongest
@@ -159,6 +154,55 @@ inside delivery. Missing prerequisites stop locally and retain completed work.
 
 ## Describe saved evidence
 
+The [manager installation guide](manager-installation.md) owns package preparation,
+disabled installation and successful receipt publication. Supply its actual
+`pigboard-manager-package/v1` manifest and
+`pigboard-installation-receipt/v1` receipt. Without a separate manifest, readiness
+uses the receipt's embedded manifest. Both routes require
+`manifest.source_revision === binding.package_revision === --revision`.
+`MANAGER_REVISION_MISMATCH` remains a failure even when an older package, receipt
+and health report agree with one another. Package support requires `sender:true`,
+Node24 runtime and the six existing logical resources. Package hashes are saved
+metadata; readiness does not independently hash deployed Lambda code.
+
+The successful receipt's site, installation/domain, region, configuration digest,
+generation and original stack/table binding must agree with canonical controls.
+Desired schedule and writes must be false. Maintenance is shown as supplied; an
+already-stopped installation does not have to clear it. Activation confirmations
+in configuration remain declarations, not proof or permission.
+
+The [basic health guide](manager-health.md) owns the separately authorized AWS read:
+
+```sh
+node /absolute/pigboard-setup/scripts/manager-health.mjs \
+  --config /absolute/private/customer.json \
+  --installation /absolute/private/installation-receipt.json \
+  --operator-profile PREPARED_PROFILE --json
+```
+
+Retain that original output as the `--health` file; readiness never invokes the
+reader. It compares installation/revision/configuration identity and the producer's
+health-generation digest. A compatible inactive observation is `disabled`, exit0,
+with desired/observed schedule and applied writes/schedule false, complete query
+coverage, zero writes and worker health `not_observed`. The producer observes the
+existing Function, Schedule, LogGroup, StateTable and roles before health queries;
+readiness preserves its logs link, query window, reasons and omissions. Unknown or
+missing resource reads remain unverified. No alarm inventory is invented.
+
+An initially disabled installation can have null health generation/enabled time,
+null evidence revision and metric status `not_applicable`. With an epoch, retain
+the producer's observed five metric entries. Zero datapoints alone do not prove a
+resource missing. Saved timestamps and stale/starting/degraded states are shown
+without recalculating freshness using today's clock. This compares saved supplied
+evidence; it neither authenticates it nor probes enablement.
+
+Versioned detailed scan-health summaries currently cover preview execution.
+Ordinary apply keeps its existing outcome logs and native metrics. Missing apply
+summary evidence stays unverified; readiness cannot infer healthy or complete
+apply execution. A current package/configuration/mode identity must agree before
+using any saved health evidence. The existing evaluator can show starting or stale
+when completion is absent; this checker does not invent an unsupported-apply state.
+
 `--observations` is the checker's local input notes format,
 `pigboard-readiness-observations/v1`; no provider is required to emit it. Its top
 level contains `schema`, `revision`, `configuration_digest`, `installation_id` and
@@ -216,9 +260,10 @@ variants; H04 retains its three. The missing-helper variant damages only an owne
 copy of a previously verified real release. It preserves prepared dependency
 symlinks and uses the unchanged verifier; it never damages the supplied release.
 
-This unpublished milestone marks the two actual C04/C05 health/revision variants
-pending supplier composition. A failed source-pin prerequisite leaves the affected
-developer assertions pending. No complete packet PASS is claimed. The saved empty
+A failed source-pin prerequisite leaves the affected developer assertions pending.
+H04 uses the actual saved reader's unknown shape for missing-resource diagnostics.
+Its old-revision variant retains both manifest input routes and a matching control.
+The saved empty
 fixture provider trace describes this local fixture, not a live-provider audit.
 Developer assertions never mark human execution PASS. Retain outputs before
 removing only owned disposable fixtures/build output. Do not alter live records
@@ -237,5 +282,5 @@ manufacture a receipt. A manager recovery receipt with
 installation receipt. If configure confirmed success but full receipt publication
 failed, retain the emitted full receipt in a new private file as the installation
 guide directs. Do not reconstruct it, repeat configure or use a truncated output.
-Actual supplier installation/health guide links and final receipt checks are
-pending their real composition into this branch.
+Follow the linked installation/health guides for their original receipt and
+observation recovery procedures.

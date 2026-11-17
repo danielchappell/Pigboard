@@ -4,8 +4,7 @@ Current ordinary-release setup follows the [release-readiness guide](../../docs/
 and the pinned role profiles. Use one canonical configuration for each project's
 native Story/Bug IDs and ordinary In Progress → In Review → QA → Human Review
 journey. Keep Jira rules and Cursor automations inactive. Readiness compares saved
-observations; it does not provision or enable them. The current PGB-90 working
-milestone remains unpublished and incomplete pending actual manager integration.
+observations; it does not provision or enable them.
 
 ## Historical pilot setup — 13–14 November 2026
 

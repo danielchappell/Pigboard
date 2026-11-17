@@ -15,8 +15,8 @@ permission to publish, transition, merge or deploy.
 For the ordinary Pig Boss release, use [release readiness](release-readiness.md)
 to compare the pinned complete bundle, canonical project routes and saved inactive
 setup evidence. It reports local, installed, health, PGB-58 and human evidence
-separately. Its working-tree milestone is unpublished; successful local diagnostics
-do not activate automation or complete human acceptance.
+separately. Successful local diagnostics do not activate automation or complete
+human acceptance.
 
 ## Choose the capability
 
