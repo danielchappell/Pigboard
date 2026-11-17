@@ -93,7 +93,7 @@ sender. The schedule starts DISABLED, with fixed preview input and no flexible
 window. Scheduler and asynchronous Lambda retry attempts are zero with a bounded
 60-second event age. AWS may still deliver duplicates; preview performs no writes.
 The state table has no TTL, stream or secondary index and is retained on deletion
-and replacement. Logs use the configured finite retention.
+and replacement. The generated template sets finite log retention from canonical configuration.
 
 ## Bind, initialize and preview
 
@@ -114,8 +114,15 @@ requires it disabled. Normal inspection and configure apply the same refusal to
 the receipt's applied configuration, even when the new desired file asks for
 scheduling. Desired intent cannot replace the receipt's installed baseline.
 An enabled receipt can still be inspected while the host is stopped; health
-observations, explicit recovery inspection and stop remain available for schedule
+observations, explicit recovery inspection and stop remain available for schedule-state
 drift. These observations report facts without repairing or enabling the host.
+Bind rejects missing, invalid or different embedded canonical configuration with
+`PACKAGE_MISMATCH` before service access. Use the matching generated manifest and
+canonical configuration from the pinned package; do not hand-fill missing
+`canonical_config` or replay an uncertain cloud operation. Bind/inspect verifies
+the documented resource and control facts, not manual cadence changes or effective
+log retention: log-group identity is checked, retention is not queried. Manual AWS
+or template mutations are outside the supported setup/update path.
 Bind and initialize the installation with these
 commands:
 

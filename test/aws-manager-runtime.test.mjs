@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {scheduleDriftJourney,configureMissingCompletionJourney,boundedConcurrencyJourney,configureCompletionJourney,resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
+import {manifestConfigurationJourney,scheduleDriftJourney,configureMissingCompletionJourney,boundedConcurrencyJourney,configureCompletionJourney,resolverJourney,stopJourney,configureJourney,asyncConfigRecoveryJourney,asyncConfigPostUpdateJourney,asyncConfigRefusalJourney,configureAssetRefusalJourney,configureArrayOrderRefusal,lateRecoveryJourney,publicationJourney,wrapperJourney} from '../scripts/test-aws-manager.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {controlOnlyChange,roleMatches} from '../lib/aws/installation.mjs';
 import {runInstallationCommand} from '../scripts/manager-installation.mjs';
@@ -40,3 +40,5 @@ test('installation CLI renders invalid arguments as JSON regardless of flag posi
 test('configure waits for its own terminal stack event before restoring preview',async(t)=>{for(const row of await configureCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('configure preserves original authority when completion proof is unavailable',async(t)=>{for(const row of await configureMissingCompletionJourney())t.diagnostic(JSON.stringify(row));});
 test('normal observation enforces bounded concurrency without blocking stopped recovery',async(t)=>{for(const row of await boundedConcurrencyJourney())t.diagnostic(JSON.stringify(row));});
+
+test('manifest canonical configuration rejects unusable receipts before services',async(t)=>{for(const row of await manifestConfigurationJourney())t.diagnostic(JSON.stringify(row));});
