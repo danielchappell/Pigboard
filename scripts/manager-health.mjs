@@ -1,0 +1,16 @@
+#!/usr/bin/env node
+import {fileURLToPath} from 'node:url';
+import {readManagerHealth} from '../lib/aws/health.mjs';
+export const usage='Usage: node scripts/manager-health.mjs --config FILE --installation FILE --operator-profile NAME [--json]';
+export function formatHealth(result){
+ const when=s=>s?`${s.ended_at} (${s.result}; ${s.elapsed_ms??'unknown'} ms; ${s.reason_codes.join(', ')||'no reasons'})`:'absent within the query window';
+ return `${result.state} (exit ${result.exit_code})\nObserved: ${result.observed_at??'unavailable'}\nInstallation: ${result.current.installation_id??'unavailable'}\nPackage: ${result.current.package_revision??'unavailable'}\nConfiguration: ${result.current.configuration_digest??'unavailable'}\nGeneration: ${result.current.health_generation??'unavailable'}; enabled at: ${result.current.health_enabled_at??'unavailable'}\nEvidence: ${result.current.evidence_revision??'unavailable'}\nSchedule: desired ${result.desired_enabled??'unknown'}, observed ${result.observed_enabled??'unknown'}\nApplied controls: ${JSON.stringify(result.applied_controls)}\nLatest complete: ${when(result.latest_complete)}\nLatest attempt: ${when(result.latest_attempt)}\nLatest failure: ${when(result.latest_failure)}\nLatest unbound failure: ${when(result.latest_unbound_failure)}\nMaximum budget use: ${result.maximum_budget_utilization===null?'not observed':result.maximum_budget_utilization.toFixed(1)+'%'}; held work: ${result.holds??'not observed'}; counts complete: ${result.counts_complete}\nSettings: ${JSON.stringify(result.settings)}\nQuery coverage: ${JSON.stringify(result.query_coverage)}\nMetric evidence: ${JSON.stringify(result.metric_evidence)}\nIgnored historical scans: ${result.ignored_historical_scans}; worker health: ${result.worker_health}; writes: ${result.writes}\nReasons: ${result.reasons.join(', ')||'none'}\n${result.next_step}\n${result.omissions.join('\n')}\n${Object.entries(result.links).map(([k,v])=>k+': '+v).join('\n')}\nUse --json for bounded per-project scan details.\n`;
+}
+export async function runHealthCommand(argv,dependencies={}){
+ if(argv.length===1&&argv[0]==='--help')return {exitCode:0,stdout:usage+'\n',outcome:null};
+ const input={},seen=new Set();let json=argv.includes('--json');
+ try{for(let i=0;i<argv.length;i++){const flag=argv[i];if(seen.has(flag))throw Error();seen.add(flag);if(flag==='--json'){json=true;continue;}const key={'--config':'configPath','--installation':'installationPath','--operator-profile':'operatorProfile'}[flag];if(!key||!argv[i+1]||argv[i+1].startsWith('--'))throw Error();input[key]=argv[++i];}if(Object.keys(input).length!==3)throw Error();}
+ catch{return {exitCode:2,stdout:json?JSON.stringify({schema:'pigboard-manager-health/v1',state:'invalid',exit_code:2,code:'INVALID_ARGUMENTS'})+'\n':'invalid: '+usage+'\n',outcome:null};}
+ const outcome=await readManagerHealth(input,dependencies);return {exitCode:outcome.exit_code,stdout:json?JSON.stringify(outcome,null,2)+'\n':formatHealth(outcome),outcome};
+}
+if(process.argv[1]===fileURLToPath(import.meta.url)){const result=await runHealthCommand(process.argv.slice(2));process.stdout.write(result.stdout);process.exitCode=result.exitCode;}

@@ -308,3 +308,36 @@ resolution and the existing margin. Preview keeps its existing
 `40 + scan_timeout_ms / 1000` requirement. The 900-second maximum and cadence
 strictly exceeding the invocation timeout remain. Insufficient configuration is
 rejected before effects; the host never changes these settings automatically.
+
+## Optional manager health settings
+
+The same canonical `manager` object may contain:
+
+```json
+"health": { "freshness_seconds": 900, "warning_percent": 80 }
+```
+
+Omitting it uses the existing defaults subject to the bounds below: effective
+freshness is three schedule cadences (`schedule_minutes * 180` seconds), and warning
+is 80 percent. Explicit freshness must be an integer from 1 to 259200. Effective
+freshness, including the default, must be strictly greater than one cadence plus
+the full invocation timeout and no greater than `log_retention_days * 86400`
+seconds. Equality with retention is allowed: the freshness window must fit the
+retained logs. Correct incompatible settings in the canonical configuration before
+packaging or configuration, choosing supported retention or freshness/cadence
+values. Warning is finite, greater than 0 and at most 100. Explicit settings
+participate in the existing canonical digest; no separate monitoring configuration
+or SNS setting exists. Defaults require deployed acceptance and do not promise
+capacity or detection latency.
+
+Detailed preview-scan health measures each scan budget separately and reports the maximum measured
+percentage. Exactly the threshold warns. Page size is a batch size. Missing request
+peaks/counters remain null/not observed. Generated health generation and enablement
+time are outputs retained in the existing installation extensions, not customer
+authored configuration. Use the existing verified configure lifecycle to change
+enabled settings. See [health states and safe recovery](manager-health.md).
+
+Detailed scan summaries and their health states describe preview scans. Apply retains
+its basic invocation/result logs and native Lambda metrics; these do not become
+preview completion metrics or certify apply health. A mode/configuration change
+changes the evidence identity, so old preview success cannot establish apply health.
