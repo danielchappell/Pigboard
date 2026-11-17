@@ -253,3 +253,21 @@ the account, role and identity values once; do not copy generated resource IDs.
   }
 }
 ```
+
+## Ordinary sender packages
+
+A reviewed package with `sender:true` contains the ordinary sender. Preview-only
+packages cannot be enabled for sending by changing an event or configuration.
+Initial installation requires schedule and writes disabled, retains the same
+State table and resources, and keeps both Scheduler and Lambda automatic retries
+at zero. Runtime transaction permissions apply only to that generated table.
+
+Use the existing configure journey for deliberate activation after confirming
+visibility, sole admission ownership and reviewed inventory. Configure retains
+its revision fence, disabled schedule/quiescence checks and controls-last commit.
+It cannot turn a preview code package into a sender code release. The schedule
+input is exactly `{"operation":"apply"}` in apply mode. See the
+[ordinary sender guide](manager-apply.md) for source-restricted transition setup,
+one-stream choice, outcomes and recovery. Later invocations may select another
+eligible stream after fresh evaluation. Stop preserves pending attempts and their
+publication/proof evidence; it does not clear or replay them.

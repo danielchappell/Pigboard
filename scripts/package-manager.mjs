@@ -4,7 +4,7 @@ import {resolve,join,dirname,relative} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
-import {hostConfig,sha256,deriveHostControls,previewOnly,loadHostSDK,hostError} from '../lib/aws/installation.mjs';
+import {hostConfig,sha256,deriveHostControls,loadHostSDK,hostError} from '../lib/aws/installation.mjs';
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const hashFile=p=>sha256(readFileSync(p));
@@ -17,8 +17,8 @@ function closure(source,entry,seen=new Set()){
 export function packageManager({configPath,output,source=root,revision,generation}={}){
  source=resolve(source);output=resolve(output);if(existsSync(output))throw hostError('OUTPUT_EXISTS');
  const git=(...args)=>execFileSync('git',args,{cwd:source,encoding:'utf8'}).trim();const head=git('rev-parse','HEAD');if(!revision||head!==revision||!/^[0-9a-f]{40}$/.test(revision)||git('status','--porcelain','--untracked-files=normal'))throw hostError('PINNED_CLEAN_SOURCE_REQUIRED');
- loadHostSDK();const text=readFileSync(configPath,'utf8'),{config,digest}=hostConfig(text),projection=deriveHostControls(text,{package_revision:revision});previewOnly(projection);if(!generation&&(config.manager.controls.schedule_enabled||config.manager.controls.maintenance))throw hostError('INITIAL_DISABLED_REQUIRED');
- const manifest={schema:'pigboard-manager-package/v1',source_revision:revision,configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:generation??randomUUID(),runtime:'nodejs24.x',sender:false,canonical_config:config,dependency_hashes:{root:hashFile(join(source,'package-lock.json')),aws:hashFile(join(source,'runtime/aws/package-lock.json'))},payload_hashes:{},logical_resources:['Function','Schedule','LogGroup','StateTable','RuntimeRole','SchedulerRole']};
+ loadHostSDK();const text=readFileSync(configPath,'utf8'),{config,digest}=hostConfig(text),projection=deriveHostControls(text,{package_revision:revision});if(!generation&&(config.manager.controls.schedule_enabled||config.manager.controls.writes_enabled||config.manager.controls.maintenance))throw hostError('INITIAL_DISABLED_REQUIRED');
+ const manifest={schema:'pigboard-manager-package/v1',source_revision:revision,configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:generation??randomUUID(),runtime:'nodejs24.x',sender:true,canonical_config:config,dependency_hashes:{root:hashFile(join(source,'package-lock.json')),aws:hashFile(join(source,'runtime/aws/package-lock.json'))},payload_hashes:{},logical_resources:['Function','Schedule','LogGroup','StateTable','RuntimeRole','SchedulerRole']};
  const payload=join(output,'payload');mkdirSync(payload,{recursive:true});
  for(const p of new Set([...closure(source,'lib/aws/manager-lambda.mjs'),'contracts/epic-v1.schema.json','contracts/ticket-v1.schema.json'])){mkdirSync(dirname(join(payload,p)),{recursive:true});cpSync(join(source,p),join(payload,p));}
  for(const p of ['node_modules','runtime/aws/node_modules','runtime/aws/package.json','runtime/aws/package-lock.json','package.json']){mkdirSync(dirname(join(payload,p)),{recursive:true});cpSync(join(source,p),join(payload,p),{recursive:true,dereference:false});}

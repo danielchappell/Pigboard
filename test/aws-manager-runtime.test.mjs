@@ -22,3 +22,12 @@ test('canonical installation comparison preserves values and array order',async(
  const account='123456789012',role='arn:aws:iam::'+account+':role/pigboard-operator';assert.equal(roleMatches('arn:aws:sts::'+account+':assumed-role/pigboard-operator/session',role,account),true);assert.equal(roleMatches('arn:aws:sts::000000000000:assumed-role/pigboard-operator/session',role,account),false);assert.equal(roleMatches('arn:aws:sts::'+account+':assumed-role/another-role/session',role,account),false);
  await configureArrayOrderRefusal();
 });
+
+test('ordinary apply host rejects stream overrides and preview package capability',async()=>{
+ const {runApply}=await import('../lib/aws/manager-lambda.mjs');let calls=0;const r=await runApply({operation:'apply',stream:'stream-1'},{createState:()=>{calls++;}});assert.equal(r.code,'APPLY_EVENT_REQUIRED');assert.equal(calls,0);
+ const {packet}=await import('../scripts/test-manager-apply.mjs');const c=structuredClone(packet.config);const {hostConfig}=await import('../lib/aws/installation.mjs');assert.throws(()=>hostConfig(JSON.stringify({...c,manager:{...c.manager,invocation_timeout_seconds:120}})),e=>e.code==='APPLY_BUDGET');
+ const noSender=await runApply({operation:'apply'},{configText:JSON.stringify(c),manifest:{source_revision:'a'.repeat(40),sender:false},createState:()=>{calls++;}});assert.equal(noSender.status,'unavailable');assert.equal(calls,0);
+});
+test('ordinary apply prepared host projects actual success and disabled zero effects',async()=>{
+ const {runApplyFixture}=await import('../scripts/test-manager-apply.mjs');const success=await runApplyFixture({host:true});assert.equal(success.result.schema,'pigboard-runtime-result/v1');assert.equal(success.result.status,'applied');assert.equal(success.result.writes,3);assert.equal(success.result.execution_authorized,false);assert.deepEqual(Object.keys(success.result.apply).sort(),['attempt_id','effects','hold','scope','stage','ticket_id']);const disabled=await runApplyFixture({host:true,enabled:false});assert.equal(disabled.result.status,'held');assert.equal(disabled.result.writes,0);assert.equal(disabled.mutations.length,0);
+});

@@ -293,3 +293,16 @@ ID alone proves no source condition. Multiple source entries are retained facts,
 not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
 authorize apply. These trusted settings are exposed through the host projection;
 this preview package never turns them into execution authority.
+
+Ordinary apply uses the existing manager activation attestations and configured
+non-global, source-restricted Ready to Work → In Progress transition edge. The
+operation-only scheduled event cannot override configuration or scope. Sender
+capability comes from the reviewed package, with initial schedule and writes off.
+
+For apply mode, the host requires
+`310 + 2 * scan_timeout_ms / 1000 + 6 * request_timeout_ms / 1000 <= invocation_timeout_seconds`.
+This covers ten State calls, two acquisitions, five writer requests, credential
+resolution and the existing margin. Preview keeps its existing
+`40 + scan_timeout_ms / 1000` requirement. The 900-second maximum and cadence
+strictly exceeding the invocation timeout remain. Insufficient configuration is
+rejected before effects; the host never changes these settings automatically.
