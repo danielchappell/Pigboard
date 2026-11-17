@@ -934,8 +934,15 @@ For each supported repair, the implementer consumes every direct assigned reques
 exactly once on the same PR and carries all findings through fresh High planning,
 independent High review and Medium execution. Independent PR review and prescribed
 QA use the repaired current revision; authenticated history is not execution.
-Only coherent verified QA consumption resolves requests. Failed repairs and prior
-implementation alone leave all older causes unresolved. Duplicate refs, unrelated
+Only coherent verified QA consumption resolves requests. Automatic historical
+resolution uses QA from exact proper ancestors of the selected active admission;
+sibling or unrelated QA remains authentic history but does not resolve its
+outstanding roots. Explicit `request_resolutions` pairs keep their separate
+existing contract: coherent same-ticket QA must actually consume the exact request
+or its root closure; contradictory completions reject. The automatic ancestor
+restriction does not change that explicit-pair contract or offer a fallback for
+missing proof. Failed repairs and prior implementation alone leave all older causes
+unresolved. Duplicate refs, unrelated
 lineage, changed requirements, conflicting PR identity and omitted causes reject.
 A resolved ancestor is not consumed again. No intermediate failed repair needs a
 successful QA record to retain its unresolved causes.

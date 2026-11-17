@@ -582,3 +582,27 @@ test('P166-PROOF recorded ancestry authenticates both unresolved requests and th
  for(const request of targets){const row=entries(input).find(x=>x.r.record_id===request.record_id);for(const exact of [request,row.r.payload.basis]){const e=projection(structuredClone(input));e.target=exact;const r=inspectRecordedHistory(JSON.stringify(e));assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert(r.records.some(x=>x.reference.record_id===exact.record_id));}}
 });
 for(const [name,input]of Object.entries(p166.refusals))test('P166-PROOF unsupported/stale '+name,()=>{const r=validateWorkerCurrent(JSON.stringify(input));assert.equal(r.valid,false,name);assert.equal(r.execution_authorized,false);for(const[key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(r[key],value,key);});
+
+// Automatic historical resolution follows the selected admission's proper
+// ancestry. Authentic sibling QA remains history, not an implicit resolution.
+function p166AdmissionLineage(input,assignment){
+ const line=[],seen=new Set();while(assignment){const row=entries(input).find(x=>x.r.record_id===assignment.record_id&&x.c.id===assignment.comment_id&&x.r.ticket_id===assignment.ticket_id&&digestValue(x.r)===assignment.digest);assert(row,'Exact admission must resolve');assert.equal(row.r.kind,'admission');assert(!seen.has(row.r.record_id),'No lineage cycle');seen.add(row.r.record_id);line.push(structuredClone(assignment));assignment=row.r.payload.previous_assignment;}return line;
+}
+function p166SiblingFacts(input){
+ const qa=entries(input).find(x=>x.r.kind==='qa'&&x.r.assignment.record_id==='16640000-0000-4000-8000-000000000001');assert(qa,'Coherent sibling QA is present');
+ const current=p166AdmissionLineage(input,input.issues[0].pointer.assignment),sibling=p166AdmissionLineage(input,qa.r.assignment),failedRepair='00000000-0000-4000-8000-000000000024';
+ assert(!current.some(a=>a.record_id===qa.r.assignment.record_id),'Sibling is not in current ancestry');assert(!sibling.some(a=>a.record_id===failedRepair),'Failed repair is not in sibling ancestry');assert.deepEqual(input.request_resolutions,[]);return {qa,current,sibling};
+}
+for(const [name,valid]of [['sibling_complete_union',true],['sibling_qa_omitted_old',false]])test('P166-SIBLING '+name,()=>{
+ const input=name==='sibling_complete_union'?p166.inputs[name]:p166.refusals[name],before=JSON.stringify(input);p166SiblingFacts(input);const r=validateWorkerCurrent(before);assert.equal(r.valid,valid,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(Object.hasOwn(r,'completion_established'),false);if(!valid)assert(r.diagnostics.some(d=>d.code==='REPAIR'&&d.path==='/target/required_requests'),JSON.stringify(r.diagnostics));assert.equal(JSON.stringify(input),before);
+});
+test('P166-SIBLING independent recorded QA remains authentic history',()=>{
+ const input=structuredClone(p166.refusals.sibling_qa_omitted_old),{qa}=p166SiblingFacts(input);input.schema='pigboard-manager-handoff-input/v1';input.consumer='manager';delete input.purpose;delete input.current_context_body;delete input.publisher;delete input.action_receipt;delete input.pr_receipts;delete input.evidence_receipts;input.trusted.projects=input.trusted.projects.map(({evidence_uris,pipeline_actors,configured_targets,...p})=>p);input.trusted.manager_assignments=[{ticket_id:input.issues[0].id,assignment:input.issues[0].pointer.assignment}];input.target={ticket_id:qa.r.ticket_id,comment_id:qa.c.id,record_id:qa.r.record_id,digest:digestValue(qa.r)};
+ const before=JSON.stringify(input),r=inspectRecordedHistory(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(r.recorded_completion_established,false);assert(r.records.some(x=>x.reference.record_id===qa.r.record_id));assert.equal(JSON.stringify(input),before);
+});
+test('P166-SIBLING genuine ancestor QA resolves only its consumed old cause',()=>{
+ const input=structuredClone(p166.inputs.ancestor_qa_resolved),old=p166.inputs.ancestor_union_admission.issues[0].required_requests[0],a=target(input),line=p166AdmissionLineage(input,input.target),all=entries(input),resolving=all.filter(x=>x.r.kind==='qa').find(q=>{const review=all.find(x=>x.r.record_id===q.r.payload.review.record_id),impl=all.find(x=>x.r.record_id===review.r.payload.implementation.record_id);return impl.r.payload.consumed_requests.some(r=>r.record_id===old.record_id);});
+ assert(resolving);assert(line.slice(1).some(r=>r.comment_id===resolving.r.assignment.comment_id&&r.digest===resolving.r.assignment.digest),'Resolving QA is an exact proper ancestor');assert(!a.r.payload.requests.some(r=>r.record_id===old.record_id),'Resolved old cause is omitted');assert.equal(a.r.payload.requests.length,1);assert.notEqual(a.r.payload.requests[0].record_id,old.record_id);assert.deepEqual(input.request_resolutions,[]);
+ const before=JSON.stringify(input),r=validateWorkerCurrent(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(JSON.stringify(input),before);
+ mutateRecord(input,input.target.record_id,r=>r.payload.requests.push(structuredClone(old)));const repeated=validateWorkerCurrent(JSON.stringify(input));assert.equal(repeated.valid,false);assert(repeated.diagnostics.some(d=>d.code==='REPAIR'&&d.path==='/target/requests'),JSON.stringify(repeated.diagnostics));
+});
