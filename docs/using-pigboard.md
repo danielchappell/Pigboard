@@ -144,10 +144,12 @@ authority.
 | Missing prerequisite, access, evidence or scope decision | Report Blocked and required human action; end work. If Jira is unavailable, retain the failure in the run result. |
 | Unknown result of a write | Record uncertainty and follow the skill's bounded reconciliation; never blindly replay. |
 
-The following broader implementation labels are historical reference; they grant
-no ordinary wait, Blocked or resume authority: `implementationOutcome`
+The implementer must retain `implementationOutcome`
 READY/DEPENDENCY_WAIT/BLOCKED/NOT_RUN and separate `deliveryOutcome`
-NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE. For current delivery,
+NOT_ATTEMPTED/COMPLETED/UNAVAILABLE/UNCERTAIN/INELIGIBLE in its durable result.
+These remain current result fields and values; they do not authorize publication,
+a Jira transition or resume. Unsupported routes remain deferred under the selected
+release’s ordinary worker support matrix and pinned entrypoint contract.
 COMPLETED means publication and the selected release's supported native destination
 were verified; it does not mean code success. Delivery failure preserves
 revision-bound READY but never claims Jira moved.
