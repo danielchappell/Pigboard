@@ -6,7 +6,7 @@ that same attempt conditionally. This source API does not install AWS resources,
 resolve customer configuration, publish to Jira or enable delivery.
 
 PGB-83 adds the source installation package, generated resource binding and bound
-operator CLI described below. PGB-137 owns original transition capture; PGB-87
+operator CLI described below. This branch adds **unreleased PGB-137 original transition capture**; PGB-87
 owns Jira effects. Installed AWS/Jira and human acceptance remain separate from
 local API and package tests.
 
@@ -240,3 +240,158 @@ Use the existing [stop command](manager-installation.md#deliberate-scheduling-an
 to disable the verified original resources; preserve partial results and build
 outputs for an authorized decision if strict current package binding remains
 unresolved. Do not repeat configure or reconstruct a receipt to hide uncertainty.
+
+## Retain and inspect original transition proof
+
+PGB-137 adds a complete proof-persistence capability to the existing attempt v1
+record. A later trusted producer can save its verified publication, prepare an
+exact request commitment, and retain its original completed HTTP response.
+The real sender is PGB-87 work; reconciliation is PGB-85 work. Neither has shipped
+through these methods. This checkpoint sends no Jira request and does not finalize
+the pending attempt.
+
+The same `inspect --kind attempt` command now adds a readable summary:
+
+| Summary | Retained fact |
+| --- | --- |
+| `none` | No named capture group exists. |
+| `prepared` | The request/publication binding was persisted; no completed response is retained. Sending or its outcome cannot be inferred. |
+| `response-captured` | An original completed HTTP status and observation time are retained for that prepared request. |
+| `unsupported` | Named capture fields are partial, conflicting, unknown or fail their request binding. Keep the hold. |
+
+The summary names the attempt, its unchanged outcome, request digest and original
+HTTP status when available. JSON returns the same full record and exact revisions.
+A retained 204, 409, 400 or other status is an HTTP fact here, with no “applied” or
+“rejected” inference. Reading existing proof never grants send/resume/retry
+permission. Inspection works while disabled, subject to the existing read contract.
+
+### Trusted writer order
+
+All three methods require the same pending attempt and exact installation, stream
+and attempt revisions. They use the normal enabled writer controls. They are
+internal package APIs; there is no capture/import/send CLI or editable proof file.
+Trusted producer provenance comes from the reviewed bound package and state/IAM
+boundary, not from a digest or an asserted caller flag.
+
+1. `begin` persists the pending intent before publication. Its publication list
+   may be empty.
+2. After actual append/readback validation of the typed manager comment, call
+   `retainPublication({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, reference, now})`.
+   The reference ticket and manager record UUID must equal this attempt's ticket
+   and attempt UUID. This restriction does not apply to worker receipt references.
+   Duplicate/competing/replacement manager references conflict. Only a confirmed
+   retention permits continuing toward pointer publication; an unknown result
+   stops that producer invocation.
+3. Verify the published admission pointer, or preserve the existing assignment
+   pointer for queue repair, using real provider facts. Then call
+   `prepareTransitionCapture({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, transition_id,
+   producer_invocation_id, publication_observations, now})`.
+   Observations contain every retained reference's server author/update-author and
+   created/updated values, plus `{mode, assignment}` for the exact pointer. The
+   persistence boundary checks unchanged metadata, exact reference coverage and
+   operation-specific pointer binding; the producer still verifies actual bodies,
+   readback and role authorization. Admission uses mode `published` and this
+   operation's manager reference. Queue repair uses mode `preserved` and its
+   retained member's existing assignment, without replacing it with the queue
+   comment. A successful fresh preparation is the state prerequisite for one send
+   in that current invocation, alongside all normal producer checks. Existing
+   capture, uncertainty or any failed result cannot be used to resume or resend.
+4. After the original request has one completed response, call
+   `recordTransitionResponse({attempt_id, expected_installation_revision,
+   expected_stream_revision, expected_attempt_revision, request_digest,
+   http_status, observed_at, provider_request_id})` once. A lost/partial transport
+   response must not call it. The status must be 100–599; absent or unsupported
+   provider request IDs are stored as null. Duplicate/conflicting responses fail
+   without replacing original proof. This method never changes the pending outcome.
+
+Each operation uses one transaction: update installation and attempt, condition-check
+the matching pending stream without advancing its revision. Success returns
+`data:{installation,stream,attempt}` with resulting records; use those exact
+revisions in the next call. Other statuses return `data:null`. Existing extension
+fields are merged and protected by the observed attempt revision. No auto-retry
+or publication append is performed by these state methods.
+
+### Capture and digest contract
+
+The ten scalar extension keys are `pb_capture_version` (1),
+`pb_capture_transition_id`, `pb_capture_request_digest`,
+`pb_capture_publication_digest`, `pb_capture_package_revision`,
+`pb_capture_invocation_id`, `pb_capture_prepared_at`, `pb_capture_status`,
+`pb_capture_received_at`, `pb_capture_provider_request_id`. Package revision comes
+from the validated binding; configuration digest stays in the immutable attempt.
+Status/time are both null or both populated. Prepared-only provider request ID is
+null. Times use bounded UTC-Z syntax. Up to six unrelated extension keys survive;
+insufficient space fails before preparation. Existing 16-key, 32 KiB marshalled
+record and 1 MiB transaction limits remain unchanged. No raw bodies, nested JSON,
+new store, schema version or field retirement is introduced.
+
+`transitionPublication` in `lib/state/contract.mjs` exports the reusable exact
+tuple and JCS/SHA256 digest. Each reference tuple is
+`[ticket_id,comment_id,record_id,digest]`. The commitment object is
+`{comments:[[referenceTuple,author_id,update_author_id,created,updated],...],
+pointer:[mode,referenceTuple]}`. Comments sort lexically by the JCS reference tuple;
+duplicates or incomplete retained coverage fail. Reference object key ordering
+and observation array ordering do not change the commitment.
+
+`transitionRequestDigest` commits to version 1, method `POST`, route
+`issue_transitions`, transition ID, exactly `{transition:{id}}`, publication digest,
+and immutable identity: schema_version, installation_id, domain_id, record_id,
+site, project_id, label, attempt_id, ticket_id, epic_id, issue_key, operation,
+source_status_id, target_status_id, configuration_digest, created_at and cause.
+Mutable revisions/outcome/response metadata are excluded. The UUID correlates
+one request; it is not provider idempotency. Later consumers must reuse these
+helpers and validate fresh real observations, rather than treating a digest as
+proof of remote origin.
+
+### Finite local proof packet
+
+With the already prepared dependencies, check the affected APIs and command:
+
+```sh
+node --test test/manager-state-contract.test.mjs test/manager-state-cli.test.mjs test/manager-state-sdk.test.mjs
+```
+
+Run the two prescribed groups once into a new disposable directory:
+
+```sh
+node scripts/test-transition-proof.mjs --all --output /tmp/pgb137-all-evidence
+```
+
+To run only an assigned group, replace `--all` with
+`--case R1-29-H01` or `--case R1-29-H02` and use a new output directory. H01 uses
+two fresh fixtures for original 204 and 409 responses. H02 uses nine fresh variants:
+stale revision, changed retained reference, duplicate preparation, duplicate response,
+disabled writer controls, extension capacity, record size, and persistence failure
+before or after write. Inputs are the [bounded fixture](../test/fixtures/transition-proof.json).
+No endpoint, credential, arbitrary proof file or customer target override exists.
+
+The driver calls the actual PGB-83 `preparedCloud` fixture, bind/resolve functions
+and `runStateCommand` with generated canonical configuration and installation
+receipt paths and the selected `operator` profile. Simulated SDK providers sit
+beneath the real resolver. Initial `init` runs while disabled. Only synthetic
+stored State controls are then enabled to represent the trusted writer prerequisite;
+canonical configuration and cloud function remain preview with writes disabled.
+The production adapter prepares the pending attempt using that generated binding.
+Subsequent readable and JSON inspection therefore reports `controls_match:false`
+while the writer fixture is enabled. That mismatch is readable, never forged into
+activation or writer permission. The disabled-controls variant restores matching
+disabled values. Every inspection is read-only and disposes its selected-profile
+clients. No fixture resolver substitutes an invented binding.
+
+Evidence includes exact Git revision/dirty state, canonical inputs, generated
+binding/receipt, independently assembled exact request/publication commitments,
+before/after records, readable/JSON output, provider audit and zero live AWS/Jira/
+worker calls. Each completed variant is retained separately before the group summary.
+Exit 0 means the local assertions passed, with
+`actual_core_integration:confirmed_local_simulated_providers` and
+`developer_observation:confirmed_local_fixture`; `human_acceptance:pending`
+remains explicit. A restart here creates fresh command clients over the same
+retained simulated provider, not a real process-durable DynamoDB restart.
+Exit 2 means invalid preparation or an assertion failed: preserve partial output
+and diagnose that one failure before any bounded correction. Missing prepared
+packages are prerequisites, never skipped acceptance or an invitation to install
+dependencies during execution. Retain evidence before removing only disposable
+output. Local checks, designated human assessment, installed/live acceptance,
+independent review, hosted CI, merge and activation remain separate.

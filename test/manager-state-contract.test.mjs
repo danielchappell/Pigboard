@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
-import { recordId, projectRetainedInventory } from '../lib/state/contract.mjs';
+import { recordId, projectRetainedInventory, transitionPublication, transitionRequestDigest, transitionProof, CAPTURE_KEYS } from '../lib/state/contract.mjs';
+import { transitionFixture, proofFixture, expectedCommitment } from '../scripts/test-transition-proof.mjs';
 import { fixture, prepared, beginInput, finalizeInput, allLimits, row } from './helpers/state-provider.mjs';
 
 // Future adapters run these same observable invariants through their own disposable
@@ -239,9 +240,84 @@ test('a different package can inspect the mismatch but cannot mutate retained st
   const operations = [
     await other.retainMembers({ expected_installation_revision: 1, members: [{ ...fixture.memberA, expected_revision: 0 }], now: fixture.now }),
     await other.begin(beginInput({ expected_installation_revision: 1, expected_stream_revision: 0 })),
-    await other.finalize(finalizeInput())
+    await other.finalize(finalizeInput()),
+    await other.retainPublication({ attempt_id: fixture.attemptA.attempt_id, expected_installation_revision: 1, expected_stream_revision: 0, expected_attempt_revision: 0, reference: proofFixture.reference, now: fixture.now }),
+    await other.prepareTransitionCapture({ attempt_id: fixture.attemptA.attempt_id, expected_installation_revision: 1, expected_stream_revision: 0, expected_attempt_revision: 0, transition_id: proofFixture.transition_id, producer_invocation_id: proofFixture.producer_invocation_id, publication_observations: proofFixture.publication_observations, now: fixture.now }),
+    await other.recordTransitionResponse({ attempt_id: fixture.attemptA.attempt_id, expected_installation_revision: 1, expected_stream_revision: 0, expected_attempt_revision: 0, request_digest: proofFixture.expected.request_digest, http_status: 204, observed_at: proofFixture.received_at, provider_request_id: null })
   ];
   for (const outcome of operations) { assert.equal(outcome.status, 'conflict'); assert.equal(outcome.code, 'CONTROL_MISMATCH'); assert.equal(outcome.data, null); }
   assert.equal(provider.snapshot(), before);
   assert.equal(provider.audit.filter(a => a.name === 'TransactWriteCommand').length, writes);
+});
+
+test('capture ordering requires retained publication and freezes it after preparation', async () => {
+  const c = await transitionFixture(); const before = c.provider.snapshot();
+  assert.equal((await c.prepare()).code, 'PUBLICATION_MISMATCH'); assert.equal(c.provider.snapshot(), before);
+  assert.equal((await c.retain()).status, 'confirmed');
+  assert.equal((await c.prepare()).status, 'confirmed');
+  const captured = c.provider.snapshot();
+  assert.equal((await c.retain({ reference: { ...proofFixture.reference, comment_id: '701' } })).code, 'PROOF_CONFLICT');
+  assert.equal((await c.response(204, { request_digest: 'sha256:' + 'b'.repeat(64) })).code, 'PROOF_CONFLICT');
+  assert.equal(c.provider.snapshot(), captured);
+  assert.equal((await c.response(400, { provider_request_id: 'unsupported/provider/id' })).status, 'confirmed');
+  assert.equal(c.records().attempt.extensions.pb_capture_provider_request_id, null);
+  assert.equal(transitionProof(c.records().attempt).http_status, 400); assert.equal(c.records().attempt.outcome, 'pending');
+});
+test('uncertain pre-pointer retention returns no continuation data and never retries', async () => {
+  for (const fault of ['before', 'after']) {
+    const c = await transitionFixture(); const before = c.provider.snapshot(), writes = c.provider.audit.filter(a => a.name === 'TransactWriteCommand').length;
+    c.provider.fault = fault; const retained = await c.retain();
+    assert.equal(retained.status, 'uncertain'); assert.equal(retained.data, null);
+    assert.equal(c.provider.audit.filter(a => a.name === 'TransactWriteCommand').length, writes + 1);
+    assert.equal(c.records().attempt.publication.length, fault === 'before' ? 0 : 1);
+    if (fault === 'before') assert.equal(c.provider.snapshot(), before);
+    await c.inspect(); assert.equal(transitionProof(c.records().attempt).state, 'none');
+  }
+});
+test('queue repair captures preserved assignment, admission captures its own published assignment', async () => {
+  const c = await transitionFixture({ operation: 'queue_repair' }); await c.retain();
+  const before = c.provider.snapshot();
+  const changed = structuredClone(c.observations); changed.pointer.assignment = proofFixture.reference;
+  assert.equal((await c.prepare({ publication_observations: changed })).code, 'PUBLICATION_MISMATCH'); assert.equal(c.provider.snapshot(), before);
+  const prepared = await c.prepare(); assert.equal(prepared.status, 'confirmed');
+  assert.equal(c.records().attempt.outcome, 'pending');
+  assert.deepEqual(row(c.provider, 'member', fixture.memberA).assignment, proofFixture.preserved_assignment);
+  const admission = await transitionFixture(); await admission.retain();
+  assert.equal((await admission.prepare({ publication_observations: c.observations })).code, 'PUBLICATION_MISMATCH');
+});
+test('publication commitment has canonical ordering and binds metadata, pointer and immutable request facts', async () => {
+  const c = await transitionFixture(); await c.retain(); const attempt = c.records().attempt;
+  const extra = fixture.evidence.references[0], observations = structuredClone(c.observations);
+  attempt.publication.push(extra); observations.comments.push({ ...observations.comments[0], reference: extra });
+  const commitment = transitionPublication(attempt, observations);
+  const reordered = structuredClone(observations); reordered.comments.reverse(); reordered.pointer.assignment = Object.fromEntries(Object.entries(reordered.pointer.assignment).reverse());
+  assert.equal(transitionPublication(attempt, reordered).digest, commitment.digest);
+  const changed = structuredClone(observations); changed.comments[0].author_id = changed.comments[0].update_author_id = 'another-manager';
+  assert.notEqual(transitionPublication(attempt, changed).digest, commitment.digest);
+  assert.notEqual(transitionRequestDigest(attempt, '32', commitment.digest), transitionRequestDigest(attempt, '31', commitment.digest));
+  assert.notEqual(transitionRequestDigest({ ...attempt, project_id: '200' }, '31', commitment.digest), transitionRequestDigest(attempt, '31', commitment.digest));
+  const duplicate = structuredClone(observations); duplicate.comments.push(duplicate.comments[0]);
+  assert.throws(() => transitionPublication(attempt, duplicate), e => e.stateResult?.code === 'PUBLICATION_MISMATCH');
+});
+test('partial/unsupported capture remains visible, blocks proof mutation, and invalid API input performs no I/O', async () => {
+  const c = await transitionFixture(); await c.retain();
+  c.provider.seed({ ...c.records().attempt, extensions: { ...c.records().attempt.extensions, pb_capture_version: 1 } });
+  const before = c.provider.snapshot(); assert.equal(transitionProof(c.records().attempt).state, 'unsupported');
+  assert.equal((await c.prepare()).code, 'UNSUPPORTED_PROOF'); assert.equal(c.provider.snapshot(), before);
+  const inspected = await c.inspect(); assert.equal(transitionProof(inspected.data.records[0]).state, 'unsupported');
+  const calls = c.provider.audit.length;
+  assert.equal((await c.state.recordTransitionResponse(c.input({ request_digest: proofFixture.expected.request_digest, http_status: 600, observed_at: proofFixture.received_at, provider_request_id: null }))).status, 'invalid');
+  assert.equal((await c.state.retainPublication(c.input({ reference: proofFixture.reference, now: fixture.now, force: true }))).status, 'invalid');
+  assert.equal(c.provider.audit.length, calls);
+});
+
+test('independent legacy golden commitments bind exact publication and original request', async () => {
+  const expected = expectedCommitment(fixture.binding);
+  assert.equal(expected.publication_digest, proofFixture.expected.publication_digest);
+  assert.equal(expected.request_digest, proofFixture.expected.request_digest);
+  const c = await transitionFixture();
+  assert.equal((await c.retain()).status, 'confirmed');
+  assert.equal((await c.prepare()).status, 'confirmed');
+  assert.equal(c.records().attempt.extensions.pb_capture_publication_digest, expected.publication_digest);
+  assert.equal(c.records().attempt.extensions.pb_capture_request_digest, expected.request_digest);
 });
