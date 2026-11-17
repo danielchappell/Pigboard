@@ -269,10 +269,11 @@ Profiles select credentials for those exact roles, never substitute resource IDs
 outputs, not another configuration file to author.
 
 `controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,
-`writes_enabled` and `maintenance`. This package supports preview with writes false;
-initial packaging requires scheduling and maintenance false. Apply is refused.
+`writes_enabled` and `maintenance`. Preview requires writes false. Initial
+packaging requires scheduling, writes and maintenance false. The included sender
+supports ordinary apply after deliberate activation with the prerequisites below.
 `schedule_minutes` is 1–1440, `invocation_timeout_seconds` is 30–900, and schedule
-interval must exceed timeout. The function budget must cover the 30-second State
+interval must exceed timeout. The preview budget must cover the 30-second State
 read bound, Jira scan bound and ten seconds of headroom. Excessive read budgets
 fail packaging without clipping. `log_retention_days` uses the declared finite
 CloudWatch values (for example 14), never unlimited retention.
