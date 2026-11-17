@@ -20,8 +20,9 @@ The prepared entrypoint reads the shared 20 review criteria, eight report catego
 and comment handling. Prepare the configured latest available Grok High, Fast off,
 and retain actual selection evidence. A separate review run provides reasoning
 independence; eligible provider approval identity still needs verification.
-For supported ordinary `new_work`, complete current approved PASS moves the
-exact revision to QA. Complete confirmed in-scope defects, with required current
+For assignments supported by the selected release's pinned
+[worker support matrix](../../docs/handoffs.md#ordinary-worker-release-boundary),
+complete current approved PASS moves the exact revision to QA. Complete confirmed in-scope defects, with required current
 proof and verified absence/removal of the reviewer's own stale approval, publish
 one reviewer `repair_request` on the same open PR and verify the direct
 In Review → Rework Queued transition. Independent inability, missing proof,

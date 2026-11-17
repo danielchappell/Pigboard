@@ -10,9 +10,14 @@ description: Compose prescribed structured QA for an authorized native Jira Stor
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
-This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+immutable prepared release.
+
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
 
 Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
@@ -23,7 +28,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.
@@ -59,7 +64,8 @@ A missing required profile stops helper dispatch with a precise inability.
 
 Invoke qa-jira once in `mode: preflight` with those trusted inputs. It verifies
 configured native Story/Bug eligibility, current QA stage, exact site/project/full
-stream, new_work assignment with no resume/assigned repair, raw work, current implementation/review/open PR,
+stream, current assignment supported by the pinned matrix and its actual referenced
+requests, raw work, current implementation/review/open PR,
 CI and actual publication permissions. Consume its verified references instead of
 unverified caller hints. `INELIGIBLE` or `UNAVAILABLE` means no helper dispatch;
 retain its diagnostics and complete any locally knowable inventory. An unreadable
@@ -178,10 +184,10 @@ its outcome or uncertainty. A real current-case outstanding upstream request mus
 have its exact typed reference, causal observation and unresolved-state evidence;
 ordinary discussion or a known defect alone is not dependency wait.
 
-An explicit resume or repair assignment is unsupported: stop before helper
-execution or candidate construction, preserving full local findings, partial
-ledgers, original history/artifacts and action receipts. Do not consume or guess
-resume authorization here. Legacy execution-record reuse/resume classifications
+An assignment unsupported by the selected matrix stops before helper execution
+or candidate construction. Preserve full local findings, partial ledgers, original
+history/artifacts and action receipts. Explicit resume remains unsupported; do not
+consume or guess resume authorization here. Legacy execution-record reuse/resume classifications
 are not an ordinary continuation path; never replay completed or uncertain actions.
 Current successful evidence reuse still requires exact case/skill/source and
 current requirements, PR/revision, actor/tenant/target and artifact validity.
@@ -208,7 +214,7 @@ PASS/FAIL evidence, including reuse, requires actual tested PR/environment proof
 missing proof stays local without changing original rows. Static zero-AI completion
 keeps exact pending humans and a no-AI reason, without a fabricated test PASS.
 
-Independent BLOCKED/inability, causal wait, incomplete/discussion, repair or resume stops
+Independent BLOCKED/inability, causal wait, incomplete/discussion, unsupported assignment or resume stops
 before candidate construction or append, with no final publication call or Jira
 transition. Return complete local `prepared_assessment`, findings, partial ledger,
 original receipts and precise inability; `candidate_record` and `published_reference`

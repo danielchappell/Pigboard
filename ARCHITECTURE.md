@@ -39,13 +39,16 @@ remain separate.
 The installed code consists of skills and setup scripts. A successful Build proves
 preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
-live delivery acceptance. The prepared implementer accepts native Story/Bug structured
-new_work assignments and emits only ordinary READY implementation records.
+live delivery acceptance. The prepared implementer accepts current native
+Story/Bug assignments supported by the pinned
+[worker support matrix](docs/handoffs.md#ordinary-worker-release-boundary) and
+emits only ordinary READY implementation records.
 Reviewer accepts actual implementation receipts; only current approved PASS
 publishes to QA; complete confirmed defects queue a reviewer repair_request.
 QA can queue complete confirmed defects with its original full partial ledger.
-Independent inability/wait/block and repair/resume retain full local findings,
-partial ledgers and original receipts with no candidate/append or transition. The QA composer consumes current structured work and canonical predecessors; it
+Unsupported assignments and independent inability/wait/block/resume routes retain
+full local findings, partial ledgers and original receipts with no candidate,
+append or transition. The QA composer consumes current structured work and canonical predecessors; it
 delegates publication to qa-jira. Saved wiring, installed/live acceptance and owner
 activation remain separate gates. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.
@@ -197,8 +200,11 @@ final actual assessment; it never falls back to direct writes or replays helpers
 after uncertainty. Independent inability and causal waits retain the full local
 assessment and stop before candidate construction or append, with no transition.
 Successful ordinary QA or explicit static zero-AI completion publishes to Human Review; complete confirmed defects with trustworthy final proof publish a QA repair_request to Rework Queued;
-humans remain pending. Repair/resume and human rework are deferred; linked legacy
-classification is not mutation authority. Current proof and original-identity
+humans remain pending. The pinned
+[worker support matrix](docs/handoffs.md#ordinary-worker-release-boundary) defines
+supported assignments and publication routes. Unsupported routes retain full local
+findings, partial ledgers and original receipts without publication or transition;
+linked legacy classification is not mutation authority. Current proof and original-identity
 no-replay rules remain publisher-owned. The manager remains a design;
 this worker boundary adds no manager state access or activation authority.
 

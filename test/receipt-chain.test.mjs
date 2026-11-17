@@ -478,6 +478,16 @@ for(const row of fixturesP165())test(row.id,()=>{
 });
 function fixturesP165(){return JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))).rework_queue_p165.proof_cases;}
 
+test('P165-PROOF-qa-no-fail isolates the missing demonstrated failure',()=>{
+ const baseline=fixturesP165().find(r=>r.id==='P165-PROOF-qa-partial'),negative=fixturesP165().find(r=>r.id==='P165-PROOF-qa-no-fail');
+ const original=JSON.stringify(negative.input),find=e=>e.comment_pages.flatMap(p=>p.comments).find(c=>extractHandoff(c.body,{format:c.format}).value.record_id===e.target.record_id),before=find(baseline.input),after=find(negative.input);
+ const oldRecord=JSON.parse(JSON.stringify(extractHandoff(before.body,{format:before.format}).value)),newRecord=JSON.parse(JSON.stringify(extractHandoff(after.body,{format:after.format}).value));
+ assert.deepEqual(oldRecord.payload.qa_report.steps.map(s=>s.result),['FAIL','PASS','PASS','PASS']);assert(newRecord.payload.qa_report.steps.every(s=>s.result==='PASS'));newRecord.payload.qa_report.steps[0].result='FAIL';assert.deepEqual(newRecord,oldRecord);
+ const normalized=structuredClone(negative.input);find(normalized).body=before.body;normalized.target.digest=baseline.input.target.digest;assert.deepEqual(normalized,baseline.input);
+ const positive=validateWorkerCurrent(JSON.stringify(baseline.input)),rejected=validateWorkerCurrent(original);assert.equal(positive.valid,true);assert.equal(rejected.valid,false);assert(rejected.diagnostics.some(d=>d.code==='LEDGER'&&d.path.endsWith('/payload/qa_report/steps')),JSON.stringify(rejected.diagnostics));
+ for(const [key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(rejected[key],value,key);assert.equal(JSON.stringify(negative.input),original);
+});
+
 test('P165-PROOF-complete-transitive-ledger retains every result and joined finding',()=>{
  const packet=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))).rework_queue_p165.packets['P165-Q-QUEUE'],input=JSON.parse(packet.assistant_files['current-worker.json']);
  const rows=input.comment_pages.flatMap(page=>page.comments.map(comment=>({comment,record:extractHandoff(comment.body,{format:comment.format}).value})));
@@ -517,6 +527,7 @@ test('P165-source copied runtime and documented private packet extraction',async
   const input=path.join(root,row.id+'.json'),raw=JSON.stringify(row.input);await writeFile(input,raw);
   const args=['--mode','worker-current','--input',input,'--json'],copied=spawnSync(process.execPath,[path.join(runtime,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'}),source=spawnSync(process.execPath,[path.join(sourceRoot,'scripts/validate-handoff.mjs'),...args],{cwd,env,encoding:'utf8'});
   assert.equal(copied.status,row.expected.valid?0:1,row.id+copied.stdout+copied.stderr);assert.equal(source.status,copied.status);assert.equal(copied.stderr,'');assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(source.stdout));assert.deepEqual(JSON.parse(copied.stdout),JSON.parse(JSON.stringify(validateWorkerCurrent(raw))));assert.equal(await readFile(input,'utf8'),raw);
+  if(row.expected.code)assert(JSON.parse(copied.stdout).diagnostics.some(d=>d.code===row.expected.code&&(!row.expected.path_suffix||d.path.endsWith(row.expected.path_suffix))),row.id+copied.stdout);
  }
  const guide=await readFile(new URL('../docs/handoffs.md',import.meta.url),'utf8'),start=guide.indexOf("node --input-type=module - \"$PIGBOARD_SOURCE\" \"$PIGBOARD_CASE\" \"$PIGBOARD_PACKET\" <<'NODE'\n");assert(start>0);
  const codeStart=guide.indexOf('\n',start)+1,code=guide.slice(codeStart,guide.indexOf('\nNODE',codeStart));

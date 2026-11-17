@@ -5,9 +5,14 @@
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
-This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+immutable prepared release.
+
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
 
 Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
@@ -18,7 +23,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.
@@ -50,9 +55,10 @@ instructions.
 
 Read exact `pigboard.work-context` pointer, assignment and implementation via exact
 issue/comment/record/digest references and complete bounded pages. Verify server
-author/update metadata against configured actors. Require current `new_work`, empty
-assigned requests and no resume; repair/resume or required repair stops locally
-before review work or candidate construction. Validate worker-current proof using
+author/update metadata against configured actors. Require the exact current
+assignment supported by the pinned matrix and all its referenced requests.
+Unsupported assignments stop before review work or candidate construction;
+explicit resume remains unsupported. Validate worker-current proof using
 actual native project/stage, requirements, PR receipts and evidence observations.
 Select the actual published implementation as target in native In Review, not only
 historical admission. Require same operation/assignment/requirements and current open
@@ -115,7 +121,7 @@ retain exact bytes/digest. Common role is reviewer, from_stage In Review.
 | --- | --- | --- |
 | QA | review / QA | implementation canonical reference, current pr, approval evidence, report evidence |
 | Complete FAIL / REWORK_QUEUED, no inability | repair_request / Rework Queued | exact implementation `basis`, same current `pr`, every confirmed `findings` ID/summary/evidence, `qa_report: null`; explicit publisher intent repair_request |
-| BLOCKED, INCOMPLETE, STAY, repair/resume, wait or scope increase | None / no transition | Stop before candidate construction or append; retain complete local findings, pending references, coverage/gaps and original receipts |
+| BLOCKED, INCOMPLETE, STAY, unsupported assignment, wait or scope increase | None / no transition | Stop before candidate construction or append; retain complete local findings, pending references, coverage/gaps and original receipts |
 
 Review approval observation must be approved by configured actor. Report observation
 must truthfully establish `criteria_complete:true, comments_handled:true`, backed by

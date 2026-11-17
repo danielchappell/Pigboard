@@ -10,9 +10,14 @@ description: Validate current native Jira Story/Bug reviewer assignments in read
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
-This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+immutable prepared release.
+
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
 
 Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
@@ -23,7 +28,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.
@@ -36,8 +41,8 @@ owns shared review, comments and approval. Do not mutate PRs, code, requirements
 labels, assignee, work-context pointer or manager state; no In Progress/DynamoDB.
 
 In `preflight`, establish native eligibility, full configured scope, exact current
-new_work assignment with no resume/repair and actual implementation worker-current
-proof, current PR/evidence, prepared actor/tools and
+assignment accepted by the pinned matrix, its exact referenced requests and actual
+implementation worker-current proof, current PR/evidence, prepared actor/tools and
 available direct edges. Return verified facts or honest inability with no writes.
 Unreadable eligibility is NOT RUN; do not speculate a blocker on an unverified issue.
 

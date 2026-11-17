@@ -20,10 +20,17 @@ Never fix code, create/replace/retarget PRs, change requirements, merge or deplo
 Use the same-release support matrix: source repository `docs/handoffs.md`,
 heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. Only current `new_work` is supported.
-Complete confirmed defects can queue the same open PR; repair assignments, resume,
-wait and inability publication remain deferred. The wrapper owns complete review,
-comments and its own approval; reviewer-jira independently owns Jira publication.
+immutable prepared release.
+
+The same-release support matrix defines supported assignments and publication
+routes. This skill retains its role-specific current proof and action boundaries.
+Unsupported assignments stop before execution or candidate construction; preserve
+full local findings and original receipts with no mutation. The matrix grants no
+manager admission, pointer or State authority. Do not fall back to strict/recorded
+proof or another release.
+Complete confirmed defects can queue the same open PR. The wrapper owns complete
+review, comments and its own approval; reviewer-jira independently owns Jira
+publication.
 
 ## Establish the exact review
 

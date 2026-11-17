@@ -10,8 +10,9 @@ off. Keep inactive. The [automation matrix](automations.md) records actual saved
 state and distinguishes pending capabilities from configured settings.
 
 QA runs on the existing open PR and retains screenshots/request/query evidence.
-Successful supported ordinary `new_work` QA moves to Human Review with the exact
-pending human cases; static zero-AI QA keeps its no-AI reason. Complete confirmed
+For assignments supported by the selected release's pinned
+[worker support matrix](../../docs/handoffs.md#ordinary-worker-release-boundary),
+successful QA moves to Human Review with the exact pending human cases; static zero-AI QA keeps its no-AI reason. Complete confirmed
 in-scope defects, with the full valid partial ledger and required current proof,
 publish one QA `repair_request` on the same open PR and verify the direct
 QA → Rework Queued transition. Independent inability, missing proof or required
