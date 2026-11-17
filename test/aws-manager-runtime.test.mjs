@@ -51,3 +51,5 @@ test('configure preserves original authority when completion proof is unavailabl
 test('normal observation enforces bounded concurrency without blocking stopped recovery',async(t)=>{for(const row of await boundedConcurrencyJourney())t.diagnostic(JSON.stringify(row));});
 
 test('manifest canonical configuration rejects unusable receipts before services',async(t)=>{for(const row of await manifestConfigurationJourney())t.diagnostic(JSON.stringify(row));});
+
+test('apply unavailable setup has a sanitized unbound failed summary and invalid event has none',async()=>{const {runApply}=await import('../lib/aws/manager-lambda.mjs');const logs=[];const failed=await runApply({operation:'apply'},{configText:'invalid',healthLog:r=>logs.push(r)});assert.equal(failed.status,'unavailable');assert.equal(failed.summary.result,'failed');assert.equal(failed.summary.binding_status,'unavailable');assert.equal(logs.length,1);const invalid=await runApply({operation:'apply',extra:true},{healthLog:r=>logs.push(r)});assert.equal(invalid.summary,undefined);assert.equal(logs.length,1);});

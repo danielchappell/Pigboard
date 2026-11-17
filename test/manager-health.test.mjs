@@ -1,6 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {buildScanSummary,validScanSummary,evaluateHealth,evidenceRevision} from '../lib/manager/health.mjs';
 import {embeddedMetricEvent} from '../lib/aws/health.mjs';
@@ -109,3 +111,6 @@ test('production health emission is one raw JSON line consumable by the health r
   t.diagnostic(JSON.stringify({production_lines:writes,invalid:{status:invalid.status,summary_absent:invalid.summary===undefined,emissions:0},reader:{state:result.state,exit_code:result.exit_code,coverage:result.query_coverage,latest_complete:result.latest_complete},actions:f.audit.slice(auditStart),telemetry:f.telemetry,state_unchanged:true}));
  }finally{f.cleanup();}
 });
+
+for(const id of fixture.apply_groups.map(g=>g.id))test(id+' prescribed apply completion group',async(t)=>{const {runApplyHealthCase}=await import('../scripts/test-manager-health.mjs');const result=await runApplyHealthCase(id);const directory=path.join(os.tmpdir(),'pgb178-evidence');fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,id+'.json'),JSON.stringify({local_result:'PASS',...result},null,2));t.diagnostic('Saved '+path.join(directory,id+'.json')+'; human acceptance NOT_RUN');});
+test('apply closed summary rejects forged workload totals and absent-mode cannot admit apply',()=>{const s=summary({mode:'apply'});assert(validScanSummary(s));assert.equal(s.counts.jira_requests,null);const forged=structuredClone(s);forged.counts.jira_requests=0;assert(!validScanSummary(forged));assert.equal(evaluateHealth(observation({events:[event(s)]})).state,'starting');assert.equal(evaluateHealth(observation({current:{...current,mode:'invalid'}})).state,'unknown');});

@@ -176,9 +176,14 @@ See [health use and recovery](../manager-health.md) and the
 [installation lifecycle](../manager-installation.md). Customer-owned deployed
 acceptance, human acceptance and activation remain separate from source fixtures.
 No health observation retries uncertain Jira operations or starts another scan.
-Detailed scan health covers preview scans. The apply sender retains basic result
-logs and native Lambda metrics without a preview summary/completion metric; old
-preview identity is not proof of apply completion or apply health.
+Current source completion health covers preview and ordinary apply processing.
+Apply observes existing acquisition/policy/recheck/finalization checkpoints, without
+health-only provider calls. Complete empty work and safely evaluated holds count;
+new uncertainty, mixed incomplete scopes and unconfirmed effects do not. Current
+mode, package, configuration and retained enablement identity must match. Existing
+admission outcomes survive telemetry-output failure. Invocation-wide Jira/writer/
+State workload remains unobserved, and worker monitoring, alarms and SNS remain
+deferred. This source capability does not establish installed or live acceptance.
 
 ## Capacity and the path to 50 projects
 

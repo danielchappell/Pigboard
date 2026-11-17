@@ -5,9 +5,122 @@
   "enabled_at": "2026-11-16T22:50:00.000Z",
   "freshness_seconds": 900,
   "groups": [
-    {"id":"R1-22-H01","scans":["empty","five-ticket-wait","retained-uncertainty","80-percent-budget"],"expected":["complete","complete","complete","degraded"]},
-    {"id":"R1-22-H02","overlaps":[{"name":"old-success-disabled","enabled":false,"observed":false,"complete_age":901,"expected":"disabled"},{"name":"expired-success-recent-failure","enabled":true,"observed":true,"complete_age":901,"failure_age":10,"expected":"stale"},{"name":"failed-first-before-expiry","enabled":true,"observed":true,"failure_age":10,"expected":"degraded"},{"name":"failed-first-after-expiry","enabled":true,"observed":true,"enablement_age":901,"failure_age":10,"expected":"stale"},{"name":"schedule-mismatch-stale","enabled":false,"observed":true,"complete_age":901,"expected":"degraded"},{"name":"unreadable-disabled","enabled":false,"observed":false,"reads_complete":false,"expected":"unknown"},{"name":"exact-boundary","enabled":true,"observed":true,"complete_age":900,"expected":"healthy"},{"name":"beyond-boundary","enabled":true,"observed":true,"complete_age":901,"expected":"stale"},{"name":"crash-no-completion","enabled":true,"observed":true,"enablement_age":901,"expected":"stale"},{"name":"no-first-completion","enabled":true,"observed":true,"expected":"starting"}]},
-    {"id":"R1-22-H03","expected":"Current code/configuration/generation only; both schedule mismatches degrade; explicit configure produces generation."},
-    {"id":"R1-22-H04","expected":"Selected verified profile, scoped observation calls only; safe unknown on denied or changed evidence."}
+    {
+      "id": "R1-22-H01",
+      "scans": [
+        "empty",
+        "five-ticket-wait",
+        "retained-uncertainty",
+        "80-percent-budget"
+      ],
+      "expected": [
+        "complete",
+        "complete",
+        "complete",
+        "degraded"
+      ]
+    },
+    {
+      "id": "R1-22-H02",
+      "overlaps": [
+        {
+          "name": "old-success-disabled",
+          "enabled": false,
+          "observed": false,
+          "complete_age": 901,
+          "expected": "disabled"
+        },
+        {
+          "name": "expired-success-recent-failure",
+          "enabled": true,
+          "observed": true,
+          "complete_age": 901,
+          "failure_age": 10,
+          "expected": "stale"
+        },
+        {
+          "name": "failed-first-before-expiry",
+          "enabled": true,
+          "observed": true,
+          "failure_age": 10,
+          "expected": "degraded"
+        },
+        {
+          "name": "failed-first-after-expiry",
+          "enabled": true,
+          "observed": true,
+          "enablement_age": 901,
+          "failure_age": 10,
+          "expected": "stale"
+        },
+        {
+          "name": "schedule-mismatch-stale",
+          "enabled": false,
+          "observed": true,
+          "complete_age": 901,
+          "expected": "degraded"
+        },
+        {
+          "name": "unreadable-disabled",
+          "enabled": false,
+          "observed": false,
+          "reads_complete": false,
+          "expected": "unknown"
+        },
+        {
+          "name": "exact-boundary",
+          "enabled": true,
+          "observed": true,
+          "complete_age": 900,
+          "expected": "healthy"
+        },
+        {
+          "name": "beyond-boundary",
+          "enabled": true,
+          "observed": true,
+          "complete_age": 901,
+          "expected": "stale"
+        },
+        {
+          "name": "crash-no-completion",
+          "enabled": true,
+          "observed": true,
+          "enablement_age": 901,
+          "expected": "stale"
+        },
+        {
+          "name": "no-first-completion",
+          "enabled": true,
+          "observed": true,
+          "expected": "starting"
+        }
+      ]
+    },
+    {
+      "id": "R1-22-H03",
+      "expected": "Current code/configuration/generation only; both schedule mismatches degrade; explicit configure produces generation."
+    },
+    {
+      "id": "R1-22-H04",
+      "expected": "Selected verified profile, scoped observation calls only; safe unknown on denied or changed evidence."
+    }
+  ],
+  "apply_groups": [
+    {
+      "id": "HEALTH-A-H01",
+      "expected": "Complete admissions, empty work and existing holds; mixed scopes incomplete"
+    },
+    {
+      "id": "HEALTH-A-H02",
+      "expected": "Faults never complete and effects retained"
+    },
+    {
+      "id": "HEALTH-A-H03",
+      "expected": "Mode, identity and freshness preserved"
+    },
+    {
+      "id": "HEALTH-A-H04",
+      "expected": "Actual production emitter and contained log failures"
+    }
   ]
 }
