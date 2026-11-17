@@ -251,16 +251,16 @@ test('a different package can inspect the mismatch but cannot mutate retained st
 });
 
 test('begin rejects current-attempt publication before I/O and preserves prior references', async () => {
-  for (const reference of [proofFixture.reference, { ...proofFixture.reference, ticket_id: '1002' }]) {
+  const reference = { ...proofFixture.preserved_assignment, comment_id: '699' };
+  for (const publication of [[proofFixture.reference], [{ ...proofFixture.reference, ticket_id: '1002' }], [reference, reference]]) {
     const rejected = await prepared();
     try {
       const before = rejected.provider.snapshot(), calls = rejected.provider.audit.length;
-      const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));
+      const outcome = await rejected.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication } }));
       assert.equal(outcome.status, 'invalid'); assert.equal(outcome.code, 'INVALID_INPUT'); assert.equal(outcome.data, null);
       assert.equal(rejected.provider.snapshot(), before); assert.equal(rejected.provider.audit.length, calls);
     } finally { rejected.state.close(); }
   }
-  const reference = { ...proofFixture.preserved_assignment, comment_id: '699' };
   const accepted = await prepared();
   try {
     const outcome = await accepted.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: [reference] } }));

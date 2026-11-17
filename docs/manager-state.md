@@ -122,9 +122,10 @@ operation, exact source/target status IDs, configuration digest and bounded
 `cause`/`publication` reference lists. Initial `publication` passed to `begin`
 must not contain a reference whose `record_id` equals this attempt's `attempt_id`,
 regardless of the reference's ticket. Empty lists and prior references with other
-record UUIDs remain allowed. Retain the current manager reference
+record UUIDs remain allowed; prior references must have distinct complete
+`ticket_id`/`comment_id`/`record_id`/`digest` tuples. Retain the current manager reference
 only after confirmed begin and append/readback validation, using
-`retainPublication` before pointer publication. A matching initial reference
+`retainPublication` before pointer publication. A matching initial reference or duplicate tuple
 returns `invalid`/`INVALID_INPUT` with `data:null`, before any provider read or
 write. Correct that never-persisted input; this does not authorize recreating an
 attempt or replaying Jira after an earlier uncertain write.
@@ -285,7 +286,9 @@ boundary, not from a digest or an asserted caller flag.
 1. `begin` persists the pending intent before publication. Start without the new
    manager reference: no initial entry may use this attempt's `attempt_id` as
    `record_id`, on any ticket. Empty lists and prior references with other record
-   UUIDs remain allowed. Append/readback and confirmed retention
+   UUIDs remain allowed; prior references must have distinct complete
+   `ticket_id`/`comment_id`/`record_id`/`digest` tuples. Invalid initial references
+   reject before provider I/O. Append/readback and confirmed retention
    happen after begin, as follows.
 2. After actual append/readback validation of the typed manager comment, call
    `retainPublication({attempt_id, expected_installation_revision,
