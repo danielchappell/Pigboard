@@ -83,9 +83,9 @@ deliberate operator action.
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer and QA receipt handoffs are available; full-loop acceptance remains pending |
 | Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
-| Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions; automatic repair admission, installed/live acceptance and activation remain separate |
+| Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions. Worker preflight checks current PR openness and freshness. |
 | Recorded same-PR ordinary repair preview | Optional canonical `manager.rework_enabled: true`; authenticated own-ticket requests and complete unresolved causes, zero writes. [Prerequisites, commands and holds](docs/manager-preview.md#recorded-same-pr-repair-preview) |
-| Manager-driven repair admission and orchestration | Later coordinated release work; PGB-88 owns sending the recorded preview proposal |
+| Manager admission of one supported same-PR repair | Compatible source sender uses the canonical rework opt-in, existing write authority and configured direct Rework Queued → In Progress edge. [Sender prerequisites and recovery](docs/manager-apply.md) |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
@@ -308,11 +308,20 @@ installed acceptance remain separate.
 
 ## Ordinary worker compatibility
 
-The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval, successful QA and complete reviewer/QA repair requests. It does not establish live freshness, execution authority or manager completion. Repair assignments, resume and inability/wait publication remain deferred with full local evidence and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
+The ordinary worker checker is `validate-handoff.mjs --mode worker-current`.
+It validates supplied current action proof and authenticated recorded ancestry
+for new work and supported same-PR repairs, including complete reviewer/QA
+repair requests. It reports proof for the supplied inputs. Current PR openness
+and freshness are checked at worker preflight. Resume and inability/wait
+publication remain deferred. Provider H01/H02 acceptance is separate from
+local checks.
 
 See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
 
 The [ordinary sender guide](docs/manager-apply.md) describes the bounded admission
 implementation and its prepared host prerequisites. Sender packages remain
-initially disabled; local developer checks do not establish installed delivery
-acceptance or authorize activation. Repair execution remains outside this slice.
+initially disabled. With rework opted in on a compatible revision, the sender
+can admit one authenticated same-PR repair and retain the actual previous
+assignment and every unresolved request. If admission holds after an attempt
+began, inspect that original attempt. Local developer checks are separate from
+installed delivery acceptance and deliberate activation.

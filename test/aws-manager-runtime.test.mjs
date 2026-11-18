@@ -68,3 +68,24 @@ test('R3A-03 supported same-source rework configure round trip and uncertainty r
  const audit=f.audit.length,source={...desired,source_revision:'b'.repeat(40)};fs.writeFileSync(manifestPath,JSON.stringify(source));const refused=await configureInstallation(input,f.dependencies);assert.equal(refused.code,'UNSUPPORTED_CHANGE');assert.equal(f.audit.length,audit);fs.writeFileSync(manifestPath,JSON.stringify(desired));f.cloud.fail='ExecuteChangeSetCommand';const bytes=fs.readFileSync(f.installationPath,'utf8'),partial=await configureInstallation(input,f.dependencies);assert.equal(partial.status,'partial');assert.deepEqual(partial.recovery_receipt,receipt);assert.equal(fs.readFileSync(f.installationPath,'utf8'),bytes);
  }finally{f.cleanup();}
 });
+
+test('PGB-88 ordinary apply host reports confirmed same-PR repair processing',async()=>{
+ const {packet,runApplyFixture}=await import('../scripts/test-manager-apply.mjs');
+ const history=packet.recorded_repair_preview.cases.find(row=>row.id==='reviewer');
+ const {result,mutations,state_calls,worker_calls}=await runApplyFixture({host:true,repairCase:{historyId:history.id}});
+ assert.equal(result.schema,'pigboard-runtime-result/v1');
+ assert.equal(result.status,'applied',JSON.stringify(result));
+ assert.equal(result.execution_authorized,false);
+ assert.equal(result.writes,3);
+ assert.equal(result.apply.effects.finalization,'confirmed');
+ assert.equal(result.summary.mode,'apply');
+ assert.equal(result.summary.result,'complete');
+ assert.equal(result.summary.counts.selected,1);
+ assert.equal(result.summary.counts.complete,true);
+ const assignment=JSON.parse(mutations[0].body.body.content[0].content[0].text);
+ assert.equal(assignment.record_id,result.apply.attempt_id);
+ assert.deepEqual(assignment.payload.existing_pr,history.expected.pr);
+ assert.deepEqual(assignment.payload.requests,history.expected.request_refs);
+ assert.equal(state_calls.find(call=>call.name==='finalize').result.status,'confirmed');
+ assert.equal(worker_calls,0);
+});

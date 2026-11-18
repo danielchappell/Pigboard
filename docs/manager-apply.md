@@ -1,17 +1,25 @@
 # One ordinary admission
 
 The ordinary sender evaluates the configured Jira domain and attempts at most one
-Ready to Work Story or Bug. It publishes the complete assignment before sending
-one configured transition to In Progress. It does not launch Cursor or execute
-repair admissions. Local fixture verification is separate from installed delivery
-acceptance and designated human checks.
+Story or Bug per invocation. It can admit new work from Ready to Work and, with
+explicit opt-in, a supported same-PR repair from Rework Queued. It publishes the
+assignment before sending one configured transition to In Progress. Workers run
+through their existing triggers and verify current PR openness and freshness.
 
-Use a reviewed sender package and the [installation guide](manager-installation.md).
-Preview packages cannot acquire sending capability through a configuration toggle.
+Use a reviewed compatible sender package and the [installation guide](manager-installation.md).
 The package starts with its schedule and writes disabled. Deliberate activation
-requires all three attestations: full visibility, sole admitting installation and
-reviewed inventory. The configured transition must be source restricted from Ready
-to Work to In Progress; a global transition is insufficient.
+requires full visibility, sole admitting installation and reviewed inventory.
+Configure the matching direct, non-global edge for each supported source stage
+and project. An available Jira transition ID alone carries no source authority.
+
+For repair, set the optional canonical boolean `manager.rework_enabled` to true.
+Omitting it or setting it to false preserves ordinary new-work sending and holds
+required repairs. Use a package revision that supports repair sending. The sender
+accepts an authenticated [ordinary repair proposal](manager-preview.md#recorded-same-pr-repair-preview)
+from its own fresh acquisition. The queued ticket must have its actual current
+assignment pointer and a complete unresolved same-ticket request union with a
+recorded non-null PR. Parent updates, dependent-stack work, null PRs and
+wait/resume work stay held. An active worker is never interrupted.
 
 The scheduled input is exactly:
 
@@ -25,12 +33,21 @@ remains a separate write-free operation.
 
 For multiple eligible ordinary streams, the sender compares immutable project IDs
 as strings, then full stream labels as strings. For example, project `10` sorts
-before `2`, and `AI-Daniel-10` before `AI-Daniel-2`. Existing Bug priority within a
-stream is unchanged. Once selected, any refusal or failure ends this invocation.
+before `2`, and `AI-Daniel-10` before `AI-Daniel-2`. Within a stream, a ready
+prerequisite comes before repair, then eligible unrelated Bugs and Stories. A
+refusal to send the chosen repair ends this invocation without admitting
+unrelated ready work in its place.
 A later invocation freshly evaluates all streams and may choose another eligible
 stream. This provides deterministic choice without fairness or throughput promises.
 
-The sender first retains native membership and a conditional original intent.
+The sender checks the member, handoff, reference, State and acquisition bounds
+before retaining membership or beginning an attempt. A repair gets one original
+attempt ID. Its admission records the actual previous assignment, the recorded
+PR and every unresolved cause from the proposal, including older causes after
+a repeated failure. An implementation acknowledgment alone cannot resolve a
+repair cause. Inspect the verified admission record for the PR and cause list.
+
+The sender retains native membership and a conditional original intent.
 It publishes one admission comment, verifies its exact body and unchanged manager
 metadata, retains its reference, publishes and verifies the assignment pointer,
 and durably binds that assignment. Fresh discovery must then confirm unchanged
@@ -97,9 +114,54 @@ An unchanged, positively isolated read refusal in an unrelated stream may remain
 held while the selected admission completes. Shared, unknown, newly changed or
 selected-stream failures still hold the original attempt before transition. All
 previously observed native facts, bodies, labels, comments, references and scope
-memberships must remain unchanged apart from this invocation's verified own
-publication. The sender never switches streams to bypass a refusal or replays an
-uncertain effect; inspect the original scope and attempt when held.
+memberships must remain unchanged apart from this invocation's verified admission
+comment, replacement pointer and the exact references they add or replace. A
+new request during recheck holds the attempt before transition. Inspect the
+original scope and attempt when held. The sender ends the invocation at the
+refusal or uncertain effect.
+
+## Check same-PR admission with prepared fixtures
+
+Use a clean reviewed source checkout or a complete prepared source copy at that
+same revision, with physical root and AWS dependencies already available. Run
+the fixed selectors from that checkout and retain their JSON output and exit
+codes.
+
+```sh
+node scripts/test-manager-apply.mjs --group R3B-H01
+node scripts/test-manager-apply.mjs --group R3B-H02
+node scripts/test-manager-apply.mjs --group R3B-H03
+```
+
+| Group | Inspect |
+| --- | --- |
+| R3B-H01 | Reviewer, QA, human and repeated failure. Compare the previous assignment, same recorded PR and complete request union. Check original State intent, ordered verified Jira writes and confirmed finalization. |
+| R3B-H02 | Opt-out, missing repair edge, repair before an unrelated Bug and over-bound assignment. Check held cases for zero admission effects and carry existing PGB-82 occupancy, project, prerequisite and capacity evidence. |
+| R3B-H03 | New request and invalid own-reference delta during recheck, then the four prescribed uncertainties. Inspect the original attempt and one later scan per uncertainty for no repeated writes or bypass. |
+| R3B-H04 | Match H01 sender output with [PGB-82 preview proof](https://scubapig.atlassian.net/browse/PGB-82) and [PGB-166 worker evidence and disposition](https://scubapig.atlassian.net/browse/PGB-166?focusedCommentId=11199) for automatic, human and repeated entry. Preserve each earlier evidence limitation. |
+
+For H04, compare the preview proposal to the published admission's previous
+assignment, PR provider/repository/number/head/target and exact request references.
+Check matching request tuples against earlier worker evidence where available.
+Identify different fixture identities and any worker step that did not run.
+
+From the clean checkout at the reviewed commit, run this separate package smoke
+with prepared Node.js 24 and `/usr/bin/zip`. It builds the real payload at the
+pinned commit and executes one reviewer case with the copied host and State
+modules and embedded configuration and manifest. The fixture driver stays
+outside the payload.
+
+```sh
+PGB_REPAIR_PACKAGE_SOURCE_PIN="$(git rev-parse HEAD)" node --test --test-name-pattern='PGB-88 pinned package repair admission' test/aws-manager-package.test.mjs
+```
+
+Retain the source revision, prepared pin, exact commands, input and module hashes,
+exit codes, sanitized result, ordered provider calls and original State records.
+The commands execute real source or copied code against dummy Jira and AWS
+providers. Describe actual earlier worker invocations separately from supplied
+proof and mock effects. Mark designated human acceptance and any unperformed
+execution `NOT_RUN`. Keep that evidence for the reviewer, then remove only
+disposable output. Hosted CI, live permission checks and activation are separate.
 
 ## Inspect processing completion
 

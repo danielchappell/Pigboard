@@ -285,7 +285,7 @@ No synthetic execution context, PR observations, earlier metadata or new store i
 created. Missing earlier capture is allowed under the adopted ordinary guarantee;
 provided genuine tuples still must match. Current authentication and external
 freshness are separate. Optional canonical `manager.rework_enabled: true` enables
-only the recorded own-ticket same-PR repair preview branch before legacy external
+the recorded own-ticket same-PR repair preview branch before legacy external
 PR/publication logic. Omitted/false preserves the ordinary repair hold. Exact
 request-targeted bound history authenticates actor, basis, digest and lineage;
 current-assignment requests determine the PR head/target, and coherent active-lineage
@@ -298,9 +298,10 @@ tickets reached from the authenticated target through validated record reference
 The declaration carries no assignment, handoff proof or completion. Unsupported
 null-PR, stack, wait/resume and parent-update work holds. The composer preserves full envelopes within existing
 bounds, rejecting overflow without truncation. Configuration digest and same-source
-host configure bind the opt-in; no State control column is added. Preview remains
-zero-write and nonexecuting; `chooseOrdinaryStream` still accepts `admit_new` only.
-PGB-88 owns later repair sending. See the [guide](docs/manager-preview.md#recorded-same-pr-repair-preview).
+host configure bind the opt-in without a State control column. Preview remains
+write-free. In apply mode the sender can consume an authenticated selected
+`admit_repair` with that opt-in and the configured source-specific write edge.
+See the [preview guide](docs/manager-preview.md#recorded-same-pr-repair-preview).
 
 Explicit mode/version/proof fields prevent legacy v1 proposals from entering the
 ordinary admission caller. The existing CLI and actual prepared-copy payload use
@@ -334,7 +335,12 @@ Ordinary admission orchestration lives in `lib/manager/apply.mjs`. It consumes t
 complete Jira inventory collector and ordinary snapshot/policy, retains native
 membership and an original State attempt, publishes/verifies the existing handoff
 and pointer through `lib/jira/write.mjs`, rechecks source facts and retains the
-original transition proof before sending once. State owns conditional revisions
+original transition proof before sending once. The opted-in same-PR repair uses
+the same path. It verifies the prior pointer and uses the direct Rework Queued →
+In Progress edge. Its admission preserves the recorded PR and complete unresolved
+request union. Fresh acquisition permits only the verified admission comment,
+replacement pointer and exact reference adjustments they require. The worker
+owns current external PR freshness checks. State owns conditional revisions
 and proof persistence; the AWS host owns prepared authority, lifetime and package
 capability. Jira and State effects are not atomic: uncertainty retains the original
 hold and never authorizes replay. See [ordinary admission](docs/manager-apply.md).
