@@ -289,17 +289,19 @@ remain separate gates.
 
 Inspect an ordinary supplied comment from source or a complete prepared copy with the pure [handoff candidate API](docs/manager-preview.md#inspect-a-supplied-handoff-comment). It distinguishes ordinary content, one canonical candidate and malformed attempts without provider calls, writes or receipt authority.
 
-### Complete ordinary Jira facts from source
+### Collect ordinary Jira facts
 
-The source library `lib/jira/inventory.mjs` collects complete bounded native Jira
+Import `lib/jira/inventory.mjs` from source or the prepared receipt's
+`skills/work-validator` root. It collects bounded native Jira
 membership, occupancy, original descriptions/comments and required exact typed
 references. Supply confirmed retained inventory and the prepared canonical read
 configuration/resolver. Safe reports distinguish complete, isolated holds and
 shared holds; private observations remain in memory. Confirmed pointer absence
 requires a successful property-key enumeration; a 404 remains unknown.
 See the [inventory guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library)
-for prerequisites, use and recovery. Core PGB-162 owns semantic normalization and
-selection; the [AWS runtime package](docs/manager-installation.md) composes these source APIs. Installed acceptance remains separate.
+for prerequisites, use, fixture commands and recovery. Core PGB-162 owns semantic
+normalization and selection. The [AWS runtime package](docs/manager-installation.md)
+composes these APIs and has separate installed journey acceptance.
 This library neither authenticates receipts nor performs admission or activation.
 
 The [ordinary recorded preview](docs/manager-preview.md#ordinary-recorded-policy)

@@ -263,15 +263,19 @@ Pointer state distinguishes validated present, enumerated absent and unknown.
 A raw 404 cannot establish absence. Exact record/digest matches establish
 acquisition consistency and do not grant receipt or admission authority.
 
-State PGB-84/83 supplies confirmed `retained_members`, `pending_intents` and
-`retained_complete` through its inventory projection. Core PGB-162 owns raw-fact
+State PGB-84/83 supplies `retained_members` and `pending_intents` through its
+inventory projection. The caller supplies explicit `retained_complete` based
+on whether State confirmed a complete inventory. Core PGB-162 owns raw-fact
 normalization, semantic snapshot/envelope construction, recorded parser behavior
 and existing policy evaluation. PGB-175 owns ordinary worker proof compatibility.
 PGB-87 owns conditional original-attempt admission/publication/transition; State
 PGB-84/137 retains durable attempt and outcome evidence. PGB-83 packages the
 disabled customer runtime and PGB-90 verifies the actual installed journey.
-The source acquisition library does not add an installer payload, CLI, evaluator
-or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
+Normal preparation copies the same acquisition library and synthetic case packet
+into `work-validator` and binds their bytes in the release manifest. The existing
+fixture harness runs the prescribed cases from source or the receipt-derived root.
+Evaluation, customer-runtime packaging and activation have their own entry points.
+See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
 
 ## Ordinary recorded policy boundary
 

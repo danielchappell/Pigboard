@@ -350,6 +350,11 @@ snapshot fields, bounds, complete human-case commands, structured/readable outpu
 and recovery. This local proposal performs zero provider/state writes and provides
 no activation, live freshness, permission or human acceptance evidence.
 
+For scoped Jira collection, append `/work-validator` to the absolute versioned
+`skills` path in the preparation receipt. The [inventory guide](manager-preview.md#complete-ordinary-jira-inventory-library)
+shows how to import the library and run the synthetic HTTPS fixtures from that
+root, including recovery for missing copied material.
+
 ## Verify the structured QA helper closure
 
 Install/refresh the entire pinned, reviewed published bundle, not four loose
