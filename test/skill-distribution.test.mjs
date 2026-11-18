@@ -537,6 +537,9 @@ test('PGB-148 focused inventory pagination and import effects', async t => {
       import {strict as probeAssert} from 'node:assert';
       import {fileURLToPath as probeFileURLToPath} from 'node:url';
       import {get as probeGet, request as probeRequest} from 'node:https';
+      import {connect as probeConnect, createConnection as probeCreateConnection, Socket as ProbeSocket} from 'node:net';
+      import {connect as probeTlsConnect} from 'node:tls';
+      import {createSocket as probeDatagram, Socket as ProbeDatagramSocket} from 'node:dgram';
       import {spawnSync as probeSpawn} from 'node:child_process';
       import {
         constants as probeFlags, open as probeOpen, openSync as probeOpenSync,
@@ -550,6 +553,14 @@ test('PGB-148 focused inventory pagination and import effects', async t => {
       try {
         probeAssert.throws(() => probeGet('https://[invalid'), probeDenied);
         probeAssert.throws(() => probeRequest('https://[invalid'), probeDenied);
+        probeAssert.throws(() => probeConnect(-1, '127.0.0.1'), probeDenied);
+        probeAssert.throws(() => probeCreateConnection(-1, '127.0.0.1'), probeDenied);
+        probeAssert.throws(() => ProbeSocket.prototype.connect.call({}, -1, '127.0.0.1'), probeDenied);
+        probeAssert.throws(() => probeTlsConnect({port: -1, host: '127.0.0.1'}), probeDenied);
+        probeAssert.throws(() => probeDatagram('invalid'), probeDenied);
+        for (const name of ['connect', 'send', 'sendto']) {
+          probeAssert.throws(() => ProbeDatagramSocket.prototype[name].call({}), probeDenied);
+        }
         probeAssert.throws(() => probeSpawn(null), probeDenied);
         probeAssert.throws(() => probeOpenSync(probeAbsent, 'w'), probeDenied);
         await probeAssert.rejects(async () => new Promise((resolve, reject) => {
@@ -580,14 +591,14 @@ test('PGB-148 focused inventory pagination and import effects', async t => {
     `;
     const result = await invoke(['--input-type=module', '--eval', program, probeRoot]);
     assert.equal(result.status, 0);
-    assert.deepEqual(result.output, {error: 'Unexpected fixture effects.', denied_attempts: 10});
+    assert.deepEqual(result.output, {error: 'Unexpected fixture effects.', denied_attempts: 18});
     assert.equal(inventoryHash(await readFile(path.join(copiedRoot, inventoryModule))), runtime.payload[inventoryModule]);
   } finally {
     await rm(probeRoot, {recursive: true});
   }
   await assert.rejects(readdir(probeRoot), {code: 'ENOENT'});
   assert.deepEqual(await readdir(cwd), []);
-  await record({import_effect_sentinels: 'DENIED_DURING_IMPORT', denied_attempts: 10,
+  await record({import_effect_sentinels: 'DENIED_DURING_IMPORT', denied_attempts: 18,
     probe_root: probeRoot, disposable_copy_removed: true});
   t.diagnostic('R1-34-H04 import effect sentinels denied at disposable root ' + probeRoot);
 });

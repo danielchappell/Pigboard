@@ -1,6 +1,9 @@
 // Test-process HTTPS redirection only. Production has no fixture transport option.
 import https from 'node:https';
 import http from 'node:http';
+import net from 'node:net';
+import tlsTransport from 'node:tls';
+import dgram from 'node:dgram';
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import cp from 'node:child_process';
@@ -242,6 +245,7 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
  });server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));if(v.tls==='connection-reset-control')socket.destroy();});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const originalRequest=https.request,restore=[];let effects=0,resolverCalls=0,resolverTimer=null,lateResolve=null,lateAck=null,lateSignal=null,lateDelivered=0,lateSettled=0,lateEvidence=null,mutations=0,getterCalls=0,tlsObservation=null;
+ let fixtureConnectPort = null;
  const callerRequest=structuredClone(v.request);
  const callerRequestBefore = selection ? digest(JSON.stringify(callerRequest)) : null;
  const deny=()=>{effects++;throw Error('Disallowed fixture effect.');};
@@ -250,6 +254,8 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   restore.push(() => { api[name] = original; });
   api[name] = replacement;
  };
+ const isFixtureConnect = options => fixtureConnectPort !== null &&
+  options?.host === '127.0.0.1' && Number(options.port) === fixtureConnectPort && !options.path;
  const redirectRequest=(url,options,callback)=>{
   let operation;
   try {
@@ -267,7 +273,15 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   const tlsOptions = selection ? {
    method: options.method, agent: false, rejectUnauthorized: true, headers: options.headers
   } : options;
-  const client=originalRequest(local,{...tlsOptions,hostname:'127.0.0.1',servername:v.tls==='wrong-host'?'wrong.example.invalid':'localhost',...(v.tls==='untrusted-ca'?{}:{ca:v.tls==='future-certificate'?tls.future.ca:tls.ca})},callback);
+  let client;
+  // Node's one-use HTTPS agent opens its TLS and TCP sockets synchronously.
+  // Only that audited request can reach the loopback fixture through these APIs.
+  fixtureConnectPort = selection ? server.address().port : null;
+  try {
+   client=originalRequest(local,{...tlsOptions,hostname:'127.0.0.1',servername:v.tls==='wrong-host'?'wrong.example.invalid':'localhost',...(v.tls==='untrusted-ca'?{}:{ca:v.tls==='future-certificate'?tls.future.ca:tls.ca})},callback);
+  } finally {
+   fixtureConnectPort = null;
+  }
   if(v.case==='R1-42-H04'){
    assert.equal(tlsObservation,null);
    tlsObservation={socket_observed:false,request_error_observed:false,secure_connect_observed:false,authorized:null,authorization_error_present:null};
@@ -298,6 +312,20 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   replace(https, 'request', selection ? deny : redirectRequest);
   if (selection) {
    replace(https, 'get', deny);
+   replace(net, 'connect', deny);
+   replace(net, 'createConnection', deny);
+   const originalSocketConnect = net.Socket.prototype.connect;
+   replace(net.Socket.prototype, 'connect', function (options, ...args) {
+    if (!(this instanceof tlsTransport.TLSSocket) || !isFixtureConnect(options)) deny();
+    return originalSocketConnect.call(this, options, ...args);
+   });
+   const originalTlsConnect = tlsTransport.connect;
+   replace(tlsTransport, 'connect', function (options, ...args) {
+    if (!isFixtureConnect(options)) deny();
+    return originalTlsConnect.call(this, options, ...args);
+   });
+   replace(dgram, 'createSocket', deny);
+   for (const name of ['connect', 'send', 'sendto']) replace(dgram.Socket.prototype, name, deny);
    const { O_WRONLY, O_RDWR, O_CREAT, O_TRUNC, O_APPEND } = fs.constants;
    const writeFlags = O_WRONLY | O_RDWR | O_CREAT | O_TRUNC | O_APPEND;
    const checkOpenFlags = flags => {
