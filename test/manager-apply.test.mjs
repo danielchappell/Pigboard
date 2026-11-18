@@ -72,11 +72,13 @@ for (const group of Object.keys(packet.repair_admission.groups)) {
   }
 }
 
-for (const [label, readBounds] of [
+for (const [label, readBounds, listedPageSize] of [
   ['observed Jira comment page', {max_response_bytes: 8000}],
-  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}]
+  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}],
+  ['the rollover page limit', {max_pages: 5}, 4],
+  ['the rollover request limit', {max_pages: 6, max_requests: 15}, 4]
 ]) test('PGB-88 repair projects '+label+' before any effects', async () => {
-  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds}});
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds, listedPageSize}});
   assert.equal(e.result.processing.acquisition.status, 'complete');
   assert.equal(e.result.status, 'held');
   assert.equal(e.result.apply.stage, 'preflight', JSON.stringify({result: e.result,
@@ -95,7 +97,8 @@ for (const [label, max_response_bytes, listedPageSize] of [
   ['a full Jira page that rolls over before append', 8000, 4]
 ]) test('PGB-88 repair with '+label+' finalizes in order', async () => {
   const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds: {
-    max_response_bytes, max_total_response_bytes: 41000
+    max_response_bytes, max_total_response_bytes: 41000,
+    ...(listedPageSize ? {max_pages: 6, max_requests: 16} : {})
   }, listedPageSize}});
   assert.equal(e.result.status, 'applied', JSON.stringify(e.result));
   assert.equal(e.result.apply.stage, 'complete');
@@ -108,7 +111,14 @@ for (const [label, max_response_bytes, listedPageSize] of [
   const selected = pages.filter(row => row.path.includes('/'+ticket+'/comment?'));
   assert.deepEqual(selected.map(row => [row.response.startAt, row.response.total, row.response.comments.length]),
     listedPageSize ? [[0, 5, 4], [4, 5, 1]] : [[0, 5, 5]]);
-  if (!listedPageSize) {
+  if (listedPageSize) {
+    const firstWrite = e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment'));
+    const initial = e.trace.slice(0, firstWrite);
+    const fresh = e.trace.filter(row => row.acquisition === 2 && row.status === 200);
+    const pageCount = rows => rows.filter(row => row.path.endsWith('/search/jql') || row.path.includes('/comment?')).length;
+    assert.deepEqual([initial.length, pageCount(initial)], [13, 5]);
+    assert.deepEqual([fresh.length, pageCount(fresh)], [16, 6]);
+  } else {
     const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
     const originalReads = e.trace.slice(0, e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment')));
     const recheckReads = e.trace.filter(row => row.acquisition === 2 && row.status === 200);
