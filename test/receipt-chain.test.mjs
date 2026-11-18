@@ -1,6 +1,6 @@
 import { test } from 'node:test';import assert from 'node:assert/strict';import { readFileSync } from 'node:fs';import { mkdtemp,writeFile,readFile,rm,mkdir,cp } from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import { spawnSync,execFileSync } from 'node:child_process';
 import canonicalize from 'canonicalize';import{createHash}from'node:crypto';
-import { validateReceiptChain,validateWorkerCurrent,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue, extractHandoff } from '../lib/contracts/handoff.mjs';
+import { validateReceiptChain,validateWorkerCurrent,validateWorkerAssignment,inspectRecordedHistory,inspectManagerCompletion,inspectManagerHistory,RECEIPT_LIMITS } from '../lib/contracts/receipts.mjs';import { digestValue, extractHandoff } from '../lib/contracts/handoff.mjs';
 const fixtures=JSON.parse(readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),clone=(name='mixed')=>structuredClone(fixtures.chains[name]),run=e=>validateReceiptChain(JSON.stringify(e)),cli=new URL('../scripts/validate-handoff.mjs',import.meta.url).pathname;
 const entries=e=>e.comment_pages.flatMap(p=>p.comments.map(c=>({p,c,r:JSON.parse(JSON.parse(c.body).content[0].content[0].text)}))),target=e=>entries(e).find(x=>x.r.record_id===e.target.record_id);
 function seal(e){for(let round=0;round<20;round++){let changed=false;const map=new Map(entries(e).map(x=>[x.r.record_id,digestValue(x.r)]));function walk(v){if(!v||typeof v!=='object')return;for(const [k,x]of Object.entries(v)){if(k==='digest'&&v.record_id&&map.has(v.record_id)&&x!==map.get(v.record_id)){v[k]=map.get(v.record_id);changed=true;}else if(x&&typeof x==='object')walk(x);}}walk(e);for(const x of entries(e)){walk(x.r);x.c.body=JSON.stringify({type:'doc',version:1,content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text:JSON.stringify(x.r)}]}]});}if(!changed&&round>0)return e;}return e;}
@@ -605,4 +605,112 @@ test('P166-SIBLING genuine ancestor QA resolves only its consumed old cause',()=
  assert(resolving);assert(line.slice(1).some(r=>r.comment_id===resolving.r.assignment.comment_id&&r.digest===resolving.r.assignment.digest),'Resolving QA is an exact proper ancestor');assert(!a.r.payload.requests.some(r=>r.record_id===old.record_id),'Resolved old cause is omitted');assert.equal(a.r.payload.requests.length,1);assert.notEqual(a.r.payload.requests[0].record_id,old.record_id);assert.deepEqual(input.request_resolutions,[]);
  const before=JSON.stringify(input),r=validateWorkerCurrent(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(JSON.stringify(input),before);
  mutateRecord(input,input.target.record_id,r=>r.payload.requests.push(structuredClone(old)));const repeated=validateWorkerCurrent(JSON.stringify(input));assert.equal(repeated.valid,false);assert(repeated.diagnostics.some(d=>d.code==='REPAIR'&&d.path==='/target/requests'),JSON.stringify(repeated.diagnostics));
+});
+
+const h02=fixtures.worker_assignment_h02;
+const assignmentBindings=['target','assignment','requirements_digest','publication','candidate_identity','published_reference'];
+function prepareAssignmentCase(row) {
+ const input=structuredClone(h02.inputs[row.base]);
+ for(const patch of row.patches){
+  const parent=patch.path.slice(0,-1).reduce((value,key)=>value[key],input),key=patch.path.at(-1);
+  if(patch.remove)delete parent[key];
+  else parent[key]=patch.value;
+ }
+ const raw=JSON.stringify(input);
+ assert.equal(createHash('sha256').update(raw).digest('hex'),row.input_sha256,row.id);
+ return raw;
+}
+function assertAssignmentCase(row,result) {
+ const {valid,code,path:diagnosticPath,...proof}=row.expected;
+ assert.equal(result.valid,valid,row.id+' '+JSON.stringify(result.diagnostics));
+ assert.equal(result.execution_authorized,false,row.id);
+ if(row.mode==='worker-assignment'){
+  assert.equal(result.schema,'pigboard-worker-handoff-validation/v1');
+  assert.equal(result.mode,'worker-assignment');
+  assert.equal(result.purpose,'worker-assignment');
+  assert.equal(result.validation_scope,'supplied_worker_assignment_proof');
+  assert.equal(result.live_freshness,'not_evaluated');
+  assert.deepEqual(Object.keys(result).sort(),[
+   'schema','mode','purpose','validation_scope','live_freshness','execution_authorized','valid',
+   'diagnostics','trust_limitations',...assignmentBindings
+  ].sort());
+  if(valid)for(const key of assignmentBindings)assert.deepEqual(result[key],proof[key],row.id+' '+key);
+  else for(const key of assignmentBindings)assert.equal(result[key],null,row.id+' '+key);
+ }
+ if(valid)assert.deepEqual(result.diagnostics,[]);
+ else assert(result.diagnostics.some(d=>d.code===code&&(!diagnosticPath||d.path===diagnosticPath)),row.id+' '+JSON.stringify(result.diagnostics));
+}
+test('PGB-161 H02 source API checks every frozen assignment and inability observation',()=>{
+ for(const row of h02.cases){
+  const raw=prepareAssignmentCase(row);
+  const validator=row.mode==='worker-current'?validateWorkerCurrent:validateWorkerAssignment;
+  const result=JSON.parse(JSON.stringify(validator(raw)));
+  assertAssignmentCase(row,result);
+  if(!result.valid)assert.equal(result.assignment,null,row.id+' rejected assignment');
+ }
+});
+
+const assignmentCliCases=new Set([
+ 'A-assignment-before-future-input','A-full-current-missing-input','B-pre-PR-unpublished','B-first-native-readback',
+ 'B-unknown-publication','B-changed-original-content','B-changed-original-uuid','B-no-append-right',
+ 'B-unresolvable-native-assignment','B-schema-valid-unsupported-kind','C-all-NOT_RUN-unpublished',
+ 'D-mixed-original-PASS-FAIL-NOT_RUN','D-executed-operation-changed','D-post-PR-advanced-head-readback',
+ 'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
+ 'I-mixed-invocation-purpose'
+]);
+test('PGB-161 H02 source CLI uses the same supplied bytes and clear exits outside the checkout',async t=>{
+ const cwd=await mkdtemp(path.join(os.tmpdir(),'pigboard-assignment-source-'));
+ t.after(()=>rm(cwd,{recursive:true,force:true}));
+ const execute=(args,script=cli)=>spawnSync(process.execPath,[script,...args],{cwd,encoding:'utf8',timeout:30000});
+ const help=execute(['--help','--json']);
+ assert.equal(help.status,0,help.stderr);
+ assert.deepEqual(JSON.parse(help.stdout).worker_capabilities,{
+  modes:['worker-current','worker-assignment'],input_schema:'pigboard-worker-handoff-input/v1',
+  result_schema:'pigboard-worker-handoff-validation/v1'
+ });
+ for(const row of h02.cases.filter(row=>assignmentCliCases.has(row.id))){
+  const raw=prepareAssignmentCase(row),file=path.join(cwd,row.id+'.json');
+  await writeFile(file,raw);
+  const args=['--mode',row.mode,'--input',file],child=execute([...args,'--json']);
+  assert.equal(child.stderr,'',row.id);
+  assert.equal(child.status,row.expected.valid?0:1,row.id+' '+child.stdout);
+  assertAssignmentCase(row,JSON.parse(child.stdout));
+  assert.equal(await readFile(file,'utf8'),raw,row.id);
+  if(['B-first-native-readback','B-unknown-publication'].includes(row.id)){
+   const readable=execute(args);
+   assert.equal(readable.stderr,'');
+   assert.equal(readable.status,child.status);
+   assert.match(readable.stdout,/worker-assignment validation; supplied assignment proof; live freshness not evaluated; execution_authorized:false/);
+   assert.doesNotMatch(readable.stdout,/undefined|Prepare the missing input/);
+   assert.match(readable.stdout,row.expected.valid?/Published reference: .*"comment_id":"6101"/:/PUBLICATION_UNKNOWN .*Preserve the original candidate/);
+  }
+ }
+ const invalidOrder=execute(['--bogus','--mode','worker-assignment','--input',cwd,'--json']);
+ assert.equal(invalidOrder.status,2,invalidOrder.stdout);
+ assertAssignmentCase({id:'option order',mode:'worker-assignment',expected:{valid:false,code:'USAGE'}},JSON.parse(invalidOrder.stdout));
+ const isolated=path.join(cwd,'validate-handoff.mjs');
+ await cp(cli,isolated);
+ for(const [extra,code,script]of [
+  [['--input',cwd],'INPUT'],[['--input',path.join(cwd,'missing')],'INPUT'],
+  [['--input',cwd,'--format','yaml'],'USAGE'],[['--input',cwd],'SETUP',isolated]
+ ]){
+  const result=execute(['--mode','worker-assignment',...extra,'--json'],script);
+  assert.equal(result.status,2,result.stdout);
+  assert.equal(result.stderr,'');
+  assertAssignmentCase({id:code,mode:'worker-assignment',expected:{valid:false,code}},JSON.parse(result.stdout));
+ }
+ t.diagnostic('Supplied fixture execution only. Designated human H02 remains pending.');
+});
+
+test('PGB-161 advanced-head implementer blocker with null basis also passes the native receipt chain',()=>{
+ const e=structuredClone(h02.inputs['D-post-PR-advanced-head-readback']);
+ e.schema='pigboard-receipt-input/v1';
+ e.trusted.manager_assignments=[];
+ for(const req of e.requirements)req.context_body=fixtures.repair_loop_p166.inputs.h01_admission.current_context_body;
+ for(const field of ['purpose','publication','publisher','action_receipt','missing_step_id','candidate','current_context_body'])delete e[field];
+ const result=run(e);
+ assert.equal(result.valid,true,JSON.stringify(result.diagnostics));
+ assert.equal(result.outcome,'blocked');
+ assert.equal(result.completion_established,false);
+ assert.deepEqual(JSON.parse(JSON.stringify(result.validated_leaf)),e.target);
 });

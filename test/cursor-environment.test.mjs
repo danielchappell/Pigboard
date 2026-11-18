@@ -1326,3 +1326,79 @@ test('ordinary worker finite packet uses one copied runtime outside source with 
  const help=spawnSync(process.execPath,[cli,'--help'],{cwd:o.app,encoding:'utf8'});assert.equal(help.status,0);assert.match(help.stdout,/worker-current/);assert.match(help.stdout,/execution_authorized:false/);assert.equal(await realpath(installed.stableSkills),installed.skills);
  t.diagnostic('One actual copied installation;32 finite supplied worker controls plus3 original record candidates; exact source/copied API/CLI parity and all7 role instructions. H01/H02 provider execution NOT_RUN.');
 });
+
+test('PGB-161 H02 copied assignment API and CLI preserve supplied proof outside the checkout',async t=>{
+ const fixtureOptions=await fixture(t),installed=await installCursorSkills(fixtureOptions,fakeInstall);
+ const manifest=await assertCurrentPayloadCopy({
+  sourceRoot:fixtureOptions.source,installed,expectedCommit:git(fixtureOptions.source,'rev-parse','HEAD')
+ });
+ assert.equal(manifest.payload_paths.length,41);
+ assert.equal(await realpath(installed.stableSkills),installed.skills);
+ const validator=path.join(installed.skills,'work-validator'),cli=path.join(validator,'scripts/validate-handoff.mjs');
+ const {pathToFileURL}=await import('node:url');
+ const copied=await import(pathToFileURL(path.join(validator,'lib/contracts/receipts.mjs')).href);
+ const source=await import('../lib/contracts/receipts.mjs');
+ const packet=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).worker_assignment_h02;
+ verificationContext(fixtureOptions,{packet:'PGB-161-H02',category:'supplied mock'});
+ const bindings=['target','assignment','requirements_digest','publication','candidate_identity','published_reference'];
+ const cliCases=new Set([
+  'A-assignment-before-future-input','A-full-current-missing-input','B-pre-PR-unpublished','B-first-native-readback',
+  'B-unknown-publication','B-changed-original-content','B-changed-original-uuid','B-no-append-right',
+  'B-unresolvable-native-assignment','B-schema-valid-unsupported-kind','C-all-NOT_RUN-unpublished',
+  'D-mixed-original-PASS-FAIL-NOT_RUN','D-executed-operation-changed','D-post-PR-advanced-head-readback',
+  'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
+  'I-mixed-invocation-purpose'
+ ]);
+ const run=args=>spawnSync(process.execPath,[cli,...args],{cwd:fixtureOptions.app,encoding:'utf8',timeout:30000});
+ const help=run(['--help','--json']);
+ assert.equal(help.status,0,help.stderr);
+ assert.deepEqual(JSON.parse(help.stdout).worker_capabilities,{
+  modes:['worker-current','worker-assignment'],input_schema:'pigboard-worker-handoff-input/v1',
+  result_schema:'pigboard-worker-handoff-validation/v1'
+ });
+ for(const row of packet.cases){
+  const envelope=structuredClone(packet.inputs[row.base]);
+  for(const patch of row.patches){
+   const parent=patch.path.slice(0,-1).reduce((value,key)=>value[key],envelope),key=patch.path.at(-1);
+   if(patch.remove)delete parent[key];
+   else parent[key]=patch.value;
+  }
+  const raw=JSON.stringify(envelope);
+  assert.equal(verificationSHA(raw),row.input_sha256,row.id);
+  const method=row.mode==='worker-current'?'validateWorkerCurrent':'validateWorkerAssignment';
+  const result=copied[method](raw);
+  verificationHistory(row,raw,row.expected,result,{mode:row.mode,input_sha256:row.input_sha256});
+  assert.deepEqual(result,source[method](raw),row.id+' source/copied API');
+  assert.equal(result.valid,row.expected.valid,row.id+' '+JSON.stringify(result.diagnostics));
+  assert.equal(result.execution_authorized,false,row.id);
+  if(!result.valid)assert(result.diagnostics.some(d=>d.code===row.expected.code&&(!row.expected.path||d.path===row.expected.path)),row.id);
+  const projection=JSON.parse(JSON.stringify(result));
+  if(row.mode==='worker-assignment')for(const key of bindings)assert.deepEqual(projection[key],row.expected.valid?row.expected[key]:null,row.id+' '+key);
+  if(!cliCases.has(row.id))continue;
+  const input=path.join(fixtureOptions.app,row.id+'.json');
+  await writeFile(input,raw);
+  const args=['--mode',row.mode,'--input',input],child=run([...args,'--json']);
+  assert.equal(child.stderr,'',row.id);
+  assert.equal(child.status,row.expected.valid?0:1,row.id+' '+child.stdout);
+  assert.deepEqual(JSON.parse(child.stdout),projection,row.id+' copied API/CLI');
+  assert.equal(await readFile(input,'utf8'),raw,row.id+' private input bytes');
+  if(['B-first-native-readback','B-unknown-publication'].includes(row.id)){
+   const readable=run(args);
+   assert.equal(readable.status,child.status);
+   assert.equal(readable.stderr,'');
+   assert.match(readable.stdout,/worker-assignment validation; supplied assignment proof; live freshness not evaluated; execution_authorized:false/);
+   assert.doesNotMatch(readable.stdout,/undefined|Prepare the missing input/);
+   assert.match(readable.stdout,row.expected.valid?/Published reference: .*"comment_id":"6101"/:/PUBLICATION_UNKNOWN .*Preserve the original candidate/);
+  }
+ }
+ for(const [extra,code]of [[['--input',fixtureOptions.app],'INPUT'],[['--input',fixtureOptions.app,'--format','yaml'],'USAGE']]){
+  const rejected=run(['--mode','worker-assignment',...extra,'--json']);
+  assert.equal(rejected.status,2,rejected.stdout);
+  const result=JSON.parse(rejected.stdout);
+  assert.equal(result.purpose,'worker-assignment');
+  assert.equal(result.execution_authorized,false);
+  assert.equal(result.diagnostics[0].code,code);
+  for(const key of bindings)assert.equal(result[key],null,key);
+ }
+ t.diagnostic('Copied physical release with prepared validator dependencies and manifested source bytes. Supplied fixtures only. Designated human H02 execution remains pending.');
+});

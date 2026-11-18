@@ -428,3 +428,43 @@ local compatibility, not complete173/State/AWS integration or human acceptance.
 The prepared work-validator includes `--mode worker-current` and `validateWorkerCurrent`. Use the same pinned installed runtime for all three ordinary roles. Preparation and installation checks verify current copied files and dependencies; they do not prove provider publication or authorize activation. Missing or damaged runtime is a setup failure; do not fetch dependencies or fall back to source during delivery.
 
 See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
+
+The same prepared runtime includes `--mode worker-assignment` and
+`validateWorkerAssignment(input)`. Check availability on the reviewed pin using
+`--help --json`. Its `worker_capabilities` lists both worker purposes and their
+input and result schemas. The assignment checker uses the existing prepared
+dependencies and installation receipt. [Worker assignment and inability](handoffs.md#worker-assignment-and-inability).
+
+Use a reviewed source checkout and its prepared installation for this local
+example. Set the two absolute paths from the checkout and the installation
+receipt's physical `skills` path. Run from an unrelated directory.
+
+```sh
+PGB161_SOURCE=/absolute/path/to/pinned/pigboard
+PGB161_SKILLS=/absolute/path/to/prepared/release/skills
+PGB161_SAMPLE=$(mktemp -d)
+cd "$PGB161_SAMPLE"
+
+node -e 'const p=JSON.parse(require("node:fs").readFileSync(process.argv[1]));process.stdout.write(JSON.stringify(p.worker_assignment_h02.inputs["B-first-native-readback"]));' \
+  "$PGB161_SOURCE/test/fixtures/handoff-chains.json" > assignment.json
+node "$PGB161_SOURCE/scripts/validate-handoff.mjs" --mode worker-assignment --input "$PWD/assignment.json" --json
+node "$PGB161_SKILLS/work-validator/scripts/validate-handoff.mjs" --help --json
+node "$PGB161_SKILLS/work-validator/scripts/validate-handoff.mjs" --mode worker-assignment --input "$PWD/assignment.json" --json
+```
+
+Both checks accept the same supplied fixture with
+`publication: readback`, native comment ID `6101` and
+`execution_authorized: false`. To inspect the contrast, extract
+`B-pre-PR-unpublished` in the same way. It reports the same candidate identity
+and a null published reference. These fixtures use simulated observations.
+Designated human acceptance and actual provider actions require separate evidence.
+
+From the pinned source checkout, the following commands run the frozen
+PGB-161-H02 packet through the source and a disposable prepared copy. Keep the
+sanitized outputs and pins you need for review. The tests clean up their
+disposable local build and input files.
+
+```sh
+node --test --test-name-pattern='PGB-161' test/receipt-chain.test.mjs
+node --test --test-name-pattern='PGB-161 H02 copied' test/cursor-environment.test.mjs
+```
