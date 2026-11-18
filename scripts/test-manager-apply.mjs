@@ -513,6 +513,20 @@ async function settlementFixture({cloud,evidenceCase,evidenceIO,attemptId,native
     assert.equal(held.outcome.code,code,held.stdout);
     assert(held.outcome.diagnostics.length>0,held.stdout);
     assertNoWrite(held);
+    if(id==='enabled_runtime'){
+      const message='Keep admission disabled. Verify that the schedule and admission writes are disabled, maintenance is on, observed Lambda reserved concurrency is zero, and the applied controls and package match the canonical configuration before reconciling.';
+      const readable=await invoke(reconcileArgs);
+      for(const refused of [held,readable]){
+        assert.equal(refused.exitCode,1,refused.stdout);
+        assert.equal(refused.outcome.status,'conflict',refused.stdout);
+        assert.equal(refused.outcome.code,'CONTROL_MISMATCH',refused.stdout);
+        assertNoWrite(refused);
+        assertNoJira(refused);
+      }
+      assert.equal(JSON.parse(held.stdout).diagnostics.find(diagnostic=>diagnostic.code==='CONTROL_MISMATCH')?.message,message);
+      assert(readable.stdout.split('\n').includes(message),readable.stdout);
+      assert(readable.stdout.split('\n').includes('conflict: CONTROL_MISMATCH'),readable.stdout);
+    }
     if(id==='absent_history'){
       assert(held.ordered_audit.some(e=>e.event==='jira'&&e.path.includes('/changelog?')&&e.status===403));
       assert.equal(transitionProof(original).http_status,evidenceCase.sendCase.saved_status);
@@ -532,6 +546,23 @@ async function settlementFixture({cloud,evidenceCase,evidenceIO,attemptId,native
     assert.equal(preflight.outcome.code,'OK',preflight.stdout);
     assert.equal(preflight.outcome.data.original_capture.http_status,evidenceCase.sendCase.saved_status);
     assert.equal(preflight.outcome.data.native_history.status,evidenceCase.history.length?'complete':'complete_empty');
+    if(id==='not_applied'){
+      const originalRequest=readFileSync(requestPath,'utf8');
+      await writeFile(requestPath,JSON.stringify({...request,disposition:'confirmed_applied'}));
+      const incompatible=await invoke([...reconcileArgs,'--json']);
+      assert.equal(incompatible.exitCode,1,incompatible.stdout);
+      assert.equal(incompatible.outcome.status,'conflict',incompatible.stdout);
+      assert.equal(incompatible.outcome.code,'CAPTURE_UNSUPPORTED',incompatible.stdout);
+      assertNoWrite(incompatible);
+      assertNoJira(incompatible);
+      cloud.session=sessions.restart;
+      const pending=await invoke([...inspect,'--json']);
+      assertPending(pending);
+      assertNoWrite(pending);
+      assertNoJira(pending);
+      await writeFile(requestPath,originalRequest);
+      cloud.session=sessions.submit;
+    }
     const faultHook=cloud.beforeState;
     if(fault)cloud.beforeState=async command=>{
       if(command.constructor.name==='TransactWriteCommand'){
@@ -623,6 +654,54 @@ async function settlementFixture({cloud,evidenceCase,evidenceIO,attemptId,native
         verifyTerminal(await invoke([...inspect,'--json']));
         assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
         assert(at('attempt',provider.records()).attempt_id===attemptId);
+        const {fixtureCloud}=await import('./test-aws-manager.mjs');
+        const observed=cloud.cloud;
+        const tableId=observed.table.TableId, eventPage=observed.eventPage;
+        const originalRequest=readFileSync(requestPath,'utf8');
+        const legacyRole=fixtureCloud(stoppedManifest.canonical_config,{birth:'legacy'},stoppedManifest)
+          .cloud.events.find(event=>event.LogicalResourceId==='RuntimeRole');
+        const legacyEvents=observed.events.map(event=>event.LogicalResourceId==='RuntimeRole'
+          ? {...event,ResourceProperties:legacyRole.ResourceProperties} : event);
+        for(const observation of ['different_table_id','missing_original_history','legacy_birth']){
+          cloud.policy=null;
+          await writeFile(requestPath,originalRequest);
+          if(observation==='different_table_id')observed.table.TableId='00000000-0000-4000-8000-000000000000';
+          if(observation==='missing_original_history')observed.eventPage=()=>({StackEvents:[]});
+          if(observation==='legacy_birth')observed.eventPage=()=>({StackEvents:legacyEvents});
+          try{
+            const inspected=await invoke([...inspect,'--json']);
+            const refused=await invoke([...reconcileArgs,'--json']);
+            inspected.fixture_observation=refused.fixture_observation=observation;
+            assert.equal(inspected.exitCode,0,inspected.stdout);
+            assert.deepEqual(inspected.outcome.data.records,[final]);
+            assert.equal(inspected.outcome.data.operator_decision,undefined);
+            const provenance=inspected.outcome.data.operator_decision_provenance;
+            assert.equal(provenance.status,observation==='legacy_birth'?'absent':'unavailable',inspected.stdout);
+            if(observation==='legacy_birth'){
+              assert.equal(provenance.code,'OPERATOR_PROVENANCE_ABSENT',inspected.stdout);
+              assert.equal(refused.outcome.code,'ORIGIN_UNVERIFIED',refused.stdout);
+            }
+            assert.notEqual(refused.exitCode,0,refused.stdout);
+            assert.equal(refused.outcome.data,null,refused.stdout);
+            for(const answer of [inspected,refused]){
+              assertNoWrite(answer);
+              assertNoJira(answer);
+              assert(answer.ordered_audit.some(entry=>entry.action===(observation==='different_table_id'
+                ? 'DescribeTableCommand' : 'DescribeStackEventsCommand')));
+            }
+            assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
+          }finally{
+            observed.table.TableId=tableId;
+            observed.eventPage=eventPage;
+          }
+        }
+        const restored=await invoke([...reconcileArgs,'--json']);
+        assert.equal(restored.exitCode,0,restored.stdout);
+        assert.equal(restored.outcome.code,'ALREADY_SETTLED',restored.stdout);
+        assert.deepEqual(restored.outcome.data,{attempt:final,operator_decision:decision});
+        assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
+        assertNoWrite(restored);
+        assertNoJira(restored);
         cloud.policy='runtime';
         const denied=await invoke([...inspect,'--json']);
         assert.equal(denied.exitCode,0,denied.stdout);

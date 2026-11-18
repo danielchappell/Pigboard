@@ -276,6 +276,11 @@ export async function runStateCommand(argv, {
     outcome = error.stateResult ?? result('unavailable', known.includes(error.code) ? error.code : 'UNAVAILABLE');
   }
   finally { state?.close?.(); resolved?.dispose?.(); }
+  if (options.command === 'reconcile' && outcome.code === 'CONTROL_MISMATCH') {
+    outcome = { ...outcome, diagnostics: outcome.diagnostics.map(diagnostic => diagnostic.code === 'CONTROL_MISMATCH'
+      ? { ...diagnostic, message: 'Keep admission disabled. Verify that the schedule and admission writes are disabled, maintenance is on, observed Lambda reserved concurrency is zero, and the applied controls and package match the canonical configuration before reconciling.' }
+      : diagnostic) };
+  }
   return { outcome, stdout: options.json ? JSON.stringify(outcome) + '\n' : readable(outcome), exitCode: stateExitCode(outcome) };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
