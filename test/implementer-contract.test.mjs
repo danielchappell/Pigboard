@@ -509,8 +509,9 @@ function simulator(fixture, output, audit) {
   const page = observed.comment_pages.find(p => p.ticket_id === issue.id);
   const stages = config.defaults.stages;
   const order = expectedCalls(fixture);
-  let calculatedHash, approvedSource, submittedSource, prepared, rawPublication, retained, prObservation;
+  let reviewedPlan, approvedSource, submittedSource, prepared, rawPublication, retained, prObservation;
   const revisions = new Map();
+  if (fixture.prior) revisions.set(fixture.prior.payload.pr.source_revision, [...fixture.branchAncestors]);
   let index = 0, requestCount = 0;
   const observations = new Set();
   const digestOf = async name => sha256(await readFile(path.join(output, name)));
@@ -521,9 +522,12 @@ function simulator(fixture, output, audit) {
     }
   };
 
-  async function readIncorporation() {
-    const { pr } = prObservation;
-    await assertCurrentSource(pr.source_revision);
+  function readIncorporation(pr) {
+    const currentChild = observed.pr_receipts.filter(item => item.current
+      && item.repository === pr.repository && item.number === pr.number);
+    assert.equal(currentChild.length, 1);
+    assert.equal(currentChild[0].source_revision, pr.source_revision);
+    assert.equal(currentChild[0].target_branch, pr.target_branch);
     const declarations = parseWork(observed.requirements.find(item => item.ticket_id === issue.id).body).prerequisites;
     const native = observed.issues.find(item => declarations.some(dep => dep.ticket === item.key));
     const correspondingPr = native.published_prs[0];
@@ -540,12 +544,23 @@ function simulator(fixture, output, audit) {
       included, parent_pointer: native.pointer.assignment, parent_stage: native.stage_id };
   }
 
+  async function currentPlanReview() {
+    const planHash = await digestOf('plan.md');
+    assert.equal(planHash, reviewedPlan.plan_sha256);
+    const retainedReview = JSON.parse(await readFile(path.join(output, 'review.json'), 'utf8'));
+    assert.deepEqual(retainedReview, reviewedPlan);
+    return planHash;
+  }
+
   async function currentReady() {
+    const planHash = await currentPlanReview();
+    assert.equal(prObservation.refs.plan.digest, 'sha256:' + planHash);
+    assert.equal(prObservation.refs.plan_review.digest, 'sha256:' + await digestOf('review.json'));
     await assertCurrentSource(prObservation.pr.source_revision);
     if ('sha256:' + await digestOf(queryFile) !== prepared.artifact.digest) {
       throw new FixtureRequestError('Prepared query bytes changed. Current retrieval is unverified.');
     }
-    return { ...prObservation, incorporation: await readIncorporation(), declared_preparation: fixture.work.testing_strategy.preparation[0],
+    return { ...prObservation, incorporation: readIncorporation(prObservation.pr), declared_preparation: fixture.work.testing_strategy.preparation[0],
       retrieval: prepared, operation: fixture.queryOperation,
       references: [...fixture.context.references, prepared.artifact.uri] };
   }
@@ -554,7 +569,9 @@ function simulator(fixture, output, audit) {
       case 'read-start':
         assert.equal(args.key, issue.key);
         return { ...observed, start_observations: fixture.context, type_id: config.defaults.types.story, environment: notice,
-          checkout: { repository: fixture.work.technical_acceptance_criteria.repository.url, branch: 'codex/fixture', base: 'main' },
+          checkout: { repository: fixture.work.technical_acceptance_criteria.repository.url, branch: 'codex/fixture', base: 'main',
+            source_revision: fixture.prior?.payload.pr.source_revision ?? null,
+            incorporation: fixture.prior ? readIncorporation(fixture.prior.payload.pr) : null },
           profile: { parent: 'grok-4.7-high', review: 'grok-4.7-high', execute: 'grok-4.7-medium', task_type: 'generalPurpose', machine: 'same_machine' },
           native_pointer: issue.pointer, prior_actions: [], can_dispatch_high: true, allowed_repository: observed.trusted.projects[0].repositories[0] };
       case 'read-preparation': {
@@ -586,17 +603,19 @@ function simulator(fixture, output, audit) {
         assert.equal(args.model, 'grok-4.7-high');
         assert.equal(args.type, 'generalPurpose');
         assert.equal(args.machine, 'same_machine');
-        calculatedHash = await digestOf('plan.md');
-        assert.equal(args.plan_sha256, calculatedHash);
-        return { model: args.model, actor: 'independent-reviewer', simulated: true,
-          plan_sha256: calculatedHash, outcome: 'CLEAN', coverage: '4/4 plus second sweep' };
+        assert.equal(args.plan_sha256, await digestOf('plan.md'));
+        reviewedPlan = { model: args.model, actor: 'independent-reviewer', simulated: true,
+          plan_sha256: args.plan_sha256, outcome: 'CLEAN', coverage: '4/4 plus second sweep' };
+        return reviewedPlan;
       case 'medium-authority':
-        assert.equal(args.plan_sha256, calculatedHash);
-        return { can_edit: fault !== 'medium-authority', same_checkout: true };
+        assert.equal(args.plan_sha256, reviewedPlan.plan_sha256);
+        return { can_edit: fault !== 'medium-authority', same_checkout: true,
+          incorporation: fixture.prior ? readIncorporation(fixture.prior.payload.pr) : null };
       case 'medium-dispatch':
         assert.equal(args.model, 'grok-4.7-medium');
         assert.equal(args.type, 'generalPurpose');
         assert.equal(args.machine, 'same_machine');
+        assert.equal(args.plan_sha256, reviewedPlan.plan_sha256);
         assert.equal(args.plan_sha256, await digestOf('plan.md'));
         return { accepted: true, actor: 'implementer', simulated: true };
       case 'read-operation':
@@ -644,6 +663,7 @@ function simulator(fixture, output, audit) {
       case 'read-pr': {
         await assertCurrentSource(args.source_revision);
         assert.equal(args.source_revision, submittedSource);
+        await currentPlanReview();
         const { current, state, ...pr } = observed.pr_receipts.find(p => p.number === fixture.prior.payload.pr.number && p.current);
         const common = { available: true, actor_id: 'observer', pr };
         const requirements_digest = issue.requirements_digest;
@@ -669,7 +689,7 @@ function simulator(fixture, output, audit) {
         return prObservation;
       }
       case 'read-incorporation': {
-        const observation = await readIncorporation();
+        const observation = readIncorporation(prObservation.pr);
         assert.equal(args.number, observation.child_number);
         assert.equal(args.source_revision, observation.child_source_revision);
         return observation;
@@ -999,7 +1019,13 @@ async function driveReady(fixture, request, verify, output, initial) {
   const requiredParent = input.issues.find(item => parseWork(work).prerequisites.some(dep => dep.ticket === item.key));
   const parentQA = requiredParent && entries(input).find(item => item.r.kind === 'qa'
     && item.r.ticket_id === requiredParent.id && item.r.assignment.digest === requiredParent.pointer.assignment.digest);
-  await checkEarly(verify, { input, context, stackParent: parentQA ? { completion: reference(parentQA) } : null });
+  const initialParent = parentQA ? stackFromObservation(initial.checkout.incorporation, priorPr) : null;
+  if (initialParent) {
+    assert.equal(initial.checkout.source_revision, priorPr.source_revision);
+    assert.deepEqual(initialParent.completion, reference(parentQA));
+    assert.deepEqual(initialParent.pr, JSON.parse(serialize(parentQA.r.payload.pr)));
+  }
+  await checkEarly(verify, { input, context, stackParent: initialParent });
   assert.equal(initial.can_dispatch_high, true);
   assert.equal(initial.allowed_repository, initial.checkout.repository);
   assert.deepEqual(input.action_receipt.transitions, [{ from_stage_id: '2', to_stage_id: '3' }]);
@@ -1015,11 +1041,18 @@ async function driveReady(fixture, request, verify, output, initial) {
   await writeFile(path.join(output, 'review.json'), serialize(review));
   const edit = await request({ action: 'medium-authority', plan_sha256 });
   if (!edit.can_edit) return { outcome: 'local', reason: 'edit authority unavailable' };
+  if (initialParent) assert.deepEqual(stackFromObservation(edit.incorporation, priorPr), initialParent);
   const medium = await request({ action: 'medium-dispatch', model: 'grok-4.7-medium', type: 'generalPurpose', machine: 'same_machine', plan_sha256 });
   assert.equal(medium.accepted, true);
 
   const operation = await request({ action: 'read-operation', step: 'TC-01.S3' });
   if (!operation.read_only) return { outcome: 'local', reason: 'unsafe operation' };
+  const step = parseWork(work).testing_strategy.cases.flatMap(item => item.steps).find(item => item.id === operation.step);
+  assert.deepEqual(operation.contract, JSON.parse(serialize(step)));
+  assert(context.allowed_skills.includes(step.skill));
+  assert(context.references.includes(step.database.access_reference));
+  assert.equal(operation.parameter_count, step.database.parameters.length);
+  assert.equal(operation.max_duration_seconds, 20);
   const source = "export const query = `select id, name, tenant_id\nfrom saved_filters\nwhere id = $2 and tenant_id = $1\nlimit 1;`;\n";
   await writeFile(path.join(output, sourceFile), source, { flag: 'wx' });
   const checked = execFileSync(process.execPath, ['--input-type=module', '-e', "import { query } from './saved-filters.mjs'; process.stdout.write(query + '\\n');"], { cwd: output });
@@ -1027,8 +1060,6 @@ async function driveReady(fixture, request, verify, output, initial) {
   const artifact = await request({ action: 'retrieve-artifact', step: operation.step });
   if (!artifact.available) return { outcome: 'local', reason: 'missing final artifact' };
   assert.equal(artifact.artifact.digest, 'sha256:' + sha256(checked));
-  assert.equal(operation.parameter_count, 2);
-  assert.equal(operation.max_duration_seconds, 20);
   const { source_revision } = artifact;
   context.operations.push(operation);
   context.references.push(artifact.artifact.uri);
@@ -1263,7 +1294,10 @@ account/ID and HTTPS strings are fixture data. Do not contact those services.
 | resolve-append | record_id |
 | resolve-transition | comment_id |
 
-Task type is generalPurpose, machine is same_machine. Read the declared
+Task type is generalPurpose, machine is same_machine. For a stacked repair,
+read-start reports the current admitted child source and its parent incorporation
+under checkout. Medium authority refreshes incorporation before dispatch.
+Read the declared
 preparation availability or the prerequisite's current evidence when applicable.
 A slot may be fillable after the edit. An unavailable source input or unmet
 dependency needs its own supporting observation. Choose the outcome yourself.
