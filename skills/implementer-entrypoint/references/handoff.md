@@ -282,5 +282,5 @@ slot, consumer and owner needed to recover; preserve inputs and completed result
 instead of changing expectations or replaying actions.
 
 For source-only PREP-01 fixture exercises, follow the source checkout's
-`docs/using-pigboard.md#prepare-prescribed-qa-inputs` guide. It is not installed.
+`docs/using-pigboard.md#verify-implementer-preparation` guide. It is not installed.
 The new output is empty and designated human cases remain pending.

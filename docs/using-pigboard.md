@@ -712,14 +712,24 @@ PIGBOARD_P164_EVIDENCE="$PRIVATE_RUN/pgb164-regression.json" \
 node --test --test-name-pattern '^P164' test/implementer-contract.test.mjs
 ```
 
-For designated human review, use an operator and a separate subject for each
-control. Use the prepared skills path from that release receipt. Prepare one
-fresh disposable directory for each case from the exact review revision:
+For designated human review, make one persistent pin from the exact checked-out
+review revision. The source checkout needs its prepared root `node_modules`.
+Supply the previously prepared helper root containing `qa-bruno` and
+`qa-database`. Each helper directory contains the exact reviewed
+`package-lock.json` and physical `node_modules`. The pin command uses the
+existing installer and copies those dependencies without installing them.
 
 ```sh
+PIGBOARD_PREPARED_HELPER_ROOT="$PREPARED_HELPERS" \
+node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" pin "$PRIVATE_RUN/pin"
+PIGBOARD_SKILLS="$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).skills' "$PRIVATE_RUN/pin/receipt.json")"
 node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" prepare "$PRIVATE_RUN/H01" H01
 node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" operator "$PRIVATE_RUN/H01"
 ```
+
+Retain the receipt. It records the reviewed product revision, local installer
+snapshot, skills path and manifest hash. Prepare a fresh directory and use a
+separate operator and subject for each control.
 
 Give the subject only `assistant/`, the pinned skills and empty `output/`.
 Start with `assistant/invocation.md`. Relay the subject's requested JSON lines

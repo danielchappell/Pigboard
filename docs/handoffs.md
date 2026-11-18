@@ -997,13 +997,15 @@ checked independently, including when role accounts overlap. It selects exact pr
 never grants permission or adds a field to the canonical handoff. Unknown intent,
 implementer repair_request and mismatched leaf role/source/destination reject.
 
-Initial preflight checks each available supported edge separately against the
-same actual predecessor, with no fabricated outcome/approval. READY requires at
-least one supported route and reports any missing route as a capability limitation.
-Before final publication, rerun the selected intended edge: a queue-only capability
-cannot authorize success, and success-only capability cannot authorize queueing.
-Run both proof checks while still in the source stage; verify destination status
-separately afterward.
+Reviewer and QA preflight checks each available supported edge separately
+against the same actual predecessor, with no fabricated outcome or approval.
+Their READY requires at least one supported route and records missing routes
+as capability limitations. The implementer checks the observed edge for the
+selected outcome only. Use worker-current for ordinary READY and
+[worker-assignment](#worker-assignment-and-inability) for a supported inability.
+Publication permission applies to that outcome. Recheck its intended edge
+in the actual source stage immediately before the write, then verify destination
+status after transition.
 
 For example, reviewer queue preflight uses the actual published implementation:
 

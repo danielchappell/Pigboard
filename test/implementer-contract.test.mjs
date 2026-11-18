@@ -332,6 +332,7 @@ function readyFixture() {
   ])];
 
   work.prerequisites = [{ ticket: parent.key, required_outcome: 'ai_qa_complete' }];
+  work.testing_strategy.preparation[0].supplies = 'Generate the reviewed query from the saved-filter lookup code once it exists.';
   const digest = digestValue(work);
   input.requirements[0] = { ...input.requirements[0], body: JSON.stringify(work), digest };
   input.requirements.push({ ticket_id: parent.id, body: parentWork.body, digest: parentWork.digest, format: 'yaml' });
@@ -377,7 +378,8 @@ function readyFixture() {
   context.references = context.references.filter(uri => !uri.endsWith('query.sql'));
   context.prerequisite_graph[0].prerequisites = [parent.key];
   context.prerequisite_graph.push({ ticket: parent.key, prerequisites: [] });
-  return { input, work, context, queryOperation, stackParent, prior, admission };
+  const branchAncestors = [parentPr.source_revision];
+  return { input, work, context, queryOperation, stackParent, prior, admission, branchAncestors };
 }
 
 function currentPacket(input, context) {
@@ -451,7 +453,6 @@ function exercise(caseId) {
   if (control.route === 'ready') return { ...readyFixture(), ...control };
   const wait = control.route === 'wait';
   const input = structuredClone(assignmentSeeds[wait ? 'E-declared-upstream-wait-before-PR' : 'D-declared-slot-absent']);
-  const candidate = JSON.parse(input.candidate.body);
   const work = JSON.parse(input.requirements.find(r => r.ticket_id === input.target.ticket_id).body);
   const context = JSON.parse(earlierExercise['facts.yaml']);
   const step = work.testing_strategy.cases[0]?.steps.find(s => s.id === 'TC-01.S3');
@@ -462,17 +463,21 @@ function exercise(caseId) {
     input.publisher.intent = 'success';
     input.action_receipt.transitions[0].to_stage_id = config.defaults.stages['In Review'];
   }
-  return { ...control, input, work, context, queryOperation, inability: candidate.payload };
+  const dependencyAccess = wait ? { required_fixture_available: false, incorporated_revision: null,
+    source: 'The prepared integration target lacks the upstream repair needed to expose the prescribed fixture.' } : null;
+  return { ...control, input, work, context, queryOperation, dependencyAccess };
 }
 
 const readyEffects = [
-  'read-start', 'high-plan', 'high-review', 'medium-authority', 'medium-dispatch',
+  'read-start', 'read-preparation', 'high-plan', 'high-review', 'medium-authority', 'medium-dispatch',
   'read-operation', 'retrieve-artifact', 'read-pre-write', 'write-pr', 'read-pr',
-  'read-publisher', 'append', 'read-comment', 'read-final', 'transition', 'read-status',
+  'read-incorporation', 'read-publisher', 'append', 'read-comment', 'read-final', 'transition', 'read-status',
 ];
-const inabilityEffects = ['read-start', 'read-publisher', 'append', 'read-comment', 'read-final', 'transition', 'read-status'];
 function expectedCalls({ route, fault }) {
-  const order = ['ready', 'first-pr'].includes(route) ? readyEffects : inabilityEffects;
+  const order = ['ready', 'first-pr'].includes(route) ? readyEffects : [
+    'read-start', route === 'wait' ? 'read-dependency' : 'read-preparation',
+    'read-publisher', 'append', 'read-comment', 'read-final', 'transition', 'read-status',
+  ];
   const stop = { 'medium-authority': 'medium-authority', operation: 'read-operation',
     retrieval: 'retrieve-artifact', assignment: 'read-pre-write', publisher: 'read-publisher',
     pr: 'write-pr', append: 'append', transition: 'transition' }[fault];
@@ -481,19 +486,69 @@ function expectedCalls({ route, fault }) {
     ...(['pr', 'append', 'transition'].includes(fault) ? ['resolve-' + fault] : [])];
 }
 
+class FixtureRequestError extends Error {}
+
+function queryMatchesFixture(text) {
+  const match = /^select\s+([a-z_]+(?:\s*,\s*[a-z_]+)*)\s+from\s+saved_filters\s+where\s+([a-z_]+\s*=\s*\$[12])\s+and\s+([a-z_]+\s*=\s*\$[12])(?:\s+limit\s+1)?\s*;?$/iu.exec(text.trim());
+  if (!match) return false;
+  const columns = match[1].toLowerCase().split(/\s*,\s*/u).sort();
+  const conditions = match.slice(2).map(part => part.toLowerCase().replace(/\s+/gu, '')).sort();
+  return columns.join(',') === 'id,name,tenant_id' && conditions.join(',') === 'id=$2,tenant_id=$1';
+}
+
 function simulator(fixture, output, audit) {
   const { fault, input, route } = fixture;
   const observed = structuredClone(input);
   delete observed.candidate;
   delete observed.missing_step_id;
   delete observed.publication;
+  delete observed.purpose;
+  delete observed.publisher;
+  delete observed.current_context_body;
   const issue = observed.issues.find(i => i.id === input.target.ticket_id);
   const page = observed.comment_pages.find(p => p.ticket_id === issue.id);
   const stages = config.defaults.stages;
   const order = expectedCalls(fixture);
-  let calculatedHash, sourceRevision, prepared, rawPublication, retained, index = 0;
-
+  let calculatedHash, approvedSource, submittedSource, prepared, rawPublication, retained, prObservation;
+  const revisions = new Map();
+  let index = 0, requestCount = 0;
+  const observations = new Set();
   const digestOf = async name => sha256(await readFile(path.join(output, name)));
+  const sourceRevision = async () => (await digestOf(sourceFile)).slice(0, 40);
+  const assertCurrentSource = async revision => {
+    if (await sourceRevision() !== revision) {
+      throw new FixtureRequestError('The scratch source changed. Refresh the local preparation and current pre-write source before proposing a PR write.');
+    }
+  };
+
+  async function readIncorporation() {
+    const { pr } = prObservation;
+    await assertCurrentSource(pr.source_revision);
+    const declarations = parseWork(observed.requirements.find(item => item.ticket_id === issue.id).body).prerequisites;
+    const native = observed.issues.find(item => declarations.some(dep => dep.ticket === item.key));
+    const correspondingPr = native.published_prs[0];
+    const parent = observed.pr_receipts.find(item => item.current && item.number === correspondingPr.number
+      && item.repository === correspondingPr.repository);
+    const { state: parent_state, current, ...parent_pr } = parent;
+    const completions = entries(observed).filter(item => item.r.ticket_id === native.id && item.r.kind === 'qa'
+      && item.r.assignment.digest === native.pointer.assignment.digest);
+    assert.equal(completions.length, 1);
+    const ancestry = revisions.get(pr.source_revision);
+    const included = ancestry.includes(parent_pr.source_revision);
+    return { child_number: pr.number, child_source_revision: pr.source_revision, parent_pr, parent_state,
+      completion: reference(completions[0]), incorporated_revision: included ? parent_pr.source_revision : null,
+      included, parent_pointer: native.pointer.assignment, parent_stage: native.stage_id };
+  }
+
+  async function currentReady() {
+    await assertCurrentSource(prObservation.pr.source_revision);
+    if ('sha256:' + await digestOf(queryFile) !== prepared.artifact.digest) {
+      throw new FixtureRequestError('Prepared query bytes changed. Current retrieval is unverified.');
+    }
+    return { ...prObservation, incorporation: await readIncorporation(), declared_preparation: fixture.work.testing_strategy.preparation[0],
+      retrieval: prepared, operation: fixture.queryOperation,
+      references: [...fixture.context.references, prepared.artifact.uri] };
+  }
   async function reply(action, args) {
     switch (action) {
       case 'read-start':
@@ -501,8 +556,27 @@ function simulator(fixture, output, audit) {
         return { ...observed, start_observations: fixture.context, type_id: config.defaults.types.story, environment: notice,
           checkout: { repository: fixture.work.technical_acceptance_criteria.repository.url, branch: 'codex/fixture', base: 'main' },
           profile: { parent: 'grok-4.7-high', review: 'grok-4.7-high', execute: 'grok-4.7-medium', task_type: 'generalPurpose', machine: 'same_machine' },
-          inability: ['blocked', 'wait'].includes(route) ? fixture.inability : null,
           native_pointer: issue.pointer, prior_actions: [], can_dispatch_high: true, allowed_repository: observed.trusted.projects[0].repositories[0] };
+      case 'read-preparation': {
+        const declared = fixture.work.testing_strategy.preparation[0];
+        assert.equal(args.id, declared.id);
+        const unavailable = route === 'blocked';
+        return { id: declared.id, consumers: declared.used_by, available: false,
+          can_prepare_in_this_checkout: !unavailable, source_prerequisite: unavailable ? null : sourceFile,
+          origin: unavailable ? 'Approved query inputs were withdrawn by the fixture owner.' : 'The authorized edit can create the required source.',
+          owner: unavailable ? 'Fixture owner' : 'implementer' };
+      }
+      case 'read-dependency': {
+        const declaration = fixture.work.prerequisites.find(item => item.ticket === args.key);
+        assert(declaration);
+        const parent = observed.issues.find(item => item.key === declaration.ticket);
+        const outstanding = entries(observed).filter(item => item.r.ticket_id === parent.id
+          && item.r.kind === 'repair_request' && item.r.assignment.digest === parent.pointer.assignment.digest);
+        return { issue: parent, required_outcome: declaration.required_outcome,
+          blocking: parent.stage_id === stages['Rework Queued'] && outstanding.length > 0,
+          outstanding_requests: outstanding.map(reference),
+          integration: fixture.dependencyAccess ?? { required_fixture_available: true } };
+      }
       case 'high-plan':
         assert.equal(args.model, 'grok-4.7-high');
         assert.equal(args.assignment, issue.pointer.assignment.record_id);
@@ -527,32 +601,49 @@ function simulator(fixture, output, audit) {
         return { accepted: true, actor: 'implementer', simulated: true };
       case 'read-operation':
         assert.equal(args.step, fixture.queryOperation.step);
-        sourceRevision = (await digestOf(sourceFile)).slice(0, 40);
-        assert.notEqual(sourceRevision, fixture.prior?.payload.pr.source_revision);
-        return { ...fixture.queryOperation, read_only: fault !== 'operation', source_revision: sourceRevision };
-      case 'retrieve-artifact':
+        return { ...fixture.queryOperation, read_only: fault !== 'operation' };
+      case 'retrieve-artifact': {
         assert.equal(args.step, fixture.queryOperation.step);
+        if (!observations.has('read-operation') || fault === 'operation') {
+          throw new FixtureRequestError('A current approved read-only operation is needed before retrieval.');
+        }
         if (fault === 'retrieval') return { available: false, audience: 'fixture-reviewer' };
         const query = await readFile(path.join(output, queryFile), 'utf8');
-        assert.match(query, /^SELECT id, name, tenant_id FROM saved_filters WHERE tenant_id = \$1 AND id = \$2;\n$/u);
-        prepared = { uri: artifactUri, label: 'query.sql', digest: 'sha256:' + sha256(query) };
-        return { available: true, audience: 'fixture-reviewer', artifact: prepared };
+        if (!queryMatchesFixture(query)) {
+          throw new FixtureRequestError('The prepared query does not meet the read-only columns and bindings in local-tools.md.');
+        }
+        const source_revision = await sourceRevision();
+        assert.notEqual(source_revision, fixture.prior?.payload.pr.source_revision);
+        prepared = { available: true, audience: 'fixture-reviewer', source_revision,
+          artifact: { uri: artifactUri, label: queryFile, digest: 'sha256:' + sha256(query) } };
+        return prepared;
+      }
       case 'read-pre-write':
         if (fault === 'assignment') issue.pointer.assignment = { ...issue.pointer.assignment, comment_id: '9999' };
-        return { ...observed, can_write_pr: true, approved_source: sourceRevision };
-      case 'write-pr':
+        approvedSource = await sourceRevision();
+        return { ...observed, can_write_pr: Boolean(prepared?.source_revision === approvedSource), approved_source: approvedSource };
+      case 'write-pr': {
         if (route === 'ready') assert.equal(args.number, fixture.prior.payload.pr.number);
         else assert.equal(args.number, null);
-        assert.equal(args.source_revision, sourceRevision);
+        await assertCurrentSource(args.source_revision);
+        if (args.source_revision !== approvedSource || args.source_revision !== prepared?.source_revision) {
+          throw new FixtureRequestError('Current PR authority and preparation must bind the proposed source. Refresh the local reads before the first write.');
+        }
         assert.equal(args.target_branch, fixture.prior?.payload.pr.target_branch ?? 'main');
         assert.equal(args.operation_id, issue.pointer.assignment.record_id);
-        assert.equal(args.preparation_digest, prepared.digest);
+        assert.equal(args.preparation_digest, prepared.artifact.digest);
         if (fault === 'pr') return { outcome: 'unknown', original_request: args };
+        submittedSource = args.source_revision;
         observed.pr_receipts.find(p => p.number === args.number && p.current).current = false;
-        observed.pr_receipts.push({ ...fixture.prior.payload.pr, source_revision: sourceRevision, state: 'open', current: true });
-        return { outcome: 'updated', number: args.number, source_revision: sourceRevision };
+        observed.pr_receipts.push({ ...fixture.prior.payload.pr, source_revision: submittedSource, state: 'open', current: true });
+        // The mock checkout starts on an independently observed parent revision.
+        // The mock Git provider records its unchanged base when the child is updated.
+        revisions.set(submittedSource, [...fixture.branchAncestors]);
+        return { outcome: 'updated', number: args.number, source_revision: submittedSource };
+      }
       case 'read-pr': {
-        assert.equal(args.source_revision, sourceRevision);
+        await assertCurrentSource(args.source_revision);
+        assert.equal(args.source_revision, submittedSource);
         const { current, state, ...pr } = observed.pr_receipts.find(p => p.number === fixture.prior.payload.pr.number && p.current);
         const common = { available: true, actor_id: 'observer', pr };
         const requirements_digest = issue.requirements_digest;
@@ -562,7 +653,7 @@ function simulator(fixture, output, audit) {
           { kind: 'ci', name: 'ci.json', details: { status: 'passed' } },
           { kind: 'artifact', name: 'verification.json', details: {} },
         ];
-        const ci = [{ name: 'fixture-unit', status: 'passed', source_revision: sourceRevision }];
+        const ci = [{ name: 'fixture-unit', status: 'passed', source_revision: submittedSource }];
         const refs = {};
         for (const { kind, name, details } of evidence) {
           const observed_digest = 'sha256:' + (kind === 'ci' ? sha256(serialize(ci)) : await digestOf(name));
@@ -572,15 +663,27 @@ function simulator(fixture, output, audit) {
           observed.trusted.projects[0].evidence_uris.push(uri);
         }
         const slot = fixture.work.testing_strategy.preparation[0];
-        observed.evidence_receipts.push({ ...common, kind: 'preparation', uri: prepared.uri,
-          observed_digest: prepared.digest, details: { requirements_digest, preparation_id: slot.id, consumers: slot.used_by } });
-        return { pr, pr_receipts: observed.pr_receipts, required_ci: ci, refs };
+        observed.evidence_receipts.push({ ...common, kind: 'preparation', uri: prepared.artifact.uri,
+          observed_digest: prepared.artifact.digest, details: { requirements_digest, preparation_id: slot.id, consumers: slot.used_by } });
+        prObservation = { pr, conflicts: false, draft: false, pr_receipts: observed.pr_receipts, required_ci: ci, refs };
+        return prObservation;
+      }
+      case 'read-incorporation': {
+        const observation = await readIncorporation();
+        assert.equal(args.number, observation.child_number);
+        assert.equal(args.source_revision, observation.child_source_revision);
+        return observation;
       }
       case 'read-publisher':
-      case 'read-final':
-        assert.equal(args.intent, observed.publisher.intent);
-        return { ...observed, actual_actor: fault === 'publisher' ? null : 'implementer' };
+      case 'read-final': {
+        const destination = { success: 'In Review', blocked: 'Blocked', dependency_wait: 'Rework Queued' }[args.intent];
+        const edge = observed.action_receipt.transitions.find(item => item.from_stage_id === issue.stage_id
+          && item.to_stage_id === stages[destination]);
+        return { ...observed, actual_actor: fault === 'publisher' ? null : 'implementer', edge: edge ?? null,
+          current_ready: edge && prObservation ? await currentReady() : null };
+      }
       case 'append': {
+        if (prObservation) await currentReady();
         assert.equal(args.issue, issue.id);
         const parsed = extractHandoff(args.body, { format: 'html' }).value;
         assert.equal(parsed.record_id, args.record_id);
@@ -599,6 +702,7 @@ function simulator(fixture, output, audit) {
         assert.equal(args.comment_id, retained.comment_id);
         return { reference: retained, pages: observed.comment_pages };
       case 'transition':
+        if (prObservation) await currentReady();
         assert.equal(args.comment_id, retained.comment_id);
         assert.equal(args.from_stage_id, issue.stage_id);
         assert.equal(args.to_stage_id, observed.action_receipt.transitions[0].to_stage_id);
@@ -619,17 +723,31 @@ function simulator(fixture, output, audit) {
     }
     throw new Error('Unknown mock operation.');
   }
+  const passive = new Set(['read-operation', 'read-preparation', 'read-dependency', 'retrieve-artifact', 'read-pre-write']);
   return async ({ action, ...args }) => {
-    const ordinal = index + 1;
+    const ordinal = ++requestCount;
     try {
-      assert.equal(action, order[index], 'Unexpected action at the current boundary.');
+      while (action !== order[index] && passive.has(order[index]) && observations.has(order[index])) index++;
+      const expected = action === order[index];
+      const canObserve = index > 0 && !submittedSource && (
+        ['read-operation', 'read-preparation', 'read-dependency'].includes(action)
+        || (['retrieve-artifact', 'read-pre-write'].includes(action) && observations.has('medium-dispatch'))
+      );
+      const publisherInquiry = index > 0 && action === 'read-publisher';
+      if (!expected && !canObserve && !publisherInquiry) {
+        throw new FixtureRequestError('That action is unavailable at the current boundary. Check the current evidence and local-tools.md.');
+      }
       const result = await reply(action, args);
-      index++;
+      if (expected && !(action === 'read-publisher' && !result.edge)) index++;
+      observations.add(action);
       await audit({ ordinal, action, args, result: structuredClone(result), observation: notice });
       return structuredClone(result);
     } catch (error) {
-      await audit({ ordinal, action, args, result: { rejected: true, reason: error.message }, observation: notice });
-      throw error;
+      const reason = error instanceof FixtureRequestError ? error.message
+        : (error.code === 'ENOENT' ? 'The requested local file is absent. Check the prerequisites in local-tools.md.'
+          : 'The request does not match the available simulated inputs. Check local-tools.md.');
+      await audit({ ordinal, action, args, result: { rejected: true, reason }, observation: notice });
+      throw new FixtureRequestError(reason);
     }
   };
 }
@@ -705,14 +823,114 @@ async function checkEarly(verify, fixture) {
   assert(unavailable.diagnostics.some(d => d.code === 'CONTEXT_OPERATION'));
 }
 
-function withoutMetadata(fixture, observation) {
+function workerPacket(observation, intent) {
   const keys = ['schema', 'consumer', 'target', 'trusted', 'issues', 'requirements', 'comment_pages',
-    'pr_receipts', 'evidence_receipts', 'retained', 'request_resolutions', 'purpose',
-    'current_context_body', 'publisher', 'action_receipt'];
-  return Object.fromEntries(keys.map(key => [key, observation[key] ?? fixture.input[key]]));
+    'pr_receipts', 'evidence_receipts', 'retained', 'request_resolutions', 'action_receipt'];
+  return { ...Object.fromEntries(keys.map(key => [key, observation[key]])),
+    purpose: intent === 'success' ? 'worker-current' : 'worker-assignment',
+    publisher: { role: 'implementer', account_id: observation.action_receipt.actor_id, intent },
+    current_context_body: null };
 }
 
-async function publishExercise(fixture, request, verify, candidate, packet) {
+function stackFromObservation(value, child) {
+  assert.equal(value.child_number, child.number);
+  assert.equal(value.child_source_revision, child.source_revision);
+  assert.equal(value.included, true);
+  assert.equal(value.incorporated_revision, value.parent_pr.source_revision);
+  assert.equal(value.parent_pr.repository, child.repository);
+  assert.equal(value.parent_state, 'open');
+  return { ticket_id: value.completion.ticket_id, pr: value.parent_pr,
+    incorporated_revision: value.incorporated_revision, completion: value.completion };
+}
+
+function assertReadyCandidate(candidate, native, original, published = null) {
+  const { current_ready: current, actual_actor: actor, edge } = native;
+  const issue = native.issues.find(item => item.id === candidate.ticket_id);
+  const { stages, actors } = config.defaults;
+  const admission = entries(native).find(item => item.c.id === issue.pointer.assignment.comment_id);
+  assert.equal(candidate.role, 'implementer');
+  assert.equal(candidate.kind, 'implementation');
+  assert.equal(candidate.from_stage, 'In Progress');
+  assert.equal(candidate.to_stage, 'In Review');
+  assert.equal(candidate.resume_authorization, null);
+  assert.equal(issue.stage_id, stages[candidate.from_stage]);
+  assert(actors.implementer.includes(actor));
+  assert.equal(actor, native.action_receipt.actor_id);
+  assert.equal(native.action_receipt.ticket_id, issue.id);
+  assert.equal(native.action_receipt.stage_id, issue.stage_id);
+  assert(native.action_receipt.can_read_issue && native.action_receipt.can_append_comment);
+  assert.deepEqual(edge, { from_stage_id: issue.stage_id, to_stage_id: stages[candidate.to_stage] });
+  assert.deepEqual(native.action_receipt.transitions.filter(item => item.to_stage_id === edge.to_stage_id), [edge]);
+  assert.deepEqual(candidate.assignment, reference(admission));
+  assert.deepEqual(candidate.assignment, original.target);
+  assert.equal(candidate.operation_id, admission.r.operation_id);
+  const work = native.requirements.find(row => row.ticket_id === issue.id);
+  for (const digest of [candidate.requirements_digest, work.digest, admission.r.requirements_digest, original.requirements[0].digest]) {
+    assert.equal(digest, issue.requirements_digest);
+  }
+  assert.equal(digestValue(parseWork(work.body)), candidate.requirements_digest);
+  const slot = entries(native).filter(item => item.r.role === 'implementer'
+    && item.r.assignment?.digest === candidate.assignment.digest);
+  assert.deepEqual(slot.map(reference), published ? [published] : []);
+  assert.deepEqual(candidate.payload.consumed_requests, issue.required_requests);
+  assert.deepEqual(candidate.payload.consumed_requests, JSON.parse(serialize(admission.r.payload.requests)));
+  assert.deepEqual(candidate.payload.pr, current.pr);
+  assert.equal(current.conflicts, false);
+  assert.equal(current.draft, false);
+  assert.equal(issue.published_prs.length, 1);
+  const [publishedPr] = issue.published_prs;
+  for (const field of ['provider', 'repository', 'number']) assert.equal(publishedPr[field], current.pr[field]);
+  assert.deepEqual(native.pr_receipts.filter(item => item.number === current.pr.number && item.current),
+    [{ ...current.pr, state: 'open', current: true }]);
+  assert(current.required_ci.length > 0);
+  assert(current.required_ci.every(item => item.source_revision === current.pr.source_revision && item.status === 'passed'));
+  const parent = stackFromObservation(current.incorporation, current.pr);
+  assert.deepEqual(candidate.payload.stack_parent, parent);
+  const parentIssue = native.issues.find(item => item.id === parent.ticket_id);
+  assert.equal(parentIssue.stage_id, stages['Human Review']);
+  assert.equal(current.incorporation.parent_stage, parentIssue.stage_id);
+  assert.deepEqual(current.incorporation.parent_pointer, parentIssue.pointer.assignment);
+  assert.equal(parentIssue.site, issue.site);
+  assert.equal(parentIssue.project_id, issue.project_id);
+  assert.equal(parentIssue.stream, issue.stream);
+  const parentWork = native.requirements.find(row => row.ticket_id === parentIssue.id);
+  assert.equal(digestValue(parseWork(parentWork.body)), parentIssue.requirements_digest);
+  assert(parseWork(work.body).prerequisites.some(item => item.ticket === parentIssue.key && item.required_outcome === 'ai_qa_complete'));
+  const qa = entries(native).find(item => item.c.id === parent.completion.comment_id);
+  assert.equal(qa.r.kind, 'qa');
+  assert.deepEqual(reference(qa), parent.completion);
+  assert.equal(qa.r.assignment.digest, parentIssue.pointer.assignment.digest);
+  assert.deepEqual(native.pr_receipts.filter(item => item.number === parent.pr.number && item.current),
+    [{ ...parent.pr, state: 'open', current: true }]);
+  const observed = (ref, kind) => {
+    const rows = native.evidence_receipts.filter(row => row.kind === kind && row.uri === ref.uri);
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].available, true);
+    assert.equal(rows[0].observed_digest, ref.digest);
+    assert.deepEqual(rows[0].pr, current.pr);
+    return rows[0].details;
+  };
+  const { refs, retrieval, declared_preparation: preparation } = current;
+  for (const kind of ['plan', 'plan_review', 'ci']) assert.deepEqual(candidate.payload[kind], refs[kind]);
+  assert.deepEqual(candidate.payload.verification, [refs.artifact]);
+  const plan = observed(refs.plan, 'plan');
+  const review = observed(refs.plan_review, 'plan_review');
+  assert.equal(plan.requirements_digest, issue.requirements_digest);
+  assert.equal(review.requirements_digest, issue.requirements_digest);
+  assert.notEqual(plan.author_id, review.reviewer_id);
+  assert.equal(review.outcome, 'CLEAN');
+  assert.equal(observed(refs.ci, 'ci').status, 'passed');
+  observed(refs.artifact, 'artifact');
+  assert.equal(retrieval.available, true);
+  assert.equal(retrieval.source_revision, current.pr.source_revision);
+  assert(retrieval.audience && current.references.includes(retrieval.artifact.uri));
+  assert.deepEqual(parseWork(work.body).testing_strategy.preparation.map(item => item.id), [preparation.id]);
+  assert.deepEqual(candidate.payload.prepared_inputs, [{ id: preparation.id, artifacts: [retrieval.artifact] }]);
+  assert.deepEqual(observed(retrieval.artifact, 'preparation'),
+    { requirements_digest: candidate.requirements_digest, preparation_id: preparation.id, consumers: preparation.used_by });
+}
+
+async function publishExercise(fixture, request, verify, candidate, packet, original) {
   const { fault, route } = fixture;
   const ready = route === 'ready';
   const raw = stringify(candidate, { aliasDuplicateObjects: false });
@@ -720,7 +938,7 @@ async function publishExercise(fixture, request, verify, candidate, packet) {
   const mode = ready ? 'worker-current' : 'worker-assignment';
   if (!ready) {
     packet.publication = 'unpublished';
-    packet.missing_step_id = route === 'blocked' ? fixture.input.missing_step_id : null;
+    packet.missing_step_id = fixture.missingStep;
     packet.candidate = { format: 'yaml', body: raw };
     const original = await verify('validate-handoff', ['--mode', mode, '--json'], { input: packet });
     assert.equal(original.execution_authorized, false);
@@ -752,6 +970,7 @@ async function publishExercise(fixture, request, verify, candidate, packet) {
   assert.deepEqual(fresh.requirements, packet.requirements);
   assert.deepEqual(fresh.evidence_receipts, packet.evidence_receipts);
   assert.deepEqual(fresh.action_receipt, packet.action_receipt);
+  if (ready) assertReadyCandidate(candidate, fresh, original, leaf);
   const moved = await request({ action: 'transition', comment_id: leaf.comment_id,
     from_stage_id: config.defaults.stages[candidate.from_stage], to_stage_id: config.defaults.stages[candidate.to_stage] });
   if (fault === 'transition') {
@@ -765,11 +984,22 @@ async function publishExercise(fixture, request, verify, candidate, packet) {
 }
 
 async function driveReady(fixture, request, verify, output, initial) {
-  const { fault, route, prior } = fixture;
-  const input = withoutMetadata(fixture, initial);
+  const { route } = fixture;
+  const input = workerPacket(initial, 'success');
+  const admitted = entries(input).find(item => item.r.kind === 'admission' && item.c.id === input.target.comment_id).r;
+  const priorPr = admitted.payload.existing_pr;
   const context = structuredClone(initial.start_observations);
   const work = input.requirements[0].body;
-  await checkEarly(verify, { ...fixture, input, context });
+  assert(!Object.hasOwn(initial, 'publisher') && !Object.hasOwn(initial, 'inability'));
+  const declared = parseWork(work).testing_strategy.preparation[0];
+  const preparation = await request({ action: 'read-preparation', id: declared.id });
+  assert.equal(preparation.available, false);
+  assert.equal(preparation.can_prepare_in_this_checkout, true);
+  assert.equal(preparation.source_prerequisite, sourceFile);
+  const requiredParent = input.issues.find(item => parseWork(work).prerequisites.some(dep => dep.ticket === item.key));
+  const parentQA = requiredParent && entries(input).find(item => item.r.kind === 'qa'
+    && item.r.ticket_id === requiredParent.id && item.r.assignment.digest === requiredParent.pointer.assignment.digest);
+  await checkEarly(verify, { input, context, stackParent: parentQA ? { completion: reference(parentQA) } : null });
   assert.equal(initial.can_dispatch_high, true);
   assert.equal(initial.allowed_repository, initial.checkout.repository);
   assert.deepEqual(input.action_receipt.transitions, [{ from_stage_id: '2', to_stage_id: '3' }]);
@@ -788,10 +1018,10 @@ async function driveReady(fixture, request, verify, output, initial) {
   const medium = await request({ action: 'medium-dispatch', model: 'grok-4.7-medium', type: 'generalPurpose', machine: 'same_machine', plan_sha256 });
   assert.equal(medium.accepted, true);
 
-  const source = "export const query = 'SELECT id, name, tenant_id FROM saved_filters WHERE tenant_id = $1 AND id = $2;';\n";
-  await writeFile(path.join(output, sourceFile), source, { flag: 'wx' });
   const operation = await request({ action: 'read-operation', step: 'TC-01.S3' });
   if (!operation.read_only) return { outcome: 'local', reason: 'unsafe operation' };
+  const source = "export const query = `select id, name, tenant_id\nfrom saved_filters\nwhere id = $2 and tenant_id = $1\nlimit 1;`;\n";
+  await writeFile(path.join(output, sourceFile), source, { flag: 'wx' });
   const checked = execFileSync(process.execPath, ['--input-type=module', '-e', "import { query } from './saved-filters.mjs'; process.stdout.write(query + '\\n');"], { cwd: output });
   await writeFile(path.join(output, queryFile), checked, { flag: 'wx' });
   const artifact = await request({ action: 'retrieve-artifact', step: operation.step });
@@ -799,11 +1029,11 @@ async function driveReady(fixture, request, verify, output, initial) {
   assert.equal(artifact.artifact.digest, 'sha256:' + sha256(checked));
   assert.equal(operation.parameter_count, 2);
   assert.equal(operation.max_duration_seconds, 20);
-  const { source_revision, ...operationFacts } = operation;
-  context.operations.push(operationFacts);
+  const { source_revision } = artifact;
+  context.operations.push(operation);
   context.references.push(artifact.artifact.uri);
   const native = await request({ action: 'read-pre-write' });
-  const predecessor = withoutMetadata(fixture, native);
+  const predecessor = workerPacket(native, 'success');
   if (JSON.stringify(native.issues[0].pointer.assignment) !== JSON.stringify(input.target)) {
     return { outcome: 'local', reason: 'changed assignment' };
   }
@@ -811,8 +1041,8 @@ async function driveReady(fixture, request, verify, output, initial) {
   assert.equal(native.approved_source, source_revision);
   await verify('validate-work', ['--mode', 'start', '--format', 'yaml', '--json'], { input: work, context });
   await verify('validate-handoff', ['--mode', 'worker-current', '--json'], { input: currentPacket(predecessor, context) });
-  const pr = await request({ action: 'write-pr', number: prior?.payload.pr.number ?? null,
-    target_branch: prior?.payload.pr.target_branch ?? 'main', source_revision,
+  const pr = await request({ action: 'write-pr', number: priorPr?.number ?? null,
+    target_branch: priorPr?.target_branch ?? 'main', source_revision,
     operation_id: input.target.record_id, preparation_digest: artifact.artifact.digest });
   if (route === 'first-pr') {
     assert.equal(pr.original_request.source_revision, source_revision);
@@ -825,38 +1055,71 @@ async function driveReady(fixture, request, verify, output, initial) {
   assert.equal(read.pr.source_revision, source_revision);
   assert(read.required_ci.every(ci => ci.source_revision === source_revision && ci.status === 'passed'));
   assert.equal(read.pr_receipts.filter(p => p.current && p.number === read.pr.number).length, 1);
-  assert(predecessor.pr_receipts.some(p => p.current && p.source_revision === prior.payload.pr.source_revision));
+  assert(predecessor.pr_receipts.some(p => p.current && p.number === priorPr.number && p.source_revision === priorPr.source_revision));
+  assert.equal(read.conflicts, false);
+  assert.equal(read.draft, false);
+  const incorporation = await request({ action: 'read-incorporation', number: read.pr.number, source_revision });
+  const stack = stackFromObservation(incorporation, read.pr);
   const publisher = await request({ action: 'read-publisher', intent: 'success' });
   if (!publisher.actual_actor) return { outcome: 'local', reason: 'publisher identity unknown' };
-  const current = withoutMetadata(fixture, publisher);
-  await verify('validate-work', ['--mode', 'start', '--format', 'yaml', '--json'], { input: work, context });
+  const current = workerPacket(publisher, 'success');
+  const finalContext = structuredClone(initial.start_observations);
+  finalContext.operations.push(publisher.current_ready.operation);
+  finalContext.references = publisher.current_ready.references;
+  const finalWork = current.requirements.find(row => row.ticket_id === input.target.ticket_id).body;
+  await verify('validate-work', ['--mode', 'start', '--format', 'yaml', '--json'], { input: finalWork, context: finalContext });
   const candidate = JSON.parse(JSON.stringify({
-    ...prior, record_id: '16400000-0000-4000-8000-000000000003',
-    assignment: input.target, operation_id: input.target.record_id,
-    payload: { pr: read.pr, stack_parent: fixture.stackParent, consumed_requests: fixture.admission.payload.requests,
+    schema: admitted.schema, ticket_id: admitted.ticket_id, requirements_digest: admitted.requirements_digest,
+    record_id: '16400000-0000-4000-8000-000000000003', assignment: input.target, operation_id: admitted.operation_id,
+    role: 'implementer', kind: 'implementation', from_stage: 'In Progress', to_stage: 'In Review', resume_authorization: null,
+    payload: { pr: read.pr, stack_parent: stack, consumed_requests: admitted.payload.requests,
       plan: read.refs.plan, plan_review: read.refs.plan_review, ci: read.refs.ci, verification: [read.refs.artifact],
-      prepared_inputs: [{ id: fixture.work.testing_strategy.preparation[0].id, artifacts: [artifact.artifact] }] },
+      prepared_inputs: [{ id: declared.id, artifacts: [artifact.artifact] }] },
   }));
-  return publishExercise(fixture, request, verify, candidate, currentPacket(current, context));
+  assertReadyCandidate(candidate, publisher, input);
+  return publishExercise(fixture, request, verify, candidate, currentPacket(current, finalContext), input);
 }
 
 async function driveInability(fixture, request, verify, initial) {
-  const input = withoutMetadata(fixture, initial);
-  const { route } = fixture;
-  const intent = route === 'blocked' ? 'blocked' : 'dependency_wait';
+  assert(!Object.hasOwn(initial, 'publisher') && !Object.hasOwn(initial, 'inability'));
+  const work = parseWork(initial.requirements.find(row => row.ticket_id === initial.target.ticket_id).body);
+  const issue = initial.issues.find(row => row.id === initial.target.ticket_id);
+  assert(issue.pr_history_complete && issue.published_prs.length === 0);
+  let intent, payload, missingStep = null;
+  if (work.prerequisites.length) {
+    const dependency = await request({ action: 'read-dependency', key: work.prerequisites[0].ticket });
+    assert.equal(dependency.required_outcome, work.prerequisites[0].required_outcome);
+    assert(dependency.blocking && !dependency.integration.required_fixture_available);
+    assert(dependency.outstanding_requests.length > 0);
+    intent = 'dependency_wait';
+    payload = { pr: null, requests: dependency.outstanding_requests,
+      reason: `The fixture from ${dependency.issue.key} requires its outstanding repair before implementation can complete.`, qa_report: null };
+  } else {
+    const slot = work.testing_strategy.preparation[0];
+    const preparation = await request({ action: 'read-preparation', id: slot.id });
+    assert(!preparation.available && !preparation.can_prepare_in_this_checkout);
+    const step = work.testing_strategy.cases.flatMap(item => item.steps)
+      .find(item => preparation.consumers.includes(item.id) && item.prepared_artifact.preparation_id === preparation.id);
+    assert(step);
+    missingStep = step.id;
+    intent = 'blocked';
+    payload = { pr: null, basis: null, reason: 'missing_input', detail: `${step.id} lacks its reviewed query inputs. ${preparation.origin}`,
+      human_action: `Ask the ${preparation.owner.toLowerCase()} to restore the approved inputs for ${slot.id}.`, evidence: [], qa_report: null };
+  }
   const publisher = await request({ action: 'read-publisher', intent });
   assert.equal(publisher.actual_actor, 'implementer');
-  const native = withoutMetadata(fixture, publisher);
+  assert(publisher.edge);
+  const native = workerPacket(publisher, intent);
   await verify('validate-handoff', ['--mode', 'worker-assignment', '--json'], {
     input: { ...native, publication: 'none', candidate: null, missing_step_id: null },
   });
-  const admission = entries(input).find(x => x.r.record_id === input.target.record_id).r;
+  const admission = entries(native).find(x => x.r.record_id === native.target.record_id).r;
   const candidate = JSON.parse(JSON.stringify({
     ...admission, record_id: '16400000-0000-4000-8000-000000000004',
-    assignment: input.target, role: 'implementer', kind: intent, from_stage: 'In Progress',
-    to_stage: route === 'blocked' ? 'Blocked' : 'Rework Queued', payload: initial.inability,
+    assignment: native.target, role: 'implementer', kind: intent, from_stage: 'In Progress',
+    to_stage: intent === 'blocked' ? 'Blocked' : 'Rework Queued', payload,
   }));
-  return publishExercise(fixture, request, verify, candidate, native);
+  return publishExercise({ ...fixture, missingStep }, request, verify, candidate, native);
 }
 
 test('P164 H01 and H02 exercise observed action boundaries with real validators', async t => {
@@ -907,6 +1170,48 @@ test('P164 H01 and H02 exercise observed action boundaries with real validators'
   }
 });
 
+test('P164 refuses stale pre-write source and refreshes before the one actual mock PR update', async t => {
+  const { dir } = await temporary(t);
+  const fixture = readyFixture();
+  const audit = [];
+  const request = simulator({ ...fixture, route: 'ready' }, dir, event => audit.push(event));
+  const reply = (action, args = {}) => request({ action, ...args });
+  await reply('read-start', { key: fixture.input.issues[0].key });
+  await reply('read-preparation', { id: 'PREP-QUERY' });
+  await reply('high-plan', { model: 'grok-4.7-high', assignment: fixture.input.target.record_id });
+  const plan = 'Prepare the saved-filter lookup.';
+  await writeFile(path.join(dir, 'plan.md'), plan);
+  const plan_sha256 = sha256(plan);
+  const profile = { type: 'generalPurpose', machine: 'same_machine', plan_sha256 };
+  await reply('high-review', { model: 'grok-4.7-high', ...profile });
+  await reply('medium-authority', { plan_sha256 });
+  await reply('medium-dispatch', { model: 'grok-4.7-medium', ...profile });
+  await reply('read-operation', { step: 'TC-01.S3' });
+  const query = 'select id, name, tenant_id from saved_filters where id = $2 and tenant_id = $1 limit 1;';
+  await writeFile(path.join(dir, sourceFile), `export const query = ${JSON.stringify(query)};\n`);
+  await writeFile(path.join(dir, queryFile), query);
+  const old = await reply('retrieve-artifact', { step: 'TC-01.S3' });
+  const predecessor = await reply('read-pre-write');
+  assert.equal(predecessor.approved_source, old.source_revision);
+  const intended = { number: fixture.prior.payload.pr.number, target_branch: fixture.prior.payload.pr.target_branch,
+    source_revision: old.source_revision, operation_id: fixture.input.target.record_id, preparation_digest: old.artifact.digest };
+  await appendFile(path.join(dir, sourceFile), '// The local source changed after the initial inspection.\n');
+  await assert.rejects(reply('write-pr', intended), /scratch source changed/u);
+  const stale = await reply('read-pre-write');
+  assert.equal(stale.can_write_pr, false);
+  assert.deepEqual(stale.pr_receipts, predecessor.pr_receipts);
+  const refreshed = await reply('retrieve-artifact', { step: 'TC-01.S3' });
+  const approved = await reply('read-pre-write');
+  assert.equal(approved.can_write_pr, true);
+  assert.equal(approved.approved_source, refreshed.source_revision);
+  assert.notEqual(refreshed.source_revision, old.source_revision);
+  assert.equal(refreshed.artifact.digest, old.artifact.digest);
+  const write = await reply('write-pr', { ...intended, source_revision: refreshed.source_revision });
+  assert.equal(write.outcome, 'updated');
+  assert.equal(write.source_revision, refreshed.source_revision);
+  assert.equal(audit.filter(event => event.action === 'write-pr' && !event.result.rejected).length, 1);
+});
+
 async function prepareExercise(directory, caseId) {
   const fixture = exercise(caseId);
   const { input } = fixture;
@@ -938,6 +1243,8 @@ account/ID and HTTPS strings are fixture data. Do not contact those services.
 | Action | Additional input fields |
 | --- | --- |
 | read-start | key |
+| read-preparation | id (declared preparation ID) |
+| read-dependency | key (declared prerequisite key) |
 | high-plan | model, assignment (record UUID) |
 | high-review | model, type, machine, plan_sha256 (hex) |
 | medium-authority | plan_sha256 |
@@ -946,7 +1253,8 @@ account/ID and HTTPS strings are fixture data. Do not contact those services.
 | read-pre-write | none |
 | write-pr | number or null, source_revision, target_branch, operation_id, preparation_digest |
 | read-pr | source_revision |
-| read-publisher, read-final | intent |
+| read-incorporation | number (child PR), source_revision |
+| read-publisher, read-final | intent (success, blocked or dependency_wait) |
 | append | issue, operation_id, record_id, digest, body (actual formatter HTML) |
 | read-comment | comment_id |
 | transition | comment_id, from_stage_id, to_stage_id |
@@ -955,15 +1263,31 @@ account/ID and HTTPS strings are fixture data. Do not contact those services.
 | resolve-append | record_id |
 | resolve-transition | comment_id |
 
-Task type is generalPurpose, machine is same_machine. For the fixture repository,
-Medium writes saved-filters.mjs in output, exporting the tenant-scoped saved-filter
-query. Generate query.sql by executing that code only after checking the prescribed
-operation. The reader needs id, name and tenant_id, tenant in parameter $1 and id
-in $2. No database is contacted. Keep plan.md for review, the actual review reply
-in review.json and the observed local verification in verification.json. Use the
-mock evidence and source revision supplied after their respective reads. Use the
-native packet fields defined in the installed validator docs, excluding adapter
-metadata. Report exact source/current assignment and provenance separately from
+Task type is generalPurpose, machine is same_machine. Read the declared
+preparation availability or the prerequisite's current evidence when applicable.
+A slot may be fillable after the edit. An unavailable source input or unmet
+dependency needs its own supporting observation. Choose the outcome yourself.
+
+\`read-operation\` is a read-only check of the declared capability and bounds.
+It can run before writing any files. Medium writes \`saved-filters.mjs\` in
+output, exporting the tenant-scoped saved-filter query. Generate \`query.sql\`
+by executing the code after verifying the operation. For this mock fixture,
+use one SELECT from saved_filters with the id, name and tenant_id fields and
+the two AND-ed equality predicates for tenant_id at $1 and id at $2. The
+order of fields and predicates, whitespace and case may vary. LIMIT 1 and
+the closing semicolon are optional. The mock observer checks this bounded
+shape and does not run a database. Retrieval requires both files.
+\`read-pre-write\` binds the proposed source to the current local bytes and
+current retrieval. If code changes, refresh retrieval and pre-write source
+observations before a provider attempt.
+
+\`read-pr\` observes the updated PR, conflict status, checks and evidence.
+\`read-incorporation\` checks the updated child against the current exact
+parent. Read the selected publisher edge and reassemble strict start from
+fresh operation, reference and retrieval facts on the confirmed current
+head. Keep \`plan.md\` for review, the actual independent reply in \`review.json\`
+and actual local verification in \`verification.json\`. Use the native packet
+fields in the installed validator docs, excluding adapter metadata. Report exact source/current assignment and provenance separately from
 the historical receipt. Write any candidate before requesting append. Preserve it
 and the original request for an uncertain effect.
 `;
