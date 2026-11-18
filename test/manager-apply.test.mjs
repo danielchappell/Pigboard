@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {runApplyFixture,runRepairGroup,packet} from '../scripts/test-manager-apply.mjs';
+import {runApplyFixture,runRepairGroup,assertSenderJourney,packet} from '../scripts/test-manager-apply.mjs';
 import {chooseOrdinaryStream} from '../lib/manager/apply.mjs';
 test('R1-17-H01 ordinary admission and no replay',async()=>{
  const e=await runApplyFixture({repeat:true});assert.equal(e.result.status,'applied',JSON.stringify(e.result));assert.equal(e.result.apply.stage,'complete');assert.equal(e.result.writes,3);assert.deepEqual(e.result.apply.effects,packet.oracle.effects);assert.deepEqual(e.mutations,packet.oracle.mutations);
@@ -258,5 +258,57 @@ for (const [limit, applied] of [[53140, false], [100000, true]]) {
     const notes = rows => rows.flatMap(row => row.response.comments ?? []).filter(comment => comment.id === '990001');
     assert.equal(notes(initial).length, 1);
     assert.deepEqual(notes(fresh), notes(initial));
+  });
+}
+
+test('native sender preserves original disposition across response and State boundaries', async () => {
+  const cases = [
+    {wire_status: 409, saved_status: 409, result_code: 'TRANSITION_REJECTED'},
+    {wire_status: 429, saved_status: 429, result_code: 'TRANSITION_RESPONSE_UNSUPPORTED'},
+    {wire_status: 302, saved_status: 302, result_code: 'TRANSITION_RESPONSE_UNSUPPORTED'},
+    {fault: 'prepare:before', sends: 0, saved_status: null, result_code: 'UNCERTAIN_WRITE'},
+    {wire_status: 409, fault: 'response:before', saved_status: null, result_code: 'UNCERTAIN_WRITE'},
+    {fault: 'finalize:before', result_code: 'UNCERTAIN_WRITE'},
+    {fault: 'finalize:after', outcome: 'applied', result_code: 'UNCERTAIN_WRITE'}
+  ];
+  for (const entry of cases) {
+    const testCase = {wire_status: 204, saved_status: 204, sends: 1, outcome: 'pending', ...entry};
+    const inspectSend = entry.fault?.startsWith('finalize:') === true;
+    const evidence = await runApplyFixture({sendCase: testCase, repeat: true, host: 'handler', inspectSend});
+    assertSenderJourney(evidence, testCase);
+  }
+});
+
+for (const expireAfterPrepare of ['manager', 'writer']) {
+  test(`native sender reports a pre-send deadline at the ${expireAfterPrepare} check`, async () => {
+    const testCase = {expireAfterPrepare, saved_status: null, sends: 0, outcome: 'pending', result_code: 'LIMIT_REACHED'};
+    const e = await runApplyFixture({sendCase: testCase, repeat: true, host: 'handler'});
+    assertSenderJourney(e, testCase);
+
+    const {result, sender, trace, mutations, records, state_calls: calls} = e;
+    const {unexpired, expired, readings, restored} = sender.deadline_clock;
+    assert.deepEqual(readings.slice(0, 2), [expireAfterPrepare === 'writer' ? unexpired : expired, expired]);
+    assert.equal(restored, true);
+    const {attempt_id} = result.apply;
+    const attempt = records.find(row => row.attempt_id === attempt_id && row.kind === 'attempt');
+    const companion = sender.after.find(row => row.SK === 'N#' + attempt_id);
+    assert.equal(result.apply.stage, 'transition');
+    assert.equal(result.apply.hold, true);
+    assert.equal(trace.filter(row => row.method === 'POST' && row.path.endsWith('/transitions')).length, 0);
+    assert.equal(result.writes, 2, 'Only the comment and pointer writes started');
+    assert.deepEqual(result.apply.effects, {...packet.oracle.effects, transition: 'not_attempted', finalization: 'not_attempted'});
+    assert.deepEqual(mutations, packet.oracle.mutations.slice(0, 2));
+    assert.equal(sender.jira_status_after, '1');
+    assert.deepEqual(sender.after, sender.prepare.after);
+    assert.match(companion.request_digest, /^sha256:[a-f0-9]{64}$/);
+    assert.equal(attempt.extensions.pb_capture_request_digest, companion.request_digest);
+    assert.equal(attempt.extensions.pb_capture_status, null);
+    assert(!calls.some(call => ['recordTransitionResponse', 'finalize'].includes(call.name)));
+    assert.equal(e.second.status, 'held');
+    assert.notEqual(e.second.code, 'LIMIT_REACHED');
+
+    const message = result.diagnostics[0].message;
+    assert(message.includes(attempt_id));
+    assert.match(message, /deadline expired before sending the Jira transition.*pending.*inspect.*State/i);
   });
 }

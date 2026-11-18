@@ -69,8 +69,12 @@ It publishes one admission comment, verifies its exact body and unchanged manage
 metadata, retains its reference, publishes and verifies the assignment pointer,
 and durably binds that assignment. Fresh discovery must then confirm unchanged
 source facts apart from this invocation's own verified publication. Finally it
-retains the original transition request, sends it once, retains the complete
-response and conditionally finalizes the same attempt.
+prepares the original transition request and saves the exact Jira comment
+metadata. Only confirmed preparation permits the one transition POST. This
+capture adds one conditional write and one retained item per prepared attempt
+on fresh installations using a package that includes it. See
+[the State capture contract](manager-state.md#retain-and-inspect-original-transition-proof).
+Earlier attempts may lack this evidence and remain readable.
 
 The structured result includes the latest stage reached and, when available, the
 selected scope, immutable ticket ID and original attempt ID. `writes` counts Jira
@@ -92,11 +96,38 @@ For `held`, use the diagnostic with `apply.stage`, `apply.ticket_id`,
 | Intent `unconfirmed` | Check State for the returned original attempt ID. Begin may have reserved it. This invocation stopped before starting Jira writes. |
 | Intent `confirmed` | Inspect the original attempt and its recorded effects in State. Keep confirmed effects separate from uncertain ones. A confirmed transition with unconfirmed finalization remains a partial outcome. |
 
-After a timeout or lost response, preserve the original records and any partial
-effects. Do not search for a possibly stored comment in order to publish again,
-resend a transition, clear the pending attempt, or infer success from Jira status.
-Disable the installation when intervention is needed. Stop preserves pending
-evidence.
+### Inspect the original transition attempt
+
+| Sender observation | What happens next |
+| --- | --- |
+| Preparation failed or was uncertain | The sender stops before the transition. Inspect the original attempt to see whether State retained the prepared request. |
+| Complete, empty HTTP 204 | The transition effect is confirmed. The sender first saves the original reply and then conditionally finalizes the same attempt. |
+| Complete HTTP 409 saved in State | Jira rejected the transition. The sender reports `held` with `TRANSITION_REJECTED`. The attempt remains pending and finalization is `not_attempted`. |
+| Another complete final reply saved in State | The sender reports `held` with `TRANSITION_RESPONSE_UNSUPPORTED`. The attempt remains pending and finalization is `not_attempted`. |
+| Deadline expires after preparation and before sending the transition | The Jira comment and assignment pointer are confirmed. The sender reports `held` with `LIMIT_REACHED` and transition `not_attempted`. Inspect the named pending attempt in State. |
+| Missing, incomplete or invalid transition reply | The transition outcome is unknown. The attempt remains pending with the prepared request and no saved reply. |
+| Uncertain reply save or finalization | Stages `retain_response` and `finalize` identify the uncertain write. The original attempt can show what committed even if State's acknowledgement was lost. |
+
+The Jira comment and assignment pointer can both be confirmed even when Jira
+rejects the transition. To check what State retained, run the read-only inspection
+from the reviewed package checkout with the prepared dependencies, customer
+configuration, original installation receipt and named AWS profile for the
+canonical operator role. See [the bound customer CLI](manager-state.md#bound-customer-cli).
+Replace `<UUID>` with the sender's `apply.attempt_id` and keep the `attempt:` prefix.
+
+```sh
+node scripts/manager-state.mjs inspect --config FILE --installation RECEIPT --operator-profile NAME --kind attempt --record-id 'attempt:<UUID>'
+```
+
+Append `--json` for the same observation as structured data. Check the recorded
+HTTP status and time, the attempt outcome and its publication reference before
+any subsequent action. If needed, inspect the original stream to confirm its
+pending attempt ID. A saved reply and a finalized attempt are separate facts.
+Leave the original records and partial effects in place. Ordinary invocations
+keep the pending stream held and send nothing for that attempt. Disable the
+installation when intervention is needed. Stop preserves pending evidence.
+Operator inspection of the full native evidence and settlement are planned
+separately. Real installation acceptance is pending.
 
 The invocation budget must cover ten bounded State calls, two bounded acquisitions,
 five Jira writer requests and one writer credential resolution. Configuration is
@@ -111,9 +142,18 @@ node --test test/manager-apply.test.mjs test/jira-write.test.mjs
 ```
 
 They use the actual collector, ordinary policy and State APIs with local simulated
-providers. The three prescribed groups cover ordinary admission/repeat, boundary
-uncertainty and existing holds. They do not establish live Jira/AWS access, worker
-acceptance, hosted CI, release readiness or designated-human PASS.
+providers. Run the two original-transition evidence groups from the reviewed
+checkout with prepared dependencies:
+
+```sh
+node scripts/test-manager-apply.mjs --group SEND-H01
+node scripts/test-manager-apply.mjs --group SEND-H02
+```
+
+Retain each group's JSON with the exact command and source revision. The groups
+check completed replies, preparation and reply faults, and read-only restart
+inspection against disposable providers. Designated human acceptance, hosted CI,
+release and live Jira and AWS behavior require separate evidence.
 
 After unconfirmed membership retention or begin, a later independent invocation
 can admit work only after complete coherent reads find no pending

@@ -1,9 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { recordId, projectRetainedInventory, transitionPublication, transitionRequestDigest, transitionProof, CAPTURE_KEYS } from '../lib/state/contract.mjs';
 import { transitionFixture, proofFixture, expectedCommitment } from '../scripts/test-transition-proof.mjs';
 import { fixture, prepared, beginInput, finalizeInput, allLimits, row } from './helpers/state-provider.mjs';
+
+const { marshall } = createRequire(new URL('../runtime/aws/package.json', import.meta.url))('@aws-sdk/util-dynamodb');
+const companionBytes = item => Buffer.byteLength(JSON.stringify(marshall(item)));
 
 // Future adapters run these same observable invariants through their own disposable
 // provider harness. Fault/fixture setup belongs to the harness, never the state API.
@@ -284,31 +288,56 @@ test('begin rejects current-attempt publication before I/O and preserves prior r
     assert.deepEqual(row(accepted.provider, 'attempt', fixture.attemptA).publication, [reference, proofFixture.reference]);
     assert.equal(transitionProof(row(accepted.provider, 'attempt', fixture.attemptA)).state, 'prepared');
   } finally { accepted.state.close(); }
-  const boundary = await prepared();
-  try {
-    const prior = fullPublication.slice(0, 99);
-    const outcome = await boundary.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: prior } }));
-    assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
-    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, prior);
-    const input = extra => ({
-      attempt_id: fixture.attemptA.attempt_id,
-      expected_installation_revision: row(boundary.provider, 'installation', fixture.binding).revision,
-      expected_stream_revision: row(boundary.provider, 'stream', fixture.streamA).revision,
-      expected_attempt_revision: row(boundary.provider, 'attempt', fixture.attemptA).revision,
-      now: fixture.now, ...extra
-    });
-    assert.equal((await boundary.state.retainPublication(input({ reference: proofFixture.reference }))).status, 'confirmed');
-    const retained = [...prior, proofFixture.reference];
-    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, retained);
-    const observations = structuredClone(proofFixture.publication_observations);
-    observations.comments = retained.map(reference => ({ ...observations.comments[0], reference }));
-    assert.equal((await boundary.state.prepareTransitionCapture(input({
-      transition_id: proofFixture.transition_id, producer_invocation_id: proofFixture.producer_invocation_id,
-      publication_observations: observations
-    }))).status, 'confirmed');
-    assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, retained);
-    assert.equal(transitionProof(row(boundary.provider, 'attempt', fixture.attemptA)).state, 'prepared');
-  } finally { boundary.state.close(); }
+  for (const count of [83, 100]) {
+    const boundary = await prepared();
+    try {
+      const prior = fullPublication.slice(0, count - 1);
+      const outcome = await boundary.state.begin(beginInput({ attempt: { ...fixture.attemptA, publication: prior } }));
+      assert.equal(outcome.status, 'confirmed', JSON.stringify(outcome));
+      assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, prior);
+      const input = extra => ({
+        attempt_id: fixture.attemptA.attempt_id,
+        expected_installation_revision: row(boundary.provider, 'installation', fixture.binding).revision,
+        expected_stream_revision: row(boundary.provider, 'stream', fixture.streamA).revision,
+        expected_attempt_revision: row(boundary.provider, 'attempt', fixture.attemptA).revision,
+        now: fixture.now, ...extra
+      });
+      assert.equal((await boundary.state.retainPublication(input({ reference: proofFixture.reference }))).status, 'confirmed');
+      const retained = [...prior, proofFixture.reference];
+      assert.deepEqual(row(boundary.provider, 'attempt', fixture.attemptA).publication, retained);
+      const observations = structuredClone(proofFixture.publication_observations);
+      observations.comments = retained.map(reference => ({ ...observations.comments[0], reference }));
+      const expectedItem = {
+        PK: 'installation#' + fixture.binding.installation_id, SK: 'N#' + fixture.attemptA.attempt_id,
+        schema: 'pigboard-native-publication/v1', installation_id: fixture.binding.installation_id,
+        site: fixture.binding.site, attempt_id: fixture.attemptA.attempt_id,
+        // A digest always occupies the same encoded space as these fixture hashes.
+        request_digest: proofFixture.reference.digest, publication_digest: proofFixture.reference.digest,
+        comments: observations.comments
+      };
+      const bytes = companionBytes(expectedItem), limit = 32 * 1024;
+      const before = boundary.provider.snapshot(), auditStart = boundary.provider.audit.length;
+      const prepared = await boundary.state.prepareTransitionCapture(input({
+        transition_id: proofFixture.transition_id, producer_invocation_id: proofFixture.producer_invocation_id,
+        publication_observations: observations
+      }));
+      const attempt = row(boundary.provider, 'attempt', fixture.attemptA);
+      assert.deepEqual(attempt.publication, retained);
+      if (count === 100) {
+        assert(bytes > limit);
+        assert.equal(prepared.code, 'TRANSACTION_LIMIT', JSON.stringify(prepared));
+        assert.equal(boundary.provider.snapshot(), before);
+        assert(!boundary.provider.audit.slice(auditStart).some(call => call.name === 'TransactWriteCommand'));
+      } else {
+        assert(bytes <= limit && bytes > limit - 400);
+        assert.equal(prepared.status, 'confirmed', JSON.stringify(prepared));
+        assert.equal(transitionProof(attempt).state, 'prepared');
+        const stored = [...boundary.provider.rows.values()].find(row => row.SK === expectedItem.SK);
+        assert.equal(companionBytes(stored), bytes);
+        assert.deepEqual(stored.comments, observations.comments);
+      }
+    } finally { boundary.state.close(); }
+  }
 });
 
 test('capture ordering requires retained publication and freezes it after preparation', async () => {
@@ -418,4 +447,37 @@ test('independent legacy golden commitments bind exact publication and original 
   assert.equal((await c.prepare()).status, 'confirmed');
   assert.equal(c.records().attempt.extensions.pb_capture_publication_digest, expected.publication_digest);
   assert.equal(c.records().attempt.extensions.pb_capture_request_digest, expected.request_digest);
+});
+
+test('prepare validates exact native metadata and never overwrites an existing companion', async () => {
+  const context = await transitionFixture();
+  try {
+    await context.retain();
+    const original = context.observations.comments[0];
+    const before = context.provider.snapshot();
+    const auditStart = context.provider.audit.length;
+    for (const comments of [
+      [],
+      [original, original],
+      [{...original, reference: {...original.reference, comment_id: '701'}}],
+      [{...original, update_author_id: 'different-author'}],
+      [{...original, updated: '2026-11-15T13:00:00.000+0100'}]
+    ]) {
+      const result = await context.prepare({publication_observations: {...context.observations, comments}});
+      assert.notEqual(result.status, 'confirmed');
+      assert.equal(context.provider.snapshot(), before);
+    }
+    assert(!context.provider.audit.slice(auditStart).some(call => call.name === 'TransactWriteCommand'));
+
+    const {installation_id} = context.binding;
+    const key = {PK: 'installation#' + installation_id, SK: 'N#' + context.records().attempt.attempt_id};
+    const existing = {...key, retained_fixture_marker: 'original'};
+    context.provider.rows.set(JSON.stringify([key.PK, key.SK]), existing);
+    const collision = context.provider.snapshot();
+    const result = await context.prepare();
+    assert.equal(result.code, 'REVISION_CONFLICT', JSON.stringify(result));
+    assert.equal(context.provider.snapshot(), collision);
+    const inspected = await context.inspect();
+    assert.deepEqual(inspected.data.records, [context.records().attempt]);
+  } finally { context.state.close(); }
 });
