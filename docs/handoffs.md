@@ -1226,8 +1226,8 @@ the direct edge from the actual source stage. Supply `publisher` with its
 | `qa` | QA. Use the unique initial review and its verified implementation in that admission. |
 
 The direct destination is Blocked for `blocked` and Rework Queued for
-`dependency_wait`. A candidate carries the current own PR and exact revision
-when one already exists. An implementer can use a null PR with complete
+`dependency_wait`. A candidate carries the current own PR, exact revision and
+observed target branch when a PR already exists. An implementer can use a null PR with complete
 pre-publication history. The implementer's blocker basis is null. Reviewer and
 QA blockers carry the exact predecessor reference. Supply current parent
 completion, PR and evidence when the verified implementation claims
@@ -1259,8 +1259,10 @@ missing their execution inputs. Invalid supplied context holds the result.
 - For `dependency_wait`, supply typed, outstanding repair or stack request
   references that block this issue or an applicable declared dependency.
   Include every still-blocking root and the reason work must wait. A request
-  already incorporated by the verified implementation or resolved by coherent
-  QA cannot be the reason to wait.
+  already incorporated by the verified implementation cannot be the reason to
+  wait. Coherent QA on the subject's exact prior admission chain can resolve a
+  root, including through a supplied resolution pair. Sibling QA leaves this
+  assignment's roots outstanding.
 
 Set `missing_step_id` to null for preflight and all other reasons or intents.
 Select one publication state and keep the original raw candidate private.

@@ -656,6 +656,8 @@ const assignmentCliCases=new Set([
  'B-unresolvable-native-assignment','B-schema-valid-unsupported-kind','C-all-NOT_RUN-unpublished',
  'D-mixed-original-PASS-FAIL-NOT_RUN','D-executed-operation-changed','D-post-PR-advanced-head-readback',
  'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
+ 'E-explicit-sibling-pair-readback','E-explicit-ancestor-readback',
+ 'E-stack-root-incorporated-by-ancestor-is-resolved','E-outstanding-stack-root-native-readback',
  'I-mixed-invocation-purpose'
 ]);
 test('PGB-161 H02 source CLI uses the same supplied bytes and clear exits outside the checkout',async t=>{

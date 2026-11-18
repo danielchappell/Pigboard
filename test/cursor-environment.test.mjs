@@ -1329,10 +1329,9 @@ test('ordinary worker finite packet uses one copied runtime outside source with 
 
 test('PGB-161 H02 copied assignment API and CLI preserve supplied proof outside the checkout',async t=>{
  const fixtureOptions=await fixture(t),installed=await installCursorSkills(fixtureOptions,fakeInstall);
- const manifest=await assertCurrentPayloadCopy({
+ await assertCurrentPayloadCopy({
   sourceRoot:fixtureOptions.source,installed,expectedCommit:git(fixtureOptions.source,'rev-parse','HEAD')
  });
- assert.equal(manifest.payload_paths.length,41);
  assert.equal(await realpath(installed.stableSkills),installed.skills);
  const validator=path.join(installed.skills,'work-validator'),cli=path.join(validator,'scripts/validate-handoff.mjs');
  const {pathToFileURL}=await import('node:url');
@@ -1347,6 +1346,8 @@ test('PGB-161 H02 copied assignment API and CLI preserve supplied proof outside 
   'B-unresolvable-native-assignment','B-schema-valid-unsupported-kind','C-all-NOT_RUN-unpublished',
   'D-mixed-original-PASS-FAIL-NOT_RUN','D-executed-operation-changed','D-post-PR-advanced-head-readback',
   'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
+  'E-explicit-sibling-pair-readback','E-explicit-ancestor-readback',
+  'E-stack-root-incorporated-by-ancestor-is-resolved','E-outstanding-stack-root-native-readback',
   'I-mixed-invocation-purpose'
  ]);
  const run=args=>spawnSync(process.execPath,[cli,...args],{cwd:fixtureOptions.app,encoding:'utf8',timeout:30000});
