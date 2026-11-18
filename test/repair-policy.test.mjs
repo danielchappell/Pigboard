@@ -564,13 +564,77 @@ function r3aPreparedCopy(dir){
 }
 test('R3A-04 exact combined envelope bound preserves complete proof and rejects one over in source and copy',()=>{
  const exact=r3aBound(50),over=r3aBound(50,true),dir=mkdtempSync(path.join(tmpdir(),'pgb82-bound-'));try{const copied=r3aPreparedCopy(dir),source=new URL('../',import.meta.url).pathname;
- const results=[];for(const [name,c]of [['exact',exact],['over',over]]){const input=path.join(dir,name+'.json');writeFileSync(input,JSON.stringify(c));const script=`import fs from 'node:fs';import{composeOrdinarySnapshot}from './lib/manager/snapshot.mjs';import{previewSnapshot}from './lib/manager/decisions.mjs';const c=JSON.parse(fs.readFileSync(process.argv[1]));const composed=composeOrdinarySnapshot(JSON.stringify(c.config),c.inspection,c.state);console.log(JSON.stringify({composed,preview:composed.valid?previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'}):null}));`;const reports=[];
+ const omitted=structuredClone(over),disabled=structuredClone(over);
+ delete omitted.config.manager.rework_enabled;
+ disabled.config.manager.rework_enabled=false;
+ const results=[];for(const [name,c]of [['exact',exact],['over',over],['omitted',omitted],['disabled',disabled]]){const input=path.join(dir,name+'.json');writeFileSync(input,JSON.stringify(c));const script=`import fs from 'node:fs';import{composeOrdinarySnapshot}from './lib/manager/snapshot.mjs';import{previewSnapshot}from './lib/manager/decisions.mjs';const c=JSON.parse(fs.readFileSync(process.argv[1]));const composed=composeOrdinarySnapshot(JSON.stringify(c.config),c.inspection,c.state);console.log(JSON.stringify({composed,preview:composed.valid?previewSnapshot(JSON.stringify(c.config),JSON.stringify(composed.snapshot),{mode:'ordinary'}):null}));`;const reports=[];
  for(const root of [source,copied]){const p=spawnSync(process.execPath,['--input-type=module','-e',script,input],{cwd:root,encoding:'utf8',env:{...process.env,NODE_PATH:''},maxBuffer:32*1024*1024});assert.equal(p.status,0,p.stderr);reports.push(JSON.parse(p.stdout));}assert.deepEqual(reports[1],reports[0],name);results.push(reports[0]);}
  const bounded=results[0];assert.equal(bounded.composed.valid,true,JSON.stringify(bounded.composed.diagnostics));assert.equal(bounded.composed.snapshot.repair_receipts.length,100);assert.equal(bounded.composed.snapshot.issues.filter(i=>i.required_requests.length===1).length,50);assert.equal(bounded.preview.valid,true);assert.equal(bounded.preview.streams[0].proposal.kind,'admit_repair');assert.equal(bounded.preview.writes,0);assert.equal(bounded.preview.execution_authorized,false);assert.equal(bounded.preview.external_freshness,'not_evaluated');assert.equal(results[1].composed.valid,false);assert.deepEqual(results[1].composed.diagnostics.map(({code,path})=>({code,path})),[{code:'LIMIT',path:'/repair_receipts'}]);assert.equal(results[1].composed.snapshot,null);
+ for(const {composed,preview} of results.slice(2)){
+  assert.equal(composed.valid,true,JSON.stringify(composed.diagnostics));
+  const {completion_receipts,repair_receipts,issues}=composed.snapshot;
+  const assignments=issues.filter(i=>i.pointer?.assignment).map(i=>i.pointer.assignment);
+  assert.equal(assignments.length,51);
+  assert.equal(completion_receipts.length,0);
+  assert.deepEqual(repair_receipts.map(r=>JSON.parse(r).target),assignments);
+  assert.equal(preview.valid,true);
+  assert.equal(preview.streams[0].selected_ticket_id,null);
+  assert.equal(preview.streams[0].proposal,null);
+ }
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 test('R3A-01 actual source copied human and JSON CLI preserve exact proposals',()=>{
- const dir=mkdtempSync(path.join(tmpdir(),'pgb82-cli-'));try{const copied=r3aPreparedCopy(dir),source=new URL('../',import.meta.url).pathname;for(const c of r3aPacket().cases){const snapshot=r3aCompose(c),config=path.join(dir,c.id+'-config.json'),input=path.join(dir,c.id+'-snapshot.json');writeFileSync(config,JSON.stringify(c.config));writeFileSync(input,JSON.stringify(snapshot));const expected=r3aPreview(c),outputs=[];
- for(const root of [source,copied]){const pair=[];for(const json of [true,false]){const p=spawnSync(process.execPath,[path.join(root,'scripts/manager-preview.mjs'),'--mode','ordinary','--config',config,'--input',input,...(json?['--json']:[])],{cwd:dir,encoding:'utf8',env:{...process.env,NODE_PATH:''}});assert.equal(p.status,0,p.stdout+p.stderr);assert.equal(p.stderr,'');if(json)assert.deepEqual(JSON.parse(p.stdout),expected);else{assert.match(p.stdout,/No execution authority; writes: 0/);assert.match(p.stdout,/Proposal admit_repair/);assert.doesNotMatch(p.stdout,/Required repair work holds for human handling/);for(const ref of c.expected.request_refs)assert(p.stdout.includes(`Cause: ticket ${ref.ticket_id}; comment ${ref.comment_id}; record ${ref.record_id}; digest ${ref.digest}.`));}pair.push(p.stdout);}outputs.push(pair);}assert.deepEqual(outputs[1],outputs[0],c.id);assert.equal(readFileSync(config,'utf8'),JSON.stringify(c.config));assert.equal(readFileSync(input,'utf8'),JSON.stringify(snapshot));}
- }finally{rmSync(dir,{recursive:true,force:true});}
+ const dir = mkdtempSync(path.join(tmpdir(),'pgb82-cli-'));
+ try {
+  const copied = r3aPreparedCopy(dir);
+  const source = new URL('../',import.meta.url).pathname;
+  for (const c of r3aPacket().cases) {
+   const snapshot = r3aCompose(c);
+   const config = path.join(dir,c.id+'-config.json');
+   const input = path.join(dir,c.id+'-snapshot.json');
+   writeFileSync(config,JSON.stringify(c.config));
+   writeFileSync(input,JSON.stringify(snapshot));
+   const expected = r3aPreview(c);
+   const {assignment, pr, request_refs: requestRefs} = c.expected;
+   const outputs = [];
+   for (const root of [source,copied]) {
+    const args = [path.join(root,'scripts/manager-preview.mjs'),'--mode','ordinary','--config',config,'--input',input];
+    const options = {cwd:dir,encoding:'utf8',env:{...process.env,NODE_PATH:''}};
+    const json = spawnSync(process.execPath,[...args,'--json'],options);
+    assert.equal(json.status,0,json.stdout+json.stderr);
+    assert.equal(json.stderr,'');
+    const report = JSON.parse(json.stdout);
+    assert.deepEqual(report,expected);
+    const proposal = report.streams[0].proposal;
+    assert.equal(proposal.kind,'admit_repair',c.id);
+    assert.deepEqual(proposal.existing_assignment,assignment,c.id);
+    assert.deepEqual(proposal.existing_pr,pr,c.id);
+    assert.deepEqual(proposal.request_refs,requestRefs,c.id);
+    assert.deepEqual(proposal.roots,requestRefs,c.id);
+
+    const human = spawnSync(process.execPath,args,options);
+    assert.equal(human.status,0,human.stdout+human.stderr);
+    assert.equal(human.stderr,'');
+    assert.match(human.stdout,/No execution authority; writes: 0/);
+    assert.match(human.stdout,/Proposal admit_repair/);
+    assert.doesNotMatch(human.stdout,/Required repair work holds for human handling/);
+    const lines = human.stdout.split('\n');
+    assert.deepEqual(lines.filter(line=>line.startsWith('  Existing assignment:')),[
+     `  Existing assignment: ticket ${assignment.ticket_id}; comment ${assignment.comment_id}; record ${assignment.record_id}; digest ${assignment.digest}.`,
+    ],c.id);
+    assert.deepEqual(lines.filter(line=>line.startsWith('  Recorded PR:')),[
+     `  Recorded PR: provider ${pr.provider}; repository ${pr.repository}; number ${pr.number}; source revision ${pr.source_revision}; target branch ${pr.target_branch}.`,
+    ],c.id);
+    assert.deepEqual(lines.filter(line=>line.startsWith('  Cause:')),requestRefs.map(ref=>
+     `  Cause: ticket ${ref.ticket_id}; comment ${ref.comment_id}; record ${ref.record_id}; digest ${ref.digest}.`
+    ),c.id);
+    outputs.push([json.stdout,human.stdout]);
+   }
+   assert.deepEqual(outputs[1],outputs[0],c.id);
+   assert.equal(readFileSync(config,'utf8'),JSON.stringify(c.config));
+   assert.equal(readFileSync(input,'utf8'),JSON.stringify(snapshot));
+  }
+ } finally {
+  rmSync(dir,{recursive:true,force:true});
+ }
 });

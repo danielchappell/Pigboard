@@ -1010,8 +1010,9 @@ Node dependencies and the same canonical configuration. Set the optional boolean
 preserves ordinary new-work-only behavior. No extra CLI flag is needed.
 
 Supply complete acquired native issues/comments and confirmed State facts to
-`composeOrdinarySnapshot` as above. It retains the current QA/admission envelope
-and an exact target envelope for each discovered request. Every envelope keeps
+`composeOrdinarySnapshot` as above. It retains the current QA/admission envelope. With
+repair preview enabled, it also includes an exact target envelope for each
+discovered request. Every envelope keeps
 full reference closure, metadata and original bodies. The existing combined
 100-envelope and aggregate input limits reject overflow; they never truncate a
 request union to fit.
@@ -1031,12 +1032,15 @@ node scripts/manager-preview.mjs --mode ordinary --config /absolute/customer.jso
 node <receipt.skills>/work-validator/scripts/manager-preview.mjs --mode ordinary --config /absolute/customer.json --input /absolute/snapshot-v2.json
 ```
 
-The JSON proposal is `admit_repair` with the real `existing_assignment`, recorded
-`existing_pr`, complete ordered `request_refs` and roots. Parent/child are null,
-stack updates empty and publication not required. Human output shows the same
-proposal and every cause identity. Both retain `writes: 0`,
-`execution_authorized: false` and `external_freshness: not_evaluated`. A recorded
-PR is not a fresh open-PR observation; workers own current applicable checks.
+Compare the `admit_repair` proposal across both outputs. The human view shows
+the selected ticket, proposed stage change, exact existing assignment reference,
+recorded PR identity with source revision and target branch, and each unresolved
+cause in order. JSON reports these under the stream selection and proposal,
+including `existing_assignment`, `existing_pr`, `request_refs` and `roots`. JSON
+also shows null parent and child references and an empty stack-update list.
+Both outputs report that publication is unnecessary, preview has no execution
+authority, writes are zero, and external freshness is unevaluated. Workers
+check the PR's current state when applicable.
 
 Repair prerequisites precede repair, then unrelated Bugs/Stories. Existing pause,
 identity, active/Blocked, ordering and five-Human-Review limits still apply.
