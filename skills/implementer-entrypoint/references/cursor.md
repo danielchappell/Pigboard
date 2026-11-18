@@ -5,7 +5,7 @@ capabilities, not claims about every Cursor version/account.
 
 | Phase | Actual configured profile | Authority |
 | --- | --- | --- |
-| Plan / revise approach | Latest available configured Grok, High | Read scope/code, write the plan, deliver authorized blocker handoff |
+| Plan / revise approach | Latest available configured Grok, High | Read scope/code, write the plan, send a supported early inability to the Jira publisher |
 | Independent plan review | Same configured Grok, High | One fresh independent reviewer per round; read only |
 | Implement / fix / verify / publish | Same configured Grok, Medium | Accepted plan and authorized repository/Jira actions |
 
@@ -47,8 +47,8 @@ Invocation shape:
 Use implementer-entrypoint for the assigned <Story or Bug> currently In Progress.
 Use the verified Grok High planning and isolated one-reviewer profile, then the
 verified Grok Medium execution continuation. Reuse the same PR for rework.
-Publish the evidence and move to In Review only after current required CI passes.
-Block required scope increases or inability to complete the assignment.
+Use Jira final for verified READY or a supported inability. Report scope increases
+and unsupported inability to the operator with retained evidence.
 ```
 
 This profile does not create Jira/Cursor automations, preview environments or Teams
@@ -78,15 +78,20 @@ The High parent composes [Jira preflight](../../implementer-jira/SKILL.md) and
 foreground review per round, with no resume, using the existing plan-review prompt
 and actual ticket/plan/source/base/instructions. Review is read-only by contract;
 generalPurpose does not establish a readonly sandbox. After CLEAN, invoke Medium
-execution with the job execute mode then Jira final mode, actual ticket, accepted plan
+execution with the job execute mode and Jira final when eligible, actual ticket, accepted plan
 and review, source/base, checkout/PR identity, previous action receipts and
 prepared tools/evidence. Wait for the result. Do not repeat execution at High.
+
+A supported inability discovered during High preflight or planning goes to Jira
+final from High, without a Medium dispatch. A local BLOCKED phase reports the
+missing proof, completed and unfinished actions, and needed human action. The
+phase label gives no write authority.
 
 The executor verifies the trusted phase assignment and retained inputs before
 editing. If the approach needs replanning, stop before those edits and return
 NEEDS_HIGH_PLAN with evidence and preserved state. Parent replans at High, obtains
 one fresh High review and dispatches a Medium continuation. Required new scope
-always follows the human BLOCKED route. Preserve the same PR and completed-action
+stays local for a human decision. Preserve the same PR and completed-action
 receipts. Parent reports the returned outcome without repeating external actions.
 
 ### Selection evidence

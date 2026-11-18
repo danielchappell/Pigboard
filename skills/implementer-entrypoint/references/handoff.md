@@ -2,130 +2,108 @@
 
 ## Ordinary worker release boundary
 
-Use the explicit same-release support matrix: source repository
-`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
-`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` and the narrowly defined same-open-PR repair assignment.
-This skill retains its own role-specific proof and action boundaries; the matrix
-grants no resume, wait, null-PR repair or inability publication authority.
+Use the same-release support matrix in source `docs/handoffs.md` or installed
+`<receipt.skills>/work-validator/docs/handoffs.md`, under “Ordinary worker release
+boundary.” Implementer execution supports current new work or non-resumed repair
+of one still-open PR for own assigned requests. The matrix also selects the two
+supported inability outcomes. A phase label grants no authority. The Jira
+publisher independently checks the chosen proof and permission. Unsupported
+assignments stay local with all findings, unfinished checks and original receipts.
 
-Use the same declared layout for the ordinary worker proof/publication contract.
-Use the pinned checker in explicit `--mode worker-current` for actual predecessor
-preflight and real-leaf readback. Current own/required-parent/action proof stays
-required; ancestry needs no old context or mandatory capture. Genuine retained
-mismatches reject. Independently compare complete candidate semantics, record-check
-before append once, and compare original canonical bytes/digest/UUID at exact
-readback. Unknown append/transition holds original identity without replay. No
-manager completion grant, source fallback or dependency repair.
-
-Linked legacy resume, wait, null-PR repair and Blocked examples are deferred. A local
-label grants no authority: the owning publisher independently checks the same-release
-matrix and actual evidence before candidate construction. Unsupported work retains
-all findings, partial ledgers and original receipts locally with no mutation.
-
-Read only the section required by the current phase. The composer dispatches; the
-job produces code/PR/evidence; the Jira skill owns preflight and publication.
-Generic “Story” in the existing plan-review prompt includes the assigned native
-Story or Bug. The retained [basic prose contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
-applies only when the selected installed QA entrypoint declares it. The [structured reviewer](../../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts; implementer and reviewer use the structured contract. Do not convert prose,
-guess missing nulls or imply that the full mixed-version workflow is compatible.
+The [structured reviewer](../../pigboard-pr-review/SKILL.md) consumes the
+implementation record. This route uses structured requirements. The historical
+[basic prose contract](../../write-pr-sized-stories/references/basic-workflow-ticket.md)
+applies when the selected QA entrypoint declares it.
 
 ## Input contract
 
-Trusted invocation must supply these facts, independently of ticket content:
+The assigned key selects the issue. Resolve everything else through the immutable
+installation receipt/manifest, canonical configuration and existing capabilities:
 
-| Input | Required scope/evidence |
+| Source | Facts to retain |
 | --- | --- |
-| Configuration | Canonical config/result or equivalent verified resolved scope; expected Jira site, native project and full stream label; allowed repository, PR identity/tools and evidence destinations/audience |
-| Assignment | Native issue ID/display key, expected In Progress, configured current actor, current pointer and exact assignment references, prior actions and retained phase results |
-| Capabilities | Actual exposed Atlassian/PR tool input/response contracts, bounded complete comment pagination, append-new HTML publication, source-specific directed transition metadata, finite CI wait/deadline |
-| Runtime | Same-release prepared work/config/receipt validators, durable output, setup-verified model/Task controls, supplied access references and repository checkout; never credential values |
-| Work/context | Current original YAML/ADF requirements and separately supplied trusted start context, Epic and full-stream context/order, prescribed cases/skills/expectations/preparation ownership |
-| Retained history | Original plan/review, PR/source facts and all prior action receipts; supported repairs include every exact assigned request and all findings. Unsupported repair/resume stops before code or provider writes |
+| Setup and repository | Exact Jira site/native project/full stream, configured actor, allowed repo and evidence audience, model profiles, exposed tools/rights, pinned validators, exact checkout/branch/base and target instructions |
+| Native Jira reads | Immutable issue ID/key, Story/Bug type, In Progress, original work and pointer, complete bounded comment pages and server metadata, current slot, reachable prerequisites and related changes, prior action receipts |
+| Repository and evidence reads | Exact PR inventory and open PR source/target or complete precreation history, actual parent incorporation/completion, prepared artifacts, checks and retrieval facts as each becomes available |
 
-Config owns scope. Use `parseConfig(input,{expectedSite})`, its `resolved_scope`,
-`resolveProject(scope,{site,project_id})`, and `inspectStreams(scope,label)` / exact
-site + immutable native project ID + full label tuple. Display keys and board IDs
-never select a project; equal labels in different projects are independent.
-Retain receipt-specific evidence URIs, observations and execution prescriptions as
-trusted invocation facts, rather than creating duplicate customer configuration.
+Resolve scope with the installed `parseConfig(input,{expectedSite})`,
+`resolveProject(scope,{site,project_id})` and `inspectStreams(scope,label)`.
+Match the site, immutable project ID and full label. A display key or board number
+cannot select a project. Reuse setup; do not obtain new credentials, read worker
+State, install dependencies, or fall back to another release or strict chain.
 
-Use the installed sibling `work-validator` (or corresponding source modules):
+Use the validation scripts in `<receipt.skills>/work-validator/scripts` and the
+installed library and contracts beside them. Source invocations use `scripts/`:
 
 ```text
-node <receipt.skills>/work-validator/scripts/validate-work.mjs --mode start --input WORK --format yaml --context CONTEXT --json
-node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode record --input RECORD.yaml --format yaml --json
-node <receipt.skills>/work-validator/scripts/validate-handoff.mjs --mode worker-current --input WORKER.json --json
+node <scripts>/validate-work.mjs --mode scheduling --input WORK --format yaml --config CONFIG --scheduling SCHEDULING --json
+node <scripts>/validate-handoff.mjs --mode recorded-history --input HISTORY.json --json
+node <scripts>/validate-work.mjs --mode start --input WORK --format yaml --context CONTEXT --json
+node <scripts>/validate-handoff.mjs --mode worker-current --input WORKER.json --json
+node <scripts>/validate-handoff.mjs --mode worker-assignment --input ASSIGNMENT.json --json
+node <scripts>/validate-handoff.mjs --mode record --input RECORD.yaml --format yaml --json
 ```
 
-`--format adf` accepts original ADF work; worker-current input is JSON only. See the same
-payload's `docs/authoring.md` and `docs/handoffs.md` for exact local contracts.
-`lib/contracts/work.mjs` exposes `validateWork`, `parseWork`/`extractADF`;
-`lib/contracts/handoff.mjs` exposes `extractHandoff`/`digestValue`; receipts use
-`validateWorkerCurrent`. Preserve raw finite-float provenance: never JSON-parse and
-reserialize unvalidated provider work/record text before these checks. Worker input
-is the closed JSON envelope above. Strict `chain` remains a separate legacy proof
-contract; it is not an ordinary-worker fallback. The result exposes `validated_leaf`
-and `qa_report`, not a `leaf` alias. Neither record nor worker-current fetches
-providers or proves live freshness.
+Use `--format adf` for original ADF work. Preserve raw work and native comment
+bodies, including literal provenance. For the canonical requirements fingerprint,
+use the prepared work `parseWork`/ADF `extractADF` and handoff `digestValue`
+on the original valid requirements. Scheduling returns no fingerprint. See the
+installed validator's authoring/handoff docs for the closed input contracts.
+These commands validate supplied facts. None authorizes dispatch, edits or writes.
 
 ## Preflight
 
-Before code or provider writes:
+1. Name the next action. Verify native type/stage/scope, actual capabilities,
+   actor and tools before the affected call. Read current original work,
+   `pigboard.work-context`, complete comments, actual dependency declarations
+   and PR/branch inventories. Bind exact raw requirements digest, pointer and
+   assignment. Use scheduling with canonical config and the actual reachable
+   graph. An unreadable assignment, changed inputs, conflict or unauthorized
+   action holds; keep actual observations and prior receipts.
+2. Use `worker-current` with full context when available for ordinary
+   predecessor proof. If a declared code-dependent input is still future,
+   perform the following read-only preparation for the named plan or edit:
 
-1. Read the actual native issue, description, native project/type/status, full labels
-   and parent. Match configured Story or Bug native type IDs and In Progress in the
-   exact allowed project/stream/repository. Task/Epic, wrong project/equal-label
-   collision, wrong stream/repository or changed stage is NOT_RUN/INELIGIBLE with
-   zero mutations. Unreadable eligibility stops in durable output; it cannot
-   manufacture a Blocked transition for an unverified ticket.
-2. Read exact `pigboard.work-context` with the configured property tool. Resolve its
-   assignment by issue/comment/record/digest through bounded **complete** comment
-   pagination. Verify server author/update-author IDs and unchanged created/updated
-   metadata against configured actors. No newest-comment selection or body-role
-   trust. Missing pages/deleted/edited/mismatched receipt stops. Validate the
-   actual predecessor in worker-current mode and independent native project binding.
-   Require current `new_work` or a nonnull existing-open-PR repair with only own
-   repair_request refs authenticated in the same-ticket previous-assignment lineage,
-   current requirements and no resume authorization. Return every exact request and
-   its complete findings to the composer. Null-PR, stack-request, wait/resume or
-   incomplete lineage stops locally before dispatch or candidate construction. No manager
-   database, lock or proof of exclusive worker ownership is required.
-3. Read current Epic, surrounding full-stream tickets/order and explicit prerequisites
-   for context. Validate complete requirements/start plan with trusted context and
-   canonical requirement digest. Own comments cannot change this fingerprint;
-   native metadata still needs independent rechecking. Missing schema, question,
-   expected result, capability/access or configured scope stops locally with all
-   findings and partial checks; it never authorizes a blocked publication. Context never grants
-   authority to implement adjacent work or interrupt another ticket.
-4. Resolve actual checkout/remote/source/base, target instructions and gates. Read
-   branch PRs, complete retained publication/action receipts before first creation.
-   Any prior uncertain creation forbids another PR. Preserve the genuinely supplied
-   complete precreation snapshot and canonical result, full assignment/predecessor
-   proof, exact references/digests/server metadata and requirements through High/Medium
-   continuation. After creation label these historical precreation proof; do not
-   invent a `published_prs` row in the first-PR preparation snapshot. Retain actual
-   creation/readback and fresh complete inventory separately. Missing eventual
-   preparation cannot become READY. For a supported repair, preserve the existing PR identity and refresh its current
-   source/target and preparation evidence. Null-PR repair and repeated-wait execution
-   remain deferred; their authentic historical receipts remain unchanged.
+   - Target the exact admission with `recorded-history` and real raw pages,
+     native facts and original requirements. Supply genuine retained tuples.
+     Its manager-shaped envelope accepts `manager_assignments: []` when no
+     State rows were supplied. Keep the pointer as native Jira evidence.
+     Match the returned issue/comment/UUID/digest, operation, manager author,
+     unchanged metadata, requirements, project/full stream and stage.
+     Recorded history proves ancestry only, with external freshness unevaluated.
+   - Inspect the complete live role slot for the assignment, including any
+     competing or resumed record. Require initial new work or supported
+     same-open-PR repair with current admitted source/target and no resume.
+     Retain confirmed/unknown actions without replay. Compare current native
+     discovery and required requests with authenticated direct references.
+     Preserve each exact direct request, its lineage and all outstanding
+     returned roots, including older admissions. Prior implementation alone
+     leaves causes outstanding.
+   - For ordinary success, qualifying automatic resolution uses coherent
+     proper-ancestor QA. For an explicit request/completion pair, require coherent
+     same-ticket QA that consumes the exact request or its root closure with
+     verified evidence. Contradictory pairs hold. Sibling QA alone cannot resolve
+     roots. For an inability wait, use the narrower subject/current-stage
+     incorporation and resolution rules of `worker-assignment`. Do not
+     transfer credit between purposes.
+   - For an incorporated parent, verify actual native Human Review or accepted
+     later stage, current pointer and raw requirements, exact coherent parent QA,
+     current acceptable PR/identity/source/target, evidence and same stream/repo.
+     Verify the actual incorporated revision. For merged parents compare the
+     recorded revision with actual base and incorporation evidence. Independent
+     work has a null parent. Missing, stale or ambiguous observations hold.
+   - Verify the specific action independently. High investigation is read-only.
+     Verify the High plan/review profiles and actual dispatch controls. Before
+     Medium verify the exact accepted plan hash, unchanged current assignment,
+     checkout and write authority. PR and Jira writes each need their own current
+     proof. Carry observations and receipts into the continuation. This sequence
+     produces no `worker-current` success and cannot replace it at READY.
 
-5. Check actual predecessor PR, merge, completion and base/incorporation facts.
-   Epic order alone is not lineage. Actual stack dependency needs exact parent
-   ticket/PR, verified completion and incorporated revision, same site/project/full
-   stream/repository. Merged predecessor uses actual configured base and actual
-   merge/incorporation evidence. Unmerged predecessor follows the repository's
-   authorized stacking method. Independent work has null parent. Never infer
-   integration from green parent CI or retarget another ticket. Missing necessary
-   lineage/access stops locally; a confirmed upstream repair preventing completion
-   is local DEPENDENCY_WAIT with exact unresolved request references and full evidence.
-   Stop before candidate construction or append.
-
-Do not make a new assignment or human resume producer. A repair is executable only
-when this release's worker-current checks establish the supported admission and all
-outstanding own requests; a general strict or recorded chain is not a substitute.
-Existing resume and unsupported repair shapes stop locally. Retain original receipts and complete local evidence for human
-handling; no polling, automatic resume, append or transition.
+3. A prospective supported inability uses `worker-assignment` with explicit
+   intent, `publication: none` and the actual Blocked or Rework Queued edge.
+   The same native and next-action checks still apply. Permission to deliver
+   success can exist independently of permission to deliver either inability.
+   A rejected proof holds the chosen action. Do not try a fallback intent.
 
 ## Job contract
 
@@ -174,114 +152,79 @@ alone does not make evidence accessible to a remote reviewer.
 
 ## Record mapping
 
-Use the existing complete `pigboard-handoff/v1` schema and same-release canonical
-examples in `work-validator/docs/handoffs.md`. No schema copy or run keys injected
-into records. Keep **every** canonical field including explicit nulls.
+Use the existing `pigboard-handoff/v1` schema, all canonical fields and explicit
+nulls. Use the admission's `operation_id`. Allocate a candidate UUID once before
+append and retain it with the original raw bytes and canonical digest.
 
-| Job outcome | Ordinary routing |
+| Retained outcome and proof | Candidate and direct edge from In Progress |
 | --- | --- |
-| READY | `kind: implementation`, role implementer, In Progress -> In Review; assignment/operation/requirements, exact `pr`, `stack_parent`, exact complete `consumed_requests` (empty for new_work), plan, independent plan_review, passing ci, verification and every prepared_inputs artifact |
-| DEPENDENCY_WAIT, BLOCKED, NOT_RUN, unsupported repair/resume | Local only: stop before candidate construction or append; no Jira transition. Retain complete findings, unfinished checks, linked reports and original receipts. |
+| READY | `kind: implementation` to In Review. Match exact assignment, operation, requirements, current PR and parent, verified plan/review, passing current CI, verification and every declared preparation. Consume each direct admission request exactly once, with no flattened roots. New work consumes none. |
+| Verified missing prepared input | `kind: blocked` to Blocked with `reason: missing_input`, null basis and an available direct edge. Use the declared `missing_step_id` in detail as a distinct token, and give an actionable human step. Bind the actual current PR or complete first-PR history. |
+| Verified dependency wait | `kind: dependency_wait` to Rework Queued with an available direct edge, exact outstanding request references and the reason work must wait. Require subject-eligible roots unincorporated at the actual stage. |
+| Missing rights, unsafe operation, stale assignment, failed/unknown checks, unclassified absence, unsupported or uncertain actions | Local only. Preserve complete findings, NOT_RUN with reason for unfinished checks and original receipts. |
 
-Use the assignment's `operation_id`; generate one fresh record UUID once before
-first publication and retain it with exact prepared bytes/digest. Never generate a
-new run ID as operation ID. Required parent incorporation follows actual lineage,
-not Epic-order guesses. For unfinished local/CI/prescribed checks, retain each as
-NOT_RUN with reason in the full local report. Implementer `qa_report` is null;
-do not invent QA observations or truncate evidence to obtain READY.
-
-For ordinary READY, `payload.consumed_requests` equals the validated admission's
-`payload.requests` exactly once per direct request: `[]` for new_work, the complete
-assigned union for a supported repair. Both job and publisher independently compare
-`ticket_id`, `comment_id`, `record_id` and `digest` before candidate construction.
-Preserve every finding and unresolved ancestor cause; missing, duplicate or unrelated
-refs hold without mutation. A resolved ancestor must not be consumed again.
-
-Independently compare the complete candidate semantics with current prepared facts:
-assignment/operation/requirements, own PR/source/target, required parent revision,
-plan/review, CI, verification, preparation and intended In Progress -> In Review edge.
-Validate the original unpublished candidate in record mode; shape/formatter success
-is insufficient. Actual predecessors must pass worker-current mode with complete
-current start, own/required-parent/action proof. Never fabricate comment IDs or
-server metadata to validate an unpublished candidate as a leaf. A mechanical mapping
-error may be corrected before the first append only, then all gates are rechecked.
-Conflicting existing slot results hold; an identical confirmed result is an original
-receipt to retain, never a reason to append again. After any append attempt there
-is no corrected replacement append or replay.
+Worker-assignment classifies only supported inability from supplied evidence.
+Unsupported blockage has no candidate. Use null `qa_report` for implementer
+inability. Preserve every cause, compare direct refs by ticket/comment/UUID/digest,
+and check complete current PR history, actual eligibility and source slot.
 
 ## Publication protocol
 
-Use configured existing Atlassian tool contracts: property read, complete paginated
-comments, append-new HTML comment, native issue reads, source-specific transition
-listing and direct transition. The discovered names are `getJiraEntityProperty`,
-`listJiraIssueComments`, `addOrEditJiraIssueComment`, `listJiraIssueTransitions` and
-`transitionJiraIssue`; inspect the currently exposed inputs/responses, never invent
-arguments. `addOrEdit` is allowed only in append-new mode, never old-result editing.
-REST ADF receipts remain readable, not permission to create a REST client or fetch
-credentials. Summaries and linked reports stay outside the canonical block.
+**Retain the actual predecessor for READY.** Once strict start inputs exist and
+before the first PR write, run `worker-current` on the actual current admission.
+For a first PR retain complete genuine precreation inventory with no published
+subject PR. For repair, first create the declared local artifact, then validate
+the full start context and the still-current admitted PR source/target before
+updating it. Do not require post-push CI or deployment at this checkpoint.
+Retain exact original packet/result, pointer, requests, actor/edge and server
+metadata. After the authorized PR create/update, read back the actual PR. Keep
+the pre-write packet historical, and use exactly one current receipt for the
+new head. Never represent the old admitted head as current after updating it.
+A missing pre-write proof holds READY.
 
-1. Before consequential publication reread native eligibility, exact pointer/current
-   assignment, requirements, PR/source/target and check facts. Verify configured
-   actor/destinations and the **source-specific** available edge to the outcome's
-   exact destination. A global transition ID or unknown edge cannot authorize a
-   write. Inspect complete existing slot results; stop conflicts or retain an
-   already confirmed identical receipt. Validate predecessor receipts and candidate
-   as described above. Missing semantic proof prevents publication.
-   For the ordinary first PR, retain genuine historical precreation proof unchanged.
-   Reread exact current pointer, native site/project/type/full stream/status,
-   requirements/assignment operation and complete current result/PR inventory.
-   Exact predecessor bytes/digests/server metadata must match; actual PR creation
-   and readback, own PR/source/target, passing CI, verification/preparation and
-   required parent incorporation remain current. Recheck the direct edge and
-   complete READY request set. Historical PASS cannot substitute for these reads.
-   Missing genuine preparation or proof means local incomplete/unavailable output
-   with no append or transition; never reconstruct history or append a blocker.
+**Check the intended current outcome.** Reread native scope, exact assignment,
+raw work and complete current result slot, applicable PR/parent/evidence and
+permission for the actual source-specific edge. For READY run strict start again
+on the full current context with retrieval, precise prescribed operations and
+current prepared receipts. Match the independently observed current PR/source/
+target, passing CI, plan/review/verification, parent and direct request set to
+the complete candidate semantics. Check the unpublished original in record mode.
+For inability use the same original work and fresh observations, and run
+`worker-assignment` with `publication: unpublished` and the original candidate.
+Never assign native metadata to an unpublished record. A conflicting slot holds.
+Retain an already confirmed identical record as the original receipt.
 
-2. Prepare immutable supported HTML with the same-release deterministic helper:
+**Prepare and append.** Use the actual configured property read, complete
+paginated comment reads, append-new HTML, native issue reads, transition listing
+and direct transition. Inspect the actual exposed contracts. The known tool
+names are `getJiraEntityProperty`, `listJiraIssueComments`,
+`addOrEditJiraIssueComment`, `listJiraIssueTransitions`, `transitionJiraIssue`.
+Use comment append only. The formatter returns a body with the exact candidate:
 
-   ```text
-   node <receipt.skills>/work-validator/scripts/prepare-handoff.mjs --input RECORD.yaml --summary SUMMARY.txt --format html
-   ```
+```text
+node <receipt.skills>/work-validator/scripts/prepare-handoff.mjs --input RECORD.yaml --summary SUMMARY.txt --format html
+```
 
-   Source uses `node scripts/prepare-handoff.mjs` with the same arguments. It returns
-   `{schema:'pigboard-handoff-publication/v1',record_id,record_digest,format,body}`.
-   HTML contains escaped summary and exactly one supported YAML pre/code block;
-   ADF is available for local/REST receipt checks via `--format adf`. Do not have an
-   agent convert text or regex-parse HTML. Invalid/bounded transport fails without
-   truncation. Retain exact returned body/UUID/digest before the first append.
-3. Publish **once**, retain exact returned issue/comment identity. Read back that
-   exact receipt through complete bounded pagination; verify author/update metadata,
-   original canonical record bytes/digest/UUID against the independently retained
-   candidate, plus actual server metadata. Transport wrappers may differ. Use
-   actual observations and complete current inventory to validate this real leaf
-   in worker-current mode; no synthetic prospective receipt or chain fallback.
-   Retain `validated_leaf`/`qa_report` and diagnostics. Never synthesize a success.
-4. After read-back and immediately before transition, reread native source stage,
-   current pointer/assignment, requirements, PR/head/target and CI. Then send **one**
-   direct In Progress -> In Review edge for verified ordinary READY. Retain response and reread native status. Do not put the comment
-   on the transition request, walk intermediate columns, send In Progress, change
-   labels/assignee/pointer, or act on another ticket.
-5. Return exact outcomes, visible record reference, confirmed receipts and observed
-   destination or unknown. Verify report/PR evidence accessibility. Publication does
-   not mean transition, review, QA, merged code or a compatible active full loop.
+Source uses `node scripts/prepare-handoff.mjs` with the same arguments. Keep
+the formatter body, UUID and digest before the single append. Verify native
+readback with actual immutable comment ID, configured author and edit metadata.
+Compare original canonical bytes/digest/UUID against the independently retained
+candidate. For READY run `worker-current` on the real leaf at the new current
+head with the admission as ancestry. For inability use `worker-assignment`
+with `publication: readback` and the same original candidate.
 
-Changed stage stops without overwrite or competing transition. Changed assignment,
-requirements or revision still in source prevents success handoff: keep historical
-evidence and report human handling. Do not manufacture a blocker that cannot bind
-the current canonical assignment. Any inability, failed check, wait or unsupported repair/resume
-stops before candidate construction or append, retaining full local output and
-original receipts without a claim that Jira advanced. No fallback blocked record.
+**Transition and confirm.** Recheck current native source stage, pointer,
+requirements, complete slot, applicable PR/parent/evidence and direct permission
+again. Use the single direct edge for the verified outcome. Do not attach the
+comment to the transition or mutate another field. Reread native destination.
+Comment publication and transition are separate confirmed effects.
 
-Failed/uncertain comment, read-back, pointer input, PR approval or transition ends
-the turn without automatic retry, replacement publication or competing transition.
-The existing **at most one resolving read** of relevant actual state may establish
-a lost response. Only confirmed success and still-valid authority permit the next
-distinct step. Explicit failure or unresolved read never authorizes replay. Retain
-the same prepared bytes/ID after uncertainty; retention is not retry permission.
-Preserve successful earlier actions. Missing Jira/access means durable output, not
-an invented alert/status. Never poll blockers, spawn recovery agents or start the
-next ticket. UUIDs, completion receipts and assignments are not run deduplication
-or exclusive worker ownership.
+Changed assignment, requirements, source, revision or rights holds the affected
+action. There is no fallback blocker. Unknown PR, append or transition permits
+at most one resolving read with original identity. A confirmed result and
+still-valid authority allow the next distinct step. Never replay a failed or
+uncertain action, append a replacement or start another ticket. Retain original
+candidate and full local work so a human can resolve the actual uncertainty.
 
 ## Durable result
 
@@ -298,17 +241,17 @@ executable work schema:
   returned.” Setup observation is not per-run telemetry; no child self-attestation.
 - `prepared_inputs`/verification references, case IDs/expectations/order, commands,
   actual local results and separately current CI; human pending work and limitations.
-- Historical precreation snapshot/result and full chain/metadata/digests when
-  applicable, labelled historical, plus actual PR creation/readback and separately
-  fresh final authority/inventory/outcome reads; never replace one with the other.
+- Historical precreation or pre-update snapshot/result and exact metadata/digests,
+  plus actual PR creation/update readback and fresh final authority, inventory
+  and outcomes.
 - `consumed_requests`, `stack_parent`, `unfinished_checks` with NOT_RUN reasons;
   `candidate_record` or null, exact prepared bytes/digest and confirmed/uncertain
   action receipts; observed `jira_status` or unknown and `recovery_reason`/human
   action/intended resume stage.
 
 READY means implementation/PR/evidence ready at the recorded revision, never
-reviewed/QA-passed/merged. COMPLETED means ordinary READY publication and direct In Review delivery are
-verified; local wait/block is not Jira delivery. Preserve
+reviewed/QA-passed/merged. COMPLETED means the eligible outcome was read back and its direct destination
+was confirmed. Local wait/block has no Jira delivery. Preserve
 READY if only delivery fails. NOT_RUN stops rejected eligibility before work.
 NEEDS_HIGH_PLAN is a phase control return with preserved state, not a new canonical
 record kind or permission to execute the changed approach. A human-authorized
@@ -317,7 +260,10 @@ candidate, append or transition. Never repeat code, PR creation or mutations to 
 
 ## Prepared inputs recipe
 
-For each declared preparation slot, retain its exact `id` and `used_by` order.
+Once the necessary code or fixture exists, fill only each declared mechanical
+slot. Keep its exact `id`, owner and `used_by` order, cases, expectations and
+cleanup. Verify the actual operation with the approved capability, read-only
+status, safe target, duration and exact parameter bindings as applicable.
 Publish one existing `prepared_inputs` entry with artifacts shaped as
 `{label, uri, digest}`. Each artifact's observed `preparation` receipt must bind
 the same PR and requirements, `details.preparation_id` and exact

@@ -23,8 +23,9 @@ The composer uses exactly one fresh High reviewer per round with the shared
 CLEAN on the applicable plan; do not turn reviewer suggestions into new scope.
 Rework can reuse a still-applicable plan only with an explicit recorded basis.
 
-**Execute (Medium).** Verify the trusted continuation and retained plan/assignment/
-checkout/PR/action receipts before editing. Follow target-repository gates and
+**Execute (Medium).** Verify the trusted continuation, unchanged plan hash and
+current assignment/checkout/PR before editing. Verify the next write is authorized
+independently of the publisher’s permission. Follow target-repository gates and
 preserve unrelated work. Apply [engineering-principles](../engineering-principles/SKILL.md)
 without repeating its rules as a report. Resolve ordinary details locally within
 the accepted approach; an omission alone does not require another owner question.
@@ -32,7 +33,8 @@ Incorporate every assigned repair cause and required actual
 parent revision in the same still-open PR. Stop before approach changes with
 NEEDS_HIGH_PLAN; scope growth/missing prerequisites is BLOCKED. A known upstream
 repair preventing completion is DEPENDENCY_WAIT with exact requests. Never replace
-a closed/missing repair PR or infer pre-first-PR history.
+a closed/missing repair PR or infer pre-first-PR history. Keep unavailable
+permissions and ambiguous effects local.
 
 Use [diagnose-problem](../diagnose-problem/SKILL.md) when observed behavior or checks
 contradict expectations, before another speculative fix. Supply a finite allowance
@@ -46,10 +48,12 @@ gaps and rerun affected checks after fixes or conflict resolution. Return its
 revision-bound results and a repeatable recipe in the existing evidence references;
 PASS alone is not READY. Preserve unfinished checks on FAIL or INCOMPLETE.
 
-Prepare only declared mechanical QA artifacts with retrievable hashes, IDs,
-owners/consumers and unchanged expectations/order. Read only named helpers'
-preparation contracts. Consume supplied environment evidence where required; do
-not provision or discover access. Do not claim independent QA or human PASS.
+When the necessary code or fixture exists, fill only the
+[declared preparation slots](../implementer-entrypoint/references/handoff.md#prepared-inputs-recipe).
+Verify the prescribed operation and retrieve the actual hashed bytes as the
+intended audience. Keep unknown authority, unsafe target or missing expectations
+local. Preserve the declared bounds, child order, checks and cleanup. Use the
+named helper's preparation contract. Report independent QA and human cases as pending.
 
 Publish/update one ready non-draft PR through the authorized repository method,
 after its required gates. Verify actual current head/target, no conflicts, and each
@@ -59,16 +63,19 @@ finite mechanism. Fix demonstrated in-scope defects at Medium; changed approach
 needs High review, unknown cause/access/infrastructure needs Blocked. Never weaken
 tests, extend timeouts or repair unrelated infrastructure. A first PR requires
 complete prior receipts and branch-PR inspection; an uncertain creation forbids a
-second PR. No self-approval, merge or deployment.
+second PR. Capture genuine worker-current predecessor proof before opening the
+first PR or updating an admitted open PR, while that state is observable. At a
+repair checkpoint prepare the code-dependent artifact locally on the authorized
+continuation, then validate full start on the admitted PR before updating it.
+Retain that original proof. After readback reassemble strict start and current
+prepared receipts, PR, parent and CI for the actual final revision. No self-approval,
+merge or deployment.
 
-Return evidence and a complete canonical candidate as specified in the
-[record mapping](../implementer-entrypoint/references/handoff.md#record-mapping),
-plus the [durable phase result](../implementer-entrypoint/references/handoff.md#durable-result).
-For READY return exactly the admission's assigned references once, not flattened
-roots; retain every cause/parent incorporation evidence under that mapping. Partial
-wait/block claims no consumption. Preserve genuine precreation proof and actual PR
-creation/readback through continuation and return, following the shared
-[phase-specific publication checks](../implementer-entrypoint/references/handoff.md#publication-protocol).
-Keep unfinished checks explicit and actual action effects distinct from readiness.
-The composer/Jira skill publishes the candidate; the job does not invent provider
-receipts or report Jira advanced.
+Return evidence using the
+[record mapping](../implementer-entrypoint/references/handoff.md#record-mapping)
+and [durable result](../implementer-entrypoint/references/handoff.md#durable-result).
+For READY, return each direct assigned request once and retain every underlying
+cause and parent incorporation. For a possible inability, return the observed
+diagnosis and missing slot/step or eligible outstanding roots, plus unfinished
+work and action receipts. Wait and blocker results claim no consumption. The
+Jira publisher independently checks eligibility and builds the candidate.

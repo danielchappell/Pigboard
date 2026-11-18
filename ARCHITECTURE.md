@@ -41,14 +41,14 @@ preparation, not a complete delivery loop. The pilot's three automations are
 recorded inactive; [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) owns bounded
 live delivery acceptance. The prepared implementer accepts current native
 Story/Bug assignments supported by the pinned
-[worker support matrix](docs/handoffs.md#ordinary-worker-release-boundary) and
-emits only ordinary READY implementation records.
+[worker support matrix](docs/handoffs.md#ordinary-worker-release-boundary) and gathers permitted facts as code-dependent inputs become available. Its Jira
+publisher delivers verified READY or a supported missing-input or dependency-wait
+record under that matrix.
 Reviewer accepts actual implementation receipts; only current approved PASS
 publishes to QA; complete confirmed defects queue a reviewer repair_request.
 QA can queue complete confirmed defects with its original full partial ledger.
-Unsupported assignments and independent inability/wait/block/resume routes retain
-full local findings, partial ledgers and original receipts with no candidate,
-append or transition. The QA composer consumes current structured work and canonical predecessors; it
+Unsupported assignments and outcomes retain full local findings, partial
+ledgers and original receipts without Jira changes. The QA composer consumes current structured work and canonical predecessors; it
 delegates publication to qa-jira. Saved wiring, installed/live acceptance and owner
 activation remain separate gates. No provider adapter or manager state engine
 is added; existing configured Atlassian tools remain the transport.

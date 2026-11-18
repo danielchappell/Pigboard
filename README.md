@@ -38,6 +38,12 @@ for what Pigboard supports today.
    approaches and give each skill a coherent purpose. Compare concrete measured
    results against agents without those skills and relevant alternatives.
 
+In a prepared release, give the implementer your assigned Jira key. It reads the
+current assignment and gathers permitted facts before each action. Review its
+durable result for code readiness, observed Jira status and any human action.
+See [the operator journey](docs/using-pigboard.md#execute-an-assigned-delivery-stage)
+and [the verification recipe](docs/using-pigboard.md#verify-implementer-preparation).
+
 ## Start here
 
 | What you want to do | Guide |
@@ -96,7 +102,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Dependency wait and blockers stop locally before candidate/append, preserving full evidence; no Jira transition. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Prepare declared artifacts as their inputs become available. The same Jira publisher can deliver a verified missing-input blocker or dependency wait. Other inability stays local. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA; complete confirmed defects queue on the same open PR. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review; complete confirmed defects queue with the full partial ledger. |
 | Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicit authorized findings may queue the same open PR through request-rework. |

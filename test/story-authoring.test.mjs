@@ -173,7 +173,7 @@ test('writer scopes prose and structured-helper compatibility to the selected in
 // release boundary. Authoring, raw schema and invocation-authority checks above remain.
 
 test('ordinary implementer and reviewer share explicit worker proof and retained publication safety',async()=>{
- for(const name of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md','implementer-jira/SKILL.md','pigboard-pr-review/references/jira-handoff.md','reviewer-jira/SKILL.md']){
+ for(const name of ['pigboard-pr-review/references/jira-handoff.md','reviewer-jira/SKILL.md']){
   const s=await readFile(new URL('../skills/'+name,import.meta.url),'utf8');
   for(const text of ['worker-current','same-release support matrix','no mutation','Current own/required-parent/action proof','original canonical bytes/digest/UUID','without replay','No\nmanager completion grant'])assert(s.includes(text),name+': '+text);
   assert(s.includes('label grants no authority')&&s.includes('owning publisher independently checks')&&s.includes('Unsupported work retains'),name+': caller labels cannot authorize publication');
@@ -191,10 +191,12 @@ test('ordinary implementer and reviewer share explicit worker proof and retained
  const impl=await readFile(new URL('../skills/implementer-entrypoint/references/handoff.md',import.meta.url),'utf8');
  const mapping=section(impl,'## Record mapping','## Publication protocol'), publication=section(impl,'## Publication protocol','## Durable result');
  assert.match(mapping,/READY \| `kind: implementation`/);
- assert.match(mapping,/Local only: stop before candidate construction or append; no Jira transition/);
- for(const term of ['complete findings','NOT_RUN with reason','original receipts','current prepared facts','record mode','worker-current mode'])assert(mapping.includes(term),term);
- assert(!/kind: (?:dependency_wait|blocked)/.test(mapping));
- for(const term of ['direct In Progress -> In Review edge','original canonical record bytes/digest/UUID','independently retained','in worker-current mode','at most one resolving read','no append or transition','No fallback blocked record'])assert(publication.includes(term),term);
+ assert.match(mapping,/Verified missing prepared input \| `kind: blocked` to Blocked/);
+ assert.match(mapping,/Verified dependency wait \| `kind: dependency_wait` to Rework Queued/);
+ for(const term of ['null basis','declared `missing_step_id`','subject-eligible roots unincorporated','Local only','complete findings','NOT_RUN with reason','original receipts'])assert(mapping.includes(term),term);
+ for(const term of ['genuine precreation','actual current admission','complete candidate semantics','in record mode','original canonical bytes/digest/UUID','independently retained candidate','`publication: unpublished`','`publication: readback`','at most one resolving read','Never replay','no fallback blocker'])assert(publication.includes(term),term);
+ const preflight=section(impl,'## Preflight','## Job contract');
+ for(const term of ['code-dependent input is still future','`recorded-history`','complete live role slot','same-open-PR repair','no resume','proper-ancestor QA','explicit request/completion pair','cannot replace it at READY','actual Blocked or Rework Queued edge'])assert(preflight.includes(term),term);
  const review=await readFile(new URL('../skills/pigboard-pr-review/references/jira-handoff.md',import.meta.url),'utf8');
  const decisions=section(review,'## Freshness and decisions','## Publication protocol'),reviewPublication=section(review,'## Publication protocol','## Durable result');
  assert.match(decisions,/Only complete current approved PASS chooses QA/);
@@ -210,10 +212,11 @@ test('ordinary implementer and reviewer share explicit worker proof and retained
  assert(final.includes('independently classify the complete wrapper assessment'));
  for(const term of ['current approved PASS publishes `review` to QA','complete confirmed in-scope defects','verified removal','own stale approval (or verified absence)','Preserve every finding and pending reference','Incomplete review, discussion, inability, wait, scope increase or unsupported assignment has no candidate or transition','exact intended edge','repair_request','complete candidate semantics','actual predecessors','real leaf','append once','direct In Review -> QA or Rework Queued'])assert(final.includes(term),term);
  const composer=await readFile(new URL('../skills/implementer-entrypoint/SKILL.md',import.meta.url),'utf8');
- assert(section(composer,'1. Read').includes('final** mode only for ordinary READY'));
- assert(section(composer,'1. Read').includes('Early High-phase blockers remain local with no final Jira call'));
+ assert(section(composer,'1. Invoke').includes('Jira **final** for READY or a supported inability'));
+ assert(section(composer,'1. Invoke').includes('An early supported inability goes directly from High to Jira **final** without dispatching Medium.'));
  const publisher=await readFile(new URL('../skills/implementer-jira/SKILL.md',import.meta.url),'utf8');
- assert(section(publisher,'**Final.**').includes('Reject any result other than ordinary READY before candidate construction or append'));
+ const implFinal=section(publisher,'**Final.**');
+ for(const term of ['READY uses strict start','worker-assignment','its own eligible edge','stays local before candidate construction','append once','actual immutable readback','transition once directly'])assert(implFinal.includes(term),term);
 });
 
 test('P165-reviewer complete defect route preserves publisher and own approval boundaries',async()=>{
