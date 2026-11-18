@@ -34,6 +34,34 @@ const nativeComment = row => ({
   created: row.created, updated: row.updated, body: JSON.parse(row.body)
 });
 
+function reverseObjectKeys(value) {
+  if (Array.isArray(value)) return value.map(reverseObjectKeys);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).reverse().map(([key, child]) => [key, reverseObjectKeys(child)]));
+  }
+  return value;
+}
+
+function addMovedProjectFixture(p, moved) {
+  const {config, issues} = p;
+  const {retained_member: member, current, projects} = moved;
+  const [selectedEpic, selectedTicket] = issues;
+  config.projects.push(...projects.map(project => ({...structuredClone(config.projects[0]), ...project})));
+  const makeEpic = (id, key, projectId) => {
+    const epic = {...structuredClone(selectedEpic), id, key};
+    epic.fields.project.id = projectId;
+    const content = epic.fields.description.content[0].content[0];
+    const work = JSON.parse(content.text);
+    work.workstreams = [{label: member.label, story_order: [current.key]}];
+    content.text = JSON.stringify(work);
+    return epic;
+  };
+  const ticket = {...structuredClone(selectedTicket), id: member.ticket_id, key: current.key};
+  Object.assign(ticket.fields, {project: {id: current.project_id}, parent: {id: current.epic_id}, labels: [member.label]});
+  issues.push(makeEpic(member.epic_id, moved.prior_epic_key, member.project_id),
+    makeEpic(current.epic_id, current.epic_key, current.project_id), ticket);
+}
+
 function prepareRepairFixture(p, {historyId, competingBug, ...options}) {
   const history = p.recorded_repair_preview.cases.find(item => item.id === historyId);
   const config = repairFixtureConfig(historyId, options);
@@ -79,7 +107,9 @@ function prepareRepairFixture(p, {historyId, competingBug, ...options}) {
 /** Disposable providers only. No live URL, credential or transport option. */
 export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false,variant=null,health=true,empty=false,logFailure=false,timeout=false,setupFailure=false,repairCase=null,runtime=null}={}){
  const p=structuredClone(packet),repair=repairCase?prepareRepairFixture(p,repairCase):null,config=repair?.config??p.config;
- const regression=variant===null?null:p.regressions[variant];if(variant!==null)assert(regression,'Use a prescribed apply variant.');if(regression)p.issues=regression.issues;if(twoStreams)p.issues=p.dispatch_issues;if(empty)p.issues=[];if(bug)p.issues[1]=p.bug_issue;if(global||hold==='global-only transition')config.manager.transition_edges[0].global=true;
+ const regression=variant===null?null:p.regressions[variant],moved=regression?.moved_project;
+ if(variant!==null)assert(regression,'Use a prescribed apply variant.');if(regression?.issues)p.issues=regression.issues;if(twoStreams)p.issues=p.dispatch_issues;if(empty)p.issues=[];if(bug)p.issues[1]=p.bug_issue;if(global||hold==='global-only transition')config.manager.transition_edges[0].global=true;
+ if(moved)addMovedProjectFixture(p,moved);
  if(hold==='paused Epic')p.issues[0].fields.status.id='1';
  if(hold==='unauthorized scope')p.issues[1].fields.project.id='999';
  if(['queued repair','five Human Review'].includes(hold)){const count=hold==='queued repair'?1:5;for(let n=0;n<count;n++){const issue=structuredClone(p.issues[1]);issue.id=String(1100+n);issue.key='EX-'+String(100+n);issue.fields.status.id=hold==='queued repair'?'6':'5';p.issues.push(issue);}}
@@ -95,8 +125,9 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(health){const row=provider.records().find(r=>r.kind==='installation');provider.seed({...row,extensions:{...row.extensions,health_generation:'apply-fixture-epoch',health_enabled_at:p.time}});}
  const healthLogs=[],timingLogs=[];
  const real=adapter({binding,control,client:provider});
- if(repair){
-   const members=repair.history.state.retained_members.map(m=>({site:binding.site,...m,expected_revision:null}));
+ if(repair||moved){
+   const retained=repair?.history.state.retained_members??[moved.retained_member];
+   const members=retained.map(m=>({site:binding.site,...m,expected_revision:null}));
    const seeded=await real.retainMembers({expected_installation_revision:0,members,now:p.time});
    assert.equal(seeded.status,'confirmed');
  }
@@ -128,7 +159,8 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if(hold==='incomplete shared discovery'){res.writeHead(403);res.end('{}');return;}
    if(!injected&&fault?.startsWith('source-check:')&&scan===2){injected=true;if(fault.endsWith(':before')){req.socket.destroy();return;}res.writeHead(403);res.end('{}');return;}
    const parentId=body.jql.match(/parent = "([0-9]+)"/)?.[1];const matches=body.jql.includes('labels = "pigboard"')?issues.filter(i=>i.fields.labels.includes('pigboard')):parentId?issues.filter(i=>i.fields.parent?.id===parentId):issues.filter(i=>i.fields.labels.includes(body.jql.match(/labels = "([^"]+)"/)?.[1]));
-   value={issues:matches,isLast:true};
+   const projectId=body.jql.match(/project = "([0-9]+)"/)?.[1];
+   value={issues:moved?matches.filter(issue=>issue.fields.project.id===projectId):matches,isLast:true};
   }else{
    const m=path.match(/^\/rest\/api\/3\/issue\/([^/?]+)(.*)$/);assert(m);const issue=issues.find(i=>i.id===m[1]||i.key===m[1]);assert(issue);const suffix=m[2],id=issue.id;
    if(mutation){
@@ -156,7 +188,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if(suffix.startsWith('?fields='))value=issue;
    else if(suffix==='/properties')value={keys:pointers.has(id)?[{key:'pigboard.work-context',self:config.jira.site+issueRoute(id,pointerSuffix)}]:[]};
    else if(suffix.startsWith('/comment?')){
-    if(regression?.deny_comments.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}
+    if(regression?.deny_comments?.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}
     const list=comments.get(id)??[],query=new URLSearchParams(suffix.split('?')[1]),startAt=Number(query.get('startAt')),maxResults=Number(query.get('maxResults'));
     value={startAt,maxResults,total:list.length,comments:list.slice(startAt,startAt+maxResults)};
    }
@@ -168,13 +200,16 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
     if(repair&&scan===2&&fault==='wrong-own-reference:recheck'&&commentId===repair.oracle.new_exact_id){
       value={...value,updated:p.repair_admission.new_request.time};injected=true;
     }
+    if(repairCase?.reorderExactBody&&scan===2&&commentId===repair.oracle.new_exact_id){
+      value={...value,body:reverseObjectKeys(value.body)};
+    }
    }
    else if(suffix==='/properties/pigboard.work-context'&&req.method==='PUT'){pointers.set(id,body);status=201;value=null;}
    else if(suffix==='/properties/pigboard.work-context')value={key:'pigboard.work-context',value:pointers.get(id)};
    else if(suffix==='/transitions'){issue.fields.status.id='2';status=204;value=null;}
    else throw Error('Unexpected fixed fixture route');
   }
-  if(repair)Object.assign(trace.at(-1),{acquisition:scan,status,response:structuredClone(value)});
+  if(repair||moved)Object.assign(trace.at(-1),{acquisition:scan,status,response:structuredClone(value)});
   if(shouldFault){injected=true;if(repair)trace.at(-1).response_lost=true;req.socket.destroy();return;}
   res.writeHead(status,{'content-type':'application/json','x-arequestid':'fixture-request-1'});res.end(value===null?'':JSON.stringify(value));
  }catch(error){serverError=error;res.writeHead(500);res.end('{}');}});
@@ -242,6 +277,16 @@ function assertRepairJourney(evidence, testCase, expected) {
     assert.deepEqual(records, evidence.initial_records);
     assert(!evidence.provider_calls.some(call => call.name === 'TransactWriteCommand'));
     assert(Object.values(result.apply.effects).every(effect => effect === 'not_attempted'));
+    assert.equal(result.apply.attempt_id, null);
+    const message = result.diagnostics.find(diagnostic => diagnostic.code === code)?.message;
+    if (testCase.optOut) {
+      assert.equal(result.apply.scope, null);
+      assert.match(message, /review.*reason.*held streams/i);
+      assert.doesNotMatch(message, /original attempt/i);
+    } else {
+      assert.equal(result.apply.ticket_id, ticket_id);
+      assert.match(message, /selected ticket.*before starting an attempt/i);
+    }
     if (testCase.commentBound) {
       const listed = trace.filter(row => row.path.includes('/comment?')).flatMap(row => row.response.comments);
       assert.equal(listed.length, packet.repair_admission.comment_bound);
@@ -317,7 +362,14 @@ function assertRepairJourney(evidence, testCase, expected) {
     const before = originalComments.find(row => row.id === oracle.new_exact_id);
     if (testCase.id === 'wrong-own-reference') {
       assert.deepEqual(read[0].response, {...nativeComment(before), updated: packet.repair_admission.new_request.time});
-    } else assert.deepEqual(read[0].response, nativeComment(before));
+    } else {
+      const enumerated = nativeComment(before);
+      assert.deepEqual(read[0].response, enumerated);
+      if (testCase.reorderExactBody) {
+        assert.notEqual(JSON.stringify(read[0].response.body), JSON.stringify(enumerated.body));
+        assert.notDeepEqual(Object.keys(read[0].response.body.content[0]), Object.keys(enumerated.body.content[0]));
+      }
+    }
     const ownExact = recheck.filter(row => row.path === issueRoute(ticket_id, '/comment/' + published.comment_id));
     assert.equal(ownExact.length, 1);
     assert.deepEqual(ownExact[0].response, publishedComment);
@@ -375,6 +427,10 @@ function assertRepairJourney(evidence, testCase, expected) {
     assert(!evidence.provider_calls.slice(first.provider_call_count).some(call => call.name === 'TransactWriteCommand'));
     assert(trace.slice(first.trace_length).some(row => row.acquisition > trace[first.trace_length-1].acquisition));
     assert.deepEqual(records, first.records);
+  }
+  if (status === 'held') {
+    const message = result.diagnostics.find(diagnostic => diagnostic.code === code)?.message;
+    assert.match(message, /inspect.*original attempt.*recorded effects.*state/i);
   }
 }
 

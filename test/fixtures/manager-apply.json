@@ -670,6 +670,34 @@
     }
   },
   "regressions": {
+    "moved-project": {
+      "moved_project": {
+        "projects": [
+          {
+            "id": "101",
+            "key": "OLD"
+          },
+          {
+            "id": "102",
+            "key": "MV"
+          }
+        ],
+        "prior_epic_key": "OLD-91",
+        "retained_member": {
+          "project_id": "101",
+          "label": "stream-2",
+          "ticket_id": "1102",
+          "epic_id": "901",
+          "assignment": null
+        },
+        "current": {
+          "project_id": "102",
+          "epic_id": "902",
+          "epic_key": "MV-92",
+          "key": "MV-2"
+        }
+      }
+    },
     "native-members": {
       "issues": [
         {
@@ -1315,6 +1343,7 @@
         {
           "id": "reviewer",
           "historyId": "reviewer",
+          "reorderExactBody": true,
           "status": "applied",
           "stage": "complete",
           "code": "APPLIED",

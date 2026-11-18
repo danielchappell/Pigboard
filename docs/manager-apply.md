@@ -40,12 +40,19 @@ unrelated ready work in its place.
 A later invocation freshly evaluates all streams and may choose another eligible
 stream. This provides deterministic choice without fairness or throughput promises.
 
-The sender checks the member, handoff, reference, State and acquisition bounds
-before retaining membership or beginning an attempt. A repair gets one original
-attempt ID. Its admission records the actual previous assignment, the recorded
-PR and every unresolved cause from the proposal, including older causes after
-a repeated failure. An implementation acknowledgment alone cannot resolve a
-repair cause. Inspect the verified admission record for the PR and cause list.
+For a selected repair, the sender checks the handoff, membership, reference, State
+and acquisition limits it can determine from the acquired facts and planned
+publication before retaining membership. The readers and writer still enforce
+their bounds on actual provider traffic. State still checks conditional revisions
+and transaction limits. New work follows the existing sequence. After eligibility
+and member checks, the sender retains membership, reloads coherent State, and
+prepares the admission before the conditional begin.
+
+A repair gets one original attempt ID. Its admission records the actual previous
+assignment, the recorded PR and every unresolved cause from the proposal,
+including older causes after a repeated failure. An implementation acknowledgment
+alone cannot resolve a repair cause. Inspect the verified admission record for
+the PR and cause list.
 
 The sender retains native membership and a conditional original intent.
 It publishes one admission comment, verifies its exact body and unchanged manager
@@ -55,21 +62,31 @@ source facts apart from this invocation's own verified publication. Finally it
 retains the original transition request, sends it once, retains the complete
 response and conditionally finalizes the same attempt.
 
-The structured result identifies only the chosen scope, immutable ticket ID,
-original attempt ID and last attempted stage. `writes` counts Jira mutation send
-attempts, from zero to three. Each of `intent`, `comment`, `pointer`, `transition`
+The structured result includes the latest stage reached and, when available, the
+selected scope, immutable ticket ID and original attempt ID. `writes` counts Jira
+mutation send attempts, from zero to three. Each of `intent`, `comment`, `pointer`, `transition`
 and `finalization` is `not_attempted`, `confirmed` or `unconfirmed`. A confirmed
 transition can coexist with an unconfirmed finalization. Only `applied` means all
 required response retention and finalization completed. `execution_authorized:false`
 means the returned observation grants no authority for another invocation; its
 effects report what this invocation actually attempted.
 
-`held` means inspect the original scope and attempt. A timeout or lost response
-never permits searching for a possibly stored comment and publishing again,
-resending a transition, clearing the pending intent or inferring success from the
-current Jira status. Disable the installation when intervention is needed; stop
-preserves pending evidence. The sender has no retry queue or automatic reconciliation.
-Keep complete and uncertain facts separately when reporting recovery.
+For `held`, use the diagnostic with `apply.stage`, `apply.ticket_id`,
+`apply.attempt_id` and `apply.effects.intent` to decide what to inspect.
+
+| Evidence in the result | What to inspect |
+| --- | --- |
+| No selected ticket or current attempt | Review the reported reason and any held streams. A pending attempt from an earlier invocation can hold a stream without this invocation selecting a ticket. |
+| Selected ticket, intent `not_attempted`, outside `retain_members` | Review the reason for holding that ticket. A repair preflight refusal occurs before membership retention or reservation. An allocated ID alone does not establish an attempt in State. |
+| Stage `retain_members`, intent `not_attempted` | Verify the selected stream membership and installation revision in State. Retention may have taken effect. This invocation stopped before beginning an attempt or writing to Jira. |
+| Intent `unconfirmed` | Check State for the returned original attempt ID. Begin may have reserved it. This invocation stopped before starting Jira writes. |
+| Intent `confirmed` | Inspect the original attempt and its recorded effects in State. Keep confirmed effects separate from uncertain ones. A confirmed transition with unconfirmed finalization remains a partial outcome. |
+
+After a timeout or lost response, preserve the original records and any partial
+effects. Do not search for a possibly stored comment in order to publish again,
+resend a transition, clear the pending attempt, or infer success from Jira status.
+Disable the installation when intervention is needed. Stop preserves pending
+evidence.
 
 The invocation budget must cover ten bounded State calls, two bounded acquisitions,
 five Jira writer requests and one writer credential resolution. Configuration is
@@ -88,9 +105,8 @@ providers. The three prescribed groups cover ordinary admission/repeat, boundary
 uncertainty and existing holds. They do not establish live Jira/AWS access, worker
 acceptance, hosted CI, release readiness or designated-human PASS.
 
-If membership retention or the original begin returns unconfirmed before Jira
-publication, that invocation stops with zero Jira effects. A later independent
-invocation can admit work only after complete coherent reads find no pending
+After unconfirmed membership retention or begin, a later independent invocation
+can admit work only after complete coherent reads find no pending
 attempt, its new conditional membership retention succeeds and advances the
 installation revision, its follow-up coherent inventory matches that revision,
 and its new conditional begin succeeds. Absence alone is not authority. The later
