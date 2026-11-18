@@ -100,3 +100,27 @@ previously observed native facts, bodies, labels, comments, references and scope
 memberships must remain unchanged apart from this invocation's verified own
 publication. The sender never switches streams to bypass a refusal or replays an
 uncertain effect; inspect the original scope and attempt when held.
+
+## Inspect processing completion
+
+The application result now includes a bounded `processing` observation; the AWS
+runtime adds a sanitized `summary` and emits one root JSON health record for each
+finished valid apply invocation. Existing status, code, writes and every `apply`
+effect keep their original meaning and order. No extra Jira or State call is made
+for health. Use the existing [health command](manager-health.md) for readable or
+JSON inspection with the same state and exit code.
+
+Complete processing requires coherent retained installation/package/configuration
+and enablement identity, full domain acquisition and valid policy evaluation.
+Selected work additionally requires complete unchanged-source recheck and confirmed
+finalization. Empty work and safely evaluated holds can complete processing. A
+pre-existing uncertain attempt stays held and unresolved; newly uncertain effects
+or failed finalization cannot supply completion. An admitted scope alongside an
+incomplete scope remains an applied outcome with incomplete processing health.
+
+Health construction, emission and timing/console failures are contained after
+admission. They cannot replace the original result, repeat effects or trigger a
+new admission. Missing logs are missing evidence, not completion. Invocation-wide
+Jira/writer/State consumption remains unobserved; measured duration and original
+effects are separate. Workers, alarms and automatic recovery remain outside this
+source increment. Existing installed packages and live acceptance are unchanged.

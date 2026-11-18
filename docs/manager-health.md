@@ -1,11 +1,12 @@
 # Inspect manager health
 
 This source command inspects the customer-owned Pig Boss installation.
-Detailed scan summaries and completion health cover preview scans. The ordinary
-apply sender retains basic sanitized invocation/result logs and native Lambda
-metrics; it does not emit a preview scan summary or completion metric. This command
-does not certify apply execution. Old preview evidence cannot satisfy a changed
-apply configuration/enablement identity. It reads
+Detailed summaries cover preview and ordinary apply processing in this source
+revision. Apply completion requires complete acquisition and policy evaluation;
+a selected admission also requires complete recheck and confirmed finalization.
+This is source capability: an older installed package must not be assumed to emit
+apply summaries. Installing, deploying and activating remain separate authorized
+actions. The command reports the verified applied mode and reads
 binding, applied State, the existing log group and fixed CloudWatch metrics. It
 performs no scan, Jira transition, State write or schedule change. Source fixtures
 do not prove deployed AWS permissions, human acceptance or activation. Alarms and
@@ -51,8 +52,9 @@ may reflect ingestion delay; they never supply fabricated completion or an SLA.
 Worker health is always `not_observed`; selected work counts are policy proposals,
 not admissions or Cursor launches.
 
-Every finished valid preview invocation emits one `pigboard-scan-summary/v1`
-record. It contains scan and installation IDs; package, canonical configuration,
+Every finished valid preview or apply invocation constructs one
+`pigboard-scan-summary/v1` summary and attempts one health record. Apply output
+failures are contained and may leave no record. It contains scan and installation IDs; package, canonical configuration,
 health generation and evidence revision; start/end; mode; complete/incomplete/failed
 result; project/stream/issue, Jira request/page and selected/held counts; count
 completeness; elapsed time; configured bounds; measured budget ratios; fixed State
@@ -67,7 +69,19 @@ infrastructure exceptions are failed. Summary fields never contain ticket bodies
 secrets or raw provider messages. At most 100 projects, 64 distinct reason codes
 and 64 KiB sanitized summary are allowed; omitted detail is explicit/incomplete.
 
-Budget utilization compares measured requests, combined search/comment pages,
+Apply scope counts describe observed policy input and proposals. They do not count
+actual Jira mutations; the original runtime result retains those effects separately.
+Invocation-wide Jira request/page/byte/time, writer and State consumption are not
+collected, so those workload totals and ratios stay null/`not_observed`. Measured
+invocation duration remains available. One acquisition pass never represents both
+passes or all invocation work. Newly uncertain writes, failed proof capture or
+unconfirmed finalization are incomplete even when some effects succeeded. A
+pre-existing pending uncertain attempt safely held can be complete processing;
+it remains unresolved. One admitted scope cannot conceal another incomplete scope.
+Health or timing output failure preserves the admission outcome without replay;
+missing telemetry can consequently produce starting or stale health.
+
+For preview, budget utilization compares measured requests, combined search/comment pages,
 Epics, streams, known issues, comments, total response/observation bytes, maximum
 single response bytes, maximum single request time, scan time and invocation time
 with their corresponding limits. The maximum ratio drives warnings (80% by default,
@@ -85,7 +99,8 @@ and stream identities are bounded log fields only.
 Evidence hashes package revision, canonical configuration digest and the retained
 enablement generation. The real configure lifecycle produces the generation after
 host readiness; normal scans/readers never refresh it. Old revision success cannot
-satisfy current health. Initial disabled installation can have no epoch: logs still
+satisfy current health. Mode and retained enabled time must also match; old preview
+evidence cannot satisfy current apply completion. Initial disabled installation can have no epoch: logs still
 must be readable, and epoch metric reads are explicitly not applicable. A newer
 relevant failure lacking epoch remains visible and makes enabled health unknown.
 The reader reacquires both actual host and retained State to reject mixed evidence.
@@ -116,7 +131,23 @@ node scripts/test-manager-health.mjs --case R1-22-H01 --output /tmp/new-health-h
 node scripts/test-manager-health.mjs --all --output /tmp/new-health-evidence
 ```
 
-It accepts only the four existing H01–H04 IDs and a new output directory, uses
+For the additive apply cases, use one selector at a time:
+
+```sh
+node scripts/test-manager-health.mjs --case HEALTH-A-H01 --output /tmp/new-apply-health-h01
+node scripts/test-manager-health.mjs --case HEALTH-A-H02 --output /tmp/new-apply-health-h02
+node scripts/test-manager-health.mjs --case HEALTH-A-H03 --output /tmp/new-apply-health-h03
+node scripts/test-manager-health.mjs --case HEALTH-A-H04 --output /tmp/new-apply-health-h04
+```
+
+H01 covers admission, empty work, holds and mixed scope coverage, including actual
+text/JSON reader output. H02 covers denied acquisition, timeout, new uncertainty,
+finalization and missing binding. H03 covers mode/identity and freshness. H04
+exercises the production root JSON emitter, failed output and denied/changed reads.
+Each uses disposable loopback TLS/DynamoDB/AWS fixtures, never a live customer.
+`--all` retains the original preview packet; it does not rerun the apply groups.
+
+It accepts the four existing R1-22-H01–H04 and four HEALTH-A-H01–H04 IDs and a new output directory, uses
 simulated providers/dummy credentials, preserves partial results and closes local
 fixtures. Local PASS remains distinct from the four human assessments, which stay
 NOT_RUN until performed. Keep evidence, then remove disposable fixture output.

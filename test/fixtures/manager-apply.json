@@ -1262,5 +1262,13 @@
         "pending_attempts": 1
       }
     }
+  },
+  "health_oracle": {
+    "admission": "complete",
+    "empty": "complete",
+    "paused_epic": "complete",
+    "existing_uncertainty": "complete",
+    "isolated_comments": "incomplete",
+    "new_uncertainty": "incomplete"
   }
 }

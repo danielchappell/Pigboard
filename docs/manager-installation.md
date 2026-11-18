@@ -461,8 +461,21 @@ per-installation metric dimensions, so the reader fixes requests in code. Existi
 operator lifecycle permissions remain. No new resource, alarm, SNS action, runtime
 metric-write permission, second State store or activation is installed by health.
 
-Detailed scan health applies to preview scans. The ordinary apply sender keeps
-its basic sanitized invocation/result logs and native Lambda metrics; it emits no
-preview scan summary or completion metric. Inspect apply outcomes through those
-logs and retained attempt evidence. A saved preview success does not prove apply
-completion or allow an old configuration/enablement identity to become healthy.
+Current source detailed health covers preview and ordinary apply processing through
+[the same health command](manager-health.md). Apply completion requires complete
+acquisition and policy evaluation; selected work also needs complete unchanged-source
+recheck and confirmed finalization. Complete empty work and safely evaluated
+pre-existing holds can complete processing without resolving held work. Newly
+uncertain effects or unconfirmed finalization cannot supply completion. Original
+apply outcome logs and retained attempt evidence still describe actual effects.
+Invocation-wide Jira, writer and State consumption remains unobserved.
+
+The historical installed acceptance baseline
+`1af6f9387fa9e762530294012ec015f3c580aa32` predates this source addition. Its detailed
+health covers preview only; its apply sender emits basic sanitized outcome logs and
+native Lambda metrics, without apply completion summaries or metrics. Do not assume
+that an older installed package includes current source capability. Source fixtures
+do not establish installed/live acceptance, upgrade a package or authorize activation;
+general source upgrades remain outside configure's supported-change boundary.
+A saved preview success never proves current apply completion: mode, package,
+configuration and retained enablement identity must match.

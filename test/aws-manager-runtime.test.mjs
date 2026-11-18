@@ -52,4 +52,6 @@ test('normal observation enforces bounded concurrency without blocking stopped r
 
 test('manifest canonical configuration rejects unusable receipts before services',async(t)=>{for(const row of await manifestConfigurationJourney())t.diagnostic(JSON.stringify(row));});
 
+test('apply unavailable setup has a sanitized unbound failed summary and invalid event has none',async()=>{const {runApply}=await import('../lib/aws/manager-lambda.mjs');const logs=[];const failed=await runApply({operation:'apply'},{configText:'invalid',healthLog:r=>logs.push(r)});assert.equal(failed.status,'unavailable');assert.equal(failed.summary.result,'failed');assert.equal(failed.summary.binding_status,'unavailable');assert.equal(logs.length,1);const invalid=await runApply({operation:'apply',extra:true},{healthLog:r=>logs.push(r)});assert.equal(invalid.summary,undefined);assert.equal(logs.length,1);});
+
 test('original CREATE initialization accepts proven creation and preserves refusal boundaries',async(t)=>{for(const row of await originalCreateInitializationJourney())t.diagnostic(JSON.stringify(row));});

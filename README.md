@@ -2,6 +2,12 @@
 
 **Pig Boss** is Pigboard's planned customer-hosted manager: one AWS installation for multiple Jira projects, project-scoped workstreams and basic operating health. See the [current design](docs/architecture/pig-boss-operations.md) and [MVP delivery set](docs/delivery/manager-r1/README.md). This behavior is not shipped yet.
 
+The current source [health command](docs/manager-health.md) inspects preview and
+ordinary apply processing with readable or JSON results. It distinguishes complete
+processing, held work and incomplete effects; worker completion and alarms remain
+outside this capability. Source checks do not establish installed/live acceptance.
+
+
 Pigboard helps agents deliver scoped Jira work through implementation, independent
 PR review and prescribed QA. Jira holds requirements and progress; Cursor runs the
 prepared skills; humans review and approve what ships.
