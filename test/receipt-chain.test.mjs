@@ -415,7 +415,7 @@ const original160SectionHashes={
   "repeated_parent": "sha256:e6a3cb5dd005083ec0d430bde53f6f116b23f908d7bc48d2a7d32d7d1cb5c94b"
 };
 test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
- assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current','rework_queue_p165','repair_loop_p166'].sort());
+ assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current','rework_queue_p165','repair_loop_p166','worker_assignment_h02'].sort());
  for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
  // A changed current copied test file is not an archived-prefix reconstruction obligation.
 
@@ -658,6 +658,7 @@ const assignmentCliCases=new Set([
  'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
  'E-explicit-sibling-pair-readback','E-explicit-ancestor-readback',
  'E-stack-root-incorporated-by-ancestor-is-resolved','E-outstanding-stack-root-native-readback',
+ 'E-explicit-shared-root-parent-first','E-explicit-shared-root-child-first',
  'I-mixed-invocation-purpose'
 ]);
 test('PGB-161 H02 source CLI uses the same supplied bytes and clear exits outside the checkout',async t=>{

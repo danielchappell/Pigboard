@@ -1348,6 +1348,7 @@ test('PGB-161 H02 copied assignment API and CLI preserve supplied proof outside 
   'E-unconsumed-wait-and-current-parent','E-unconsumed-wait-native-readback','E-consumed-root-native-readback',
   'E-explicit-sibling-pair-readback','E-explicit-ancestor-readback',
   'E-stack-root-incorporated-by-ancestor-is-resolved','E-outstanding-stack-root-native-readback',
+  'E-explicit-shared-root-parent-first','E-explicit-shared-root-child-first',
   'I-mixed-invocation-purpose'
  ]);
  const run=args=>spawnSync(process.execPath,[cli,...args],{cwd:fixtureOptions.app,encoding:'utf8',timeout:30000});

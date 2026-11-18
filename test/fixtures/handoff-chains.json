@@ -124520,6 +124520,136 @@
         }
       },
       {
+        "id": "E-explicit-shared-root-parent-first",
+        "base": "E-stack-root-incorporated-by-ancestor-is-resolved",
+        "mode": "worker-assignment",
+        "patches": [
+          {
+            "path": [
+              "request_resolutions"
+            ],
+            "value": [
+              {
+                "request": {
+                  "ticket_id": "1000",
+                  "comment_id": "2032",
+                  "record_id": "00000000-0000-4000-8000-000000000032",
+                  "digest": "sha256:b9ec40fb912f4da6c7141dc8aeefaf8eeb399d09a76cb2669d18c87374079da1"
+                },
+                "completion": {
+                  "ticket_id": "1000",
+                  "comment_id": "2036",
+                  "record_id": "00000000-0000-4000-8000-000000000036",
+                  "digest": "sha256:f49e94141828ec4f4ac617c11363080daf7b051a0ec8aae25b85740721d07ae5"
+                }
+              },
+              {
+                "request": {
+                  "ticket_id": "1001",
+                  "comment_id": "2037",
+                  "record_id": "00000000-0000-4000-8000-000000000037",
+                  "digest": "sha256:8e5ee174d2f9f278d3d44deacc71644fe92f648b20ceba2c8bacb00fbd8523ff"
+                },
+                "completion": {
+                  "ticket_id": "1001",
+                  "comment_id": "2041",
+                  "record_id": "00000000-0000-4000-8000-000000000041",
+                  "digest": "sha256:5ee5dc76e4678e7a29a9fc7d003f47937f4c52f0f849c10819f47f5c04ab05b1"
+                }
+              }
+            ]
+          }
+        ],
+        "input_sha256": "da45228bf318951d1a464afb39420cf8438c22d3e1dc64821d575b94cda1f8af",
+        "expected": {
+          "valid": true,
+          "assignment": {
+            "ticket_id": "1001",
+            "comment_id": "6203",
+            "record_id": "16100000-0000-4000-8000-000000000103",
+            "digest": "sha256:8a5850267a0b4461efc021860b0243896c216cd545cc5a4c3653443cb08baaab"
+          },
+          "target": {
+            "ticket_id": "1001",
+            "comment_id": "6203",
+            "record_id": "16100000-0000-4000-8000-000000000103",
+            "digest": "sha256:8a5850267a0b4461efc021860b0243896c216cd545cc5a4c3653443cb08baaab"
+          },
+          "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "publication": "unpublished",
+          "candidate_identity": {
+            "record_id": "16100000-0000-4000-8000-000000000015",
+            "record_digest": "sha256:a04d0121f14270875c34e225b6a807d72a9b78adf346ba7f6b0995459cc0eaf4"
+          },
+          "published_reference": null
+        }
+      },
+      {
+        "id": "E-explicit-shared-root-child-first",
+        "base": "E-stack-root-incorporated-by-ancestor-is-resolved",
+        "mode": "worker-assignment",
+        "patches": [
+          {
+            "path": [
+              "request_resolutions"
+            ],
+            "value": [
+              {
+                "request": {
+                  "ticket_id": "1001",
+                  "comment_id": "2037",
+                  "record_id": "00000000-0000-4000-8000-000000000037",
+                  "digest": "sha256:8e5ee174d2f9f278d3d44deacc71644fe92f648b20ceba2c8bacb00fbd8523ff"
+                },
+                "completion": {
+                  "ticket_id": "1001",
+                  "comment_id": "2041",
+                  "record_id": "00000000-0000-4000-8000-000000000041",
+                  "digest": "sha256:5ee5dc76e4678e7a29a9fc7d003f47937f4c52f0f849c10819f47f5c04ab05b1"
+                }
+              },
+              {
+                "request": {
+                  "ticket_id": "1000",
+                  "comment_id": "2032",
+                  "record_id": "00000000-0000-4000-8000-000000000032",
+                  "digest": "sha256:b9ec40fb912f4da6c7141dc8aeefaf8eeb399d09a76cb2669d18c87374079da1"
+                },
+                "completion": {
+                  "ticket_id": "1000",
+                  "comment_id": "2036",
+                  "record_id": "00000000-0000-4000-8000-000000000036",
+                  "digest": "sha256:f49e94141828ec4f4ac617c11363080daf7b051a0ec8aae25b85740721d07ae5"
+                }
+              }
+            ]
+          }
+        ],
+        "input_sha256": "31a955cbd93740da2931da7c49873c0fbbfb09bb36672f014e8175751f725bda",
+        "expected": {
+          "valid": true,
+          "assignment": {
+            "ticket_id": "1001",
+            "comment_id": "6203",
+            "record_id": "16100000-0000-4000-8000-000000000103",
+            "digest": "sha256:8a5850267a0b4461efc021860b0243896c216cd545cc5a4c3653443cb08baaab"
+          },
+          "target": {
+            "ticket_id": "1001",
+            "comment_id": "6203",
+            "record_id": "16100000-0000-4000-8000-000000000103",
+            "digest": "sha256:8a5850267a0b4461efc021860b0243896c216cd545cc5a4c3653443cb08baaab"
+          },
+          "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+          "publication": "unpublished",
+          "candidate_identity": {
+            "record_id": "16100000-0000-4000-8000-000000000015",
+            "record_digest": "sha256:a04d0121f14270875c34e225b6a807d72a9b78adf346ba7f6b0995459cc0eaf4"
+          },
+          "published_reference": null
+        }
+      },
+      {
         "id": "E-outstanding-stack-root-survives-sibling-QA",
         "base": "E-outstanding-stack-root-survives-sibling-QA",
         "mode": "worker-assignment",
