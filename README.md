@@ -72,7 +72,7 @@ deliberate operator action.
 
 | Capability | State |
 | --- | --- |
-| Twenty-two shared skills: engineering methods, authoring, composed delivery, review, human rework, writing and QA | In the repository and installation allowlist |
+| Twenty-three shared skills: engineering methods, authoring, composed delivery, review, human rework, writing and QA | In the repository and installation allowlist |
 | Pinned skill preparation, verified stable installation and helper dependencies | Implemented; local installer tests available |
 | Jira-to-Cursor implementation, PR review and QA setup | Configured for the pilot; recorded inactive, with bounded live delivery acceptance still pending in [PGB-58](https://scubapig.atlassian.net/browse/PGB-58) |
 | Offline manager policy preview of supplied complete snapshots | Complete source and prepared-installed fixture preview of ordinary work, repair prerequisites and recorded-parent stack updates, with every readable cause identity in order. Installation verifies repair semantics with an eighth check before replacing the stable link. Local fixture evidence does not establish live discovery, delivery or activation; preview has no writes or execution authority. |

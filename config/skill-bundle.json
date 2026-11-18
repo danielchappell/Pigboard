@@ -5,6 +5,7 @@
     "implementer-job",
     "implementer-jira",
     "pigboard-pr-review",
+    "bitbucket-pr-review",
     "reviewer-jira",
     "pr-review",
     "pr-commenting",

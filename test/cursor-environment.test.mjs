@@ -80,7 +80,7 @@ test('install and refresh expose verified skills without changing app or older r
   const o = await fixture(t);
   const first = await installCursorSkills(o, fakeInstall);
   assert.equal(await realpath(first.stableSkills), first.skills);
-  assert.equal(first.verification.entrypoints, 22);
+  assert.equal(first.verification.entrypoints, 23);
   for (const relative of ['write-pr-sized-stories/SKILL.md', 'write-pr-sized-stories/references/pigboard-ticket.md', 'write-pr-sized-stories/references/pigboard-example.md']) {
     assert.equal(await readFile(path.join(first.stableSkills, relative), 'utf8'), await readFile(path.join(o.source, 'skills', relative), 'utf8'));
   }
@@ -408,7 +408,7 @@ test('installed manager preview runs all frozen complete snapshots with real cop
 // Closure/encoding evidence only; instruction decisions are independently exercised.
 test('reviewer sibling installation preserves complete folders and real formatter output from unrelated cwd',async t=>{
  const o=await fixture(t),first=await installCursorSkills(o,fakeInstall);
- for(const name of ['pigboard-pr-review','reviewer-jira','implementer-entrypoint']){
+ for(const name of ['pigboard-pr-review','bitbucket-pr-review','pr-review','reviewer-jira','implementer-entrypoint']){
   async function compare(relative=''){
    for(const entry of await readdir(path.join(o.source,'skills',name,relative),{withFileTypes:true})){
     const sub=path.join(relative,entry.name);
@@ -423,6 +423,16 @@ test('reviewer sibling installation preserves complete folders and real formatte
  assert.equal(await readFile(path.resolve(first.skills,'work-validator/docs/../../pigboard-pr-review/references/jira-handoff.md'),'utf8'),await readFile(path.join(o.source,'skills/pigboard-pr-review/references/jira-handoff.md'),'utf8'));
  const wrapper=await readFile(path.join(first.skills,'pigboard-pr-review/SKILL.md'),'utf8');
  assert(wrapper.includes('../reviewer-jira/SKILL.md'));
+ const lifecycle = 'pr-review/references/bitbucket-review.md';
+ const writing = 'human-writing/SKILL.md';
+ for (const name of ['pigboard-pr-review', 'bitbucket-pr-review']) {
+  const skill = await readFile(path.join(first.skills, name, 'SKILL.md'), 'utf8');
+  assert(skill.includes(`../${lifecycle}`));
+  assert(skill.includes(`../${writing}`));
+ }
+ const installedLifecycle = await readFile(path.join(first.skills, lifecycle), 'utf8');
+ assert(installedLifecycle.includes(`../../${writing}`));
+ assert.deepEqual(await readFile(path.join(first.skills, writing)), await readFile(path.join(o.source, 'skills', writing)));
  for(const relative of ['implementer-entrypoint/SKILL.md','implementer-entrypoint/references/handoff.md']){
   const text=await readFile(path.join(first.skills,relative),'utf8');assert(text.includes('structured reviewer'));
  }
@@ -482,7 +492,7 @@ test('installed structured QA composer/helpers/publisher retain full sibling clo
   const actual=execFileSync(process.execPath,[cli,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   const source=execFileSync(process.execPath,[new URL('../scripts/validate-work.mjs',import.meta.url).pathname,...args],{cwd:o.app,encoding:'utf8',timeout:30000});
   assert.equal(actual,source);assert.equal(JSON.parse(actual).valid,true);
-  assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.dependencies,'verified');
+  assert.equal(installed.verification.entrypoints,23);assert.equal(installed.verification.dependencies,'verified');
   assert.deepEqual(installed.verification.smokeChecks,['pg.Client','bru --version','work-validator epic draft','work-validator ticket draft','handoff-validator admission record','config-validator project scope','manager-preview nonexecuting selection','manager-preview nonexecuting repair queue']);
   // Changed instruction bytes are copied exactly; neither this check nor the
   // dependency mocks establish actual Grok/helper/clock or publisher execution.
@@ -499,7 +509,7 @@ test('human rework folder/siblings survive installation and real canonical CLIs 
  const {extractHandoff}=await import('../lib/contracts/handoff.mjs');
  const {stringify}=await import('yaml');
  const {createHash}=await import('node:crypto');
- assert.equal(first.verification.entrypoints,22);
+ assert.equal(first.verification.entrypoints,23);
  const manifest=JSON.parse(await readFile(first.manifest,'utf8'));
  const actualManifest=Object.keys(manifest.sourceFiles);
  for(const name of ['request-rework','human-writing']) {
@@ -728,7 +738,7 @@ test('standalone QA publisher ships exact folder and same-release contracts; sou
  const {targetRecord}=await import('./fixtures/qa-partial-results.mjs');
  const {stringify}=await import('yaml');
  const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
- assert.equal(installed.verification.entrypoints,22);
+ assert.equal(installed.verification.entrypoints,23);
  const relative='qa-jira/SKILL.md',publisher=path.join(installed.skills,relative),source=await readFile(new URL('../skills/'+relative,import.meta.url));
  assert.deepEqual(await readFile(publisher),source);assert.equal(manifest.sourceFiles[relative],createHash('sha256').update(source).digest('hex'));
  assert.deepEqual(await readdir(path.dirname(publisher)),['SKILL.md']);
@@ -934,7 +944,7 @@ test('installed preview rejects frozen current-proof contradictions and preserve
 test('installed preview preserves inherited36 typed own-repair outcomes and three controls',async t=>{
  const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator'),packet=JSON.parse(await readFile(path.join(validator,'test/fixtures/manager-repairs.json'))),own=packet.inherited_own_preview,F={...own.original,cases:own.original.cases.map(c=>({...c,expected:own.cases.find(e=>e.id===c.id).expected}))};
  const {createHash}=await import('node:crypto'),sha=b=>createHash('sha256').update(b).digest('hex'),manifest=JSON.parse(await readFile(installed.manifest));
- assert.equal(installed.verification.entrypoints,22);assert.equal(installed.verification.smokeChecks.length,8);assert(Object.hasOwn(manifest.sourceFiles,'work-validator/lib/manager/repair-policy.mjs'));assert(Object.hasOwn(manifest.sourceFiles,'work-validator/test/fixtures/manager-repairs.json'));
+ assert.equal(installed.verification.entrypoints,23);assert.equal(installed.verification.smokeChecks.length,8);assert(Object.hasOwn(manifest.sourceFiles,'work-validator/lib/manager/repair-policy.mjs'));assert(Object.hasOwn(manifest.sourceFiles,'work-validator/test/fixtures/manager-repairs.json'));
  for(const relative of ['lib/contracts/receipts.mjs','lib/manager/snapshot.mjs','lib/manager/decisions.mjs']){const bytes=await readFile(new URL('../'+relative,import.meta.url));assert.equal(sha(await readFile(path.join(validator,relative))),sha(bytes));assert.equal(manifest.sourceFiles['work-validator/'+relative],sha(bytes));}
  assert.deepEqual(F.installed_case_ids,['OC01-selection','OC04-cap-5','OC05-stack-request']);
  const config=path.join(o.app,'config.json'),input=path.join(o.app,'snapshot.json'),cli=path.join(validator,'scripts/manager-preview.mjs');

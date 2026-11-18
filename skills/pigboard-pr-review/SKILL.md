@@ -66,22 +66,11 @@ change expectations to fit implementation. Optional improvements are follow-ups;
 required scope growth blocks instead of authorizing patches.
 Missing evidence/unknown denominator cannot become PASS; retain every finding and gap.
 
-Before each consequential PR/Jira boundary perform the contract's freshness check.
-Post/update one existing or new in-progress summary, then assess. Save immutable
-completed round/index only after the round completes; interrupted work cannot replace
-completed evidence. Verify private cache is ignored/untracked or use prepared storage.
-Publish each confirmed finding once through pr-commenting with correct diff side and
-smallest useful range, or justified top-level fallback. Reuse existing threads;
-resolve only after verified fixes/counterevidence, retain superseded links and stable
-IDs. Evidence gaps are not invented code defects. Final human report includes the change
-summary and grouped file map, eight category rows, coverage and linked full evidence.
-It does not require a twenty-row appendix.
-Never omit low-severity in-scope findings or pending finding references.
-Replace the progress summary with the final report. When editing is known unsupported
-before an attempt, publish a linked replacement; failed/unknown attempted editing
-never permits another comment. Keep summary/threads consistent, retain unpublished
-findings and disclose delivery failures. Verify the evidence audience can access
-actual PR/report links; local cache alone cannot establish a ready QA handoff.
+Use the shared [Bitbucket comment lifecycle](../pr-review/references/bitbucket-review.md)
+to post the progress comment, then assess and publish the review. Apply the
+[handoff contract](references/jira-handoff.md#freshness-and-decisions) before each
+consequential PR or Jira action. Verify the evidence audience can access actual
+PR/report links. Local cache alone cannot establish a ready QA handoff.
 
 ## Decide separately from the verdict
 

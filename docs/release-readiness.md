@@ -35,7 +35,7 @@ node /absolute/pigboard-setup/scripts/install-cursor-skills.mjs \
   --root /absolute/private/pigboard
 ```
 
-The installer adds `stableSkills` and `verification`. Retain all twenty-two complete
+The installer adds `stableSkills` and `verification`. Retain all twenty-three complete
 skill folders, their sibling references, validator payload and locked dependencies.
 Readiness reuses the existing verifier and its eight smoke checks, including the
 nonexecuting repair preview. That preview does not activate deferred repair work.

@@ -20,8 +20,7 @@ human acceptance.
 
 ## Choose the capability
 
-The [bundle manifest](../config/skill-bundle.json) lists twenty-two skills. These are
-entrypoints and helpers, not twenty-two autonomous workers:
+The [bundle manifest](../config/skill-bundle.json) lists the entry points and helpers:
 
 | Skill | Use and minimum context |
 | --- | --- |
@@ -36,6 +35,7 @@ entrypoints and helpers, not twenty-two autonomous workers:
 | [verify-change](../skills/verify-change/SKILL.md) | Final author checks, relevant intermediate checks and a repeatable verification recipe for the exact code state. |
 | [implementer-jira](../skills/implementer-jira/SKILL.md) | Read-only preflight or final typed append/read-back/recheck/direct transition. Never edits code/PRs or admission state. |
 | [pigboard-pr-review](../skills/pigboard-pr-review/SKILL.md) | An authorized native Story/Bug in In Review and its current open Bitbucket PR, target instructions, prepared review tools and independent High profile. Owns current-revision evidence and PR approval; composes reviewer-jira for Jira handoff. |
+| [bitbucket-pr-review](../skills/bitbucket-pr-review/SKILL.md) | An existing Bitbucket PR and its linked Jira issue. Shares the Bitbucket comment lifecycle and can post a regular Jira recap. |
 | [reviewer-jira](../skills/reviewer-jira/SKILL.md) | Read-only current assignment/implementation preflight or one canonical final publication/read-back/recheck/direct transition; never reviews code or changes PRs. |
 | [qa-entrypoint](../skills/qa-entrypoint/SKILL.md) | An authorized native Story/Bug in QA with full structured raw work/trusted context, current receipts/PR/CI, actual Grok High, prepared access/artifacts/evidence and clock when needed. Composes exact AI units and one qa-jira final assessment. |
 | [qa-jira](../skills/qa-jira/SKILL.md) | Read-only eligibility preflight or standalone publication of a complete prepared QA assessment for the current native Story/Bug, assignment/review/open PR and configured tools. Executes no helpers; used standalone or by the compatible qa-entrypoint. |
@@ -89,6 +89,20 @@ prerequisites and tool contracts are met. Reuse is not a claim that Pigboard has
 validated every host. The integrated delivery profiles currently target Cursor;
 no Codex installation adapter, npm-distributed agent, Pigboard MCP server or
 one-command manager deployment is provided by this repository.
+
+## Review from a Bitbucket PR
+
+Install the reviewed bundle and prepare Rovito MCP and Jira MCP in the Cursor
+environment. The automation setup supplies the allowed repo, Jira scope and
+permission to post on each service. Replace `<skills>` with the `skills` path
+from the installation receipt and use one prompt for the PR event:
+
+> Review the pull request from this event using `<skills>/bitbucket-pr-review/SKILL.md`.
+
+The skill uses the Jira issue referenced by the PR. It posts or updates the PR
+summary and finding threads when authorized. The linked Jira issue gets a plain
+recap when the PR report is confirmed and Jira commenting is authorized. Missing
+access or uncertain writes appear in the run result.
 
 ## Execute an assigned delivery stage
 
@@ -254,7 +268,7 @@ port/database/qa_reader, with no URL options. Never weaken TLS or repair during 
 
 Install the exact local committed candidate into an isolated root with the real
 installer before local instruction exercises (customer installs use published
-reviewed revisions). Inspect its receipt, twenty-two entrypoints, eight smoke checks,
+reviewed revisions). Inspect its receipt for the manifest's entrypoints, eight smoke checks,
 locked dependency versions and hashes. Use the receipt's `skills`, not stableSkills:
 
 ```sh
