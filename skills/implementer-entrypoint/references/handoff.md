@@ -5,9 +5,9 @@
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
+immutable prepared release. It supports current `new_work` and the narrowly defined same-open-PR repair assignment.
 This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+grants no resume, wait, null-PR repair or inability publication authority.
 
 Use the same declared layout for the ordinary worker proof/publication contract.
 Use the pinned checker in explicit `--mode worker-current` for actual predecessor
@@ -18,7 +18,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait, null-PR repair and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.
@@ -41,7 +41,7 @@ Trusted invocation must supply these facts, independently of ticket content:
 | Capabilities | Actual exposed Atlassian/PR tool input/response contracts, bounded complete comment pagination, append-new HTML publication, source-specific directed transition metadata, finite CI wait/deadline |
 | Runtime | Same-release prepared work/config/receipt validators, durable output, setup-verified model/Task controls, supplied access references and repository checkout; never credential values |
 | Work/context | Current original YAML/ADF requirements and separately supplied trusted start context, Epic and full-stream context/order, prescribed cases/skills/expectations/preparation ownership |
-| Retained history | Original plan/review, PR/source facts and all prior action receipts; repair/resume assignments are unsupported and stop before code or provider writes |
+| Retained history | Original plan/review, PR/source facts and all prior action receipts; supported repairs include every exact assigned request and all findings. Unsupported repair/resume stops before code or provider writes |
 
 Config owns scope. Use `parseConfig(input,{expectedSite})`, its `resolved_scope`,
 `resolveProject(scope,{site,project_id})`, and `inspectStreams(scope,label)` / exact
@@ -85,8 +85,11 @@ Before code or provider writes:
    metadata against configured actors. No newest-comment selection or body-role
    trust. Missing pages/deleted/edited/mismatched receipt stops. Validate the
    actual predecessor in worker-current mode and independent native project binding.
-   Require current `new_work`, empty assigned requests and no resume authorization;
-   repair/resume or required repair stops locally before candidate construction. No manager
+   Require current `new_work` or a nonnull existing-open-PR repair with only own
+   repair_request refs authenticated in the same-ticket previous-assignment lineage,
+   current requirements and no resume authorization. Return every exact request and
+   its complete findings to the composer. Null-PR, stack-request, wait/resume or
+   incomplete lineage stops locally before dispatch or candidate construction. No manager
    database, lock or proof of exclusive worker ownership is required.
 3. Read current Epic, surrounding full-stream tickets/order and explicit prerequisites
    for context. Validate complete requirements/start plan with trusted context and
@@ -103,8 +106,9 @@ Before code or provider writes:
    continuation. After creation label these historical precreation proof; do not
    invent a `published_prs` row in the first-PR preparation snapshot. Retain actual
    creation/readback and fresh complete inventory separately. Missing eventual
-   preparation cannot become READY. Repair, null-PR repair and repeated-wait
-   execution are deferred; their authentic historical receipts remain unchanged.
+   preparation cannot become READY. For a supported repair, preserve the existing PR identity and refresh its current
+   source/target and preparation evidence. Null-PR repair and repeated-wait execution
+   remain deferred; their authentic historical receipts remain unchanged.
 
 5. Check actual predecessor PR, merge, completion and base/incorporation facts.
    Epic order alone is not lineage. Actual stack dependency needs exact parent
@@ -117,9 +121,10 @@ Before code or provider writes:
    is local DEPENDENCY_WAIT with exact unresolved request references and full evidence.
    Stop before candidate construction or append.
 
-Do not make a new assignment or human resume producer. An existing resume or repair
-assignment is unsupported in this invocation even if its general canonical chain
-is authentic. Retain original receipts and complete local evidence for human
+Do not make a new assignment or human resume producer. A repair is executable only
+when this release's worker-current checks establish the supported admission and all
+outstanding own requests; a general strict or recorded chain is not a substitute.
+Existing resume and unsupported repair shapes stop locally. Retain original receipts and complete local evidence for human
 handling; no polling, automatic resume, append or transition.
 
 ## Job contract
@@ -139,9 +144,11 @@ another repository, >20 total files or >=2 human days is a human blocker.
 
 After exact-plan CLEAN, Medium retains assignment/requirements, accepted plan/review,
 checkout/PR and action receipts. Implement only that plan/confirmed in-scope fixes.
-Ordinary READY requires the empty assigned request set under
-[record mapping](#record-mapping). Preserve authenticated historical roots without
-claiming to execute a repair. Preserve unrelated work, one PR
+Ordinary READY requires the complete assigned request set under
+[record mapping](#record-mapping): empty for new_work, every exact assigned request
+once for a supported repair. Preserve all unresolved ancestor findings; a prior
+implementation alone does not resolve them. Only coherent verified QA consumption
+resolves causes. Preserve unrelated work, one PR
 and source identity. Publish/update ready non-draft PR using authorized repository
 method after its gates. No self-approval, merge, deploy or human acceptance claims.
 
@@ -173,8 +180,8 @@ into records. Keep **every** canonical field including explicit nulls.
 
 | Job outcome | Ordinary routing |
 | --- | --- |
-| READY | `kind: implementation`, role implementer, In Progress -> In Review; assignment/operation/requirements, exact `pr`, `stack_parent`, empty `consumed_requests`, plan, independent plan_review, passing ci, verification and every prepared_inputs artifact |
-| DEPENDENCY_WAIT, BLOCKED, NOT_RUN, repair/resume | Local only: stop before candidate construction or append; no Jira transition. Retain complete findings, unfinished checks, linked reports and original receipts. |
+| READY | `kind: implementation`, role implementer, In Progress -> In Review; assignment/operation/requirements, exact `pr`, `stack_parent`, exact complete `consumed_requests` (empty for new_work), plan, independent plan_review, passing ci, verification and every prepared_inputs artifact |
+| DEPENDENCY_WAIT, BLOCKED, NOT_RUN, unsupported repair/resume | Local only: stop before candidate construction or append; no Jira transition. Retain complete findings, unfinished checks, linked reports and original receipts. |
 
 Use the assignment's `operation_id`; generate one fresh record UUID once before
 first publication and retain it with exact prepared bytes/digest. Never generate a
@@ -183,11 +190,12 @@ not Epic-order guesses. For unfinished local/CI/prescribed checks, retain each a
 NOT_RUN with reason in the full local report. Implementer `qa_report` is null;
 do not invent QA observations or truncate evidence to obtain READY.
 
-For ordinary READY the validated admission's `payload.requests` must be empty and
-`payload.consumed_requests` must be `[]`. Both job and publisher independently compare
-all assignment references (`ticket_id`, `comment_id`, `record_id`, `digest`) before
-candidate construction; nonempty repair/wait causes hold without mutation. Preserve
-the causes and historical incorporation evidence rather than dropping them to fit.
+For ordinary READY, `payload.consumed_requests` equals the validated admission's
+`payload.requests` exactly once per direct request: `[]` for new_work, the complete
+assigned union for a supported repair. Both job and publisher independently compare
+`ticket_id`, `comment_id`, `record_id` and `digest` before candidate construction.
+Preserve every finding and unresolved ancestor cause; missing, duplicate or unrelated
+refs hold without mutation. A resolved ancestor must not be consumed again.
 
 Independently compare the complete candidate semantics with current prepared facts:
 assignment/operation/requirements, own PR/source/target, required parent revision,
@@ -225,7 +233,7 @@ credentials. Summaries and linked reports stay outside the canonical block.
    Exact predecessor bytes/digests/server metadata must match; actual PR creation
    and readback, own PR/source/target, passing CI, verification/preparation and
    required parent incorporation remain current. Recheck the direct edge and
-   empty READY request set. Historical PASS cannot substitute for these reads.
+   complete READY request set. Historical PASS cannot substitute for these reads.
    Missing genuine preparation or proof means local incomplete/unavailable output
    with no append or transition; never reconstruct history or append a blocker.
 
@@ -260,7 +268,7 @@ credentials. Summaries and linked reports stay outside the canonical block.
 Changed stage stops without overwrite or competing transition. Changed assignment,
 requirements or revision still in source prevents success handoff: keep historical
 evidence and report human handling. Do not manufacture a blocker that cannot bind
-the current canonical assignment. Any inability, failed check, wait or repair/resume
+the current canonical assignment. Any inability, failed check, wait or unsupported repair/resume
 stops before candidate construction or append, retaining full local output and
 original receipts without a claim that Jira advanced. No fallback blocked record.
 

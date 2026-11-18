@@ -77,7 +77,8 @@ deliberate operator action.
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer and QA receipt handoffs are available; full-loop acceptance remains pending |
 | Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
-| Manager-driven admission, repair orchestration and compatible review/QA handoffs | Later coordinated release work |
+| Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions; automatic repair admission, installed/live acceptance and activation remain separate |
+| Manager-driven repair admission and orchestration | Later coordinated release work |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
@@ -91,7 +92,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 | In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Dependency wait and blockers stop locally before candidate/append, preserving full evidence; no Jira transition. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA; complete confirmed defects queue on the same open PR. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review; complete confirmed defects queue with the full partial ledger. |
-| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; human rework is deferred from the ordinary invocation; retain findings for human handling. |
+| Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicit authorized findings may queue the same open PR through request-rework. |
 | Product Acceptance | Human acceptance after deployment to UAT. |
 | Done | Verified production deployment. |
 
@@ -105,10 +106,10 @@ one repair_request and verify the direct Rework Queued transition. The
 states exact proof and destinations. Independent inability, incomplete work, causal
 waits and unsupported repair/resume retain all findings and partial ledgers locally.
 Queueing grants no admission/pointer/State authority; live acceptance and later
-same-PR repair execution remain separate.
+automatic repair admission remain separate. Supported supplied same-PR repair admissions can execute through fresh implementation, independent review and prescribed QA; repeated current human rejection is available on the new QA basis.
 
-Discussion stays in Review or QA. The separately prepared request-rework skill and
-legacy repair contracts do not provide an ordinary fallback. Saved wiring, provider
+Discussion stays in its current stage. The separately prepared request-rework skill
+uses explicit human-current proof; unsupported legacy shapes have no fallback. Saved wiring, provider
 acceptance and owner activation remain separate gates. Workers do not select new
 work, merge, deploy or retry blocked work. See the [installed workflow](docs/workflow.md)
 for current contracts.

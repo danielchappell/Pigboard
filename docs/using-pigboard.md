@@ -302,8 +302,8 @@ I authorize recording these in-scope findings and queueing EX-1 for rework.”
 
 Prepare trusted config, native identity/full stream, current compatible completed QA
 chain, open-PR/evidence reads, configured human actor and direct append/read/transition
-capabilities beforehand. Retained QA does not produce that chain yet; missing
-compatible evidence means inability, not an invented QA completion. No manual card
+capabilities beforehand. Same-release QA produces this typed current chain. Missing compatible evidence
+means inability, not an invented QA completion; installed/live acceptance remains separate. No manual card
 drag or extra routine approval is required when the explicit authorization exists.
 Story writing stays separate. Discussion/new scope/stale facts make no queue move.
 Already queued work is inspected without another append or transition; additional
@@ -312,7 +312,7 @@ retry. The result distinguishes the recorded request from confirmed queueing; th
 manager later admits A when its separate normal gates pass, while B continues.
 
 [The complete example](../skills/request-rework/references/example.md) supplies exact
-source/installed validation commands and all twelve fixed PREP-01 variants. These
+source/installed validation commands and the twelve legacy PREP-01 variants and the P166 current/repeated packets. These
 are synthetic local instruction exercises, not live Jira or completed human
 acceptance. It explains dependency preparation, evidence retention and cleanup.
 
@@ -670,3 +670,26 @@ Return qa-jira's exact `test_verdict`, `human_only`, `qa_report`, `findings`,
 COMPLETED means publication and the selected release's supported native
 destination were independently verified; it does not mean tests or human cases
 passed. Hosted CI, merge and activation have separate evidence.
+
+## Repeat a supported same-PR repair
+
+Use the same-release [support matrix](handoffs.md#ordinary-worker-release-boundary).
+A supplied compatible manager repair admission must name the existing open PR,
+current requirements, exact same-ticket previous-assignment lineage and every
+unresolved own repair_request. Implementer consumes each direct ref once and keeps
+all findings through High planning, independent High review and Medium execution.
+PR review and QA run against the repaired current revision. Only coherent QA
+consumption resolves old causes; earlier implementation alone does not. Automatic
+repair admission and activation remain separate work.
+
+After successful repaired QA, the human can say: “For EX-1, record these in-scope
+findings against the current QA and queue the existing open PR. I authorize both.”
+Request-rework uses `worker-current` with configured `human_request`, explicit
+`repair_request` intent, current QA/start/action proof and the exact Human Review
+queue edge. It record-checks unpublished bytes, appends once, validates actual new
+request readback, refreshes pointer/requirements/open PR/source/edge, transitions
+once and reads status. There is no completion flag or QA-actor substitution. A
+further repaired QA can receive a fresh explicit rejection against its new basis.
+Discussion/missing permission writes nothing. Already queued is recorded-history
+inspection plus current native/PR observations only; new findings stay unrecorded.
+Unknown effects retain original UUID/bytes/receipts without replay.

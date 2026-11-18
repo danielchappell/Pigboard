@@ -10,9 +10,9 @@ description: Validate the current versioned implementer assignment or publish an
 Use the explicit same-release support matrix: source repository
 `docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
 `<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` only.
+immutable prepared release. It supports current `new_work` and the narrowly defined same-open-PR repair assignment.
 This skill retains its own role-specific proof and action boundaries; the matrix
-grants no repair-assignment, resume, wait or inability publication authority.
+grants no resume, wait, null-PR repair or inability publication authority.
 
 Follow the [shared ordinary worker boundary](../implementer-entrypoint/references/handoff.md#ordinary-worker-release-boundary).
 Full proof/publication help is `<receipt.skills>/work-validator/docs/handoffs.md`
@@ -25,7 +25,7 @@ before append once, and compare original canonical bytes/digest/UUID at exact
 readback. Unknown append/transition holds original identity without replay. No
 manager completion grant, source fallback or dependency repair.
 
-Linked legacy assignment, resume, wait and Blocked examples are deferred. A local
+Linked legacy resume, wait, null-PR repair and Blocked examples are deferred. A local
 label grants no authority: the owning publisher independently checks the same-release
 matrix and actual evidence before candidate construction. Unsupported work retains
 all findings, partial ledgers and original receipts locally with no mutation.

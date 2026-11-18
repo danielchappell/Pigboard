@@ -8,19 +8,51 @@ import path from 'node:path';
 import { parse, stringify } from 'yaml';
 import { digestValue, extractHandoff } from '../../lib/contracts/handoff.mjs';
 
-const seeds = JSON.parse(readFileSync(new URL('./handoff-chains.json', import.meta.url))).chains;
+const handoffFixtures = JSON.parse(readFileSync(new URL('./handoff-chains.json', import.meta.url)));
+const seeds = handoffFixtures.chains;
 const clone = value => JSON.parse(JSON.stringify(value));
 const entries = e => e.comment_pages.flatMap(p => p.comments.map(c => ({ c, r: clone(extractHandoff(c.body, { format:c.format }).value) })));
 export const CASE_IDS = Object.freeze(['H01', 'H02-discussion', 'H02-scope', 'H02-closed', 'H02-source', 'H02-missing', 'H02-queued', 'H02-append-unknown', 'H02-transition-unknown', 'H02-drift-after-publish', 'H02-authorization', 'H02-readback']);
+export const P166_CASE_IDS = Object.freeze(['P166-H03-current','P166-H03-repeated','P166-H03-discussion','P166-H03-authorization','P166-H03-closed','P166-H03-source','P166-H03-actor','P166-H03-edge','P166-H03-conflicting-qa','P166-H03-queued']);
 const notice = 'SYNTHETIC LOCAL FIXTURE. Mock HTTPS observations, never live artifacts or proof of human acceptance.';
 const reference = (record, commentId) => ({ ticket_id:record.ticket_id, comment_id:commentId, record_id:record.record_id, digest:digestValue(record) });
 const adf = r => JSON.stringify({ type:'doc', version:1, content:[{ type:'codeBlock', attrs:{language:'yaml'}, content:[{type:'text',text:stringify(r)}] }] });
 const hash = text => 'sha256:' + createHash('sha256').update(text).digest('hex');
 
+// Current projections deliberately preserve legacy packet/chain semantics.
+export function workerProjection(input){
+ const e=clone(input),issue=e.issues[0],project=e.trusted.projects[0];
+ e.schema='pigboard-worker-handoff-input/v1';e.consumer='worker';e.purpose='worker-current';
+ e.current_context_body=e.requirements.find(r=>r.ticket_id===issue.id).context_body;
+ e.requirements=e.requirements.map(({context_body,...row})=>row);delete e.trusted.manager_assignments;
+ e.publisher={role:'human_request',account_id:'human',intent:'repair_request'};
+ e.action_receipt={site:issue.site,project_id:issue.project_id,ticket_id:issue.id,actor_id:'human',stage_id:project.stages['Human Review'],can_read_issue:true,can_append_comment:true,transitions:[{from_stage_id:project.stages['Human Review'],to_stage_id:project.stages['Rework Queued']}]};return e;
+}
+export function recordedProjection(input){
+ const e=clone(input);e.schema='pigboard-manager-handoff-input/v1';e.consumer='manager';
+ e.trusted.projects=e.trusted.projects.map(({evidence_uris,pipeline_actors,configured_targets,...p})=>p);
+ e.requirements=e.requirements.map(({context_body,...r})=>r);delete e.pr_receipts;delete e.evidence_receipts;return e;
+}
+function repairedHumanSeed(repeated){
+ const e=clone(seeds.repair);if(!repeated)return e;
+ const all=entries(e),qa=all.filter(x=>x.r.kind==='qa').at(-1),old=all.find(x=>x.r.kind==='repair_request'),a=all.filter(x=>x.r.kind==='admission').at(-1),page=e.comment_pages[0];
+ const add=(r,id,actor)=>{const c={...clone(qa.c),id,author_id:actor,update_author_id:actor,body:adf(r)};page.comments.push(c);page.total++;return reference(r,id);};
+ const request={...clone(old.r),record_id:'16610000-0000-4000-8000-000000000001',assignment:clone(qa.r.assignment),operation_id:qa.r.operation_id,payload:{...clone(old.r.payload),basis:reference(qa.r,qa.c.id),pr:clone(qa.r.payload.pr)}};
+ const rr=add(request,'16901','human'),uuid='16610000-0000-4000-8000-000000000002',admission={...clone(a.r),record_id:uuid,operation_id:uuid,payload:{...clone(a.r.payload),previous_assignment:clone(qa.r.assignment),requests:[rr],existing_pr:clone(qa.r.payload.pr)}},ar=add(admission,'16902','manager');
+ let predecessor;
+ for(const [index,kind]of ['implementation','review','qa'].entries()){
+  const r=clone(all.filter(x=>x.r.kind===kind).at(-1).r);r.record_id='16610000-0000-4000-8000-'+String(index+3).padStart(12,'0');r.assignment=ar;r.operation_id=uuid;
+  if(kind==='implementation')r.payload.consumed_requests=[rr];if(kind==='review')r.payload.implementation=predecessor;if(kind==='qa')r.payload.review=predecessor;
+  predecessor=add(r,String(16903+index),r.role);
+ }
+ e.target=predecessor;e.issues[0].pointer.assignment=ar;return e;
+}
+
 export function packet(caseId = 'H01') {
-  if (!CASE_IDS.includes(caseId)) throw Error('Unknown fixed case ID.');
-  const preflight = clone(seeds.human), project = preflight.trusted.projects[0], issue = preflight.issues[0];
-  const qa = entries(preflight).find(x => x.r.kind === 'qa').r;
+  if (![...CASE_IDS,...P166_CASE_IDS].includes(caseId)) throw Error('Unknown fixed case ID.');
+  const current = P166_CASE_IDS.includes(caseId);
+  const preflight = current ? repairedHumanSeed(caseId === 'P166-H03-repeated') : clone(seeds.human), project = preflight.trusted.projects[0], issue = preflight.issues[0];
+  const qa = entries(preflight).filter(x => x.r.kind === 'qa').at(-1).r;
   // Use the existing checked repair seed's human producer envelope, not a schema fork.
   const template = entries(seeds.repair).find(x => x.r.kind === 'repair_request' && x.r.role === 'human_request').r;
   const rawEvidence = preflight.evidence_receipts.map(observation => ({ notice, uri:observation.uri, status:200, body:JSON.stringify({ notice, actor_id:observation.actor_id, pr:observation.pr, kind:observation.kind, details:observation.details }), observation:clone(observation) }));
@@ -50,20 +82,28 @@ export function packet(caseId = 'H01') {
   const b = { id:'1001', key:'EX-2', site:issue.site, project_id:issue.project_id, stage_id:'2', stream:issue.stream, pointer:{schema:'pigboard-work-pointer/v1',assignment:{ticket_id:'1001',comment_id:'2101',record_id:'79000000-0000-4000-8000-000000000002',digest:'sha256:'+'b'.repeat(64)}} };
   let request = `For EX-1, record findings F01 and F02 below and queue EX-1 for rework on its existing PR. I explicitly authorize both publication and queueing.\n${findings.map(f=>`${f.id}: ${f.summary}\nExpected: ${f.expected}\nObserved: ${f.observed}\nEvidence: ${f.evidence[0].uri}`).join('\n')}`;
   let outcome = { requestOutcome:'QUEUED', deliveryOutcome:'COMPLETED', append:1, transition:1, reason:'Verified request and direct queue transition; both findings, pointer and B preserved.' };
-  if (caseId === 'H02-discussion') { request = 'For EX-1, should we change the empty-state wording? I am asking for discussion only.';outcome={requestOutcome:'DISCUSSION',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'No request to record and queue.'}; }
-  if (caseId === 'H02-authorization') { request = `For EX-1, these are my observations.\n${findings.map(f=>`${f.id}: ${f.summary} Expected: ${f.expected} Evidence: ${f.evidence[0].uri}`).join('\n')}`;outcome={requestOutcome:'NEEDS_INPUT',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Explicit permission to record and queue is missing; retain draft.'}; }
+  if (['H02-discussion','P166-H03-discussion'].includes(caseId)) { request = 'For EX-1, should we change the empty-state wording? I am asking for discussion only.';outcome={requestOutcome:'DISCUSSION',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'No request to record and queue.'}; }
+  if (['H02-authorization','P166-H03-authorization'].includes(caseId)) { request = `For EX-1, these are my observations.\n${findings.map(f=>`${f.id}: ${f.summary} Expected: ${f.expected} Evidence: ${f.evidence[0].uri}`).join('\n')}`;outcome={requestOutcome:'NEEDS_INPUT',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Explicit permission to record and queue is missing; retain draft.'}; }
   if (caseId === 'H02-scope') { request = 'For EX-1, add a cross-tenant saved-filter sharing feature (F03). I authorize recording this new behavior and queueing EX-1.';outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Cross-tenant sharing is outside approved requirements; retain for grooming.'}; }
-  if (caseId === 'H02-closed') { preflight.pr_receipts[0].state='closed';outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'The PR is closed.'}; }
-  if (caseId === 'H02-source') { preflight.pr_receipts[0].source_revision='f'.repeat(40);outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Current source differs from completed QA.'}; }
+  if (['H02-closed','P166-H03-closed'].includes(caseId)) { preflight.pr_receipts.filter(p=>!current||p.current).forEach(p=>p.state='closed');outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'The PR is closed.'}; }
+  if (['H02-source','P166-H03-source'].includes(caseId)) { preflight.pr_receipts.filter(p=>!current||p.current).forEach(p=>p.source_revision='f'.repeat(40));outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Current source differs from completed QA.'}; }
   if (caseId === 'H02-missing') { preflight.comment_pages[0].comments=preflight.comment_pages[0].comments.filter(c=>c.id!==preflight.target.comment_id);preflight.comment_pages[0].total--;outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Exact QA basis is absent from complete supplied pages.'}; }
-  if (caseId === 'H02-queued') { Object.assign(preflight,clone(queued));outcome={requestOutcome:'ALREADY_QUEUED',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Inspect existing request, preserving both findings; no new append or transition.'}; }
+  if (['H02-queued','P166-H03-queued'].includes(caseId)) { Object.assign(preflight,clone(queued));outcome={requestOutcome:'ALREADY_QUEUED',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Inspect existing request, preserving both findings; no new append or transition.'}; }
   if (caseId === 'H02-append-unknown') outcome={requestOutcome:'REQUEST_PREPARED',deliveryOutcome:'UNCERTAIN',append:1,transition:0,reason:'Append response lost; publication unknown. Preserve bytes, no retry.'};
   if (caseId === 'H02-transition-unknown') outcome={requestOutcome:'REQUEST_PREPARED',deliveryOutcome:'UNCERTAIN',append:1,transition:1,reason:'Publication verified, transition response lost; queueing unconfirmed. No retry.'};
   if (caseId === 'H02-drift-after-publish') outcome={requestOutcome:'REQUEST_PREPARED',deliveryOutcome:'UNAVAILABLE',append:1,transition:0,reason:'Source changed after verified publication; preserve request without transition.'};
   if (caseId === 'H02-readback') outcome={requestOutcome:'REQUEST_PREPARED',deliveryOutcome:'UNAVAILABLE',append:1,transition:0,reason:'Exact readback actor is wrong; no transition/replacement.'};
+  if(caseId==='P166-H03-conflicting-qa'){
+    const existing=entries(preflight).filter(x=>x.r.kind==='qa').at(-1),conflict={...clone(existing.r),record_id:'16610000-0000-4000-8000-000000000090'};
+    preflight.comment_pages[0].comments.push({...clone(existing.c),id:'16990',body:adf(conflict)});preflight.comment_pages[0].total++;
+    outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Conflicting current QA cannot be selected by timestamp.'};
+  }
+  if(caseId==='P166-H03-actor'||caseId==='P166-H03-edge')outcome={requestOutcome:'INELIGIBLE',deliveryOutcome:'NOT_ATTEMPTED',append:0,transition:0,reason:'Configured human actor/direct edge proof is absent.'};
   const nativeA = native(preflight.issues[0]);
   const rawPR = p => ({ notice, provider:p.provider,repository:p.repository,number:p.number,state:p.state,source:{revision:p.source_revision},target:{branch:p.target_branch} });
   const transitions = { notice, issue_id:'1000', actor_id:'human', from_status_id:'5', transitions:[{id:'61',to:{id:'6',name:'Rework Queued'},from:{id:'5',name:'Human Review'}}] };
+  if(caseId==='P166-H03-actor')transitions.actor_id='qa';
+  if(caseId==='P166-H03-edge')transitions.transitions=[];
   const observationCard = { notice, native_a:nativeA, comments:clone(preflight.comment_pages), pr:preflight.pr_receipts.map(rawPR), evidence:rawEvidence, capabilities:{actor_id:'human',append_new_comment:true,read_exact_comment:true,transition:true}, transitions };
   const finalRead = clone(observationCard);
   // Static example page: tester rebinds only the actual generated record/body/digest.
@@ -79,15 +119,21 @@ export function packet(caseId = 'H01') {
     'transition.json':caseId==='H02-transition-unknown'?{notice,delivery:'response_lost',status:'unknown'}:{notice,accepted:true},
     'native-after-transition.json':{notice,native_a:native({...issue,stage_id:'6'})}
   };
-  return { notice, caseId, config:base, preflight, published, queued, record, findings, request, summary:'Human requests rework: F01 exact-name search; F02 understandable no-match wording. Expected and observed behavior are retained in the linked evidence.', cards, nativeB:{notice,...b}, sentinels:{notice,pointer:clone(issue.pointer),native_b:clone(b)}, oracle:{notice,caseId,status:'NOT RUN',expected:outcome,invariants:['No B writes','A pointer unchanged','No implementer/admission action','All supplied and prior findings preserved'],humanAcceptance:'PENDING; R1-09-H01/H02 remain human-owned.'} };
+  const currentPreflight=current?(caseId==='P166-H03-queued'?recordedProjection(preflight):workerProjection(preflight)):null;
+  const currentPublished=current?workerProjection(published):null;
+  if(caseId==='P166-H03-actor')currentPreflight.publisher.account_id=currentPreflight.action_receipt.actor_id='qa';
+  if(caseId==='P166-H03-edge')currentPreflight.action_receipt.transitions=[];
+  return { notice, caseId, currentPreflight,currentPublished, config:base, preflight, published, queued, record, findings, request, summary:'Human requests rework: F01 exact-name search; F02 understandable no-match wording. Expected and observed behavior are retained in the linked evidence.', cards, nativeB:{notice,...b}, sentinels:{notice,pointer:clone(issue.pointer),native_b:clone(b)}, oracle:{notice,caseId,status:'NOT RUN',expected:outcome,invariants:['No B writes','A pointer unchanged','No implementer/admission action','All supplied and prior findings preserved'],humanAcceptance:'PENDING; R1-09-H01/H02 remain human-owned.'} };
 }
 
 export async function prepare(runDir, caseId) {
+  if(Object.hasOwn(handoffFixtures.repair_loop_p166.packets,caseId))return prepareWorkerPacket(runDir,caseId);
   const data = packet(caseId);
   // A fresh directory prevents an old response or oracle leaking into another run.
   await mkdir(runDir, {mode:0o700});
   await mkdir(path.join(runDir,'assistant'),{mode:0o700});
   await mkdir(path.join(runDir,'tester-cards'),{mode:0o700});
+  await mkdir(path.join(runDir,'output'),{mode:0o700});
   const source = fileURLToPath(new URL('../../',import.meta.url));
   const revision = execFileSync('git',['rev-parse','HEAD'],{cwd:source,encoding:'utf8'}).trim();
   const meta = {notice,caseId,source_revision:revision,exporter_sha256:createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),status:'NOT RUN'};
@@ -101,13 +147,26 @@ export async function prepare(runDir, caseId) {
     'audit-sentinels.json':JSON.stringify(data.sentinels,null,2),
     'assistant/request.txt':data.request+'\n','assistant/work.yaml':data.preflight.requirements[0].body,
     'assistant/facts.yaml':data.preflight.requirements[0].context_body,'assistant/config.yaml':stringify(data.config),
-    'assistant/preflight-chain.json':JSON.stringify(data.preflight,null,2),
+    'assistant/preflight-chain.json':JSON.stringify(data.currentPreflight??data.preflight,null,2),
     'assistant/native-b.json':JSON.stringify(data.nativeB,null,2),
     'assistant/preflight-observations.json':JSON.stringify(data.cards['preflight.json'],null,2)
   };
+  if(data.currentPreflight){files['current-preflight.json']=JSON.stringify(data.currentPreflight,null,2);files['current-published.json']=JSON.stringify(data.currentPublished,null,2);}
   for (const [name,card] of Object.entries(data.cards)) files['tester-cards/'+name]=JSON.stringify(card,null,2);
   for (const [name,text] of Object.entries(files)) await writeFile(path.join(runDir,name),text,{mode:0o600,flag:'wx'});
   return meta;
+}
+async function prepareWorkerPacket(runDir,caseId){
+ const data=handoffFixtures.repair_loop_p166.packets[caseId];
+ await mkdir(runDir,{mode:0o700});
+ for(const area of ['assistant','operator','output'])await mkdir(path.join(runDir,area),{mode:0o700});
+ const hashes={};
+ for(const [area,key]of [['assistant','assistant_files'],['operator','operator_files']])for(const [name,content]of Object.entries(data[key])){
+  await writeFile(path.join(runDir,area,name),content,{mode:0o600,flag:'wx'});hashes[area+'/'+name]=hash(content);
+ }
+ const source=fileURLToPath(new URL('../../',import.meta.url)),revision=execFileSync('git',['rev-parse','HEAD'],{cwd:source,encoding:'utf8'}).trim();
+ const meta={notice,caseId,source_revision:revision,exporter_sha256:hash(readFileSync(fileURLToPath(import.meta.url))),input_hashes:hashes,status:'NOT_RUN',subject_execution:'NOT_RUN',human_acceptance:'NOT_RUN'};
+ await writeFile(path.join(runDir,'metadata.json'),JSON.stringify(meta,null,2),{mode:0o600,flag:'wx'});return meta;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.length !== 5 || process.argv[2] !== 'prepare' || !path.isAbsolute(process.argv[3])) {

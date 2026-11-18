@@ -69,7 +69,7 @@ The implementer composes separate [job](../skills/implementer-job/SKILL.md) and
 [Jira](../skills/implementer-jira/SKILL.md) skills: code/PR evidence never mutates
 Jira, while preflight/publication never edits code/PRs. Exact current assignment,
 server actor metadata, requirements, actual parent/source/base and current CI
-bind the ordinary new_work result. Repair/resume and pre-first-PR wait execution
+bind the ordinary or supported same-PR repair result. Unsupported repair/resume and pre-first-PR wait execution
 are deferred; retain their authentic historical receipts without replay. No admission,
 pointer writes, worker exclusivity, deduplication or new provider engine is added.
 
@@ -216,6 +216,6 @@ compatibility does not enable delivery or prove installed/live acceptance.
 
 ## Ordinary new-work delivery
 
-Ordinary implementer READY, reviewer approval, successful QA and complete reviewer/QA repair requests use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Repair assignments/resume, human rework and inability/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
+Ordinary implementer READY, reviewer approval, successful QA and complete reviewer/QA repair requests use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Own-request nonnull-PR repairs retain all unresolved ancestor findings on the same PR through fresh High planning/independent review, Medium execution, PR review and prescribed QA. Human rework uses the configured human_request actor, explicit repair_request intent, unique current QA/open PR and Human Review queue edge; another rejection after repaired QA uses that new basis. Automatic repair admission remains separate. Null-PR/stack-request repairs, resume and inability/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
 
 See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

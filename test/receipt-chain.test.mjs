@@ -415,7 +415,7 @@ const original160SectionHashes={
   "repeated_parent": "sha256:e6a3cb5dd005083ec0d430bde53f6f116b23f908d7bc48d2a7d32d7d1cb5c94b"
 };
 test('recorded fixture append preserves exact strict sections and final159 cursor prefix',()=>{
- assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current','rework_queue_p165'].sort());
+ assert.deepEqual(Object.keys(fixtures).sort(),[...Object.keys(original160SectionHashes),'recorded','worker_current','rework_queue_p165','repair_loop_p166'].sort());
  for(const [key,digest]of Object.entries(original160SectionHashes))assert.equal('sha256:'+createHash('sha256').update(canonicalize(fixtures[key])).digest('hex'),digest,key+' original complete section');
  // A changed current copied test file is not an archived-prefix reconstruction obligation.
 
@@ -548,4 +548,61 @@ test('P165-source copied runtime and documented private packet extraction',async
  assert.deepEqual(await readFile(path.join(runtime,'docs/handoffs.md')),await readFile(path.join(sourceRoot,'docs/handoffs.md')));assert.match(await readFile(path.join(runtime,'docs/handoffs.md'),'utf8'),/## Ordinary worker release boundary/);
  const unknown=path.join(root,'unknown');assert.equal(extract('UNKNOWN',unknown).status,1);await assert.rejects(readFile(path.join(unknown,'assistant','invocation.md')));
  const damaged=path.join(root,'damaged');await cp(runtime,damaged,{recursive:true});await rm(path.join(damaged,'lib/contracts/receipts.mjs'));const failed=spawnSync(process.execPath,[path.join(damaged,'scripts/validate-handoff.mjs'),'--mode','worker-current','--input',path.join(root,packet.proof_cases[0].id+'.json'),'--json'],{cwd,env,encoding:'utf8'});assert.notEqual(failed.status,0);
+});
+
+// P166 fixed supplied-contract proofs; actual subject/human execution is separate.
+const p166=fixtures.repair_loop_p166;
+for(const [name,input]of Object.entries(p166.inputs))test('P166-PROOF-positive '+name,()=>{
+ const before=JSON.stringify(input),r=validateWorkerCurrent(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(Object.hasOwn(r,'completion_established'),false);assert.equal(Object.hasOwn(r,'recorded_completion_established'),false);assert.equal(JSON.stringify(input),before);
+});
+test('P166-PROOF-missing unresolved ancestor rejects despite prior implementation',()=>{
+ const e=structuredClone(p166.inputs.ancestor_union_admission);mutateRecord(e,e.target.record_id,r=>r.payload.requests.shift());const r=validateWorkerCurrent(JSON.stringify(e));assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code==='REPAIR'),JSON.stringify(r.diagnostics));
+});
+for(const [name,change,code]of [
+ ['wrong human actor',e=>{e.publisher.account_id='qa';e.action_receipt.actor_id='qa';},'AUTHORITY'],
+ ['merged PR',e=>e.pr_receipts.filter(p=>p.current).forEach(p=>p.state='merged'),'PR'],
+ ['missing intent',e=>delete e.publisher.intent,'STRUCTURE'],
+ ['success intent',e=>e.publisher.intent='success','STRUCTURE'],
+ ['wrong queue edge',e=>e.action_receipt.transitions=[],'AUTHORITY'],
+ ['changed head',e=>e.pr_receipts.find(p=>p.current).source_revision='f'.repeat(40),'PR'],
+])test('P166-HUMAN-refuses '+name,()=>{const e=structuredClone(p166.inputs.human_preflight);change(e);const r=validateWorkerCurrent(JSON.stringify(e));assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code===code),JSON.stringify(r.diagnostics));});
+for(const [label,mutate,code]of [
+ ['duplicate assigned refs',e=>mutateRecord(e,e.target.record_id,r=>r.payload.requests.push(r.payload.requests[0])),'STRUCTURE'],
+ ['omitted old with no native hint',e=>{e.issues[0].required_requests=[];mutateRecord(e,e.target.record_id,r=>r.payload.requests.shift());},'REPAIR'],
+ ['unrelated previous lineage',e=>mutateRecord(e,e.target.record_id,r=>r.payload.previous_assignment=r.payload.requests[0]),'ASSIGNMENT'],
+ ['requirements drift',e=>e.issues[0].requirements_digest='sha256:'+'f'.repeat(64),'REQUIREMENTS'],
+ ['conflicting existing PR',e=>mutateRecord(e,e.target.record_id,r=>r.payload.existing_pr.number='99'),'PR'],
+])test('P166-PROOF-ancestor refusal '+label,()=>{const e=structuredClone(p166.inputs.ancestor_union_admission);mutate(e);const r=validateWorkerCurrent(JSON.stringify(e));assert.equal(r.valid,false);assert(r.diagnostics.some(d=>d.code===code),JSON.stringify(r.diagnostics));});
+test('P166-PROOF-request leaf cannot hide another unaccounted current request',()=>{
+ const e=structuredClone(p166.inputs.human_readback),r=structuredClone(target(e).r);r.record_id='16600000-0000-4000-8000-000000000099';append(e,r,'human');const result=validateWorkerCurrent(JSON.stringify(e));assert.equal(result.valid,false);assert(result.diagnostics.some(d=>d.code==='REPAIR'),JSON.stringify(result.diagnostics));
+});
+test('P166-PROOF recorded ancestry authenticates both unresolved requests and their real bases',()=>{
+ const input=structuredClone(p166.inputs.ancestor_union_admission),targets=target(input).r.payload.requests;
+ const projection=e=>{e.schema='pigboard-manager-handoff-input/v1';e.consumer='manager';delete e.purpose;delete e.current_context_body;delete e.publisher;delete e.action_receipt;delete e.pr_receipts;delete e.evidence_receipts;e.trusted.projects=e.trusted.projects.map(({evidence_uris,pipeline_actors,configured_targets,...p})=>p);e.trusted.manager_assignments=[{ticket_id:e.issues[0].id,assignment:e.issues[0].pointer.assignment}];return e;};
+ for(const request of targets){const row=entries(input).find(x=>x.r.record_id===request.record_id);for(const exact of [request,row.r.payload.basis]){const e=projection(structuredClone(input));e.target=exact;const r=inspectRecordedHistory(JSON.stringify(e));assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert(r.records.some(x=>x.reference.record_id===exact.record_id));}}
+});
+for(const [name,input]of Object.entries(p166.refusals))test('P166-PROOF unsupported/stale '+name,()=>{const r=validateWorkerCurrent(JSON.stringify(input));assert.equal(r.valid,false,name);assert.equal(r.execution_authorized,false);for(const[key,value]of Object.entries(workerCases.negative_invariants))assert.deepEqual(r[key],value,key);});
+
+// Automatic historical resolution follows the selected admission's proper
+// ancestry. Authentic sibling QA remains history, not an implicit resolution.
+function p166AdmissionLineage(input,assignment){
+ const line=[],seen=new Set();while(assignment){const row=entries(input).find(x=>x.r.record_id===assignment.record_id&&x.c.id===assignment.comment_id&&x.r.ticket_id===assignment.ticket_id&&digestValue(x.r)===assignment.digest);assert(row,'Exact admission must resolve');assert.equal(row.r.kind,'admission');assert(!seen.has(row.r.record_id),'No lineage cycle');seen.add(row.r.record_id);line.push(structuredClone(assignment));assignment=row.r.payload.previous_assignment;}return line;
+}
+function p166SiblingFacts(input){
+ const qa=entries(input).find(x=>x.r.kind==='qa'&&x.r.assignment.record_id==='16640000-0000-4000-8000-000000000001');assert(qa,'Coherent sibling QA is present');
+ const current=p166AdmissionLineage(input,input.issues[0].pointer.assignment),sibling=p166AdmissionLineage(input,qa.r.assignment),failedRepair='00000000-0000-4000-8000-000000000024';
+ assert(!current.some(a=>a.record_id===qa.r.assignment.record_id),'Sibling is not in current ancestry');assert(!sibling.some(a=>a.record_id===failedRepair),'Failed repair is not in sibling ancestry');assert.deepEqual(input.request_resolutions,[]);return {qa,current,sibling};
+}
+for(const [name,valid]of [['sibling_complete_union',true],['sibling_qa_omitted_old',false]])test('P166-SIBLING '+name,()=>{
+ const input=name==='sibling_complete_union'?p166.inputs[name]:p166.refusals[name],before=JSON.stringify(input);p166SiblingFacts(input);const r=validateWorkerCurrent(before);assert.equal(r.valid,valid,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(Object.hasOwn(r,'completion_established'),false);if(!valid)assert(r.diagnostics.some(d=>d.code==='REPAIR'&&d.path==='/target/required_requests'),JSON.stringify(r.diagnostics));assert.equal(JSON.stringify(input),before);
+});
+test('P166-SIBLING independent recorded QA remains authentic history',()=>{
+ const input=structuredClone(p166.refusals.sibling_qa_omitted_old),{qa}=p166SiblingFacts(input);input.schema='pigboard-manager-handoff-input/v1';input.consumer='manager';delete input.purpose;delete input.current_context_body;delete input.publisher;delete input.action_receipt;delete input.pr_receipts;delete input.evidence_receipts;input.trusted.projects=input.trusted.projects.map(({evidence_uris,pipeline_actors,configured_targets,...p})=>p);input.trusted.manager_assignments=[{ticket_id:input.issues[0].id,assignment:input.issues[0].pointer.assignment}];input.target={ticket_id:qa.r.ticket_id,comment_id:qa.c.id,record_id:qa.r.record_id,digest:digestValue(qa.r)};
+ const before=JSON.stringify(input),r=inspectRecordedHistory(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(r.execution_authorized,false);assert.equal(r.recorded_completion_established,false);assert(r.records.some(x=>x.reference.record_id===qa.r.record_id));assert.equal(JSON.stringify(input),before);
+});
+test('P166-SIBLING genuine ancestor QA resolves only its consumed old cause',()=>{
+ const input=structuredClone(p166.inputs.ancestor_qa_resolved),old=p166.inputs.ancestor_union_admission.issues[0].required_requests[0],a=target(input),line=p166AdmissionLineage(input,input.target),all=entries(input),resolving=all.filter(x=>x.r.kind==='qa').find(q=>{const review=all.find(x=>x.r.record_id===q.r.payload.review.record_id),impl=all.find(x=>x.r.record_id===review.r.payload.implementation.record_id);return impl.r.payload.consumed_requests.some(r=>r.record_id===old.record_id);});
+ assert(resolving);assert(line.slice(1).some(r=>r.comment_id===resolving.r.assignment.comment_id&&r.digest===resolving.r.assignment.digest),'Resolving QA is an exact proper ancestor');assert(!a.r.payload.requests.some(r=>r.record_id===old.record_id),'Resolved old cause is omitted');assert.equal(a.r.payload.requests.length,1);assert.notEqual(a.r.payload.requests[0].record_id,old.record_id);assert.deepEqual(input.request_resolutions,[]);
+ const before=JSON.stringify(input),r=validateWorkerCurrent(before);assert.equal(r.valid,true,JSON.stringify(r.diagnostics));assert.equal(JSON.stringify(input),before);
+ mutateRecord(input,input.target.record_id,r=>r.payload.requests.push(structuredClone(old)));const repeated=validateWorkerCurrent(JSON.stringify(input));assert.equal(repeated.valid,false);assert(repeated.diagnostics.some(d=>d.code==='REPAIR'&&d.path==='/target/requests'),JSON.stringify(repeated.diagnostics));
 });
