@@ -38,7 +38,7 @@ prepared testing information for review and QA.
 
 | Trigger | Entry point | Required outcome |
 | --- | --- | --- |
-| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, one PR, passing current CI/artifacts, ordinary READY append/read-back and recheck before direct In Review; waits/blockers remain local with no mutation. |
+| In Progress | `implementer-entrypoint` | Grok High plan, one independent High adversarial plan review, Medium execution, one PR, passing current CI/artifacts, ordinary READY append/read-back and recheck before direct In Review; verified declared missing input or dependency wait can use its own eligible edge. |
 | In Review | `pigboard-pr-review` | Grok High review against ticket and shared `pr-review` criteria, existing comment handling, PR and ticket evidence; current approved PASS moves to QA; complete confirmed defects queue on the same open PR; incomplete/evidence gaps remain local. |
 | QA | `qa-entrypoint` | Actual Grok High; structured inventory, exact ordered AI units and complete partial evidence; qa-jira alone publishes/read-backs successful QA to Human Review or complete confirmed defects to Rework Queued; independent inability/wait remains local before candidate/append. Humans stay pending. |
 
@@ -79,9 +79,9 @@ are retained. Local record/chain checks do not establish live freshness. See the
 [publication protocol](../skills/implementer-entrypoint/references/handoff.md#publication-protocol).
 Missing access, incomplete instructions, unavailable tools or scope expansion
 stops locally with complete findings/partial ledgers, original receipts, precise
-missing facts and required human action. No blocker append or transition is
-permitted, even when the assignment is verified. Local BLOCKED does not claim
-native Jira changed. No autonomous retry, polling, resume or scope expansion.
+missing facts and required human action. A local BLOCKED label grants no authority. The implementer can deliver an independently
+verified missing-input or dependency-wait outcome under the
+[worker support matrix](handoffs.md#ordinary-worker-release-boundary). No autonomous retry, polling, resume or scope expansion.
 
 The AI board's Blocked column and the historical broader workflow do not provide
 an ordinary worker fallback. Previous-stage cards and human-requested resume are
@@ -216,6 +216,6 @@ compatibility does not enable delivery or prove installed/live acceptance.
 
 ## Ordinary new-work delivery
 
-Ordinary implementer READY, reviewer approval, successful QA and complete reviewer/QA repair requests use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Own-request nonnull-PR repairs retain all unresolved ancestor findings on the same PR through fresh High planning/independent review, Medium execution, PR review and prescribed QA. Human rework uses the configured human_request actor, explicit repair_request intent, unique current QA/open PR and Human Review queue edge; another rejection after repaired QA uses that new basis. Automatic repair admission remains separate. Null-PR/stack-request repairs, resume and inability/blocked/wait publication are deferred: retain local findings and hold without mutation. Unknown writes keep their original identity without replay.
+Ordinary implementer READY, reviewer approval, successful QA and complete reviewer/QA repair requests use explicit `worker-current` proof. The selected current start, own and required-parent PR/evidence and configured action authority remain checked. Authenticated recorded ancestry needs no old execution context or mandatory prior capture; supplied retained mismatches still reject. Own-request nonnull-PR repairs retain all unresolved ancestor findings on the same PR through fresh High planning/independent review, Medium execution, PR review and prescribed QA. Human rework uses the configured human_request actor, explicit repair_request intent, unique current QA/open PR and Human Review queue edge; another rejection after repaired QA uses that new basis. Automatic repair admission remains separate. Null-PR/stack-request repair and resume remain outside execution. Implementer inability uses worker-assignment for the two supported outcomes in the [worker support matrix](handoffs.md#ordinary-worker-release-boundary). Reviewer and QA inability stays local. Unknown writes keep their original identity without replay.
 
 See the [ordinary worker contract](handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.

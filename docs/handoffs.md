@@ -916,20 +916,25 @@ all bundled worker entries and their references:
 
 | Publisher / `intent` | Actual preflight target | Actual readback target | Direct source → destination |
 | --- | --- | --- | --- |
-| implementer / `success` | admission | implementation | In Progress → In Review |
+| implementer / `success` | admission at the actual pre-write PR state | implementation at the new current head | In Progress → In Review |
+| implementer / `blocked` | admission, `worker-assignment` | blocked, `worker-assignment` | In Progress → Blocked |
+| implementer / `dependency_wait` | admission, `worker-assignment` | dependency_wait, `worker-assignment` | In Progress → Rework Queued |
 | reviewer / `success` | implementation | review | In Review → QA |
 | reviewer / `repair_request` | implementation | reviewer repair_request | In Review → Rework Queued |
 | qa / `success` | review | qa | QA → Human Review |
 | qa / `repair_request` | review | qa repair_request | QA → Rework Queued |
 | human_request / explicit `repair_request` | current unique qa | human repair_request | Human Review → Rework Queued |
 
-Null-PR repair, stack-request repair, resume, wait and Blocked/inability publication
-remain deferred from these workers. Reject unsupported assignments before
-execution and unsupported final results before candidate construction or append.
-Preserve the full findings, partial ledger and original receipts locally. Never
-fall back to strict chain, manager recorded proof or another source release. The
-implementer still publishes only ordinary READY. Queue delivery does not admit
-repair, replace the pointer, enter In Progress or mutate manager State.
+The implementer can publish two specifically supported inability outcomes:
+a declared step missing prepared input, or an outstanding upstream repair or
+stack request that prevents completion for this subject. Use its own
+[assignment proof](#worker-assignment-and-inability) and actual direct
+edge. A verified inability publication supplies no permission to execute a
+wait or resume assignment. Reviewer and QA inability publication remains
+deferred in this release. Null-PR repair, stack-request repair and resume
+remain outside execution. Unsupported outcomes hold locally with full findings,
+partial ledgers and original receipts. Queue delivery does not admit repair,
+replace the pointer, enter In Progress or mutate manager State.
 
 For each supported repair, the implementer consumes every direct assigned request
 exactly once on the same PR and carries all findings through fresh High planning,
@@ -992,13 +997,15 @@ checked independently, including when role accounts overlap. It selects exact pr
 never grants permission or adds a field to the canonical handoff. Unknown intent,
 implementer repair_request and mismatched leaf role/source/destination reject.
 
-Initial preflight checks each available supported edge separately against the
-same actual predecessor, with no fabricated outcome/approval. READY requires at
-least one supported route and reports any missing route as a capability limitation.
-Before final publication, rerun the selected intended edge: a queue-only capability
-cannot authorize success, and success-only capability cannot authorize queueing.
-Run both proof checks while still in the source stage; verify destination status
-separately afterward.
+Reviewer and QA preflight checks each available supported edge separately
+against the same actual predecessor, with no fabricated outcome or approval.
+Their READY requires at least one supported route and records missing routes
+as capability limitations. The implementer checks the observed edge for the
+selected outcome only. Use worker-current for ordinary READY and
+[worker-assignment](#worker-assignment-and-inability) for a supported inability.
+Publication permission applies to that outcome. Recheck its intended edge
+in the actual source stage immediately before the write, then verify destination
+status after transition.
 
 For example, reviewer queue preflight uses the actual published implementation:
 

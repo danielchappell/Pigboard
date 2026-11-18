@@ -38,6 +38,12 @@ for what Pigboard supports today.
    approaches and give each skill a coherent purpose. Compare concrete measured
    results against agents without those skills and relevant alternatives.
 
+In a prepared release, give the implementer your assigned Jira key. It reads the
+current assignment and gathers permitted facts before each action. Review its
+durable result for code readiness, observed Jira status and any human action.
+See [the operator journey](docs/using-pigboard.md#execute-an-assigned-delivery-stage)
+and [the verification recipe](docs/using-pigboard.md#verify-implementer-preparation).
+
 ## Start here
 
 | What you want to do | Guide |
@@ -96,7 +102,7 @@ assigned Story or Bug names one repository allowed by its prepared environment.
 
 | Jira stage | Owner and result |
 | --- | --- |
-| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Dependency wait and blockers stop locally before candidate/append, preserving full evidence; no Jira transition. |
+| In Progress | Implementer plans with High, obtains one independent High plan review, implements with Medium, opens or updates one PR, verifies current CI/artifacts, then publishes/read-backs a typed record before In Review. Prepare declared artifacts as their inputs become available. The same Jira publisher can deliver a verified missing-input blocker or dependency wait. Other inability stays local. |
 | In Review | Independent High reviewer checks ticket and PR; verified approval moves it to QA; complete confirmed defects queue on the same open PR. |
 | QA | High QA agent runs the ticket's named skills and prescribed cases, retaining evidence; success moves the open PR to Human Review; complete confirmed defects queue with the full partial ledger. |
 | Human Review | Responsible developer and human QA reviewer assess the PR before human merge; explicit authorized findings may queue the same open PR through request-rework. |
@@ -308,9 +314,16 @@ installed acceptance remain separate.
 
 ## Ordinary worker compatibility
 
-The ordinary worker checker is `validate-handoff.mjs --mode worker-current`. It validates supplied current own/action proof and authenticated recorded ancestry for new-work implementation, approval, successful QA and complete reviewer/QA repair requests. It does not establish live freshness, execution authority or manager completion. Repair assignments, resume and inability/wait publication remain deferred with full local evidence and a no-mutation hold. Provider H01/H02 acceptance remains separate from local checks.
+Use `worker-current` for current new work or an eligible same-open-PR repair,
+and for ordinary implementation, review and QA handoffs. Use `worker-assignment`
+for an implementer's verified missing prepared input or dependency wait. Each
+publication needs its own authorized direct edge. Reviewer and QA inability,
+null-PR and stack-request repair execution, and resume remain deferred. Keep
+local findings and original receipts when an action holds. Local checks establish
+supplied proof. Provider acceptance and live authority require separate evidence.
 
-See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary) for the closed envelope, exact readback and recovery.
+See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary)
+for exact eligibility, readback and recovery.
 
 The [ordinary sender guide](docs/manager-apply.md) describes the bounded admission
 implementation and its prepared host prerequisites. Sender packages remain
