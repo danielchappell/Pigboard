@@ -44,9 +44,10 @@ For a selected repair, the sender checks the handoff, membership, reference, Sta
 and acquisition limits it can determine from the acquired facts and planned
 publication before retaining membership. It projects the selected ticket's
 comment pages with the new comment using Jira's observed page layout and page
-size. It also checks the minimum combined size of the reads required to verify
-the publication. Jira may return a different page layout or additional fields
-on the next read. The readers and writer enforce their bounds on actual provider
+size. It also forecasts the total bytes needed for verification using the
+sizes Jira returned, adjusted for the planned comment, pointer and comment
+readbacks. Jira may return a different page layout or different fields on the
+next read. The readers and writer enforce their bounds on actual provider
 traffic, and State checks conditional revisions and transaction limits. New
 work follows the existing sequence. After eligibility and member checks, the
 sender retains membership, reloads coherent State, and prepares the admission

@@ -117,3 +117,31 @@ for (const [label, max_response_bytes, listedPageSize] of [
     assert(recheckReads.every(row => bytes([row]) <= 9000));
   }
 });
+
+test('PGB-88 repair fits observed reads with a shorter unrelated search row', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true,
+    readBounds: {max_response_bytes: 12000, max_total_response_bytes: 53000}}});
+  const {result, trace} = e;
+  const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+  const initialReads = trace.filter(row => row.acquisition === 1 && row.status === 200);
+  // Verification reads following the publish writes do not count toward inventory.
+  const firstWrite = trace.findIndex(row => row.status === 201);
+  assert.equal(bytes(firstWrite === -1 ? initialReads : trace.slice(0, firstWrite)), 46339);
+  assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+    [['stream-1', true], ['stream-2', false]]);
+  assert(result.processing.reason_codes.includes('CHANGED_INPUT'));
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.apply.stage, 'complete');
+  assert.equal(result.writes, 3);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+  const freshReads = trace.filter(row => row.acquisition === 2 && row.status === 200);
+  assert.equal(bytes(freshReads), 52261);
+  for (const rows of [initialReads, freshReads]) {
+    const label = rows.filter(row => row.body?.jql?.includes('labels = "stream-2"'));
+    const issue = rows.filter(row => row.path.includes('/issue/1012?'));
+    assert.equal(label.length, 1);
+    assert.equal(issue.length, 1);
+    assert.deepEqual([bytes(label), bytes(issue)], [195, 5261]);
+  }
+});

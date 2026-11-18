@@ -63,7 +63,7 @@ function addMovedProjectFixture(p, moved) {
     makeEpic(current.epic_id, current.epic_key, current.project_id), ticket);
 }
 
-function prepareRepairFixture(p, {historyId, competingBug, ...options}) {
+function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, ...options}) {
   const history = p.recorded_repair_preview.cases.find(item => item.id === historyId);
   const config = repairFixtureConfig(historyId, options);
   const {issues, comment_pages} = history.inspection.observations;
@@ -80,6 +80,22 @@ function prepareRepairFixture(p, {historyId, competingBug, ...options}) {
     epic.workstreams[0].story_order.push(p.bug_issue.key);
     order.text = JSON.stringify(epic);
     native.push(p.bug_issue);
+  }
+  if (shortLabelSearch) {
+    const epic = structuredClone(native.find(i => i.id === '900'));
+    Object.assign(epic, {id: '901', key: 'EX-91'});
+    const node = epic.fields.description.content[0].content[0];
+    const work = JSON.parse(node.text);
+    work.workstreams = [{label: 'stream-2', story_order: ['EX-12']}];
+    node.text = JSON.stringify(work);
+    const issue = {
+      id: '1012', key: 'EX-12', fields: {
+        project: {id: '100'}, issuetype: {id: '22'}, status: {id: '2'}, parent: {id: '901'}, labels: ['stream-2'],
+        description: {type: 'doc', version: 1, content: [{type: 'paragraph', content: [{type: 'text', text: 'x'.repeat(5000)}]}]}
+      }
+    };
+    native.push(epic, issue);
+    history.state.retained_members.push({project_id: '100', label: 'stream-2', ticket_id: issue.id, epic_id: epic.id, assignment: null});
   }
   const {ticket_id, ...expected} = history.expected.assignment;
   const oracle = p.repair_admission.histories[historyId];
@@ -161,7 +177,10 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if(!injected&&fault?.startsWith('source-check:')&&scan===2){injected=true;if(fault.endsWith(':before')){req.socket.destroy();return;}res.writeHead(403);res.end('{}');return;}
    const parentId=body.jql.match(/parent = "([0-9]+)"/)?.[1];const matches=body.jql.includes('labels = "pigboard"')?issues.filter(i=>i.fields.labels.includes('pigboard')):parentId?issues.filter(i=>i.fields.parent?.id===parentId):issues.filter(i=>i.fields.labels.includes(body.jql.match(/labels = "([^"]+)"/)?.[1]));
    const projectId=body.jql.match(/project = "([0-9]+)"/)?.[1];
-   value={issues:moved?matches.filter(issue=>issue.fields.project.id===projectId):matches,isLast:true};
+   const labelRows=repairCase?.shortLabelSearch&&body.jql.includes('labels = "stream-2"')
+    ?matches.map(issue=>issue.id==='1012'?{...issue,fields:{...issue.fields,description:null}}:issue)
+    :matches;
+   value={issues:moved?labelRows.filter(issue=>issue.fields.project.id===projectId):labelRows,isLast:true};
   }else{
    const m=path.match(/^\/rest\/api\/3\/issue\/([^/?]+)(.*)$/);assert(m);const issue=issues.find(i=>i.id===m[1]||i.key===m[1]);assert(issue);const suffix=m[2],id=issue.id;
    if(mutation){
