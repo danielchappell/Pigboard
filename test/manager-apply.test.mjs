@@ -199,3 +199,34 @@ for (const [label, readBounds, applied] of [
   assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
   assert.deepEqual(measure(fresh), {requests: 24, bytes: 57524, aliases: ['1012', 'OLD-12']});
 });
+
+for (const [limit, applied] of [[53530, false], [100000, true]]) {
+  test('PGB-88 repair counts a scoped failed read at a '+limit+'-byte cap', async () => {
+    const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true, denyUnrelatedComments: true,
+      readBounds: {max_response_bytes: 9000, max_total_response_bytes: limit}}});
+    const {result, trace} = e;
+    assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+      [['stream-1', true], ['stream-2', false]]);
+    assert(result.processing.reason_codes.includes('READ_DENIED_OR_MISSING'));
+    const bytes = response => Buffer.byteLength(JSON.stringify(response));
+    const measure = rows => ({
+      requests: rows.length,
+      bytes: rows.reduce((sum, row) => sum + bytes(row.response), 0),
+      denials: rows.filter(row => row.status === 403).map(row => bytes(row.response))
+    });
+    const firstWrite = trace.findIndex(row => row.status === 201);
+    assert.deepEqual(measure(firstWrite === -1 ? trace : trace.slice(0, firstWrite)),
+      {requests: 21, bytes: 48108, denials: [1822]});
+    if (!applied) {
+      assertPreflightLimit(e);
+      return;
+    }
+    assert.equal(result.status, 'applied', JSON.stringify(result));
+    assert.equal(result.apply.stage, 'complete');
+    assert.equal(result.writes, 3);
+    assert.equal(result.apply.effects.finalization, 'confirmed');
+    assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+    const fresh = trace.filter(row => row.acquisition === 2 && [200, 403].includes(row.status));
+    assert.deepEqual(measure(fresh), {requests: 23, bytes: 54030, denials: [1822]});
+  });
+}

@@ -208,11 +208,16 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if(suffix.startsWith('?fields='))value=issue;
    else if(suffix==='/properties')value={keys:pointers.has(id)?[{key:'pigboard.work-context',self:config.jira.site+issueRoute(id,pointerSuffix)}]:[]};
    else if(suffix.startsWith('/comment?')){
-    if(regression?.deny_comments?.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}
-    const list=comments.get(id)??[],query=new URLSearchParams(suffix.split('?')[1]),startAt=Number(query.get('startAt'));
-    const requested=Number(query.get('maxResults'));
-    const maxResults=repairCase?.listedPageSize&&id===repair.ticket_id?Math.min(requested,repairCase.listedPageSize):requested;
-    value={startAt,maxResults,total:list.length,comments:list.slice(startAt,startAt+maxResults)};
+    if(repairCase?.denyUnrelatedComments&&id==='1012'){
+     value={errorMessages:['x'.repeat(1800)]};
+     status=403;
+    }else if(regression?.deny_comments?.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}
+    else{
+     const list=comments.get(id)??[],query=new URLSearchParams(suffix.split('?')[1]),startAt=Number(query.get('startAt'));
+     const requested=Number(query.get('maxResults'));
+     const maxResults=repairCase?.listedPageSize&&id===repair.ticket_id?Math.min(requested,repairCase.listedPageSize):requested;
+     value={startAt,maxResults,total:list.length,comments:list.slice(startAt,startAt+maxResults)};
+    }
    }
    else if(suffix==='/comment'&&req.method==='POST'){comments.set(id,[...(comments.get(id)??[]),currentComment]);value=currentComment;status=201;}
    else if(suffix.startsWith('/comment/')){
