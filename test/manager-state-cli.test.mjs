@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {runStateCommand} from '../scripts/manager-state.mjs';
+import {formatTransitionInspection,runStateCommand} from '../scripts/manager-state.mjs';
 import {resolverJourney} from '../scripts/test-aws-manager.mjs';
 test('bound state CLI resolves selected operator and renders readable JSON all four record kinds',async()=>{const r=await resolverJourney();assert.equal(Object.keys(r.inspections).length,8);});
 test('state CLI help and strict flags perform no resolution',async()=>{let calls=0;const options={resolveInstallation:()=>{calls++;}};assert.equal((await runStateCommand(['--help'],options)).exitCode,0);assert.equal((await runStateCommand(['init','--config','x','--installation','x','--operator-profile','operator','--force'],options)).exitCode,2);assert.equal((await runStateCommand(['init','--config','x','--installation','x','--operator-profile','operator','--recovery'],options)).exitCode,2);assert.equal(calls,0);});
@@ -43,4 +43,56 @@ test('actual bound CLI displays capture states with truthful read-only control m
     assert.match(unsupported.readable, /Transition capture: unsupported/);
     assert.equal(transitionProof(unsupported.json.data.records[0]).state, 'unsupported');
   } finally { c.cleanup(); }
+});
+
+test('Jira evidence flags require one exact named attempt before resolving AWS',async()=>{
+  const base=['--config','config.yaml','--installation','receipt.json','--operator-profile','operator'];
+  const attempt='attempt:11111111-1111-4111-8111-111111111111';
+  const evidence=['inspect',...base,'--kind','attempt','--record-id',attempt,'--jira-evidence'];
+  let calls=0;
+  const dependencies={resolveInstallation:async()=>{calls++;throw Error('unexpected resolution');}};
+  const invalid=[
+    ['init',...base,'--jira-evidence'],
+    ['init',...base,'--original-installation','prior.json'],
+    ['inspect',...base,'--kind','attempt','--record-id',attempt,'--original-installation','prior.json'],
+    ['inspect',...base,'--kind','attempt','--jira-evidence'],
+    ['inspect',...base,'--kind','stream','--record-id',attempt,'--jira-evidence'],
+    ['inspect',...base,'--kind','attempt','--record-id','attempt:NOT-A-UUID','--jira-evidence'],
+    [...evidence,'--recovery'],[...evidence,'--limit','1'],[...evidence,'--cursor','AAAA'],
+    [...evidence,'--endpoint','https://never-used.invalid'],[...evidence,'--secret-reference','opaque'],
+    [...evidence,'--evidence-result','result.json']
+  ];
+  for(const args of invalid){
+    const result=await runStateCommand([...args,'--json'],dependencies);
+    assert.equal(result.exitCode,2,args.join(' '));
+    assert.equal(result.outcome.status,'invalid');
+    assert.equal(result.outcome.code,'INVALID_INPUT');
+  }
+  assert.equal(calls,0);
+  const help=(await runStateCommand(['--help'])).stdout;
+  assert.match(help,/--jira-evidence/);
+  assert.match(help,/--original-installation/);
+});
+
+test('readable history encodes a multiline provider actor on one line with exact machine parity',()=>{
+  const actor='fixture actor\ncontinued\r\u001b[2J\u0085\u2028\u2029';
+  const item={issue_id:'1001',history_id:'42',item_index:0,actor_id:actor,from_status_id:'1',to_status_id:'2',created:'2026-11-17T12:00:00.000Z'};
+  const dimension=(status,extra={})=>({status,code:null,...extra});
+  const attempt_id='11111111-1111-4111-8111-111111111111';
+  const outcome={schema:'pigboard-transition-inspection/v1',status:'complete',code:'OK',diagnostics:[],writes:0,execution_authorized:false,
+    data:{attempt_id,pending_attempt_id:attempt_id,state_outcome:'pending',revisions:{installation:5,stream:0,attempt:3},
+      desired_controls:{writes_enabled:true},applied_controls:{writes_enabled:true},observed_schedule:'ENABLED',controls_match:true,schedule_matches_applied:true,
+      pending:dimension('held'),original_capture:dimension('confirmed',{http_status:204,interpretation:'success_reply'}),
+      original_authority:dimension('confirmed',{source:'current_receipt'}),original_metadata:dimension('confirmed'),inventory:dimension('confirmed'),
+      recovery_credential:dimension('acquired'),jira_acquisition:dimension('acquired'),assignment:dimension('matched'),recorded_proof:dimension('confirmed'),
+      publication:dimension('confirmed'),native_history:dimension('complete',{observed_count:1,items:[item],truncated:false,request_attribution:'none'}),
+      jira_observations:'as_observed',state_fence:dimension('confirmed'),current_agreement:'confirmed'}};
+  const output=formatTransitionInspection(outcome,false).stdout;
+  const machine=JSON.parse(formatTransitionInspection(outcome,true).stdout);
+  const prefix='Native history item ';
+  const lines=output.split('\n').filter(line=>line.startsWith(prefix));
+  assert.equal(lines.length,1);
+  assert.deepEqual(JSON.parse(lines[0].slice(prefix.length)),item);
+  assert.deepEqual(machine.data.native_history.items,[item]);
+  assert(!/[\r\u001b\u0085\u2028\u2029]/u.test(output));
 });

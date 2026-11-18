@@ -227,6 +227,11 @@
             "deployer_role_arn": {
               "type": "string",
               "pattern": "^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_-]{1,128}$"
+            },
+            "recovery_jira_secret_arn": {
+              "type": "string",
+              "maxLength": 640,
+              "pattern": "^(arn:aws:secretsmanager:[a-z]{2}-[a-z]+-[0-9]:[0-9]{12}:secret:)([A-Za-z0-9/_+=.@-]{1,512})-[A-Za-z0-9]{6}$(?![\\s\\S])"
             }
           },
           "required": [

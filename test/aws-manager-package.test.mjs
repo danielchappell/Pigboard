@@ -5,12 +5,14 @@ import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
-import {hostConfig,deriveHostControls,sha256,installationResourceBase} from '../lib/aws/installation.mjs';
+import {hostConfig,deriveHostControls,sha256,installationResourceBase,resolveInstallation} from '../lib/aws/installation.mjs';
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
+import {parseConfig} from '../lib/config/parse.mjs';
 import {fixtureCloud,preparedCloud} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
+const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
 test('disabled package synthesizes scoped read-only runtime and retained bounded host',()=>{
  const {config}=fixture(),text=JSON.stringify(config),{digest}=hostConfig(text),manifest={schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),canonical_config:config};
  const t=synthesizeTemplate(text,manifest),r=t.Resources;assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(r.Function.Properties.ReservedConcurrentExecutions.Ref,'QuiescenceConcurrency');assert.equal(t.Parameters.QuiescenceConcurrency.Default,1);assert.equal(r.Function.Properties.Runtime,'nodejs24.x');assert.equal(r.AsyncInvocation.Properties.Qualifier,'$LATEST');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.AsyncInvocation.Properties.MaximumEventAgeInSeconds,60);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumEventAgeInSeconds,60);assert.equal(r.StateTable.DeletionPolicy,'Retain');assert.equal(r.StateTable.UpdateReplacePolicy,'Retain');assert.equal(r.LogGroup.Properties.RetentionInDays,14);
@@ -19,11 +21,78 @@ test('disabled package synthesizes scoped read-only runtime and retained bounded
  const projected=deriveHostControls(text,{package_revision:manifest.source_revision});assert.equal(projected.mode,'preview');assert.deepEqual(projected.control,{configuration_digest:digest,schedule_enabled:false,writes_enabled:false,maintenance:false});
 });
 
+test('canonical recovery credential validates exact distinct ARNs and adds one operator-only grant',()=>{
+ const {config}=fixture(), senderArn=config.jira.connection.secret_reference;
+ const baseline=JSON.stringify(config), baselineDigest=hostConfig(baseline).digest;
+ const template=value=>{
+  const text=JSON.stringify(value),digest=hostConfig(text).digest;
+  return synthesizeTemplate(text,{schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,
+   installation_id:value.manager.installation_id,domain_id:value.manager.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),canonical_config:value});
+ };
+ const original=template(config);
+ config.manager.aws.recovery_jira_secret_arn=recoveryArn;
+ assert.notEqual(hostConfig(JSON.stringify(config)).digest,baselineDigest);
+ const withRecovery=template(config);
+ const originalPolicies=original.Metadata.Pigboard, proposedPolicies=withRecovery.Metadata.Pigboard;
+ assert.deepEqual(proposedPolicies.operator_policy.Statement,[...originalPolicies.operator_policy.Statement,
+  {Effect:'Allow',Action:'secretsmanager:GetSecretValue',Resource:recoveryArn}]);
+ assert.deepEqual(originalPolicies.operator_policy.Statement.filter(s=>[s.Action].flat().some(a=>a.startsWith('secretsmanager:'))),[]);
+ assert.deepEqual(proposedPolicies.configure_deployer_policy,originalPolicies.configure_deployer_policy);
+ assert.deepEqual(withRecovery.Resources.RuntimeRole,original.Resources.RuntimeRole);
+ assert.deepEqual(withRecovery.Resources.SchedulerRole,original.Resources.SchedulerRole);
+ assert.deepEqual(withRecovery.Resources.RuntimeRole.Properties.Policies[0].PolicyDocument.Statement.filter(s=>[s.Action].flat().some(a=>a.startsWith('secretsmanager:'))),
+  [{Effect:'Allow',Action:'secretsmanager:GetSecretValue',Resource:senderArn}]);
+ for(const [recovery,sender] of [
+  [senderArn,senderArn], [senderArn.slice(0,-6)+'123456',senderArn], [recoveryArn+'-pq1234',recoveryArn],
+  [recoveryArn,recoveryArn+'-pq1234'], [recoveryArn.slice(0,-7),senderArn], ['pigboard-evidence',senderArn],
+  [recoveryArn.replace('eu-west-1','us-east-1'),senderArn], [recoveryArn.replace('123456789012','123456789013'),senderArn],
+  [recoveryArn.replace('team/','*/'),senderArn], [recoveryArn+'\n',senderArn], [recoveryArn,senderArn.slice(0,-7)],
+  [recoveryArn,senderArn.replace('123456789012','123456789013')], [recoveryArn,'pigboard-fixture']
+ ]){
+  config.manager.aws.recovery_jira_secret_arn=recovery;
+  config.jira.connection.secret_reference=sender;
+  const parsed=parseConfig(JSON.stringify(config));
+  assert.equal(parsed.valid,false);
+  assert.equal(parsed.diagnostics[0].path,'/manager/aws/recovery_jira_secret_arn');
+  assert(!JSON.stringify(parsed).includes(sender));
+ }
+ delete config.manager.aws.recovery_jira_secret_arn;
+ config.jira.connection.secret_reference=senderArn.slice(0,-7);
+ assert(hostConfig(JSON.stringify(config)).digest);
+});
+
 test('copied pinned package imports and rejects extra event fields under selected Node runtime',async()=>{
- const {snapshotPackage}=await import('../scripts/test-aws-manager.mjs');const built=snapshotPackage();try{
+ const {snapshotPackage}=await import('../scripts/test-aws-manager.mjs'),{config}=fixture();
+ config.manager.aws.recovery_jira_secret_arn=recoveryArn;
+ const built=snapshotPackage({config});try{
  const node24=process.env.PGB_NODE24??process.execPath;if(process.env.PGB_NODE24)assert.match(execFileSync(node24,['--version'],{encoding:'utf8'}),/^v24\./);
  const url=pathToFileURL(built.payload+'/lib/aws/manager-lambda.mjs').href,code=`const {handler}=await import(${JSON.stringify(url)});console.log(JSON.stringify(await handler({operation:'preview',override:true},{})));`;
  const lines=execFileSync(node24,['--input-type=module','-e',code],{encoding:'utf8'}).trim().split('\n'),out=JSON.parse(lines.at(-1));assert(lines.every(line=>!line.includes('dummy-scoped-token')));assert.equal(out.code,'PREVIEW_EVENT_REQUIRED');assert.equal(out.writes,0);assert(built.manifest.payload_hashes['contracts/epic-v1.schema.json']);assert(built.manifest.payload_hashes['runtime/aws/package-lock.json']);
+ for(const path of ['contracts/config-v1.schema.json','lib/config/parse.mjs','lib/aws/installation.mjs']){
+  const source=readFileSync(new URL('../'+path,import.meta.url)),copied=readFileSync(join(built.payload,path));
+  assert.deepEqual(copied,source,path);
+  assert.equal(built.manifest.payload_hashes[path],sha256(copied),path);
+ }
+ const canonical=readFileSync(join(built.payload,'config/manager.json'));
+ assert.deepEqual(JSON.parse(canonical),config);
+ assert.equal(built.manifest.payload_hashes['config/manager.json'],sha256(canonical));
+ assert.equal(built.manifest.configuration_digest,hostConfig(canonical.toString()).digest);
+ const host=await preparedCloud(config,built.manifest),{sdk,makeClient}=host.dependencies;
+ try{
+  writeFileSync(host.installationPath,JSON.stringify(host.receipt,null,2)+'\n');
+  const resolved=await resolveInstallation({configPath:host.configPath,installationPath:host.installationPath,
+   originalInstallationPath:host.installationPath,purpose:'evidence-inspect',operatorProfile:'operator'},
+  {sdk,makeClient(kind,options){
+   const client=makeClient(kind,options);
+   if(kind!=='STS')return client;
+   return {...client,send:async(...args)=>({...await client.send(...args),UserId:'fixture-user-id'})};
+  }});
+  try{
+   assert.deepEqual(resolved.evidenceAuthority.original?.binding,resolved.evidenceAuthority.binding);
+   assert.equal(resolved.evidenceAuthority.recoverySecretOutcome(),'not-called');
+   assert(host.audit.every(entry=>/^(Get|Describe)/.test(entry.action)));
+  }finally{resolved.dispose();}
+ }finally{host.cleanup();}
  }finally{built.cleanup();}
 });
 
