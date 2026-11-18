@@ -58,3 +58,11 @@ test('recorded diagnostics lead only with evaluated proof or observed attributio
   });
  }
 });
+
+test('original admission remains complete when a separate stream loses its pointer',async()=>{
+ const result=await runFixture('PGB-163-H01','original-admission',source,{receiptComparison:'reconciliation-unrelated-pointer'});
+ assert.equal(result.report.status,'complete');
+ assert.equal(result.publication.status,'complete');
+ assert.equal(result.history.status,'complete');
+ assert.equal(result.observed.proof_evaluated,true);
+});

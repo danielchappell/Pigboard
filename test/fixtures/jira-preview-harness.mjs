@@ -59,10 +59,13 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,recei
  if(!oracle)throw Error('Use a prescribed case and variant.');
  const competingEpic=ownershipConflict||receiptComparison==='ownership-conflict';
  const genericForeignPointer=receiptComparison==='generic-foreign-pointer';
- const scopedForeignPointer=['scoped-pointer','ownership-conflict'].includes(receiptComparison);
+ const originalPublication=receiptComparison==='reconciliation-unrelated-pointer';
+ const scopedForeignPointer=originalPublication||['scoped-pointer','ownership-conflict'].includes(receiptComparison);
  if(competingEpic||genericForeignPointer){
   assert.equal(variant,'current-qa');
   Object.assign(oracle,{status:'incomplete',code:'CLOSURE_INCOMPLETE'});
+ }else if(originalPublication){
+  assert.equal(variant,'original-admission');
  }else if(receiptComparison){
   assert.equal(variant,'current-qa-outstanding-request');
   assert(['scoped-pointer','target-denied'].includes(receiptComparison));
@@ -632,7 +635,7 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    assert(!report.diagnostics.some(d=>['OWNERSHIP_CONFLICT','MEMBERSHIP_MISMATCH'].includes(d.code)));
    observed={target:v.target,proof_evaluated:false,closure_reason:null};
   }
-  if(['scoped-pointer','ownership-conflict','generic-foreign-pointer'].includes(receiptComparison)){
+  if(['scoped-pointer','ownership-conflict','generic-foreign-pointer','reconciliation-unrelated-pointer'].includes(receiptComparison)){
    const scope=receiptComparison==='generic-foreign-pointer'?null:{project_id:'100',label:'stream-2'};
    assert(report.diagnostics.some(d=>d.code==='POINTER_UNKNOWN'&&d.operation==='pointer'&&d.issue_id==='1200'&&
     canonicalize(d.scope)===canonicalize(scope)));
@@ -651,6 +654,7 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    const assessed=proof.validation??proof;
    assert.equal(assessed.valid,true);assert.equal(assessed.execution_authorized,false);
    assert.equal(assessed.purpose,v.reconcile?'recorded-history':'recorded-completion');
+   assert.equal(canonicalize(assessed.target),canonicalize(v.target));
    observed={target:receipt_input.target,proof_purpose:(proof.validation??proof).purpose,publication,history,native_times:null,capture_digest:null};
    if(v.reconcile){
     const native=receipt_input.comment_pages.filter(p=>p.ticket_id===v.target.ticket_id).flatMap(p=>p.comments).find(c=>c.id===v.target.comment_id);
@@ -665,6 +669,12 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
     assert.equal(capture,v.publicationDigest);
     assert.equal(capture,v.state.attempt.extensions.pb_capture_publication_digest);
     observed={...observed,native_times:times,publication_observations,capture_digest:capture};
+    if(receiptComparison==='reconciliation-unrelated-pointer'){
+     assert.equal(report.diagnostics.length,1);
+     assert.equal(trace.length,28);
+     assert.equal(v.state.attempt.cause.length,0);
+     observed={...observed,proof_evaluated:true};
+    }
    }else{
     assert.equal(proof.validation.recorded_completion_established,true);
     assert.equal(receipt_input.issues.find(i=>i.id===v.target.ticket_id).pr_history_complete,true);

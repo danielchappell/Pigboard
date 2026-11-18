@@ -816,11 +816,12 @@ test('real prepared copy runs both native receipt groups from an unrelated direc
   ['scoped-pointer','current-qa-outstanding-request','RECORDED_PROOF_INVALID'],
   ['target-denied','current-qa-outstanding-request','READ_DENIED_OR_MISSING'],
   ['ownership-conflict','current-qa','CLOSURE_INCOMPLETE'],
-  ['generic-foreign-pointer','current-qa','CLOSURE_INCOMPLETE']
+  ['generic-foreign-pointer','current-qa','CLOSURE_INCOMPLETE'],
+  ['reconciliation-unrelated-pointer','original-admission','OK']
  ]){
   const result=spawnSync(process.execPath,['--input-type=module','--eval',comparisons,runtime,variant,comparison],{cwd,env,encoding:'utf8',timeout:20000});
   assert.equal(result.status,0,comparison+' '+result.stdout+' '+result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout),{code,proof_evaluated:comparison==='scoped-pointer',effects:0});
+  assert.deepEqual(JSON.parse(result.stdout),{code,proof_evaluated:['scoped-pointer','reconciliation-unrelated-pointer'].includes(comparison),effects:0});
  }
  assert.deepEqual(await readdir(cwd),[]);
 });
