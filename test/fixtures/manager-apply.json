@@ -1,5 +1,26 @@
 {
   "schema": "pigboard-manager-apply-fixture/v1",
+  "sender_evidence": {
+    "timestamp": "2026-11-17T13:00:00.000+0100",
+    "canonical_timestamp": "2026-11-17T12:00:00.000Z",
+    "provider_request_id": "fixture-transition-1",
+    "private_reply_marker": "DUMMY_PRIVATE_TRANSITION_RESPONSE",
+    "private_header_marker": "DUMMY_PRIVATE_TRANSITION_HEADER",
+    "groups": {
+      "SEND-H01": [
+        {"id": "applied", "wire_status": 204, "saved_status": 204, "sends": 1, "outcome": "applied", "result_code": "APPLIED"},
+        {"id": "recorded-conflict", "wire_status": 409, "error_body": true, "saved_status": 409, "sends": 1, "outcome": "pending", "result_code": "TRANSITION_REJECTED"},
+        {"id": "unsupported-status", "wire_status": 400, "error_body": true, "saved_status": 400, "sends": 1, "outcome": "pending", "result_code": "TRANSITION_RESPONSE_UNSUPPORTED"}
+      ],
+      "SEND-H02": [
+        {"id": "prepare-rejected", "fault": "prepare:rejected", "saved_status": null, "sends": 0, "outcome": "pending", "result_code": "REVISION_CONFLICT"},
+        {"id": "prepare-uncertain", "fault": "prepare:after", "saved_status": null, "sends": 0, "outcome": "pending", "result_code": "UNCERTAIN_WRITE"},
+        {"id": "incomplete-response", "wire_status": 409, "fault": "transition:incomplete", "saved_status": null, "sends": 1, "outcome": "pending"},
+        {"id": "response-acknowledgement-lost", "wire_status": 409, "error_body": true, "fault": "response:after", "saved_status": 409, "sends": 1, "outcome": "pending", "result_code": "UNCERTAIN_WRITE"},
+        {"id": "legacy-pending", "legacy": true, "saved_status": 204, "sends": 0, "outcome": "pending"}
+      ]
+    }
+  },
   "config": {
     "schema": "pigboard-config/v1",
     "jira": {

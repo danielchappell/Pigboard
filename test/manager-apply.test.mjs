@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {runApplyFixture,runRepairGroup,packet} from '../scripts/test-manager-apply.mjs';
+import {runApplyFixture,runRepairGroup,assertSenderJourney,packet} from '../scripts/test-manager-apply.mjs';
 import {chooseOrdinaryStream} from '../lib/manager/apply.mjs';
 test('R1-17-H01 ordinary admission and no replay',async()=>{
  const e=await runApplyFixture({repeat:true});assert.equal(e.result.status,'applied',JSON.stringify(e.result));assert.equal(e.result.apply.stage,'complete');assert.equal(e.result.writes,3);assert.deepEqual(e.result.apply.effects,packet.oracle.effects);assert.deepEqual(e.mutations,packet.oracle.mutations);
@@ -260,3 +260,21 @@ for (const [limit, applied] of [[53140, false], [100000, true]]) {
     assert.deepEqual(notes(fresh), notes(initial));
   });
 }
+
+test('native sender preserves original disposition across response and State boundaries', async () => {
+  const cases = [
+    {wire_status: 409, saved_status: 409, result_code: 'TRANSITION_REJECTED'},
+    {wire_status: 429, saved_status: 429, result_code: 'TRANSITION_RESPONSE_UNSUPPORTED'},
+    {wire_status: 302, saved_status: 302, result_code: 'TRANSITION_RESPONSE_UNSUPPORTED'},
+    {fault: 'prepare:before', sends: 0, saved_status: null, result_code: 'UNCERTAIN_WRITE'},
+    {wire_status: 409, fault: 'response:before', saved_status: null, result_code: 'UNCERTAIN_WRITE'},
+    {fault: 'finalize:before', result_code: 'UNCERTAIN_WRITE'},
+    {fault: 'finalize:after', outcome: 'applied', result_code: 'UNCERTAIN_WRITE'}
+  ];
+  for (const entry of cases) {
+    const testCase = {wire_status: 204, saved_status: 204, sends: 1, outcome: 'pending', ...entry};
+    const inspectSend = entry.fault?.startsWith('finalize:') === true;
+    const evidence = await runApplyFixture({sendCase: testCase, repeat: true, host: 'handler', inspectSend});
+    assertSenderJourney(evidence, testCase);
+  }
+});

@@ -41,7 +41,11 @@ resource or bootstrap a replacement table:
   observation time, `new_installation:true` and `table_empty:true`.
 
 The table uses string keys `PK` and `SK`, with no indexes, TTL or streams. The
-adapter uses an installation partition and `I#`, `S#`, `M#`, `A#` record prefixes.
+adapter uses `installation#<installation_id>` as the partition key and `I#`, `S#`,
+`M#`, `A#` sort-key prefixes for the four business records. New transition
+preparations also retain a native publication item at `N#<attempt_uuid>`. Inventory
+and ordinary inspection select business record prefixes. Installation inventory
+work under PGB-86 must recognize and preserve the retained `N#` namespace.
 The PGB-83 host generates and verifies this layout, retains the table on stack
 deletion or replacement and refuses an empty replacement as authority. This API provisions
 nothing. It rechecks the table ARN, active state and emptiness before a conditional
@@ -267,12 +271,13 @@ unresolved. Do not repeat configure or reconstruct a receipt to hide uncertainty
 
 ## Retain and inspect original transition proof
 
-PGB-137 adds a complete proof-persistence capability to the existing attempt v1
-record. A later trusted producer can save its verified publication, prepare an
-exact request commitment, and retain its original completed HTTP response.
-The real sender is PGB-87 work; reconciliation is PGB-85 work. Neither has shipped
-through these methods. This checkpoint sends no Jira request and does not finalize
-the pending attempt.
+The [ordinary sender](manager-apply.md#inspect-the-original-transition-attempt)
+uses the internal State writer to retain its verified publication, prepare the
+exact request commitment and save the original completed HTTP reply. This
+section describes a fresh installation using a package with native publication
+capture. Earlier attempts remain readable with the evidence they originally
+retained. Access to the full native evidence during operator inspection and
+settlement are later PGB-85 work.
 
 The same `inspect --kind attempt` command now adds a readable summary:
 
@@ -284,10 +289,12 @@ The same `inspect --kind attempt` command now adds a readable summary:
 | `unsupported` | Named capture fields are partial, conflicting, unknown or fail their request binding. Keep the hold. |
 
 The summary names the attempt, its unchanged outcome, request digest and original
-HTTP status when available. JSON returns the same full record and exact revisions.
-A retained 204, 409, 400 or other status is an HTTP fact here, with no “applied” or
-“rejected” inference. Reading existing proof never grants send/resume/retry
-permission. Inspection works while disabled, subject to the existing read contract.
+HTTP status when available. JSON returns the same business record and exact
+revisions. Check the attempt outcome separately from the retained HTTP status.
+A `prepared` or `response-captured` summary describes the attempt's v1 fields.
+Earlier attempts can have those fields and lack the native item. Keep the
+original evidence and any unresolved hold when evidence is missing. Inspection
+works while disabled under the existing read contract.
 
 ### Trusted writer order
 
@@ -319,17 +326,18 @@ boundary, not from a digest or an asserted caller flag.
    `prepareTransitionCapture({attempt_id, expected_installation_revision,
    expected_stream_revision, expected_attempt_revision, transition_id,
    producer_invocation_id, publication_observations, now})`.
-   Observations contain every retained reference's server author/update-author and
-   created/updated values, plus `{mode, assignment}` for the exact pointer. The
-   persistence boundary checks unchanged metadata, exact reference coverage and
-   operation-specific pointer binding; the producer still verifies actual bodies,
-   readback and role authorization. Admission uses mode `published` and this
+   Observations contain every retained reference's server author and update-author
+   IDs and original created and updated strings, plus `{mode, assignment}` for
+   the exact pointer. The persistence boundary checks unchanged metadata, unique
+   comment identities, exact reference coverage and operation-specific pointer
+   binding. The producer verifies the actual bodies, readback and role authorization.
+   Admission uses mode `published` and this
    operation's manager reference. Queue repair uses mode `preserved` and its
    retained member's existing assignment, without replacing it with the queue
    comment. A successful fresh preparation is the state prerequisite for one send
    in that current invocation, alongside all normal producer checks. Existing
    capture, uncertainty or any failed result cannot be used to resume or resend.
-4. After the original request has one completed response, call
+4. After the original request has one valid completed response, call
    `recordTransitionResponse({attempt_id, expected_installation_revision,
    expected_stream_revision, expected_attempt_revision, request_digest,
    http_status, observed_at, provider_request_id})` once. A lost/partial transport
@@ -340,8 +348,10 @@ boundary, not from a digest or an asserted caller flag.
    Duplicate/conflicting responses fail without replacing original proof.
    This method never changes the pending outcome.
 
-Each operation uses one transaction: update installation and attempt, condition-check
-the matching pending stream without advancing its revision. Success returns
+Each operation uses one transaction to update installation and attempt and check
+the exact pending stream and its revision. The stream revision stays the same.
+Preparation adds an insert-only fourth action for the native publication item.
+The item and the request commitment either both commit or both fail. Success returns
 `data:{installation,stream,attempt}` with resulting records; use those exact
 revisions in the next call. Other statuses return `data:null`. Existing extension
 fields are merged and protected by the observed attempt revision. No auto-retry
@@ -356,18 +366,32 @@ The ten scalar extension keys are `pb_capture_version` (1),
 `pb_capture_received_at`, `pb_capture_provider_request_id`. Package revision comes
 from the validated binding; configuration digest stays in the immutable attempt.
 Status/time are both null or both populated. Prepared-only provider request ID is
-null. Times use bounded UTC-Z syntax. Up to six unrelated extension keys survive;
-insufficient space fails before preparation. Existing 16-key, 32 KiB marshalled
-record and 1 MiB transaction limits remain unchanged. No raw bodies, nested JSON,
-new store, schema version or field retirement is introduced.
+null. Times stored in the scalar extensions use bounded UTC syntax with a `Z`
+suffix. Up to six unrelated extension keys survive. Insufficient space fails
+before preparation. The v1 attempt and its 16-key extension limit are unchanged.
+
+The companion uses schema `pigboard-native-publication/v1` and holds
+`installation_id`, `site`, `attempt_id`, `request_digest`, `publication_digest` and
+`comments`. Each comment holds its nested typed `reference` and the exact original
+`author_id`, `update_author_id`, `created` and `updated` from Jira. For example,
+`2026-11-18T15:10:00.000+0100` stays as supplied in the companion and becomes
+`2026-11-18T14:10:00.000Z` in the canonical digest input. The same verified
+observation supplies both forms. The item holds no provider bodies or credentials.
+
+State inserts the companion only if its key is absent and retains it with the
+attempt without TTL or backfill. Its full marshalled item, including both keys,
+has a 32 KiB limit and counts toward the 100-action and 1 MiB transaction limits.
+The business-record size checks also apply. A preparation conflict, limit or
+uncertain result stops the sender before the Jira transition.
 
 `transitionPublication` in `lib/state/contract.mjs` exports the reusable exact
 tuple and JCS/SHA256 digest. Each reference tuple is
 `[ticket_id,comment_id,record_id,digest]`. The commitment object is
 `{comments:[[referenceTuple,author_id,update_author_id,created,updated],...],
-pointer:[mode,referenceTuple]}`. Comments sort lexically by the JCS reference tuple;
-duplicates or incomplete retained coverage fail. Reference object key ordering
-and observation array ordering do not change the commitment.
+pointer:[mode,referenceTuple]}`. Here both times are canonical ISO UTC strings.
+Comments sort lexically by the JCS reference tuple. Duplicates or incomplete
+retained coverage fail. Reference object key ordering and observation array
+ordering do not change the commitment.
 
 `transitionRequestDigest` commits to version 1, method `POST`, route
 `issue_transitions`, transition ID, exactly `{transition:{id}}`, publication digest,
