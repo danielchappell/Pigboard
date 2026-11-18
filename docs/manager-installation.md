@@ -479,3 +479,23 @@ do not establish installed/live acceptance, upgrade a package or authorize activ
 general source upgrades remain outside configure's supported-change boundary.
 A saved preview success never proves current apply completion: mode, package,
 configuration and retained enablement identity must match.
+
+## Recorded repair preview configuration
+
+A compatible reviewed package exposes effective `manager.rework_enabled` from the
+single canonical config; omitted/false keeps existing behavior. True permits the
+[recorded same-PR preview](manager-preview.md#recorded-same-pr-repair-preview),
+while the sender still declines repair. PGB-88 owns later sender support.
+
+To toggle false → true → false on an existing compatible installation, change only
+that canonical boolean and follow the same-source package/configure commands
+above: retain the exact source revision, original generation and prepared
+payload/dependencies, rebuild, upload the exact zip and use its asset receipt.
+The complete configuration digest binds the flag. Configure preserves fencing,
+quiescence, health-epoch rules and original receipt recovery on uncertainty.
+A successful result supplies the new receipt; keep previous receipts. On partial
+or uncertain results retain the original recovery identity and follow the
+existing inspect/stop procedure without replay. An older pin lacking this field
+needs a separately authorized source upgrade; configure refuses source changes.
+Every initial package still starts with schedule and writes disabled. This flag
+is neither activation nor authority to send or launch repairs.

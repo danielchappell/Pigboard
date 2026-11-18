@@ -58,3 +58,18 @@ prioritizes that ready Bug; it does not convert Stories or create Bugs automatic
 An admission is not proof a Cursor run exists or that delivery occurs exactly once.
 
 The [Pig Boss company/health design](../architecture/pig-boss-operations.md) defines project scope, multi-project installation and current operating-health requirements.
+
+## Current recorded repair preview
+
+The source and complete prepared ordinary preview can propose authenticated
+own-ticket same-PR rework when canonical `manager.rework_enabled` is true.
+Reviewer/QA failure needs its own authenticated basis; human rejection needs its
+QA basis. Complete unresolved ancestor causes survive until coherent active-lineage
+QA consumption, and the current request determines the recorded PR head/target.
+Existing prerequisites, stream identity, ordering and availability limits apply.
+Unsupported null-PR, stack, wait/resume and parent-update work holds.
+
+This is a proposal with zero writes and no execution or external freshness claim.
+The current ordinary sender still admits new work only; PGB-88 owns repair sending.
+See [commands, prerequisites and recovery](../manager-preview.md#recorded-same-pr-repair-preview).
+The target rules above remain broader than this preview increment.

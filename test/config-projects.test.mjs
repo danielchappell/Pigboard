@@ -116,3 +116,9 @@ test('manager health defaults preserve old configs and explicit health bounds en
  const omittedOverflow=structuredClone(source);omittedOverflow.manager.log_retention_days=1;omittedOverflow.manager.schedule_minutes=481;const omittedRejected=check(omittedOverflow);assert.equal(omittedRejected.valid,false);assert.deepEqual(omittedRejected.diagnostics.map(({code,path})=>({code,path})),[{code:'HOST_SETTINGS',path:'/manager/health/freshness_seconds'}]);
  const equality=structuredClone(c);equality.manager.log_retention_days=1;equality.manager.health.freshness_seconds=86400;assert.equal(check(equality).valid,true);
 });
+
+test('R3A-03 canonical rework opt-in is optional boolean and preserves authored digest',async()=>{
+ const {createHash}=await import('node:crypto'),{default:canonicalize}=await import('canonicalize');const source=JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config,digests=[];
+ for(const value of [undefined,false,true]){const c=structuredClone(source);if(value!==undefined)c.manager.rework_enabled=value;const raw=JSON.stringify(c),r=check(c);assert.equal(r.valid,true,JSON.stringify(r));assert.equal(r.configuration_digest,'sha256:'+createHash('sha256').update(canonicalize(c)).digest('hex'));assert.equal(JSON.stringify(c),raw);assert.equal(Object.hasOwn(c.manager,'rework_enabled'),value!==undefined);digests.push(r.configuration_digest);}
+ assert.equal(new Set(digests).size,3);for(const value of ['true',null,1,{}]){const c=structuredClone(source);c.manager.rework_enabled=value;const r=check(c);assert.equal(r.valid,false);assert.equal(r.diagnostics[0].path,'/manager/rework_enabled');}
+});

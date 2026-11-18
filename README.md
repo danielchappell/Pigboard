@@ -84,7 +84,8 @@ deliberate operator action.
 | Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
 | Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions; automatic repair admission, installed/live acceptance and activation remain separate |
-| Manager-driven repair admission and orchestration | Later coordinated release work |
+| Recorded same-PR ordinary repair preview | Optional canonical `manager.rework_enabled: true`; authenticated own-ticket requests and complete unresolved causes, zero writes. [Prerequisites, commands and holds](docs/manager-preview.md#recorded-same-pr-repair-preview) |
+| Manager-driven repair admission and orchestration | Later coordinated release work; PGB-88 owns sending the recorded preview proposal |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
@@ -297,10 +298,13 @@ This library neither authenticates receipts nor performs admission or activation
 
 The [ordinary recorded preview](docs/manager-preview.md#ordinary-recorded-policy)
 uses explicit `--mode ordinary` and snapshot/v2 in source and the prepared validator.
-It selects ordinary work from supplied complete facts, holds required repair and
-reports hidden external PR changes as outside its proof. Existing v1 fixture repair
-preview remains available without the mode flag. Neither route writes or activates
-delivery. The source AWS wrapper composes173/State/ordinary policy; designated human and installed acceptance remain separate.
+It selects ordinary work from complete supplied facts. Set `manager.rework_enabled`
+to true to preview supported same-PR repairs. For held work, see the stream's
+reason. The preview cannot detect hidden external PR changes. Existing v1 fixture
+repair preview remains available without the mode flag. Both routes produce
+zero writes and grant no execution or activation authority. The source AWS wrapper uses native Jira
+inventory, confirmed State and ordinary preview policy. Designated human and
+installed acceptance remain separate.
 
 ## Ordinary worker compatibility
 

@@ -9,7 +9,7 @@ configuration or operational state. Native Jira metadata remains authoritative.
 Start with the complete synthetic [example](../config/pigboss.example.yaml), copy
 it to your chosen configuration path and replace the synthetic IDs and mappings.
 The example uses JSON syntax, which is valid YAML 1.2. Keep secrets out of this file.
-The closed [canonical schema](../contracts/config-v1.schema.json) covers project scope and optional local Jira connection/read bounds. Schedule budgets, health settings and deployment remain later namespaces. No second editable cloud binding file is needed.
+The closed [canonical schema](../contracts/config-v1.schema.json) covers project scope and optional local Jira connection/read bounds. Optional `manager` settings include host controls, health and recorded repair preview. No second editable cloud binding file is needed.
 
 ## Run a check
 
@@ -341,3 +341,20 @@ Detailed scan summaries and their health states describe preview scans. Apply re
 its basic invocation/result logs and native Lambda metrics; these do not become
 preview completion metrics or certify apply health. A mode/configuration change
 changes the evidence identity, so old preview success cannot establish apply health.
+
+## Preview recorded same-PR rework
+
+The optional boolean `manager.rework_enabled` defaults effectively to false.
+Omitting it leaves the authored configuration unchanged; no default is inserted.
+Set it to `true` in the existing complete `manager` section to let ordinary preview
+propose supported own-ticket repairs. Strings such as `"true"` are invalid.
+The complete canonical configuration digest binds this value, including the
+distinction between omission and explicit false.
+
+This flag enables preview only. It does not enable the repair sender, launch a
+worker, check external PR freshness or activate an installation. Existing ordinary
+new-work sending is unchanged; repair sending belongs to PGB-88. See
+[recorded preview prerequisites and recovery](manager-preview.md#recorded-same-pr-repair-preview).
+A compatible source/prepared pin must contain this field. Existing installations
+may toggle it through [same-source configure](manager-installation.md#recorded-repair-preview-configuration);
+source upgrades remain a separate authorized release.
