@@ -52,7 +52,7 @@ const metadataFields=['author_id','update_author_id','created','updated'];
 const matchReference=(ticket_id,comment_id,record)=>({ticket_id,comment_id,record_id:record.record_id,digest:sha(record)});
 const changePath=(issueId,startAt)=>issuePath(issueId)+'/changelog?startAt='+startAt+'&maxResults=4';
 
-function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false}={}){
+function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,receiptComparison=null}={}){
  const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),'utf8'));
  const packet=read('test/fixtures/jira-preview-cases.json'),native=packet.native_receipts;
  const oracle=structuredClone(caseId===positiveReceipts?native.positive[variant]:native.negative[variant]);
@@ -60,6 +60,11 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false}={}){
  if(ownershipConflict){
   assert.equal(variant,'current-qa');
   Object.assign(oracle,{status:'incomplete',code:'CLOSURE_INCOMPLETE'});
+ }
+ if(receiptComparison){
+  assert.equal(variant,'current-qa-outstanding-request');
+  assert(['scoped-pointer','target-denied'].includes(receiptComparison));
+  if(receiptComparison==='target-denied')Object.assign(oracle,{status:'unavailable',code:'READ_DENIED_OR_MISSING'});
  }
  const baseId=oracle.base??'S06';
  const choices=baseId.startsWith('H02-')?read('test/fixtures/manager-repairs.json').cases:
@@ -155,17 +160,29 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false}={}){
   const competing={...rootIssue,id:'901',key:'EX-91'};
   rows.push(competing);roots.push(competing);nativeIds.push(competing.id);
  }
+ if(receiptComparison==='scoped-pointer'){
+  const epicWork=JSON.parse(rootIssue.body);
+  epicWork.workstreams=[{label:'stream-2',story_order:['EX-1200']}];
+  const unrelatedRoot={...rootIssue,id:'901',key:'EX-91',body:JSON.stringify(epicWork)};
+  const unrelatedIssue={...rows.find(i=>i.id==='1100'),id:'1200',key:'EX-1200',parent_id:'901',
+   labels:['stream-2'],body:null,pointer:{schema:'pigboard-work-pointer/v1'}};
+  roots.push(unrelatedRoot);rows.push(unrelatedRoot,unrelatedIssue);nativeIds.push('901','1200');
+ }
  search('labels = "pigboard"',roots);
  for(const id of nativeIds){
   const native=rows.find(i=>i.id===id),path=issuePath(id),own=comments.filter(c=>c.ticket_id===id).map(commentWire);
   push(path+issueFields,wireIssue(native));
   push(path+'/properties',{keys:native.pointer?[{key:'pigboard.work-context',self:'https://foreign.example.invalid/property'}]:[]});
-  if(native.pointer)push(path+'/properties/pigboard.work-context',{key:'pigboard.work-context',value:native.pointer});
+  if(native.pointer){
+   if(receiptComparison==='scoped-pointer'&&id==='1200')push(path+'/properties/pigboard.work-context',{},{status:404});
+   else push(path+'/properties/pigboard.work-context',{key:'pigboard.work-context',value:native.pointer});
+  }
   for(let startAt=0;startAt<Math.max(1,own.length);startAt+=4)push(path+'/comment?startAt='+startAt+'&maxResults=4&orderBy=created',
    {startAt,maxResults:4,total:own.length,comments:own.slice(startAt,startAt+4)});
   if(roots.some(root=>root.id===id))search('parent = "'+id+'"',rows.filter(i=>i.parent_id===id));
  }
  search('labels = "stream-1"',scoped);
+ if(receiptComparison==='scoped-pointer')search('labels = "stream-2"',rows.filter(i=>i.id==='1200'));
  const independentExact={
   S06:operation==='recorded-completion'?['2001','2004','2002','2003',...(variant==='current-qa-outstanding-request'?['2099']:[])]:
    ['2001','2002','2003','2004'],
@@ -174,7 +191,9 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false}={}){
  };
  for(const id of independentExact[baseId]){
   const row=comments.find(c=>c.comment.id===id);
-  push(issuePath(row.ticket_id)+'/comment/'+id,commentWire(row));
+  const path=issuePath(row.ticket_id)+'/comment/'+id;
+  if(receiptComparison==='target-denied'&&id===target.comment_id)push(path,{},{status:403});
+  else push(path,commentWire(row));
  }
  const requiredPages=script.filter(step=>step.method==='POST'||step.path.includes('orderBy=created')).length;
  const history_raw='2026-11-01T13:35:56.100+01:00',actor_id='native-actor',issue_id=target.ticket_id;
@@ -334,22 +353,22 @@ async function runtimeSnapshot(root, missing = [], inventory=false) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
-export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null,repeatReceipt=false,ownershipConflict=false}={}) {
+export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
  const selection = inventorySelection(caseId, variant);
  if (caseId.startsWith('R1-34-') && !selection) throw Error('Use a prescribed case and variant.');
  const root = path.resolve(runtime);
  const selected = selection ? await readInventoryFixture(selection, root) : null;
  return executeFixture(caseId, variant, root, {
-  control, privateProjection, authoredFixture, selection, selected, repeatReceipt, ownershipConflict
+  control, privateProjection, authoredFixture, selection, selected, repeatReceipt, ownershipConflict, receiptComparison
  });
 }
 
-async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected,repeatReceipt=false,ownershipConflict=false}={}) {
+async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
  const receipt=receiptCase(caseId),guarded=!!selection||receipt;
  const inventory = guarded || caseId.startsWith('R1-45-');
  const packetPath = selection ? path.join(root, inventoryPacketPath) : path.join(here,'jira-inventory-cases.json');
  const authored = selected?.authored ?? authoredFixture ??
-  (receipt?nativeReceiptFixture(caseId,variant,root,{ownershipConflict}):(inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant));
+  (receipt?nativeReceiptFixture(caseId,variant,root,{ownershipConflict,receiptComparison}):(inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant));
  if (authoredFixture) assert(authoredFixture.case === caseId && authoredFixture.variant === variant);
  if (!authored) throw Error('Use a prescribed case and variant.');
  const v=structuredClone(authored),trace=[],serverTrace=[],seedPages=[];let disposable=null;
@@ -570,8 +589,6 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   assert.deepEqual(trace,v.script.map(step=>({method:step.method??'GET',path:step.path})),JSON.stringify(report));
   assert.deepEqual(serverTrace,trace);assert.equal(resolverCalls,v.resolverExpected*(repeatReceipt?2:1));
   const currentTrace=repeatReceipt?trace.slice(receiptCalls):trace;
-  assert.equal(report.status,v.oracle.status,JSON.stringify({report,proof:acquired.data?.proof?.diagnostics??acquired.data?.proof?.validation?.diagnostics}));
-  assert.equal(report.code,v.oracle.code);
   for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference,'pigboard-handoff/v1'])
    assert(!JSON.stringify(report).includes(canary));
   assert.equal(report.writes,0);assert.equal(report.execution_authorized,false);
@@ -602,6 +619,12 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    assert.equal(receipt_input,null);
   }
   let observed=null;
+  if(receiptComparison==='target-denied'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   assert(report.diagnostics.some(d=>d.code==='READ_DENIED_OR_MISSING'&&d.operation==='comment'&&d.issue_id===v.target.ticket_id));
+   observed={target:v.target,proof_evaluated:false};
+  }
   if(v.oracle.history_status)assert.equal(history.status,v.oracle.history_status);
   if(history?.status==='complete'||variant==='missing-page')assert.deepEqual(history.items,v.historyItems);
   if(variant==='missing-page'||variant==='shared-budget-exhausted')assert.notEqual(history.status,'complete');
@@ -628,12 +651,26 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
     assert.equal(proof.validation.recorded_completion_established,true);
     assert.equal(receipt_input.issues.find(i=>i.id===v.target.ticket_id).pr_history_complete,true);
    }
-  }else if(variant==='current-qa-outstanding-request'){
-   assert((proof.validation??proof).diagnostics.some(d=>d.code==='REPAIR'));
+  }else if(variant==='current-qa-outstanding-request'&&receiptComparison!=='target-denied'){
+   const assessed=proof?.validation??proof;
+   assert(assessed,'The exact recorded evaluator must return a proof result.');
+   assert.equal(assessed.valid,false);
+   assert.equal(assessed.purpose,'recorded-completion');
+   assert.equal(canonicalize(assessed.target),canonicalize(v.target));
+   assert(assessed.diagnostics.some(d=>d.code==='REPAIR'));
    assert(trace.some(t=>t.path.endsWith('/comment/2099')));
+   if(receiptComparison==='scoped-pointer'){
+    assert(report.diagnostics.some(d=>d.code==='POINTER_UNKNOWN'&&d.operation==='pointer'&&d.issue_id==='1200'&&
+     d.scope?.project_id==='100'&&d.scope?.label==='stream-2'));
+   }
+   observed={target:v.target,proof_evaluated:true,proof_purpose:assessed.purpose,proof_valid:false,proof_codes:assessed.diagnostics.map(d=>d.code)};
   }
   const runtimeAfter=await snapshot(),inputAfter=inputSnapshot(v);
   assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
+  // The bounded comparison emits only the same public diagnostics and selected proof facts.
+  const diagnosticEvidence=JSON.stringify({report,observed,trace,effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0});
+  assert.equal(report.status,v.oracle.status,diagnosticEvidence);
+  assert.equal(report.code,v.oracle.code,diagnosticEvidence);
   return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},
    runtime_hashes:{before:runtimeBefore,after:runtimeAfter},observed,history:history??null,publication:publication??null,
    effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0,oracle_matched:true,evidence_execution:'simulated-local-tls'};

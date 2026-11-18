@@ -43,3 +43,13 @@ test('native reader preserves an actionable bounded composition failure',async()
  assert(result.report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'));
  assert.equal(result.effects,0);
 });
+
+test('recorded target proof takes diagnostic precedence only after evaluation',async t=>{
+ for(const [receiptComparison,code] of [['scoped-pointer','RECORDED_PROOF_INVALID'],['target-denied','READ_DENIED_OR_MISSING']]){
+  await t.test(receiptComparison,async()=>{
+   const result=await runFixture('PGB-163-H01','current-qa-outstanding-request',source,{receiptComparison});
+   assert.equal(result.report.code,code);
+   assert.equal(result.observed.proof_evaluated,receiptComparison==='scoped-pointer');
+  });
+ }
+});
