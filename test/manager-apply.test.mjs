@@ -72,14 +72,7 @@ for (const group of Object.keys(packet.repair_admission.groups)) {
   }
 }
 
-for (const [label, readBounds, listedPageSize] of [
-  ['observed Jira comment page', {max_response_bytes: 8000}],
-  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}],
-  ['the rollover page limit', {max_pages: 5}, 4],
-  ['the rollover request limit', {max_pages: 6, max_requests: 15}, 4]
-]) test('PGB-88 repair projects '+label+' before any effects', async () => {
-  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds, listedPageSize}});
-  assert.equal(e.result.processing.acquisition.status, 'complete');
+function assertPreflightLimit(e) {
   assert.equal(e.result.status, 'held');
   assert.equal(e.result.apply.stage, 'preflight', JSON.stringify({result: e.result,
     mutations: e.mutations.map(({method, path}) => ({method, path})), state: e.state_calls.map(({name}) => name)}));
@@ -90,6 +83,18 @@ for (const [label, readBounds, listedPageSize] of [
   assert(e.trace.every(row => row.acquisition === 1));
   assert.equal(e.result.writes, 0);
   assert.deepEqual(e.records, e.initial_records);
+}
+
+for (const [label, readBounds, listedPageSize] of [
+  ['observed Jira comment page', {max_response_bytes: 8000}],
+  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}],
+  ['the rollover page limit', {max_pages: 5}, 4],
+  ['the rollover request limit', {max_pages: 6, max_requests: 15}, 4],
+  ['the native admission envelope limit', {max_response_bytes: 9000, max_total_response_bytes: 40200}, 4]
+]) test('PGB-88 repair projects '+label+' before any effects', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds, listedPageSize}});
+  assert.equal(e.result.processing.acquisition.status, 'complete');
+  assertPreflightLimit(e);
 });
 
 for (const [label, max_response_bytes, listedPageSize] of [
@@ -118,6 +123,13 @@ for (const [label, max_response_bytes, listedPageSize] of [
     const pageCount = rows => rows.filter(row => row.path.endsWith('/search/jql') || row.path.includes('/comment?')).length;
     assert.deepEqual([initial.length, pageCount(initial)], [13, 5]);
     assert.deepEqual([fresh.length, pageCount(fresh)], [16, 6]);
+    const bytes = value => Buffer.byteLength(JSON.stringify(value));
+    const responseBytes = rows => rows.reduce((sum, row) => sum + bytes(row.response), 0);
+    assert.deepEqual([responseBytes(initial), responseBytes(fresh)], [34277, 40250]);
+    const assignmentId = e.initial_records.find(record => record.kind === 'member').assignment.comment_id;
+    const priorExact = initial.find(row => row.path.endsWith('/comment/'+assignmentId)).response;
+    const priorListed = initial.flatMap(row => row.response.comments ?? []).find(comment => comment.id === assignmentId);
+    assert.deepEqual([priorListed, priorExact].map(comment => bytes(comment) - bytes(comment.body)), [159, 159]);
   } else {
     const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
     const originalReads = e.trace.slice(0, e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment')));
@@ -154,4 +166,36 @@ test('PGB-88 repair fits observed reads with a shorter unrelated search row', as
     assert.equal(issue.length, 1);
     assert.deepEqual([bytes(label), bytes(issue)], [195, 5261]);
   }
+});
+
+for (const [label, readBounds, applied] of [
+  ['request limit', {max_requests: 23, max_pages: 12}, false],
+  ['byte limit', {max_total_response_bytes: 57024}, false],
+  ['roomy positive', {}, true]
+]) test('PGB-88 repair includes physical old-key reads in the '+label, async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true, oldIssueKey: true,
+    readBounds: {max_response_bytes: 9000, max_total_response_bytes: 100000, ...readBounds}}});
+  const {result, trace} = e;
+  assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+    [['stream-1', true], ['stream-2', false]]);
+  assert(result.processing.reason_codes.includes('CHANGED_INPUT'));
+  const firstWrite = trace.findIndex(row => row.status === 201);
+  const initial = firstWrite === -1 ? trace : trace.slice(0, firstWrite);
+  const fresh = trace.filter(row => row.acquisition === 2 && row.status === 200);
+  const measure = rows => ({
+    requests: rows.length,
+    bytes: rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0),
+    aliases: rows.map(row => row.path.match(/\/(1012|OLD-12)\?fields=/)?.[1]).filter(Boolean)
+  });
+  assert.deepEqual(measure(initial), {requests: 22, bytes: 51602, aliases: ['1012', 'OLD-12']});
+  if (!applied) {
+    assertPreflightLimit(e);
+    return;
+  }
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.apply.stage, 'complete');
+  assert.equal(result.writes, 3);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+  assert.deepEqual(measure(fresh), {requests: 24, bytes: 57524, aliases: ['1012', 'OLD-12']});
 });

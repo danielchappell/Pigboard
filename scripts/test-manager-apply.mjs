@@ -63,7 +63,7 @@ function addMovedProjectFixture(p, moved) {
     makeEpic(current.epic_id, current.epic_key, current.project_id), ticket);
 }
 
-function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, ...options}) {
+function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, oldIssueKey, ...options}) {
   const history = p.recorded_repair_preview.cases.find(item => item.id === historyId);
   const config = repairFixtureConfig(historyId, options);
   const {issues, comment_pages} = history.inspection.observations;
@@ -86,7 +86,7 @@ function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, ...
     Object.assign(epic, {id: '901', key: 'EX-91'});
     const node = epic.fields.description.content[0].content[0];
     const work = JSON.parse(node.text);
-    work.workstreams = [{label: 'stream-2', story_order: ['EX-12']}];
+    work.workstreams = [{label: 'stream-2', story_order: [oldIssueKey ? 'OLD-12' : 'EX-12']}];
     node.text = JSON.stringify(work);
     const issue = {
       id: '1012', key: 'EX-12', fields: {
@@ -182,7 +182,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
     :matches;
    value={issues:moved?labelRows.filter(issue=>issue.fields.project.id===projectId):labelRows,isLast:true};
   }else{
-   const m=path.match(/^\/rest\/api\/3\/issue\/([^/?]+)(.*)$/);assert(m);const issue=issues.find(i=>i.id===m[1]||i.key===m[1]);assert(issue);const suffix=m[2],id=issue.id;
+   const m=path.match(/^\/rest\/api\/3\/issue\/([^/?]+)(.*)$/);assert(m);const issue=issues.find(i=>i.id===m[1]||i.key===m[1]||(repairCase?.oldIssueKey&&m[1]==='OLD-12'&&i.id==='1012'));assert(issue);const suffix=m[2],id=issue.id;
    if(mutation){
     events.push('jira:'+req.method+':'+path);
     const reservation=stateCalls.findLast(c=>c.name==='begin');
