@@ -1111,7 +1111,8 @@ stream held for human handling. Missing/conflicting lineage keeps its precise
 failure. Omitted mode continues the unchanged legacy v1 offline fixture/repair
 route; its result cannot authorize the ordinary admission path.
 
-Ordinary admission effects belong to the separate [source-only ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/ae7a48ac5dcdea447da71631cb6531cd8090f953/docs/manager-apply.md); that sender is not part of this installed preview skill.
+The [ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/main/docs/manager-apply.md)
+covers admission effects in the separate source AWS package.
 Preview does not reserve intents, publish assignments or transition work. Its
 nonexecuting proposal is not permission to call a writer.
 
@@ -1188,6 +1189,8 @@ repair reaches the opt-in check with the flag omitted or false, the reason is
 `REPAIR_REQUIRED`. Invalid or missing proof can hold earlier. Capacity and
 availability holds retain their own reasons.
 
-This release previews repair only. The existing sender accepts `admit_new` only,
-even with true; PGB-88 owns repair sending. Source/copy developer fixtures do not
-establish designated human acceptance, live installation, hosted CI or activation.
+A compatible ordinary sender can independently acquire and admit this kind of
+repair with existing write authority and a configured direct Rework Queued →
+In Progress edge. The offline result stays a write-free proposal. Evidence from source and
+copied fixtures is separate from designated human acceptance, live installation,
+hosted CI and activation.

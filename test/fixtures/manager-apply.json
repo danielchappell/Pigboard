@@ -670,6 +670,34 @@
     }
   },
   "regressions": {
+    "moved-project": {
+      "moved_project": {
+        "projects": [
+          {
+            "id": "101",
+            "key": "OLD"
+          },
+          {
+            "id": "102",
+            "key": "MV"
+          }
+        ],
+        "prior_epic_key": "OLD-91",
+        "retained_member": {
+          "project_id": "101",
+          "label": "stream-2",
+          "ticket_id": "1102",
+          "epic_id": "901",
+          "assignment": null
+        },
+        "current": {
+          "project_id": "102",
+          "epic_id": "902",
+          "epic_key": "MV-92",
+          "key": "MV-2"
+        }
+      }
+    },
     "native-members": {
       "issues": [
         {
@@ -1270,6 +1298,196 @@
     "existing_uncertainty": "complete",
     "isolated_comments": "incomplete",
     "new_uncertainty": "incomplete"
+  },
+  "repair_admission": {
+    "edge": {
+      "project_id": "100",
+      "transition_id": "32",
+      "source_status_ids": [
+        "6"
+      ],
+      "target_status_id": "2",
+      "global": false
+    },
+    "comment_bound": 3,
+    "new_request": {
+      "comment_id": "2009",
+      "previous_record_id": "00000000-0000-4000-8000-000000000007",
+      "record_id": "00000000-0000-4000-8000-000000000009",
+      "time": "2026-11-17T12:01:00.000Z"
+    },
+    "histories": {
+      "reviewer": {
+        "requirements_digest": "sha256:2fae1434af5b5ca888c3b3d8ef95f1e220693f379dc78477f5df60010a00371e",
+        "admission_digest": "sha256:2b37b39ac2d843c0342783fc779b56f5e0ddb6271c6116e0402ac9faaa11b6cb",
+        "new_exact_id": "2007"
+      },
+      "qa": {
+        "requirements_digest": "sha256:2fae1434af5b5ca888c3b3d8ef95f1e220693f379dc78477f5df60010a00371e",
+        "admission_digest": "sha256:9f113d697939a337b4c2afadfae0e0981eb89e679e06c423b768d9a45e824a38",
+        "new_exact_id": "2008"
+      },
+      "human": {
+        "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+        "admission_digest": "sha256:7ade53f5023b2e84e0571275d9ab2f9b2c5b8d98e49bae0e767c226b93f0607f",
+        "new_exact_id": "16604"
+      },
+      "ancestor-union": {
+        "requirements_digest": "sha256:9f2583c20c0fabb4c1b2725409d83263f0401582489ae6d494591c6d6f056892",
+        "admission_digest": "sha256:2999e9cbdcc6c94afee1b27e6a4bd05d045c0a46a20a5435c00ab23b629966bd",
+        "new_exact_id": "16601"
+      }
+    },
+    "groups": {
+      "R3B-H01": [
+        {
+          "id": "reviewer",
+          "historyId": "reviewer",
+          "reorderExactBody": true,
+          "status": "applied",
+          "stage": "complete",
+          "code": "APPLIED",
+          "writes": 3
+        },
+        {
+          "id": "qa",
+          "historyId": "qa",
+          "status": "applied",
+          "stage": "complete",
+          "code": "APPLIED",
+          "writes": 3
+        },
+        {
+          "id": "human",
+          "historyId": "human",
+          "status": "applied",
+          "stage": "complete",
+          "code": "APPLIED",
+          "writes": 3
+        },
+        {
+          "id": "ancestor-union",
+          "historyId": "ancestor-union",
+          "status": "applied",
+          "stage": "complete",
+          "code": "APPLIED",
+          "writes": 3
+        }
+      ],
+      "R3B-H02": [
+        {
+          "id": "opt-out",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "optOut": true,
+          "status": "held",
+          "stage": "acquire",
+          "code": "LINEAGE_REQUIRED",
+          "writes": 0
+        },
+        {
+          "id": "missing-edge",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "missingEdge": true,
+          "status": "held",
+          "stage": "acquire",
+          "code": "SOURCE_EDGE_REQUIRED",
+          "writes": 0
+        },
+        {
+          "id": "repair-before-bug",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "status": "applied",
+          "stage": "complete",
+          "code": "APPLIED",
+          "writes": 3
+        },
+        {
+          "id": "over-bound",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "commentBound": true,
+          "status": "held",
+          "stage": "preflight",
+          "code": "LIMIT_REACHED",
+          "writes": 0
+        }
+      ],
+      "R3B-H03": [
+        {
+          "id": "new-request",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "new-request:recheck",
+          "status": "held",
+          "stage": "recheck",
+          "code": "CHANGED_INPUT",
+          "writes": 2,
+          "attempt_outcome": "pending"
+        },
+        {
+          "id": "wrong-own-reference",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "wrong-own-reference:recheck",
+          "status": "held",
+          "stage": "recheck",
+          "code": "CHANGED_INPUT",
+          "writes": 2,
+          "attempt_outcome": "pending"
+        },
+        {
+          "id": "admission-append",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "comment:after",
+          "status": "held",
+          "stage": "comment",
+          "code": "APPLY_HELD",
+          "writes": 1,
+          "attempt_outcome": "pending",
+          "repeat": true
+        },
+        {
+          "id": "pointer-readback",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "pointer-readback:after",
+          "status": "held",
+          "stage": "pointer",
+          "code": "APPLY_HELD",
+          "writes": 2,
+          "attempt_outcome": "pending",
+          "repeat": true
+        },
+        {
+          "id": "transition-response",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "transition:after",
+          "status": "held",
+          "stage": "transition",
+          "code": "APPLY_HELD",
+          "writes": 3,
+          "attempt_outcome": "pending",
+          "repeat": true
+        },
+        {
+          "id": "finalization",
+          "historyId": "reviewer",
+          "competingBug": true,
+          "fault": "finalize:after",
+          "status": "held",
+          "stage": "finalize",
+          "code": "UNCERTAIN_WRITE",
+          "writes": 3,
+          "attempt_outcome": "applied",
+          "repeat": true
+        }
+      ]
+    }
   },
   "recorded_repair_preview": {
     "notice": "Synthetic recorded native facts. Developer regression only; designated human R3A-H01-H04 NOT_RUN.",

@@ -69,7 +69,11 @@ QA consumption, and the current request determines the recorded PR head/target.
 Existing prerequisites, stream identity, ordering and availability limits apply.
 Unsupported null-PR, stack, wait/resume and parent-update work holds.
 
-This is a proposal with zero writes and no execution or external freshness claim.
-The current ordinary sender still admits new work only; PGB-88 owns repair sending.
-See [commands, prerequisites and recovery](../manager-preview.md#recorded-same-pr-repair-preview).
-The target rules above remain broader than this preview increment.
+Preview produces a write-free proposal. The compatible
+[ordinary sender](../manager-apply.md) can admit one freshly selected repair
+through the configured direct Rework Queued → In Progress edge with existing
+write authority and the same opt-in. Admission preserves the actual previous
+assignment, recorded PR and complete unresolved request union. It reports
+`applied` after confirmed finalization. The worker checks current PR openness and
+freshness. See [preview commands, prerequisites and recovery](../manager-preview.md#recorded-same-pr-repair-preview).
+The target rules above also describe deferred dependent-stack and parent-update work.

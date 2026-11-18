@@ -1,7 +1,8 @@
 # Install the disabled customer runtime
 
 The customer runtime supports write-free decision preview and reviewed
-sender-capable packages for ordinary admission. Every new installation starts
+sender-capable packages for ordinary admission, including supported same-PR
+repair on a compatible revision. Every new installation starts
 with scheduling and writes disabled. Local fixture evidence is separate from
 installed acceptance, human review and permission verification. No vendor
 principal, vendor telemetry, public endpoint or runtime source download is configured.
@@ -483,9 +484,14 @@ configuration and retained enablement identity must match.
 ## Recorded repair preview configuration
 
 A compatible reviewed package exposes effective `manager.rework_enabled` from the
-single canonical config; omitted/false keeps existing behavior. True permits the
-[recorded same-PR preview](manager-preview.md#recorded-same-pr-repair-preview),
-while the sender still declines repair. PGB-88 owns later sender support.
+single canonical config. Omit the flag or set it to false to keep ordinary new-work
+sending and leave required repairs held. True enables
+[recorded same-PR preview](manager-preview.md#recorded-same-pr-repair-preview).
+On a revision with [same-PR repair sending](manager-apply.md), an installation in
+apply mode can also admit one supported selected repair when it has existing write
+authority and the direct non-global Rework Queued → In Progress edge for that
+project. Check the exact package revision in the receipt, since earlier sender
+packages may support repair preview only.
 
 To toggle false → true → false on an existing compatible installation, change only
 that canonical boolean and follow the same-source package/configure commands
@@ -495,7 +501,8 @@ The complete configuration digest binds the flag. Configure preserves fencing,
 quiescence, health-epoch rules and original receipt recovery on uncertainty.
 A successful result supplies the new receipt; keep previous receipts. On partial
 or uncertain results retain the original recovery identity and follow the
-existing inspect/stop procedure without replay. An older pin lacking this field
-needs a separately authorized source upgrade; configure refuses source changes.
-Every initial package still starts with schedule and writes disabled. This flag
-is neither activation nor authority to send or launch repairs.
+existing inspect/stop procedure without replay. A pin lacking the desired
+capability needs a separately authorized source upgrade. Configure keeps the
+existing source pin. Every initial package still starts with schedule and writes
+disabled. Use the separate activation procedure when authorized. Worker preflight
+continues to check the actual PR's current state.
