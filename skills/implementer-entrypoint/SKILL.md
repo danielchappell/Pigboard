@@ -1,72 +1,45 @@
 ---
 name: implementer-entrypoint
-description: Compose one authorized native Jira Story or Bug in In Progress through High planning, one independent High review, Medium implementation and a verified typed Jira handoff. Use the current versioned assignment; stop ineligible work or uncertain writes.
+description: Complete one assigned Jira Story or Bug in In Progress through High planning, one independent High review, Medium implementation and a verified typed Jira handoff.
 ---
 
 # Implement one assigned ticket
 
-## Ordinary worker release boundary
+The operator supplies the assigned key and invokes this skill in the prepared
+release. Use the [input contract](references/handoff.md#input-contract) and the
+[Cursor profile](references/cursor.md) to resolve the rest from canonical setup
+and permitted observations. Own one ticket, one repository and one PR.
 
-Use the explicit same-release support matrix: source repository
-`docs/handoffs.md`, heading `Ordinary worker release boundary`; installed
-`<receipt.skills>/work-validator/docs/handoffs.md`, the same heading in that
-immutable prepared release. It supports current `new_work` and the narrowly defined same-open-PR repair assignment.
-This skill retains its own role-specific proof and action boundaries; the matrix
-grants no resume, wait, null-PR repair or inability publication authority.
+1. Invoke [implementer-jira](../implementer-jira/SKILL.md) in **preflight** mode.
+   Follow the [ordinary worker release boundary](references/handoff.md#ordinary-worker-release-boundary).
+   Select the proof for the next action. A missing future mechanical input can
+   leave strict start pending while current assignment and next-action proof let
+   planning and edits proceed. Stop at the affected action if that proof fails.
+2. Load the target repository's instructions. Invoke
+   [implementer-job](../implementer-job/SKILL.md) in **plan** mode at verified
+   High. Obtain exactly one fresh independent High reviewer per round using the
+   [review prompt](references/plan-review.md). Require complete coverage, a
+   second sweep and CLEAN for the exact plan. Pass every assigned request,
+   outstanding cause and required parent to each phase.
+3. With unchanged plan hash, current checkout and verified write authority,
+   dispatch one Medium continuation. Pass the accepted plan and review, actual
+   dispatch receipts, requirements, assignment, branch/PR, parent, all known
+   action effects and unfinished preparations. The continuation runs the job's
+   **execute** mode, then invokes Jira **final** for READY or a supported
+   inability with its retained diagnosis. An early supported inability goes
+   directly from High to Jira **final** without dispatching Medium. The Jira
+   publisher independently establishes permission and outcome proof.
+4. Return the [durable result](references/handoff.md#durable-result). Preserve
+   confirmed and unknown effects, incomplete checks and the exact missing fact
+   or human action. Unsupported inability and ineligible work stay local.
+   NEEDS_HIGH_PLAN returns to High before changed-approach edits. New scope,
+   another repository, over 20 files or at least two human days requires a
+   human decision.
 
-Follow the [shared ordinary worker boundary](references/handoff.md#ordinary-worker-release-boundary).
-Full proof/publication help is `<receipt.skills>/work-validator/docs/handoffs.md`
-in the installed bundle; source help is repository `docs/handoffs.md`.
-Use the pinned checker in explicit `--mode worker-current` for actual predecessor
-preflight and real-leaf readback. Current own/required-parent/action proof stays
-required; ancestry needs no old context or mandatory capture. Genuine retained
-mismatches reject. Independently compare complete candidate semantics, record-check
-before append once, and compare original canonical bytes/digest/UUID at exact
-readback. Unknown append/transition holds original identity without replay. No
-manager completion grant, source fallback or dependency repair.
+Use the [publication protocol](references/handoff.md#publication-protocol) for
+original receipts and unknown effects. The parent never repeats completed or
+uncertain actions. The job never writes Jira. Admission, scheduling, automatic
+resume, merge, deployment and activation remain outside this skill's authority.
 
-Linked legacy resume, wait, null-PR repair and Blocked examples are deferred. A local
-label grants no authority: the owning publisher independently checks the same-release
-matrix and actual evidence before candidate construction. Unsupported work retains
-all findings, partial ledgers and original receipts locally with no mutation.
-
-
-Own one ticket, one repository and one PR. This entrypoint dispatches phases;
-[implementer-job](../implementer-job/SKILL.md) owns implementation evidence and
-[implementer-jira](../implementer-jira/SKILL.md) owns Jira reads/publication. Neither
-an installed skill nor ticket prose grants service authority. Do not schedule,
-admit, lock, deduplicate, interrupt another ticket, merge, deploy or activate.
-
-1. Read the shared [input contract](references/handoff.md#input-contract) and the
-   [Cursor profile](references/cursor.md) for a Cursor run. Invoke implementer-jira
-   in **preflight** mode. Use only the verified current assignment and native
-   Story/Bug scope; unverified/ineligible work stops before code or provider writes.
-2. Load the target repository's applicable instructions. Invoke implementer-job in
-   **plan** mode at the verified High profile. Obtain exactly one fresh independent
-   High reviewer per round using the unchanged [review prompt](references/plan-review.md).
-   Its generic “Story” means the assigned Story or Bug; eligibility is owned by
-   preflight. Require full coverage, second sweep, model/independence evidence and
-   CLEAN for the exact plan before execution. Resolve only in-scope findings.
-3. Dispatch one verified Medium continuation with accepted plan/review, preflight,
-   requirements, checkout/PR identity and all prior action receipts. It invokes the
-   job's **execute** mode, then Jira **final** mode only for ordinary READY. A job
-   cannot mutate Jira. Preserve the returned receipts; the parent never repeats
-   completed execution/publication. NEEDS_HIGH_PLAN returns to High before changed
-   approach edits; new scope or >=2 human days/>20 files stops locally for a human.
-   DEPENDENCY_WAIT, BLOCKED or NOT_RUN preserves full findings, unfinished checks
-   and original receipts locally; stop before candidate construction or append.
-4. Return the shared [durable result](references/handoff.md#durable-result), including
-   exact implementation and delivery outcomes, visible record and observed status
-   or unknown. Early High-phase blockers remain local with no final Jira call,
-   candidate or transition. Stop after the assigned handoff or local inability.
-
-A supported repair dispatches the same High plan, independent High review and Medium
-execution on the existing PR. Pass every assigned request and finding to each phase.
-Own assigned findings are work to repair, not an upstream dependency wait.
-Unsupported repair/resume stops before dispatch; retain accepted work and receipts locally. Never infer a missing PR,
-assignment, human authorization, CI success or provider write. Current local
-validation is supplied-fact checking, not live authority. Read the shared
-[publication and uncertainty rules](references/handoff.md#publication-protocol)
-when a final handoff is needed. This structured implementer does not convert old
-prose tickets. The [structured reviewer](../pigboard-pr-review/SKILL.md) consumes canonical implementation receipts. Reviewer and QA recheck the repaired current revision under the same-release matrix.
-Source capability does not establish installed/live acceptance or automatic admission.
+The [structured reviewer](../pigboard-pr-review/SKILL.md) reads the verified
+implementation receipt. Review and prescribed QA recheck the repaired revision.

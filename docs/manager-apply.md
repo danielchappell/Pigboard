@@ -46,11 +46,13 @@ publication before retaining membership. It projects the selected ticket's
 comment pages with the new comment using Jira's observed page layout and page
 size. It uses that layout and all response bytes received, including error
 responses, to forecast verification requests, pages and bytes after the planned
-publication. When available, the current assignment's verified comment supplies
-the metadata sizes for the new comment and pointer estimate. Jira may return a different page
-layout, metadata or formatting on the next read. The readers and writer enforce
-their bounds on actual provider traffic, and State checks conditional revisions
-and transaction limits. If a publication or verification read exceeds a limit,
+publication. The sender separately estimates the size of the normalized data
+needed for verification, including the recorded reason each issue was read.
+When available, the current assignment's verified comment supplies metadata sizes
+for both estimates. Jira may return a different page layout, metadata or
+formatting on the next read. The readers and writer enforce their bounds on
+actual provider traffic, and State checks conditional revisions and transaction
+limits. If a publication or verification read exceeds a limit,
 the sender retains the original attempt for recovery and stops before transition
 or finalization. New work follows the existing sequence. After eligibility and
 member checks, the sender retains membership, reloads coherent State, and prepares

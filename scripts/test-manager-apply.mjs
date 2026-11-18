@@ -63,7 +63,7 @@ function addMovedProjectFixture(p, moved) {
     makeEpic(current.epic_id, current.epic_key, current.project_id), ticket);
 }
 
-function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, oldIssueKey, ...options}) {
+function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, oldIssueKey, escapedPlainNote, ...options}) {
   const history = p.recorded_repair_preview.cases.find(item => item.id === historyId);
   const config = repairFixtureConfig(historyId, options);
   const {issues, comment_pages} = history.inspection.observations;
@@ -112,6 +112,11 @@ function prepareRepairFixture(p, {historyId, competingBug, shortLabelSearch, old
   };
   const pointers = new Map(issues.filter(i => i.pointer.state === 'present').map(i => [i.id, i.pointer.value]));
   const comments = new Map(comment_pages.map(page => [page.ticket_id, page.comments.map(nativeComment)]));
+  if (escapedPlainNote) comments.get(ticket_id).unshift({
+    id:'990001', author:{accountId:'test-note'}, updateAuthor:{accountId:'test-note'},
+    created:'2026-11-18T00:00:00Z', updated:'2026-11-18T00:00:00Z',
+    body:{type:'doc',version:1,content:[{type:'paragraph',content:[{type:'text',text:String.fromCharCode(92).repeat(5000)}]}]}
+  });
   const published = {ticket_id, comment_id: p.comment.id, record_id: p.attempt_id, digest: oracle.admission_digest};
   const mutations = [
     {method: 'POST', path: issueRoute(ticket_id, '/comment')},

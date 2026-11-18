@@ -230,3 +230,33 @@ for (const [limit, applied] of [[53530, false], [100000, true]]) {
     assert.deepEqual(measure(fresh), {requests: 23, bytes: 54030, denials: [1822]});
   });
 }
+
+for (const [limit, applied] of [[53140, false], [100000, true]]) {
+  test('PGB-88 repair budgets an escaped plain note at a '+limit+'-byte cap', async () => {
+    const e = await runApplyFixture({repairCase: {historyId: 'qa', escapedPlainNote: true,
+      readBounds: {max_response_bytes: 40000, max_total_response_bytes: limit}}});
+    const {result, trace} = e;
+    assert.equal(result.processing.acquisition.status, 'complete');
+    assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]), [['stream-1', true]]);
+    const firstWrite = trace.findIndex(row => row.status === 201);
+    const initial = firstWrite === -1 ? trace : trace.slice(0, firstWrite);
+    const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+    assert.equal(bytes(initial), 44541);
+    assert.deepEqual(initial.filter(row => row.path.includes('?fields=')).map(row => row.response.id), ['1000', '900']);
+    if (!applied) {
+      assertPreflightLimit(e);
+      return;
+    }
+    assert.equal(result.status, 'applied', JSON.stringify(result));
+    assert.equal(result.apply.stage, 'complete');
+    assert.equal(result.writes, 3);
+    assert.equal(result.apply.effects.finalization, 'confirmed');
+    assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+    const fresh = trace.filter(row => row.acquisition === 2 && row.status === 200);
+    assert.equal(bytes(fresh), 50463);
+    assert.deepEqual(fresh.filter(row => row.path.includes('?fields=')).map(row => row.response.id), ['1000', '900']);
+    const notes = rows => rows.flatMap(row => row.response.comments ?? []).filter(comment => comment.id === '990001');
+    assert.equal(notes(initial).length, 1);
+    assert.deepEqual(notes(fresh), notes(initial));
+  });
+}

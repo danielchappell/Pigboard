@@ -100,23 +100,27 @@ Use the operator-prepared path and the versioned prompt for the stage:
 | In Review | [pr-review-prompt.txt](../config/cursor/pr-review-prompt.txt) | `/opt/pigboard/skills/pigboard-pr-review/SKILL.md` |
 | QA | [qa-prompt.txt](../config/cursor/qa-prompt.txt) | `/opt/pigboard/skills/qa-entrypoint/SKILL.md` |
 
-For example, the installed implementer prompt is:
+For implementation, verify the prepared release receipt, configured model
+profiles and access first. Then invoke the installed skill with the assigned key:
 
-> Complete the provided Jira ticket in the codebase specified by that ticket,
-> following /opt/pigboard/skills/implementer-entrypoint/SKILL.md.
+> Use /opt/pigboard/skills/implementer-entrypoint/SKILL.md for PGB-123.
 
-The trusted trigger supplies a ticket reference and full stream label; the setup
-supplies allowed project, stage, repository and tools. A ticket cannot select an
-arbitrary repository or credential. Read the current ticket and linked PR rather
-than treating webhook text or an earlier report as current authority. Stop an
-ineligible invocation without moving a different-stage ticket backward.
+Use the skills path from your setup receipt if it differs. The implementer
+reads the current work, assignment, PR and any required parent using the already
+configured services. It plans at High, obtains one independent High review and
+uses Medium to implement the accepted plan. Preparation can happen after the
+needed code exists. The job checks that each declared artifact is retrievable
+by the intended audience. It verifies the actual PR and current required CI
+before handing READY evidence to the Jira publisher. See the
+[workflow guide](workflow.md) and [preflight contract](../skills/implementer-entrypoint/references/handoff.md#preflight).
 
-Before execution, establish the required source/base revisions, requirements,
-prepared tools/model controls, case inputs and evidence destination. Implementation
-prepares only the testing artifacts/mechanical values allowed by the contract;
-review and QA do not invent missing requirements, install tools or repair targets.
-Details live in each entrypoint and its references. The
-[workflow guide](workflow.md) describes ownership and the current handoffs.
+If a step holds, read the durable result for the exact missing proof, completed
+work and requested human action. A verified missing-input blocker can go to
+Blocked. A verified dependency wait can go to Rework Queued. Each uses its own
+assignment proof and authorized direct edge. Local inability means Jira stayed
+at the last observed stage. For an unknown effect, use the retained action and
+candidate identity to check actual state. Do not relaunch the implementation
+or send a replacement write.
 
 ## Return evidence and a truthful outcome
 
@@ -127,9 +131,8 @@ Installation receipts and local paths alone are not live acceptance evidence.
 
 Current publication and transition authority comes from the selected release's
 [ordinary worker support matrix](handoffs.md#ordinary-worker-release-boundary)
-and pinned entrypoint contract. The broader historical routes below are not a
-current capability list. Their rows grant no ordinary wait, Blocked or resume
-authority.
+and pinned entrypoint contract. Consult the matrix before using any historical
+route below.
 
 | Outcome | Historical route reference |
 | --- | --- |
@@ -693,3 +696,81 @@ further repaired QA can receive a fresh explicit rejection against its new basis
 Discussion/missing permission writes nothing. Already queued is recorded-history
 inspection plus current native/PR observations only; new findings stay unrecorded.
 Unknown effects retain original UUID/bytes/receipts without replay.
+
+## Verify implementer preparation
+
+From the reviewed Pigboard checkout, use the existing prepared source runtime
+and physical helper dependencies. The command runs the finite mock exercise
+through the real source and copied validators and formatter from an unrelated
+directory. It records the manifest and instruction/runtime hashes, original
+helper inputs and results, and ordered simulated calls. Set an unused absolute
+audit path.
+
+```sh
+PIGBOARD_PREPARED_HELPER_ROOT="$PREPARED_HELPERS" \
+PIGBOARD_P164_EVIDENCE="$PRIVATE_RUN/pgb164-regression.json" \
+node --test --test-name-pattern '^P164' test/implementer-contract.test.mjs
+```
+
+For designated human review, make one persistent pin from the exact checked-out
+review revision. The source checkout needs its prepared root `node_modules`.
+Supply the previously prepared helper root containing `qa-bruno` and
+`qa-database`. Each helper directory contains the exact reviewed
+`package-lock.json` and physical `node_modules`. The pin command uses the
+existing installer and copies those dependencies without installing them.
+
+```sh
+PIGBOARD_PREPARED_HELPER_ROOT="$PREPARED_HELPERS" \
+node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" pin "$PRIVATE_RUN/pin"
+PIGBOARD_SKILLS="$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).skills' "$PRIVATE_RUN/pin/receipt.json")"
+node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" prepare "$PRIVATE_RUN/H01" H01
+node "$PIGBOARD_SOURCE/test/implementer-contract.test.mjs" operator "$PRIVATE_RUN/H01"
+```
+
+Retain the receipt. It records the reviewed product revision, local installer
+snapshot, skills path and manifest hash. Prepare a fresh directory and use a
+separate operator and subject for each control.
+
+Give the subject only `assistant/`, the pinned skills and empty `output/`.
+Start with `assistant/invocation.md`. Relay the subject's requested JSON lines
+to the separate mock operator and relay the replies back. The operator has
+`operator/expectations.json` and the private fixture. Do not show either to
+the subject. Use no live tools or real credentials. Record the actual subject
+invocation and prepared release and manifest hashes.
+
+Use H01 for the same-PR repair. Expect the future query to be absent before
+High, one independent High review before Medium, and prepared retrieval and
+strict start at the old admitted head before PR update. Verify the new current
+head, checks, request references, parent and original READY readback before
+the direct In Review transition.
+
+Prepare each H02 control separately with the same commands and its ID:
+
+| Control | Expected result |
+| --- | --- |
+| `H02-authority` | Missing edit authority holds before Medium execution. |
+| `H02-unsafe` | Unsafe operation holds before query preparation or provider writes. |
+| `H02-artifact` | Failed reviewer retrieval holds before PR write and publication. |
+| `H02-assignment` | Changed pointer holds before PR write and publication. |
+| `H02-publisher` | Unknown publisher holds before append. Preserve completed implementation evidence. |
+| `H02-pr-unknown`, `H02-append-unknown`, `H02-transition-unknown` | Retain the original attempted action and any confirmed earlier results. One resolving read remains unknown. No replay or later mutation. |
+| `H02-missing-input`, `H02-dependency-wait` | Verify the supported candidate and actual reader-visible comment before one direct Blocked or Rework Queued transition. |
+
+The subject executes the validator and formatter commands in the
+[implementer input contract](../skills/implementer-entrypoint/references/handoff.md#input-contract)
+and keeps its original packets and helper outputs. Repeat each retained
+invocation with the source and installed scripts using the same input bytes.
+For example, for a subject-generated worker-current packet:
+
+```sh
+node "$PIGBOARD_SOURCE/scripts/validate-handoff.mjs" --mode worker-current --input "$PACKET" --json
+node "$PIGBOARD_SKILLS/work-validator/scripts/validate-handoff.mjs" --mode worker-current --input "$PACKET" --json
+```
+
+Preserve sanitized `operator/audit.jsonl` separately from the subject output.
+Compare call order and actual result to each expected boundary, including
+absent dependent calls. Record what was simulated and what ran, plus the tested
+revision, manifest and exact commands. Deterministic regression, instruction
+subject execution, designated human review and live delivery each need their
+own evidence. After saving evidence, remove only the disposable directories
+you prepared for this exercise.

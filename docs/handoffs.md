@@ -1,12 +1,13 @@
 # Validate local handoff evidence
 
-The prepared `work-validator` contains five read-only handoff checks:
+The prepared `work-validator` contains six read-only handoff checks.
 
 | Purpose | What it proves |
 | --- | --- |
 | `record` | One complete handoff's encoding, structure and digest. |
 | `chain` | The separate legacy strict proof against supplied work/context, native and external observations; no ordinary-worker fallback. |
-| `worker-current` | Current ordinary/supported same-PR repair worker or human predecessor/real-leaf proof with current own/required-parent/action observations; see the ordinary contract below. |
+| `worker-current` | Current ordinary or supported same-PR worker and human proof. See the [ordinary contract](#ordinary-worker-release-boundary). |
+| `worker-assignment` | Current worker assignment and supported inability proof, including unpublished records and exact native readback. See [worker assignment](#worker-assignment-and-inability). |
 | `recorded-history` | Authentication of one exact recorded target and its required ancestry, including manager admission and stack requests. It does not establish current completion. |
 | `recorded-completion` | A coherent exact current recorded QA leaf, current declarations/digest/assignment, accepted native stage and outstanding recorded obligations. |
 
@@ -915,20 +916,25 @@ all bundled worker entries and their references:
 
 | Publisher / `intent` | Actual preflight target | Actual readback target | Direct source → destination |
 | --- | --- | --- | --- |
-| implementer / `success` | admission | implementation | In Progress → In Review |
+| implementer / `success` | admission at the actual pre-write PR state | implementation at the new current head | In Progress → In Review |
+| implementer / `blocked` | admission, `worker-assignment` | blocked, `worker-assignment` | In Progress → Blocked |
+| implementer / `dependency_wait` | admission, `worker-assignment` | dependency_wait, `worker-assignment` | In Progress → Rework Queued |
 | reviewer / `success` | implementation | review | In Review → QA |
 | reviewer / `repair_request` | implementation | reviewer repair_request | In Review → Rework Queued |
 | qa / `success` | review | qa | QA → Human Review |
 | qa / `repair_request` | review | qa repair_request | QA → Rework Queued |
 | human_request / explicit `repair_request` | current unique qa | human repair_request | Human Review → Rework Queued |
 
-Null-PR repair, stack-request repair, resume, wait and Blocked/inability publication
-remain deferred from these workers. Reject unsupported assignments before
-execution and unsupported final results before candidate construction or append.
-Preserve the full findings, partial ledger and original receipts locally. Never
-fall back to strict chain, manager recorded proof or another source release. The
-implementer still publishes only ordinary READY. Queue delivery does not admit
-repair, replace the pointer, enter In Progress or mutate manager State.
+The implementer can publish two specifically supported inability outcomes:
+a declared step missing prepared input, or an outstanding upstream repair or
+stack request that prevents completion for this subject. Use its own
+[assignment proof](#worker-assignment-and-inability) and actual direct
+edge. A verified inability publication supplies no permission to execute a
+wait or resume assignment. Reviewer and QA inability publication remains
+deferred in this release. Null-PR repair, stack-request repair and resume
+remain outside execution. Unsupported outcomes hold locally with full findings,
+partial ledgers and original receipts. Queue delivery does not admit repair,
+replace the pointer, enter In Progress or mutate manager State.
 
 For each supported repair, the implementer consumes every direct assigned request
 exactly once on the same PR and carries all findings through fresh High planning,
@@ -991,13 +997,15 @@ checked independently, including when role accounts overlap. It selects exact pr
 never grants permission or adds a field to the canonical handoff. Unknown intent,
 implementer repair_request and mismatched leaf role/source/destination reject.
 
-Initial preflight checks each available supported edge separately against the
-same actual predecessor, with no fabricated outcome/approval. READY requires at
-least one supported route and reports any missing route as a capability limitation.
-Before final publication, rerun the selected intended edge: a queue-only capability
-cannot authorize success, and success-only capability cannot authorize queueing.
-Run both proof checks while still in the source stage; verify destination status
-separately afterward.
+Reviewer and QA preflight checks each available supported edge separately
+against the same actual predecessor, with no fabricated outcome or approval.
+Their READY requires at least one supported route and records missing routes
+as capability limitations. The implementer checks the observed edge for the
+selected outcome only. Use worker-current for ordinary READY and
+[worker-assignment](#worker-assignment-and-inability) for a supported inability.
+Publication permission applies to that outcome. Recheck its intended edge
+in the actual source stage immediately before the write, then verify destination
+status after transition.
 
 For example, reviewer queue preflight uses the actual published implementation:
 
@@ -1196,3 +1204,105 @@ whether High/Medium selection was real or simulated. Missing prescribed capabili
 remains NOT_RUN/NOT_REACHED after the bounded attempt; do not replay helpers or
 uncertain writes. Automatic manager admission, customer acceptance and activation
 are not part of these exercises.
+
+## Worker assignment and inability
+
+Use `worker-assignment` when an assigned worker needs to check whether the
+supplied facts support a Blocked report or a dependency wait. It verifies the
+complete ticket declaration, current worker assignment and requested action even
+when a future execution input is missing. Use `worker-current` for full start
+and the ordinary success and repair routes. The installed worker and
+`human_request` skills continue to use their own support matrix.
+
+The input is one JSON file with `schema: pigboard-worker-handoff-input/v1`,
+`consumer: worker` and `purpose: worker-assignment`. It shares the ordinary
+worker's exact `target`, `trusted`, `issues`, `requirements`,
+`comment_pages`, `pr_receipts`, `evidence_receipts`, `retained`,
+`request_resolutions` and `action_receipt` fields. Supply the complete
+discovery pages and original current requirements, including the reachable
+prerequisite declarations and native worker pointers. The action receipt binds
+the selected native issue, current role account, read and append permission and
+the direct edge from the actual source stage. Supply `publisher` with its
+`role`, `account_id` and explicit `intent` of `blocked` or
+`dependency_wait`.
+
+| Role | Native source stage and predecessor |
+| --- | --- |
+| `implementer` | In Progress. Use the actual current manager admission. |
+| `reviewer` | In Review. Use the unique initial implementation in that admission. |
+| `qa` | QA. Use the unique initial review and its verified implementation in that admission. |
+
+The direct destination is Blocked for `blocked` and Rework Queued for
+`dependency_wait`. A candidate carries the current own PR, exact revision and
+observed target branch when a PR already exists. An implementer can use a null PR with complete
+pre-publication history. The implementer's blocker basis is null. Reviewer and
+QA blockers carry the exact predecessor reference. Supply current parent
+completion, PR and evidence when the verified implementation claims
+incorporation. Supported admissions are ordinary work and the [own-request
+same-PR repairs](#ordinary-worker-release-boundary).
+
+Supply `current_context_body` as original context text or explicit null.
+A null context can support an entirely unrun report. QA records must retain
+every prescribed step and helper in order, each NOT_RUN reason, causal finding
+IDs, pending human IDs and the declared no-AI reason. Each PASS or FAIL requires
+its original evidence, the tested PR and qualifying environment observation, and
+execution context for the relevant operations, actors and fixtures. Preserve
+case-specific reuse proof when present. Independent unrun cases can still be
+missing their execution inputs. Invalid supplied context holds the result.
+
+- For `blocked` with `reason: missing_input`, set `missing_step_id` to the
+  declared step with the unavailable prepared artifact. Identify that same step
+  ID as a distinct token in the original detail and describe the human action.
+  For example, “The prepared query for TC-01.S3 is unavailable.” In a QA ledger,
+  mark that step NOT_RUN with a reason and keep the original results for other
+  executed steps. An available linked preparation proves presence. An available
+  matching preparation whose issue ownership is unclear holds the report.
+  Absence applies to the supplied evidence.
+- For QA `blocked` with `reason: evidence`, begin the original detail with
+  `[missing:deployment-evidence]`, a space and an explanation. For example,
+  `[missing:deployment-evidence] The current revision has no supplied
+  deployment observation.` Supply the exact current PR, a complete runtime
+  ledger marked NOT_RUN and no qualifying deployment observation for that
+  revision and target. Other blocker reasons stay local.
+- For `dependency_wait`, supply typed, outstanding repair or stack request
+  references that block this issue or an applicable declared dependency.
+  Include every still-blocking root and the reason work must wait. A request
+  already incorporated by the verified implementation cannot be the reason to
+  wait. Coherent QA on the subject's exact prior admission chain can resolve a
+  root, including through a supplied resolution pair. Sibling QA leaves this
+  assignment's roots outstanding.
+
+Set `missing_step_id` to null for preflight and all other reasons or intents.
+Select one publication state and keep the original raw candidate private.
+
+| `publication` | `target` | `candidate` | Positive result |
+| --- | --- | --- | --- |
+| `none` | Actual predecessor | null | Assignment checked. Both publication bindings are null. |
+| `unpublished` | Actual predecessor | Original `{format: "yaml", body: "<raw YAML>"}` | Candidate UUID and digest. Published reference is null. |
+| `readback` | Actual published blocker or wait | The saved original candidate | Candidate UUID and digest, plus the exact native published reference. |
+| `unknown` | The last observed reference | The saved original candidate | Local hold. Preserve the input and resolve the uncertainty before any action. |
+
+During first readback, the real native comment must match the saved UUID and
+canonical body, including when Jira wraps the record in ADF or HTML. The
+comment's author and update author must match the configured current publisher
+and its creation and update timestamps must match. Later comparisons check every
+genuine retained tuple. An occupied slot prevents a new candidate from passing.
+A conflicting or physically duplicated publication cannot establish readback.
+Keep the issue at the source stage when checking readback.
+
+The CLI and `validateWorkerAssignment(input)` return
+`pigboard-worker-handoff-validation/v1` with `mode` and `purpose` set to
+`worker-assignment`, `validation_scope: supplied_worker_assignment_proof`,
+`live_freshness: not_evaluated`, `execution_authorized: false`, `valid`,
+`diagnostics` and `trust_limitations`. A valid result binds the real `target`,
+verified `assignment`, `requirements_digest` and `publication`.
+`candidate_identity` carries `record_id` and `record_digest` for a validated
+candidate. `published_reference` is present as a native reference only after
+valid readback. Rejections clear all six bindings to null. The original YAML and
+ledger remain in the caller's packet. The checker performs zero provider actions.
+
+The CLI exits 0 for valid supplied proof, 1 for rejected evidence, and 2 for
+usage, input or setup failure. Preserve any original candidate when proof is
+rejected or publication is unknown. Obtain the missing observation or resolve
+the original publication using the authorized provider process. Keep the same
+UUID and original raw candidate. An uncertain result never permits replay.
