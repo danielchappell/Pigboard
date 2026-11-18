@@ -32,6 +32,40 @@ supported roles; do not strip a path or substitute a basename to select another
 identity. A denied selected profile never falls back to ambient credentials. No
 role assumption or credential store is created by Pigboard.
 
+## Optional operator credential for Jira evidence
+
+To inspect Jira evidence for pending transitions on a fresh installation, prepare
+a separate Jira service account with an `atlassian_scoped_service_account_token`
+credential. Have the customer administrator verify that Jira authorization gives
+this account read visibility for the configured projects, required issues and
+issue security groups, restricted comments, issue properties, search and native
+changelogs. Check the account's permissions and token scopes for absence of Jira
+mutation permissions. Successful reads establish only the visibility they observe.
+
+Store the recovery token as the raw `SecretString` in AWS Secrets Manager using
+the AWS-managed Secrets Manager key. Use the same account and region as the
+manager. Set `manager.aws.recovery_jira_secret_arn` once in the canonical file
+with the literal ARN, including its six-character AWS suffix, before packaging.
+Keep the sender token in its own secret and put its complete, distinct ARN in
+`jira.connection.secret_reference`. Keep token values out of config, command
+arguments and evidence. Omit the optional recovery ARN if you only need
+State inspection.
+
+During initial setup, have the customer administrator review the synthesized
+`Metadata.Pigboard.operator_policy` before applying the single
+`secretsmanager:GetSecretValue` grant for the recovery ARN to the configured
+operator role. The runtime role keeps its existing sender grant and the template
+leaves the deployer policy unchanged. Pigboard generates metadata for manual
+review and attachment. The named inspection command verifies the configured
+operator account and role through STS before using its verified credentials to
+look up exactly the recovery ARN. Verify installed permissions through the
+customer's acceptance process before relying on live inspection.
+
+Retain generated installation receipts when controls or packages change. Use the
+current receipt for inspection and have the receipt from the original sending
+configuration available if an attempt predates the current package or configuration.
+See [named State inspection](manager-state.md) for the command and safe outcomes.
+
 ## Build and deploy
 
 Run from the pinned checkout with initial controls all disabled:

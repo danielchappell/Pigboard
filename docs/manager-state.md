@@ -272,6 +272,67 @@ to disable the verified original resources; preserve partial results and build
 outputs for an authorized decision if strict current package binding remains
 unresolved. Do not repeat configure or reconstruct a receipt to hide uncertainty.
 
+## Inspect Jira evidence for one pending attempt
+
+On a fresh installation, prepare the separate recovery credential and exact
+operator access described in the [installation guide](manager-installation.md).
+Use the same verified AWS operator profile and generated current receipt as for
+State inspection. Read the stream in State and copy its `pending_attempt_id`.
+For example, with the UUID `11111111-1111-4111-8111-111111111111`:
+
+```sh
+node scripts/manager-state.mjs inspect --config current.yaml --installation current-receipt.json \
+  --operator-profile customer-operator --kind stream --json
+node scripts/manager-state.mjs inspect --config current.yaml --installation current-receipt.json \
+  --operator-profile customer-operator --kind attempt \
+  --record-id attempt:11111111-1111-4111-8111-111111111111 --jira-evidence
+```
+
+Add `--json` to the evidence command for the same observations in a
+`pigboard-transition-inspection/v1` result. Evidence inspection requires one
+named attempt. The list, cursor and limit options and the partial-configure
+`--recovery` flag belong to ordinary State inspection. To inspect only State,
+omit `--jira-evidence` and `--original-installation`.
+
+Keep the generated receipt from the package and configuration that sent the
+original request. If today's verified package or configuration differs, add
+`--original-installation retained-sender-receipt.json`. The original receipt
+must match the attempt's captured configuration and package and the current
+physical installation. Today's verified applied receipt supplies the recovery
+connection and limits. The original receipt supplies the sending authority, and
+both must describe the same Jira cloud and scope.
+
+The report shows the initial installation, stream and attempt revisions, the
+pending pointer, desired and applied controls and observed schedule. An enabled
+installation is inspectable. Control and schedule differences are visible
+alongside the evidence. Current package and physical resource identity must
+still verify. Closing State verification checks whether the same named snapshot
+still holds after the read.
+
+The saved HTTP 204 was the sender's success reply. The saved HTTP 409 was its
+rejection. Earlier publications and the assignment may still be present after a
+409. Review original capture, current assignment and publication commitments,
+recorded proof and native history separately. Current agreement describes whether
+the observed publication and assignment support the saved commitments, with a
+confirmed closing State read. History lists observed status
+changes with their literal provider timestamps and actors. A matching change
+cannot identify the request that produced it. The report distinguishes complete
+empty history from unavailable or unconsulted history. For partial history it
+includes acquired items and the observed count. `truncated: true` means the
+display bound omitted items.
+
+| Exit | Result and next action |
+| --- | --- |
+| 0 | `complete` / `OK`. Review the evidence with the retained pending hold. The command performs no settlement or replay. |
+| 1 | `partial`. Use each dimension's reason and next action. For `RECOVERY_SECRET_MISSING`, check the applied configuration. For a denied or mismatched secret, verify the operator grant and configured ARN. For `ORIGINAL_AUTHORITY_MISSING`, supply the retained sending receipt. For missing or conflicting original capture or publication metadata, keep the original records and the hold. |
+| 1 | `partial` with Jira observations. Check recovery account visibility for `HISTORY_UNAVAILABLE` or `PUBLICATION_UNAVAILABLE`. Review the retained or native assignment source for `ASSIGNMENT_MISMATCH`. For `STATE_CHANGED` or `STATE_FENCE_UNAVAILABLE`, treat observations as provisional and inspect the same attempt again after checking State. |
+| 2 | `invalid` or `unavailable`. Correct the selector or configuration, use the exact verified operator profile, or check the applied package, receipt and named attempt. The result carries no attempt data. |
+
+The evidence path uses bounded State and Jira reads. Its Jira search uses the
+read API's fixed search POST. It performs no writes to Jira or State and starts
+no worker. Read visibility depends on the recovery account's configured Jira
+permissions. See the installation guide for those prerequisites.
+
 ## Retain and inspect original transition proof
 
 The [ordinary sender](manager-apply.md#inspect-the-original-transition-attempt)
@@ -279,8 +340,8 @@ uses the internal State writer to retain its verified publication, prepare the
 exact request commitment and save the original completed HTTP reply. This
 section describes a fresh installation using a package with native publication
 capture. Earlier attempts remain readable with the evidence they originally
-retained. Access to the full native evidence during operator inspection and
-settlement are later PGB-85 work.
+retained. Use [Jira evidence inspection](#inspect-jira-evidence-for-one-pending-attempt)
+to check the original publication commitments against current Jira observations.
 
 The same `inspect --kind attempt` command now adds a readable summary:
 

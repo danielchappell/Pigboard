@@ -296,6 +296,20 @@ test('installed config checker validates and previews outside checkout; corrupt 
  const run=args=>execFileSync(process.execPath,[path.join(validator,'scripts/check-config.mjs'),'--input',input,...args,'--json'],{cwd:o.app,encoding:'utf8',timeout:30000});
  const checked=JSON.parse(run(['--label','AI-Daniel-1']));assert.equal(checked.valid,true);assert.equal(checked.resolved_scope.projects.length,2);assert.notEqual(checked.streams[0].key,checked.streams[1].key);
  const preview=JSON.parse(run(['--previous',previous]));assert.equal(preview.preview.status,'review_required');assert.equal(preview.preview.display_changed.length,1);assert.deepEqual(preview.preview.state_actions,[]);
+ const host=JSON.parse(await readFile(new URL('./fixtures/aws-manager.json',import.meta.url),'utf8')).config;
+ host.manager.aws.recovery_jira_secret_arn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-evidence-123ABC';
+ await writeFile(input,JSON.stringify(host));
+ const recovery=JSON.parse(run([]));assert.equal(recovery.valid,true);assert.equal(recovery.live_configuration.status,'complete');
+ host.manager.aws.recovery_jira_secret_arn=host.jira.connection.secret_reference;
+ await writeFile(input,JSON.stringify(host));
+ assert.throws(()=>run([]),error=>{
+  assert.equal(error.status,1);
+  const rejected=JSON.parse(error.stdout);
+  assert.equal(rejected.valid,false);
+  assert.equal(rejected.diagnostics[0].path,'/manager/aws/recovery_jira_secret_arn');
+  assert(!error.stdout.toString().includes(host.jira.connection.secret_reference));
+  return true;
+ });
  await writeFile(input,'token: SECRET-INSTALLED');assert.throws(()=>run([]),error=>error.status===1&&!error.stdout.toString().includes('SECRET-INSTALLED'));
  for(const mutate of [async dir=>rm(path.join(dir,'lib/config/projects.mjs')),async dir=>writeFile(path.join(dir,'lib/config/parse.mjs'),'throw Error("corrupt config")'),async dir=>rm(path.join(dir,'contracts/config-v1.schema.json')),async dir=>writeFile(path.join(dir,'scripts/check-config.mjs'),'process.exit(0);')]){
   await assert.rejects(installCursorSkills(o,async dir=>{await fakeInstall(dir);if(path.basename(dir)==='work-validator')await mutate(dir);}));verificationCheck();assert.equal(await realpath(first.stableSkills),first.skills);

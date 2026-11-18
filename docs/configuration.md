@@ -268,6 +268,17 @@ role/profile prerequisites in the [installation guide](manager-installation.md).
 Profiles select credentials for those exact roles, never substitute resource IDs. Generated stack/table/function/schedule IDs and installation receipts are
 outputs, not another configuration file to author.
 
+For a fresh installation that needs Jira evidence for pending transitions, set
+`manager.aws.recovery_jira_secret_arn` to the complete Secrets Manager ARN for a
+separate Jira service-account token. Use the configured AWS account and region
+and include the secret's six-character AWS suffix. The sender reference in
+`jira.connection.secret_reference` must also be a complete ARN for a distinct
+secret. Names, partial ARNs, wildcards and references that can select the same
+secret fail local validation. Correct the named field and verify both full ARNs
+before preparing the package. The optional field participates in the canonical
+configuration digest and drives the generated operator policy. Omit it for
+State-only inspection. See [operator credential setup](manager-installation.md#optional-operator-credential-for-jira-evidence).
+
 `controls` explicitly names mode (`preview` or `apply`), `schedule_enabled`,
 `writes_enabled` and `maintenance`. Preview requires writes false. Initial
 packaging requires scheduling, writes and maintenance false. The included sender

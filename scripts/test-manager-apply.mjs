@@ -17,10 +17,13 @@ import {runApply,handler} from '../lib/aws/manager-lambda.mjs';
 import {applyOrdinary} from '../lib/manager/apply.mjs';
 import {bindInstallation,resolveInstallation} from '../lib/aws/installation.mjs';
 import {runStateCommand} from './manager-state.mjs';
+import {packageManager} from './package-manager.mjs';
 export const packet=JSON.parse(readFileSync(new URL('../test/fixtures/manager-apply.json',import.meta.url),'utf8'));
 const tls=JSON.parse(readFileSync(new URL('../test/fixtures/jira-preview-tls.json',import.meta.url),'utf8'));
 const issueRoute = (ticket, suffix) => '/rest/api/3/issue/' + ticket + suffix;
 const pointerSuffix = '/properties/pigboard.work-context';
+const recoveryToken = 'LOCAL_RECOVERY_DUMMY';
+const recoveryArn = 'arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-recovery-abcdef';
 
 export function repairFixtureConfig(historyId, {optOut = false, missingEdge = false, commentBound = false, readBounds} = {}) {
   const history = packet.recorded_repair_preview.cases.find(item => item.id === historyId);
@@ -221,9 +224,131 @@ async function inspectSenderAttempt(cloud, attemptId) {
   }
 }
 
+async function inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId}) {
+  const directory = await mkdtemp(join(tmpdir(), 'pigboard-jira-evidence-'));
+  const {provider}=cloud;
+  const {fixtureCloud}=await import('./test-aws-manager.mjs');
+  const bind = authority => bindInstallation({
+    configText:JSON.stringify(authority.config),manifest:authority.manifest,stackId:authority.stackId,operatorProfile:'operator'
+  },authority.dependencies);
+  try {
+    const original=structuredClone(await bind(cloud));
+    let current=cloud,receipt=original;
+    if(evidenceCase.current){
+      const manifest=evidenceCase.current;
+      current=fixtureCloud(manifest.canonical_config,{},manifest);
+      const {cloud:resources,binding}=current;
+      const {controls}=current.config.manager;
+      assert.equal(binding.table_arn,cloud.binding.table_arn);
+      assert.equal(binding.installation_generation,cloud.binding.installation_generation);
+      Object.assign(resources.function.Environment.Variables,{PB_MODE:controls.mode,PB_WRITES_ENABLED:String(controls.writes_enabled)});
+      resources.schedule.Target.Input=JSON.stringify({operation:controls.mode});
+      receipt=await bind(current);
+      const row=provider.records().find(record=>record.kind==='installation');
+      provider.seed({...row,revision:row.revision+1,configuration_digest:binding.configuration_digest,
+        package_revision:binding.package_revision,writes_enabled:false,schedule_enabled:false});
+    }
+    if(evidenceCase.retainedAssignmentMismatch){
+      const member=provider.records().find(record=>record.kind==='member'&&record.ticket_id==='1001');
+      provider.seed({...member,revision:member.revision+1,assignment:null});
+    }
+    const configPath=join(directory,'config.json'),installationPath=join(directory,'installation.json');
+    const originalPath=join(directory,'sender-receipt.json');
+    const config=structuredClone(current.config);
+    if(evidenceCase.alias)config.manager.aws.recovery_jira_secret_arn=config.jira.connection.secret_reference;
+    if(evidenceCase.badOriginal)original.manifest.source_revision='0'.repeat(40);
+    await writeFile(configPath,JSON.stringify(config));
+    await writeFile(installationPath,JSON.stringify(receipt));
+    if(evidenceCase.current&&!evidenceCase.omitOriginal)await writeFile(originalPath,JSON.stringify(original));
+    const args=['inspect','--config',configPath,'--installation',installationPath,'--operator-profile','operator',
+      '--kind','attempt','--record-id','attempt:'+attemptId];
+    const scope=[...(evidenceCase.current&&!evidenceCase.omitOriginal?['--original-installation',originalPath]:[])];
+    const attempts=provider.records().filter(record=>record.kind==='attempt');
+    assert.equal(attempts.find(record=>record.attempt_id===attemptId)?.outcome,'pending');
+    const audit=[],clients=[];
+    const dependencies={...current.dependencies,makeClient(kind,options){
+      assert.equal(options.credentials.accessKeyId,'SELECTED_OPERATOR');
+      assert.equal(options.region,config.manager.aws.region);
+      assert.equal(options.maxAttempts,1);
+      // Every provider client is confined to this fixture. No default SDK client
+      // may perform a lookup, and no mock accepts a sender secret selector.
+      const client=kind==='SecretsManager'?{destroy(){}}:current.dependencies.makeClient(kind,options);
+      const lifecycle={kind,closed:false};
+      clients.push(lifecycle);
+      return {...client,destroy(){client.destroy();lifecycle.closed=true;},async send(command,sendOptions){
+        const action=command.constructor.name;
+        const entry={kind,role:'selected operator',action};
+        audit.push(entry);
+        if(action==='GetCallerIdentityCommand'){
+          const {account_id:account}=config.manager.aws;
+          return {Account:account,Arn:`arn:aws:sts::${account}:assumed-role/${evidenceCase.wrongRole?'wrong-role':'pigboard-operator'}/fixture`,
+            ...(evidenceCase.missingUserId?{}:{UserId:'AROAEXAMPLE:fixture'})};
+        }
+        if(kind==='SecretsManager'){
+          assert.equal(action,'GetSecretValueCommand');
+          assert(command.input.SecretId===recoveryArn,'Only the exact recovery secret may be looked up');
+          assert(sendOptions.abortSignal instanceof AbortSignal);
+          entry.selector='recovery ARN';
+          if(evidenceCase.secretDenied)throw Object.assign(new Error('dummy secret denied'),{name:'AccessDeniedException',$metadata:{httpStatusCode:400}});
+          return {ARN:evidenceCase.secretWrongArn?config.jira.connection.secret_reference:recoveryArn,SecretString:recoveryToken};
+        }
+        assert(/^(Get|Query|Describe|TransactGet)/.test(action),'Inspection cannot write State or mutate AWS');
+        if(kind==='DynamoDBDocument'&&action!=='DescribeTableCommand'){
+          if(evidenceCase.inventoryFailed&&action==='QueryCommand')throw new Error('simulated inventory read unavailable');
+          const namedRead=action==='TransactGetCommand'&&command.input.TransactItems.some(({Get})=>Get.Key.SK.startsWith('A#'));
+          if(namedRead)entry.named_snapshot=true;
+          const closing=namedRead&&evidenceIO.requests.length>evidenceIO.requestStart;
+          if(closing&&evidenceCase.fenceFailed)throw new Error('simulated closing read unavailable');
+          const response=await provider.send(command,sendOptions);
+          if(closing&&evidenceCase.fenceDrift){
+            entry.fixture_external_revision_change=true;
+            response.Responses.find(row=>row.Item?.kind==='stream').Item.revision++;
+          }
+          return response;
+        }
+        return client.send(command,sendOptions);
+      }};
+    }};
+    const resolve=input=>resolveInstallation(input,dependencies);
+    const invoke=async optionArgs=>{
+      const before=provider.snapshot(),stateStart=provider.audit.length,auditStart=audit.length,clientStart=clients.length;
+      evidenceIO.requestStart=evidenceIO.requests.length;
+      evidenceIO.active=true;
+      let output;
+      try{output=await runStateCommand(optionArgs,{resolveInstallation:resolve});}
+      finally{evidenceIO.active=false;}
+      const after=provider.snapshot();
+      assert.equal(after,before);
+      const state=provider.audit.slice(stateStart).map(({name,abortSignal})=>({name,abortSignal}));
+      assert(!state.some(call=>call.name==='TransactWriteCommand'));
+      const http=evidenceIO.requests.slice(evidenceIO.requestStart),aws=audit.slice(auditStart);
+      const secrets=aws.filter(call=>call.kind==='SecretsManager');
+      assert(secrets.length<=1&&secrets.every(call=>call.selector==='recovery ARN'));
+      assert(!http.length||secrets.length===1);
+      assert(clients.slice(clientStart).every(client=>client.closed),'Every owned client was released');
+      return {...output,command:['node','scripts/manager-state.mjs',...optionArgs],before:JSON.parse(before),after:JSON.parse(after),aws,state,http};
+    };
+    const normal=evidenceCase.omission?await invoke([...args,'--json']):null;
+    const evidenceArgs=[...args,'--jira-evidence',...scope];
+    const readable=await invoke(evidenceArgs),json=await invoke([...evidenceArgs,'--json']);
+    assert.deepEqual(JSON.parse(json.stdout),json.outcome);
+    assert.deepEqual(readable.outcome,json.outcome);
+    assert.equal(readable.exitCode,json.exitCode);
+    assert.deepEqual(readable.http,json.http);
+    const {outcome}=json;
+    const evidence={readable,json,normal,current:{binding:receipt.binding,zip_digest:receipt.manifest.zip_digest},
+      original:{binding:original.binding,zip_digest:original.manifest.zip_digest}};
+    for(const marker of [recoveryToken,'LOCAL_APPLY_DUMMY',packet.sender_evidence.private_reply_marker,packet.sender_evidence.private_header_marker])
+      assert(!JSON.stringify(evidence).includes(marker),'Inspection evidence must redact provider-private material');
+    assert.equal(outcome.schema,'pigboard-transition-inspection/v1');
+    return evidence;
+  }finally{await rm(directory,{recursive:true,force:true});}
+}
+
 /** Disposable providers only. No live URL, credential or transport option. */
-export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false,variant=null,health=true,empty=false,logFailure=false,timeout=false,setupFailure=false,repairCase=null,runtime=null,sendCase=null,inspectSend=false}={}){
- const p=structuredClone(packet),repair=repairCase?prepareRepairFixture(p,repairCase):null,config=repair?.config??p.config;
+export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false,variant=null,health=true,empty=false,logFailure=false,timeout=false,setupFailure=false,repairCase=null,runtime=null,sendCase=null,inspectSend=false,evidenceCase=null}={}){
+ const p=structuredClone(packet),repair=repairCase?prepareRepairFixture(p,repairCase):null;
+ const config=evidenceCase?structuredClone(evidenceCase.sender.canonical_config):repair?.config??p.config;
  const regression=variant===null?null:p.regressions[variant],moved=regression?.moved_project;
  if(variant!==null)assert(regression,'Use a prescribed apply variant.');if(regression?.issues)p.issues=regression.issues;if(twoStreams)p.issues=p.dispatch_issues;if(empty)p.issues=[];if(bug)p.issues[1]=p.bug_issue;if(global||hold==='global-only transition')config.manager.transition_edges[0].global=true;
  if(moved)addMovedProjectFixture(p,moved);
@@ -235,12 +360,13 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(runtime){assert(repair);assert.deepEqual(JSON.parse(runtime.configText),config);assert.equal(runtime.manifest.configuration_digest,parsed.configuration_digest);}
  const control={configuration_digest:parsed.configuration_digest,schedule_enabled:enabled,writes_enabled:enabled,maintenance:false};
  let cloud;
- if (inspectSend) {
+ if (inspectSend || evidenceCase) {
    const {fixtureCloud} = await import('./test-aws-manager.mjs');
    const base = fixtureCloud(config);
-   cloud = fixtureCloud(config, {}, {...base.manifest, sender: true});
+   cloud = fixtureCloud(config, {}, evidenceCase?.sender ?? {...base.manifest, sender: true});
    Object.assign(cloud.cloud.function.Environment.Variables, {PB_MODE: 'apply', PB_WRITES_ENABLED: 'true'});
    cloud.cloud.schedule.Target.Input = JSON.stringify({operation: 'apply'});
+   if (evidenceCase) cloud.cloud.schedule.State = 'ENABLED';
  }
  const binding=cloud?.binding??{...stateFixture.binding,site:config.jira.site,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,configuration_digest:parsed.configuration_digest};
  if(runtime)Object.assign(binding,{package_revision:runtime.manifest.source_revision,installation_generation:runtime.manifest.installation_generation});
@@ -304,8 +430,17 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  }
  const state=Object.fromEntries(Object.keys(real).map(name=>[name,async input=>{const call={name,input:structuredClone(input)};stateCalls.push(call);events.push('state:'+name);const boundary={retainMembers:stateCalls.filter(c=>c.name==='retainMembers').length===1?'member':'assignment',begin:'intent',finalize:'finalize'}[name];const proofInjection=p.oracle.proof_boundary_injections?.[fault];if(!injected&&proofInjection?.state_call===name){provider.fault=proofInjection.fault;injected=true;}else if(!injected&&!proofInjection&&fault?.startsWith(boundary+':')){provider.fault=fault.endsWith(':after')?'after':'before';injected=true;}const result=sender&&['prepareTransitionCapture','recordTransitionResponse','finalize'].includes(name)?await observeSendState(name,input):await real[name](input);call.result=structuredClone(result);return result;} ]));
  let serverError=null,workerCalls=0,uuidIndex=0,currentComment=p.comment,currentMutationOracle=p.oracle.mutations;const sockets=new Set();
+ const evidenceIO={active:false,requests:[]};
  const server=https.createServer({key:tls.key,cert:tls.cert},async(req,res)=>{try{
-  let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null;const path=req.url;trace.push({method:req.method,path,body});assert.equal(req.headers.authorization,'Bearer LOCAL_APPLY_DUMMY');
+  let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null;const path=req.url;
+  if(evidenceIO.active){
+   evidenceIO.requests.push({method:req.method,path,...(body?.maxResults?{page_size:body.maxResults}:{}),credential:'operator recovery'});
+   assert(req.headers.authorization === 'Bearer '+recoveryToken,'Inspection must use the separate recovery credential');
+   assert(req.method==='GET'||req.method==='POST'&&path==='/rest/api/3/search/jql','Inspection cannot mutate Jira');
+  }else{
+   trace.push({method:req.method,path,body});
+   assert(req.headers.authorization==='Bearer LOCAL_APPLY_DUMMY','The sender must use its own fixture credential');
+  }
   const mutation=req.method!=='GET'&&!path.includes('/search/');let boundary=path.endsWith('/comment')?'comment':path.endsWith('/transitions')?'transition':mutation?'pointer':null;
   if(repair&&req.method==='GET'&&path===issueRoute(repair.ticket_id,pointerSuffix)&&mutations.length===2&&scan===1)boundary='pointer-readback';
   const shouldFault=!injected&&fault?.startsWith(boundary+':');if(shouldFault&&fault.endsWith(':before')){injected=true;req.socket.destroy();return;}
@@ -356,7 +491,15 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
     }
     mutations.push({method:req.method,path,body});
    }
-   if(suffix.startsWith('?fields='))value=issue;
+   if(evidenceIO.active&&suffix.startsWith('/changelog?')){
+    const query=new URLSearchParams(suffix.split('?')[1]);
+    const startAt=Number(query.get('startAt')),maxResults=Number(query.get('maxResults'));
+    const values=evidenceCase.history;
+    if(evidenceCase.denyHistory||evidenceCase.partialHistory&&startAt>0){status=403;value={};}
+    else if(evidenceCase.partialHistory)value={startAt,maxResults:1,total:2,isLast:false,values:values.slice(0,1)};
+    else value={startAt,maxResults,total:values.length,isLast:true,values};
+   }
+   else if(suffix.startsWith('?fields='))value=issue;
    else if(suffix==='/properties')value={keys:pointers.has(id)?[{key:'pigboard.work-context',self:config.jira.site+issueRoute(id,pointerSuffix)}]:[]};
    else if(suffix.startsWith('/comment?')){
     if(repairCase?.denyUnrelatedComments&&id==='1012'){
@@ -411,10 +554,11 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    }
    else throw Error('Unexpected fixed fixture route');
   }
-  if (sender && (status === 201 && boundary === 'comment' || req.method === 'GET' && path === issueRoute('1001', '/comment/' + p.comment.id))) {
+  if (!evidenceIO.active && sender && (status === 201 && boundary === 'comment' || req.method === 'GET' && path === issueRoute('1001', '/comment/' + p.comment.id))) {
     sender.comment_observations.push({method: req.method, ...nativeObservation(value, p.oracle.mutations[1].body.assignment)});
   }
   if(repair||moved)Object.assign(trace.at(-1),{acquisition:scan,status,response:structuredClone(value)});
+  if(evidenceIO.active)evidenceIO.requests.at(-1).status=status;
   if(shouldFault){injected=true;if(repair)trace.at(-1).response_lost=true;req.socket.destroy();return;}
   res.writeHead(status,{'content-type':'application/json','x-arequestid':'fixture-request-1'});res.end(value===null?'':JSON.stringify(value));
  }catch(error){serverError=error;res.writeHead(500);res.end('{}');}});
@@ -433,7 +577,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  crypto.randomUUID=()=>[p.attempt_id,p.fresh_attempt_id][uuidIndex++];syncBuiltinESMExports();
  let result,second,first;const stdout=process.stdout.write,info=console.info;if(host==='handler'){process.stdout.write=function(chunk,...args){if(typeof chunk!=='string'||!chunk.startsWith('{"summary":'))return stdout.call(this,chunk,...args);if(logFailure)throw Error('DUMMY_SECRET_LOG');healthLogs.push(JSON.parse(chunk));return true;};console.info=()=>{if(logFailure)throw Error('DUMMY_SECRET_LOG');};}try{
   const configText=JSON.stringify(config);
-  const manifest={schema:'pigboard-manager-package/v1',runtime:'nodejs24.x',canonical_config:config,sender:true,source_revision:binding.package_revision,configuration_digest:binding.configuration_digest,installation_id:binding.installation_id,domain_id:binding.domain_id,installation_generation:binding.installation_generation};
+  const manifest=evidenceCase?.sender??{schema:'pigboard-manager-package/v1',runtime:'nodejs24.x',canonical_config:config,sender:true,source_revision:binding.package_revision,configuration_digest:binding.configuration_digest,installation_id:binding.installation_id,domain_id:binding.domain_id,installation_generation:binding.installation_generation};
   const environment={PB_STACK_ID:binding.stack_id,PB_TABLE_NAME:binding.table_name,PB_TABLE_ARN:binding.table_arn,PB_INSTALLATION_ID:binding.installation_id,PB_DOMAIN_ID:binding.domain_id,PB_INSTALLATION_GENERATION:binding.installation_generation,PB_PACKAGE_REVISION:binding.package_revision,PB_CONFIGURATION_DIGEST:binding.configuration_digest,PB_MODE:'apply',PB_WRITES_ENABLED:String(enabled)};
   const hostInvoke=runtime?.runApply??(host==='handler'?((event,dependencies)=>handler(event,{awsRequestId:p.producer_invocation_id},dependencies)):runApply);
   const invoke=()=>host||runtime?hostInvoke({operation:'apply'},{
@@ -457,7 +601,21 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
     sender.jira_status_after = issues.find(issue => issue.id === '1001').fields.status.id;
     sender.first_transactions = writeAudit();
     if (inspectSend) sender.inspection = await inspectSenderAttempt(cloud, p.attempt_id);
-    assert.deepEqual(snapshot(), sender.after, 'inspection only reads the original attempt');
+    if(evidenceCase){
+      if(evidenceCase.corruptMetadata){
+        const row=[...provider.rows.values()].find(record=>record.SK==='N#'+p.attempt_id);
+        assert(row);
+        row.comments[0].created='2026-11-16T12:00:00.000Z';
+      }
+      if(evidenceCase.changedAssignment){
+        const pointer=structuredClone(p.oracle.fresh_mutations[1].body);
+        const comment={...p.fresh_comment,id:'799'};
+        pointer.assignment.comment_id=comment.id;
+        comments.get('1001').push(comment);
+        pointers.set('1001',pointer);
+      }
+      sender.evidence_inspection=await inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId:p.attempt_id});
+    }else assert.deepEqual(snapshot(), sender.after, 'inspection only reads the original attempt');
   }
   if(repeat)second=await invoke();
   if (sender) {
@@ -844,6 +1002,169 @@ export function assertSenderJourney(evidence, testCase) {
   for (const marker of [packet.sender_evidence.private_reply_marker, packet.sender_evidence.private_header_marker, 'LOCAL_APPLY_DUMMY']) {
     assert(!retained.includes(marker), 'Do not retain private provider material');
   }
+}
+
+const evidenceHistory=(id,created)=>({id,created,author:{accountId:'manager'},
+  items:[{field:'status',fieldtype:'jira',fieldId:'status',from:'1',to:'2'}]});
+const earlierEdge=evidenceHistory('901','2026-11-17T11:00:00.000Z');
+const laterEdge=evidenceHistory('902','2026-11-17T12:01:00.000Z');
+
+function assertEvidenceObservation(evidence,spec){
+  const {json,readable,normal}=evidence,{outcome}=json;
+  assert.deepEqual([outcome.status,outcome.code,json.exitCode],spec.expected,JSON.stringify(outcome));
+  assert(readable.stdout.includes(outcome.code));
+  if(spec.expected[2]===2){
+    assert.equal(outcome.data,null);
+    assert.deepEqual(json.aws.map(call=>call.action),spec.wrongRole||spec.missingUserId?['GetCallerIdentityCommand']:[]);
+    assert.equal(json.state.length,0);
+    assert.equal(json.http.length,0);
+    return;
+  }
+  const data=outcome.data,rows=senderState(json.before.map(([,row])=>row));
+  assert.equal(json.aws.filter(call=>call.named_snapshot).length,2,'Initial and closing named State observations');
+  assert.equal(data.attempt_id,rows.attempt.attempt_id);
+  assert.equal(data.pending_attempt_id,rows.stream.pending_attempt_id);
+  assert.deepEqual(data.revisions,{installation:rows.installation.revision,stream:rows.stream.revision,attempt:rows.attempt.revision});
+  assert.equal(data.original_capture.http_status,rows.attempt.extensions.pb_capture_status);
+  assert.equal(data.original_capture.request_digest,rows.attempt.extensions.pb_capture_request_digest);
+  assert.equal(data.original_capture.publication_digest,rows.attempt.extensions.pb_capture_publication_digest);
+  assert(readable.stdout.includes(data.attempt_id));
+  const readableRow=label=>JSON.parse(readable.stdout.split('\n').find(line=>line.startsWith(label+' ')).slice(label.length+1));
+  assert.deepEqual(readableRow('Named State snapshot'),{attempt_id:data.attempt_id,pending_attempt_id:data.pending_attempt_id,
+    state_outcome:data.state_outcome,revisions:data.revisions});
+  assert.deepEqual(readableRow('Original capture'),data.original_capture);
+  if(normal){
+    assert.equal(normal.exitCode,0,normal.stdout);
+    assert.equal(normal.outcome.data.records[0].attempt_id,data.attempt_id);
+    assert.equal(normal.http.length,0);
+    assert(!normal.aws.some(call=>call.kind==='SecretsManager'));
+  }
+  if(spec.noJira){
+    assert.equal(json.http.length,0);
+    assert.equal(json.aws.filter(call=>call.kind==='SecretsManager').length,spec.secretDenied||spec.secretWrongArn?1:0);
+    assert.equal(data.native_history.status,'not_consulted');
+    assert.equal(data.state_fence.status,'confirmed');
+    if(spec.retainedAssignmentMismatch){
+      assert.equal(data.assignment.status,'retained_mismatch');
+      assert.equal(data.assignment.source,'retained');
+      assert.equal(data.recorded_proof.status,'not_consulted');
+    }
+    return;
+  }
+  assert(json.http.some(call=>call.path.startsWith('/rest/api/3/issue/1001/changelog?')));
+  if(spec.current){
+    assert.notEqual(evidence.current.binding.configuration_digest,evidence.original.binding.configuration_digest);
+    assert.equal(data.original_authority.source,'original_receipt');
+    assert.equal(data.applied_controls.writes_enabled,false);
+    assert(json.http.some(call=>call.page_size===7),'Use the current read bounds');
+  }else{
+    assert.equal(data.original_authority.source,'current_receipt');
+    assert.equal(data.applied_controls.writes_enabled,true);
+  }
+  assert.equal(data.desired_controls.writes_enabled,!spec.current);
+  assert.equal(data.controls_match,true);
+  assert(readable.stdout.includes(spec.current?'DISABLED':'ENABLED'));
+  if(spec.changedAssignment){
+    assert.equal(data.assignment.status,'mismatch');
+    assert.equal(data.assignment.source,'native');
+    assert.equal(data.publication.status,'not_established');
+    assert.equal(data.recorded_proof.status,'not_established');
+  }else{
+    assert.equal(data.assignment.status,'matched');
+    assert.equal(data.publication.status,'confirmed');
+    assert.equal(data.recorded_proof.status,'confirmed');
+  }
+  assert.equal(data.original_capture.interpretation,({204:'success_reply',409:'rejection_reply'})[spec.sendCase.wire_status]??null);
+  if(spec.fenceFailed||spec.fenceDrift){
+    assert.equal(data.state_fence.status,spec.fenceDrift?'stale':'unknown');
+    assert.equal(data.jira_observations,'provisional');
+  }else assert.equal(data.state_fence.status,'confirmed');
+  const history=spec.denyHistory?[]:spec.partialHistory?spec.history.slice(0,1):spec.history;
+  assert.equal(data.native_history.observed_count,history.length);
+  assert.equal(data.native_history.truncated,false);
+  if(spec.denyHistory||spec.partialHistory){
+    assert.equal(data.native_history.status,spec.partialHistory?'incomplete':'unavailable');
+    assert.equal(data.native_history.code,'HISTORY_UNAVAILABLE');
+    assert(outcome.diagnostics.some(diagnostic=>diagnostic.code==='HISTORY_UNAVAILABLE'));
+  }else assert.equal(data.native_history.status,history.length?'complete':'complete_empty');
+  assert.deepEqual(data.native_history.items,history.map(row=>({issue_id:'1001',history_id:row.id,item_index:0,
+    actor_id:row.author.accountId,from_status_id:'1',to_status_id:'2',created:row.created})));
+  const readableItems=readable.stdout.split('\n').filter(line=>line.startsWith('Native history item '));
+  assert.deepEqual(readableItems.map(line=>JSON.parse(line.slice('Native history item '.length))),data.native_history.items);
+}
+
+export async function runInspectionGroup(group){
+  assert(['INSPECT-H01','INSPECT-H02'].includes(group));
+  const {snapshotPackage}=await import('./test-aws-manager.mjs');
+  const senderConfig=structuredClone(packet.config);
+  senderConfig.manager.aws.recovery_jira_secret_arn=recoveryArn;
+  const disabled=structuredClone(senderConfig);
+  Object.assign(disabled.manager.controls,{schedule_enabled:false,writes_enabled:false});
+  disabled.jira.read_bounds.page_size=7;
+  disabled.jira.connection.secret_reference='arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-current-abcdef';
+  const source=snapshotPackage({config:disabled});
+  try{
+    const build=async(name,config)=>{
+      const configPath=join(source.temp,name+'.json');
+      await writeFile(configPath,JSON.stringify(config));
+      return packageManager({configPath,output:join(source.temp,name),source:source.source,revision:source.snapshot_revision,
+        generation:source.manifest.installation_generation}).manifest;
+    };
+    const sender=await build('sender',senderConfig),omitted=structuredClone(senderConfig);
+    delete omitted.manager.aws.recovery_jira_secret_arn;
+    const omission=await build('omit-recovery',omitted);
+    let otherScope;
+    if(group==='INSPECT-H02'){
+      const changedScope=structuredClone(disabled);
+      changedScope.jira.connection.cloud_id='00000000-0000-0000-0000-000000000002';
+      otherScope=await build('different-jira-cloud',changedScope);
+    }
+    const [accepted,rejected,unsupported]=packet.sender_evidence.groups['SEND-H01'];
+    const legacy=packet.sender_evidence.groups['SEND-H02'].find(item=>item.legacy);
+    const prepared=packet.sender_evidence.groups['SEND-H02'].find(item=>item.id==='prepare-uncertain');
+    const pendingAccepted={...accepted,fault:'finalize:before'};
+    const complete=['complete','OK',0],partial=code=>['partial',code,1],unavailable=code=>['unavailable',code,2];
+    const cases=group==='INSPECT-H01'?[
+      {name:'saved 204 and stopped before finalization',sendCase:pendingAccepted,history:[laterEdge],expected:complete},
+      {name:'saved 409 under the original sender receipt',current:source.manifest,history:[earlierEdge,laterEdge],expected:complete},
+      {name:'complete history with no status events',expected:complete},
+      {name:'ordinary State and opt-in on a package without recovery configured',sender:omission,omission:true,noJira:true,expected:partial('RECOVERY_SECRET_MISSING')}
+    ]:[
+      {name:'wrong role',wrongRole:true,expected:unavailable('OPERATOR_UNAUTHORIZED')},
+      {name:'missing operator UserId',missingUserId:true,expected:unavailable('OPERATOR_UNAUTHORIZED')},
+      {name:'absent recovery config',sender:omission,noJira:true,expected:partial('RECOVERY_SECRET_MISSING')},
+      {name:'aliased recovery config',alias:true,expected:['invalid','RECOVERY_SECRET_INVALID',2]},
+      {name:'denied recovery secret',secretDenied:true,noJira:true,expected:partial('RECOVERY_SECRET_DENIED')},
+      {name:'response identifies the sender secret',secretWrongArn:true,noJira:true,expected:partial('RECOVERY_SECRET_IDENTITY_MISMATCH')},
+      {name:'denied native history with verified publication',denyHistory:true,expected:partial('HISTORY_UNAVAILABLE')},
+      {name:'partially obtained native history',partialHistory:true,history:[earlierEdge,laterEdge],expected:partial('HISTORY_UNAVAILABLE')},
+      {name:'changed native assignment with verified history',changedAssignment:true,history:[laterEdge],expected:partial('ASSIGNMENT_MISMATCH')},
+      {name:'retained assignment mismatch refuses acquisition',retainedAssignmentMismatch:true,noJira:true,expected:partial('ASSIGNMENT_MISMATCH')},
+      {name:'old attempt lacking original metadata',sendCase:legacy,noJira:true,expected:partial('ORIGINAL_METADATA_MISSING')},
+      {name:'original native metadata no longer reproduces commitments',corruptMetadata:true,noJira:true,expected:partial('ORIGINAL_METADATA_MISMATCH')},
+      {name:'retained inventory unavailable',inventoryFailed:true,noJira:true,expected:partial('RETAINED_INVENTORY_INCOMPLETE')},
+      {name:'historical receipt absent',current:source.manifest,omitOriginal:true,noJira:true,expected:partial('ORIGINAL_AUTHORITY_MISSING')},
+      {name:'historical receipt incorrect',current:source.manifest,badOriginal:true,noJira:true,expected:partial('ORIGINAL_AUTHORITY_MISSING')},
+      {name:'current Jira cloud differs from original authority',current:otherScope,noJira:true,expected:partial('ORIGINAL_AUTHORITY_MISSING')},
+      {name:'closing State read unavailable',fenceFailed:true,history:[laterEdge],expected:partial('STATE_FENCE_UNAVAILABLE')},
+      {name:'State revision drift supersedes denied history',fenceDrift:true,denyHistory:true,expected:partial('STATE_CHANGED')},
+      {name:'prepared-only State supersedes denied history',sendCase:prepared,denyHistory:true,expected:partial('ORIGINAL_RESPONSE_UNRECORDED')},
+      {name:'unsupported saved HTTP response',sendCase:unsupported,expected:partial('ORIGINAL_RESPONSE_UNSUPPORTED')}
+    ];
+    const runs=[];
+    for(const variant of cases){
+      const spec={sender,sendCase:rejected,history:[],...variant};
+      const observed=await runApplyFixture({host:'handler',sendCase:spec.sendCase,evidenceCase:spec});
+      assert.equal(observed.worker_calls,0);
+      assert.equal(observed.sender.transition_starts,spec.sendCase.sends);
+      const inspection=observed.sender.evidence_inspection;
+      assertEvidenceObservation(inspection,spec);
+      runs.push({name:spec.name,sender_requests:observed.trace.map(({method,path})=>({method,path})),
+        sender_reply:observed.sender.provider_reply??null,sender_pending:senderState(observed.sender.after).stream.pending_attempt_id,
+        worker_calls:observed.worker_calls,inspection});
+    }
+    return {package_source:{checkout_revision:source.source_parent,snapshot_revision:source.snapshot_revision,tree:source.snapshot_tree},runs};
+  }finally{source.cleanup();}
 }
 
 export async function runSenderGroup(group, {caseId} = {}) {
