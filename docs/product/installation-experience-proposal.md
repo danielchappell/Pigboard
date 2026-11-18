@@ -49,7 +49,7 @@ projects:
   - id: "10017"
     key: APP
     mappings:
-      repositories: [https://bitbucket.org/example/payments]
+      repositories: ["https://bitbucket.org/example/payments"]
       # The Jira admin confirms stages, issue types and actors in this same file.
 manager:
   aws: {account_id: "123456789012", region: eu-west-1}
