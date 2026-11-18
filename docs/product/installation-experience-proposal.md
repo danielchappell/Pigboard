@@ -2,7 +2,7 @@
 
 **Joint design decision for Daniel and the Pigboard director · 18 November 2026 · Provisional — not ready for delivery.**
 
-**Decision requested.** Give the developer a request they can forward and give the next operator a private report that answers “What worked, is delivery off, and who acts next?” Start by reading existing receipts. Platform teams could publish the report from their usual infrastructure pipeline. Smaller teams could generate it locally and export it to the same kind of shared location. The first increment ends at this handoff.
+**Decision requested.** Give the developer a request they can forward and give the next operator a private report that answers “Which controls were observed off, what is still unknown, and who acts next?” Start by reading existing receipts. Platform teams could publish the report from their usual infrastructure pipeline. Smaller teams could generate it locally and export it to the same kind of shared location. The first increment ends at this handoff.
 
 ## 1. Follow one request
 
@@ -27,7 +27,7 @@ flowchart TD
 
 **How a pilot would reach one PR.** Today, the customer and admins prepare the providers using their existing tools. The proposed report helps them see where preparation stands. Release acceptance and a separately authorized pilot come later.
 
-1. The sponsor nominates one ready Story or Bug, such as APP-42. In an isolated, approved pilot scope, the operator verifies that the manager can see all work, it is the only manager allowed to start work there, and only APP-42 is eligible. A manager invocation chooses eligible work itself. If the team cannot bound eligibility or confirm these facts, it keeps delivery off.
+1. The sponsor nominates one ready Story or Bug, such as APP-42 in the single numbered workstream AI-App-1. In an isolated, approved pilot scope, the operator verifies that the manager can see all work, it is the only manager allowed to start work there, and only APP-42 is eligible. A manager invocation chooses eligible work itself. If the team cannot bound eligibility or confirm these facts, it keeps delivery off.
 2. The AWS manager assigns eligible work in Jira and moves it to In Progress. A Jira rule sends an authenticated request to the matching Cursor automation. The worker uses the selected Build, a saved environment containing the pinned Pigboard skills. Three rule/automation pairs handle three stages. Implementation opens the Bitbucket PR. An independent reviewer checks the current PR, then QA runs the prescribed cases. Their Jira handoffs lead to Human Review.
 3. The pilot operator closes admission after the authorized attempt and checks the manager has stopped, while already-authorized review and QA can finish. The sponsor follows APP-42 and its linked PR. On a stall, retain the issue, PR and original attempt, show the last verified stage and route the missing evidence to its owner. At the agreed pilot end the coordinator checks that the whole setup is stopped and records any outstanding work.
 4. At Human Review the developer and human QA reviewer open the PR, see what changed and where, inspect current-head review and CI, and see QA results and human cases due. Receiving that usable packet is first team value. The customer retains acceptance and merge. [Admission contract](../manager-apply.md) · [Worker handoffs](../workflow.md)
@@ -86,17 +86,17 @@ Provider documentation establishes possible mechanics. The installed Pigboard pi
 
 ## 4. What the successor sees
 
-Illustrative private setup record for APP. Each evidence link opens only for an authorized customer user. The same rows are available as structured fields for a pipeline or agent.
+Illustrative private setup record for APP’s single workstream, AI-App-1. An installation-wide view must cover every configured project and each full workstream label in scope. Check all three roles per stream even where a native rule is shared. An omitted project, stream or role leaves coverage unverified. Each evidence link opens only for an authorized customer user. The same rows are available as structured fields for a pipeline or agent.
 
 ```text
-APP / payments · Desired: disabled · Observed: partial · Open setup report
+APP / AI-App-1 / payments · Desired: disabled · Observed: partial · Open setup report
 AWS     10:20  saved operator read   Original stack matched. Schedule and writes off. [receipt]
 Jira    10:23  saved admin read      Three scoped rules off. [rule checks]
 Cursor  10:24  saved admin read      Three automations off. Active Build unverified. [environment]
 Workers        no observation        Current or prior runs unknown.
 Next    Developer Tools on-call     Inspect the selected Build and the install receipt for this pin.
 Then    Platform on-call            Refresh affected rows. Keep the original AWS and Jira evidence.
-Pilot   Payments lead: pending      Stop coordinator: Platform on-call. [private decision record]
+Pilot   Approval pending. Owner: Payments lead. Stop coordinator: Platform on-call. [decision]
 ```
 
 The proposed machine-readable row carries the same conclusion, for example `{"component":"cursor.build","state":"unverified","source":"missing","owner":"dev-tools-on-call","next":"inspect_active_build","expected_revision":"7d0552e32e8bb606f4cab6be07b94087909d9a5d"}`. If a later read shows a matching Build exists but is unselected, the owner verifies it before selecting it. A default image, an older Build and an inaccessible environment each remain distinct findings.
@@ -116,9 +116,9 @@ The proposed machine-readable row carries the same conclusion, for example `{"co
 
 **Choose the shared record first.** A platform-repository change gives review history, existing deployment approvals and a natural place to hand over evidence. It adds queue time where teams lack such a pipeline. A guided local run can fit a small team, but its receipts must reach a durable customer location before handoff. Both can use one config, the existing validators and the same status format. A single cross-account wizard would require a concentration of permissions our evidence does not justify. No new user interface needs to be selected yet. [Original operator proposal](https://scubapig.atlassian.net/browse/PGB-95?focusedCommentId=11263)
 
-**Provisional sequence.** First, give a sponsor a forwardable request and a successor a read-only disabled setup report from existing configuration and receipts. The first increment succeeds when the successor identifies the missing Build, its owner and next action while preserving completed work. Next, test that handoff with actual participants and prove delegated provider operations on explicitly authorized isolated fixtures. Only then consider generating disabled changes for each provider, followed by controlled day-two updates, scope expansion and removal. The separately approved one-issue pilot above would measure the path through Human Review once PGB-91, PGB-92 and PGB-58 supply the necessary acceptance and authority. Epic 66 keeps the manager, installed acceptance and readiness decision. PGB-58 owns live worker acceptance. PGB-183 owns the cross-system customer journey. Delivery Stories, estimates and activation await their own decisions.
+**Provisional sequence.** First, give a sponsor a forwardable request and a successor a read-only disabled setup report from existing configuration and receipts. The request succeeds when its recipient can identify the scope and approvers or return it with a named missing item. The report succeeds when the successor identifies the missing Build, its owner and next action while preserving completed work. Next, test that handoff with actual participants and prove delegated provider operations on explicitly authorized isolated fixtures. Only then consider generating disabled changes for each provider, followed by controlled day-two updates, scope expansion and removal. The separately approved one-issue pilot above would measure the path through Human Review once PGB-91, PGB-92 and PGB-58 supply the necessary acceptance and authority. Epic 66 keeps the manager, installed acceptance and readiness decision. PGB-58 owns live worker acceptance. PGB-183 owns the cross-system customer journey. Delivery Stories, estimates and activation await their own decisions.
 
-1. **Daniel and director:** Adopt the shared request and setup record as the first increment for both routes, or prioritize another customer handoff?
+1. **Daniel and director:** Endorse the request and setup report as the first handoff to validate, or prioritize another? This decision selects product direction. Implementation would require a subsequent reviewed delivery plan.
 2. **Daniel:** Is there a redacted comparable rollout or an authorized participant for an uncoached handoff before we choose which route to build first? Without one, carry both routes and the unverified roles forward.
 
 [Installation UX epic](https://scubapig.atlassian.net/browse/PGB-183) · [Discovery and review record](https://scubapig.atlassian.net/browse/PGB-95) · [Manager acceptance](https://scubapig.atlassian.net/browse/PGB-91) · [Worker acceptance](https://scubapig.atlassian.net/browse/PGB-58)
