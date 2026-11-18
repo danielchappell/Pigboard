@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { appendFile, mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir, cp, realpath } from 'node:fs/promises';
+import { appendFile, mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir, cp, realpath, lstat, readlink } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import os from 'node:os';
@@ -300,7 +300,7 @@ async function prepareInventoryTest(t) {
   const prepared = await prepare({...o, ref: fixtureCommit}, async dir => {
     if (path.basename(dir) === 'work-validator') {
       await cp(path.join(sourceRoot, 'node_modules'), path.join(dir, 'node_modules'), {
-        recursive: true, dereference: true
+        recursive: true, verbatimSymlinks: true
       });
     } else {
       await install(dir);
@@ -316,6 +316,26 @@ async function prepareInventoryTest(t) {
   for (const relative of ['node_modules/yaml/package.json', 'node_modules/ajv/package.json']) {
     assert.deepEqual(await readFile(path.join(copiedRoot, relative)), await readFile(path.join(sourceRoot, relative)));
     assert.equal(await realpath(path.join(copiedRoot, relative)), path.join(copiedRoot, relative));
+  }
+  const preparedDependencies = path.join(copiedRoot, 'node_modules');
+  for (const bin of ['canonicalize', 'yaml']) {
+    const sourceBin = path.join(sourceRoot, 'node_modules', '.bin', bin);
+    const copiedBin = path.join(preparedDependencies, '.bin', bin);
+    const original = await lstat(sourceBin);
+    const copied = await lstat(copiedBin);
+    assert.equal(copied.isFile(), original.isFile(), bin + ' regular file parity');
+    assert.equal(copied.isSymbolicLink(), original.isSymbolicLink(), bin + ' symlink parity');
+    if (original.isSymbolicLink()) {
+      const target = await readlink(sourceBin);
+      assert(!path.isAbsolute(target), bin + ' has a relative npm bin target');
+      assert.equal(await readlink(copiedBin), target, bin + ' preserves its relative target');
+      const resolved = await realpath(copiedBin);
+      assert(resolved.startsWith(preparedDependencies + path.sep), bin + ' resolves inside the versioned copy');
+      assert.equal(resolved, path.resolve(path.dirname(copiedBin), target));
+    } else {
+      assert(original.isFile(), bin + ' is a regular bin file');
+    }
+    assert.deepEqual(await readFile(copiedBin), await readFile(sourceBin), bin + ' executable bytes');
   }
 
   const env = {...process.env};
