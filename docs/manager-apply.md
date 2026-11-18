@@ -124,10 +124,13 @@ HTTP status and time, the attempt outcome and its publication reference before
 any subsequent action. If needed, inspect the original stream to confirm its
 pending attempt ID. A saved reply and a finalized attempt are separate facts.
 Leave the original records and partial effects in place. Ordinary invocations
-keep the pending stream held and send nothing for that attempt. Disable the
-installation when intervention is needed. Stop preserves pending evidence.
-Operator inspection of the full native evidence and settlement are planned
-separately. Real installation acceptance is pending.
+keep the pending stream held and send nothing for that attempt. On a verified
+enabled or disabled installation, the operator can read the original response
+and current Jira evidence for the pending attempt. See
+[Inspect Jira evidence for one pending attempt](manager-state.md#inspect-jira-evidence-for-one-pending-attempt).
+Disable the installation when intervention is needed. Stop preserves pending
+evidence. Operator settlement is planned separately. Real installation
+acceptance is pending.
 
 The invocation budget must cover ten bounded State calls, two bounded acquisitions,
 five Jira writer requests and one writer credential resolution. Configuration is
