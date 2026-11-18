@@ -315,3 +315,31 @@ test('boundary human TAP evidence is inspectable',async t=>{
  }
  for(const observation of observations)t.diagnostic(marker+JSON.stringify(observation));
 });
+
+test('native changelog rejects invalid selectors and preserves paged status evidence when a later page fails',async()=>{
+ const {createJiraReadSession,readJiraStatusHistory}=await import('../lib/jira/read.mjs');
+ const config=JSON.stringify(fixtureCases.variants[0].config);
+ let resolved=0,getters=0;
+ const unsafe=Object.defineProperty({pages:1,requests:1},'milliseconds',{enumerable:true,get(){getters++;throw Error('unsafe');}});
+ const badSession=await createJiraReadSession(config,{resolveSecret(){resolved++;}},{reductions:unsafe});
+ assert.equal(badSession.ready,false);
+ assert.equal(badSession.finish().report.diagnostics[0].code,'INPUT_INVALID');
+ assert.equal(getters,0);assert.equal(resolved,0);
+ const session=await createJiraReadSession(config,{resolveSecret(){resolved++;}},{reductions:{pages:1,requests:1,milliseconds:1000}});
+ try{
+  await assert.rejects(session.changelog('100/200',0),{code:'INPUT_INVALID'});
+  await assert.rejects(session.changelog('100',-1),{code:'INPUT_INVALID'});
+  assert.equal(session.report.counters.requests_attempted,0);
+  assert.equal(session.report.limits.max_pages,1);
+ }finally{session.finish();}
+ const at='2026-05-01T13:00:00+01:00',retained=[],items=[];
+ const row={id:'909',author:{accountId:'actor'},created:at,items:[{field:'status',fieldId:'status',fieldtype:'jira',from:'1',to:'2'}]};
+ const fake={report:{limits:{page_size:4}},checkTime(){},retainHistory(v){retained.push(...v);},
+  async changelog(issueId,startAt){
+   assert.equal(issueId,'101');
+   return startAt===0?{startAt,maxResults:4,total:2,isLast:false,values:[row]}:{startAt,maxResults:4,total:2,isLast:true,values:[row]};
+  }};
+ await assert.rejects(readJiraStatusHistory(fake,'101',items),{code:'CHANGED_INPUT'});
+ const expected=[{issue_id:'101',history_id:'909',item_index:0,actor_id:'actor',from_status_id:'1',to_status_id:'2',created:at}];
+ assert.deepEqual(items,expected);assert.deepEqual(retained,expected);
+});

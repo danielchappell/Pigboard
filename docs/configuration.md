@@ -359,3 +359,21 @@ controls. Earlier pins may support only [recorded preview](manager-preview.md#re
 Existing installations may toggle the flag through
 [same-source configure](manager-installation.md#recorded-repair-preview-configuration).
 Source upgrades remain a separate authorized release.
+
+## Native handoff and attempt reads
+
+The native receipt library uses the existing canonical Jira connection,
+configured project and role mappings, and `jira.read_bounds`. One invocation
+shares its page, request, response and retained bytes, and time limits across
+inventory, exact comments and native changelog pages. The attempt selector
+can reduce the page, request and scan time limits. It cannot change the Jira
+site, resolver, authorized actors or per-response limits.
+
+A pending attempt is bound to the installed package and configuration
+recorded when it ran. Maintenance can change the current configuration
+digest. A trusted caller can supply the original approved `{configInput,
+binding}` pair in `original`, along with the current configuration and
+binding. The original pair must match the attempt's capture and agree with
+the current Jira site, connection cloud ID and resolved project authority.
+Missing original configuration or package evidence leaves reconciliation
+unavailable. See [the read library and fixture examples](manager-preview.md#read-an-exact-jira-handoff-or-original-attempt).

@@ -1023,7 +1023,7 @@ PGB148_EVIDENCE_DIR=/absolute/disposable/evidence \
 node --test --test-name-pattern='^PGB-148 prepared inventory guide and recovery$' test/skill-distribution.test.mjs
 ```
 
-The check verifies the receipt commit, its versioned manifest and all 44 payload
+The check verifies the receipt commit, its versioned manifest and all 46 payload
 path hashes against the exact source revision, including the guide, library and
 fixture files. It imports directly from the receipt's installed root under a
 loader that permits copied dependencies and rejects source fallback and excluded
@@ -1194,3 +1194,100 @@ repair with existing write authority and a configured direct Rework Queued →
 In Progress edge. The offline result stays a write-free proposal. Evidence from source and
 copied fixtures is separate from designated human acceptance, live installation,
 hosted CI and activation.
+
+## Read an exact Jira handoff or original attempt
+
+The prepared validator exposes `lib/jira/receipts.mjs` in source and under
+`<receipt.skills>/work-validator`. Import from the selected root. Keep the
+release pin and installation receipt with the result. A missing copied module
+or schema is a setup problem. Prepare that pinned release again or use the
+previous known-good pin.
+
+A trusted in-process caller binds its canonical configuration, existing secret
+resolver, approved installation identity and confirmed State read to the
+library. The State projection contains `retained_complete`, `retained_members`
+and `pending_intents` from the existing inventory. It also requires a
+`retained` array. Use `retained: []` for an ordinary recorded read with no prior
+native tuples. Reconciliation also needs the original pending `attempt` and its
+genuine publication tuples. A missing required tuple reports
+`RETAINED_TUPLE_MISSING`. Each prior tuple contains
+`site`, the four exact reference fields, `author_id`, `update_author_id`,
+`created` and `updated` as originally recorded. The installation identity is
+the approved `site`, `installation_id`, `domain_id`, `package_revision` and
+`configuration_digest`. Copy these from the trusted sources that prepared and
+read this installation.
+
+```js
+import { bindJiraReceipts } from './lib/jira/receipts.mjs'
+
+const reads = bindJiraReceipts({ configInput, resolveSecret, binding, state, original })
+
+const receipt = await reads.readRecordedReceipt({
+  purpose: 'recorded-completion',
+  target: { ticket_id, comment_id, record_id, digest }
+})
+
+const facts = await reads.readReconciliationFacts({
+  attempt: state.attempt,
+  publicationReferences: state.attempt.publication,
+  limits: { pages: 48, requests: 96, milliseconds: 12000 }
+})
+```
+
+`recorded-completion` checks an exact current QA result.
+`recorded-history` inspects an exact historical target. Both apply the
+[recorded proof rules](handoffs.md#native-recorded-proof) to complete native
+comments, exact references, work declarations and positive scope checks.
+The configuration supplies the Jira site, allowed projects and actors.
+The [original binding](configuration.md#native-handoff-and-attempt-reads) is
+optional when current approved configuration and package match the attempt.
+The three reconciliation limits can reduce the configured budget for this
+call. Full configuration bounds apply to the recorded read.
+
+| Result | What to inspect |
+| --- | --- |
+| `complete` | The requested proof or both original-attempt observations passed. `data.history.items: []` with `data.history.status: complete` means Jira returned a complete history with zero status changes. |
+| `unavailable` | Check the named authority, original metadata or Jira visibility. A 403 or 404 leaves the observation unconfirmed. |
+| `incomplete` | Inspect the named budget, page, pointer, or proof diagnostic. Keep any completed observations with the original attempt. |
+| `unsupported` | Keep the evidence and use a release that understands the retained capture or native Jira history format. |
+
+The result exposes safe diagnostics, counters and cleanup for reporting.
+Trusted callers can read `data` in process. It holds native evidence and is
+omitted from ordinary JSON serialization. The reconciliation result has
+independent history and publication statuses. Each projected native event
+carries the source issue, history ID, item index, Jira author account ID, native
+from/to status IDs and original timestamp. Publication evidence carries the
+authenticated receipt, UTC State timestamps and exact pointer assignment.
+The caller responsible for reconciliation checks the original capture, State
+revision and operator disposition before any action. Jira status history alone
+cannot establish an HTTP response or link the change to the pending attempt.
+
+### Prepared PGB-163 fixture checks
+
+Run Node.js from the pinned checkout with its dependencies prepared. Set
+`runtime` to the source root for the first run. Repeat with the saved local
+installation receipt's `skills` path plus `/work-validator` for the copy.
+Use an unrelated working directory for the copied run.
+
+```sh
+runtime=/absolute/path/to/selected/runtime
+for variant in current-qa current-qa-outstanding-request original-admission original-repair-admission original-stack-update complete-empty; do
+  node "$runtime/test/fixtures/jira-preview-harness.mjs" --case PGB-163-H01 --variant "$variant" --runtime "$runtime" --json || break
+done
+for variant in missing-page 403 404 shared-budget-exhausted timeout foreign-destination redirect secret-bearing-error wrong-uuid wrong-assignment wrong-operation edited-metadata missing-prior-tuple unsupported-changelog-shape; do
+  node "$runtime/test/fixtures/jira-preview-harness.mjs" --case PGB-163-H02 --variant "$variant" --runtime "$runtime" --json || break
+done
+```
+
+Keep the revision and receipt pin, ordered request traces, exact target and
+pointer facts, native and UTC timestamps, original publication digest, page
+and byte accounting and cleanup results. The outside-chain QA request must
+hold completion. The original stack-update pointer must stay on the previous
+assignment. The wrong-assignment control expects `ASSIGNMENT_MISMATCH`. The
+wrong-operation control expects `MANAGER_TARGET_MISMATCH`. Both preserve the
+complete native history. Confirm each listed control with zero mutations and no request to
+a foreign destination. The packet uses dummy credentials and a loopback TLS
+server. Its output labels that simulation, and its teardown closes only the
+fixture connections. Remove disposable copy and build output after retaining
+the reports. Keep designated human execution evidence separate from contributor
+regressions and live acceptance.

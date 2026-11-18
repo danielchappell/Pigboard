@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import assert from 'node:assert/strict';
+import canonicalize from 'canonicalize';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
 export const fixtureCases=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-cases.json'),'utf8'));
@@ -37,6 +38,200 @@ const inventorySelectors = new Map([
  ]],
  ['R1-34-H04', ['guide-and-install', 'missing-retained-input', 'no-effects']]
 ]);
+
+const receiptModulePath='lib/jira/receipts.mjs';
+const positiveReceipts='PGB-163-H01',negativeReceipts='PGB-163-H02';
+const receiptCase=caseId=>[positiveReceipts,negativeReceipts].includes(caseId);
+const sha=value=>'sha256:'+digest(canonicalize(value));
+const issueFields='?fields=project,issuetype,status,parent,labels,description';
+const jiraFields=issueFields.split('=')[1].split(',');
+const searchPath='/rest/api/3/search/jql';
+const issuePath=id=>'/rest/api/3/issue/'+id;
+const adf=text=>({version:1,type:'doc',content:[{type:'codeBlock',attrs:{language:'yaml'},content:[{type:'text',text}]}]});
+const metadataFields=['author_id','update_author_id','created','updated'];
+const matchReference=(ticket_id,comment_id,record)=>({ticket_id,comment_id,record_id:record.record_id,digest:sha(record)});
+const changePath=(issueId,startAt)=>issuePath(issueId)+'/changelog?startAt='+startAt+'&maxResults=4';
+
+function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,receiptComparison=null}={}){
+ const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),'utf8'));
+ const packet=read('test/fixtures/jira-preview-cases.json'),native=packet.native_receipts;
+ const oracle=structuredClone(caseId===positiveReceipts?native.positive[variant]:native.negative[variant]);
+ if(!oracle)throw Error('Use a prescribed case and variant.');
+ const competingEpic=ownershipConflict||receiptComparison==='ownership-conflict';
+ const genericForeignPointer=receiptComparison==='generic-foreign-pointer';
+ const originalPublication=receiptComparison==='reconciliation-unrelated-pointer';
+ const scopedForeignPointer=originalPublication||['scoped-pointer','ownership-conflict'].includes(receiptComparison);
+ if(competingEpic||genericForeignPointer){
+  assert.equal(variant,'current-qa');
+  Object.assign(oracle,{status:'incomplete',code:'CLOSURE_INCOMPLETE'});
+ }else if(originalPublication){
+  assert.equal(variant,'original-admission');
+ }else if(receiptComparison){
+  assert.equal(variant,'current-qa-outstanding-request');
+  assert(['scoped-pointer','target-denied'].includes(receiptComparison));
+  if(receiptComparison==='target-denied')Object.assign(oracle,{status:'unavailable',code:'READ_DENIED_OR_MISSING'});
+ }
+ const baseId=oracle.base??'S06';
+ const choices=baseId.startsWith('H02-')?read('test/fixtures/manager-repairs.json').cases:
+  Object.values(read('test/fixtures/manager-candidates.json').ordinary_recorded).flatMap(v=>Array.isArray(v)?v:[v]);
+ const {config,snapshot}=structuredClone(choices.find(c=>c?.id===baseId));
+ const envelope=JSON.parse(snapshot.completion_receipts[0]);
+ const configSettings=packet.variants[0].config.jira;
+ config.jira.connection={...configSettings.connection};
+ config.jira.read_bounds={...configSettings.read_bounds,page_size:4,max_pages:64,max_requests:128,max_epics:4,max_streams:4,max_known_issues:16,max_comments:128,request_timeout_ms:750,scan_timeout_ms:15000};
+ config.manager=structuredClone(native.manager);
+ const binding={site:config.jira.site,configuration_digest:sha(config),package_revision:native.package_revision,
+  installation_id:config.manager.installation_id,domain_id:config.manager.domain_id};
+ const state={retained_members:snapshot.retained_members,pending_intents:[],retained_complete:true,retained:[]};
+ const comments=envelope.comment_pages.flatMap(page=>page.comments.map(({format,body,...c})=>{
+  const wire=JSON.parse(body);
+  const record=JSON.parse(wire.content[0].content[0].text);
+  return {ticket_id:page.ticket_id,comment:c,wire,record};
+ }));
+ const source=comments.find(row=>row.comment.id===envelope.target.comment_id);
+ if(variant==='current-qa-outstanding-request'){
+  const request={
+   schema:'pigboard-handoff/v1',record_id:'00000000-0000-4000-8000-000000000099',operation_id:source.record.operation_id,
+   ticket_id:source.ticket_id,requirements_digest:source.record.requirements_digest,assignment:source.record.assignment,
+   role:'human_request',kind:'repair_request',from_stage:'Human Review',to_stage:'Rework Queued',resume_authorization:null,
+   payload:{basis:envelope.target,pr:source.record.payload.pr,findings:[{id:'F1',summary:'Correct the verified wording.',
+     evidence:[{label:'fixture-finding',uri:'https://evidence.example.invalid/native-receipts',digest:null}]}],qa_report:null}
+  };
+  comments.push({ticket_id:source.ticket_id,comment:{...source.comment,id:'2099',author_id:'human',update_author_id:'human'},wire:adf(JSON.stringify(request)),record:request});
+ }
+ const operation=oracle.read??'admit_ready',reconcile=!operation.startsWith('recorded-');
+ let target=envelope.target,mode=null,publicationDigest=null,original=null,historyItems=[];
+ if(reconcile){
+  const row=operation==='queue_repair'?comments.find(c=>c.record.kind==='stack_update_request'):
+   comments.find(c=>c.record.kind==='admission'&&c.comment.id===snapshot.issues.find(i=>i.id===c.ticket_id)?.pointer?.assignment.comment_id);
+  const publication=matchReference(row.ticket_id,row.comment.id,row.record);
+  const nativeIssue=snapshot.issues.find(i=>i.id===row.ticket_id);
+  const assignment=nativeIssue.pointer.assignment;
+  mode=operation==='queue_repair'?'preserved':'published';
+  // This native spelling denotes the same instant as the original capture's UTC spelling.
+  row.comment.created=native.raw_timestamp;row.comment.updated=native.raw_timestamp;
+  state.retained=[{...publication,site:binding.site,...Object.fromEntries(metadataFields.map(k=>[k,row.comment[k]]))}];
+  if(variant==='missing-prior-tuple')state.retained=[];
+  if(variant==='edited-metadata')row.comment.updated='2026-11-01T13:34:57.123+01:00';
+  const created_at='2026-11-01T12:34:55.123Z';
+  // Wrong operation control retains a valid rework admission but claims its
+  // original operation was a new-work admission under the same exact UUID.
+  const claimedOp=variant==='wrong-operation'?'admit_ready':operation;
+  const source_status_id=claimedOp==='queue_repair'?'5':claimedOp==='admit_rework'?'6':'1';
+  const target_status_id=claimedOp==='queue_repair'?'6':'2';
+  const attempt={schema_version:1,installation_id:binding.installation_id,domain_id:binding.domain_id,
+   record_id:'attempt:'+publication.record_id,site:binding.site,project_id:nativeIssue.project_id,label:'stream-1',
+   attempt_id:publication.record_id,ticket_id:row.ticket_id,epic_id:nativeIssue.parent_id,issue_key:nativeIssue.key,
+   operation:claimedOp,source_status_id,target_status_id,configuration_digest:binding.configuration_digest,created_at,
+   cause:operation==='queue_repair'?row.record.payload.roots:claimedOp==='admit_rework'?row.record.payload.requests:[]};
+  const refTuple=r=>[r.ticket_id,r.comment_id,r.record_id,r.digest];
+  publicationDigest=sha({comments:[[refTuple(publication),row.comment.author_id,row.comment.update_author_id,native.utc_timestamp,native.utc_timestamp]],pointer:[mode,refTuple(assignment)]});
+  const transition_id=operation==='queue_repair'?'32':'31';
+  const requestDigest=sha({version:1,identity:attempt,method:'POST',route:'issue_transitions',transition_id,
+   body:{transition:{id:transition_id}},publication_digest:publicationDigest});
+  state.attempt={...attempt,kind:'attempt',revision:2,updated_at:native.utc_timestamp,publication:[publication],outcome:'pending',evidence:null,
+   extensions:{pb_capture_version:1,pb_capture_transition_id:transition_id,pb_capture_request_digest:requestDigest,
+    pb_capture_publication_digest:publicationDigest,pb_capture_package_revision:binding.package_revision,
+    pb_capture_invocation_id:'00000000-0000-4000-8000-000000000111',pb_capture_prepared_at:native.utc_timestamp,
+    pb_capture_status:204,pb_capture_received_at:native.utc_timestamp,pb_capture_provider_request_id:'mock-request'}};
+  state.pending_intents=[{project_id:attempt.project_id,label:attempt.label,ticket_id:attempt.ticket_id,attempt_id:attempt.attempt_id}];
+  target=publication;
+  if(variant==='wrong-assignment'){
+   const prior=comments.find(c=>c.comment.id==='2019');
+   const earlier=matchReference(prior.ticket_id,prior.comment.id,prior.record);
+   assert.notDeepEqual(earlier,assignment);
+   nativeIssue.pointer.assignment=earlier;
+  }
+  if(operation==='queue_repair'){
+   original={configInput:JSON.stringify(config),binding:{...binding}};
+   config.manager.controls.maintenance=true;binding.configuration_digest=sha(config);
+  }
+ }
+ const limit={pages:48,requests:96,milliseconds:12000};
+ const selector=reconcile?{attempt:structuredClone(state.attempt),publicationReferences:[{...target}],limits:limit}:{purpose:operation,target};
+ if(variant==='wrong-uuid')selector.publicationReferences[0].record_id='00000000-0000-4000-8000-000000000099';
+ if(variant==='foreign-destination')binding.site='https://foreign.example.invalid';
+ if(variant==='shared-budget-exhausted')limit.pages=8;
+ const commentWire=row=>({id:row.comment.id,author:{accountId:row.comment.author_id},updateAuthor:{accountId:row.comment.update_author_id},
+  created:row.comment.created,updated:row.comment.updated,body:row.wire});
+ const wireIssue=i=>({id:i.id,key:i.key,fields:{project:{id:i.project_id},issuetype:{id:i.type_id},status:{id:i.status_id},
+  parent:i.parent_id?{id:i.parent_id}:null,labels:i.labels,description:i.body?adf(i.body):null}});
+ const script=[],push=(path,body,extra={})=>script.push({path,body,status:200,...extra});
+ const search=(predicate,issues)=>push(searchPath,{isLast:true,issues:issues.map(wireIssue)},
+  {method:'POST',request_body:{jql:'project = "100" AND '+predicate+' ORDER BY id ASC',maxResults:4,fields:jiraFields}});
+ const rows=snapshot.issues,rootIssue=rows.find(i=>i.id==='900'),scoped=rows.filter(i=>i.parent_id===rootIssue.id);
+ const roots=[rootIssue],nativeIds=baseId.startsWith('H02-')?['1000','1001','1002','900','1003']:['1000','900','1100'];
+ if(competingEpic){
+  const competing={...rootIssue,id:'901',key:'EX-91'};
+  rows.push(competing);roots.push(competing);nativeIds.push(competing.id);
+ }
+ if(scopedForeignPointer||genericForeignPointer){
+  let parent=rootIssue;
+  if(scopedForeignPointer){
+   const epicWork=JSON.parse(rootIssue.body);
+   epicWork.workstreams=[{label:'stream-2',story_order:['EX-1200']}];
+   parent={...rootIssue,id:competingEpic?'902':'901',key:competingEpic?'EX-92':'EX-91',body:JSON.stringify(epicWork)};
+   roots.push(parent);rows.push(parent);nativeIds.push(parent.id);
+  }
+  const unrelatedIssue={...rows.find(i=>i.id==='1100'),id:'1200',key:'EX-1200',parent_id:parent.id,
+   labels:scopedForeignPointer?['stream-2']:[],body:null,pointer:{schema:'pigboard-work-pointer/v1'}};
+  rows.push(unrelatedIssue);nativeIds.push(unrelatedIssue.id);
+ }
+ search('labels = "pigboard"',roots);
+ for(const id of nativeIds){
+  const native=rows.find(i=>i.id===id),path=issuePath(id),own=comments.filter(c=>c.ticket_id===id).map(commentWire);
+  push(path+issueFields,wireIssue(native));
+  push(path+'/properties',{keys:native.pointer?[{key:'pigboard.work-context',self:'https://foreign.example.invalid/property'}]:[]});
+  if(native.pointer){
+   if((scopedForeignPointer||genericForeignPointer)&&id==='1200')push(path+'/properties/pigboard.work-context',{},{status:404});
+   else push(path+'/properties/pigboard.work-context',{key:'pigboard.work-context',value:native.pointer});
+  }
+  for(let startAt=0;startAt<Math.max(1,own.length);startAt+=4)push(path+'/comment?startAt='+startAt+'&maxResults=4&orderBy=created',
+   {startAt,maxResults:4,total:own.length,comments:own.slice(startAt,startAt+4)});
+  if(roots.some(root=>root.id===id))search('parent = "'+id+'"',rows.filter(i=>i.parent_id===id));
+ }
+ search('labels = "stream-1"',scoped);
+ if(scopedForeignPointer)search('labels = "stream-2"',rows.filter(i=>i.id==='1200'));
+ const independentExact={
+  S06:operation==='recorded-completion'?['2001','2004','2002','2003',...(variant==='current-qa-outstanding-request'?['2099']:[])]:
+   ['2001','2002','2003','2004'],
+  'repair-independent-complete':variant==='wrong-operation'?['2024','2019','2020','2021','2022','2023','2025','2026','2027']:['2024','2023','2019','2020','2021','2022','2025','2026','2027'],
+  'H02-03-u1-queued-r2-arrived':['81014','81005','81009','81018','81013','81001','81002','81003','81004','81015','81016','81017','81019','81006','81007','81008','81010','81011','81012']
+ };
+ for(const id of independentExact[baseId]){
+  const row=comments.find(c=>c.comment.id===id);
+  const path=issuePath(row.ticket_id)+'/comment/'+id;
+  if(receiptComparison==='target-denied'&&id===target.comment_id)push(path,{},{status:403});
+  else push(path,commentWire(row));
+ }
+ const requiredPages=script.filter(step=>step.method==='POST'||step.path.includes('orderBy=created')).length;
+ const history_raw='2026-11-01T13:35:56.100+01:00',actor_id='native-actor',issue_id=target.ticket_id;
+ const standard={startAt:0,maxResults:4,total:2,isLast:false,self:'https://foreign.example.invalid/current',
+  nextPage:'https://foreign.example.invalid/next',values:[{id:'9501',author:{accountId:'description-editor'},created:history_raw,items:[{field:'description',fieldtype:'jira',fieldId:'description'}]}]};
+ const historyPage={startAt:1,maxResults:4,total:2,isLast:true,values:[{id:'9502',author:{accountId:actor_id},created:history_raw,
+  items:[{field:'summary',fieldtype:'jira',fieldId:'summary'},{field:'status',fieldtype:'jira',fieldId:'status',from:state.attempt?.source_status_id,to:state.attempt?.target_status_id}]}]};
+ if(reconcile){
+  if(['foreign-destination','wrong-uuid','secret-bearing-error'].includes(variant))script.length=0;
+  else if(variant==='shared-budget-exhausted')limit.pages=requiredPages;
+  else if(oracle.history==='empty')push(changePath(issue_id,0),{startAt:0,maxResults:4,total:0,isLast:true,values:[]});
+  else if(['403','404','redirect','timeout','unsupported-changelog-shape'].includes(variant)){
+   const native={code:'ERROR-CANARY '+packet.token};
+   if(variant==='timeout')push(changePath(issue_id,0),standard,{header_delay_ms:1100});
+   else push(changePath(issue_id,0),variant==='unsupported-changelog-shape'?{history:[]}:native,
+    {status:variant==='redirect'?302:Number(variant)||200});
+  }else{
+   const missing=variant==='missing-page';
+   push(changePath(issue_id,0),missing?{...standard,values:historyPage.values}:standard);
+   push(changePath(issue_id,1),missing?{...historyPage,values:[]}:historyPage);
+   historyItems=[{issue_id,history_id:'9502',item_index:1,actor_id,
+    from_status_id:state.attempt.source_status_id,to_status_id:state.attempt.target_status_id,created:history_raw}];
+  }
+ }
+ return {case:caseId,variant,config,binding,state,original,request:selector,script,oracle,target,mode,publicationDigest,historyItems,reconcile,
+  resolver:variant==='secret-bearing-error'?'reject':null,
+  resolverExpected:['foreign-destination','wrong-uuid'].includes(variant)?0:1,
+  prerequisite_hashes:Object.fromEntries(['manager-candidates.json','manager-repairs.json'].map(f=>[f,digest(fs.readFileSync(path.join(root,'test/fixtures',f)))]))};
+}
 
 function inventorySelection(caseId, variant) {
  if (!inventorySelectors.get(caseId)?.includes(variant)) return null;
@@ -167,28 +362,34 @@ async function runtimeSnapshot(root, missing = [], inventory=false) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
-export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null}={}) {
+export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
  const selection = inventorySelection(caseId, variant);
  if (caseId.startsWith('R1-34-') && !selection) throw Error('Use a prescribed case and variant.');
  const root = path.resolve(runtime);
  const selected = selection ? await readInventoryFixture(selection, root) : null;
  return executeFixture(caseId, variant, root, {
-  control, privateProjection, authoredFixture, selection, selected
+  control, privateProjection, authoredFixture, selection, selected, repeatReceipt, ownershipConflict, receiptComparison
  });
 }
 
-async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected}={}) {
- const inventory = !!selection || caseId.startsWith('R1-45-');
+async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
+ const receipt=receiptCase(caseId),guarded=!!selection||receipt;
+ const inventory = guarded || caseId.startsWith('R1-45-');
  const packetPath = selection ? path.join(root, inventoryPacketPath) : path.join(here,'jira-inventory-cases.json');
  const authored = selected?.authored ?? authoredFixture ??
-  (inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant);
+  (receipt?nativeReceiptFixture(caseId,variant,root,{ownershipConflict,receiptComparison}):(inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant));
  if (authoredFixture) assert(authoredFixture.case === caseId && authoredFixture.variant === variant);
  if (!authored) throw Error('Use a prescribed case and variant.');
  const v=structuredClone(authored),trace=[],serverTrace=[],seedPages=[];let disposable=null;
+ const receiptCalls=v.script.length;
+ if(repeatReceipt){
+  assert.equal(variant,'original-admission');
+  v.script=[...v.script,...v.script];
+ }
  if(control){assert(v.control);if(v.control.bound)v.config.jira.read_bounds[v.control.bound]=v.control.value;if(v.control.immediate){delete v.resolver_delay_ms;for(const step of v.script){delete step.header_delay_ms;delete step.body_delay_ms;}}v.oracle=v.control.oracle;if(v.control.script)v.script=v.control.script;}
  for(const entry of fixtureCases.variants)for(const [i,step]of entry.script.entries())if(Object.hasOwn(step,'wire_prefix')){if(entry.variant==='total-byte-limit'){assert.equal(i,0);assert.equal(step.wire_prefix,' '.repeat(256));}else{assert.equal(entry.case,'R1-42-H02');assert(['exact-wire-stop','exact-two-issue-control'].includes(entry.variant));assert.equal(i,3);assert.equal(step.wire_prefix,' '.repeat(600));}}
  if(privateProjection){assert(v.private_projection);if(v.private_projection.omit_wire_prefix)delete v.script[0].wire_prefix;v.config.jira.read_bounds.max_total_response_bytes=v.private_projection.bound;v.oracle=v.private_projection.oracle;}
- const before={cases:digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),tls:digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),...(inventory?{inventory:selected?.packetHash??digest(fs.readFileSync(packetPath))}:{})};
+ const before={cases:digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),tls:digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),...(inventory&&!receipt?{inventory:selected?.packetHash??digest(fs.readFileSync(packetPath))}:{}),...(receipt?{receipt_dependencies:v.prerequisite_hashes}:{})};
  if (selection) before.scoped_inventory = selected.overlayHash;
  const inputBefore=inputSnapshot(v);let moduleRoot=root,missing=[];
  if(variant==='damaged-copy'){
@@ -198,10 +399,10 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   await fsp.cp(path.join(root,'node_modules'),path.join(disposable,'node_modules'),{recursive:true});assert.deepEqual(await runtimeSnapshot(disposable),original);
   await fsp.rm(path.join(disposable,'lib/config/projects.mjs'));moduleRoot=disposable;missing=['lib/config/projects.mjs'];
  }
- const snapshot = () => runtimeSnapshot(moduleRoot, missing, inventory);
+ const snapshot = () => runtimeSnapshot(moduleRoot, missing, inventory&&!receipt);
  const runtimeBefore = selection ? await withRequiredSetup(snapshot) : await snapshot();
  let inspect;
- if (!selection) try{if(inventory)({inspectJiraInventory:inspect}=await import(pathToFileURL(path.join(moduleRoot,inventoryModulePath)).href));else({inspectJiraIssues:inspect}=await import(pathToFileURL(path.join(moduleRoot,'lib/jira/read.mjs')).href));}
+ if (!guarded) try{if(inventory)({inspectJiraInventory:inspect}=await import(pathToFileURL(path.join(moduleRoot,inventoryModulePath)).href));else({inspectJiraIssues:inspect}=await import(pathToFileURL(path.join(moduleRoot,'lib/jira/read.mjs')).href));}
  catch{
   const runtimeAfter=await runtimeSnapshot(moduleRoot,missing,inventory),inputAfter=inputSnapshot(v);assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
   if(disposable)await fsp.rm(disposable,{recursive:true,force:true});
@@ -263,20 +464,20 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    operation=url.pathname.slice(fixedPrefix.length)+url.search;
    // Known extra history is addressable only on loopback. The server counts
    // any access before processing the script and the literal oracle fails it.
-   if (!history?.route(operation)) assert.equal(operation,v.script[trace.length]?.path??(selection?null:operation));
+   if (!history?.route(operation)) assert.equal(operation,v.script[trace.length]?.path??(guarded?null:operation));
   } catch (error) {
-   if (selection) effects++;
+   if (guarded) effects++;
    throw error;
   }
   trace.push({method:options.method,path:operation});
   const local=new URL('https://localhost:'+server.address().port+operation);
-  const tlsOptions = selection ? {
+  const tlsOptions = guarded ? {
    method: options.method, agent: false, rejectUnauthorized: true, headers: options.headers
   } : options;
   let client;
   // Node's one-use HTTPS agent opens its TLS and TCP sockets synchronously.
   // Only that audited request can reach the loopback fixture through these APIs.
-  fixtureConnectPort = selection ? server.address().port : null;
+  fixtureConnectPort = guarded ? server.address().port : null;
   try {
    client=originalRequest(local,{...tlsOptions,hostname:'127.0.0.1',servername:v.tls==='wrong-host'?'wrong.example.invalid':'localhost',...(v.tls==='untrusted-ca'?{}:{ca:v.tls==='future-certificate'?tls.future.ca:tls.ca})},callback);
   } finally {
@@ -300,7 +501,7 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
  }
  try{
   const fileMutations = ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'];
-  if (selection) fileMutations.push('fchmod','fchown','ftruncate','futimes','lchmod','lchown','lutimes','mkdtemp','utimes');
+  if (guarded) fileMutations.push('fchmod','fchown','ftruncate','futimes','lchmod','lchown','lutimes','mkdtemp','utimes');
   for (const api of [fs, fsp]) for (const name of fileMutations) {
    for (const key of [name, name + 'Sync']) if (typeof api[key] === 'function') replace(api, key, deny);
   }
@@ -348,7 +549,17 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    });
   }
   syncBuiltinESMExports();
-  if (selection) {
+  if (receipt) {
+   const moduleUrl=pathToFileURL(path.join(moduleRoot,receiptModulePath)).href;
+   const {bindJiraReceipts}=await withRequiredSetup(()=>import(moduleUrl));
+   let ports;
+   inspect=(configInput,selector,{resolveSecret})=>{
+    ports??=bindJiraReceipts({configInput,resolveSecret,binding:v.binding,state:v.state,original:v.original});
+    return v.reconcile?ports.readReconciliationFacts(selector):ports.readRecordedReceipt(selector);
+   };
+   https.request=redirectRequest;
+   syncBuiltinESMExports();
+  } else if (selection) {
    const moduleUrl = pathToFileURL(path.join(moduleRoot, inventoryModulePath)).href;
    ({ inspectJiraInventory: inspect } = await withRequiredSetup(() => import(moduleUrl)));
    assert.equal(effects, 0, 'Unexpected fixture effects.');
@@ -356,7 +567,21 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    https.request = redirectRequest;
    syncBuiltinESMExports();
   }
-  acquired=await inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});return fixtureCases.token;}});
+  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});return fixtureCases.token;}});
+  acquired=await invoke();
+  if(repeatReceipt){
+   assert.equal(acquired.status,'complete');
+   const original=JSON.stringify(acquired.data);
+   const prior=acquired.data;
+   prior.publication.status='incomplete';prior.publication.code='TEST_ANNOTATION';
+   prior.publication_observations.pointer.assignment.comment_id='9001';
+   prior.publication_observations.comments[0].reference.record_id='00000000-0000-4000-8000-000000000099';
+   prior.receipt_input.trusted.manager_assignments[0].assignment.digest='sha256:'+'9'.repeat(64);
+   prior.proof.target.comment_id='9001';
+   acquired=await invoke();
+   assert.equal(acquired.status,'complete');
+   assert.equal(JSON.stringify(acquired.data),original);
+  }
   if(v.resolver==='late')await acknowledgeLate(true);
  }finally{
   try{if(lateResolve&&lateDelivered===0)await acknowledgeLate(false);}finally{
@@ -366,10 +591,120 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   }
  }
  assert.equal(effects, 0, 'Unexpected fixture effects.');
- assert.equal(sockets.size,0);const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.issue_ids)assert.deepEqual(acquired.observations.issues.map(v=>v.id).sort(),v.oracle.issue_ids);if(v.oracle.pointers)for(const [id,pointer]of Object.entries(v.oracle.pointers))assert.deepEqual(acquired.observations.issues.find(v=>v.id===id)?.pointer,pointer);if(v.oracle.reference_count!==undefined)assert.equal(acquired.observations.references.length,v.oracle.reference_count);if(v.oracle.raw_bodies)for(const [id,body]of Object.entries(v.oracle.raw_bodies))assert.equal(acquired.observations.issues.find(v=>v.id===id)?.body,body);if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
+ assert.equal(sockets.size,0);
+ if(receipt){
+  const report=JSON.parse(JSON.stringify(acquired));
+  assert.equal(effects,0);assert.equal(serverError,null);assert.equal(redirectRequests,0);
+  assert.deepEqual(trace,v.script.map(step=>({method:step.method??'GET',path:step.path})),JSON.stringify(report));
+  assert.deepEqual(serverTrace,trace);assert.equal(resolverCalls,v.resolverExpected*(repeatReceipt?2:1));
+  const currentTrace=repeatReceipt?trace.slice(receiptCalls):trace;
+  for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference,'pigboard-handoff/v1'])
+   assert(!JSON.stringify(report).includes(canary));
+  assert.equal(report.writes,0);assert.equal(report.execution_authorized,false);
+  assert(!Object.hasOwn(report,'data'));
+  if(report.counters){
+   assert.equal(report.counters.requests_attempted,currentTrace.length);
+   assert.equal(report.counters.requests_completed+report.counters.requests_failed,currentTrace.length);
+   assert.equal(report.cleanup.resolver,'settled');
+   assert(report.counters.elapsed_ms<=report.limits.scan_timeout_ms+100);
+   assert(report.counters.response_bytes<=report.limits.max_total_response_bytes);
+   assert(report.counters.observation_bytes<=report.limits.max_total_response_bytes);
+   assert.equal(report.counters.search_pages+report.counters.comment_pages+(report.counters.changelog_pages??0),currentTrace.filter(t=>t.method==='POST'||t.path.includes('startAt=')).length);
+  }
+  const {history,publication,receipt_input,publication_observations,proof}=acquired.data??{};
+  if(v.oracle.status==='complete'){
+   assert(receipt_input,'Complete native proof requires its exact envelope.');
+   assert(proof,'Complete native proof requires its recorded evaluation.');
+   if(v.reconcile){
+    assert.equal(acquired.data.complete,true);
+    assert.equal(history?.status,'complete');
+    assert.equal(publication?.status,'complete');
+    assert(publication_observations?.comments?.length,'Complete publication requires native observations.');
+    assert(publication_observations.pointer,'Complete publication requires the observed pointer.');
+   }
+  }
+  let observed=null;
+  if(ownershipConflict||receiptComparison==='ownership-conflict'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   observed={target:v.target,proof_evaluated:false,closure_reason:report.diagnostics.find(d=>d.code==='OWNERSHIP_CONFLICT')?.code??null};
+  }
+  if(receiptComparison==='generic-foreign-pointer'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   assert(!report.diagnostics.some(d=>['OWNERSHIP_CONFLICT','MEMBERSHIP_MISMATCH'].includes(d.code)));
+   observed={target:v.target,proof_evaluated:false,closure_reason:null};
+  }
+  if(['scoped-pointer','ownership-conflict','generic-foreign-pointer','reconciliation-unrelated-pointer'].includes(receiptComparison)){
+   const scope=receiptComparison==='generic-foreign-pointer'?null:{project_id:'100',label:'stream-2'};
+   assert(report.diagnostics.some(d=>d.code==='POINTER_UNKNOWN'&&d.operation==='pointer'&&d.issue_id==='1200'&&
+    canonicalize(d.scope)===canonicalize(scope)));
+  }
+  if(receiptComparison==='target-denied'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   assert(report.diagnostics.some(d=>d.code==='READ_DENIED_OR_MISSING'&&d.operation==='comment'&&d.issue_id===v.target.ticket_id));
+   observed={target:v.target,proof_evaluated:false};
+  }
+  if(v.oracle.history_status)assert.equal(history.status,v.oracle.history_status);
+  if(history?.status==='complete'||variant==='missing-page')assert.deepEqual(history.items,v.historyItems);
+  if(variant==='missing-page'||variant==='shared-budget-exhausted')assert.notEqual(history.status,'complete');
+  if(receipt_input){
+   assert.deepEqual(receipt_input.target,v.target);assert.equal(receipt_input.consumer,'manager');
+   const assessed=proof.validation??proof;
+   assert.equal(assessed.valid,true);assert.equal(assessed.execution_authorized,false);
+   assert.equal(assessed.purpose,v.reconcile?'recorded-history':'recorded-completion');
+   assert.equal(canonicalize(assessed.target),canonicalize(v.target));
+   observed={target:receipt_input.target,proof_purpose:(proof.validation??proof).purpose,publication,history,native_times:null,capture_digest:null};
+   if(v.reconcile){
+    const native=receipt_input.comment_pages.filter(p=>p.ticket_id===v.target.ticket_id).flatMap(p=>p.comments).find(c=>c.id===v.target.comment_id);
+    const times=metadataFields.map(k=>native[k]),canon=publication_observations.comments[0],tuple=r=>[r.ticket_id,r.comment_id,r.record_id,r.digest];
+    assert.equal(times[2],fixtureCases.native_receipts.raw_timestamp);assert.equal(times[3],times[2]);
+    assert.deepEqual([canon.created,canon.updated],Array(2).fill(fixtureCases.native_receipts.utc_timestamp));
+    assert.deepEqual([canon.author_id,canon.update_author_id],times.slice(0,2));
+    assert.equal(publication_observations.pointer.mode,v.mode);
+    assert.deepEqual(publication_observations.pointer.assignment,v.state.retained_members.find(m=>m.ticket_id===v.target.ticket_id).assignment);
+    const capture=sha({comments:[[tuple(canon.reference),canon.author_id,canon.update_author_id,canon.created,canon.updated]],
+     pointer:[v.mode,tuple(publication_observations.pointer.assignment)]});
+    assert.equal(capture,v.publicationDigest);
+    assert.equal(capture,v.state.attempt.extensions.pb_capture_publication_digest);
+    observed={...observed,native_times:times,publication_observations,capture_digest:capture};
+    if(receiptComparison==='reconciliation-unrelated-pointer'){
+     assert.equal(report.diagnostics.length,1);
+     assert.equal(trace.length,28);
+     assert.equal(v.state.attempt.cause.length,0);
+     observed={...observed,proof_evaluated:true};
+    }
+   }else{
+    assert.equal(proof.validation.recorded_completion_established,true);
+    assert.equal(receipt_input.issues.find(i=>i.id===v.target.ticket_id).pr_history_complete,true);
+   }
+  }else if(variant==='current-qa-outstanding-request'&&receiptComparison!=='target-denied'){
+   const assessed=proof?.validation??proof;
+   assert(assessed,'The exact recorded evaluator must return a proof result.');
+   assert.equal(assessed.valid,false);
+   assert.equal(assessed.purpose,'recorded-completion');
+   assert.equal(canonicalize(assessed.target),canonicalize(v.target));
+   assert(assessed.diagnostics.some(d=>d.code==='REPAIR'));
+   assert(trace.some(t=>t.path.endsWith('/comment/2099')));
+   observed={target:v.target,proof_evaluated:true,proof_purpose:assessed.purpose,proof_valid:false,proof_codes:assessed.diagnostics.map(d=>d.code)};
+  }
+  const runtimeAfter=await snapshot(),inputAfter=inputSnapshot(v);
+  assert.deepEqual(runtimeAfter,runtimeBefore);assert.deepEqual(inputAfter,inputBefore);
+  // The bounded comparison emits only the same public diagnostics and selected proof facts.
+  const diagnosticEvidence=JSON.stringify({report,observed,trace,effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0});
+  assert.equal(report.status,v.oracle.status,diagnosticEvidence);
+  assert.equal(report.code,v.oracle.code,diagnosticEvidence);
+  if(ownershipConflict||receiptComparison==='ownership-conflict')
+   assert(report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'&&d.message.includes('competing Epic')),diagnosticEvidence);
+  return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},
+   runtime_hashes:{before:runtimeBefore,after:runtimeAfter},observed,history:history??null,publication:publication??null,
+   effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0,oracle_matched:true,evidence_execution:'simulated-local-tls'};
+ }
+ const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.issue_ids)assert.deepEqual(acquired.observations.issues.map(v=>v.id).sort(),v.oracle.issue_ids);if(v.oracle.pointers)for(const [id,pointer]of Object.entries(v.oracle.pointers))assert.deepEqual(acquired.observations.issues.find(v=>v.id===id)?.pointer,pointer);if(v.oracle.reference_count!==undefined)assert.equal(acquired.observations.references.length,v.oracle.reference_count);if(v.oracle.raw_bodies)for(const [id,body]of Object.entries(v.oracle.raw_bodies))assert.equal(acquired.observations.issues.find(v=>v.id===id)?.body,body);if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
  for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference])assert(!JSON.stringify(acquired).includes(canary));
  assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),before.cases);assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),before.tls);
- if(inventory)assert.equal(digest(fs.readFileSync(packetPath)),before.inventory);
+ if(inventory&&!receipt)assert.equal(digest(fs.readFileSync(packetPath)),before.inventory);
  if (selection) assert.equal(digest(fs.readFileSync(path.join(root, scopedInventoryPacketPath))), before.scoped_inventory);
  const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing,inventory);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
  const inventoryEvidence = {};
@@ -433,6 +768,9 @@ if(isMain){
    failedRole = 'main';
    prepared = await readInventoryFixture(selection, root);
    authored = prepared.authored;
+  } else if(receiptCase(caseId)){
+   authored=nativeReceiptFixture(caseId,variant,root);
+   selected=authored;
   } else {
    const packet = caseId.startsWith('R1-45-') ?
     JSON.parse(fs.readFileSync(path.join(here,'jira-inventory-cases.json'),'utf8')) : fixtureCases;

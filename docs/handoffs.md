@@ -1306,3 +1306,27 @@ usage, input or setup failure. Preserve any original candidate when proof is
 rejected or publication is unknown. Obtain the missing observation or resolve
 the original publication using the authorized provider process. Keep the same
 UUID and original raw candidate. An uncertain result never permits replay.
+
+## Native recorded proof
+
+The source and prepared validator can read an exact Jira target with
+`readRecordedReceipt({purpose, target})`. The library acquires the complete
+native closure for the target under configured Jira authority, then calls
+the existing recorded-history or recorded-completion evaluator. The offline
+`validate-handoff` commands still accept supplied envelopes. Current worker
+action evidence remains a separate requirement. See the [bound library API
+and fixtures](manager-preview.md#read-an-exact-jira-handoff-or-original-attempt).
+
+`readReconciliationFacts({attempt, publicationReferences, limits})` uses the
+original retained attempt to locate the exact manager record. Admission uses
+the published assignment. A stack-update request preserves the separately
+retained assignment and authenticates the original manager publication as its
+own record. Native status history travels alongside typed handoff ancestry.
+
+The reconciliation caller consumes `data.receipt_input` as
+`pigboard-manager-handoff-input/v1` with `inspectRecordedHistory`. In the
+draft reconciliation consumer, replace its strict-v1 validator call with that
+purpose and preserve the authority, pointer, capture digest and State fence
+checks. Compare native author and editor IDs exactly. Convert valid native
+timestamps to UTC for the publication tuple comparison and preserve their
+original spellings for continuity checks.

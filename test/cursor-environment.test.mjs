@@ -1086,7 +1086,9 @@ const currentPayloadPaths = [
   ...expected169PayloadPaths,
   'lib/jira/inventory.mjs',
   'test/fixtures/jira-inventory-cases.json',
-  'test/fixtures/jira-scoped-inventory-cases.mjs'
+  'test/fixtures/jira-scoped-inventory-cases.mjs',
+  'lib/jira/receipts.mjs',
+  'contracts/manager-live-input-v1.schema.json'
 ];
 async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
@@ -1095,7 +1097,7 @@ async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  assert.deepEqual(manifest.bundle,bundle,'actual current bundle');
  assert.equal(bundle.validatorPayload.directory,'work-validator');
  assert.equal(expected169PayloadPaths.length,41);
- assert.equal(currentPayloadPaths.length,44);
+ assert.equal(currentPayloadPaths.length,46);
  assert.deepEqual([...bundle.validatorPayload.sources].sort(),[...currentPayloadPaths].sort(),'independent complete bundle payload paths');
  const paths=Object.keys(manifest.sourceFiles).filter(p=>p.startsWith('work-validator/')).map(p=>p.slice('work-validator/'.length)).sort();
  assert.deepEqual(paths,[...currentPayloadPaths].sort(),'independent complete manifest payload paths');
