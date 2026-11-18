@@ -71,3 +71,49 @@ for (const group of Object.keys(packet.repair_admission.groups)) {
     });
   }
 }
+
+for (const [label, readBounds] of [
+  ['observed Jira comment page', {max_response_bytes: 8000}],
+  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}]
+]) test('PGB-88 repair projects '+label+' before any effects', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds}});
+  assert.equal(e.result.processing.acquisition.status, 'complete');
+  assert.equal(e.result.status, 'held');
+  assert.equal(e.result.apply.stage, 'preflight', JSON.stringify({result: e.result,
+    mutations: e.mutations.map(({method, path}) => ({method, path})), state: e.state_calls.map(({name}) => name)}));
+  assert.equal(e.result.code, 'LIMIT_REACHED');
+  assert.deepEqual(e.state_calls.map(({name}) => name), ['readInventory']);
+  assert.deepEqual(e.mutations, []);
+  assert(!e.provider_calls.some(call => call.name === 'TransactWriteCommand'));
+  assert(e.trace.every(row => row.acquisition === 1));
+  assert.equal(e.result.writes, 0);
+  assert.deepEqual(e.records, e.initial_records);
+});
+
+for (const [label, max_response_bytes, listedPageSize] of [
+  ['room for the observed Jira comment page', 9000, undefined],
+  ['a full Jira page that rolls over before append', 8000, 4]
+]) test('PGB-88 repair with '+label+' finalizes in order', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds: {
+    max_response_bytes, max_total_response_bytes: 41000
+  }, listedPageSize}});
+  assert.equal(e.result.status, 'applied', JSON.stringify(e.result));
+  assert.equal(e.result.apply.stage, 'complete');
+  assert.equal(e.result.apply.effects.finalization, 'confirmed');
+  assert.equal(e.result.writes, 3);
+  const ticket = e.result.apply.ticket_id;
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+ticket+'/')));
+  const pages = e.trace.filter(row => row.acquisition === 2 && row.path.includes('/comment?'));
+  assert(pages.some(row => row.response.total === 0 && row.response.comments.length === 0));
+  const selected = pages.filter(row => row.path.includes('/'+ticket+'/comment?'));
+  assert.deepEqual(selected.map(row => [row.response.startAt, row.response.total, row.response.comments.length]),
+    listedPageSize ? [[0, 5, 4], [4, 5, 1]] : [[0, 5, 5]]);
+  if (!listedPageSize) {
+    const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+    const originalReads = e.trace.slice(0, e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment')));
+    const recheckReads = e.trace.filter(row => row.acquisition === 2 && row.status === 200);
+    assert(bytes(originalReads) < 37000);
+    assert(bytes(recheckReads) > 37000);
+    assert(recheckReads.every(row => bytes([row]) <= 9000));
+  }
+});

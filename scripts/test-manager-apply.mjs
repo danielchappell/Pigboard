@@ -15,7 +15,7 @@ const tls=JSON.parse(readFileSync(new URL('../test/fixtures/jira-preview-tls.jso
 const issueRoute = (ticket, suffix) => '/rest/api/3/issue/' + ticket + suffix;
 const pointerSuffix = '/properties/pigboard.work-context';
 
-export function repairFixtureConfig(historyId, {optOut = false, missingEdge = false, commentBound = false} = {}) {
+export function repairFixtureConfig(historyId, {optOut = false, missingEdge = false, commentBound = false, readBounds} = {}) {
   const history = packet.recorded_repair_preview.cases.find(item => item.id === historyId);
   assert(history, 'Use a prescribed repair history.');
   const config = structuredClone(history.config);
@@ -26,6 +26,7 @@ export function repairFixtureConfig(historyId, {optOut = false, missingEdge = fa
     config.jira.read_bounds.max_comments = packet.repair_admission.comment_bound;
     config.jira.read_bounds.page_size = packet.repair_admission.comment_bound;
   }
+  Object.assign(config.jira.read_bounds, readBounds);
   return config;
 }
 
@@ -189,7 +190,9 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    else if(suffix==='/properties')value={keys:pointers.has(id)?[{key:'pigboard.work-context',self:config.jira.site+issueRoute(id,pointerSuffix)}]:[]};
    else if(suffix.startsWith('/comment?')){
     if(regression?.deny_comments?.some(d=>d.ticket_id===id&&d.acquisitions.includes(scan))){trace.at(-1).status=403;res.writeHead(403,{'content-type':'application/json'});res.end('{}');return;}
-    const list=comments.get(id)??[],query=new URLSearchParams(suffix.split('?')[1]),startAt=Number(query.get('startAt')),maxResults=Number(query.get('maxResults'));
+    const list=comments.get(id)??[],query=new URLSearchParams(suffix.split('?')[1]),startAt=Number(query.get('startAt'));
+    const requested=Number(query.get('maxResults'));
+    const maxResults=repairCase?.listedPageSize&&id===repair.ticket_id?Math.min(requested,repairCase.listedPageSize):requested;
     value={startAt,maxResults,total:list.length,comments:list.slice(startAt,startAt+maxResults)};
    }
    else if(suffix==='/comment'&&req.method==='POST'){comments.set(id,[...(comments.get(id)??[]),currentComment]);value=currentComment;status=201;}
