@@ -450,8 +450,10 @@ The closed `pigboard-manager-handoff-input/v1` envelope contains only
 `requirements`, `comment_pages`, `retained` and `request_resolutions`.
 Trusted projects contain only `id`, `stages`, `accepted_later_stage_ids`, `actors`
 and `repositories`; trusted root also contains `site` and `manager_assignments`.
-Native issue/reference/page/retained shapes remain those of the strict receipt
-contract. Requirements rows contain only `ticket_id`, `digest`, `format: yaml|adf`
+Reference, page and retained shapes remain those of the strict receipt contract.
+Only recorded manager issue rows may carry an explicit null `pointer` for a
+read-only Ready to Work declaration. Strict and worker inputs still require a
+pointer. Requirements rows contain only `ticket_id`, `digest`, `format: yaml|adf`
 and original `body`. The exported `managerHandoffInputSchema` composes those
 existing definitions without altering the strict schema. Whole input is JSON
 only, at most 8 MiB, depth40/list1000; individual handoff bounds remain unchanged.
@@ -465,6 +467,29 @@ installed supported skill set. Related-change rows project declarations; they do
 not establish external change completeness or current action authority. Missing
 reachable bodies/keys hold rather than becoming fabricated empty graph leaves.
 No canonical full config or execution context is invented for that call.
+
+An envelope with a read-only declaration must supply the configured site and
+project, the native Ready to Work stage and a single original current ticket
+requirements row bound by key, issue ID, format and canonical digest. Request
+and PR inventories must be empty, PR history complete, and original comment pages
+complete and contiguous. Ordinary comments are allowed. The declaration cannot
+carry a manager assignment, typed publication or retained publication. It cannot
+be a target, resolve a record reference or participate in a request resolution.
+These restrictions apply before publication registration. Across envelopes,
+overlap checks compare fingerprints of shared native facts and comment identities.
+Page completeness is checked within each envelope.
+
+When the envelope includes a read-only declaration, both recorded purposes start
+at the exact validated target and follow only its successfully validated explicit
+record references to identify assigned tickets.
+The scheduling validator uses those tickets' current native declarations and
+digests and checks every prerequisite branch, including missing siblings and cycles.
+Each supplied read-only declaration must appear on that graph. Additional history,
+resolutions and same-ticket records cannot independently make a declaration
+reachable. The ordinary snapshot normalizer separately binds each declaration to
+v2's native issue, work body, request and retained membership facts before it
+uses authenticated results in scheduling. A declaration establishes no handoff
+or completion and grants no execution authority.
 
 The shared engine preserves contiguous complete pages, immutable raw/server
 metadata, UUID/slot/resume coherence, exact assignment/predecessor/operation,

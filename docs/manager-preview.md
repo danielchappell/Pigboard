@@ -940,8 +940,9 @@ PGB-162 adds a pure source and prepared-copy route for ordinary Ready to Work
 Stories/Bugs. It reuses the existing policy with scheduling declarations and
 current authenticated recorded handoffs. Complete native membership, exact full
 project/stream identity, Epic order, Bug priority, occupancy, pause, Blocked holds
-and the five-ticket Human Review cap still apply. Required rework or stack repair
-holds for human handling; no ordinary proposal can schedule around it.
+and the five-ticket Human Review cap still apply. Without explicit `manager.rework_enabled: true`, required rework holds for human
+handling. With that flag, the supported recorded own-ticket branch below can
+propose same-PR repair; unsupported work still holds and cannot be bypassed.
 
 ```js
 import { previewSnapshot } from './lib/manager/decisions.mjs';
@@ -1000,3 +1001,80 @@ route; its result cannot authorize the ordinary admission path.
 Ordinary admission effects belong to the separate [source-only ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/ae7a48ac5dcdea447da71631cb6531cd8090f953/docs/manager-apply.md); that sender is not part of this installed preview skill.
 Preview does not reserve intents, publish assignments or transition work. Its
 nonexecuting proposal is not permission to call a writer.
+
+## Recorded same-PR repair preview
+
+Use one reviewed source revision or its complete prepared copy, with prepared
+Node dependencies and the same canonical configuration. Set the optional boolean
+`manager.rework_enabled` to true in the existing manager section. Omitted/false
+preserves ordinary new-work-only behavior. No extra CLI flag is needed.
+
+Supply complete acquired native issues/comments and confirmed State facts to
+`composeOrdinarySnapshot` as above. It retains the current QA/admission envelope. With
+repair preview enabled, it also includes an exact target envelope for each
+discovered request. Every envelope keeps
+full reference closure, metadata and original bodies. The existing combined
+100-envelope and aggregate input limits reject overflow; they never truncate a
+request union to fit.
+
+A queued Story/Bug needs its actual current admission pointer, current requirements,
+authenticated own-ticket requests on that assignment or its exact ancestors and
+at least one unresolved request on the current assignment. Reviewer/QA failure
+requests authenticate their failed basis without requiring a successful current
+QA. Human requests retain their authenticated QA basis. Every unresolved request
+must name the same non-null PR; current-assignment requests must agree on the
+recorded source revision and target branch. Older causes may name earlier heads
+of that same PR. Implementation consumption alone never clears a cause; coherent
+QA on the active assignment lineage does.
+
+```sh
+node scripts/manager-preview.mjs --mode ordinary --config /absolute/customer.json --input /absolute/snapshot-v2.json --json
+node <receipt.skills>/work-validator/scripts/manager-preview.mjs --mode ordinary --config /absolute/customer.json --input /absolute/snapshot-v2.json
+```
+
+Compare the `admit_repair` proposal across both outputs. The human view shows
+the selected ticket, proposed stage change, exact existing assignment reference,
+recorded PR identity with source revision and target branch, and each unresolved
+cause in order. JSON reports these under the stream selection and proposal,
+including `existing_assignment`, `existing_pr`, `request_refs` and `roots`. JSON
+also shows null parent and child references and an empty stack-update list.
+Both outputs report that publication is unnecessary, preview has no execution
+authority, writes are zero, and external freshness is unevaluated. Workers
+check the PR's current state when applicable.
+
+Repair prerequisites precede repair, then unrelated Bugs/Stories. Existing pause,
+identity, active/Blocked, ordering and five-Human-Review limits still apply.
+A prerequisite in Ready to Work can contribute its current Jira declaration before
+it has an assignment. A preview may propose `admit_new` for that prerequisite
+before proposing repair. That result creates no assignment and proves no completion.
+
+`REPAIR_PROOF_INVALID` holds the affected scope when supplied proof is incomplete
+or disagrees. Check the queued ticket's exact prerequisite keys against each
+prerequisite's current Jira work body and Ready to Work status. For a read-only
+declaration, confirm the inventory read found the assignment pointer absent.
+Check that the native read included complete comment pages.
+
+The reason path may identify a receipt, an issue or a repair inventory entry.
+If it identifies a saved receipt, use the recorded-history validator to check
+that receipt on its own.
+
+```sh
+node scripts/validate-handoff.mjs --mode recorded-history --input /absolute/receipt.json
+```
+
+A receipt can pass on its own while the preview still holds. Check for duplicate
+receipt targets. Compare the envelope with the original Jira issue key, status,
+pointer, work body and format, request inventory, and the confirmed retained
+membership and assignment. Where receipts overlap, compare the shared issue
+facts and raw comment observations. Restore missing or conflicting evidence
+through its owning source and compose a fresh snapshot. Keep published records
+and all request causes intact while refreshing the evidence.
+
+Null-PR, stack, wait/resume and parent-update work remain held. When required
+repair reaches the opt-in check with the flag omitted or false, the reason is
+`REPAIR_REQUIRED`. Invalid or missing proof can hold earlier. Capacity and
+availability holds retain their own reasons.
+
+This release previews repair only. The existing sender accepts `admit_new` only,
+even with true; PGB-88 owns repair sending. Source/copy developer fixtures do not
+establish designated human acceptance, live installation, hosted CI or activation.

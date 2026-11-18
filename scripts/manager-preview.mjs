@@ -18,8 +18,25 @@ try{
 }catch(e){const code=['USAGE','INPUT','SETUP'].includes(e.message)?e.message:'INTERNAL';result={...base(),scope_diagnostics:[{code,path:'',scope:null,message:{USAGE:'Use --config FILE --input FILE and optional expected-site/digest and --json. Run --help for examples.',INPUT:'Read local regular files with sufficient permissions; use an explicit path for a filename resembling a flag.',SETUP:'Preview runtime is missing or corrupt. Prepare source dependencies or rerun normal approved Pigboard preparation outside preview; this command never repairs dependencies.',INTERNAL:'Preview could not complete. Check the prepared runtime and report this failure.'}[code]}]};}
 if(result){if(json)console.log(JSON.stringify(result));else{
  console.log(`Local supplied snapshot only. Preview: ${result.status}. No execution authority; writes: 0. Freshness and permissions: not evaluated.`);
- if(result.mode==='ordinary')console.log('Ordinary proof: authenticated recorded handoffs; hidden external PR changes are not detected. Earlier metadata is compared only when supplied. Required repair work holds for human handling.');
- for(const s of result.streams){console.log(`${JSON.stringify(s.scope)}: ${s.decision}; Human Review ${s.counts_complete?s.human_review_ids.length:'unknown'}; return ${s.return_count??'unknown'}; selected ${s.selected_key??'none'}.`);if(s.proposal){console.log(`  Proposal ${s.proposal.kind}: ${s.proposal.from_stage} → ${s.proposal.to_stage}; publication required ${s.proposal.publication_required}.`);if(s.proposal.required_parent)console.log(`  Parent ${s.proposal.required_parent.ticket_id} revision ${s.proposal.required_parent.required_revision}; retained causes ${s.proposal.roots.length}.`);for(const root of s.proposal.roots)console.log(`  Cause: ticket ${root.ticket_id}; comment ${root.comment_id}; record ${root.record_id}; digest ${root.digest}.`);}for(const row of s.repair_order??[])console.log(`  Repair ${row.key}: ${row.state}.`);for(const r of s.reasons)console.log(`  ${r.code} ${r.path}: ${r.message}`);for(const c of s.candidates)for(const r of c.reasons)console.log(`  Candidate ${c.key}: ${r.code} ${r.path}: ${r.message}`);}
+ if(result.mode==='ordinary')console.log('Ordinary proof: authenticated recorded handoffs; hidden external PR changes are not detected. Earlier metadata is compared only when supplied.');
+ for (const s of result.streams) {
+  console.log(`${JSON.stringify(s.scope)}: ${s.decision}; Human Review ${s.counts_complete?s.human_review_ids.length:'unknown'}; return ${s.return_count??'unknown'}; selected ${s.selected_key??'none'}.`);
+  const proposal = s.proposal;
+  if (proposal) {
+   console.log(`  Proposal ${proposal.kind}: ${proposal.from_stage} → ${proposal.to_stage}; publication required ${proposal.publication_required}.`);
+   if (result.mode === 'ordinary' && proposal.kind === 'admit_repair') {
+    const assignment = proposal.existing_assignment;
+    const pr = proposal.existing_pr;
+    console.log(`  Existing assignment: ticket ${assignment.ticket_id}; comment ${assignment.comment_id}; record ${assignment.record_id}; digest ${assignment.digest}.`);
+    console.log(`  Recorded PR: provider ${pr.provider}; repository ${pr.repository}; number ${pr.number}; source revision ${pr.source_revision}; target branch ${pr.target_branch}.`);
+   }
+   if (proposal.required_parent) console.log(`  Parent ${proposal.required_parent.ticket_id} revision ${proposal.required_parent.required_revision}; retained causes ${proposal.roots.length}.`);
+   for (const root of proposal.roots) console.log(`  Cause: ticket ${root.ticket_id}; comment ${root.comment_id}; record ${root.record_id}; digest ${root.digest}.`);
+  }
+  for (const row of s.repair_order??[]) console.log(`  Repair ${row.key}: ${row.state}.`);
+  for (const r of s.reasons) console.log(`  ${r.code} ${r.path}: ${r.message}`);
+  for (const c of s.candidates) for (const r of c.reasons) console.log(`  Candidate ${c.key}: ${r.code} ${r.path}: ${r.message}`);
+ }
  for(const d of result.scope_diagnostics)console.log(`${d.code} ${d.path}: ${d.message}`);
  if(result.snapshot_digest)console.log(`Snapshot digest: ${result.snapshot_digest}`);
  }process.exitCode=exit;}

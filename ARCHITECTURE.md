@@ -284,7 +284,23 @@ scope failures retain known membership and hold only affected scope checks.
 No synthetic execution context, PR observations, earlier metadata or new store is
 created. Missing earlier capture is allowed under the adopted ordinary guarantee;
 provided genuine tuples still must match. Current authentication and external
-freshness are separate. Required repair holds before external PR/publication logic.
+freshness are separate. Optional canonical `manager.rework_enabled: true` enables
+only the recorded own-ticket same-PR repair preview branch before legacy external
+PR/publication logic. Omitted/false preserves the ordinary repair hold. Exact
+request-targeted bound history authenticates actor, basis, digest and lineage;
+current-assignment requests determine the PR head/target, and coherent active-lineage
+QA alone subtracts consumed causes. The composer includes an unassigned Ready to Work
+declaration only along prerequisite edges from the exact envelope target's assigned
+ticket and tickets it reaches through typed record references. The normalizer binds
+each declaration to native v2 facts. When an envelope includes a read-only declaration,
+both recorded purposes check the full current prerequisite graph for the assigned
+tickets reached from the authenticated target through validated record references.
+The declaration carries no assignment, handoff proof or completion. Unsupported
+null-PR, stack, wait/resume and parent-update work holds. The composer preserves full envelopes within existing
+bounds, rejecting overflow without truncation. Configuration digest and same-source
+host configure bind the opt-in; no State control column is added. Preview remains
+zero-write and nonexecuting; `chooseOrdinaryStream` still accepts `admit_new` only.
+PGB-88 owns later repair sending. See the [guide](docs/manager-preview.md#recorded-same-pr-repair-preview).
 
 Explicit mode/version/proof fields prevent legacy v1 proposals from entering the
 ordinary admission caller. The existing CLI and actual prepared-copy payload use

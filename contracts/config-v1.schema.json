@@ -195,6 +195,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "rework_enabled": { "type": "boolean" },
         "installation_id": {
           "type": "string",
           "pattern": "^[A-Za-z0-9._:-]{1,64}$"
