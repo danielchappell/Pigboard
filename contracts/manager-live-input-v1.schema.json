@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pigboard native manager read selectors",
+  "description": "Data passed to one bound native read operation. Trusted construction, credentials and external effects are outside this schema.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/recorded"
+    },
+    {
+      "$ref": "#/$defs/reconciliation"
+    }
+  ],
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "properties": {
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "comment_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "record_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "ticket_id",
+        "comment_id",
+        "record_id",
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "recorded": {
+      "type": "object",
+      "properties": {
+        "purpose": {
+          "enum": [
+            "recorded-history",
+            "recorded-completion"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/reference"
+        }
+      },
+      "required": [
+        "purpose",
+        "target"
+      ],
+      "additionalProperties": false
+    },
+    "reconciliation": {
+      "type": "object",
+      "properties": {
+        "attempt": {
+          "$ref": "#/$defs/attempt"
+        },
+        "publicationReferences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "minItems": 1
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "pages": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "requests": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "milliseconds": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "pages",
+            "requests",
+            "milliseconds"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "attempt",
+        "publicationReferences",
+        "limits"
+      ],
+      "additionalProperties": false
+    },
+    "attempt": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "attempt"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "installation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+        },
+        "domain_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+        },
+        "site": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "project_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "^\\S+$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "record_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64
+        },
+        "attempt_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "ticket_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "epic_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "issue_key": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]{0,100}-[1-9][0-9]{0,100}$"
+        },
+        "operation": {
+          "enum": [
+            "admit_ready",
+            "admit_rework",
+            "queue_repair"
+          ]
+        },
+        "source_status_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "target_status_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "configuration_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "cause": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100
+        },
+        "publication": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          },
+          "maxItems": 100,
+          "minItems": 1
+        },
+        "outcome": {
+          "const": "pending"
+        },
+        "evidence": {
+          "type": "null"
+        },
+        "extensions": {
+          "type": "object",
+          "maxProperties": 16,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]{0,31}$"
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "maxLength": 255,
+                "pattern": "^[A-Za-z0-9._:-]*$"
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "kind",
+        "schema_version",
+        "installation_id",
+        "domain_id",
+        "site",
+        "project_id",
+        "label",
+        "revision",
+        "record_id",
+        "created_at",
+        "updated_at",
+        "attempt_id",
+        "ticket_id",
+        "epic_id",
+        "issue_key",
+        "operation",
+        "source_status_id",
+        "target_status_id",
+        "configuration_digest",
+        "cause",
+        "publication",
+        "outcome",
+        "evidence",
+        "extensions"
+      ],
+      "additionalProperties": false
+    },
+    "capture": {
+      "type": "object",
+      "properties": {
+        "pb_capture_version": {
+          "const": 1
+        },
+        "pb_capture_transition_id": {
+          "type": "string",
+          "pattern": "^[0-9]{1,255}$"
+        },
+        "pb_capture_request_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "pb_capture_publication_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "pb_capture_package_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "pb_capture_invocation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "pb_capture_prepared_at": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 64,
+          "pattern": "Z$"
+        },
+        "pb_capture_status": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 200,
+              "maximum": 599
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pb_capture_received_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 64,
+              "pattern": "Z$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pb_capture_provider_request_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "pb_capture_version",
+        "pb_capture_transition_id",
+        "pb_capture_request_digest",
+        "pb_capture_publication_digest",
+        "pb_capture_package_revision",
+        "pb_capture_invocation_id",
+        "pb_capture_prepared_at",
+        "pb_capture_status",
+        "pb_capture_received_at",
+        "pb_capture_provider_request_id"
+      ],
+      "additionalProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "installation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+        },
+        "domain_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._:-]{1,255}$"
+        },
+        "site": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 2048
+        },
+        "configuration_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "package_revision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      },
+      "required": [
+        "installation_id",
+        "domain_id",
+        "site",
+        "configuration_digest",
+        "package_revision"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

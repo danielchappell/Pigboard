@@ -74,6 +74,8 @@
       "test/fixtures/jira-preview-cases.json",
       "test/fixtures/jira-preview-tls.json",
       "lib/jira/inventory.mjs",
+      "lib/jira/receipts.mjs",
+      "contracts/manager-live-input-v1.schema.json",
       "test/fixtures/jira-inventory-cases.json",
       "test/fixtures/jira-scoped-inventory-cases.mjs"
     ]

@@ -267,11 +267,11 @@ async function assertInventoryManifest({receipt, expectedCommit, sourceRoot, com
   const manifest = JSON.parse(manifestBytes);
   assert.equal(manifest.commit, expectedCommit, 'manifest revision matches the chosen source revision');
   const expectedPaths = [...bundle.validatorPayload.sources].sort();
-  assert.equal(expectedPaths.length, 44);
+  assert.equal(expectedPaths.length, 46);
   assert.deepEqual(manifest.bundle, bundle, 'manifest bundle matches approved source');
   const paths = Object.keys(manifest.sourceFiles).filter(relative => relative.startsWith('work-validator/'))
     .map(relative => relative.slice('work-validator/'.length)).sort();
-  assert.deepEqual(paths, expectedPaths, 'all 44 validator payload paths');
+  assert.deepEqual(paths, expectedPaths, 'all 46 validator payload paths');
   const payload = {};
   for (const relative of paths) {
     const source = await readFile(path.join(sourceRoot, relative));
@@ -687,7 +687,7 @@ test('PGB-148 prepared inventory guide and recovery', async t => {
       receiptIdentity: {path: receiptPath, sha256: inventoryHash(receiptBytes)}
     });
     t.diagnostic('Verified receipt ' + receiptPath + ' (SHA256 ' + verified.receipt.sha256 +
-      ') at ' + revision + '. All 44 payload hashes match. Guarded read-only import used ' + verified.runtime_root);
+      ') at ' + revision + '. All 46 payload hashes match. Guarded read-only import used ' + verified.runtime_root);
   }
 
   for (const [label, relative] of [['module', inventoryModule], ['packet', inventoryFixture], ['overlay', inventoryOverlay]]) {
@@ -768,4 +768,41 @@ test('PGB-148 source and prepared scoped inventory cases', async t => {
     source_and_copy_match: true, main_cases_per_runtime: remaining.length - focusedInventoryCases.length,
     controls_per_runtime: inventoryControls.length - 1, unrelated_cwd_unmodified: true
   });
+});
+
+test('real prepared copy runs both native receipt groups from an unrelated directory',async t=>{
+ const source=await fixture(t),root=path.dirname(source.source),cwd=path.join(root,'unrelated-native-receipt');
+ await mkdir(cwd);
+ const release=await prepare(source,async dir=>{
+  if(path.basename(dir)==='work-validator')await cp(new URL('../node_modules/',import.meta.url),path.join(dir,'node_modules'),{recursive:true,verbatimSymlinks:true});
+  else await install(dir);
+ });
+ const runtime=path.join(release.skills,'work-validator');
+ assert.equal(release.commit,git(source.source,'rev-parse','HEAD'));
+ const {manifest}=release,prepared=JSON.parse(await readFile(manifest));
+ const native=JSON.parse(await readFile(path.join(runtime,'test/fixtures/jira-preview-cases.json'))).native_receipts;
+ for(const name of bundle.validatorPayload.sources){
+  const original=await readFile(path.join(source.source,name)),copy=await readFile(path.join(runtime,name));
+  assert.deepEqual(copy,original);
+  assert.equal(prepared.sourceFiles['work-validator/'+name],createHash('sha256').update(copy).digest('hex'));
+ }
+ const bin=path.join(runtime,'node_modules/.bin');
+ for(const name of await readdir(bin)){
+  const target=await readlink(path.join(bin,name));
+  assert(!path.isAbsolute(target));
+  assert((await realpath(path.join(bin,name))).startsWith(runtime+path.sep));
+ }
+ const env={...process.env};delete env.NODE_PATH;
+ for(const [group,variants] of [['PGB-163-H01',native.positive],['PGB-163-H02',native.negative]]){
+  for(const variant of Object.keys(variants)){
+   const result=spawnSync(process.execPath,[path.join(runtime,'test/fixtures/jira-preview-harness.mjs'),
+    '--case',group,'--variant',variant,'--runtime',runtime,'--json'],{cwd,env,encoding:'utf8',timeout:20000});
+   assert.equal(result.status,0,variant+' '+result.stdout+' '+result.stderr);
+   const [run]=JSON.parse(result.stdout).runs;
+   assert(run.oracle_matched&&run.cleanup_complete);
+   assert.equal(run.effects,0);assert.equal(run.evidence_execution,'simulated-local-tls');
+   t.diagnostic(group+' '+variant+' '+run.report.status+' '+run.trace.length+' calls');
+  }
+ }
+ assert.deepEqual(await readdir(cwd),[]);
 });

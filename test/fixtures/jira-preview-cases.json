@@ -9504,5 +9504,152 @@
         }
       }
     }
-  ]
+  ],
+  "native_receipts": {
+    "manager": {
+      "installation_id": "fixture",
+      "domain_id": "fixture-domain",
+      "aws": {
+        "account_id": "123456789012",
+        "region": "eu-west-1",
+        "stack_name": "pigboard-fixture",
+        "operator_role_arn": "arn:aws:iam::123456789012:role/pigboard-operator",
+        "deployer_role_arn": "arn:aws:iam::123456789012:role/pigboard-deployer"
+      },
+      "controls": {
+        "mode": "apply",
+        "schedule_enabled": false,
+        "writes_enabled": false,
+        "maintenance": false
+      },
+      "schedule_minutes": 11,
+      "invocation_timeout_seconds": 600,
+      "log_retention_days": 14,
+      "activation": {
+        "full_visibility_confirmed": true,
+        "sole_admitting_installation_confirmed": true,
+        "inventory_reviewed": true
+      },
+      "transition_edges": [
+        {
+          "project_id": "100",
+          "transition_id": "31",
+          "source_status_ids": [
+            "1"
+          ],
+          "target_status_id": "2",
+          "global": false
+        }
+      ]
+    },
+    "package_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "raw_timestamp": "2026-11-01T13:34:56.123+01:00",
+    "utc_timestamp": "2026-11-01T12:34:56.123Z",
+    "positive": {
+      "current-qa": {
+        "base": "S06",
+        "read": "recorded-completion",
+        "status": "complete",
+        "code": "OK"
+      },
+      "current-qa-outstanding-request": {
+        "base": "S06",
+        "read": "recorded-completion",
+        "status": "incomplete",
+        "code": "RECORDED_PROOF_INVALID"
+      },
+      "original-admission": {
+        "base": "S06",
+        "read": "admit_ready",
+        "status": "complete",
+        "code": "OK"
+      },
+      "original-repair-admission": {
+        "base": "repair-independent-complete",
+        "read": "admit_rework",
+        "status": "complete",
+        "code": "OK"
+      },
+      "original-stack-update": {
+        "base": "H02-03-u1-queued-r2-arrived",
+        "read": "queue_repair",
+        "status": "complete",
+        "code": "OK"
+      },
+      "complete-empty": {
+        "base": "S06",
+        "read": "admit_ready",
+        "status": "complete",
+        "code": "OK",
+        "history": "empty"
+      }
+    },
+    "negative": {
+      "missing-page": {
+        "status": "incomplete",
+        "code": "HISTORY_PAGE_INCOMPLETE",
+        "history_status": "incomplete"
+      },
+      "403": {
+        "status": "unavailable",
+        "code": "READ_DENIED_OR_MISSING",
+        "history_status": "unavailable"
+      },
+      "404": {
+        "status": "unavailable",
+        "code": "READ_DENIED_OR_MISSING",
+        "history_status": "unavailable"
+      },
+      "shared-budget-exhausted": {
+        "status": "incomplete",
+        "code": "LIMIT_REACHED",
+        "history_status": "incomplete"
+      },
+      "timeout": {
+        "status": "incomplete",
+        "code": "LIMIT_REACHED",
+        "history_status": "incomplete"
+      },
+      "foreign-destination": {
+        "status": "unavailable",
+        "code": "AUTHORITY_MISSING"
+      },
+      "redirect": {
+        "status": "incomplete",
+        "code": "REDIRECT_REJECTED",
+        "history_status": "incomplete"
+      },
+      "secret-bearing-error": {
+        "status": "unavailable",
+        "code": "SECRET_UNAVAILABLE",
+        "history_status": "unavailable"
+      },
+      "wrong-uuid": {
+        "status": "incomplete",
+        "code": "ATTEMPT_MISMATCH"
+      },
+      "wrong-assignment": {
+        "base": "repair-independent-complete",
+        "read": "admit_rework",
+        "status": "incomplete",
+        "code": "MANAGER_TARGET_MISMATCH",
+        "history_status": "complete"
+      },
+      "edited-metadata": {
+        "status": "incomplete",
+        "code": "PUBLICATION_METADATA_CHANGED",
+        "history_status": "complete"
+      },
+      "missing-prior-tuple": {
+        "status": "unavailable",
+        "code": "RETAINED_TUPLE_MISSING",
+        "history_status": "complete"
+      },
+      "unsupported-changelog-shape": {
+        "status": "unsupported",
+        "code": "HISTORY_UNSUPPORTED",
+        "history_status": "unsupported"
+      }
+    }
+  }
 }

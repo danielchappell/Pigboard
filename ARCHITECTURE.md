@@ -342,3 +342,14 @@ original transition proof before sending once. State owns conditional revisions
 and proof persistence; the AWS host owns prepared authority, lifetime and package
 capability. Jira and State effects are not atomic: uncertainty retains the original
 hold and never authorizes replay. See [ordinary admission](docs/manager-apply.md).
+
+
+## Native recorded handoff acquisition
+
+The source and prepared validator bind an exact read to approved installation
+identity, canonical configuration and confirmed retained facts. The Jira reader
+reuses configured inventory and exact-comment acquisition in one bounded
+session. The manager composes the existing recorded proof envelope, and
+reconciliation reads issue status history as a separate native observation.
+The caller owns State fences, original transition capture comparison and
+disposition. [Library and fixture guide](docs/manager-preview.md#read-an-exact-jira-handoff-or-original-attempt)
