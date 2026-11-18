@@ -6,9 +6,12 @@ that same attempt conditionally. This source API does not install AWS resources,
 resolve customer configuration, publish to Jira or enable delivery.
 
 PGB-83 adds the source installation package, generated resource binding and bound
-operator CLI described below. This branch adds **unreleased PGB-137 original transition capture**; PGB-87
-owns Jira effects. Installed AWS/Jira and human acceptance remain separate from
-local API and package tests.
+operator CLI described below. State retains the original transition capture. For
+fresh installations, this package's ordinary sender also saves the original
+publication metadata from Jira when it prepares a new transition. See how to
+[inspect the original transition attempt](manager-apply.md#inspect-the-original-transition-attempt).
+Installed AWS/Jira and human acceptance remain separate from local API and package
+tests.
 
 ## Prepare dependencies and trusted inputs
 
