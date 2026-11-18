@@ -15,36 +15,44 @@ import {runStateCommand} from './manager-state.mjs';
 import {runInstallationCommand} from './manager-installation.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {packageManager} from './package-manager.mjs';
-import {synthesizeTemplate} from '../lib/aws/template.mjs';
+import {synthesizeTemplate,runtimeRoleProperties} from '../lib/aws/template.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const hostFixture=()=>JSON.parse(fs.readFileSync(path.join(root,'test/fixtures/aws-manager.json')));
 const inventoryPacket=()=>JSON.parse(fs.readFileSync(path.join(root,'test/fixtures/jira-inventory-cases.json')));
 export function fixtureCloud(config=hostFixture().config,overrides={},packageManifest){
- const sdk=loadHostSDK(),m=config.manager,a=m.aws,{digest}=hostConfig(JSON.stringify(config));
+ const sdk=loadHostSDK(),m=config.manager,a=m.aws,{digest,config:canonical}=hostConfig(JSON.stringify(config));
  const manifest=packageManifest??{schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:m.installation_id,domain_id:m.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),runtime:'nodejs24.x',canonical_config:config,dependency_hashes:{root:'r',aws:'a'},payload_hashes:{'lib/aws/manager-lambda.mjs':'source','config/manager.json':digest}};
- const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,name=installationResourceBase(m.installation_id),tableName=name+'-state',tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`;
+ const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,name=installationResourceBase(m.installation_id),tableName=name+'-state',tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`,scheduleArn=`arn:aws:scheduler:${a.region}:${a.account_id}:schedule/default/${name}`;
  const binding={schema:'pigboard-aws-installation/v1',installation_id:m.installation_id,domain_id:m.domain_id,site:config.jira.site,configuration_digest:digest,package_revision:manifest.source_revision,region:a.region,stack_id:stackId,table_name:tableName,table_arn:tableArn,installation_generation:manifest.installation_generation};
- const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableArn:tableArn,TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
- const env={PB_INSTALLATION_ID:m.installation_id,PB_DOMAIN_ID:m.domain_id,PB_INSTALLATION_GENERATION:manifest.installation_generation,PB_PACKAGE_REVISION:manifest.source_revision,PB_CONFIGURATION_DIGEST:digest,PB_MODE:'preview',PB_WRITES_ENABLED:'false',PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:stackId};
+ const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableArn:tableArn,TableId:'45fb5364-258e-4f57-86fd-d4e65c398d96',CreationDateTime:new Date('2026-11-17T08:00:22.410Z'),TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
+ const env={PB_INSTALLATION_ID:m.installation_id,PB_DOMAIN_ID:m.domain_id,PB_INSTALLATION_GENERATION:manifest.installation_generation,PB_PACKAGE_REVISION:manifest.source_revision,PB_CONFIGURATION_DIGEST:digest,PB_MODE:m.controls.mode,PB_WRITES_ENABLED:String(m.controls.writes_enabled),PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:stackId};
  const created='2026-11-17T08:00:09.731Z',tableCreated='2026-11-17T08:00:24.908Z',completed='2026-11-17T08:00:45.078Z';
  const stackEvent=(ResourceStatus,Timestamp)=>({StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus,Timestamp});
- const cloud={stack:{StackId:stackId,StackStatus:'CREATE_COMPLETE',CreationTime:created,Outputs:[{OutputKey:'FunctionArn',OutputValue:functionArn}]},events:[stackEvent('CREATE_COMPLETE',completed),{StackId:stackId,LogicalResourceId:'StateTable',ResourceType:'AWS::DynamoDB::Table',ResourceStatus:'CREATE_COMPLETE',PhysicalResourceId:tableName,Timestamp:tableCreated},stackEvent('CREATE_IN_PROGRESS',created)],function:{FunctionArn:functionArn,Environment:{Variables:env},Role:`arn:aws:iam::${a.account_id}:role/${name}-runtime`,Runtime:'nodejs24.x',Handler:'lib/aws/manager-lambda.handler',Timeout:m.invocation_timeout_seconds,LastUpdateStatus:'Successful',State:'Active'},asyncConfig:{FunctionArn:functionArn+':$LATEST',MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60},codeHash:Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64'),concurrency:1,schedule:{Name:name,State:'DISABLED',ScheduleExpression:`rate(${m.schedule_minutes} minutes)`,FlexibleTimeWindow:{Mode:'OFF'},Target:{Arn:functionArn,RoleArn:`arn:aws:iam::${a.account_id}:role/${name}-scheduler`,Input:JSON.stringify({operation:'preview'}),RetryPolicy:{MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60}}},...overrides};
+ const createEvent=(LogicalResourceId,ResourceType,PhysicalResourceId,EventId,Timestamp,ResourceProperties)=>({
+   StackId:stackId,LogicalResourceId,ResourceType,PhysicalResourceId,EventId,Timestamp,ResourceStatus:'CREATE_COMPLETE',ResourceProperties
+ });
+ const roleProperties=JSON.stringify(runtimeRoleProperties(canonical,manifest.sender===true,{legacy:overrides.birth==='legacy'}));
+ const events=[stackEvent('CREATE_COMPLETE',completed),
+   createEvent('RuntimeRole','AWS::IAM::Role',name+'-runtime','RuntimeRole-CREATE_COMPLETE-fixture','2026-11-17T08:00:32.000Z',roleProperties),
+   createEvent('StateTable','AWS::DynamoDB::Table',tableName,'StateTable-CREATE_COMPLETE-fixture',tableCreated),
+   stackEvent('CREATE_IN_PROGRESS',created)];
+ const cloud={stack:{StackId:stackId,StackStatus:'CREATE_COMPLETE',CreationTime:created,Outputs:[{OutputKey:'FunctionArn',OutputValue:functionArn}]},events,function:{FunctionArn:functionArn,Version:'$LATEST',Environment:{Variables:env},Role:`arn:aws:iam::${a.account_id}:role/${name}-runtime`,Runtime:'nodejs24.x',Handler:'lib/aws/manager-lambda.handler',Timeout:m.invocation_timeout_seconds,LastUpdateStatus:'Successful',State:'Active'},asyncConfig:{FunctionArn:functionArn+':$LATEST',MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60},codeHash:Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64'),concurrency:1,table,schedule:{Arn:scheduleArn,GroupName:'default',Name:name,State:'DISABLED',ScheduleExpression:`rate(${m.schedule_minutes} minutes)`,FlexibleTimeWindow:{Mode:'OFF'},Target:{Arn:functionArn,RoleArn:`arn:aws:iam::${a.account_id}:role/${name}-scheduler`,Input:JSON.stringify({operation:m.controls.mode}),RetryPolicy:{MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60}}},...overrides};
  const credentials=profile=>({accessKeyId:profile==='operator'?'SELECTED_OPERATOR':profile==='deployer'?'SELECTED_DEPLOYER':'WRONG_AMBIENT',secretAccessKey:'dummy'});
  const injectedSDK={...sdk,fromIni:({profile})=>async()=>credentials(profile)};
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
   const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n)throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
-  if(n==='GetCallerIdentityCommand')return {Account:a.account_id,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/fixture`};
+  if(n==='GetCallerIdentityCommand')return {Account:a.account_id,UserId:'AROAEXAMPLE:fixture',Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/fixture`};
   if(n==='DescribeStacksCommand')return {Stacks:[cloud.stack]};
   if(n==='DescribeStackResourcesCommand')return {StackResources:Object.entries({Function:name,Schedule:name,StateTable:tableName,RuntimeRole:name+'-runtime',SchedulerRole:name+'-scheduler',LogGroup:'/aws/lambda/'+name}).map(([LogicalResourceId,PhysicalResourceId])=>({LogicalResourceId,PhysicalResourceId}))};
-  if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);return {StackEvents:cloud.events,...(cloud.eventsNextToken===undefined?{}:{NextToken:cloud.eventsNextToken})};}
+  if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);if(cloud.eventPage)return cloud.eventPage(i);return {StackEvents:cloud.events,...(cloud.eventsNextToken===undefined?{}:{NextToken:cloud.eventsNextToken})};}
   if(n==='GetFunctionCommand')return {Configuration:{FunctionArn:functionArn,...(cloud.codeHash===undefined?{}:{CodeSha256:cloud.codeHash})},Code:{Location:'https://unused.example.invalid/fixture'}};
   if(n==='GetFunctionConfigurationCommand')return structuredClone(cloud.function);
   if(n==='GetFunctionEventInvokeConfigCommand'){if(!cloud.asyncConfig)throw Object.assign(new Error('dummy missing async config'),{name:'ResourceNotFoundException'});return structuredClone(cloud.asyncConfig);}
   if(n==='GetFunctionConcurrencyCommand')return {ReservedConcurrentExecutions:cloud.concurrency};
   if(n==='PutFunctionConcurrencyCommand'){cloud.concurrency=i.ReservedConcurrentExecutions;return {};}
   if(n==='GetScheduleCommand')return structuredClone(cloud.schedule);
-  if(n==='UpdateScheduleCommand'){cloud.schedule=structuredClone(i);return {};}
-  if(n==='DescribeTableCommand')return {Table:table};
+  if(n==='UpdateScheduleCommand'){cloud.schedule={...structuredClone(i),Arn:scheduleArn,GroupName:i.GroupName??'default'};return {};}
+  if(n==='DescribeTableCommand')return {Table:structuredClone(cloud.describeTable?.(i)??cloud.table)};
   if(n==='CreateChangeSetCommand'){cloud.changeInput=i;return {Id:'arn:aws:cloudformation:eu-west-1:123456789012:changeSet/pigboard-controls-fixture/id'};}
   if(n==='DescribeChangeSetCommand')return {Status:'CREATE_COMPLETE',Changes:cloud.changes??[{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',Details:[{Target:{Attribute:'Properties',Name:'Code'}}]}}]};
   if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';cloud.executedToken=i.ClientRequestToken;cloud.completionReads=0;cloud.events.unshift({ClientRequestToken:i.ClientRequestToken,StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'});return {};}
@@ -54,8 +62,8 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
  const dependencies={sdk:injectedSDK,makeClient,wait:async()=>{}};
  return {config,manifest,binding,provider,audit,destroyed,cloud,environment:env,dependencies,stackId};
 }
-export async function preparedCloud(config=hostFixture().config,packageManifest){
- const fixture=fixtureCloud(config,{},packageManifest),directory=fs.mkdtempSync(path.join(os.tmpdir(),'pgb83-cloud-')),configPath=path.join(directory,'config.json'),installationPath=path.join(directory,'installation.json');fs.writeFileSync(configPath,JSON.stringify(config));
+export async function preparedCloud(config=hostFixture().config,packageManifest,overrides={}){
+ const fixture=fixtureCloud(config,overrides,packageManifest),directory=fs.mkdtempSync(path.join(os.tmpdir(),'pgb83-cloud-')),configPath=path.join(directory,'config.json'),installationPath=path.join(directory,'installation.json');fs.writeFileSync(configPath,JSON.stringify(config));
  const receipt=await bindInstallation({configText:JSON.stringify(config),manifest:fixture.manifest,stackId:fixture.stackId,operatorProfile:'operator'},fixture.dependencies);fs.writeFileSync(installationPath,JSON.stringify(receipt));
  return {...fixture,directory,configPath,installationPath,receipt,cleanup:()=>fs.rmSync(directory,{recursive:true,force:true}),resolve:input=>resolveInstallation(input,fixture.dependencies)};
 }
@@ -80,13 +88,13 @@ export async function manifestConfigurationJourney(){
  }
  return observations;
 }
-// Ten bounded local cases for original-create provenance; no provider campaign.
+// Bounded local cases for original-create provenance and table continuity.
 export async function originalCreateInitializationJourney(){
  const observations=[];
- const kinds=['direct_create','create_change_set','unexplained_last_update','updated_stack','update_event','missing_stack_milestone','different_table','paginated_events','invalid_timestamp','nonempty_table'];
+ const kinds=['direct_create','create_change_set','legacy','unexplained_last_update','updated_stack','update_event','missing_stack_milestone','different_table','paginated_events','invalid_timestamp','nonempty_table','role_event_denied','role_properties_missing','broader_original_role','second_table_id','second_table_time'];
  for(const kind of kinds){
-  const f=await preparedCloud();try{
-   if(kind!=='direct_create'){
+  const f=await preparedCloud(undefined,undefined,{birth:kind==='legacy'?'legacy':'protected'});try{
+   if(kind==='create_change_set'||kind==='unexplained_last_update'){
     f.cloud.stack.CreationTime='2026-11-17T08:00:04.419Z';
     // SDK Date and an equivalent offset string must compare as the same instant.
     f.cloud.stack.LastUpdatedTime=new Date('2026-11-17T08:00:09.731Z');
@@ -101,6 +109,20 @@ export async function originalCreateInitializationJourney(){
    if(kind==='paginated_events')f.cloud.eventsNextToken='another-page';
    if(kind==='invalid_timestamp')f.cloud.events.find(e=>e.ResourceStatus==='CREATE_IN_PROGRESS').Timestamp='invalid-time';
    if(kind==='nonempty_table')seedRetained(f,{retained_members:[{...stateFixture.memberA,project_id:'10001',label:'AI-Daniel-1'}],pending_intents:[]});
+   const roleEvent=f.cloud.events.find(e=>e.LogicalResourceId==='RuntimeRole');
+   if(kind==='role_event_denied')f.cloud.fail='DescribeStackEventsCommand';
+   if(kind==='role_properties_missing')delete roleEvent.ResourceProperties;
+   if(kind==='broader_original_role'){
+    const role=JSON.parse(roleEvent.ResourceProperties);
+    role.ManagedPolicyArns=['arn:aws:iam::aws:policy/AdministratorAccess'];
+    roleEvent.ResourceProperties=JSON.stringify(role);
+   }
+   const secondPhysicalDrift=kind==='second_table_id'||kind==='second_table_time';
+   if(secondPhysicalDrift){
+    let reads=0;
+    f.cloud.describeTable=()=>++reads===1?f.cloud.table:{...f.cloud.table,...(kind==='second_table_id'?
+     {TableId:'00000000-0000-4000-8000-000000000001'}:{CreationDateTime:new Date('2026-11-17T08:01:23.000Z')})};
+   }
    const before=f.provider.snapshot(),receipt=fs.readFileSync(f.installationPath),auditStart=f.audit.length,stateStart=f.provider.audit.length;
    const result=await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve});
    const audit=f.audit.slice(auditStart),stateAudit=f.provider.audit.slice(stateStart),transactions=stateAudit.filter(a=>a.name==='TransactWriteCommand');
@@ -110,25 +132,39 @@ export async function originalCreateInitializationJourney(){
    assert(audit.every(a=>/^(Get|Describe|Scan)/.test(a.action)||a.action==='TransactWriteCommand'),kind+' has no cloud control mutation');
    assert(audit.every(a=>a.identity==='SELECTED_OPERATOR'),kind+' selected operator only');
    assert(audit.filter(a=>a.kind==='DynamoDBDocument').every(a=>a.input.TableName===f.binding.table_name||a.input.TransactItems?.every(i=>i.Put?.TableName===f.binding.table_name)),kind+' original table only');
-   if(['direct_create','create_change_set'].includes(kind)){
+   assert(!f.destroyed.some(item=>item.kind==='SecretsManager'),kind+' never constructs a recovery-secret client');
+   if(['direct_create','create_change_set','legacy'].includes(kind)){
     assert.equal(result.exitCode,0,kind+': '+result.stdout);assert.equal(result.outcome.status,'confirmed',kind);
-    const records=f.provider.records();assert.equal(records.length,1,kind+' one installation');const record=records[0];
+    const records=f.provider.records(),legacy=kind==='legacy';
+    assert.equal(records.length,legacy?1:2,kind+' expected installation and origin rows');const record=records.find(row=>row.kind==='installation');
     assert.equal(record.kind,'installation');
     for(const field of ['table_name','table_arn','stack_id','installation_generation','package_revision','configuration_digest'])assert.equal(record[field],f.binding[field],kind+' original '+field);
     for(const field of ['schedule_enabled','writes_enabled','maintenance'])assert.equal(record[field],false,kind+' disabled '+field);
     assert.equal(f.manifest.source_revision,'a'.repeat(40));assert.notEqual(f.manifest.source_revision,execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim());
-    assert.equal(transactions.length,1,kind+' one conditional transaction');assert.equal(transactions[0].input.TransactItems.length,1);
-    assert.equal(transactions[0].input.TransactItems[0].Put.ConditionExpression,'attribute_not_exists(PK)');
+    assert.equal(transactions.length,1,kind+' one conditional transaction');assert.equal(transactions[0].input.TransactItems.length,legacy?1:2);
+    const puts=transactions[0].input.TransactItems.map(({Put})=>Put);
+    assert(puts.every(put=>put.ConditionExpression==='attribute_not_exists(PK)'));
+    if(!legacy){
+     const origin=puts.find(put=>put.Item.PK==='operator-decision#'+f.binding.installation_id);
+     assert.equal(origin.Item.SK,'ORIGIN');
+     assert.equal(audit.filter(a=>a.action==='DescribeTableCommand').length,2,kind+' independently rechecks physical identity');
+    }
    }else{
-    assert.equal(result.outcome.code,'FRESH_INSTALLATION_REQUIRED',kind+': '+result.stdout);assert.equal(result.exitCode,kind==='nonempty_table'?1:2,kind);
+    if(!secondPhysicalDrift){
+     assert.equal(result.outcome.code,'FRESH_INSTALLATION_REQUIRED',kind+': '+result.stdout);
+     assert.equal(result.exitCode,kind==='nonempty_table'?1:2,kind);
+    }else{
+     assert.notEqual(result.exitCode,0,kind);
+     assert.equal(audit.filter(a=>a.action==='DescribeTableCommand').length,2,kind+' independently rechecks physical identity');
+    }
     assert.equal(f.provider.snapshot(),before,kind+' preserves retained state');assert.equal(transactions.length,0,kind+' no transaction');
     if(kind==='nonempty_table'){assert(stateAudit.some(a=>a.name==='GetCommand'));assert(stateAudit.some(a=>a.name==='ScanCommand'));assert.equal(f.provider.records().length,1);}
-    else{assert.equal(stateAudit.length,0,kind+' no State initialization reads');assert.equal(audit.filter(a=>a.action==='DescribeTableCommand').length,1,kind+' observation only');}
+    else if(!secondPhysicalDrift){assert.equal(stateAudit.length,0,kind+' no State initialization reads');assert.equal(audit.filter(a=>a.action==='DescribeTableCommand').length,1,kind+' observation only');}
    }
    observations.push({kind,status:result.outcome.status,code:result.outcome.code,exit_code:result.exitCode,event_requests:1,transactions:transactions.length,receipt_unchanged:true,cloud_control_mutations:0});
   }finally{f.cleanup();}
  }
- assert.equal(observations.length,10);return observations;
+ return observations;
 }
 export async function resolverJourney(){const f=await preparedCloud();try{
  const args=['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'];const init=await runStateCommand(args,{resolveInstallation:f.resolve});assert.equal(init.exitCode,0,init.stdout);assert.equal(f.provider.records()[0].schedule_enabled,false);
@@ -419,13 +455,64 @@ export async function publicationJourney(){const observations=[];
  return observations;
 }
 export function snapshotPackage({config=hostFixture().config}={}){const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pgb83-pinned-')),source=path.join(temp,'source');fs.mkdirSync(source);const tracked=execFileSync('git',['ls-files','--cached','--others','--exclude-standard'],{cwd:root,encoding:'utf8'}).trim().split('\n');for(const p of tracked){if(!p||!fs.existsSync(path.join(root,p)))continue;fs.mkdirSync(path.dirname(path.join(source,p)),{recursive:true});fs.cpSync(path.join(root,p),path.join(source,p));}for(const p of ['node_modules','runtime/aws/node_modules'])fs.cpSync(path.join(root,p),path.join(source,p),{recursive:true});for(const args of [['init','-q'],['add','.'],['-c','user.name=Pigboard Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Disposable exact working source snapshot']])execFileSync('git',args,{cwd:source});const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:source,encoding:'utf8'}).trim(),configPath=path.join(temp,'config.json');fs.writeFileSync(configPath,JSON.stringify(config));const built=packageManager({configPath,output:path.join(temp,'build'),source,revision});return {...built,temp,source,snapshot_revision:revision,snapshot_tree:execFileSync('git',['rev-parse','HEAD^{tree}'],{cwd:source,encoding:'utf8'}).trim(),source_parent:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_dirty:execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}),cleanup:()=>fs.rmSync(temp,{recursive:true,force:true})};}
+// Evaluate the generated statement set for concrete fixture requests, including
+// transaction context as DynamoDB evaluates it per item.
+export function policyPermits(policy, action, resource, { enclosing, leadingKeys } = {}) {
+ const glob = (pattern, value, insensitive = false) => typeof pattern === 'string' &&
+  new RegExp('^'+pattern.split('*').map(piece=>piece.replace(/[-/\\^$+?.()|[\]{}]/g,'\\$&')).join('.*')+'$', insensitive?'i':'').test(value);
+ const context = {'dynamodb:EnclosingOperation': enclosing ? [enclosing] : [], 'dynamodb:LeadingKeys': leadingKeys??[]};
+ const conditions = (condition = {}) => Object.entries(condition).every(([rule, terms]) => Object.entries(terms).every(([key, allowed]) => {
+  const actual = context[key]??[], choices = [allowed].flat();
+  if (rule==='Null') return choices.includes(String(actual.length===0));
+  if (rule==='ForAllValues:StringEquals') return actual.every(value=>choices.includes(value));
+  if (rule==='ForAnyValue:StringEquals'||rule==='StringEquals') return actual.some(value=>choices.includes(value));
+  return false;
+ }));
+ const matches = policy.Statement.filter(s=>[s.Action].flat().some(pattern=>glob(pattern,action,true))&&
+   [s.Resource].flat().some(pattern=>glob(pattern,resource))&&conditions(s.Condition));
+ return matches.some(s=>s.Effect==='Allow')&&!matches.some(s=>s.Effect==='Deny');
+}
+
 export function templateJourney(){
- const f=fixtureCloud(),template=synthesizeTemplate(JSON.stringify(f.config),f.manifest),r=template.Resources,operator=template.Metadata.Pigboard.operator_policy,runtime=r.RuntimeRole.Properties.Policies[0].PolicyDocument;
+ const baseline=fixtureCloud(),f=fixtureCloud(baseline.config,{}, {...baseline.manifest,sender:true}),template=synthesizeTemplate(JSON.stringify(f.config),f.manifest),r=template.Resources,operator=template.Metadata.Pigboard.operator_policy,runtime=r.RuntimeRole.Properties.Policies[0].PolicyDocument;
  assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(template.Parameters.QuiescenceConcurrency.Default,1);assert.equal(r.AsyncInvocation.Properties.Qualifier,'$LATEST');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.AsyncInvocation.Properties.MaximumEventAgeInSeconds,60);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumEventAgeInSeconds,60);assert.equal(r.StateTable.DeletionPolicy,'Retain');assert.equal(r.StateTable.UpdateReplacePolicy,'Retain');assert.equal(r.LogGroup.Properties.RetentionInDays,14);
- const permits=(policy,action,resource,enclosing)=>policy.Statement.some(s=>[s.Action].flat().includes(action)&&[s.Resource].flat().some(v=>typeof v==='string'&&v===resource)&&(!s.Condition||s.Condition['ForAnyValue:StringEquals']?.['dynamodb:EnclosingOperation']?.includes(enclosing))),table=f.binding.table_arn,other=table+'-unrelated',checks=[];
- for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable','dynamodb:Scan']){assert(permits(operator,action,table));assert(!permits(operator,action,other));checks.push({role:'operator',action,intended:true,unrelated:false});}
- for(const action of ['dynamodb:PutItem','dynamodb:UpdateItem']){assert(permits(operator,action,table,'TransactWriteItems'));assert(!permits(operator,action,table));assert(!permits(operator,action,other,'TransactWriteItems'));assert(!permits(runtime,action,table,'TransactWriteItems'));checks.push({role:'operator',action,transaction_only:true,unrelated:false,runtime:false});}
- for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable']){assert(permits(runtime,action,table));assert(!permits(runtime,action,other));checks.push({role:'runtime',action,intended:true,unrelated:false});}assert(!permits(runtime,'dynamodb:Scan',table));assert(permits(runtime,'secretsmanager:GetSecretValue',f.config.jira.connection.secret_reference));assert(!permits(runtime,'secretsmanager:GetSecretValue',f.config.jira.connection.secret_reference+'unrelated'));assert(!JSON.stringify(template).includes('ConditionCheckItem'));assert(!JSON.stringify(template).includes('DeleteItem'));assert(!JSON.stringify(operator).includes('ExecuteChangeSet'));assert(!Object.values(r).some(v=>['AWS::Lambda::Url','AWS::ApiGateway::RestApi'].includes(v.Type)));
+ const permits=policyPermits,table=f.binding.table_arn,other=table+'-unrelated',checks=[];
+ const normal='installation#'+f.binding.installation_id,protectedKey='operator-decision#'+f.binding.installation_id;
+ const transact=leadingKeys=>({enclosing:'TransactWriteItems',leadingKeys});
+ const check=(role,policy,action,resource,context,expected)=>{
+  assert.equal(permits(policy,action,resource,context),expected,JSON.stringify({role,action,resource,context}));
+  checks.push({role,action,resource,context,allowed:expected});
+ };
+ for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable','dynamodb:Scan']){
+  check('operator',operator,action,table,undefined,true);
+  check('operator',operator,action,other,undefined,false);
+ }
+ for(const action of ['dynamodb:PutItem','dynamodb:UpdateItem','dynamodb:ConditionCheckItem','dynamodb:DeleteItem']){
+  const operatorNormal=['dynamodb:PutItem','dynamodb:UpdateItem'].includes(action);
+  const runtimeNormal=action!=='dynamodb:DeleteItem';
+  for(const [role,policy,normalAllowed,protectedAllowed] of [
+   ['operator',operator,operatorNormal,action==='dynamodb:PutItem'],['runtime',runtime,runtimeNormal,false]
+  ]){
+   check(role,policy,action,table,transact([normal]),normalAllowed);
+   check(role,policy,action,table,transact([protectedKey]),protectedAllowed);
+   for(const keys of [undefined,[],['installation#unrelated'],[normal,'installation#unrelated']]){
+    check(role,policy,action,table,transact(keys),false);
+   }
+   check(role,policy,action,table,{leadingKeys:[protectedKey]},false);
+   check(role,policy,action,table,{leadingKeys:[normal]},false);
+   check(role,policy,action,other,transact([normal]),false);
+  }
+ }
+ for(const action of ['dynamodb:GetItem','dynamodb:Query']){
+  check('runtime',runtime,action,table,{leadingKeys:[normal]},true);
+  check('runtime',runtime,action,table,{leadingKeys:[protectedKey]},false);
+  check('runtime',runtime,action,table,undefined,false);
+  check('runtime',runtime,action,other,{leadingKeys:[normal]},false);
+ }
+ check('runtime',runtime,'dynamodb:GetItem',table,{enclosing:'TransactGetItems',leadingKeys:[normal]},true);
+ check('runtime',runtime,'dynamodb:DescribeTable',table,undefined,true);
+ check('runtime',runtime,'dynamodb:Scan',table,undefined,false);
+ assert(permits(runtime,'secretsmanager:GetSecretValue',f.config.jira.connection.secret_reference));assert(!permits(runtime,'secretsmanager:GetSecretValue',f.config.jira.connection.secret_reference+'unrelated'));assert(!JSON.stringify(template).includes('DeleteItem'));assert(!JSON.stringify(operator).includes('ExecuteChangeSet'));assert(!Object.values(r).some(v=>['AWS::Lambda::Url','AWS::ApiGateway::RestApi'].includes(v.Type)));
  const action='lambda:GetFunctionEventInvokeConfig',functionArn=f.cloud.function.FunctionArn,latest=functionArn+':$LATEST',scheduler=r.SchedulerRole.Properties.Policies[0].PolicyDocument,deployer=template.Metadata.Pigboard.configure_deployer_policy;
  const read=operator.Statement.filter(s=>[s.Action].flat().includes(action));assert.equal(read.length,1);assert.deepEqual(read[0],{Effect:'Allow',Action:action,Resource:latest});
  for(const resource of [latest,functionArn,functionArn+'-other:$LATEST',functionArn+':1']){const allowed=resource===latest;assert.equal(permits(operator,action,resource),allowed);checks.push({role:'operator',action,resource,allowed});}

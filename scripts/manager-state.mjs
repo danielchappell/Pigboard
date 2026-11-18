@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 import { pathToFileURL } from 'node:url';
-import { createDynamoInspectionState, createDynamoState } from '../lib/aws/dynamodb.mjs';
+import { constants } from 'node:fs';
+import { open } from 'node:fs/promises';
+import { createDynamoInspectionState, createDynamoOperatorState, createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { resolveInstallation as productionResolver } from '../lib/aws/installation.mjs';
-import { attemptSchema, result, transitionProof, valid } from '../lib/state/contract.mjs';
+import { attemptSchema, failure, parseReconciliationRequest, result, transitionProof, valid } from '../lib/state/contract.mjs';
 import { inspectTransition, rejectTransitionInspection } from '../lib/manager/inspect-transition.mjs';
+import { reconcile } from '../lib/manager/reconcile.mjs';
 
 const help = `Usage:
   node scripts/manager-state.mjs init --config FILE --installation FILE --operator-profile NAME [--json]
   node scripts/manager-state.mjs inspect --config FILE --installation FILE --kind installation|stream|attempt|member [--record-id ID|--cursor CURSOR] [--limit 1..100] --operator-profile NAME [--recovery] [--json]
   node scripts/manager-state.mjs inspect --config FILE --installation FILE --kind attempt --record-id attempt:<UUID> --operator-profile NAME --jira-evidence [--original-installation FILE] [--json]
+  node scripts/manager-state.mjs reconcile --config FILE --installation FILE --operator-profile NAME --request FILE [--original-installation FILE] [--json]
 
-Initialize a verified fresh installation while disabled, or inspect retained state.
-Use the canonical configuration and generated installation receipt. No resource
-override, enable, unlock, purge, reconciliation or retry command exists.
+Initialize a verified fresh installation while disabled, inspect retained State,
+or reconcile one named attempt with original proof and a verified completed stop.
+Use the canonical configuration and generated installation receipt.
 Prepare pinned root and runtime/aws dependencies before use; commands never install.
 Select the prepared operator profile; its exact canonical role is verified.
 Use inspect --recovery only after partial configure: original resources remain
@@ -29,12 +33,22 @@ sending authority that differs from today's installation, supply the saved
 sender receipt with --original-installation. This check never settles the hold.
 For evidence inspection, exit 0 means complete, 1 means partial, and 2 means
 invalid input or an unavailable operator, installation or named snapshot.
+For reconcile, use the closed request in docs/manager-state.md. A saved 204 or
+409 supports only its matching disposition. New decisions require original
+protected installation history and trusted stop evidence. New installed decisions
+remain held until the PGB-86 stop producer can verify a completed stop.
+To confirm an uncertain write, inspect the named attempt or repeat the same request.
+Ordinary named State inspection can show a verified original operator decision
+without reading Jira. For settlement, 0 confirms the decision, 1 holds with a
+conflict, and 2 indicates invalid input, unavailable evidence or uncertainty.
 `;
 function parse(argv) {
   if (argv.length === 1 && ['--help', '-h'].includes(argv[0])) return { help: true };
-  if (!['init', 'inspect'].includes(argv[0])) throw Error();
+  if (!['init', 'inspect', 'reconcile'].includes(argv[0])) throw Error();
   const out = { command: argv[0], json: false };
-  const allowed = new Set(['config', 'installation', 'operator-profile', ...(out.command === 'inspect' ? ['kind', 'record-id', 'cursor', 'limit', 'original-installation'] : [])]);
+  const allowed = new Set(['config', 'installation', 'operator-profile',
+    ...(out.command === 'inspect' ? ['kind', 'record-id', 'cursor', 'limit', 'original-installation'] : []),
+    ...(out.command === 'reconcile' ? ['request', 'original-installation'] : [])]);
   const seen = new Set();
   for (let n = 1; n < argv.length; n++) {
     const flag = argv[n]; if (!flag.startsWith('--') || seen.has(flag)) throw Error(); seen.add(flag);
@@ -55,6 +69,8 @@ function parse(argv) {
     const id = out['record-id'];
     if (out.kind !== 'attempt' || out.cursor || out.limit || out.recovery
       || !id?.startsWith('attempt:') || !valid(id.slice(8), attemptSchema.properties.attempt_id)) throw Error();
+  } else if (out.command === 'reconcile') {
+    if (!out.request) throw Error();
   } else if (out['original-installation']) throw Error();
   return out;
 }
@@ -67,9 +83,12 @@ function readable(outcome) {
   const rows = [outcome.status + ': ' + outcome.code, ...outcome.diagnostics.map(d => d.message)];
   if (outcome.recovery) rows.push('Recovery: ' + JSON.stringify(outcome.recovery));
   if (outcome.data) {
-    rows.push('Canonical/applied controls: ' + (outcome.data.controls_match ? 'match' : 'differ; inspect remains read-only'));
-    for (const record of outcome.data.records ?? (outcome.data.installation ? [outcome.data.installation] : [])) {
-      rows.push(JSON.stringify(record));
+    if (typeof outcome.data.controls_match === 'boolean') {
+      rows.push('Canonical/applied controls: ' + (outcome.data.controls_match ? 'match' : 'differ; inspect remains read-only'));
+    }
+    const records = outcome.data.records ?? [outcome.data.installation, outcome.data.stream, outcome.data.attempt].filter(Boolean);
+    for (const record of records) {
+      rows.push(readableRecord(record));
       if (record.kind === 'stream' && record.pending_attempt_id) rows.push('Pending hold: ' + record.pending_attempt_id);
       if (record.kind === 'attempt') {
         const proof = transitionProof(record);
@@ -78,6 +97,10 @@ function readable(outcome) {
         if (proof.http_status !== null) rows.push('Original HTTP response: ' + proof.http_status + '; outcome remains ' + record.outcome);
         if (record.outcome === 'pending') rows.push('Pending hold: ' + record.attempt_id);
       }
+    }
+    if (outcome.data.operator_decision) rows.push('Verified operator decision ' + readableRecord(outcome.data.operator_decision));
+    if (outcome.data.operator_decision_provenance && !outcome.data.operator_decision) {
+      rows.push('Operator decision provenance ' + readableRecord(outcome.data.operator_decision_provenance));
     }
     if (outcome.data.complete === false) rows.push('More records: use --cursor ' + outcome.data.next_cursor + ' with the same kind and installation.');
   }
@@ -154,14 +177,63 @@ async function runTransitionInspection(options, resolveInstallation, createInspe
   return formatTransitionInspection(outcome, options.json);
 }
 
-/** Core supplies its trusted resolver here at final PGB-82/83 integration. This
- * function never reads an alternate config, imports arbitrary modules or accepts
- * resource/credential/freshness assertions from command-line inputs. */
-export async function runStateCommand(argv, { resolveInstallation = productionResolver, createState = createDynamoState, createInspectionState = createDynamoInspectionState, now = () => new Date().toISOString() } = {}) {
+async function readRequestFile(path) {
+  let file;
+  try {
+    file = await open(path, constants.O_RDONLY | constants.O_NONBLOCK);
+    if (!(await file.stat()).isFile()) throw Error();
+    const buffer = Buffer.alloc(16385);
+    let count = 0;
+    while (count < buffer.length) {
+      const part = await file.read(buffer, count, buffer.length - count, null);
+      if (!part.bytesRead) break;
+      count += part.bytesRead;
+    }
+    if (count > 16384) throw Error();
+    return buffer.subarray(0, count);
+  } catch { throw Object.assign(Error(), { stateResult: result('invalid', 'INVALID_INPUT') }); }
+  finally { await file?.close(); }
+}
+
+function operatorOptions(resolved) {
+  return { binding: resolved.binding, control: { ...resolved.control, configuration_digest: resolved.binding.configuration_digest },
+    client: resolved.client, originEvidence: resolved.originEvidence, identity: resolved.session?.operator?.identity };
+}
+
+async function addOperatorDecision(outcome, binding, resolution, attemptId, resolveInstallation, createOperatorState) {
+  let trusted;
+  function withProvenance(status, code, verified = null) {
+    return {
+      ...outcome,
+      diagnostics: status === 'unavailable' ? [...outcome.diagnostics, ...result(status, 'OPERATOR_PROVENANCE_UNAVAILABLE').diagnostics] : outcome.diagnostics,
+      data: {
+        ...outcome.data, operator_decision_provenance: { status, code },
+        ...(verified ? { records: [verified.attempt], operator_decision: verified.operator_decision } : {})
+      }
+    };
+  }
+  try {
+    trusted = await resolveInstallation({ ...resolution, purpose: 'decision-inspect' });
+    const fields = ['installation_id', 'domain_id', 'site', 'stack_id', 'table_arn', 'installation_generation'];
+    if (fields.some(field => trusted.binding[field] !== binding[field])) return withProvenance('unavailable', 'BINDING_MISMATCH');
+    if (trusted.birthClassification === 'legacy') return withProvenance('absent', 'OPERATOR_PROVENANCE_ABSENT');
+    const read = await createOperatorState(operatorOptions(trusted), 'inspect').readDecision({ attempt_id: attemptId });
+    if (read.status !== 'confirmed') return withProvenance('unavailable', read.code);
+    if (!read.data.operator_decision) return withProvenance('absent', 'OPERATOR_PROVENANCE_ABSENT');
+    return withProvenance('verified', 'OK', read.data);
+  } catch (error) {
+    return withProvenance('unavailable', error.stateResult?.code ?? 'OPERATOR_PROVENANCE_UNAVAILABLE');
+  } finally { await trusted?.dispose?.(); }
+}
+
+export async function runStateCommand(argv, {
+  resolveInstallation = productionResolver, createState = createDynamoState, createInspectionState = createDynamoInspectionState,
+  createOperatorState = createDynamoOperatorState, readRequest = readRequestFile, now = () => new Date().toISOString()
+} = {}) {
   let options;
   try { options = parse(argv); } catch {
     const json = argv.includes('--json');
-    if (argv.includes('--jira-evidence') || argv.includes('--original-installation')) {
+    if (argv.includes('--jira-evidence') || argv[0] !== 'reconcile' && argv.includes('--original-installation')) {
       return formatTransitionInspection(rejectTransitionInspection('INVALID_INPUT'), json);
     }
     const outcome = result('invalid', 'INVALID_INPUT');
@@ -170,17 +242,39 @@ export async function runStateCommand(argv, { resolveInstallation = productionRe
   if (options.help) return { outcome: null, stdout: help, exitCode: 0 };
   if (options.jiraEvidence) return runTransitionInspection(options, resolveInstallation, createInspectionState);
   let state, outcome, resolved;
+  const resolution = { configPath: options.config, installationPath: options.installation, operatorProfile: options['operator-profile'] };
   try {
-    if (typeof resolveInstallation !== 'function') outcome = result('unavailable', 'CORE_PREREQUISITE');
-    else {
-      resolved = await resolveInstallation({ configPath: options.config, installationPath: options.installation, purpose: options.recovery ? 'recovery-inspect' : options.command, operatorProfile: options['operator-profile'] });
-      state = createState({ binding: resolved.binding, control: resolved.control, client: resolved.client });
-      outcome = options.command === 'init'
-        ? await state.initialize({ fresh_installation: resolved.fresh_installation, now: now() })
-        : await state.inspect({ kind: options.kind, ...(options['record-id'] ? { record_id: options['record-id'] } : {}), ...(options.cursor ? { cursor: options.cursor } : {}), ...(options.limit ? { limit: options.limit } : {}) });
-      if(options.recovery && resolved.recovery) outcome = {...outcome, recovery:resolved.recovery};
+    const request = options.command === 'reconcile' ? parseReconciliationRequest(await readRequest(options.request)) : null;
+    if (typeof resolveInstallation !== 'function') throw failure('CORE_PREREQUISITE');
+    resolved = await resolveInstallation({ ...resolution, purpose: options.recovery ? 'recovery-inspect' : options.command,
+      ...(request ? { originalInstallationPath: options['original-installation'] } : {}) });
+    if (request) {
+      const live = operatorOptions(resolved);
+      const operatorState = createOperatorState(live, 'reconcile');
+      state = createInspectionState({ binding: live.binding, control: live.control, client: live.client });
+      outcome = await reconcile({ request, resolved, inspectionState: state, operatorState });
+    } else {
+      if (options.command === 'init') {
+        if (resolved.birthClassification === 'protected') state = createOperatorState(operatorOptions(resolved), 'initialize');
+        else if (resolved.birthClassification === 'legacy') state = createState({ binding: resolved.binding, control: resolved.control, client: resolved.client });
+        else throw failure('ORIGIN_UNVERIFIED');
+        outcome = await state.initialize({ fresh_installation: resolved.fresh_installation, now: now() });
+      } else {
+        state = createState({ binding: resolved.binding, control: resolved.control, client: resolved.client });
+        const recordId = options['record-id'];
+        outcome = await state.inspect({ kind: options.kind, ...(recordId ? { record_id: recordId } : {}),
+          ...(options.cursor ? { cursor: options.cursor } : {}), ...(options.limit ? { limit: options.limit } : {}) });
+        if (options.recovery && resolved.recovery) outcome = { ...outcome, recovery: resolved.recovery };
+        if (!options.recovery && outcome.status === 'confirmed' && options.kind === 'attempt'
+          && recordId?.startsWith('attempt:') && valid(recordId.slice(8), attemptSchema.properties.attempt_id)) {
+          outcome = await addOperatorDecision(outcome, resolved.binding, resolution, recordId.slice(8), resolveInstallation, createOperatorState);
+        }
+      }
     }
-  } catch (error) { outcome = error.stateResult ?? result('unavailable', 'UNAVAILABLE'); }
+  } catch (error) {
+    const known = ['OPERATOR_UNAUTHORIZED', 'OPERATOR_SESSION_UNAVAILABLE', 'INSTALLATION_UNAVAILABLE', 'ORIGIN_UNVERIFIED'];
+    outcome = error.stateResult ?? result('unavailable', known.includes(error.code) ? error.code : 'UNAVAILABLE');
+  }
   finally { state?.close?.(); resolved?.dispose?.(); }
   return { outcome, stdout: options.json ? JSON.stringify(outcome) + '\n' : readable(outcome), exitCode: stateExitCode(outcome) };
 }

@@ -8,7 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {hostConfig,deriveHostControls,sha256,installationResourceBase,resolveInstallation} from '../lib/aws/installation.mjs';
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
 import {parseConfig} from '../lib/config/parse.mjs';
-import {fixtureCloud,preparedCloud} from '../scripts/test-aws-manager.mjs';
+import {fixtureCloud,preparedCloud,policyPermits,templateJourney} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
@@ -17,7 +17,7 @@ test('disabled package synthesizes scoped read-only runtime and retained bounded
  const {config}=fixture(),text=JSON.stringify(config),{digest}=hostConfig(text),manifest={schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),canonical_config:config};
  const t=synthesizeTemplate(text,manifest),r=t.Resources;assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(r.Function.Properties.ReservedConcurrentExecutions.Ref,'QuiescenceConcurrency');assert.equal(t.Parameters.QuiescenceConcurrency.Default,1);assert.equal(r.Function.Properties.Runtime,'nodejs24.x');assert.equal(r.AsyncInvocation.Properties.Qualifier,'$LATEST');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.AsyncInvocation.Properties.MaximumEventAgeInSeconds,60);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumEventAgeInSeconds,60);assert.equal(r.StateTable.DeletionPolicy,'Retain');assert.equal(r.StateTable.UpdateReplacePolicy,'Retain');assert.equal(r.LogGroup.Properties.RetentionInDays,14);
  const runtime=r.RuntimeRole.Properties.Policies[0].PolicyDocument.Statement;assert(!JSON.stringify(runtime).includes('dynamodb:Scan'));assert(!JSON.stringify(runtime).includes('dynamodb:PutItem'));assert(!JSON.stringify(runtime).includes('dynamodb:UpdateItem'));assert(!JSON.stringify(t).includes('DeleteItem'));assert(!JSON.stringify(t).includes('ConditionCheckItem'));assert(!Object.values(r).some(v=>['AWS::Lambda::Url','AWS::ApiGateway::RestApi'].includes(v.Type)));
- const op=t.Metadata.Pigboard.operator_policy.Statement;const writes=op.find(v=>v.Action.includes?.('dynamodb:PutItem'));assert.deepEqual(writes.Condition,{'ForAnyValue:StringEquals':{'dynamodb:EnclosingOperation':['TransactWriteItems']}});assert(writes.Resource.endsWith('/'+fixtureBase+'-state'));assert(op.some(v=>v.Action.includes?.('dynamodb:Scan')));assert(!JSON.stringify(op).includes('ExecuteChangeSet'));
+ const op=t.Metadata.Pigboard.operator_policy.Statement;const writes=op.find(v=>v.Action.includes?.('dynamodb:PutItem'));assert.deepEqual(writes.Condition,{Null:{'dynamodb:LeadingKeys':'false'},'ForAllValues:StringEquals':{'dynamodb:LeadingKeys':['installation#fixture']},'ForAnyValue:StringEquals':{'dynamodb:EnclosingOperation':['TransactWriteItems']}});assert(writes.Resource.endsWith('/'+fixtureBase+'-state'));assert(op.some(v=>v.Action.includes?.('dynamodb:Scan')));assert(!JSON.stringify(op).includes('ExecuteChangeSet'));
  const projected=deriveHostControls(text,{package_revision:manifest.source_revision});assert.equal(projected.mode,'preview');assert.deepEqual(projected.control,{configuration_digest:digest,schedule_enabled:false,writes_enabled:false,maintenance:false});
 });
 
@@ -96,13 +96,59 @@ test('copied pinned package imports and rejects extra event fields under selecte
  }finally{built.cleanup();}
 });
 
+test('protected history follows bounded AWS pages with one frozen operator snapshot and no secret client',async()=>{
+ const {config}=fixture();config.manager.aws.recovery_jira_secret_arn=recoveryArn;
+ const f=await preparedCloud(config);try{
+  const {events}=f.cloud;
+  f.cloud.stack.StackStatus='UPDATE_COMPLETE';
+  const first={StackEvents:[{StackId:f.stackId,PhysicalResourceId:f.stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'}],NextToken:'original'};
+  const cases=[
+   {name:'complete',eventPage:({NextToken})=>NextToken?{StackEvents:events}:first,kind:'protected',pages:2},
+   {name:'legacy',eventPage:()=>({StackEvents:fixtureCloud(config,{birth:'legacy'}).cloud.events}),kind:'legacy',pages:1},
+   {name:'repeated-token',eventPage:()=>first,kind:'unverified',pages:2},
+   {name:'bounded-pages',eventPage:({NextToken})=>({StackEvents:[],NextToken:String(Number(NextToken??0)+1)}),kind:'unverified',pages:8}
+  ];
+  // Live route age affects new settlement. Named historical lookup still binds
+  // the current receipt and authenticates the original protected table.
+  f.cloud.fail='GetFunctionEventInvokeConfigCommand';
+  for(const {name,eventPage,kind,pages} of cases){
+   f.cloud.eventPage=eventPage;
+   const {sdk,makeClient}=f.dependencies,created=[],before=f.audit.length;
+   let snapshot,credentialsCalls=0;
+   const wrappedSdk={...sdk,fromIni(options){
+    const load=sdk.fromIni(options);
+    return async()=>{credentialsCalls++;return load();};
+   }};
+   const resolved=await resolveInstallation({configPath:f.configPath,installationPath:f.installationPath,operatorProfile:'operator',purpose:'decision-inspect'},{
+    sdk:wrappedSdk,
+    makeClient(clientKind,options){
+     created.push(clientKind);
+     assert(Object.isFrozen(options.credentials));
+     snapshot??=options.credentials;
+     assert.equal(options.credentials,snapshot);
+     return makeClient(clientKind,options);
+    }
+   });
+   try{
+    assert.equal(credentialsCalls,1,name);
+    assert.equal(resolved.birthClassification,kind,name);
+    assert.equal(resolved.originEvidence?.table_id,kind==='protected'?f.cloud.table.TableId:undefined,name);
+    assert.equal(resolved.session.operator.identity.UserId,'AROAEXAMPLE:fixture',name);
+    assert(!created.includes('SecretsManager'),name);
+    assert.equal(f.audit.slice(before).filter(call=>call.action==='DescribeStackEventsCommand').length,pages,name);
+    assert(!f.audit.slice(before).some(call=>call.action==='GetFunctionEventInvokeConfigCommand'),name);
+   }finally{resolved.dispose();}
+  }
+ }finally{f.cleanup();}
+});
+
 test('disabled package IAM allows concrete intended transactions and denies unrelated or runtime mutations',()=>{
  const {config}=fixture(),text=JSON.stringify(config),manifest={schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:hostConfig(text).digest,installation_id:'fixture',domain_id:'fixture-domain',installation_generation:'generation',zip_digest:sha256('zip'),canonical_config:config},template=synthesizeTemplate(text,manifest),runtime=template.Resources.RuntimeRole.Properties.Policies[0].PolicyDocument,operator=template.Metadata.Pigboard.operator_policy;
- const permits=(policy,action,resource,enclosing)=>policy.Statement.some(s=>[s.Action].flat().includes(action)&&[s.Resource].flat().some(r=>typeof r==='string'&&r===resource)&&(!s.Condition||s.Condition['ForAnyValue:StringEquals']?.['dynamodb:EnclosingOperation']?.includes(enclosing)));
+ const permits=policyPermits, txn={enclosing:'TransactWriteItems',leadingKeys:['installation#fixture']}, normal={leadingKeys:txn.leadingKeys};
  const table='arn:aws:dynamodb:eu-west-1:123456789012:table/'+fixtureBase+'-state',other=table+'-unrelated';
  for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable','dynamodb:Scan']){assert(permits(operator,action,table));assert(!permits(operator,action,other));}
- for(const action of ['dynamodb:PutItem','dynamodb:UpdateItem']){assert(permits(operator,action,table,'TransactWriteItems'));assert(!permits(operator,action,table));assert(!permits(operator,action,other,'TransactWriteItems'));assert(!permits(runtime,action,table,'TransactWriteItems'));}
- for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable']){assert(permits(runtime,action,table));assert(!permits(runtime,action,other));}assert(!permits(runtime,'dynamodb:Scan',table));assert(!permits(runtime,'secretsmanager:GetSecretValue',config.jira.connection.secret_reference+'other'));assert(permits(runtime,'secretsmanager:GetSecretValue',config.jira.connection.secret_reference));assert(!permits(runtime,'lambda:InvokeFunction','anything'));assert(!permits(operator,'cloudformation:ExecuteChangeSet','anything'));
+ for(const action of ['dynamodb:PutItem','dynamodb:UpdateItem']){assert(permits(operator,action,table,txn));assert(!permits(operator,action,table));assert(!permits(operator,action,other,txn));assert(!permits(runtime,action,table,txn));}
+ for(const action of ['dynamodb:GetItem','dynamodb:Query','dynamodb:DescribeTable']){assert(permits(runtime,action,table,normal));assert(!permits(runtime,action,other,normal));}assert(!permits(runtime,'dynamodb:Scan',table));assert(!permits(runtime,'secretsmanager:GetSecretValue',config.jira.connection.secret_reference+'other'));assert(permits(runtime,'secretsmanager:GetSecretValue',config.jira.connection.secret_reference));assert(!permits(runtime,'lambda:InvokeFunction','anything'));assert(!permits(operator,'cloudformation:ExecuteChangeSet','anything'));
  const action='lambda:GetFunctionEventInvokeConfig',functionArn='arn:aws:lambda:eu-west-1:123456789012:function:'+fixtureBase,latest=functionArn+':$LATEST',scheduler=template.Resources.SchedulerRole.Properties.Policies[0].PolicyDocument,deployer=template.Metadata.Pigboard.configure_deployer_policy;
  const read=operator.Statement.filter(s=>[s.Action].flat().includes(action));assert.equal(read.length,1);assert.deepEqual(read[0],{Effect:'Allow',Action:action,Resource:latest});assert(permits(operator,action,latest));for(const resource of [functionArn,functionArn+'-other:$LATEST',functionArn+':1'])assert(!permits(operator,action,resource));
  for(const policy of [runtime,scheduler,deployer])assert(!permits(policy,action,latest));for(const mutation of ['lambda:InvokeFunction','lambda:PutFunctionConcurrency','lambda:UpdateFunctionCode','lambda:UpdateFunctionConfiguration']){assert(!permits(operator,mutation,latest));assert(!permits(deployer,mutation,latest));}
@@ -177,7 +223,7 @@ test('generated installation names distinguish valid IDs and bind exact resource
 });
 
 test('sender capability keeps initial off and scopes concrete transactional IAM',async()=>{
- const {packet}=await import('../scripts/test-manager-apply.mjs');const config=structuredClone(packet.config);config.manager.controls.schedule_enabled=false;config.manager.controls.writes_enabled=false;const text=JSON.stringify(config),manifest={schema:'pigboard-manager-package/v1',sender:true,source_revision:'a'.repeat(40),configuration_digest:hostConfig(text).digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:'generation',zip_digest:sha256('zip'),canonical_config:config};const template=synthesizeTemplate(text,manifest),r=template.Resources;assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(r.Schedule.Properties.Target.Input,'{"operation":"apply"}');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.deepEqual(Object.keys(r).sort(),['AsyncInvocation','Function','LogGroup','RuntimeRole','Schedule','SchedulerRole','StateTable']);const statements=r.RuntimeRole.Properties.Policies[0].PolicyDocument.Statement;const write=statements.find(s=>s.Action.includes?.('dynamodb:PutItem'));assert.deepEqual(write.Action,['dynamodb:PutItem','dynamodb:UpdateItem','dynamodb:ConditionCheckItem']);assert.deepEqual(write.Condition,{'ForAnyValue:StringEquals':{'dynamodb:EnclosingOperation':['TransactWriteItems']}});assert.equal(write.Resource,'arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state');assert(!JSON.stringify(statements).includes('DeleteItem'));assert(!JSON.stringify(statements).includes('dynamodb:Scan'));assert(statements.some(s=>s.Condition?.['ForAnyValue:StringEquals']?.['dynamodb:EnclosingOperation']?.includes('TransactGetItems')));assert.throws(()=>synthesizeTemplate(text,{...manifest,sender:false}),e=>e.code==='APPLY_UNSUPPORTED');
+ const {packet}=await import('../scripts/test-manager-apply.mjs');const config=structuredClone(packet.config);config.manager.controls.schedule_enabled=false;config.manager.controls.writes_enabled=false;const text=JSON.stringify(config),manifest={schema:'pigboard-manager-package/v1',sender:true,source_revision:'a'.repeat(40),configuration_digest:hostConfig(text).digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:'generation',zip_digest:sha256('zip'),canonical_config:config};const template=synthesizeTemplate(text,manifest),r=template.Resources;assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(r.Schedule.Properties.Target.Input,'{"operation":"apply"}');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.deepEqual(Object.keys(r).sort(),['AsyncInvocation','Function','LogGroup','RuntimeRole','Schedule','SchedulerRole','StateTable']);const statements=r.RuntimeRole.Properties.Policies[0].PolicyDocument.Statement;const write=statements.find(s=>s.Action.includes?.('dynamodb:PutItem'));assert.deepEqual(write.Action,['dynamodb:PutItem','dynamodb:UpdateItem','dynamodb:ConditionCheckItem']);assert.deepEqual(write.Condition,{Null:{'dynamodb:LeadingKeys':'false'},'ForAllValues:StringEquals':{'dynamodb:LeadingKeys':['installation#fixture']},'ForAnyValue:StringEquals':{'dynamodb:EnclosingOperation':['TransactWriteItems']}});assert.equal(write.Resource,'arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-state');assert(!JSON.stringify(statements).includes('DeleteItem'));assert(!JSON.stringify(statements).includes('dynamodb:Scan'));assert(templateJourney().checks.length>0);assert.throws(()=>synthesizeTemplate(text,{...manifest,sender:false}),e=>e.code==='APPLY_UNSUPPORTED');
 });
 
 test('R3A-03 canonical opt-in projects outside State control columns and binds manifest',async()=>{

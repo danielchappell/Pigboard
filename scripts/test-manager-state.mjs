@@ -4,15 +4,18 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { fixture, StateProvider, prepared, beginInput, finalizeInput, allLimits, row } from '../test/helpers/state-provider.mjs';
 import { createDynamoState } from '../lib/aws/dynamodb.mjs';
 import { projectRetainedInventory } from '../lib/state/contract.mjs';
-import { runInspectionGroup } from './test-manager-apply.mjs';
+import { runInspectionGroup, runReconciliationGroup } from './test-manager-apply.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cases = ['R1-14-H01', 'R1-14-H02', 'R1-14-H03'];
 const inspectionCases = ['INSPECT-H01', 'INSPECT-H02'];
+const reconciliationCases = ['R1-15-H01', 'R1-15-H02'];
+const reconciliationFixture = JSON.parse(readFileSync(new URL('../test/fixtures/reconciliation.json', import.meta.url)));
 function parse(args) {
   if (args.length === 1 && args[0] === '--help') return null;
   const input = {};
@@ -21,7 +24,7 @@ function parse(args) {
     if (key === '--all') input[key] = true;
     else { if (!args[n + 1] || args[n + 1].startsWith('--')) throw Error('Supply the documented value.'); input[key] = args[++n]; }
   }
-  if (!input['--output'] || Boolean(input['--case']) === Boolean(input['--all']) || input['--case'] && ![...cases,...inspectionCases].includes(input['--case'])) throw Error('Select one prescribed case or --all and a new output directory.');
+  if (!input['--output'] || Boolean(input['--case']) === Boolean(input['--all']) || input['--case'] && ![...cases, ...inspectionCases, ...reconciliationCases].includes(input['--case'])) throw Error('Select one prescribed case or --all and a new output directory.');
   return { selected: input['--all'] ? cases : [input['--case']], output: resolve(input['--output']) };
 }
 const observation = traces => ({ developer_observation: 'confirmed_local_api_fixture', human_acceptance: 'pending', installed_acceptance: 'pending', traces,
@@ -122,16 +125,19 @@ async function h02() {
 async function main() {
   const options = parse(process.argv.slice(2));
   if (!options) {
-    console.log('node scripts/test-manager-state.mjs --case R1-14-H01|R1-14-H02|R1-14-H03|INSPECT-H01|INSPECT-H02 --output NEW_DIRECTORY\nUse --all for the three R1-14 API groups. The two INSPECT groups exercise local CLI fixtures with simulated providers. Human acceptance remains pending.');
+    console.log('node scripts/test-manager-state.mjs --case R1-14-H01|R1-14-H02|R1-14-H03|INSPECT-H01|INSPECT-H02|R1-15-H01|R1-15-H02 --output NEW_DIRECTORY\nUse --all for the three R1-14 API groups. INSPECT and R1-15 groups exercise local CLI fixtures with simulated providers. Human acceptance remains pending.');
     return;
   }
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   const revision = git('rev-parse', 'HEAD'), dirty = git('status', '--porcelain').length !== 0;
   await mkdir(options.output); // Refuse to overwrite any retained evidence directory.
-  await writeFile(join(options.output, 'fixture-inputs.json'), JSON.stringify(fixture, null, 2) + '\n');
+  const inputs = options.selected.some(id => reconciliationCases.includes(id)) ? reconciliationFixture : fixture;
+  await writeFile(join(options.output, 'fixture-inputs.json'), JSON.stringify(inputs, null, 2) + '\n');
   const outcomes = [];
   for (const case_id of options.selected) {
-    const observed = inspectionCases.includes(case_id)
+    const observed = reconciliationCases.includes(case_id)
+      ? await runReconciliationGroup(case_id)
+      : inspectionCases.includes(case_id)
       ? {developer_observation:'confirmed_local_cli_fixture',human_acceptance:'pending',installed_acceptance:'pending',
         limitations:['Disposable local State and TLS Jira fixtures with simulated AWS identity and credentials.'],
         cleanup:'Disposable fixture resources removed; this evidence remains.',...await runInspectionGroup(case_id)}
@@ -145,8 +151,10 @@ async function main() {
   console.log(JSON.stringify(summary));
   if (outcomes.some(o => o.developer_observation === 'blocked')) process.exitCode = 1;
 }
-try { await main(); } catch (error) {
-  console.error('Fixture packet failed. Keep any produced evidence; check preparation and use a new output directory only after correcting a mechanical setup failure.');
-  if(process.argv.some(arg=>inspectionCases.includes(arg)))console.error(error.stack);
-  process.exitCode = 2;
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  try { await main(); } catch (error) {
+    console.error('Fixture packet failed. Keep any produced evidence; check preparation and use a new output directory only after correcting a mechanical setup failure.');
+    if (process.argv.some(arg => [...inspectionCases, ...reconciliationCases].includes(arg))) console.error(error.stack);
+    process.exitCode = 2;
+  }
 }

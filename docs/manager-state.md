@@ -44,11 +44,12 @@ resource or bootstrap a replacement table:
   observation time, `new_installation:true` and `table_empty:true`.
 
 The table uses string keys `PK` and `SK`, with no indexes, TTL or streams. The
-adapter uses `installation#<installation_id>` as the partition key and `I#`, `S#`,
+adapter uses `installation#<installation_id>` as the business partition key and `I#`, `S#`,
 `M#`, `A#` sort-key prefixes for the four business records. New transition
 preparations also retain a native publication item at `N#<attempt_uuid>`. Inventory
-and ordinary inspection select business record prefixes. Installation inventory
-work under PGB-86 must recognize and preserve the retained `N#` namespace.
+and ordinary record listings select business record prefixes. Protected operator
+origin and decisions use a separate partition. Installation inventory work under
+PGB-86 must recognize and preserve the native publication and protected records.
 The PGB-83 host generates and verifies this layout, retains the table on stack
 deletion or replacement and refuses an empty replacement as authority. This API provisions
 nothing. It rechecks the table ARN, active state and emptiness before a conditional
@@ -227,8 +228,13 @@ table completion between them. AWS's creation-time `LastUpdatedTime` is accepted
 only when it equals that stack's CREATE_IN_PROGRESS instant; an unexplained update
 time refuses. Missing, invalid or paginated creation proof and incompatible event
 statuses return `FRESH_INSTALLATION_REQUIRED` before State initialization. The
-State adapter still independently refuses existing installation records and
-nonempty tables. Success creates one disabled record with `confirmed`/`OK`, exit zero.
+resolver also verifies the original RuntimeRole policy and physical table creation.
+State independently checks for an existing installation record and scans for an
+empty table. A verified legacy installation gets one disabled record. A verified
+protected installation gets the disabled record and its immutable operator origin
+in one conditional transaction, after State independently rechecks the table
+ARN, physical ID and creation time. Both succeed with `confirmed`/`OK`, exit
+zero. Unverified birth holds initialization.
 
 An updated stack, an empty replacement or uncertain prior initialization requires
 diagnosis and inspection of the same retained resources. Never generate another
@@ -332,6 +338,135 @@ The evidence path uses bounded State and Jira reads. Its Jira search uses the
 read API's fixed search POST. It performs no writes to Jira or State and starts
 no worker. Read visibility depends on the recovery account's configured Jira
 permissions. See the installation guide for those prerequisites.
+
+## Reconcile one named attempt
+
+Use [Jira evidence inspection](#inspect-jira-evidence-for-one-pending-attempt) to
+find the named attempt and check `data.revisions`, publication, assignment and
+the original response. Use the current canonical configuration, current
+installation receipt and an explicit AWS profile for the configured operator role.
+Keep the original sending receipt when config or package changes. See
+[fresh protected installation prerequisites](manager-installation.md).
+
+New decisions require a fresh installation with protection verified from its
+original creation, disabled scheduling and writes, maintenance on, zero Lambda
+reserved concurrency and independently verified completed stop evidence. **This
+package holds new installed decisions while the PGB-86 stop producer is
+unavailable.** A matching current setting, an emergency stop or elapsed wall time
+alone cannot establish the stop. Draining cannot cancel a Jira request already
+sent. Ambiguous attempts may remain held.
+
+Save a JSON request of at most 16 KiB. Substitute the named attempt UUID and the
+three revisions from the inspection. Use `confirmed_applied` for an original
+durably saved 204 or `confirmed_not_applied` for a durably saved 409.
+
+```json
+{
+  "schema": "pigboard-reconciliation-request/v1",
+  "attempt_id": "11111111-1111-4111-8111-111111111111",
+  "expected_installation_revision": 5,
+  "expected_stream_revision": 0,
+  "expected_attempt_revision": 3,
+  "disposition": "confirmed_applied"
+}
+```
+
+```sh
+node scripts/manager-state.mjs reconcile --config current.yaml --installation current-receipt.json \
+  --operator-profile customer-operator --request decision.json --original-installation sending-receipt.json
+```
+
+Use `--original-installation` when the saved capture belongs to an earlier
+sending receipt. Omit it when the current receipt identifies the original
+sender. The command reads the actual retained capture, publication, assignment
+and Jira changelog again. Current issue status, missing or unreadable history,
+an unsupported HTTP status or conflicting evidence leave the hold in place.
+Complete-empty history alone provides no outcome evidence. A saved 409 can follow
+a successful comment or assignment update, and settlement preserves those effects.
+
+On success the command conditionally records the decision, updates the named
+attempt, advances the installation revision and clears its pending pointer in
+one transaction. It preserves the original capture, publication and assignment,
+starts no worker and leaves admission disabled. No Jira mutation or pointer
+rollback is part of settlement.
+
+Append `--json` for the same result in structured form. Exit zero confirms a
+new `OPERATOR_SETTLED` or existing `ALREADY_SETTLED` decision. Exit one
+reports a conflict, including `CONTROL_MISMATCH`, `DRAIN_INCOMPLETE`,
+`HISTORY_UNAVAILABLE` or `REVISION_CONFLICT`. Exit two reports unavailable
+or invalid input, an unverified origin or an uncertain write. A different
+request for an already settled attempt returns `ALREADY_SETTLED_CONFLICT`.
+
+For an uncertain write, use ordinary named inspection from the same installation:
+
+```sh
+node scripts/manager-state.mjs inspect --config current.yaml --installation current-receipt.json \
+  --operator-profile customer-operator --kind attempt \
+  --record-id 'attempt:11111111-1111-4111-8111-111111111111' --json
+```
+
+Verified readback includes `data.operator_decision` with its original actor,
+disposition, three input revisions and resulting attempt revision. It remains
+readable after the stream moves on and needs only the current verified operator
+profile and installation. The actor reflects the original account, STS user ID
+and assumed-role ARN. A renewed session does not change that actor.
+`data.operator_decision_provenance.status` reports `verified`, `absent` or
+`unavailable`. When provenance is unavailable, the result retains the ordinary
+State observation with its as-observed attempt revision. A terminal State record
+alone cannot establish an operator decision.
+
+Repeating the same request after a confirmed commit also returns the original
+decision read-only. The command never retries a write automatically. Keep the
+same attempt and protected installation while confirming an uncertain result.
+Never replay Jira or create another attempt to resolve a lost acknowledgement.
+
+### Protected State and the completed stop
+
+The original disabled protected install stores `ORIGIN` in
+`operator-decision#<installation_id>` with immutable table ID, creation time,
+original stack and role/table creation evidence, original policy digest,
+initializing actor and package pin. A binding receipt helps locate the original
+installation. Rebinding creates no protected origin. Trust depends on the
+administrator maintaining the original partition and action restrictions.
+
+The same protected partition stores an insert-only `A#<attempt_uuid>` decision.
+Its SHA-256 operator request digest commits to canonical JSON with schema
+`pigboard-operator-request-digest/v1`, installation ID and generation, and the
+entire closed request. The original Jira request and publication have separate
+digests. Readback requires a coherent origin, decision and attempt from the same
+physical table and keeps the original actor distinct from the current session.
+
+PGB-86 owns creating and invalidating completed stops. Its producer can use the
+[versioned projection](../lib/aws/reconcile-context.mjs) to generate its stop
+commitments. The resources digest hashes a canonical array containing the
+`pigboard-stop-resources/v1` tag, physical installation scope, Scheduler routing
+fields, Lambda runtime identity and config/package digests, in that order. The
+bounds digest hashes the `pigboard-stop-bounds/v1` tag, resources digest and
+bounds object, in that order. The direct route sums Scheduler's 60-second delivery
+age, Lambda's 60-second asynchronous delivery age, the applied invocation
+timeout and the enforced Jira request timeout, all in milliseconds. Both retry
+limits must be zero. The bound stop must match the protected installation,
+current resources and a positive verified producer generation. Installation
+revisions may advance through multiple settlements during one uninterrupted
+stop. Enablement requires separate authorization.
+
+### Run the local reconciliation cases
+
+With prepared dependencies, run each case into a new disposable directory:
+
+```sh
+node scripts/test-manager-state.mjs --case R1-15-H01 --output /tmp/pgb85-h01-evidence
+node scripts/test-manager-state.mjs --case R1-15-H02 --output /tmp/pgb85-h02-evidence
+```
+
+H01 exercises the actual evaluator and State transaction with positive 204 and
+409 cases and a prepared simulated stop producer. H02 covers enabled runtime,
+incomplete drain, a missing saved response, inaccessible history, stale revision,
+an unauthorized role and changed Jira assignment. The existing R1-14 groups
+still run with `--all`. Retain each group's exact revision, command, outputs,
+before/after State and provider audit before removing its disposable output.
+These runs use local providers. Designated human acceptance, hosted checks and
+released AWS/Jira behavior require separate evidence.
 
 ## Retain and inspect original transition proof
 
