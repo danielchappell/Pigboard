@@ -104,6 +104,7 @@ For `held`, use the diagnostic with `apply.stage`, `apply.ticket_id`,
 | Complete, empty HTTP 204 | The transition effect is confirmed. The sender first saves the original reply and then conditionally finalizes the same attempt. |
 | Complete HTTP 409 saved in State | Jira rejected the transition. The sender reports `held` with `TRANSITION_REJECTED`. The attempt remains pending and finalization is `not_attempted`. |
 | Another complete final reply saved in State | The sender reports `held` with `TRANSITION_RESPONSE_UNSUPPORTED`. The attempt remains pending and finalization is `not_attempted`. |
+| Deadline expires after preparation and before sending the transition | The Jira comment and assignment pointer are confirmed. The sender reports `held` with `LIMIT_REACHED` and transition `not_attempted`. Inspect the named pending attempt in State. |
 | Missing, incomplete or invalid transition reply | The transition outcome is unknown. The attempt remains pending with the prepared request and no saved reply. |
 | Uncertain reply save or finalization | Stages `retain_response` and `finalize` identify the uncertain write. The original attempt can show what committed even if State's acknowledgement was lost. |
 

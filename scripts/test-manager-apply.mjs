@@ -268,6 +268,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  const snapshot = () => structuredClone([...provider.rows.values()]);
  const writeAudit = (start = auditStart) => provider.audit.slice(start).filter(call => call.name === 'TransactWriteCommand');
  const sender = sendCase ? {before: snapshot(), at_send: [], comment_observations: []} : null;
+ let restoreClock;
  async function observeSendState(name, input) {
    const before = snapshot(), audit = provider.audit.length;
    const injection = sendCase.fault?.split(':');
@@ -279,6 +280,17 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    }
    const result = await real[name](input);
    sender[boundary] = {before, after: snapshot(), transactions: writeAudit(audit), status: result.status, code: result.code};
+   if (boundary === 'prepare' && sendCase.expireAfterPrepare && result.status === 'confirmed') {
+     assertAtomicSenderPrepare(sender.prepare);
+     const original = Object.getOwnPropertyDescriptor(performance, 'now');
+     const actualNow = performance.now.bind(performance);
+     const expired = actualNow() + config.manager.invocation_timeout_seconds * 1000;
+     Object.defineProperty(performance, 'now', {configurable: true, value: () => expired});
+     restoreClock = () => {
+       if (original) Object.defineProperty(performance, 'now', original);
+       else delete performance.now;
+     };
+   }
    return result;
  }
  const state=Object.fromEntries(Object.keys(real).map(name=>[name,async input=>{const call={name,input:structuredClone(input)};stateCalls.push(call);events.push('state:'+name);const boundary={retainMembers:stateCalls.filter(c=>c.name==='retainMembers').length===1?'member':'assignment',begin:'intent',finalize:'finalize'}[name];const proofInjection=p.oracle.proof_boundary_injections?.[fault];if(!injected&&proofInjection?.state_call===name){provider.fault=proofInjection.fault;injected=true;}else if(!injected&&!proofInjection&&fault?.startsWith(boundary+':')){provider.fault=fault.endsWith(':after')?'after':'before';injected=true;}const result=sender&&['prepareTransitionCapture','recordTransitionResponse','finalize'].includes(name)?await observeSendState(name,input):await real[name](input);call.result=structuredClone(result);return result;} ]));
@@ -416,7 +428,11 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
     producer_invocation_id:p.producer_invocation_id,...(timeout?{monotonic:()=>-1000000000}:{}),now:()=>p.time,
     healthLog:r=>{if(logFailure)throw Error('DUMMY_SECRET_LOG');healthLogs.push(r);},log:r=>{if(logFailure)throw Error('DUMMY_SECRET_LOG');timingLogs.push(r);}
   }):applyOrdinary(configText,{binding,control,state,resolveSecret:()=> 'LOCAL_APPLY_DUMMY',producer_invocation_id:p.producer_invocation_id,deadline:performance.now()+600000});
-  result=await invoke();
+  try {
+    result=await invoke();
+  } finally {
+    restoreClock?.();
+  }
   if(repair)first={records:provider.records(),trace_length:trace.length,state_call_count:stateCalls.length,provider_call_count:provider.audit.length-auditStart};
   if (sender) {
     sender.after = snapshot();
@@ -715,7 +731,7 @@ export function assertSenderJourney(evidence, testCase) {
   } else {
     assertAtomicSenderPrepare(prepare);
     assert.deepEqual(companion, senderState(prepare.after).companion);
-    assert.equal(prepare.status, sends.length ? 'confirmed' : 'uncertain');
+    assert.equal(prepare.status, sends.length || testCase.expireAfterPrepare ? 'confirmed' : 'uncertain');
   }
 
   if (sends.length) {
@@ -764,6 +780,9 @@ export function assertSenderJourney(evidence, testCase) {
     assert.deepEqual(after, prepare.after);
     assert.equal(result.apply.effects.transition, 'unconfirmed');
     assert.equal(result.apply.stage, 'transition');
+    const message = result.diagnostics[0].message;
+    assert(message.includes(attempt.attempt_id));
+    assert.match(message, /reply could not be confirmed.*pending.*inspect.*State/i);
   }
   if (testCase.fault?.startsWith('response:')) {
     assert.equal(response.status, 'uncertain');

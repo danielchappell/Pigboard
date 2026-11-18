@@ -278,3 +278,32 @@ test('native sender preserves original disposition across response and State bou
     assertSenderJourney(evidence, testCase);
   }
 });
+
+test('native sender reports a deadline after confirmed preparation and before the transition POST', async () => {
+  const testCase = {expireAfterPrepare: true, saved_status: null, sends: 0, outcome: 'pending', result_code: 'LIMIT_REACHED'};
+  const e = await runApplyFixture({sendCase: testCase, repeat: true, host: 'handler'});
+  assertSenderJourney(e, testCase);
+
+  const {result, sender, trace, mutations, records, state_calls: calls} = e;
+  const {attempt_id} = result.apply;
+  const attempt = records.find(row => row.attempt_id === attempt_id && row.kind === 'attempt');
+  const companion = sender.after.find(row => row.SK === 'N#' + attempt_id);
+  assert.equal(result.apply.stage, 'transition');
+  assert.equal(result.apply.hold, true);
+  assert.equal(result.writes, 2);
+  assert.deepEqual(result.apply.effects, {...packet.oracle.effects, transition: 'not_attempted', finalization: 'not_attempted'});
+  assert.deepEqual(mutations, packet.oracle.mutations.slice(0, 2));
+  assert(!trace.some(row => row.method === 'POST' && row.path.endsWith('/transitions')));
+  assert.equal(sender.jira_status_after, '1');
+  assert.deepEqual(sender.after, sender.prepare.after);
+  assert.match(companion.request_digest, /^sha256:[a-f0-9]{64}$/);
+  assert.equal(attempt.extensions.pb_capture_request_digest, companion.request_digest);
+  assert.equal(attempt.extensions.pb_capture_status, null);
+  assert(!calls.some(call => ['recordTransitionResponse', 'finalize'].includes(call.name)));
+  assert.equal(e.second.status, 'held');
+  assert.notEqual(e.second.code, 'LIMIT_REACHED');
+
+  const message = result.diagnostics[0].message;
+  assert(message.includes(attempt_id));
+  assert.match(message, /deadline expired before sending the Jira transition.*pending.*inspect.*State/i);
+});
