@@ -1246,10 +1246,11 @@ missing their execution inputs. Invalid supplied context holds the result.
 - For `blocked` with `reason: missing_input`, set `missing_step_id` to the
   declared step with the unavailable prepared artifact. Identify that same step
   ID as a distinct token in the original detail and describe the human action.
-  For example, “The prepared query for TC-01.S3 is unavailable.” An available
-  linked preparation proves presence. An available matching preparation whose
-  issue ownership is unclear holds the report. Absence applies to the supplied
-  evidence.
+  For example, “The prepared query for TC-01.S3 is unavailable.” In a QA ledger,
+  mark that step NOT_RUN with a reason and keep the original results for other
+  executed steps. An available linked preparation proves presence. An available
+  matching preparation whose issue ownership is unclear holds the report.
+  Absence applies to the supplied evidence.
 - For QA `blocked` with `reason: evidence`, begin the original detail with
   `[missing:deployment-evidence]`, a space and an explanation. For example,
   `[missing:deployment-evidence] The current revision has no supplied
