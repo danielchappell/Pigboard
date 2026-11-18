@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import { prepare } from '../scripts/prepare-pigboard-skills.mjs';
+import { applyScopedInventoryCase } from './fixtures/jira-scoped-inventory-cases.mjs';
 const bundle = JSON.parse(await readFile(new URL('../config/skill-bundle.json', import.meta.url)));
 const git = (cwd, ...args) => execFileSync('git', args, { cwd, stdio: 'pipe' }).toString().trim();
 async function fixture(t) {
@@ -242,13 +243,53 @@ const inventoryCases = {
   ],
   'R1-34-H04': ['guide-and-install', 'missing-retained-input', 'no-effects']
 };
+const focusedInventoryCases = ['seed-page-missing', 'token-missing', 'page-size'];
 const inventoryControls = ['epic-limit', 'stream-limit', 'page-size', 'closure-target-limit'];
 const inventoryModule = 'lib/jira/inventory.mjs';
 const inventoryFixture = 'test/fixtures/jira-inventory-cases.json';
+const inventoryOverlay = 'test/fixtures/jira-scoped-inventory-cases.mjs';
 const inventoryHarness = 'test/fixtures/jira-preview-harness.mjs';
 const inventoryGuide = 'docs/manager-preview.md';
 const inventoryFixturePin = '27384cd88441ba7f9e5b13e852ea2efc37bc08d3295e727ee991188d9e75ace3';
 const inventoryHash = bytes => createHash('sha256').update(bytes).digest('hex');
+
+async function assertInventoryManifest({receipt, expectedCommit, sourceRoot, committed = false}) {
+  assert.equal(receipt.commit, expectedCommit, 'receipt revision matches the chosen source revision');
+  for (const key of ['skills', 'manifest']) {
+    assert(typeof receipt[key] === 'string' && path.isAbsolute(receipt[key]), 'absolute receipt ' + key);
+  }
+  const skills = await realpath(receipt.skills);
+  const copiedRoot = await realpath(path.join(skills, 'work-validator'));
+  assert.equal(copiedRoot, path.join(skills, 'work-validator'), 'versioned validator root');
+  const manifestPath = await realpath(receipt.manifest);
+  assert.equal(manifestPath, path.join(path.dirname(skills), 'manifest.json'), 'manifest belongs to the prepared root');
+  const manifestBytes = await readFile(manifestPath);
+  const manifest = JSON.parse(manifestBytes);
+  assert.equal(manifest.commit, expectedCommit, 'manifest revision matches the chosen source revision');
+  const expectedPaths = [...bundle.validatorPayload.sources].sort();
+  assert.equal(expectedPaths.length, 44);
+  assert.deepEqual(manifest.bundle, bundle, 'manifest bundle matches approved source');
+  const paths = Object.keys(manifest.sourceFiles).filter(relative => relative.startsWith('work-validator/'))
+    .map(relative => relative.slice('work-validator/'.length)).sort();
+  assert.deepEqual(paths, expectedPaths, 'all 44 validator payload paths');
+  const payload = {};
+  for (const relative of paths) {
+    const source = await readFile(path.join(sourceRoot, relative));
+    if (committed) {
+      const approved = execFileSync('git', ['show', expectedCommit + ':' + relative], {cwd: sourceRoot});
+      assert(source.equals(approved), relative + ' approved revision bytes');
+    }
+    const copiedPath = path.join(copiedRoot, relative);
+    assert.equal(await realpath(copiedPath), copiedPath, relative + ' prepared path');
+    const copied = await readFile(copiedPath);
+    const sha = inventoryHash(source);
+    assert(source.equals(copied), relative + ' prepared bytes');
+    assert.equal(manifest.sourceFiles['work-validator/' + relative], sha, relative + ' manifest SHA');
+    payload[relative] = sha;
+  }
+  assert.equal(payload[inventoryFixture], inventoryFixturePin);
+  return {copiedRoot, manifestPath, manifestHash: inventoryHash(manifestBytes), payload};
+}
 
 async function prepareInventoryTest(t) {
   const o = await fixture(t);
@@ -263,28 +304,13 @@ async function prepareInventoryTest(t) {
       await install(dir);
     }
   });
-  const copiedRoot = await realpath(path.join(prepared.skills, 'work-validator'));
   const cwd = await realpath(o.app);
-  const manifest = JSON.parse(await readFile(prepared.manifest));
-  assert.equal(prepared.commit, fixtureCommit);
-  assert.equal(manifest.commit, fixtureCommit);
-  const paths = Object.keys(manifest.sourceFiles).filter(relative => relative.startsWith('work-validator/'))
-    .map(relative => relative.slice('work-validator/'.length));
-  assert.equal(paths.length, 43);
-  const payload = {};
-  for (const relative of paths) {
-    const source = await readFile(path.join(sourceRoot, relative));
-    const fixture = await readFile(path.join(o.source, relative));
-    const copied = await readFile(path.join(copiedRoot, relative));
-    const sha = inventoryHash(source);
-    assert(source.equals(fixture), relative + ' fixture bytes');
-    assert(source.equals(copied), relative + ' prepared bytes');
-    assert.equal(manifest.sourceFiles['work-validator/' + relative], sha, relative + ' manifest SHA');
-    payload[relative] = sha;
+  const {copiedRoot, payload} = await assertInventoryManifest({
+    receipt: prepared, expectedCommit: fixtureCommit, sourceRoot
+  });
+  for (const [relative, sha] of Object.entries(payload)) {
+    assert.equal(inventoryHash(await readFile(path.join(o.source, relative))), sha, relative + ' fixture bytes');
   }
-  assert.equal(payload[inventoryFixture], inventoryFixturePin);
-  assert.match(payload[inventoryModule], /^[0-9a-f]{64}$/);
-  assert.match(payload[inventoryGuide], /^[0-9a-f]{64}$/);
   for (const relative of ['node_modules/yaml/package.json', 'node_modules/ajv/package.json']) {
     assert.deepEqual(await readFile(path.join(copiedRoot, relative)), await readFile(path.join(sourceRoot, relative)));
     assert.equal(await realpath(path.join(copiedRoot, relative)), path.join(copiedRoot, relative));
@@ -364,7 +390,7 @@ async function prepareInventoryTest(t) {
     path.join(root, inventoryHarness), '--case', caseId, '--variant', variant,
     '--runtime', root, ...(json ? ['--json'] : [])
   ], !json);
-  return {sourceRoot, copiedRoot, cwd, run, invoke, packet, payload, record};
+  return {sourceRoot, copiedRoot, cwd, run, invoke, packet, payload, record, prepared, fixtureCommit};
 }
 
 function deterministicInventoryReport(report) {
@@ -385,6 +411,13 @@ function assertInventoryRun(run, variant, oracle, payload) {
   assert.equal(report.retained_complete, oracle.retained_complete);
   assert.deepEqual(report.scopes, oracle.scopes);
   assert.deepEqual(report.diagnostics.map(d => d.code).includes(oracle.code), Boolean(oracle.code));
+  if (oracle.diagnostic_reach) {
+    const normalized = diagnostics => diagnostics.map(({code, scope}) =>
+      JSON.stringify([code, scope === null ? null : [scope.project_id, scope.label]])).sort();
+    assert.deepEqual(normalized(report.diagnostics), normalized(oracle.diagnostic_reach),
+      variant + ' exact diagnostic codes and affected scopes');
+  }
+  if (oracle.seed_pages) assert.deepEqual(run.seed_pages, oracle.seed_pages);
   assert.equal(report.admission, 'not_evaluated');
   assert.equal(report.receipt_proof, 'not_evaluated');
   assert.equal(report.counters.requests_attempted, oracle.calls);
@@ -400,6 +433,7 @@ function assertInventoryRun(run, variant, oracle, payload) {
   assert.deepEqual(run.runtime_hashes.before, run.runtime_hashes.after);
   for (const [relative, expected] of Object.entries(payload)) assert.equal(run.runtime_hashes.before[relative], expected);
   assert.equal(run.fixture_hashes.inventory, inventoryFixturePin);
+  assert.equal(run.fixture_hashes.scoped_inventory, payload[inventoryOverlay]);
   assert.equal(run.caller_request_hashes.before, run.caller_request_hashes.after);
   assert.match(run.caller_request_hashes.before, /^[0-9a-f]{64}$/);
   assert.equal(audit.unrelated_issue_count, variant === 'unrelated-history' ? 65 : 0);
@@ -427,10 +461,11 @@ async function compareInventoryRoots(testRuntime, caseId, variant, authored) {
   const outputs = [];
   for (const root of [sourceRoot, copiedRoot]) {
     const result = await run(root, caseId, variant);
-    assert.equal(result.status, 0, variant);
+    assert.equal(result.status, 0, variant + ' at ' + root);
     assert.equal(result.output.case, caseId);
     assert.equal(result.output.variant, variant);
-    const oracles = inventoryControls.includes(variant) ? [authored.oracle, authored.control.oracle] : [authored.oracle];
+    const scoped = applyScopedInventoryCase(authored);
+    const oracles = inventoryControls.includes(variant) ? [scoped.oracle, scoped.control.oracle] : [scoped.oracle];
     assert.equal(result.output.runs.length, oracles.length);
     outputs.push(result.output.runs.map((item, index) => assertInventoryRun(item, variant, oracles[index], payload)));
   }
@@ -438,32 +473,119 @@ async function compareInventoryRoots(testRuntime, caseId, variant, authored) {
   return outputs[0];
 }
 
-test('PGB-148 prepared inventory guide and recovery', async t => {
+test('PGB-148 focused inventory pagination and import effects', async t => {
   const runtime = await prepareInventoryTest(t);
-  const {sourceRoot, copiedRoot, run, invoke, payload, packet, cwd, record} = runtime;
-  const caseId = 'R1-34-H04', variant = 'guide-and-install';
-  const authored = packet.variants.find(v => v.variant === 'complete-domain');
-  const [expected] = await compareInventoryRoots(runtime, caseId, variant, authored);
-  assert.equal(expected.report.status, 'complete');
-  assert.equal(expected.report.counters.requests_attempted, 24);
-  for (const root of [sourceRoot, copiedRoot]) {
-    const result = await run(root, caseId, variant, false);
-    assert.equal(result.status, 0);
-    assert.match(result.output.heading, /^R1-34-H04 \/ guide-and-install: literal oracle matched/);
-    assert.deepEqual(deterministicInventoryReport(result.output.report), expected.report);
+  const {sourceRoot, copiedRoot, packet, cwd, invoke, record} = runtime;
+  const results = new Map();
+  for (const variant of focusedInventoryCases) {
+    const authored = packet.variants.find(row => row.variant === variant);
+    const evidence = await compareInventoryRoots(runtime, 'R1-34-H02', variant, authored);
+    results.set(variant, evidence);
+    t.diagnostic('R1-34-H02 ' + variant + ' verified at ' + sourceRoot + ' and ' + copiedRoot);
+  }
+  const [missingPage] = results.get('seed-page-missing');
+  const [missingToken] = results.get('token-missing');
+  assert.equal(missingPage.seed_pages.length, 2);
+  assert.equal(missingPage.seed_pages[1].request_token, 'missing-seed-page');
+  assert.equal(missingPage.seed_pages[1].response_status, 404);
+  assert.equal(missingToken.seed_pages.length, 1);
+  assert.equal(missingToken.seed_pages[0].is_last, false);
+  assert.equal(missingToken.seed_pages[0].next_token, null);
+
+  const [maxOne, maxTwo] = [...results.get('page-size')]
+    .sort((left, right) => left.seed_pages[0].request_max_results - right.seed_pages[0].request_max_results);
+  assert.deepEqual(maxOne.seed_pages.map(page => page.issue_ids), [['100'], ['106'], ['107']]);
+  assert.deepEqual(maxTwo.seed_pages.map(page => page.issue_ids), [['100'], ['106', '107']]);
+  for (const [run, size] of [[maxOne, 1], [maxTwo, 2]]) {
+    assert(run.seed_pages.every(page => page.request_max_results === size));
+    assert.equal(run.seed_pages[0].is_last, false);
+    assert.equal(run.seed_pages[1].request_token, run.seed_pages[0].next_token);
+    assert.equal(run.seed_pages.at(-1).is_last, true);
+    assert.equal(run.report.domain_complete, true);
   }
 
+  // Run the import sentinels against their own copy. With the guard absent,
+  // invalid URLs/arguments and absent parent paths still prevent real effects.
+  const probeRoot = path.join(path.dirname(cwd), 'inventory-effect-probe');
+  await cp(copiedRoot, probeRoot, {recursive: true});
+  try {
+    const modulePath = path.join(probeRoot, inventoryModule);
+    const original = await readFile(modulePath, 'utf8');
+    await writeFile(modulePath, original + `
+      import {strict as probeAssert} from 'node:assert';
+      import {fileURLToPath as probeFileURLToPath} from 'node:url';
+      import {get as probeGet, request as probeRequest} from 'node:https';
+      import {spawnSync as probeSpawn} from 'node:child_process';
+      import {
+        constants as probeFlags, open as probeOpen, openSync as probeOpenSync,
+        closeSync as probeCloseSync, writeSync as probeWriteSync, ftruncateSync as probeTruncateSync
+      } from 'node:fs';
+      import {open as probeOpenPromise} from 'node:fs/promises';
+      const probeDenied = {message: 'Disallowed fixture effect.'};
+      const probeInput = probeFileURLToPath(import.meta.url);
+      const probeAbsent = probeInput + '/missing-parent/sentinel';
+      const probeFd = probeOpenSync(probeInput, probeFlags.O_RDONLY);
+      try {
+        probeAssert.throws(() => probeGet('https://[invalid'), probeDenied);
+        probeAssert.throws(() => probeRequest('https://[invalid'), probeDenied);
+        probeAssert.throws(() => probeSpawn(null), probeDenied);
+        probeAssert.throws(() => probeOpenSync(probeAbsent, 'w'), probeDenied);
+        await probeAssert.rejects(async () => new Promise((resolve, reject) => {
+          probeOpen(probeAbsent, 'a', error => error ? reject(error) : resolve());
+        }), probeDenied);
+        await probeAssert.rejects(async () => probeOpenPromise(probeAbsent, probeFlags.O_RDWR), probeDenied);
+        probeAssert.throws(() => probeWriteSync(probeFd, 'sentinel'), probeDenied);
+        probeAssert.throws(() => probeTruncateSync(probeFd, 0), probeDenied);
+      } finally {
+        probeCloseSync(probeFd);
+      }
+      const probeHandle = await probeOpenPromise(probeInput, 'r');
+      try {
+        await probeAssert.rejects(async () => probeHandle.write('sentinel'), probeDenied);
+        await probeAssert.rejects(async () => probeHandle.truncate(0), probeDenied);
+      } finally {
+        await probeHandle.close();
+      }
+    `);
+    const program = `
+      import {runFixture} from ${JSON.stringify(pathToFileURL(path.join(probeRoot, inventoryHarness)).href)};
+      try {
+        await runFixture('R1-34-H04', 'missing-retained-input', process.argv[1]);
+        console.log(JSON.stringify({error: null}));
+      } catch (error) {
+        console.log(JSON.stringify({error: error.message.split('\\n')[0], denied_attempts: error.actual}));
+      }
+    `;
+    const result = await invoke(['--input-type=module', '--eval', program, probeRoot]);
+    assert.equal(result.status, 0);
+    assert.deepEqual(result.output, {error: 'Unexpected fixture effects.', denied_attempts: 10});
+    assert.equal(inventoryHash(await readFile(path.join(copiedRoot, inventoryModule))), runtime.payload[inventoryModule]);
+  } finally {
+    await rm(probeRoot, {recursive: true});
+  }
+  await assert.rejects(readdir(probeRoot), {code: 'ENOENT'});
+  assert.deepEqual(await readdir(cwd), []);
+  await record({import_effect_sentinels: 'DENIED_DURING_IMPORT', denied_attempts: 10,
+    probe_root: probeRoot, disposable_copy_removed: true});
+  t.diagnostic('R1-34-H04 import effect sentinels denied at disposable root ' + probeRoot);
+});
+
+async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, receiptIdentity = null) {
+  const {sourceRoot, cwd, invoke, record} = runtime;
+  const {copiedRoot, manifestPath, manifestHash, payload} = await assertInventoryManifest({
+    receipt, expectedCommit, sourceRoot, committed: receiptIdentity !== null
+  });
   const guide = await readFile(path.join(copiedRoot, inventoryGuide), 'utf8');
   for (const marker of ['inspectJiraInventory', 'R1-34-H04', '--runtime', 'work-validator']) assert(guide.includes(marker));
-  const loader = path.join(path.dirname(cwd), 'inventory-import-loader.mjs');
-  const register = path.join(path.dirname(cwd), 'inventory-import-register.mjs');
+  const loader = path.join(path.dirname(cwd), 'inventory-import-loader-' + label + '.mjs');
+  const register = path.join(path.dirname(cwd), 'inventory-import-register-' + label + '.mjs');
   await writeFile(loader, `
     const allowed = ${JSON.stringify(pathToFileURL(copiedRoot + path.sep).href)};
     export async function resolve(specifier, context, next) {
       const resolved = await next(specifier, context);
       if (resolved.url.startsWith('file:')) {
         const allowedFile = resolved.url.startsWith(allowed) &&
-          !/^lib\\/(manager\\/|aws\\/|contracts\\/receipts\\.mjs)/.test(resolved.url.slice(allowed.length));
+          !/^lib\\/(manager\\/|aws\\/|state\\/|release\\/|jira\\/write\\.mjs|contracts\\/receipts\\.mjs)/.test(resolved.url.slice(allowed.length));
         if (!allowedFile) throw Error('Unexpected inventory import');
       }
       return resolved;
@@ -495,7 +617,45 @@ test('PGB-148 prepared inventory guide and recovery', async t => {
   assert.equal(library.output.report.counters.requests_attempted, 0);
   assert.deepEqual(library.output.report.diagnostics.map(d => d.code), ['INPUT_INVALID']);
 
-  for (const [label, relative] of [['module', inventoryModule], ['packet', inventoryFixture]]) {
+  const verified = {
+    guide_verification: label, receipt: receiptIdentity, revision: expectedCommit,
+    manifest: manifestPath, manifest_sha256: manifestHash, runtime_root: copiedRoot,
+    payload_hashes: payload, guarded_import: 'PASSED', resolver_calls: 0
+  };
+  await record(verified);
+  return verified;
+}
+
+test('PGB-148 prepared inventory guide and recovery', async t => {
+  const runtime = await prepareInventoryTest(t);
+  const {sourceRoot, copiedRoot, run, payload, packet, cwd, record, prepared, fixtureCommit} = runtime;
+  const caseId = 'R1-34-H04', variant = 'guide-and-install';
+  const authored = packet.variants.find(v => v.variant === 'complete-domain');
+  const [expected] = await compareInventoryRoots(runtime, caseId, variant, authored);
+  assert.equal(expected.report.status, 'complete');
+  assert.equal(expected.report.counters.requests_attempted, 24);
+  for (const root of [sourceRoot, copiedRoot]) {
+    const result = await run(root, caseId, variant, false);
+    assert.equal(result.status, 0);
+    assert.match(result.output.heading, /^R1-34-H04 \/ guide-and-install: literal oracle matched/);
+    assert.deepEqual(deterministicInventoryReport(result.output.report), expected.report);
+  }
+
+  await verifyInventoryGuide(runtime, prepared, fixtureCommit, 'disposable');
+  if (Object.hasOwn(process.env, 'PGB148_VERIFY_RECEIPT')) {
+    const receiptPath = process.env.PGB148_VERIFY_RECEIPT;
+    assert(path.isAbsolute(receiptPath), 'PGB148_VERIFY_RECEIPT is an absolute saved receipt path');
+    const receiptBytes = await readFile(receiptPath);
+    const receipt = JSON.parse(receiptBytes);
+    const revision = git(sourceRoot, 'rev-parse', 'HEAD');
+    const verified = await verifyInventoryGuide(runtime, receipt, revision, 'designated', {
+      path: receiptPath, sha256: inventoryHash(receiptBytes)
+    });
+    t.diagnostic('Verified receipt ' + receiptPath + ' (SHA256 ' + verified.receipt.sha256 +
+      ') at ' + revision + '. All 44 payload hashes match. Guarded read-only import used ' + verified.runtime_root);
+  }
+
+  for (const [label, relative] of [['module', inventoryModule], ['packet', inventoryFixture], ['overlay', inventoryOverlay]]) {
     const damaged = path.join(path.dirname(cwd), 'damaged-inventory-' + label);
     await cp(copiedRoot, damaged, {recursive: true});
     await rm(path.join(damaged, relative));
@@ -551,6 +711,7 @@ test('PGB-148 source and prepared scoped inventory cases', async t => {
   }
   let completeDomain;
   for (const [index, {caseId, variant}] of remaining.entries()) {
+    if (focusedInventoryCases.includes(variant)) continue;
     const runs = await compareInventoryRoots(runtime, caseId, variant, packet.variants[index]);
     if (variant === 'complete-domain') completeDomain = runs[0];
     if (variant === 'unrelated-history') {
@@ -562,7 +723,7 @@ test('PGB-148 source and prepared scoped inventory cases', async t => {
   }
   assert.deepEqual(await readdir(cwd), []);
   await record({
-    source_and_copy_match: true, main_cases_per_runtime: remaining.length,
-    controls_per_runtime: inventoryControls.length, unrelated_cwd_unmodified: true
+    source_and_copy_match: true, main_cases_per_runtime: remaining.length - focusedInventoryCases.length,
+    controls_per_runtime: inventoryControls.length - 1, unrelated_cwd_unmodified: true
   });
 });

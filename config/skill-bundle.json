@@ -74,7 +74,8 @@
       "test/fixtures/jira-preview-cases.json",
       "test/fixtures/jira-preview-tls.json",
       "lib/jira/inventory.mjs",
-      "test/fixtures/jira-inventory-cases.json"
+      "test/fixtures/jira-inventory-cases.json",
+      "test/fixtures/jira-scoped-inventory-cases.mjs"
     ]
   }
 }

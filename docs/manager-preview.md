@@ -852,14 +852,29 @@ NODE
 
 Each import prints `function`. To collect facts, confirm that the Jira credential
 can read issues, comments and properties across the configured scope. Supply the
-canonical read configuration, a trusted resolver and the retained members,
-pending intents and explicit completeness from State's
-`readInventory`/`projectRetainedInventory` owner.
+canonical read configuration, a trusted resolver and exactly these three fields
+from the State owner for the same configured site and projects.
 
 ```js
+const retainedInventory = {
+  retained_members: confirmedMembers,
+  pending_intents: confirmedIntents,
+  retained_complete: stateInventoryComplete === true,
+};
 const result = await inspectJiraInventory(configText, retainedInventory, { resolveSecret });
 console.log(JSON.stringify(result.report));
 ```
+
+Set `stateInventoryComplete` to true only after State's `readInventory` confirms
+a complete inventory. For that observation, `projectRetainedInventory` supplies
+the two arrays and the caller supplies the boolean. Each member has
+`{ticket_id, project_id, epic_id, label, assignment}`, where `assignment` is
+null or `{ticket_id, comment_id, record_id, digest}`. Each pending intent has
+`{project_id, label, ticket_id, attempt_id}`. If the State read is incomplete
+or unconfirmed, preserve any confirmed rows and pass `retained_complete: false`.
+An empty array then means no confirmed rows for that list, while the unknown
+inventory still holds the domain. A missing field or a nonboolean completeness
+value is invalid.
 
 `resolveSecret(reference, signal)` is the prepared in-process resolver; it returns
 the credential and cooperates with cancellation. The library makes fixed verified
@@ -974,13 +989,14 @@ These are 29 variants. The harness automatically runs the four paired controls
 with `epic-limit`, `stream-limit`, `page-size` and `closure-target-limit`. Keep
 the original limits and retain each completed run's evidence if a later run fails.
 
-Review the fixed request scripts and expected results in
-`<receipt.skills>/work-validator/test/fixtures/jira-inventory-cases.json`.
-The fixture file uses the R1-45 group names. R1-34-H01 through R1-34-H04 map to
-R1-45-H01 through R1-45-H04 by matching the H number. The
-`R1-34-H04 / guide-and-install` selector reuses the R1-45-H01
-`complete-domain` script and expected results, and checks the installed guide
-and runtime.
+In either root, the base packet at `test/fixtures/jira-inventory-cases.json`
+retains SHA256 `27384cd88441ba7f9e5b13e852ea2efc37bc08d3295e727ee991188d9e75ace3`
+and its original R1-45 behavior. R1-34 normally selects the matching H number.
+The scoped overlay at `test/fixtures/jira-scoped-inventory-cases.mjs` supplies
+R1-34's adjusted responses and independent expectations. For H02, compare the
+authored pagination traces, page sizes, continuation tokens and returned IDs.
+For H02 and H03 negatives, compare the expected diagnostic codes, shared or
+project/label reach, and completeness.
 
 Correct an invalid case/variant using the table. For a valid selector that
 returns `setup_failed` with `SETUP_MISSING`, check the named root. Prepare the
@@ -990,10 +1006,44 @@ dependencies, use the same preparation recovery. Keep the previous usable releas
 and any partial reports. Confirm fixture cleanup and remove only disposable
 verification copies.
 
+### Verify the installed guide and receipt for H04
+
+The `R1-34-H04 / guide-and-install` selector replays the H01
+`complete-domain` behavior. The designated human check requires an approved
+source checkout at the saved receipt's exact commit, the prepared source
+dependencies and the actual installed copy from that receipt. Open
+`<receipt.skills>/work-validator/docs/manager-preview.md` and follow its copied
+import and fixture commands. Then run the independent receipt check from the
+approved source checkout:
+
+```sh
+cd /absolute/pigboard/source
+PGB148_VERIFY_RECEIPT=/absolute/preparation-receipt.json \
+PGB148_EVIDENCE_DIR=/absolute/disposable/evidence \
+node --test --test-name-pattern='^PGB-148 prepared inventory guide and recovery$' test/skill-distribution.test.mjs
+```
+
+The check verifies the receipt commit, its versioned manifest and all 44 payload
+path hashes against the exact source revision, including the guide, library and
+fixture files. It imports directly from the receipt's installed root under a
+loader that permits copied dependencies and rejects source fallback and excluded
+manager, AWS and receipt modules. Its missing-input call makes zero provider
+requests and zero resolver calls. Look for `Verified receipt` with the actual
+receipt path, revision and installed root. The optional evidence directory
+retains the manifest and payload hashes and the guarded-import result. The check
+removes only its disposable probes and leaves the installed release in place.
+It activates nothing.
+
+With only a prepared copy, you can follow its import and fixture steps. Record
+those observations as fixture evidence. If you ran only the fixture CLI, or the
+receipt check did not verify your actual receipt, record the H04 receipt and
+import-graph checks as unverified.
+
 A designated human can use the same fixtures. For each prescribed group, record
 the tested source revision and receipt pin, source and copied commands, exit
-codes, reports, request traces, hashes and cleanup results. Compare these with
-the fixed expectations and record the human result separately in Jira. Human
+codes, reports, request traces, counts, bytes, timings, effect and cancellation
+observations, hashes and cleanup results. Compare these with the fixed
+expectations and record the human result separately in Jira. Human
 acceptance remains `NOT_RUN` (0/4 to date). Live Jira visibility, AWS installed
 journey acceptance, hosted CI, merge and activation require separate evidence.
 
