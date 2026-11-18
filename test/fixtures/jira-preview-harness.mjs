@@ -57,11 +57,13 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,recei
  const packet=read('test/fixtures/jira-preview-cases.json'),native=packet.native_receipts;
  const oracle=structuredClone(caseId===positiveReceipts?native.positive[variant]:native.negative[variant]);
  if(!oracle)throw Error('Use a prescribed case and variant.');
- if(ownershipConflict){
+ const competingEpic=ownershipConflict||receiptComparison==='ownership-conflict';
+ const genericForeignPointer=receiptComparison==='generic-foreign-pointer';
+ const scopedForeignPointer=['scoped-pointer','ownership-conflict'].includes(receiptComparison);
+ if(competingEpic||genericForeignPointer){
   assert.equal(variant,'current-qa');
   Object.assign(oracle,{status:'incomplete',code:'CLOSURE_INCOMPLETE'});
- }
- if(receiptComparison){
+ }else if(receiptComparison){
   assert.equal(variant,'current-qa-outstanding-request');
   assert(['scoped-pointer','target-denied'].includes(receiptComparison));
   if(receiptComparison==='target-denied')Object.assign(oracle,{status:'unavailable',code:'READ_DENIED_OR_MISSING'});
@@ -156,17 +158,21 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,recei
   {method:'POST',request_body:{jql:'project = "100" AND '+predicate+' ORDER BY id ASC',maxResults:4,fields:jiraFields}});
  const rows=snapshot.issues,rootIssue=rows.find(i=>i.id==='900'),scoped=rows.filter(i=>i.parent_id===rootIssue.id);
  const roots=[rootIssue],nativeIds=baseId.startsWith('H02-')?['1000','1001','1002','900','1003']:['1000','900','1100'];
- if(ownershipConflict){
+ if(competingEpic){
   const competing={...rootIssue,id:'901',key:'EX-91'};
   rows.push(competing);roots.push(competing);nativeIds.push(competing.id);
  }
- if(receiptComparison==='scoped-pointer'){
-  const epicWork=JSON.parse(rootIssue.body);
-  epicWork.workstreams=[{label:'stream-2',story_order:['EX-1200']}];
-  const unrelatedRoot={...rootIssue,id:'901',key:'EX-91',body:JSON.stringify(epicWork)};
-  const unrelatedIssue={...rows.find(i=>i.id==='1100'),id:'1200',key:'EX-1200',parent_id:'901',
-   labels:['stream-2'],body:null,pointer:{schema:'pigboard-work-pointer/v1'}};
-  roots.push(unrelatedRoot);rows.push(unrelatedRoot,unrelatedIssue);nativeIds.push('901','1200');
+ if(scopedForeignPointer||genericForeignPointer){
+  let parent=rootIssue;
+  if(scopedForeignPointer){
+   const epicWork=JSON.parse(rootIssue.body);
+   epicWork.workstreams=[{label:'stream-2',story_order:['EX-1200']}];
+   parent={...rootIssue,id:competingEpic?'902':'901',key:competingEpic?'EX-92':'EX-91',body:JSON.stringify(epicWork)};
+   roots.push(parent);rows.push(parent);nativeIds.push(parent.id);
+  }
+  const unrelatedIssue={...rows.find(i=>i.id==='1100'),id:'1200',key:'EX-1200',parent_id:parent.id,
+   labels:scopedForeignPointer?['stream-2']:[],body:null,pointer:{schema:'pigboard-work-pointer/v1'}};
+  rows.push(unrelatedIssue);nativeIds.push(unrelatedIssue.id);
  }
  search('labels = "pigboard"',roots);
  for(const id of nativeIds){
@@ -174,7 +180,7 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,recei
   push(path+issueFields,wireIssue(native));
   push(path+'/properties',{keys:native.pointer?[{key:'pigboard.work-context',self:'https://foreign.example.invalid/property'}]:[]});
   if(native.pointer){
-   if(receiptComparison==='scoped-pointer'&&id==='1200')push(path+'/properties/pigboard.work-context',{},{status:404});
+   if((scopedForeignPointer||genericForeignPointer)&&id==='1200')push(path+'/properties/pigboard.work-context',{},{status:404});
    else push(path+'/properties/pigboard.work-context',{key:'pigboard.work-context',value:native.pointer});
   }
   for(let startAt=0;startAt<Math.max(1,own.length);startAt+=4)push(path+'/comment?startAt='+startAt+'&maxResults=4&orderBy=created',
@@ -182,7 +188,7 @@ function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false,recei
   if(roots.some(root=>root.id===id))search('parent = "'+id+'"',rows.filter(i=>i.parent_id===id));
  }
  search('labels = "stream-1"',scoped);
- if(receiptComparison==='scoped-pointer')search('labels = "stream-2"',rows.filter(i=>i.id==='1200'));
+ if(scopedForeignPointer)search('labels = "stream-2"',rows.filter(i=>i.id==='1200'));
  const independentExact={
   S06:operation==='recorded-completion'?['2001','2004','2002','2003',...(variant==='current-qa-outstanding-request'?['2099']:[])]:
    ['2001','2002','2003','2004'],
@@ -614,11 +620,23 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
     assert(publication_observations.pointer,'Complete publication requires the observed pointer.');
    }
   }
-  if(ownershipConflict){
-   assert(report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'&&d.message.includes('competing Epic')));
-   assert.equal(receipt_input,null);
-  }
   let observed=null;
+  if(ownershipConflict||receiptComparison==='ownership-conflict'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   observed={target:v.target,proof_evaluated:false,closure_reason:report.diagnostics.find(d=>d.code==='OWNERSHIP_CONFLICT')?.code??null};
+  }
+  if(receiptComparison==='generic-foreign-pointer'){
+   assert.equal(receipt_input,null);
+   assert.equal(proof,null);
+   assert(!report.diagnostics.some(d=>['OWNERSHIP_CONFLICT','MEMBERSHIP_MISMATCH'].includes(d.code)));
+   observed={target:v.target,proof_evaluated:false,closure_reason:null};
+  }
+  if(['scoped-pointer','ownership-conflict','generic-foreign-pointer'].includes(receiptComparison)){
+   const scope=receiptComparison==='generic-foreign-pointer'?null:{project_id:'100',label:'stream-2'};
+   assert(report.diagnostics.some(d=>d.code==='POINTER_UNKNOWN'&&d.operation==='pointer'&&d.issue_id==='1200'&&
+    canonicalize(d.scope)===canonicalize(scope)));
+  }
   if(receiptComparison==='target-denied'){
    assert.equal(receipt_input,null);
    assert.equal(proof,null);
@@ -659,10 +677,6 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    assert.equal(canonicalize(assessed.target),canonicalize(v.target));
    assert(assessed.diagnostics.some(d=>d.code==='REPAIR'));
    assert(trace.some(t=>t.path.endsWith('/comment/2099')));
-   if(receiptComparison==='scoped-pointer'){
-    assert(report.diagnostics.some(d=>d.code==='POINTER_UNKNOWN'&&d.operation==='pointer'&&d.issue_id==='1200'&&
-     d.scope?.project_id==='100'&&d.scope?.label==='stream-2'));
-   }
    observed={target:v.target,proof_evaluated:true,proof_purpose:assessed.purpose,proof_valid:false,proof_codes:assessed.diagnostics.map(d=>d.code)};
   }
   const runtimeAfter=await snapshot(),inputAfter=inputSnapshot(v);
@@ -671,6 +685,8 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   const diagnosticEvidence=JSON.stringify({report,observed,trace,effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0});
   assert.equal(report.status,v.oracle.status,diagnosticEvidence);
   assert.equal(report.code,v.oracle.code,diagnosticEvidence);
+  if(ownershipConflict||receiptComparison==='ownership-conflict')
+   assert(report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'&&d.message.includes('competing Epic')),diagnosticEvidence);
   return {report,trace,server_trace:serverTrace,fixture_hashes:before,input_hashes:{before:inputBefore,after:inputAfter},
    runtime_hashes:{before:runtimeBefore,after:runtimeAfter},observed,history:history??null,publication:publication??null,
    effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0,oracle_matched:true,evidence_execution:'simulated-local-tls'};

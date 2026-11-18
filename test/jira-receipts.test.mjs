@@ -44,10 +44,15 @@ test('native reader preserves an actionable bounded composition failure',async()
  assert.equal(result.effects,0);
 });
 
-test('recorded target proof takes diagnostic precedence only after evaluation',async t=>{
- for(const [receiptComparison,code] of [['scoped-pointer','RECORDED_PROOF_INVALID'],['target-denied','READ_DENIED_OR_MISSING']]){
+test('recorded diagnostics lead only with evaluated proof or observed attribution',async t=>{
+ for(const [receiptComparison,variant,code] of [
+  ['scoped-pointer','current-qa-outstanding-request','RECORDED_PROOF_INVALID'],
+  ['target-denied','current-qa-outstanding-request','READ_DENIED_OR_MISSING'],
+  ['ownership-conflict','current-qa','CLOSURE_INCOMPLETE'],
+  ['generic-foreign-pointer','current-qa','CLOSURE_INCOMPLETE']
+ ]){
   await t.test(receiptComparison,async()=>{
-   const result=await runFixture('PGB-163-H01','current-qa-outstanding-request',source,{receiptComparison});
+   const result=await runFixture('PGB-163-H01',variant,source,{receiptComparison});
    assert.equal(result.report.code,code);
    assert.equal(result.observed.proof_evaluated,receiptComparison==='scoped-pointer');
   });

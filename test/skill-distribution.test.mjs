@@ -807,13 +807,18 @@ test('real prepared copy runs both native receipt groups from an unrelated direc
  const comparisons = `
   import path from 'node:path';
   import { pathToFileURL } from 'node:url';
-  const [root,receiptComparison]=process.argv.slice(1);
+  const [root,variant,receiptComparison]=process.argv.slice(1);
   const {runFixture}=await import(pathToFileURL(path.join(root,'test/fixtures/jira-preview-harness.mjs')));
-  const run=await runFixture('PGB-163-H01','current-qa-outstanding-request',root,{receiptComparison});
+  const run=await runFixture('PGB-163-H01',variant,root,{receiptComparison});
   console.log(JSON.stringify({code:run.report.code,proof_evaluated:run.observed.proof_evaluated,effects:run.effects}));
  `;
- for(const [comparison,code] of [['scoped-pointer','RECORDED_PROOF_INVALID'],['target-denied','READ_DENIED_OR_MISSING']]){
-  const result=spawnSync(process.execPath,['--input-type=module','--eval',comparisons,runtime,comparison],{cwd,env,encoding:'utf8',timeout:20000});
+ for(const [comparison,variant,code] of [
+  ['scoped-pointer','current-qa-outstanding-request','RECORDED_PROOF_INVALID'],
+  ['target-denied','current-qa-outstanding-request','READ_DENIED_OR_MISSING'],
+  ['ownership-conflict','current-qa','CLOSURE_INCOMPLETE'],
+  ['generic-foreign-pointer','current-qa','CLOSURE_INCOMPLETE']
+ ]){
+  const result=spawnSync(process.execPath,['--input-type=module','--eval',comparisons,runtime,variant,comparison],{cwd,env,encoding:'utf8',timeout:20000});
   assert.equal(result.status,0,comparison+' '+result.stdout+' '+result.stderr);
   assert.deepEqual(JSON.parse(result.stdout),{code,proof_evaluated:comparison==='scoped-pointer',effects:0});
  }
