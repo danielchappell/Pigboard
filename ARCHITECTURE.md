@@ -270,8 +270,11 @@ and existing policy evaluation. PGB-175 owns ordinary worker proof compatibility
 PGB-87 owns conditional original-attempt admission/publication/transition; State
 PGB-84/137 retains durable attempt and outcome evidence. PGB-83 packages the
 disabled customer runtime and PGB-90 verifies the actual installed journey.
-The source acquisition library does not add an installer payload, CLI, evaluator
-or activation path. See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
+Normal preparation copies the same acquisition library and synthetic case packet
+into `work-validator` and binds their bytes in the release manifest. The existing
+fixture harness runs the prescribed cases from source or the receipt-derived root.
+Evaluation, customer-runtime packaging and activation have their own entry points.
+See the [guide](docs/manager-preview.md#complete-ordinary-jira-inventory-library).
 
 ## Ordinary recorded policy boundary
 

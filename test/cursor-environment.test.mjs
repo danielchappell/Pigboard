@@ -1082,6 +1082,11 @@ const expected169PayloadPaths = [
   "test/fixtures/jira-preview-cases.json",
   "test/fixtures/jira-preview-tls.json"
 ];
+const currentPayloadPaths = [
+  ...expected169PayloadPaths,
+  'lib/jira/inventory.mjs',
+  'test/fixtures/jira-inventory-cases.json'
+];
 async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  const manifest=JSON.parse(await readFile(installed.manifest,'utf8'));
  assert.equal(manifest.commit,expectedCommit,'actual prepared fixture commit');
@@ -1089,11 +1094,12 @@ async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
  assert.deepEqual(manifest.bundle,bundle,'actual current bundle');
  assert.equal(bundle.validatorPayload.directory,'work-validator');
  assert.equal(expected169PayloadPaths.length,41);
- assert.deepEqual([...bundle.validatorPayload.sources].sort(),[...expected169PayloadPaths].sort(),'independent complete bundle payload paths');
+ assert.equal(currentPayloadPaths.length,43);
+ assert.deepEqual([...bundle.validatorPayload.sources].sort(),[...currentPayloadPaths].sort(),'independent complete bundle payload paths');
  const paths=Object.keys(manifest.sourceFiles).filter(p=>p.startsWith('work-validator/')).map(p=>p.slice('work-validator/'.length)).sort();
- assert.deepEqual(paths,[...expected169PayloadPaths].sort(),'independent complete manifest payload paths');
+ assert.deepEqual(paths,[...currentPayloadPaths].sort(),'independent complete manifest payload paths');
  const records=[];
- for(const relative of expected169PayloadPaths) {
+ for(const relative of currentPayloadPaths) {
   const source=await readFile(new URL('../'+relative,import.meta.url)),fixture=await readFile(path.join(sourceRoot,relative)),copied=await readFile(path.join(installed.skills,'work-validator',relative)),expected=verificationSHA(source);
   assert(source.equals(fixture),relative+' actual source/fixture bytes');
   assert(source.equals(copied),relative+' actual source/installed bytes');
@@ -1105,7 +1111,7 @@ async function assertCurrentPayloadCopy({sourceRoot,installed,expectedCommit}) {
 test('PGB-169 every current source payload byte matches its installed copy and manifest',async t=>{
  const o=await fixture(t),expectedCommit=git(o.source,'rev-parse','HEAD'),installed=await installCursorSkills(o,fakeInstall);
  const evidence=await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
- t.diagnostic('Verified all41 source/fixture/installed/manifest entries at actual fixture '+expectedCommit);
+ t.diagnostic('Verified all '+evidence.payload_paths.length+' source/fixture/installed/manifest entries at actual fixture '+expectedCommit);
  verificationAfter('current complete payload parity',()=>verificationRecord('payload-parity',{test:t.name,source:o.source,installed:installed.skills,...evidence}));
  const relative='lib/contracts/work.mjs',originalSHA=evidence.records.find(r=>r.path===relative).source_sha256;
  const controls=[
@@ -1132,7 +1138,7 @@ test('PGB-169 every current source payload byte matches its installed copy and m
 test('PGB-159 copied scheduling preserves source contracts from unrelated cwd',async t=>{
  const o=await fixture(t),expectedCommit=git(o.source,'rev-parse','HEAD');
  const installed=await installCursorSkills(o,fakeInstall),validator=path.join(installed.skills,'work-validator');
- await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ const {payload_paths}=await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
  const fixtures=JSON.parse(await readFile(new URL('./fixtures/work-semantics.json',import.meta.url),'utf8'));
  const {sizeLedger}=await import('../lib/contracts/work-semantics.mjs');
  const fresh=()=>structuredClone(fixtures.scheduling);
@@ -1261,7 +1267,7 @@ test('PGB-159 copied scheduling preserves source contracts from unrelated cwd',a
  }
  assert.deepEqual(help[1],help[0],'source/copied help capability parity');
  assert.deepEqual((await readdir(o.app)).sort(),['config.json','scheduling.json','work.json']);await unchanged(raw);
- t.diagnostic('One installation; all41 actual payload entries;2 preparation-bearing forms;12 declaration controls; strict start;2 copied import orders; config CLI/help; unchanged inputs. Real work-validator dependencies; other QA-helper installs simulated. Human H01/H02 not run.');
+ t.diagnostic('One installation; all '+payload_paths.length+' actual payload entries;2 preparation-bearing forms;12 declaration controls; strict start;2 copied import orders; config CLI/help; unchanged inputs. Real work-validator dependencies; other QA-helper installs simulated. Human H01/H02 not run.');
 });
 
 // PGB-160 focused recorded manager packet
@@ -1274,7 +1280,7 @@ function assertCopiedRecordedResult(result,expected,row,mode){
 }
 test('copied recorded30-row manager packet preserves purposes proof and strict compatibility',async t=>{
  const o=await fixture(t),installed=await installCursorSkills(o,fakeInstall),expectedCommit=git(o.source,'rev-parse','HEAD'),validator=path.join(installed.skills,'work-validator'),cli=path.join(validator,'scripts/validate-handoff.mjs');
- await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
+ const {payload_paths}=await assertCurrentPayloadCopy({sourceRoot:o.source,installed,expectedCommit});
  await assert.rejects(readFile(path.join(validator,'test/fixtures/handoff-chains.json')),error=>error.code==='ENOENT');
  const packet=JSON.parse(await readFile(new URL('./fixtures/handoff-chains.json',import.meta.url))).recorded;applyOrdinaryCaptureCut(packet);
  const run=(mode,file,extra=[],json=true)=>spawnSync(process.execPath,[cli,'--mode',mode,'--input',file,...extra,...(json?['--json']:[])],{cwd:o.app,encoding:'utf8',timeout:30000});
@@ -1290,8 +1296,8 @@ test('copied recorded30-row manager packet preserves purposes proof and strict c
  const usage=run(b.format_misuse.mode,path.join(o.app,'MISSING_SECRET_INPUT'),['--format',b.format_misuse.format]);assert.equal(usage.status,2);assert.equal(JSON.parse(usage.stdout).diagnostics[0].code,'USAGE');assert(!usage.stdout.includes('MISSING_SECRET'));
  for(const [id,mode]of [['P01','recorded-completion'],['P03','recorded-history']]){const state=packet.rows.find(r=>r.id===id),child=run(mode,path.join(o.app,id+'.json'),[],false);assert.equal(child.status,0);assert.match(child.stdout,/execution_authorized:false/);assert.match(child.stdout,/external freshness not evaluated/);assert(child.stdout.includes(JSON.stringify(state.input.target)));}
  assert.deepEqual((await readdir(o.app)).sort(),expectedNames.sort(),'checker creates no files');assert.equal(await realpath(installed.stableSkills),installed.skills);
- verificationAfter('recorded copied fixture identity',()=>verificationRecord('recorded-packet',{test:t.name,fixture_commit:expectedCommit,payload_paths:41,rows,states,purpose_invocations:invocations,source_fixture:verificationBlob(verificationFs.readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),input_files:verificationInventory(o.app),human_acceptance:'PGB-160-H01/H02 NOT_RUN'}));verificationComplete(o,'PGB-160-recorded');
- t.diagnostic('One actual installation;41 current payload entries;30rows/31states/46purposes; external absolute inputs; strict baseline/companions and no fallback; no customer/provider access.');
+ verificationAfter('recorded copied fixture identity',()=>verificationRecord('recorded-packet',{test:t.name,fixture_commit:expectedCommit,payload_paths:payload_paths.length,rows,states,purpose_invocations:invocations,source_fixture:verificationBlob(verificationFs.readFileSync(new URL('./fixtures/handoff-chains.json',import.meta.url))),input_files:verificationInventory(o.app),human_acceptance:'PGB-160-H01/H02 NOT_RUN'}));verificationComplete(o,'PGB-160-recorded');
+ t.diagnostic('One actual installation;'+payload_paths.length+' current payload entries;30rows/31states/46purposes; external absolute inputs; strict baseline/companions and no fallback; no customer/provider access.');
 });
 
 

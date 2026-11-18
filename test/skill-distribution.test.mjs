@@ -1,7 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir, cp, realpath } from 'node:fs/promises';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { appendFile, mkdtemp, mkdir, writeFile, readFile, rm, symlink, readdir, cp, realpath } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import { prepare } from '../scripts/prepare-pigboard-skills.mjs';
@@ -223,4 +225,344 @@ test('P166-COPY real instruction bytes and finite source/copied proof',{
  const audit={category:'Actual source/copied byte and supplied-proof test; not subject/human/live acceptance',product_source_revision:git(sourceRoot,'rev-parse','HEAD'),disposable_snapshot_revision:prepared.commit,receipt:prepared,manifested_files:Object.keys(sourceFiles).length,source_files:sourceFiles,dependencies:copies,proof_results:results};
  if(evidence){await mkdir(evidence,{recursive:true});await writeFile(path.join(evidence,'audit.json'),JSON.stringify(audit,null,2));await cp(prepared.manifest,path.join(evidence,'manifest.json'));}
  t.diagnostic('Compared '+Object.keys(sourceFiles).length+' actual source/copied manifested files; '+results.length+' finite API/CLI parity cases. Disposable snapshot commit is separate from product revision.');
+});
+
+// The public selectors are prescribed by the Story, independently of harness dispatch.
+const inventoryCases = {
+  'R1-34-H01': ['complete-domain', 'unrelated-history', 'retained-incomplete'],
+  'R1-34-H02': [
+    'seed-page-missing', 'child-page-missing', 'label-page-missing', 'token-repeat',
+    'token-missing', 'search-duplicate', 'fresh-membership-change', 'malformed-seed',
+    'malformed-record', 'reference-missing', 'reference-digest-change', 'reference-cycle',
+    'epic-limit', 'stream-limit', 'page-size', 'closure-target-limit'
+  ],
+  'R1-34-H03': [
+    'two-projects', 'cross-project-prerequisite', 'renamed-alias', 'old-ownership',
+    'denied-project', 'isolated-conflict', 'out-of-scope-reference'
+  ],
+  'R1-34-H04': ['guide-and-install', 'missing-retained-input', 'no-effects']
+};
+const inventoryControls = ['epic-limit', 'stream-limit', 'page-size', 'closure-target-limit'];
+const inventoryModule = 'lib/jira/inventory.mjs';
+const inventoryFixture = 'test/fixtures/jira-inventory-cases.json';
+const inventoryHarness = 'test/fixtures/jira-preview-harness.mjs';
+const inventoryGuide = 'docs/manager-preview.md';
+const inventoryFixturePin = '27384cd88441ba7f9e5b13e852ea2efc37bc08d3295e727ee991188d9e75ace3';
+const inventoryHash = bytes => createHash('sha256').update(bytes).digest('hex');
+
+async function prepareInventoryTest(t) {
+  const o = await fixture(t);
+  const sourceRoot = await realpath(fileURLToPath(new URL('../', import.meta.url)));
+  const fixtureCommit = git(o.source, 'rev-parse', 'HEAD');
+  const prepared = await prepare({...o, ref: fixtureCommit}, async dir => {
+    if (path.basename(dir) === 'work-validator') {
+      await cp(path.join(sourceRoot, 'node_modules'), path.join(dir, 'node_modules'), {
+        recursive: true, dereference: true
+      });
+    } else {
+      await install(dir);
+    }
+  });
+  const copiedRoot = await realpath(path.join(prepared.skills, 'work-validator'));
+  const cwd = await realpath(o.app);
+  const manifest = JSON.parse(await readFile(prepared.manifest));
+  assert.equal(prepared.commit, fixtureCommit);
+  assert.equal(manifest.commit, fixtureCommit);
+  const paths = Object.keys(manifest.sourceFiles).filter(relative => relative.startsWith('work-validator/'))
+    .map(relative => relative.slice('work-validator/'.length));
+  assert.equal(paths.length, 43);
+  const payload = {};
+  for (const relative of paths) {
+    const source = await readFile(path.join(sourceRoot, relative));
+    const fixture = await readFile(path.join(o.source, relative));
+    const copied = await readFile(path.join(copiedRoot, relative));
+    const sha = inventoryHash(source);
+    assert(source.equals(fixture), relative + ' fixture bytes');
+    assert(source.equals(copied), relative + ' prepared bytes');
+    assert.equal(manifest.sourceFiles['work-validator/' + relative], sha, relative + ' manifest SHA');
+    payload[relative] = sha;
+  }
+  assert.equal(payload[inventoryFixture], inventoryFixturePin);
+  assert.match(payload[inventoryModule], /^[0-9a-f]{64}$/);
+  assert.match(payload[inventoryGuide], /^[0-9a-f]{64}$/);
+  for (const relative of ['node_modules/yaml/package.json', 'node_modules/ajv/package.json']) {
+    assert.deepEqual(await readFile(path.join(copiedRoot, relative)), await readFile(path.join(sourceRoot, relative)));
+    assert.equal(await realpath(path.join(copiedRoot, relative)), path.join(copiedRoot, relative));
+  }
+
+  const env = {...process.env};
+  delete env.NODE_PATH;
+  const previewPacket = JSON.parse(await readFile(path.join(sourceRoot, 'test/fixtures/jira-preview-cases.json')));
+  const packet = JSON.parse(await readFile(path.join(copiedRoot, inventoryFixture)));
+  const canaries = new Set([
+    previewPacket.token, 'ERROR-CANARY', '-----BEGIN',
+    ...packet.variants.map(v => v.config.jira.connection.secret_reference),
+    ...packet.variants.flatMap(v => Object.values(v.oracle.raw_bodies ?? {}))
+  ].filter(value => typeof value === 'string' && value.length > 0));
+  let evidenceFile;
+  if (process.env.PGB148_EVIDENCE_DIR) {
+    const directory = path.resolve(process.env.PGB148_EVIDENCE_DIR);
+    await mkdir(directory, {recursive: true});
+    const evidence = await mkdtemp(path.join(directory, 'inventory-'));
+    evidenceFile = path.join(evidence, 'observations.jsonl');
+  }
+  async function record(data) {
+    if (evidenceFile) await appendFile(evidenceFile, JSON.stringify(data) + '\n', {mode: 0o600});
+  }
+  await record({
+    test: t.name, source_revision: git(sourceRoot, 'rev-parse', 'HEAD'),
+    fixture_commit: fixtureCommit, fixture_pin: inventoryFixturePin, source_root: sourceRoot,
+    copied_root: copiedRoot, manifest: prepared.manifest, cwd, payload_hashes: payload,
+    human_acceptance: 'NOT_RUN'
+  });
+  t.after(async () => {
+    let removed = false;
+    try {
+      await readdir(path.dirname(o.source));
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      removed = true;
+    }
+    await record({disposable_fixture_removed: removed});
+    assert(removed, 'disposable fixture is removed after the tests');
+  });
+
+  async function invoke(args, readable = false) {
+    const result = spawnSync(process.execPath, args, {
+      cwd, env, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024
+    });
+    const stdout = result.stdout ?? '', stderr = result.stderr ?? '';
+    const safe = ![...canaries].some(canary =>
+      [canary, JSON.stringify(canary).slice(1, -1)].some(value =>
+        stdout.includes(value) || stderr.includes(value)));
+    let output;
+    if (safe) {
+      try {
+        if (readable && result.status === 0) {
+          const split = stdout.indexOf('\n');
+          output = {heading: stdout.slice(0, split), report: JSON.parse(stdout.slice(split + 1))};
+        } else {
+          output = JSON.parse(stdout);
+        }
+      } catch {
+        // Preserve status and fingerprints even when a subprocess emits unusable evidence.
+      }
+    }
+    await record({
+      command: [process.execPath, ...args], cwd, status: result.status, signal: result.signal,
+      error_code: result.error?.code ?? null, stdout_sha256: inventoryHash(stdout),
+      stderr_sha256: inventoryHash(stderr), stdout_bytes: Buffer.byteLength(stdout),
+      stderr_bytes: Buffer.byteLength(stderr), ...(output === undefined ? {} : {output})
+    });
+    assert(safe, 'subprocess output kept private fixture material out of its reports');
+    assert.equal(result.error?.code ?? null, null);
+    assert.equal(stderr, '');
+    assert.notEqual(output, undefined, 'subprocess emitted a readable safe report');
+    return {status: result.status, output};
+  }
+  const run = (root, caseId, variant, json = true) => invoke([
+    path.join(root, inventoryHarness), '--case', caseId, '--variant', variant,
+    '--runtime', root, ...(json ? ['--json'] : [])
+  ], !json);
+  return {sourceRoot, copiedRoot, cwd, run, invoke, packet, payload, record};
+}
+
+function deterministicInventoryReport(report) {
+  const copy = structuredClone(report);
+  for (const key of ['elapsed_ms', 'peak_request_elapsed_ms']) {
+    if (key === 'peak_request_elapsed_ms' && report.counters.requests_attempted === 0) continue;
+    assert(Number.isFinite(copy.counters[key]) && copy.counters[key] >= 0, 'valid timing for ' + key);
+    delete copy.counters[key];
+  }
+  return copy;
+}
+
+function assertInventoryRun(run, variant, oracle, payload) {
+  const {report, trace, server_trace: serverTrace, server_audit: audit} = run;
+  assert.equal(report.inspection_scope, 'configured_inventory');
+  assert.equal(report.status, oracle.status);
+  assert.equal(report.domain_complete, oracle.domain_complete);
+  assert.equal(report.retained_complete, oracle.retained_complete);
+  assert.deepEqual(report.scopes, oracle.scopes);
+  assert.deepEqual(report.diagnostics.map(d => d.code).includes(oracle.code), Boolean(oracle.code));
+  assert.equal(report.admission, 'not_evaluated');
+  assert.equal(report.receipt_proof, 'not_evaluated');
+  assert.equal(report.counters.requests_attempted, oracle.calls);
+  assert.deepEqual(trace, oracle.trace);
+  assert.deepEqual(serverTrace, oracle.trace);
+  for (const [key, value] of Object.entries(oracle.counters ?? {})) assert.equal(report.counters[key], value, key);
+  assert.equal(run.oracle_matched, true);
+  assert.equal(run.effects, 0);
+  assert.equal(run.mutations, 0);
+  assert.equal(run.getter_calls, 0);
+  assert.equal(run.cleanup_complete, true);
+  assert.deepEqual(run.input_hashes.before, run.input_hashes.after);
+  assert.deepEqual(run.runtime_hashes.before, run.runtime_hashes.after);
+  for (const [relative, expected] of Object.entries(payload)) assert.equal(run.runtime_hashes.before[relative], expected);
+  assert.equal(run.fixture_hashes.inventory, inventoryFixturePin);
+  assert.equal(run.caller_request_hashes.before, run.caller_request_hashes.after);
+  assert.match(run.caller_request_hashes.before, /^[0-9a-f]{64}$/);
+  assert.equal(audit.unrelated_issue_count, variant === 'unrelated-history' ? 65 : 0);
+  assert.equal(audit.unrelated_comment_count, variant === 'unrelated-history' ? 512 : 0);
+  assert.equal(audit.unrelated_access_count, 0);
+  assert.equal(audit.before_sha256, audit.after_sha256);
+  assert.match(audit.before_sha256, /^[0-9a-f]{64}$/);
+  if (['complete-domain', 'unrelated-history', 'guide-and-install'].includes(variant)) {
+    const provenance = run.provenance_comparison;
+    assert.equal(provenance.matched, true);
+    assert.equal(provenance.algorithm, 'sha256');
+    assert.equal(provenance.actual_sha256, provenance.expected_sha256);
+    assert.match(provenance.actual_sha256, /^[0-9a-f]{64}$/);
+  }
+  if (variant === 'missing-retained-input') {
+    assert.equal(run.resolver_calls, 0);
+    assert.equal(report.counters.requests_attempted, 0);
+    assert.deepEqual(report.diagnostics.map(d => d.code), ['INPUT_INVALID']);
+  }
+  return {...run, report: deterministicInventoryReport(report)};
+}
+
+async function compareInventoryRoots(testRuntime, caseId, variant, authored) {
+  const {sourceRoot, copiedRoot, run, payload} = testRuntime;
+  const outputs = [];
+  for (const root of [sourceRoot, copiedRoot]) {
+    const result = await run(root, caseId, variant);
+    assert.equal(result.status, 0, variant);
+    assert.equal(result.output.case, caseId);
+    assert.equal(result.output.variant, variant);
+    const oracles = inventoryControls.includes(variant) ? [authored.oracle, authored.control.oracle] : [authored.oracle];
+    assert.equal(result.output.runs.length, oracles.length);
+    outputs.push(result.output.runs.map((item, index) => assertInventoryRun(item, variant, oracles[index], payload)));
+  }
+  assert.deepEqual(outputs[0], outputs[1], variant + ' source and prepared deterministic parity');
+  return outputs[0];
+}
+
+test('PGB-148 prepared inventory guide and recovery', async t => {
+  const runtime = await prepareInventoryTest(t);
+  const {sourceRoot, copiedRoot, run, invoke, payload, packet, cwd, record} = runtime;
+  const caseId = 'R1-34-H04', variant = 'guide-and-install';
+  const authored = packet.variants.find(v => v.variant === 'complete-domain');
+  const [expected] = await compareInventoryRoots(runtime, caseId, variant, authored);
+  assert.equal(expected.report.status, 'complete');
+  assert.equal(expected.report.counters.requests_attempted, 24);
+  for (const root of [sourceRoot, copiedRoot]) {
+    const result = await run(root, caseId, variant, false);
+    assert.equal(result.status, 0);
+    assert.match(result.output.heading, /^R1-34-H04 \/ guide-and-install: literal oracle matched/);
+    assert.deepEqual(deterministicInventoryReport(result.output.report), expected.report);
+  }
+
+  const guide = await readFile(path.join(copiedRoot, inventoryGuide), 'utf8');
+  for (const marker of ['inspectJiraInventory', 'R1-34-H04', '--runtime', 'work-validator']) assert(guide.includes(marker));
+  const loader = path.join(path.dirname(cwd), 'inventory-import-loader.mjs');
+  const register = path.join(path.dirname(cwd), 'inventory-import-register.mjs');
+  await writeFile(loader, `
+    const allowed = ${JSON.stringify(pathToFileURL(copiedRoot + path.sep).href)};
+    export async function resolve(specifier, context, next) {
+      const resolved = await next(specifier, context);
+      if (resolved.url.startsWith('file:')) {
+        const allowedFile = resolved.url.startsWith(allowed) &&
+          !/^lib\\/(manager\\/|aws\\/|contracts\\/receipts\\.mjs)/.test(resolved.url.slice(allowed.length));
+        if (!allowedFile) throw Error('Unexpected inventory import');
+      }
+      return resolved;
+    }
+  `);
+  await writeFile(register, `
+    import {register} from 'node:module';
+    register(${JSON.stringify(pathToFileURL(loader).href)});
+  `);
+  const program = `
+    import {readFileSync} from 'node:fs';
+    import {join} from 'node:path';
+    import {pathToFileURL} from 'node:url';
+    const root = process.argv[1];
+    const {inspectJiraInventory} = await import(pathToFileURL(join(root, ${JSON.stringify(inventoryModule)})));
+    const packet = JSON.parse(readFileSync(join(root, ${JSON.stringify(inventoryFixture)})));
+    const {config, request} = packet.variants.find(row => row.variant === 'missing-retained-input');
+    let resolverCalls = 0;
+    const result = await inspectJiraInventory(JSON.stringify(config), request, {
+      resolveSecret() { resolverCalls++; throw Error('Unexpected resolver call'); }
+    });
+    console.log(JSON.stringify({report: result.report, resolver_calls: resolverCalls}));
+  `;
+  const library = await invoke(['--import', register, '--input-type=module', '--eval', program, copiedRoot]);
+  assert.equal(library.status, 0);
+  assert.equal(library.output.resolver_calls, 0);
+  assert.equal(library.output.report.status, 'invalid');
+  assert.equal(library.output.report.inspection_scope, 'configured_inventory');
+  assert.equal(library.output.report.counters.requests_attempted, 0);
+  assert.deepEqual(library.output.report.diagnostics.map(d => d.code), ['INPUT_INVALID']);
+
+  for (const [label, relative] of [['module', inventoryModule], ['packet', inventoryFixture]]) {
+    const damaged = path.join(path.dirname(cwd), 'damaged-inventory-' + label);
+    await cp(copiedRoot, damaged, {recursive: true});
+    await rm(path.join(damaged, relative));
+    const failure = await run(damaged, caseId, variant, label === 'module');
+    assert.equal(failure.status, 2);
+    assert.equal(failure.output.status, 'setup_failed');
+    assert.equal(failure.output.inspection_scope, 'configured_inventory');
+    assert.equal(failure.output.case, caseId);
+    assert.equal(failure.output.variant, variant);
+    assert.deepEqual(failure.output.runs, []);
+    assert.deepEqual(failure.output.run_roles, []);
+    assert.deepEqual(failure.output.failed_run, {
+      role: 'main', observations: 'unavailable', cleanup: 'not_reported'
+    });
+    assert.equal(failure.output.domain_complete, false);
+    assert.equal(failure.output.admission, 'not_evaluated');
+    assert.equal(failure.output.receipt_proof, 'not_evaluated');
+    assert.deepEqual(failure.output.diagnostics.map(d => d.code), ['SETUP_MISSING']);
+    assert.match(failure.output.diagnostics[0].message, /prepare/i);
+    await assert.rejects(readFile(path.join(damaged, relative)), {code: 'ENOENT'});
+    assert.equal(inventoryHash(await readFile(path.join(copiedRoot, relative))), payload[relative]);
+    // Selection precedes setup, even with an absent fixture packet.
+    if (label === 'packet') {
+      const unsupported = await run(damaged, 'R1-34-H01', variant);
+      assert.equal(unsupported.status, 2);
+      assert.equal(unsupported.output.status, 'selection_failed');
+      assert.deepEqual(unsupported.output.diagnostics.map(d => d.code), ['FIXTURE_SELECTION_INVALID']);
+      assert.deepEqual(unsupported.output.runs, []);
+    }
+    await rm(damaged, {recursive: true});
+    await assert.rejects(readdir(damaged), {code: 'ENOENT'});
+    await record({damaged_copy: label, removed: true, intact_copy_sha256: payload[relative]});
+  }
+  assert.deepEqual(await readdir(cwd), []);
+  await record({source_and_copy_match: true, readable_and_json_match: true, unrelated_cwd_unmodified: true});
+});
+
+test('PGB-148 source and prepared scoped inventory cases', async t => {
+  const runtime = await prepareInventoryTest(t);
+  const {packet, cwd, record} = runtime;
+  const selectors = Object.entries(inventoryCases).flatMap(([caseId, variants]) =>
+    variants.map(variant => ({caseId, variant})));
+  assert.equal(selectors.length, 29);
+  const remaining = selectors.filter(entry => entry.variant !== 'guide-and-install');
+  assert.equal(remaining.length, 28);
+  assert.deepEqual(packet.variants.map(v => [v.case, v.variant]), remaining.map(({caseId, variant}) =>
+    [caseId.replace('R1-34-', 'R1-45-'), variant]));
+  assert.deepEqual(packet.variants.filter(v => v.control).map(v => v.variant), inventoryControls);
+  const corpus = packet.variants.find(v => v.variant === 'unrelated-history');
+  for (const [rows, size] of [[corpus.unrelated_issues, 65], [corpus.unrelated_comments, 512]]) {
+    assert.equal(rows.length, size);
+    assert.equal(new Set(rows.map(row => row.id)).size, size);
+  }
+  let completeDomain;
+  for (const [index, {caseId, variant}] of remaining.entries()) {
+    const runs = await compareInventoryRoots(runtime, caseId, variant, packet.variants[index]);
+    if (variant === 'complete-domain') completeDomain = runs[0];
+    if (variant === 'unrelated-history') {
+      const {server_audit: historyAudit, ...history} = runs[0];
+      const {server_audit: ordinaryAudit, ...ordinary} = completeDomain;
+      assert.notEqual(historyAudit.before_sha256, ordinaryAudit.before_sha256);
+      assert.deepEqual(history, ordinary, 'unrelated history changes only the mounted server corpus');
+    }
+  }
+  assert.deepEqual(await readdir(cwd), []);
+  await record({
+    source_and_copy_match: true, main_cases_per_runtime: remaining.length,
+    controls_per_runtime: inventoryControls.length, unrelated_cwd_unmodified: true
+  });
 });
