@@ -263,8 +263,9 @@ Pointer state distinguishes validated present, enumerated absent and unknown.
 A raw 404 cannot establish absence. Exact record/digest matches establish
 acquisition consistency and do not grant receipt or admission authority.
 
-State PGB-84/83 supplies confirmed `retained_members`, `pending_intents` and
-`retained_complete` through its inventory projection. Core PGB-162 owns raw-fact
+State PGB-84/83 supplies `retained_members` and `pending_intents` through its
+inventory projection. The caller supplies explicit `retained_complete` based
+on whether State confirmed a complete inventory. Core PGB-162 owns raw-fact
 normalization, semantic snapshot/envelope construction, recorded parser behavior
 and existing policy evaluation. PGB-175 owns ordinary worker proof compatibility.
 PGB-87 owns conditional original-attempt admission/publication/transition; State

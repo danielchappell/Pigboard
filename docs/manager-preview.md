@@ -1009,9 +1009,9 @@ verification copies.
 ### Verify the installed guide and receipt for H04
 
 The `R1-34-H04 / guide-and-install` selector replays the H01
-`complete-domain` behavior. The designated human check requires an approved
-source checkout at the saved receipt's exact commit, the prepared source
-dependencies and the actual installed copy from that receipt. Open
+`complete-domain` behavior. The designated human check requires Node 20+, Git,
+an approved source checkout at the saved receipt's exact commit, the prepared
+source dependencies and the actual installed copy from that receipt. Open
 `<receipt.skills>/work-validator/docs/manager-preview.md` and follow its copied
 import and fixture commands. Then run the independent receipt check from the
 approved source checkout:

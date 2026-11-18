@@ -253,7 +253,7 @@ const inventoryGuide = 'docs/manager-preview.md';
 const inventoryFixturePin = '27384cd88441ba7f9e5b13e852ea2efc37bc08d3295e727ee991188d9e75ace3';
 const inventoryHash = bytes => createHash('sha256').update(bytes).digest('hex');
 
-async function assertInventoryManifest({receipt, expectedCommit, sourceRoot, committed = false}) {
+async function assertInventoryManifest({receipt, expectedCommit, sourceRoot, commitRoot = null}) {
   assert.equal(receipt.commit, expectedCommit, 'receipt revision matches the chosen source revision');
   for (const key of ['skills', 'manifest']) {
     assert(typeof receipt[key] === 'string' && path.isAbsolute(receipt[key]), 'absolute receipt ' + key);
@@ -275,8 +275,10 @@ async function assertInventoryManifest({receipt, expectedCommit, sourceRoot, com
   const payload = {};
   for (const relative of paths) {
     const source = await readFile(path.join(sourceRoot, relative));
-    if (committed) {
-      const approved = execFileSync('git', ['show', expectedCommit + ':' + relative], {cwd: sourceRoot});
+    if (commitRoot !== null) {
+      const approved = execFileSync('git', ['show', expectedCommit + ':' + relative], {
+        cwd: commitRoot, maxBuffer: source.length + 1
+      });
       assert(source.equals(approved), relative + ' approved revision bytes');
     }
     const copiedPath = path.join(copiedRoot, relative);
@@ -390,7 +392,7 @@ async function prepareInventoryTest(t) {
     path.join(root, inventoryHarness), '--case', caseId, '--variant', variant,
     '--runtime', root, ...(json ? ['--json'] : [])
   ], !json);
-  return {sourceRoot, copiedRoot, cwd, run, invoke, packet, payload, record, prepared, fixtureCommit};
+  return {sourceRoot, copiedRoot, cwd, run, invoke, packet, payload, record, prepared, fixtureCommit, fixtureRoot: o.source};
 }
 
 function deterministicInventoryReport(report) {
@@ -570,15 +572,14 @@ test('PGB-148 focused inventory pagination and import effects', async t => {
   t.diagnostic('R1-34-H04 import effect sentinels denied at disposable root ' + probeRoot);
 });
 
-async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, receiptIdentity = null) {
+async function verifyInventoryGuide(runtime, receipt, {expectedCommit, commitRoot, label, receiptIdentity = null}) {
   const {sourceRoot, cwd, invoke, record} = runtime;
   const {copiedRoot, manifestPath, manifestHash, payload} = await assertInventoryManifest({
-    receipt, expectedCommit, sourceRoot, committed: receiptIdentity !== null
+    receipt, expectedCommit, sourceRoot, commitRoot
   });
   const guide = await readFile(path.join(copiedRoot, inventoryGuide), 'utf8');
   for (const marker of ['inspectJiraInventory', 'R1-34-H04', '--runtime', 'work-validator']) assert(guide.includes(marker));
   const loader = path.join(path.dirname(cwd), 'inventory-import-loader-' + label + '.mjs');
-  const register = path.join(path.dirname(cwd), 'inventory-import-register-' + label + '.mjs');
   await writeFile(loader, `
     const allowed = ${JSON.stringify(pathToFileURL(copiedRoot + path.sep).href)};
     export async function resolve(specifier, context, next) {
@@ -590,10 +591,6 @@ async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, rec
       }
       return resolved;
     }
-  `);
-  await writeFile(register, `
-    import {register} from 'node:module';
-    register(${JSON.stringify(pathToFileURL(loader).href)});
   `);
   const program = `
     import {readFileSync} from 'node:fs';
@@ -609,7 +606,11 @@ async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, rec
     });
     console.log(JSON.stringify({report: result.report, resolver_calls: resolverCalls}));
   `;
-  const library = await invoke(['--import', register, '--input-type=module', '--eval', program, copiedRoot]);
+  // Node 20.0 supports the loader flag and emits an ExperimentalWarning for it.
+  const library = await invoke([
+    '--no-warnings', '--experimental-loader', pathToFileURL(loader).href,
+    '--input-type=module', '--eval', program, copiedRoot
+  ]);
   assert.equal(library.status, 0);
   assert.equal(library.output.resolver_calls, 0);
   assert.equal(library.output.report.status, 'invalid');
@@ -618,7 +619,7 @@ async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, rec
   assert.deepEqual(library.output.report.diagnostics.map(d => d.code), ['INPUT_INVALID']);
 
   const verified = {
-    guide_verification: label, receipt: receiptIdentity, revision: expectedCommit,
+    guide_verification: label, receipt: receiptIdentity, revision: expectedCommit, committed_source_root: commitRoot,
     manifest: manifestPath, manifest_sha256: manifestHash, runtime_root: copiedRoot,
     payload_hashes: payload, guarded_import: 'PASSED', resolver_calls: 0
   };
@@ -628,7 +629,7 @@ async function verifyInventoryGuide(runtime, receipt, expectedCommit, label, rec
 
 test('PGB-148 prepared inventory guide and recovery', async t => {
   const runtime = await prepareInventoryTest(t);
-  const {sourceRoot, copiedRoot, run, payload, packet, cwd, record, prepared, fixtureCommit} = runtime;
+  const {sourceRoot, copiedRoot, run, payload, packet, cwd, record, prepared, fixtureCommit, fixtureRoot} = runtime;
   const caseId = 'R1-34-H04', variant = 'guide-and-install';
   const authored = packet.variants.find(v => v.variant === 'complete-domain');
   const [expected] = await compareInventoryRoots(runtime, caseId, variant, authored);
@@ -641,15 +642,18 @@ test('PGB-148 prepared inventory guide and recovery', async t => {
     assert.deepEqual(deterministicInventoryReport(result.output.report), expected.report);
   }
 
-  await verifyInventoryGuide(runtime, prepared, fixtureCommit, 'disposable');
+  await verifyInventoryGuide(runtime, prepared, {
+    expectedCommit: fixtureCommit, commitRoot: fixtureRoot, label: 'disposable'
+  });
   if (Object.hasOwn(process.env, 'PGB148_VERIFY_RECEIPT')) {
     const receiptPath = process.env.PGB148_VERIFY_RECEIPT;
     assert(path.isAbsolute(receiptPath), 'PGB148_VERIFY_RECEIPT is an absolute saved receipt path');
     const receiptBytes = await readFile(receiptPath);
     const receipt = JSON.parse(receiptBytes);
     const revision = git(sourceRoot, 'rev-parse', 'HEAD');
-    const verified = await verifyInventoryGuide(runtime, receipt, revision, 'designated', {
-      path: receiptPath, sha256: inventoryHash(receiptBytes)
+    const verified = await verifyInventoryGuide(runtime, receipt, {
+      expectedCommit: revision, commitRoot: sourceRoot, label: 'designated',
+      receiptIdentity: {path: receiptPath, sha256: inventoryHash(receiptBytes)}
     });
     t.diagnostic('Verified receipt ' + receiptPath + ' (SHA256 ' + verified.receipt.sha256 +
       ') at ' + revision + '. All 44 payload hashes match. Guarded read-only import used ' + verified.runtime_root);
@@ -677,6 +681,13 @@ test('PGB-148 prepared inventory guide and recovery', async t => {
     assert.match(failure.output.diagnostics[0].message, /prepare/i);
     await assert.rejects(readFile(path.join(damaged, relative)), {code: 'ENOENT'});
     assert.equal(inventoryHash(await readFile(path.join(copiedRoot, relative))), payload[relative]);
+    if (label === 'module') {
+      const legacy = await run(damaged, 'R1-45-H01', 'complete-domain');
+      assert.equal(legacy.status, 2);
+      assert.equal(legacy.output.status, 'setup_failed');
+      assert.equal(legacy.output.inspection_scope, 'requested_issues');
+      assert.deepEqual(legacy.output.diagnostics.map(d => d.code), ['SETUP_MISSING']);
+    }
     // Selection precedes setup, even with an absent fixture packet.
     if (label === 'packet') {
       const unsupported = await run(damaged, 'R1-34-H01', variant);

@@ -421,7 +421,7 @@ if(isMain){
   else{console.log(selected.case+' / '+selected.variant+': literal oracle matched. Human acceptance remains a separate review.');for(const run of runs)console.log(JSON.stringify(run.report,null,2));}
  }catch(error){
   const selectionFailed = !selected;
-  const selectedInventory = !!selected && (selected.case.startsWith('R1-34-') || selected.case.startsWith('R1-45-'));
+  const selectedInventory = selected?.case.startsWith('R1-34-');
   const setupFailed = !selectionFailed && (selected.case.startsWith('R1-34-') ?
    error?.code === 'FIXTURE_SETUP_MISSING' : ['ENOENT','ERR_MODULE_NOT_FOUND'].includes(error?.code));
   const status=selectionFailed?'selection_failed':setupFailed?'setup_failed':'fixture_failed';
