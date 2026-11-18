@@ -267,7 +267,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  const auditStart=provider.audit.length;
  const snapshot = () => structuredClone([...provider.rows.values()]);
  const writeAudit = (start = auditStart) => provider.audit.slice(start).filter(call => call.name === 'TransactWriteCommand');
- const sender = sendCase ? {before: snapshot(), at_send: [], comment_observations: []} : null;
+ const sender = sendCase ? {before: snapshot(), at_send: [], transition_starts: 0, comment_observations: []} : null;
  let restoreClock;
  async function observeSendState(name, input) {
    const before = snapshot(), audit = provider.audit.length;
@@ -283,12 +283,21 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
    if (boundary === 'prepare' && sendCase.expireAfterPrepare && result.status === 'confirmed') {
      assertAtomicSenderPrepare(sender.prepare);
      const original = Object.getOwnPropertyDescriptor(performance, 'now');
-     const actualNow = performance.now.bind(performance);
-     const expired = actualNow() + config.manager.invocation_timeout_seconds * 1000;
-     Object.defineProperty(performance, 'now', {configurable: true, value: () => expired});
+     const actualNow = performance.now;
+     const unexpired = performance.now();
+     const expired = unexpired + config.manager.invocation_timeout_seconds * 1000;
+     const clock = {unexpired, expired, readings: [], restored: false};
+     sender.deadline_clock = clock;
+     Object.defineProperty(performance, 'now', {configurable: true, value: () => {
+       // Let the manager's stage check pass once before expiring in the writer's preflight check.
+       const time = sendCase.expireAfterPrepare === 'writer' && clock.readings.length === 0 ? unexpired : expired;
+       clock.readings.push(time);
+       return time;
+     }});
      restoreClock = () => {
        if (original) Object.defineProperty(performance, 'now', original);
        else delete performance.now;
+       clock.restored = performance.now === actualNow;
      };
    }
    return result;
@@ -411,7 +420,16 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  }catch(error){serverError=error;res.writeHead(500);res.end('{}');}});
  server.on('connection',s=>{sockets.add(s);s.on('close',()=>sockets.delete(s));});await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve);});
  const original=https.request,uuid=crypto.randomUUID;
- https.request=(url,options,callback)=>{if(url.origin!=='https://api.atlassian.com')workerCalls++;assert.equal(url.origin,'https://api.atlassian.com');assert(url.pathname.startsWith('/ex/jira/00000000-0000-0000-0000-000000000001/rest/api/3/'));assert.equal(options.rejectUnauthorized,true);assert.equal(options.agent,false);assert.equal(options.headers['Accept-Encoding'],'identity');return original(new URL('https://localhost:'+server.address().port+url.pathname.replace('/ex/jira/00000000-0000-0000-0000-000000000001','')+url.search),{...options,hostname:'127.0.0.1',servername:'localhost',ca:tls.ca},callback);};
+ https.request=(url,options,callback)=>{
+  if(url.origin!=='https://api.atlassian.com')workerCalls++;
+  assert.equal(url.origin,'https://api.atlassian.com');
+  assert(url.pathname.startsWith('/ex/jira/00000000-0000-0000-0000-000000000001/rest/api/3/'));
+  assert.equal(options.rejectUnauthorized,true);assert.equal(options.agent,false);assert.equal(options.headers['Accept-Encoding'],'identity');
+  const local = new URL('https://localhost:'+server.address().port+url.pathname.replace('/ex/jira/00000000-0000-0000-0000-000000000001','')+url.search);
+  const request = original(local,{...options,hostname:'127.0.0.1',servername:'localhost',ca:tls.ca},callback);
+  if (sender && options.method === 'POST' && local.pathname.endsWith('/transitions')) sender.transition_starts++;
+  return request;
+ };
  crypto.randomUUID=()=>[p.attempt_id,p.fresh_attempt_id][uuidIndex++];syncBuiltinESMExports();
  let result,second,first;const stdout=process.stdout.write,info=console.info;if(host==='handler'){process.stdout.write=function(chunk,...args){if(typeof chunk!=='string'||!chunk.startsWith('{"summary":'))return stdout.call(this,chunk,...args);if(logFailure)throw Error('DUMMY_SECRET_LOG');healthLogs.push(JSON.parse(chunk));return true;};console.info=()=>{if(logFailure)throw Error('DUMMY_SECRET_LOG');};}try{
   const configText=JSON.stringify(config);
@@ -706,6 +724,7 @@ export function assertSenderJourney(evidence, testCase) {
   const rows = senderState(after);
   const {attempt, stream, companion} = rows;
   assert.equal(evidence.worker_calls, 0);
+  assert.equal(sender.transition_starts, testCase.sends);
   assert.equal(sends.length, testCase.sends);
   assert.equal(mutations.filter(row => row.path === packet.oracle.mutations[2].path).length, testCase.sends);
   assert.equal(second.writes, 0);
@@ -735,6 +754,7 @@ export function assertSenderJourney(evidence, testCase) {
   }
 
   if (sends.length) {
+    assert.equal(result.writes, 3);
     const {provider_reply: reply} = sender;
     assert.equal(reply.http_status, testCase.wire_status);
     assert.equal(reply.complete, testCase.fault !== 'transition:incomplete');
