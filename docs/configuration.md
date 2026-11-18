@@ -288,18 +288,17 @@ file, including manager controls; rebuild the pinned package for control updates
 `transition_edges` may be empty for preview. Each closed row has numeric
 `project_id`, `transition_id`, explicit unique nonempty `source_status_ids`,
 `target_status_id` and boolean `global`. Project/transition pairs are unique and
-refer to configured projects. Ordinary apply requires the configured Ready
-to Work source and In Progress target with `global: false`; an available transition
-ID alone proves no source condition. Multiple source entries are retained facts,
-not a claim Jira performs a conditional write. Missing/unknown/global edges cannot
-authorize apply. These trusted settings are exposed through the host projection;
-preview never turns them into execution authority. The package includes the
-ordinary sender, but apply additionally requires the activation controls below.
+refer to configured projects. Ordinary apply requires a unique project edge
+matching the proposed source and In Progress target with `global: false`.
+The source is Ready to Work for new work and Rework Queued for opted-in same-PR
+repair. An available transition ID alone proves no source condition. The source
+list records configured constraints. Jira and State still use separate effects.
+Missing, ambiguous or global edges hold the selected admission.
 
-Ordinary apply uses the existing manager activation attestations and configured
-non-global, source-restricted Ready to Work → In Progress transition edge. The
-operation-only scheduled event cannot override configuration or scope. Sender
-capability comes from the reviewed package, with initial schedule and writes off.
+Ordinary apply uses the existing manager activation attestations. The
+operation-only scheduled event takes its configuration and scope from the host.
+Sender capability comes from the reviewed package, with initial schedule and
+writes off.
 
 For apply mode, the host requires
 `310 + 2 * scan_timeout_ms / 1000 + 6 * request_timeout_ms / 1000 <= invocation_timeout_seconds`.
@@ -337,10 +336,11 @@ time are outputs retained in the existing installation extensions, not customer
 authored configuration. Use the existing verified configure lifecycle to change
 enabled settings. See [health states and safe recovery](manager-health.md).
 
-Detailed scan summaries and their health states describe preview scans. Apply retains
-its basic invocation/result logs and native Lambda metrics; these do not become
-preview completion metrics or certify apply health. A mode/configuration change
-changes the evidence identity, so old preview success cannot establish apply health.
+Preview and apply processing use distinct health evidence. The source apply
+runtime adds a [processing summary](manager-apply.md#inspect-processing-completion)
+alongside its original result and effects. Mode and configuration changes change
+the evidence identity. Check current apply health against the current apply
+installation, package and enablement identity.
 
 ## Preview recorded same-PR rework
 
@@ -351,13 +351,14 @@ propose supported own-ticket repairs. Strings such as `"true"` are invalid.
 The complete canonical configuration digest binds this value, including the
 distinction between omission and explicit false.
 
-This flag enables preview only. It does not enable the repair sender, launch a
-worker, check external PR freshness or activate an installation. Existing ordinary
-new-work sending is unchanged; repair sending belongs to PGB-88. See
-[recorded preview prerequisites and recovery](manager-preview.md#recorded-same-pr-repair-preview).
-A compatible source/prepared pin must contain this field. Existing installations
-may toggle it through [same-source configure](manager-installation.md#recorded-repair-preview-configuration);
-source upgrades remain a separate authorized release.
+A compatible [sender package](manager-apply.md) can also admit the freshly selected
+repair with existing write authority and the direct Rework Queued → In Progress
+edge described above. Preview remains write-free. The worker checks current PR
+openness and freshness. Schedule and write activation use their existing separate
+controls. Earlier pins may support only [recorded preview](manager-preview.md#recorded-same-pr-repair-preview).
+Existing installations may toggle the flag through
+[same-source configure](manager-installation.md#recorded-repair-preview-configuration).
+Source upgrades remain a separate authorized release.
 
 ## Native handoff and attempt reads
 

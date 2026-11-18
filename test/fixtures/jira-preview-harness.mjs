@@ -52,11 +52,15 @@ const metadataFields=['author_id','update_author_id','created','updated'];
 const matchReference=(ticket_id,comment_id,record)=>({ticket_id,comment_id,record_id:record.record_id,digest:sha(record)});
 const changePath=(issueId,startAt)=>issuePath(issueId)+'/changelog?startAt='+startAt+'&maxResults=4';
 
-function nativeReceiptFixture(caseId,variant,root){
+function nativeReceiptFixture(caseId,variant,root,{ownershipConflict=false}={}){
  const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),'utf8'));
  const packet=read('test/fixtures/jira-preview-cases.json'),native=packet.native_receipts;
- const oracle=caseId===positiveReceipts?native.positive[variant]:native.negative[variant];
+ const oracle=structuredClone(caseId===positiveReceipts?native.positive[variant]:native.negative[variant]);
  if(!oracle)throw Error('Use a prescribed case and variant.');
+ if(ownershipConflict){
+  assert.equal(variant,'current-qa');
+  Object.assign(oracle,{status:'incomplete',code:'CLOSURE_INCOMPLETE'});
+ }
  const baseId=oracle.base??'S06';
  const choices=baseId.startsWith('H02-')?read('test/fixtures/manager-repairs.json').cases:
   Object.values(read('test/fixtures/manager-candidates.json').ordinary_recorded).flatMap(v=>Array.isArray(v)?v:[v]);
@@ -100,9 +104,9 @@ function nativeReceiptFixture(caseId,variant,root){
   if(variant==='missing-prior-tuple')state.retained=[];
   if(variant==='edited-metadata')row.comment.updated='2026-11-01T13:34:57.123+01:00';
   const created_at='2026-11-01T12:34:55.123Z';
-  // Wrong assignment control retains a valid rework admission but claims its
+  // Wrong operation control retains a valid rework admission but claims its
   // original operation was a new-work admission under the same exact UUID.
-  const claimedOp=variant==='wrong-assignment'?'admit_ready':operation;
+  const claimedOp=variant==='wrong-operation'?'admit_ready':operation;
   const source_status_id=claimedOp==='queue_repair'?'5':claimedOp==='admit_rework'?'6':'1';
   const target_status_id=claimedOp==='queue_repair'?'6':'2';
   const attempt={schema_version:1,installation_id:binding.installation_id,domain_id:binding.domain_id,
@@ -122,6 +126,12 @@ function nativeReceiptFixture(caseId,variant,root){
     pb_capture_status:204,pb_capture_received_at:native.utc_timestamp,pb_capture_provider_request_id:'mock-request'}};
   state.pending_intents=[{project_id:attempt.project_id,label:attempt.label,ticket_id:attempt.ticket_id,attempt_id:attempt.attempt_id}];
   target=publication;
+  if(variant==='wrong-assignment'){
+   const prior=comments.find(c=>c.comment.id==='2019');
+   const earlier=matchReference(prior.ticket_id,prior.comment.id,prior.record);
+   assert.notDeepEqual(earlier,assignment);
+   nativeIssue.pointer.assignment=earlier;
+  }
   if(operation==='queue_repair'){
    original={configInput:JSON.stringify(config),binding:{...binding}};
    config.manager.controls.maintenance=true;binding.configuration_digest=sha(config);
@@ -140,8 +150,12 @@ function nativeReceiptFixture(caseId,variant,root){
  const search=(predicate,issues)=>push(searchPath,{isLast:true,issues:issues.map(wireIssue)},
   {method:'POST',request_body:{jql:'project = "100" AND '+predicate+' ORDER BY id ASC',maxResults:4,fields:jiraFields}});
  const rows=snapshot.issues,rootIssue=rows.find(i=>i.id==='900'),scoped=rows.filter(i=>i.parent_id===rootIssue.id);
- const nativeIds=baseId.startsWith('H02-')?['1000','1001','1002','900','1003']:['1000','900','1100'];
- search('labels = "pigboard"',[rootIssue]);
+ const roots=[rootIssue],nativeIds=baseId.startsWith('H02-')?['1000','1001','1002','900','1003']:['1000','900','1100'];
+ if(ownershipConflict){
+  const competing={...rootIssue,id:'901',key:'EX-91'};
+  rows.push(competing);roots.push(competing);nativeIds.push(competing.id);
+ }
+ search('labels = "pigboard"',roots);
  for(const id of nativeIds){
   const native=rows.find(i=>i.id===id),path=issuePath(id),own=comments.filter(c=>c.ticket_id===id).map(commentWire);
   push(path+issueFields,wireIssue(native));
@@ -149,13 +163,13 @@ function nativeReceiptFixture(caseId,variant,root){
   if(native.pointer)push(path+'/properties/pigboard.work-context',{key:'pigboard.work-context',value:native.pointer});
   for(let startAt=0;startAt<Math.max(1,own.length);startAt+=4)push(path+'/comment?startAt='+startAt+'&maxResults=4&orderBy=created',
    {startAt,maxResults:4,total:own.length,comments:own.slice(startAt,startAt+4)});
-  if(id==='900')search('parent = "900"',scoped);
+  if(roots.some(root=>root.id===id))search('parent = "'+id+'"',rows.filter(i=>i.parent_id===id));
  }
  search('labels = "stream-1"',scoped);
  const independentExact={
   S06:operation==='recorded-completion'?['2001','2004','2002','2003',...(variant==='current-qa-outstanding-request'?['2099']:[])]:
    ['2001','2002','2003','2004'],
-  'repair-independent-complete':variant==='wrong-assignment'?['2024','2019','2020','2021','2022','2023','2025','2026','2027']:['2024','2023','2019','2020','2021','2022','2025','2026','2027'],
+  'repair-independent-complete':variant==='wrong-operation'?['2024','2019','2020','2021','2022','2023','2025','2026','2027']:['2024','2023','2019','2020','2021','2022','2025','2026','2027'],
   'H02-03-u1-queued-r2-arrived':['81014','81005','81009','81018','81013','81001','81002','81003','81004','81015','81016','81017','81019','81006','81007','81008','81010','81011','81012']
  };
  for(const id of independentExact[baseId]){
@@ -320,25 +334,30 @@ async function runtimeSnapshot(root, missing = [], inventory=false) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
-export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null}={}) {
+export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null,repeatReceipt=false,ownershipConflict=false}={}) {
  const selection = inventorySelection(caseId, variant);
  if (caseId.startsWith('R1-34-') && !selection) throw Error('Use a prescribed case and variant.');
  const root = path.resolve(runtime);
  const selected = selection ? await readInventoryFixture(selection, root) : null;
  return executeFixture(caseId, variant, root, {
-  control, privateProjection, authoredFixture, selection, selected
+  control, privateProjection, authoredFixture, selection, selected, repeatReceipt, ownershipConflict
  });
 }
 
-async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected}={}) {
+async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected,repeatReceipt=false,ownershipConflict=false}={}) {
  const receipt=receiptCase(caseId),guarded=!!selection||receipt;
  const inventory = guarded || caseId.startsWith('R1-45-');
  const packetPath = selection ? path.join(root, inventoryPacketPath) : path.join(here,'jira-inventory-cases.json');
  const authored = selected?.authored ?? authoredFixture ??
-  (receipt?nativeReceiptFixture(caseId,variant,root):(inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant));
+  (receipt?nativeReceiptFixture(caseId,variant,root,{ownershipConflict}):(inventory ? JSON.parse(fs.readFileSync(packetPath,'utf8')) : fixtureCases).variants.find(v => v.case === caseId && v.variant === variant));
  if (authoredFixture) assert(authoredFixture.case === caseId && authoredFixture.variant === variant);
  if (!authored) throw Error('Use a prescribed case and variant.');
  const v=structuredClone(authored),trace=[],serverTrace=[],seedPages=[];let disposable=null;
+ const receiptCalls=v.script.length;
+ if(repeatReceipt){
+  assert.equal(variant,'original-admission');
+  v.script=[...v.script,...v.script];
+ }
  if(control){assert(v.control);if(v.control.bound)v.config.jira.read_bounds[v.control.bound]=v.control.value;if(v.control.immediate){delete v.resolver_delay_ms;for(const step of v.script){delete step.header_delay_ms;delete step.body_delay_ms;}}v.oracle=v.control.oracle;if(v.control.script)v.script=v.control.script;}
  for(const entry of fixtureCases.variants)for(const [i,step]of entry.script.entries())if(Object.hasOwn(step,'wire_prefix')){if(entry.variant==='total-byte-limit'){assert.equal(i,0);assert.equal(step.wire_prefix,' '.repeat(256));}else{assert.equal(entry.case,'R1-42-H02');assert(['exact-wire-stop','exact-two-issue-control'].includes(entry.variant));assert.equal(i,3);assert.equal(step.wire_prefix,' '.repeat(600));}}
  if(privateProjection){assert(v.private_projection);if(v.private_projection.omit_wire_prefix)delete v.script[0].wire_prefix;v.config.jira.read_bounds.max_total_response_bytes=v.private_projection.bound;v.oracle=v.private_projection.oracle;}
@@ -505,8 +524,9 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   if (receipt) {
    const moduleUrl=pathToFileURL(path.join(moduleRoot,receiptModulePath)).href;
    const {bindJiraReceipts}=await withRequiredSetup(()=>import(moduleUrl));
+   let ports;
    inspect=(configInput,selector,{resolveSecret})=>{
-    const ports=bindJiraReceipts({configInput,resolveSecret,binding:v.binding,state:v.state,original:v.original});
+    ports??=bindJiraReceipts({configInput,resolveSecret,binding:v.binding,state:v.state,original:v.original});
     return v.reconcile?ports.readReconciliationFacts(selector):ports.readRecordedReceipt(selector);
    };
    https.request=redirectRequest;
@@ -519,7 +539,21 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    https.request = redirectRequest;
    syncBuiltinESMExports();
   }
-  acquired=await inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});return fixtureCases.token;}});
+  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});return fixtureCases.token;}});
+  acquired=await invoke();
+  if(repeatReceipt){
+   assert.equal(acquired.status,'complete');
+   const original=JSON.stringify(acquired.data);
+   const prior=acquired.data;
+   prior.publication.status='incomplete';prior.publication.code='TEST_ANNOTATION';
+   prior.publication_observations.pointer.assignment.comment_id='9001';
+   prior.publication_observations.comments[0].reference.record_id='00000000-0000-4000-8000-000000000099';
+   prior.receipt_input.trusted.manager_assignments[0].assignment.digest='sha256:'+'9'.repeat(64);
+   prior.proof.target.comment_id='9001';
+   acquired=await invoke();
+   assert.equal(acquired.status,'complete');
+   assert.equal(JSON.stringify(acquired.data),original);
+  }
   if(v.resolver==='late')await acknowledgeLate(true);
  }finally{
   try{if(lateResolve&&lateDelivered===0)await acknowledgeLate(false);}finally{
@@ -534,7 +568,8 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   const report=JSON.parse(JSON.stringify(acquired));
   assert.equal(effects,0);assert.equal(serverError,null);assert.equal(redirectRequests,0);
   assert.deepEqual(trace,v.script.map(step=>({method:step.method??'GET',path:step.path})),JSON.stringify(report));
-  assert.deepEqual(serverTrace,trace);assert.equal(resolverCalls,v.resolverExpected);
+  assert.deepEqual(serverTrace,trace);assert.equal(resolverCalls,v.resolverExpected*(repeatReceipt?2:1));
+  const currentTrace=repeatReceipt?trace.slice(receiptCalls):trace;
   assert.equal(report.status,v.oracle.status,JSON.stringify({report,proof:acquired.data?.proof?.diagnostics??acquired.data?.proof?.validation?.diagnostics}));
   assert.equal(report.code,v.oracle.code);
   for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference,'pigboard-handoff/v1'])
@@ -542,22 +577,39 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   assert.equal(report.writes,0);assert.equal(report.execution_authorized,false);
   assert(!Object.hasOwn(report,'data'));
   if(report.counters){
-   assert.equal(report.counters.requests_attempted,trace.length);
-   assert.equal(report.counters.requests_completed+report.counters.requests_failed,trace.length);
+   assert.equal(report.counters.requests_attempted,currentTrace.length);
+   assert.equal(report.counters.requests_completed+report.counters.requests_failed,currentTrace.length);
    assert.equal(report.cleanup.resolver,'settled');
    assert(report.counters.elapsed_ms<=report.limits.scan_timeout_ms+100);
    assert(report.counters.response_bytes<=report.limits.max_total_response_bytes);
    assert(report.counters.observation_bytes<=report.limits.max_total_response_bytes);
-   assert.equal(report.counters.search_pages+report.counters.comment_pages+(report.counters.changelog_pages??0),trace.filter(t=>t.method==='POST'||t.path.includes('startAt=')).length);
+   assert.equal(report.counters.search_pages+report.counters.comment_pages+(report.counters.changelog_pages??0),currentTrace.filter(t=>t.method==='POST'||t.path.includes('startAt=')).length);
   }
   const {history,publication,receipt_input,publication_observations,proof}=acquired.data??{};
+  if(v.oracle.status==='complete'){
+   assert(receipt_input,'Complete native proof requires its exact envelope.');
+   assert(proof,'Complete native proof requires its recorded evaluation.');
+   if(v.reconcile){
+    assert.equal(acquired.data.complete,true);
+    assert.equal(history?.status,'complete');
+    assert.equal(publication?.status,'complete');
+    assert(publication_observations?.comments?.length,'Complete publication requires native observations.');
+    assert(publication_observations.pointer,'Complete publication requires the observed pointer.');
+   }
+  }
+  if(ownershipConflict){
+   assert(report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'&&d.message.includes('competing Epic')));
+   assert.equal(receipt_input,null);
+  }
   let observed=null;
   if(v.oracle.history_status)assert.equal(history.status,v.oracle.history_status);
   if(history?.status==='complete'||variant==='missing-page')assert.deepEqual(history.items,v.historyItems);
   if(variant==='missing-page'||variant==='shared-budget-exhausted')assert.notEqual(history.status,'complete');
   if(receipt_input){
    assert.deepEqual(receipt_input.target,v.target);assert.equal(receipt_input.consumer,'manager');
-   assert.equal((proof.validation??proof).valid,true);assert.equal((proof.validation??proof).execution_authorized,false);
+   const assessed=proof.validation??proof;
+   assert.equal(assessed.valid,true);assert.equal(assessed.execution_authorized,false);
+   assert.equal(assessed.purpose,v.reconcile?'recorded-history':'recorded-completion');
    observed={target:receipt_input.target,proof_purpose:(proof.validation??proof).purpose,publication,history,native_times:null,capture_digest:null};
    if(v.reconcile){
     const native=receipt_input.comment_pages.filter(p=>p.ticket_id===v.target.ticket_id).flatMap(p=>p.comments).find(c=>c.id===v.target.comment_id);

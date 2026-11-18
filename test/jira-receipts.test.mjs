@@ -29,3 +29,17 @@ test('native read selectors reject accessors without invoking them or the resolv
  }
  assert.equal(getters,0);assert.equal(resolves,0);
 });
+
+test('completed native result values cannot change a second read on the same binding',async()=>{
+ const result=await runFixture('PGB-163-H01','original-admission',source,{repeatReceipt:true});
+ assert.equal(result.report.status,'complete');
+ assert.equal(result.resolver_calls,2);
+ assert(result.oracle_matched);
+});
+
+test('native reader preserves an actionable bounded composition failure',async()=>{
+ const result=await runFixture('PGB-163-H01','current-qa',source,{ownershipConflict:true});
+ assert.equal(result.report.code,'CLOSURE_INCOMPLETE');
+ assert(result.report.diagnostics.some(d=>d.code==='OWNERSHIP_CONFLICT'));
+ assert.equal(result.effects,0);
+});

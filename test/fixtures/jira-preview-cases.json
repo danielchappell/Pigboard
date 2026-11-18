@@ -9632,6 +9632,13 @@
         "base": "repair-independent-complete",
         "read": "admit_rework",
         "status": "incomplete",
+        "code": "ASSIGNMENT_MISMATCH",
+        "history_status": "complete"
+      },
+      "wrong-operation": {
+        "base": "repair-independent-complete",
+        "read": "admit_rework",
+        "status": "incomplete",
         "code": "MANAGER_TARGET_MISMATCH",
         "history_status": "complete"
       },

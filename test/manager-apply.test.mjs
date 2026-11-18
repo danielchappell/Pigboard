@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {runApplyFixture,packet} from '../scripts/test-manager-apply.mjs';
+import {runApplyFixture,runRepairGroup,packet} from '../scripts/test-manager-apply.mjs';
 import {chooseOrdinaryStream} from '../lib/manager/apply.mjs';
 test('R1-17-H01 ordinary admission and no replay',async()=>{
  const e=await runApplyFixture({repeat:true});assert.equal(e.result.status,'applied',JSON.stringify(e.result));assert.equal(e.result.apply.stage,'complete');assert.equal(e.result.writes,3);assert.deepEqual(e.result.apply.effects,packet.oracle.effects);assert.deepEqual(e.mutations,packet.oracle.mutations);
@@ -8,9 +8,9 @@ test('R1-17-H01 ordinary admission and no replay',async()=>{
  assert.equal(e.records.find(r=>r.kind==='attempt').outcome,'applied');assert.equal(e.second.writes,0);assert(['no_action','held'].includes(e.second.status));assert.equal(e.human_status,'NOT_RUN');
  const choices=[['2','AI-Daniel-1'],['10','AI-Daniel-2'],['10','AI-Daniel-10']].map(([project_id,label])=>({scope:{project_id,label},decision:'select',proposal:{kind:'admit_new'}}));assert.equal(chooseOrdinaryStream(choices).scope.label,'AI-Daniel-10');choices[2].decision='hold';assert.equal(chooseOrdinaryStream(choices).scope.label,'AI-Daniel-2');
 });
-test('R1-17-H02 uncertain intent',async()=>{const e=await runApplyFixture({fault:'intent:after',repeat:true});assert.equal(e.result.status,'held');assert.equal(e.result.apply.stage,'begin');assert.equal(e.result.apply.effects.intent,'unconfirmed');assert.equal(e.result.writes,0);assert.equal(e.second.writes,0);assert.equal(e.records.filter(r=>r.kind==='attempt').length,1);assert.equal(e.mutations.length,0);assert.equal(e.worker_calls,0);const dispatch=await runApplyFixture({fault:'intent:after',twoStreams:true});const oracle=packet.oracle.uncertain_intent_dispatch;assert.deepEqual(dispatch.result.apply.scope,oracle.selected_scope);assert.equal(dispatch.result.apply.ticket_id,oracle.selected_ticket_id);assert.equal(dispatch.state_calls.filter(c=>c.name==='begin').length,oracle.begin_calls);assert.equal(dispatch.mutations.length,oracle.mutations);assert(!dispatch.state_calls.some(c=>c.name==='begin'&&c.input.stream.label===oracle.second_stream_label));});
+test('R1-17-H02 uncertain intent',async()=>{const e=await runApplyFixture({fault:'intent:after',repeat:true});assert.equal(e.result.status,'held');assert.equal(e.result.apply.stage,'begin');assert.equal(e.result.apply.effects.intent,'unconfirmed');assert.match(e.result.diagnostics[0].message,/check State.*original attempt ID.*Jira writes did not start/i);assert.equal(e.result.writes,0);assert.equal(e.second.writes,0);assert.equal(e.records.filter(r=>r.kind==='attempt').length,1);assert.equal(e.mutations.length,0);assert.equal(e.worker_calls,0);const dispatch=await runApplyFixture({fault:'intent:after',twoStreams:true});const oracle=packet.oracle.uncertain_intent_dispatch;assert.deepEqual(dispatch.result.apply.scope,oracle.selected_scope);assert.equal(dispatch.result.apply.ticket_id,oracle.selected_ticket_id);assert.equal(dispatch.state_calls.filter(c=>c.name==='begin').length,oracle.begin_calls);assert.equal(dispatch.mutations.length,oracle.mutations);assert(!dispatch.state_calls.some(c=>c.name==='begin'&&c.input.stream.label===oracle.second_stream_label));});
 test('R1-17-H03 global-only transition',async()=>{const e=await runApplyFixture({global:true});assert.equal(e.result.status,'held');assert.equal(e.result.code,'SOURCE_EDGE_REQUIRED');assert.equal(e.result.writes,0);assert.equal(e.records.filter(r=>r.kind==='attempt').length,0);assert.equal(e.worker_calls,0);});
-for(const fault of packet.oracle.fault_positions)test('R1-17-H02 prescribed boundary '+fault,async()=>{const e=await runApplyFixture({fault,repeat:true});assert.equal(e.result.status,'held',fault);assert.equal(e.injected,true,fault);assert.equal(e.worker_calls,0,fault);const count=e.records.filter(r=>r.kind==='attempt').length;assert(count<=1,fault);if(!fault.startsWith('member:')&&fault!=='intent:before')assert.equal(e.second.writes,0,fault);if(fault==='intent:before'){const oracle=packet.oracle.pre_intent_fence;assert.equal(e.result.apply.stage,oracle.first_stage);assert.equal(e.result.writes,oracle.first_writes);assert.equal(e.second.status,oracle.fresh_status);assert.equal(e.second.writes,oracle.fresh_writes);const begins=e.state_calls.filter(c=>c.name==='begin');assert.equal(begins.length,2);assert.equal(begins[0].input.attempt.attempt_id,oracle.original_attempt_id);assert.equal(begins[1].input.attempt.attempt_id,oracle.fresh_attempt_id);assert.equal(begins[0].input.expected_installation_revision,oracle.first_begin_expected_installation_revision);assert.equal(begins[1].input.expected_installation_revision,oracle.fresh_begin_expected_installation_revision);const first=e.state_calls.indexOf(begins[0]),fence=e.state_calls.slice(first+1).find(c=>c.name==='retainMembers');assert.equal(fence.input.expected_installation_revision,oracle.fresh_retain_expected_installation_revision);assert.equal(fence.result.status,'confirmed');assert.equal(fence.result.data.installation_revision,oracle.fresh_retain_confirmed_installation_revision);const coherent=e.state_calls[e.state_calls.indexOf(fence)+1];assert.equal(coherent.name,'readInventory');assert.equal(coherent.result.status,'confirmed');assert.equal(coherent.result.data.installation.revision,oracle.fresh_retain_confirmed_installation_revision);assert.equal(begins[1].result.status,'confirmed');assert.equal(e.records.find(r=>r.kind==='attempt').attempt_id,oracle.fresh_attempt_id);assert.deepEqual(e.mutations,packet.oracle.fresh_mutations);assert.deepEqual(e.events.slice(e.events.indexOf('state:begin')+1),packet.oracle.effect_order);}const proof=packet.oracle.proof_boundary_injections[fault];if(proof){assert.equal(e.result.apply.stage,proof.expected_stage);assert.equal(e.result.writes,proof.writes);assert.equal(e.result.apply.effects[proof.blocked_effect],'not_attempted');}if(fault==='finalize:after'){assert.equal(e.result.apply.effects.transition,'confirmed');assert.equal(e.result.apply.effects.finalization,'unconfirmed');}else assert.notEqual(e.result.status,'applied',fault);});
+for(const fault of packet.oracle.fault_positions)test('R1-17-H02 prescribed boundary '+fault,async()=>{const e=await runApplyFixture({fault,repeat:true});assert.equal(e.result.status,'held',fault);assert.equal(e.injected,true,fault);assert.equal(e.worker_calls,0,fault);if(fault.startsWith('member:'))assert.match(e.result.diagnostics[0].message,/verify.*membership.*revisions in State.*before starting an attempt/i);const count=e.records.filter(r=>r.kind==='attempt').length;assert(count<=1,fault);if(!fault.startsWith('member:')&&fault!=='intent:before')assert.equal(e.second.writes,0,fault);if(fault==='intent:before'){const oracle=packet.oracle.pre_intent_fence;assert.equal(e.result.apply.stage,oracle.first_stage);assert.equal(e.result.writes,oracle.first_writes);assert.equal(e.second.status,oracle.fresh_status);assert.equal(e.second.writes,oracle.fresh_writes);const begins=e.state_calls.filter(c=>c.name==='begin');assert.equal(begins.length,2);assert.equal(begins[0].input.attempt.attempt_id,oracle.original_attempt_id);assert.equal(begins[1].input.attempt.attempt_id,oracle.fresh_attempt_id);assert.equal(begins[0].input.expected_installation_revision,oracle.first_begin_expected_installation_revision);assert.equal(begins[1].input.expected_installation_revision,oracle.fresh_begin_expected_installation_revision);const first=e.state_calls.indexOf(begins[0]),fence=e.state_calls.slice(first+1).find(c=>c.name==='retainMembers');assert.equal(fence.input.expected_installation_revision,oracle.fresh_retain_expected_installation_revision);assert.equal(fence.result.status,'confirmed');assert.equal(fence.result.data.installation_revision,oracle.fresh_retain_confirmed_installation_revision);const coherent=e.state_calls[e.state_calls.indexOf(fence)+1];assert.equal(coherent.name,'readInventory');assert.equal(coherent.result.status,'confirmed');assert.equal(coherent.result.data.installation.revision,oracle.fresh_retain_confirmed_installation_revision);assert.equal(begins[1].result.status,'confirmed');assert.equal(e.records.find(r=>r.kind==='attempt').attempt_id,oracle.fresh_attempt_id);assert.deepEqual(e.mutations,packet.oracle.fresh_mutations);assert.deepEqual(e.events.slice(e.events.indexOf('state:begin')+1),packet.oracle.effect_order);}const proof=packet.oracle.proof_boundary_injections[fault];if(proof){assert.equal(e.result.apply.stage,proof.expected_stage);assert.equal(e.result.writes,proof.writes);assert.equal(e.result.apply.effects[proof.blocked_effect],'not_attempted');}if(fault==='finalize:after'){assert.equal(e.result.apply.effects.transition,'confirmed');assert.equal(e.result.apply.effects.finalization,'unconfirmed');}else assert.notEqual(e.result.status,'applied',fault);});
 test('R1-17-H03 existing six holds forbid ordinary effects',async()=>{for(const hold of packet.oracle.holds){const e=await runApplyFixture({hold});assert.equal(e.result.writes,0,hold);assert.equal(e.result.code,packet.oracle.hold_expectations[hold],hold);assert.equal(e.records.filter(r=>r.kind==='attempt').length,0,hold);assert.equal(e.worker_calls,0);}});
 
 test('R1-17-H01 ordinary Bug admission and no replay',async()=>{const e=await runApplyFixture({bug:true,repeat:true});const oracle=packet.oracle.bug;assert.equal(packet.bug_issue.fields.issuetype.id,oracle.type_id);assert.equal(e.result.status,oracle.status,JSON.stringify(e.result));assert.equal(e.result.apply.ticket_id,oracle.ticket_id);assert.equal(e.result.writes,oracle.writes);assert.equal(e.second.writes,oracle.repeat_writes);assert.deepEqual(e.mutations,packet.oracle.mutations);assert.equal(e.records.find(r=>r.kind==='attempt').outcome,'applied');});
@@ -39,16 +39,224 @@ test('R1-17-H01 isolated scoped recheck preserves selected safety',async()=>{
 
 test('apply processing reports original effects separately from globally incomplete scopes',async()=>{const e=await runApplyFixture({variant:'isolated-comments'});assert.equal(e.result.status,'applied');assert.equal(e.result.processing.result,packet.health_oracle.isolated_comments);assert.equal(e.result.processing.acquisition.domain_complete,false);assert(e.result.processing.acquisition.scopes.some(s=>!s.complete));assert.equal(e.result.processing.policy_complete,true);assert.equal(e.result.processing.recheck_complete,false);assert.deepEqual(e.mutations,packet.oracle.mutations);assert(e.result.processing.reason_codes.includes('OK'));});
 
-test('R3A-03 actual eligible recorded repair remains unsent with zero provider effects',async()=>{
- const {readFileSync}=await import('node:fs'),https=await import('node:https'),{syncBuiltinESMExports}=await import('node:module'),{performance}=await import('node:perf_hooks'),{applyOrdinary}=await import('../lib/manager/apply.mjs'),{composeOrdinarySnapshot}=await import('../lib/manager/snapshot.mjs'),{previewSnapshot}=await import('../lib/manager/decisions.mjs'),{parseConfig}=await import('../lib/config/parse.mjs'),{fixture}=await import('./helpers/state-provider.mjs');
- const c=structuredClone(packet.recorded_repair_preview.cases[0]),config={...c.config,jira:{...packet.config.jira},manager:{...packet.config.manager,rework_enabled:true}};config.jira.site=c.config.jira.site;const text=JSON.stringify(config),parsed=parseConfig(text);assert.equal(parsed.valid,true);const composed=composeOrdinarySnapshot(text,c.inspection,c.state);assert.equal(composed.valid,true);const preview=previewSnapshot(text,JSON.stringify(composed.snapshot),{mode:'ordinary'});assert.equal(preview.streams[0].proposal.kind,'admit_repair');assert.equal(chooseOrdinaryStream(preview.streams),null);
- const control={configuration_digest:parsed.configuration_digest,...Object.fromEntries(['schedule_enabled','writes_enabled','maintenance'].map(k=>[k,config.manager.controls[k]]))},binding={...fixture.binding,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,site:config.jira.site,region:config.manager.aws.region,configuration_digest:parsed.configuration_digest},tls=JSON.parse(readFileSync(new URL('./fixtures/jira-preview-tls.json',import.meta.url)));const trace=[],effects=[],calls=[];let serverError;
- const native=c.inspection.observations.issues.map(i=>({id:i.id,key:i.key,fields:{project:{id:i.project_id,key:'EX'},issuetype:{id:i.type_id},status:{id:i.status_id},parent:i.parent_id?{id:i.parent_id}:null,labels:i.labels,description:JSON.parse(i.body)}}));
- const server=https.default.createServer({key:tls.key,cert:tls.cert},async(req,res)=>{try{let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null,url=new URL(req.url,'https://fixture.invalid');trace.push({method:req.method,path:req.url});if(req.method!=='GET'&&!url.pathname.endsWith('/search/jql'))effects.push(req.url);let value;
- if(url.pathname.endsWith('/search/jql')){const jql=body.jql;value={issues:jql.includes('labels = "pigboard"')?native.filter(i=>i.fields.labels.includes('pigboard')):jql.includes('parent =')?native.filter(i=>i.fields.parent?.id==='900'):native.filter(i=>i.fields.labels.includes('stream-1')),isLast:true};}
- else{const m=url.pathname.match(/\/issue\/([^/]+)(.*)$/);assert(m);const issue=native.find(i=>i.id===m[1]||i.key===m[1]);assert(issue);const original=c.inspection.observations.issues.find(i=>i.id===issue.id),suffix=m[2],page=c.inspection.observations.comment_pages.find(p=>p.ticket_id===issue.id);
- if(suffix==='')value=issue;else if(suffix==='/properties')value={keys:original.pointer.state==='present'?[{key:'pigboard.work-context',self:`${config.jira.site}/rest/api/3/issue/${issue.id}/properties/pigboard.work-context`}]:[]};else if(suffix==='/properties/pigboard.work-context')value={key:'pigboard.work-context',value:original.pointer.value};else if(suffix==='/comment')value={startAt:0,maxResults:100,total:page.comments.length,comments:page.comments.map(comment=>({id:comment.id,author:{accountId:comment.author_id},updateAuthor:{accountId:comment.update_author_id},created:comment.created,updated:comment.updated,body:JSON.parse(comment.body)}))};else if(suffix.startsWith('/comment/')){const comment=page.comments.find(co=>co.id===suffix.split('/').at(-1));assert(comment);value={id:comment.id,author:{accountId:comment.author_id},updateAuthor:{accountId:comment.update_author_id},created:comment.created,updated:comment.updated,body:JSON.parse(comment.body)};}else throw Error('Unexpected fixture route');}
- res.writeHead(200,{'content-type':'application/json'});res.end(JSON.stringify(value));}catch(e){serverError=e;res.writeHead(500);res.end('{}');}});const sockets=new Set();server.on('connection',s=>{sockets.add(s);s.on('close',()=>sockets.delete(s));});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const original=https.default.request;https.default.request=(url,options,callback)=>{assert.equal(url.origin,'https://api.atlassian.com');return original(new URL('https://localhost:'+server.address().port+url.pathname.replace('/ex/jira/'+config.jira.connection.cloud_id,'')+url.search),{...options,hostname:'127.0.0.1',servername:'localhost',ca:tls.ca},callback);};syncBuiltinESMExports();
- try{const state={readInventory:async()=>{calls.push('readInventory');return {status:'confirmed',data:{complete:true,controls_match:true,members:c.state.retained_members,pending_attempts:[]}};},retainMembers:async()=>{effects.push('retainMembers');throw Error('Repair must not reach writer');},begin:async()=>{effects.push('begin');throw Error('Repair must not be admitted');}};const result=await applyOrdinary(text,{binding,control,state,resolveSecret:()=> 'LOCAL_REPAIR_DUMMY',producer_invocation_id:packet.producer_invocation_id,deadline:performance.now()+30000});if(serverError)throw serverError;assert.equal(result.status,'no_action',JSON.stringify(result));assert.equal(result.code,'NO_ORDINARY_SELECTION');assert.equal(result.writes,0);assert.deepEqual(effects,[]);assert.deepEqual(calls,['readInventory']);assert(trace.some(r=>r.path.endsWith('/comment/2005')));assert(trace.some(r=>r.path.endsWith('/comment/2006')));assert(trace.some(r=>r.path.includes('/comment?')));assert(Object.values(result.apply.effects).every(v=>v==='not_attempted'));}
- finally{https.default.request=original;syncBuiltinESMExports();for(const socket of sockets)socket.destroy();await new Promise(resolve=>server.close(resolve));}
+test('PGB-88 ordinary admission survives an unrelated retained ticket moving projects', async () => {
+  const moved = packet.regressions['moved-project'].moved_project;
+  const {result, state_calls, trace, mutations, records} = await runApplyFixture({variant: 'moved-project'});
+  const {project_id, label, ticket_id, epic_id, assignment} = moved.retained_member;
+  const readInventory = state_calls.find(call => call.name === 'readInventory');
+  const fromState = readInventory.result.data.members.find(member => member.ticket_id === ticket_id);
+  assert.deepEqual({project_id: fromState.project_id, label: fromState.label, epic_id: fromState.epic_id, assignment: fromState.assignment},
+    {project_id, label, epic_id, assignment});
+  const movedReads = trace.filter(row => row.method === 'GET' && row.path.startsWith('/rest/api/3/issue/'+ticket_id+'?fields='));
+  assert.equal(movedReads.length, 2);
+  assert.deepEqual(movedReads.map(row => row.response.fields.project.id), [moved.current.project_id, moved.current.project_id]);
+  const firstMovedRead = trace.indexOf(movedReads[0]);
+  assert(!trace.slice(0, firstMovedRead).some(row => row.response?.issues?.some(issue => issue.id === ticket_id)));
+  for (const id of [project_id, moved.current.project_id]) {
+    const held = result.processing.projects.find(project => project.project_id === id);
+    assert(held.reason_codes.includes('MEMBERSHIP_MISMATCH'));
+    assert.equal(held.selected_count, 0);
+  }
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.apply.ticket_id, packet.issues[1].id);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.deepEqual(mutations, packet.oracle.mutations);
+  assert.deepEqual(records.find(record => record.kind === 'member' && record.ticket_id === ticket_id), fromState);
 });
+
+for (const group of Object.keys(packet.repair_admission.groups)) {
+  for (const {id} of packet.repair_admission.groups[group]) {
+    test(group + ' ' + id, async () => {
+      await runRepairGroup(group, {caseId: id});
+    });
+  }
+}
+
+function assertPreflightLimit(e) {
+  assert.equal(e.result.status, 'held');
+  assert.equal(e.result.apply.stage, 'preflight', JSON.stringify({result: e.result,
+    mutations: e.mutations.map(({method, path}) => ({method, path})), state: e.state_calls.map(({name}) => name)}));
+  assert.equal(e.result.code, 'LIMIT_REACHED');
+  assert.deepEqual(e.state_calls.map(({name}) => name), ['readInventory']);
+  assert.deepEqual(e.mutations, []);
+  assert(!e.provider_calls.some(call => call.name === 'TransactWriteCommand'));
+  assert(e.trace.every(row => row.acquisition === 1));
+  assert.equal(e.result.writes, 0);
+  assert.deepEqual(e.records, e.initial_records);
+}
+
+for (const [label, readBounds, listedPageSize] of [
+  ['observed Jira comment page', {max_response_bytes: 8000}],
+  ['cumulative Jira reads', {max_response_bytes: 9000, max_total_response_bytes: 37000}],
+  ['the rollover page limit', {max_pages: 5}, 4],
+  ['the rollover request limit', {max_pages: 6, max_requests: 15}, 4],
+  ['the native admission envelope limit', {max_response_bytes: 9000, max_total_response_bytes: 40200}, 4]
+]) test('PGB-88 repair projects '+label+' before any effects', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds, listedPageSize}});
+  assert.equal(e.result.processing.acquisition.status, 'complete');
+  assertPreflightLimit(e);
+});
+
+for (const [label, max_response_bytes, listedPageSize] of [
+  ['room for the observed Jira comment page', 9000, undefined],
+  ['a full Jira page that rolls over before append', 8000, 4]
+]) test('PGB-88 repair with '+label+' finalizes in order', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', readBounds: {
+    max_response_bytes, max_total_response_bytes: 41000,
+    ...(listedPageSize ? {max_pages: 6, max_requests: 16} : {})
+  }, listedPageSize}});
+  assert.equal(e.result.status, 'applied', JSON.stringify(e.result));
+  assert.equal(e.result.apply.stage, 'complete');
+  assert.equal(e.result.apply.effects.finalization, 'confirmed');
+  assert.equal(e.result.writes, 3);
+  const ticket = e.result.apply.ticket_id;
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+ticket+'/')));
+  const pages = e.trace.filter(row => row.acquisition === 2 && row.path.includes('/comment?'));
+  assert(pages.some(row => row.response.total === 0 && row.response.comments.length === 0));
+  const selected = pages.filter(row => row.path.includes('/'+ticket+'/comment?'));
+  assert.deepEqual(selected.map(row => [row.response.startAt, row.response.total, row.response.comments.length]),
+    listedPageSize ? [[0, 5, 4], [4, 5, 1]] : [[0, 5, 5]]);
+  if (listedPageSize) {
+    const firstWrite = e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment'));
+    const initial = e.trace.slice(0, firstWrite);
+    const fresh = e.trace.filter(row => row.acquisition === 2 && row.status === 200);
+    const pageCount = rows => rows.filter(row => row.path.endsWith('/search/jql') || row.path.includes('/comment?')).length;
+    assert.deepEqual([initial.length, pageCount(initial)], [13, 5]);
+    assert.deepEqual([fresh.length, pageCount(fresh)], [16, 6]);
+    const bytes = value => Buffer.byteLength(JSON.stringify(value));
+    const responseBytes = rows => rows.reduce((sum, row) => sum + bytes(row.response), 0);
+    assert.deepEqual([responseBytes(initial), responseBytes(fresh)], [34277, 40250]);
+    const assignmentId = e.initial_records.find(record => record.kind === 'member').assignment.comment_id;
+    const priorExact = initial.find(row => row.path.endsWith('/comment/'+assignmentId)).response;
+    const priorListed = initial.flatMap(row => row.response.comments ?? []).find(comment => comment.id === assignmentId);
+    assert.deepEqual([priorListed, priorExact].map(comment => bytes(comment) - bytes(comment.body)), [159, 159]);
+  } else {
+    const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+    const originalReads = e.trace.slice(0, e.trace.findIndex(row => row.method === 'POST' && row.path.endsWith('/comment')));
+    const recheckReads = e.trace.filter(row => row.acquisition === 2 && row.status === 200);
+    assert(bytes(originalReads) < 37000);
+    assert(bytes(recheckReads) > 37000);
+    assert(recheckReads.every(row => bytes([row]) <= 9000));
+  }
+});
+
+test('PGB-88 repair fits observed reads with a shorter unrelated search row', async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true,
+    readBounds: {max_response_bytes: 12000, max_total_response_bytes: 53000}}});
+  const {result, trace} = e;
+  const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+  const initialReads = trace.filter(row => row.acquisition === 1 && row.status === 200);
+  // Verification reads following the publish writes do not count toward inventory.
+  const firstWrite = trace.findIndex(row => row.status === 201);
+  assert.equal(bytes(firstWrite === -1 ? initialReads : trace.slice(0, firstWrite)), 46339);
+  assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+    [['stream-1', true], ['stream-2', false]]);
+  assert(result.processing.reason_codes.includes('CHANGED_INPUT'));
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.apply.stage, 'complete');
+  assert.equal(result.writes, 3);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+  const freshReads = trace.filter(row => row.acquisition === 2 && row.status === 200);
+  assert.equal(bytes(freshReads), 52261);
+  for (const rows of [initialReads, freshReads]) {
+    const label = rows.filter(row => row.body?.jql?.includes('labels = "stream-2"'));
+    const issue = rows.filter(row => row.path.includes('/issue/1012?'));
+    assert.equal(label.length, 1);
+    assert.equal(issue.length, 1);
+    assert.deepEqual([bytes(label), bytes(issue)], [195, 5261]);
+  }
+});
+
+for (const [label, readBounds, applied] of [
+  ['request limit', {max_requests: 23, max_pages: 12}, false],
+  ['byte limit', {max_total_response_bytes: 57024}, false],
+  ['roomy positive', {}, true]
+]) test('PGB-88 repair includes physical old-key reads in the '+label, async () => {
+  const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true, oldIssueKey: true,
+    readBounds: {max_response_bytes: 9000, max_total_response_bytes: 100000, ...readBounds}}});
+  const {result, trace} = e;
+  assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+    [['stream-1', true], ['stream-2', false]]);
+  assert(result.processing.reason_codes.includes('CHANGED_INPUT'));
+  const firstWrite = trace.findIndex(row => row.status === 201);
+  const initial = firstWrite === -1 ? trace : trace.slice(0, firstWrite);
+  const fresh = trace.filter(row => row.acquisition === 2 && row.status === 200);
+  const measure = rows => ({
+    requests: rows.length,
+    bytes: rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0),
+    aliases: rows.map(row => row.path.match(/\/(1012|OLD-12)\?fields=/)?.[1]).filter(Boolean)
+  });
+  assert.deepEqual(measure(initial), {requests: 22, bytes: 51602, aliases: ['1012', 'OLD-12']});
+  if (!applied) {
+    assertPreflightLimit(e);
+    return;
+  }
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.apply.stage, 'complete');
+  assert.equal(result.writes, 3);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+  assert.deepEqual(measure(fresh), {requests: 24, bytes: 57524, aliases: ['1012', 'OLD-12']});
+});
+
+for (const [limit, applied] of [[53530, false], [100000, true]]) {
+  test('PGB-88 repair counts a scoped failed read at a '+limit+'-byte cap', async () => {
+    const e = await runApplyFixture({repairCase: {historyId: 'qa', shortLabelSearch: true, denyUnrelatedComments: true,
+      readBounds: {max_response_bytes: 9000, max_total_response_bytes: limit}}});
+    const {result, trace} = e;
+    assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]),
+      [['stream-1', true], ['stream-2', false]]);
+    assert(result.processing.reason_codes.includes('READ_DENIED_OR_MISSING'));
+    const bytes = response => Buffer.byteLength(JSON.stringify(response));
+    const measure = rows => ({
+      requests: rows.length,
+      bytes: rows.reduce((sum, row) => sum + bytes(row.response), 0),
+      denials: rows.filter(row => row.status === 403).map(row => bytes(row.response))
+    });
+    const firstWrite = trace.findIndex(row => row.status === 201);
+    assert.deepEqual(measure(firstWrite === -1 ? trace : trace.slice(0, firstWrite)),
+      {requests: 21, bytes: 48108, denials: [1822]});
+    if (!applied) {
+      assertPreflightLimit(e);
+      return;
+    }
+    assert.equal(result.status, 'applied', JSON.stringify(result));
+    assert.equal(result.apply.stage, 'complete');
+    assert.equal(result.writes, 3);
+    assert.equal(result.apply.effects.finalization, 'confirmed');
+    assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+    const fresh = trace.filter(row => row.acquisition === 2 && [200, 403].includes(row.status));
+    assert.deepEqual(measure(fresh), {requests: 23, bytes: 54030, denials: [1822]});
+  });
+}
+
+for (const [limit, applied] of [[53140, false], [100000, true]]) {
+  test('PGB-88 repair budgets an escaped plain note at a '+limit+'-byte cap', async () => {
+    const e = await runApplyFixture({repairCase: {historyId: 'qa', escapedPlainNote: true,
+      readBounds: {max_response_bytes: 40000, max_total_response_bytes: limit}}});
+    const {result, trace} = e;
+    assert.equal(result.processing.acquisition.status, 'complete');
+    assert.deepEqual(result.processing.acquisition.scopes.map(({label, complete}) => [label, complete]), [['stream-1', true]]);
+    const firstWrite = trace.findIndex(row => row.status === 201);
+    const initial = firstWrite === -1 ? trace : trace.slice(0, firstWrite);
+    const bytes = rows => rows.reduce((sum, row) => sum + Buffer.byteLength(JSON.stringify(row.response)), 0);
+    assert.equal(bytes(initial), 44541);
+    assert.deepEqual(initial.filter(row => row.path.includes('?fields=')).map(row => row.response.id), ['1000', '900']);
+    if (!applied) {
+      assertPreflightLimit(e);
+      return;
+    }
+    assert.equal(result.status, 'applied', JSON.stringify(result));
+    assert.equal(result.apply.stage, 'complete');
+    assert.equal(result.writes, 3);
+    assert.equal(result.apply.effects.finalization, 'confirmed');
+    assert.deepEqual(e.events, packet.oracle.effect_order.map(event => event.replace('/1001/', '/'+result.apply.ticket_id+'/')));
+    const fresh = trace.filter(row => row.acquisition === 2 && row.status === 200);
+    assert.equal(bytes(fresh), 50463);
+    assert.deepEqual(fresh.filter(row => row.path.includes('?fields=')).map(row => row.response.id), ['1000', '900']);
+    const notes = rows => rows.flatMap(row => row.response.comments ?? []).filter(comment => comment.id === '990001');
+    assert.equal(notes(initial).length, 1);
+    assert.deepEqual(notes(fresh), notes(initial));
+  });
+}

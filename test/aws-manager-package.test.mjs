@@ -1,6 +1,10 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {existsSync,mkdtempSync,readFileSync,realpathSync,rmSync,writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {hostConfig,deriveHostControls,sha256,installationResourceBase} from '../lib/aws/installation.mjs';
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
 import {fixtureCloud,preparedCloud} from '../scripts/test-aws-manager.mjs';
@@ -16,7 +20,7 @@ test('disabled package synthesizes scoped read-only runtime and retained bounded
 });
 
 test('copied pinned package imports and rejects extra event fields under selected Node runtime',async()=>{
- const {snapshotPackage}=await import('../scripts/test-aws-manager.mjs');const {execFileSync}=await import('node:child_process');const {pathToFileURL}=await import('node:url');const built=snapshotPackage();try{
+ const {snapshotPackage}=await import('../scripts/test-aws-manager.mjs');const built=snapshotPackage();try{
  const node24=process.env.PGB_NODE24??process.execPath;if(process.env.PGB_NODE24)assert.match(execFileSync(node24,['--version'],{encoding:'utf8'}),/^v24\./);
  const url=pathToFileURL(built.payload+'/lib/aws/manager-lambda.mjs').href,code=`const {handler}=await import(${JSON.stringify(url)});console.log(JSON.stringify(await handler({operation:'preview',override:true},{})));`;
  const lines=execFileSync(node24,['--input-type=module','-e',code],{encoding:'utf8'}).trim().split('\n'),out=JSON.parse(lines.at(-1));assert(lines.every(line=>!line.includes('dummy-scoped-token')));assert.equal(out.code,'PREVIEW_EVENT_REQUIRED');assert.equal(out.writes,0);assert(built.manifest.payload_hashes['contracts/epic-v1.schema.json']);assert(built.manifest.payload_hashes['runtime/aws/package-lock.json']);
@@ -110,4 +114,106 @@ test('sender capability keeps initial off and scopes concrete transactional IAM'
 test('R3A-03 canonical opt-in projects outside State control columns and binds manifest',async()=>{
  const {validateManifest,controlOnlyChange}=await import('../lib/aws/installation.mjs');const {config}=fixture(),revision='a'.repeat(40);
  for(const value of [undefined,false,true]){const c=structuredClone(config);if(value!==undefined)c.manager.rework_enabled=value;const text=JSON.stringify(c),p=deriveHostControls(text,{package_revision:revision});assert.equal(p.rework_enabled,value===true);assert.deepEqual(Object.keys(p.control).sort(),['configuration_digest','maintenance','schedule_enabled','writes_enabled']);const manifest={schema:'pigboard-manager-package/v1',source_revision:revision,configuration_digest:p.configuration_digest,installation_id:p.installation_id,domain_id:p.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),canonical_config:c};assert.equal(validateManifest(manifest,text).rework_enabled,value===true);const changed=structuredClone(manifest);changed.canonical_config.manager.rework_enabled=value!==true;assert.throws(()=>validateManifest(changed,text),e=>e.code==='PACKAGE_MISMATCH');assert.equal(controlOnlyChange(manifest,{...manifest,source_revision:'b'.repeat(40)}),false);}
+});
+
+// The exact-revision check is called separately from dirty-worktree regression runs.
+const repairSourcePin = process.env.PGB_REPAIR_PACKAGE_SOURCE_PIN;
+if (repairSourcePin !== undefined) test('PGB-88 pinned package repair admission', async t => {
+  assert.match(repairSourcePin, /^[a-f0-9]{40}$/);
+  assert.match(process.version, /^v24\./, 'Use prepared Node.js 24 for the packaged repair check.');
+  const {packageManager} = await import('../scripts/package-manager.mjs');
+  const {packet,repairFixtureConfig,runRepairGroup} = await import('../scripts/test-manager-apply.mjs');
+  const root = realpathSync(fileURLToPath(new URL('../', import.meta.url)));
+  const git = (...args) => execFileSync('git', args, {cwd:root,encoding:'utf8'}).trim();
+  assert.equal(git('rev-parse','HEAD'), repairSourcePin);
+  assert.equal(git('status','--porcelain','--untracked-files=normal'), '');
+  const temp = mkdtempSync(join(tmpdir(), 'pigboard-repair-package-'));
+  t.after(() => rmSync(temp, {recursive:true,force:true}));
+
+  const configPath = join(temp, 'repair-config.json');
+  const historyId = 'reviewer';
+  writeFileSync(configPath, JSON.stringify(repairFixtureConfig(historyId)));
+  const generation = 'disposable-repair-package-generation';
+  const built = packageManager({
+    configPath, output:join(temp, 'build'), source:root, revision:repairSourcePin, generation
+  });
+  const payload = realpathSync(built.payload);
+  const embeddedConfigPath = join(payload, 'config/manager.json');
+  const embeddedManifestPath = join(payload, 'package-manifest.json');
+  const configText = readFileSync(embeddedConfigPath, 'utf8');
+  const manifestText = readFileSync(embeddedManifestPath, 'utf8');
+  const manifest = JSON.parse(manifestText);
+  assert.equal(manifest.source_revision, repairSourcePin);
+  assert.equal(built.manifest.source_revision, repairSourcePin);
+  assert.equal(manifest.installation_generation, generation);
+  assert.equal(manifest.sender, true);
+  assert.equal(manifest.runtime, 'nodejs24.x');
+  assert.deepEqual(JSON.parse(configText), manifest.canonical_config);
+  assert.equal(hostConfig(configText).digest, manifest.configuration_digest);
+  assert.equal(sha256(configText), built.manifest.payload_hashes['config/manager.json']);
+  assert.equal(sha256(manifestText), built.manifest.payload_hashes['package-manifest.json']);
+  assert.equal(existsSync(join(payload, 'scripts/test-manager-apply.mjs')), false);
+  assert.equal(existsSync(join(payload, 'test/fixtures/manager-apply.json')), false);
+
+  const modules = {};
+  for (const path of ['lib/aws/manager-lambda.mjs','lib/aws/dynamodb.mjs','lib/manager/apply.mjs','lib/jira/read.mjs']) {
+    const copied = join(payload, path);
+    assert.equal(realpathSync(copied), copied);
+    const sourceHash = sha256(execFileSync('git', ['show', repairSourcePin + ':' + path], {cwd:root}));
+    assert.equal(sha256(readFileSync(join(root, path))), sourceHash, path);
+    const copyHash = sha256(readFileSync(copied));
+    assert.equal(copyHash, sourceHash, path);
+    assert.equal(copyHash, manifest.payload_hashes[path], path);
+    modules[path] = {path:copied,sha256:copyHash};
+  }
+  const {runApply} = await import(pathToFileURL(modules['lib/aws/manager-lambda.mjs'].path).href);
+  const {createDynamoState} = await import(pathToFileURL(modules['lib/aws/dynamodb.mjs'].path).href);
+  const group = await runRepairGroup('R3B-H01', {
+    caseId:historyId, runtime:{runApply,createDynamoState,configText,manifest}
+  });
+  assert.equal(group.runs.length, 1);
+  const receipt = group.runs[0];
+  assert.equal(receipt.execution.manager, 'prepared_package');
+  const expected = packet.recorded_repair_preview.cases.find(history => history.id === historyId).expected;
+  const {result,mutations,state_calls,records} = receipt;
+  const verifiedAdmission = JSON.parse(mutations[0]?.body?.body?.content[0]?.content[0]?.text ?? 'null');
+  assert.equal(result.status, 'applied', JSON.stringify(result));
+  assert.equal(result.package_revision, repairSourcePin);
+  assert.equal(result.configuration_digest, manifest.configuration_digest);
+  assert.equal(result.writes, 3);
+  assert.equal(result.apply.effects.finalization, 'confirmed');
+  assert.equal(result.execution_authorized, false);
+  const issue = '/rest/api/3/issue/' + expected.assignment.ticket_id;
+  assert.deepEqual(mutations.map(({method,path}) => [method,path]), [
+    ['POST',issue + '/comment'],
+    ['PUT',issue + '/properties/pigboard.work-context'],
+    ['POST',issue + '/transitions']
+  ]);
+  assert.equal(verifiedAdmission.record_id, result.apply.attempt_id);
+  assert.deepEqual(verifiedAdmission.payload.previous_assignment, expected.assignment);
+  assert.deepEqual(verifiedAdmission.payload.requests, expected.request_refs);
+  assert.deepEqual(verifiedAdmission.payload.existing_pr, expected.pr);
+  const original = state_calls.find(call => call.name === 'begin');
+  assert.equal(original.input.attempt.attempt_id, result.apply.attempt_id);
+  assert.deepEqual(original.input.attempt.cause, expected.request_refs);
+  assert.equal(state_calls.filter(call => call.name === 'begin').length, 1);
+  assert.equal(state_calls.filter(call => call.name === 'finalize').length, 1);
+  assert.equal(state_calls.find(call => call.name === 'finalize').result.status, 'confirmed');
+  assert.equal(records.find(row => row.kind === 'attempt').outcome, 'applied');
+  assert.equal(receipt.worker_calls, 0);
+  assert.equal(receipt.human_status, 'NOT_RUN');
+
+  const fixturePath = 'test/fixtures/manager-apply.json';
+  const fixtureHash = sha256(readFileSync(join(root, fixturePath)));
+  assert.equal(fixtureHash, sha256(execFileSync('git', ['show', repairSourcePin + ':' + fixturePath], {cwd:root})));
+  assert.equal(fixtureHash, 'sha256:' + group.input_sha256);
+  const evidence = {
+    node:process.version, source_revision:repairSourcePin, source_tree:git('rev-parse','HEAD^{tree}'),
+    prepared_pin:manifest.source_revision, configuration_sha256:sha256(configText),
+    fixture_sha256:fixtureHash,
+    embedded_manifest_sha256:sha256(manifestText), zip_sha256:built.manifest.zip_digest,
+    modules, receipt
+  };
+  assert(!JSON.stringify(evidence).includes('LOCAL_APPLY_DUMMY'));
+  t.diagnostic(JSON.stringify(evidence));
 });

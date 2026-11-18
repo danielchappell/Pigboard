@@ -1,17 +1,25 @@
 # One ordinary admission
 
 The ordinary sender evaluates the configured Jira domain and attempts at most one
-Ready to Work Story or Bug. It publishes the complete assignment before sending
-one configured transition to In Progress. It does not launch Cursor or execute
-repair admissions. Local fixture verification is separate from installed delivery
-acceptance and designated human checks.
+Story or Bug per invocation. It can admit new work from Ready to Work and, with
+explicit opt-in, a supported same-PR repair from Rework Queued. It publishes the
+assignment before sending one configured transition to In Progress. Workers run
+through their existing triggers and verify current PR openness and freshness.
 
-Use a reviewed sender package and the [installation guide](manager-installation.md).
-Preview packages cannot acquire sending capability through a configuration toggle.
+Use a reviewed compatible sender package and the [installation guide](manager-installation.md).
 The package starts with its schedule and writes disabled. Deliberate activation
-requires all three attestations: full visibility, sole admitting installation and
-reviewed inventory. The configured transition must be source restricted from Ready
-to Work to In Progress; a global transition is insufficient.
+requires full visibility, sole admitting installation and reviewed inventory.
+Configure the matching direct, non-global edge for each supported source stage
+and project. An available Jira transition ID alone carries no source authority.
+
+For repair, set the optional canonical boolean `manager.rework_enabled` to true.
+Omitting it or setting it to false preserves ordinary new-work sending and holds
+required repairs. Use a package revision that supports repair sending. The sender
+accepts an authenticated [ordinary repair proposal](manager-preview.md#recorded-same-pr-repair-preview)
+from its own fresh acquisition. The queued ticket must have its actual current
+assignment pointer and a complete unresolved same-ticket request union with a
+recorded non-null PR. Parent updates, dependent-stack work, null PRs and
+wait/resume work stay held. An active worker is never interrupted.
 
 The scheduled input is exactly:
 
@@ -25,12 +33,38 @@ remains a separate write-free operation.
 
 For multiple eligible ordinary streams, the sender compares immutable project IDs
 as strings, then full stream labels as strings. For example, project `10` sorts
-before `2`, and `AI-Daniel-10` before `AI-Daniel-2`. Existing Bug priority within a
-stream is unchanged. Once selected, any refusal or failure ends this invocation.
+before `2`, and `AI-Daniel-10` before `AI-Daniel-2`. Within a stream, a ready
+prerequisite comes before repair, then eligible unrelated Bugs and Stories. A
+refusal to send the chosen repair ends this invocation without admitting
+unrelated ready work in its place.
 A later invocation freshly evaluates all streams and may choose another eligible
 stream. This provides deterministic choice without fairness or throughput promises.
 
-The sender first retains native membership and a conditional original intent.
+For a selected repair, the sender checks the handoff, membership, reference, State
+and acquisition limits it can determine from the acquired facts and planned
+publication before retaining membership. It projects the selected ticket's
+comment pages with the new comment using Jira's observed page layout and page
+size. It uses that layout and all response bytes received, including error
+responses, to forecast verification requests, pages and bytes after the planned
+publication. The sender separately estimates the size of the normalized data
+needed for verification, including the recorded reason each issue was read.
+When available, the current assignment's verified comment supplies metadata sizes
+for both estimates. Jira may return a different page layout, metadata or
+formatting on the next read. The readers and writer enforce their bounds on
+actual provider traffic, and State checks conditional revisions and transaction
+limits. If a publication or verification read exceeds a limit,
+the sender retains the original attempt for recovery and stops before transition
+or finalization. New work follows the existing sequence. After eligibility and
+member checks, the sender retains membership, reloads coherent State, and prepares
+the admission before the conditional begin.
+
+A repair gets one original attempt ID. Its admission records the actual previous
+assignment, the recorded PR and every unresolved cause from the proposal,
+including older causes after a repeated failure. An implementation acknowledgment
+alone cannot resolve a repair cause. Inspect the verified admission record for
+the PR and cause list.
+
+The sender retains native membership and a conditional original intent.
 It publishes one admission comment, verifies its exact body and unchanged manager
 metadata, retains its reference, publishes and verifies the assignment pointer,
 and durably binds that assignment. Fresh discovery must then confirm unchanged
@@ -38,21 +72,31 @@ source facts apart from this invocation's own verified publication. Finally it
 retains the original transition request, sends it once, retains the complete
 response and conditionally finalizes the same attempt.
 
-The structured result identifies only the chosen scope, immutable ticket ID,
-original attempt ID and last attempted stage. `writes` counts Jira mutation send
-attempts, from zero to three. Each of `intent`, `comment`, `pointer`, `transition`
+The structured result includes the latest stage reached and, when available, the
+selected scope, immutable ticket ID and original attempt ID. `writes` counts Jira
+mutation send attempts, from zero to three. Each of `intent`, `comment`, `pointer`, `transition`
 and `finalization` is `not_attempted`, `confirmed` or `unconfirmed`. A confirmed
 transition can coexist with an unconfirmed finalization. Only `applied` means all
 required response retention and finalization completed. `execution_authorized:false`
 means the returned observation grants no authority for another invocation; its
 effects report what this invocation actually attempted.
 
-`held` means inspect the original scope and attempt. A timeout or lost response
-never permits searching for a possibly stored comment and publishing again,
-resending a transition, clearing the pending intent or inferring success from the
-current Jira status. Disable the installation when intervention is needed; stop
-preserves pending evidence. The sender has no retry queue or automatic reconciliation.
-Keep complete and uncertain facts separately when reporting recovery.
+For `held`, use the diagnostic with `apply.stage`, `apply.ticket_id`,
+`apply.attempt_id` and `apply.effects.intent` to decide what to inspect.
+
+| Evidence in the result | What to inspect |
+| --- | --- |
+| No selected ticket or current attempt | Review the reported reason and any held streams. A pending attempt from an earlier invocation can hold a stream without this invocation selecting a ticket. |
+| Selected ticket, intent `not_attempted`, outside `retain_members` | Review the reason for holding that ticket. A repair preflight refusal occurs before membership retention or reservation. An allocated ID alone does not establish an attempt in State. |
+| Stage `retain_members`, intent `not_attempted` | Verify the selected stream membership and installation revision in State. Retention may have taken effect. This invocation stopped before beginning an attempt or writing to Jira. |
+| Intent `unconfirmed` | Check State for the returned original attempt ID. Begin may have reserved it. This invocation stopped before starting Jira writes. |
+| Intent `confirmed` | Inspect the original attempt and its recorded effects in State. Keep confirmed effects separate from uncertain ones. A confirmed transition with unconfirmed finalization remains a partial outcome. |
+
+After a timeout or lost response, preserve the original records and any partial
+effects. Do not search for a possibly stored comment in order to publish again,
+resend a transition, clear the pending attempt, or infer success from Jira status.
+Disable the installation when intervention is needed. Stop preserves pending
+evidence.
 
 The invocation budget must cover ten bounded State calls, two bounded acquisitions,
 five Jira writer requests and one writer credential resolution. Configuration is
@@ -71,9 +115,8 @@ providers. The three prescribed groups cover ordinary admission/repeat, boundary
 uncertainty and existing holds. They do not establish live Jira/AWS access, worker
 acceptance, hosted CI, release readiness or designated-human PASS.
 
-If membership retention or the original begin returns unconfirmed before Jira
-publication, that invocation stops with zero Jira effects. A later independent
-invocation can admit work only after complete coherent reads find no pending
+After unconfirmed membership retention or begin, a later independent invocation
+can admit work only after complete coherent reads find no pending
 attempt, its new conditional membership retention succeeds and advances the
 installation revision, its follow-up coherent inventory matches that revision,
 and its new conditional begin succeeds. Absence alone is not authority. The later
@@ -97,9 +140,54 @@ An unchanged, positively isolated read refusal in an unrelated stream may remain
 held while the selected admission completes. Shared, unknown, newly changed or
 selected-stream failures still hold the original attempt before transition. All
 previously observed native facts, bodies, labels, comments, references and scope
-memberships must remain unchanged apart from this invocation's verified own
-publication. The sender never switches streams to bypass a refusal or replays an
-uncertain effect; inspect the original scope and attempt when held.
+memberships must remain unchanged apart from this invocation's verified admission
+comment, replacement pointer and the exact references they add or replace. A
+new request during recheck holds the attempt before transition. Inspect the
+original scope and attempt when held. The sender ends the invocation at the
+refusal or uncertain effect.
+
+## Check same-PR admission with prepared fixtures
+
+Use a clean reviewed source checkout or a complete prepared source copy at that
+same revision, with physical root and AWS dependencies already available. Run
+the fixed selectors from that checkout and retain their JSON output and exit
+codes.
+
+```sh
+node scripts/test-manager-apply.mjs --group R3B-H01
+node scripts/test-manager-apply.mjs --group R3B-H02
+node scripts/test-manager-apply.mjs --group R3B-H03
+```
+
+| Group | Inspect |
+| --- | --- |
+| R3B-H01 | Reviewer, QA, human and repeated failure. Compare the previous assignment, same recorded PR and complete request union. Check original State intent, ordered verified Jira writes and confirmed finalization. |
+| R3B-H02 | Opt-out, missing repair edge, repair before an unrelated Bug and over-bound assignment. Check held cases for zero admission effects and carry existing PGB-82 occupancy, project, prerequisite and capacity evidence. |
+| R3B-H03 | New request and invalid own-reference delta during recheck, then the four prescribed uncertainties. Inspect the original attempt and one later scan per uncertainty for no repeated writes or bypass. |
+| R3B-H04 | Match H01 sender output with [PGB-82 preview proof](https://scubapig.atlassian.net/browse/PGB-82) and [PGB-166 worker evidence and disposition](https://scubapig.atlassian.net/browse/PGB-166?focusedCommentId=11199) for automatic, human and repeated entry. Preserve each earlier evidence limitation. |
+
+For H04, compare the preview proposal to the published admission's previous
+assignment, PR provider/repository/number/head/target and exact request references.
+Check matching request tuples against earlier worker evidence where available.
+Identify different fixture identities and any worker step that did not run.
+
+From the clean checkout at the reviewed commit, run this separate package smoke
+with prepared Node.js 24 and `/usr/bin/zip`. It builds the real payload at the
+pinned commit and executes one reviewer case with the copied host and State
+modules and embedded configuration and manifest. The fixture driver stays
+outside the payload.
+
+```sh
+PGB_REPAIR_PACKAGE_SOURCE_PIN="$(git rev-parse HEAD)" node --test --test-name-pattern='PGB-88 pinned package repair admission' test/aws-manager-package.test.mjs
+```
+
+Retain the source revision, prepared pin, exact commands, input and module hashes,
+exit codes, sanitized result, ordered provider calls and original State records.
+The commands execute real source or copied code against dummy Jira and AWS
+providers. Describe actual earlier worker invocations separately from supplied
+proof and mock effects. Mark designated human acceptance and any unperformed
+execution `NOT_RUN`. Keep that evidence for the reviewer, then remove only
+disposable output. Hosted CI, live permission checks and activation are separate.
 
 ## Inspect processing completion
 

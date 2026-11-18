@@ -1111,7 +1111,8 @@ stream held for human handling. Missing/conflicting lineage keeps its precise
 failure. Omitted mode continues the unchanged legacy v1 offline fixture/repair
 route; its result cannot authorize the ordinary admission path.
 
-Ordinary admission effects belong to the separate [source-only ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/ae7a48ac5dcdea447da71631cb6531cd8090f953/docs/manager-apply.md); that sender is not part of this installed preview skill.
+The [ordinary sender guide](https://github.com/danielchappell/Pigboard/blob/main/docs/manager-apply.md)
+covers admission effects in the separate source AWS package.
 Preview does not reserve intents, publish assignments or transition work. Its
 nonexecuting proposal is not permission to call a writer.
 
@@ -1188,9 +1189,11 @@ repair reaches the opt-in check with the flag omitted or false, the reason is
 `REPAIR_REQUIRED`. Invalid or missing proof can hold earlier. Capacity and
 availability holds retain their own reasons.
 
-This release previews repair only. The existing sender accepts `admit_new` only,
-even with true; PGB-88 owns repair sending. Source/copy developer fixtures do not
-establish designated human acceptance, live installation, hosted CI or activation.
+A compatible ordinary sender can independently acquire and admit this kind of
+repair with existing write authority and a configured direct Rework Queued →
+In Progress edge. The offline result stays a write-free proposal. Evidence from source and
+copied fixtures is separate from designated human acceptance, live installation,
+hosted CI and activation.
 
 ## Read an exact Jira handoff or original attempt
 
@@ -1203,9 +1206,11 @@ previous known-good pin.
 A trusted in-process caller binds its canonical configuration, existing secret
 resolver, approved installation identity and confirmed State read to the
 library. The State projection contains `retained_complete`, `retained_members`
-and `pending_intents` from the existing inventory. It also contains a
-`retained` array of prior native comment tuples, if available, and the
-original pending `attempt` for reconciliation. Each prior tuple contains
+and `pending_intents` from the existing inventory. It also requires a
+`retained` array. Use `retained: []` for an ordinary recorded read with no prior
+native tuples. Reconciliation also needs the original pending `attempt` and its
+genuine publication tuples. A missing required tuple reports
+`RETAINED_TUPLE_MISSING`. Each prior tuple contains
 `site`, the four exact reference fields, `author_id`, `update_author_id`,
 `created` and `updated` as originally recorded. The installation identity is
 the approved `site`, `installation_id`, `domain_id`, `package_revision` and
@@ -1269,7 +1274,7 @@ runtime=/absolute/path/to/selected/runtime
 for variant in current-qa current-qa-outstanding-request original-admission original-repair-admission original-stack-update complete-empty; do
   node "$runtime/test/fixtures/jira-preview-harness.mjs" --case PGB-163-H01 --variant "$variant" --runtime "$runtime" --json || break
 done
-for variant in missing-page 403 404 shared-budget-exhausted timeout foreign-destination redirect secret-bearing-error wrong-uuid wrong-assignment edited-metadata missing-prior-tuple unsupported-changelog-shape; do
+for variant in missing-page 403 404 shared-budget-exhausted timeout foreign-destination redirect secret-bearing-error wrong-uuid wrong-assignment wrong-operation edited-metadata missing-prior-tuple unsupported-changelog-shape; do
   node "$runtime/test/fixtures/jira-preview-harness.mjs" --case PGB-163-H02 --variant "$variant" --runtime "$runtime" --json || break
 done
 ```
@@ -1278,7 +1283,9 @@ Keep the revision and receipt pin, ordered request traces, exact target and
 pointer facts, native and UTC timestamps, original publication digest, page
 and byte accounting and cleanup results. The outside-chain QA request must
 hold completion. The original stack-update pointer must stay on the previous
-assignment. Confirm each listed control with zero mutations and no request to
+assignment. The wrong-assignment control expects `ASSIGNMENT_MISMATCH`. The
+wrong-operation control expects `MANAGER_TARGET_MISMATCH`. Both preserve the
+complete native history. Confirm each listed control with zero mutations and no request to
 a foreign destination. The packet uses dummy credentials and a loopback TLS
 server. Its output labels that simulation, and its teardown closes only the
 fixture connections. Remove disposable copy and build output after retaining

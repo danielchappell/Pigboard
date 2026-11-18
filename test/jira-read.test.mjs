@@ -321,11 +321,11 @@ test('native changelog rejects invalid selectors and preserves paged status evid
  const config=JSON.stringify(fixtureCases.variants[0].config);
  let resolved=0,getters=0;
  const unsafe=Object.defineProperty({pages:1,requests:1},'milliseconds',{enumerable:true,get(){getters++;throw Error('unsafe');}});
- const badSession=await createJiraReadSession(config,{resolveSecret(){resolved++;}},unsafe);
+ const badSession=await createJiraReadSession(config,{resolveSecret(){resolved++;}},{reductions:unsafe});
  assert.equal(badSession.ready,false);
  assert.equal(badSession.finish().report.diagnostics[0].code,'INPUT_INVALID');
  assert.equal(getters,0);assert.equal(resolved,0);
- const session=await createJiraReadSession(config,{resolveSecret(){resolved++;}},{pages:1,requests:1,milliseconds:1000});
+ const session=await createJiraReadSession(config,{resolveSecret(){resolved++;}},{reductions:{pages:1,requests:1,milliseconds:1000}});
  try{
   await assert.rejects(session.changelog('100/200',0),{code:'INPUT_INVALID'});
   await assert.rejects(session.changelog('100',-1),{code:'INPUT_INVALID'});

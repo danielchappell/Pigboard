@@ -90,9 +90,9 @@ deliberate operator action.
 | Structured Story/Bug implementer with separate job/Jira skills and typed handoff | Prepared capability; structured reviewer and QA receipt handoffs are available; full-loop acceptance remains pending |
 | Structured Story/Bug QA composer and standalone qa-jira publisher | Source instruction capability; actual Grok High/helper/clock acceptance and compatible installed/live release remain separate |
 | Human-invoked request-rework | Prepared separate skill; requires an existing compatible current QA chain, configured actor and explicit human authorization; no activation |
-| Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions; automatic repair admission, installed/live acceptance and activation remain separate |
+| Same-open-PR repair execution and repeated authorized human rejection | Source/same-release prepared capability for compatible supplied admissions. Worker preflight checks current PR openness and freshness. |
 | Recorded same-PR ordinary repair preview | Optional canonical `manager.rework_enabled: true`; authenticated own-ticket requests and complete unresolved causes, zero writes. [Prerequisites, commands and holds](docs/manager-preview.md#recorded-same-pr-repair-preview) |
-| Manager-driven repair admission and orchestration | Later coordinated release work; PGB-88 owns sending the recorded preview proposal |
+| Manager admission of one supported same-PR repair | Compatible source sender uses the canonical rework opt-in, existing write authority and configured direct Rework Queued → In Progress edge. [Sender prerequisites and recovery](docs/manager-apply.md) |
 
 The current pilot uses Safeguard INT, numbered `AI-Daniel-<digits>` workstreams and
 Plexus on `master`; its boards currently isolate `AI-Daniel-1`. These are that
@@ -317,18 +317,26 @@ installed acceptance remain separate.
 
 ## Ordinary worker compatibility
 
-Use `worker-current` for current new work or an eligible same-open-PR repair,
-and for ordinary implementation, review and QA handoffs. Use `worker-assignment`
-for an implementer's verified missing prepared input or dependency wait. Each
-publication needs its own authorized direct edge. Reviewer and QA inability,
-null-PR and stack-request repair execution, and resume remain deferred. Keep
-local findings and original receipts when an action holds. Local checks establish
-supplied proof. Provider acceptance and live authority require separate evidence.
+Use `worker-current` for new work, an eligible repair on the same open PR,
+and ordinary implementation, review and QA handoffs. For a repair, the checker
+validates the supplied current action proof, authenticated assignment history
+and complete set of recorded repair requests. The worker checks PR openness
+and freshness when it acts.
+
+Use `worker-assignment` when an implementer verifies that a prepared input
+is missing or a dependency requires a wait. Each publication needs its own
+authorized direct edge. Reviewer and QA inability, null-PR and stack-request
+repair execution, and resume remain deferred. Keep local findings and original
+receipts when an action holds. Provider acceptance and live authority require
+separate evidence.
 
 See the [ordinary worker contract](docs/handoffs.md#ordinary-worker-release-boundary)
 for exact eligibility, readback and recovery.
 
 The [ordinary sender guide](docs/manager-apply.md) describes the bounded admission
 implementation and its prepared host prerequisites. Sender packages remain
-initially disabled; local developer checks do not establish installed delivery
-acceptance or authorize activation. Repair execution remains outside this slice.
+initially disabled. With rework opted in on a compatible revision, the sender
+can admit one authenticated same-PR repair and retain the actual previous
+assignment and every unresolved request. If admission holds after an attempt
+began, inspect that original attempt. Local developer checks are separate from
+installed delivery acceptance and deliberate activation.

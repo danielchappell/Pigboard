@@ -96,6 +96,17 @@ On 14 November 2026 the owner confirmed:
 
 The detailed design and delivery plan must retain these decisions.
 
+## Same-PR repair admission in source
+
+PGB-88 supplies [bounded manager admission for supported same-PR repairs](../manager-apply.md)
+through the existing sender. It uses the canonical rework opt-in, existing write
+authority and direct Rework Queued → In Progress edge. The admission keeps the
+actual previous assignment, recorded PR and complete unresolved cause list.
+Worker preflight checks current PR freshness. Dependent-stack, parent-update,
+null-PR and wait/resume work remain deferred. Installed acceptance and activation
+are separate gates. The dated scope and checkpoint records describe their original
+revisions.
+
 ## Source and review record
 
 The owner conversation establishes the product decisions. Repository contracts
