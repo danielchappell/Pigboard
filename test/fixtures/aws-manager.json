@@ -290,5 +290,105 @@
         }
       ]
     }
+  },
+  "alarms": {
+    "schema": "pigboard-aws-alarm-fixture/v1",
+    "cases": [
+      "R1-23-H01",
+      "R1-23-H02"
+    ],
+    "simulated_roles": [
+      "operator",
+      "deployer"
+    ],
+    "freshness_seconds": 900,
+    "warning_percent": 80,
+    "expected": [
+      {
+        "logical": "MissingCompletionAlarm",
+        "suffix": "missing-completion",
+        "key": "missing_completion",
+        "metric": "CompletePresence"
+      },
+      {
+        "logical": "LambdaErrorsAlarm",
+        "suffix": "lambda-errors",
+        "key": "lambda_errors",
+        "metric": "Errors"
+      },
+      {
+        "logical": "LambdaThrottlesAlarm",
+        "suffix": "lambda-throttles",
+        "key": "lambda_throttles",
+        "metric": "Throttles"
+      },
+      {
+        "logical": "MeasuredBudgetAlarm",
+        "suffix": "measured-budget",
+        "key": "measured_budget",
+        "metric": "MaximumBudgetUtilization"
+      }
+    ],
+    "historical": {
+      "base_revision": "75f4efddb6e4fc0a7fcdedd660040842206763a3",
+      "config": "sha256:8d0a0b908369264138ac71e1fcddbb2aadf8e7caa59b218553bda8eaecede249",
+      "zip": "sha256:2abed28d94ca7fc280789b690eceb429a071fece9eb7cf0f74c99780772e1181",
+      "generation": "6c029eee-2dc0-41ca-a6a3-b910f554946c",
+      "manifest": "4bf74fa23151d2fbdd4478382863f8fb23a76db97a99b8ed10eb8e64de3cf76a",
+      "payload_entry_count": 6400,
+      "source_entries": {
+        "config/manager.json": "sha256:7c9a9b6511737cae45a3e261fc5308d623ce250d0dfb5d6bd16830a11bf8b71c",
+        "config/skill-bundle.json": "sha256:dbf1e2789c2b6ab8f2d1789a1c285672533e57485335a44256549fc0a69c9c32",
+        "contracts/config-v1.schema.json": "sha256:ec232c583e7fd76bfcd4a160dae5f9402722f37939cdf08df9495251ee22aca0",
+        "contracts/epic-v1.schema.json": "sha256:d495ec3de052ac8daeb26bb3b43e55b839c889d232c692025ce02c0c5f5242ac",
+        "contracts/handoff-v1.schema.json": "sha256:6ef02c5c8d297155520a14f890ac99cdfa5e160c95d5754c6127cd27f8f4e596",
+        "contracts/ticket-v1.schema.json": "sha256:5b54d5e8c89a25f288cb1aaa032b67a0b85a3fa0eb31fcd1abcab53893839660",
+        "contracts/work-pointer-v1.schema.json": "sha256:24dec200e48b2529bb6fc5931d513baaae2c74b72c497f4e2693dd3ede783242",
+        "contracts/work-validation-context-v1.schema.json": "sha256:19931601db402fc13e7f4587997434d1c833c05b52219f94727286063b26af15",
+        "lib/aws/dynamodb.mjs": "sha256:bc2c9ebdbb3bb4b51a65caf046931548d4222365900bf57dbbb83f96de1bf62d",
+        "lib/aws/health.mjs": "sha256:9cf0c9446c32f4fa53cbc8d326bf4e2cf102ff472bb306b5ab867f43f6e7adae",
+        "lib/aws/installation.mjs": "sha256:5838233dcf8cdaeb79287965372dab1ccb510896cf900328adc706a7d3a4fdc5",
+        "lib/aws/manager-lambda.mjs": "sha256:2c1bc74f0e77309ed1e269bfef0bd47f7c29d353c1ba1715200a082c76053ad0",
+        "lib/aws/reconcile-context.mjs": "sha256:33817fafb4efb7b71495cb158a56b94ea59639f947fbd907d45f4e4115073160",
+        "lib/aws/template.mjs": "sha256:005f98e1fa27cf1fb2d80f4fbd3d9ee9d063190b8b7932ceb35cfe7eafe2dcab",
+        "lib/config/parse.mjs": "sha256:5a6f79ab68f0ef5f1df2895943ffe72bfefdf5b504e6bbe49d99da955d03230b",
+        "lib/config/projects.mjs": "sha256:b6c67027e204ad7f5cbefbed5905b0da7c2eb5890ae515130d54ded5166436d5",
+        "lib/contracts/case-graph.mjs": "sha256:9508880a82a7066348a3aa0a6d91ddfa42769e75fb03d869e7607f4f895c75d2",
+        "lib/contracts/handoff.mjs": "sha256:39b78c9feffda6748ef0f1ee626a8f0033b13cfdba81cad2cb4b010fdec72d7f",
+        "lib/contracts/receipts.mjs": "sha256:3d898a4d3be060fe2dbecdc235f4eeee19d5c94b435e2eb5486bef841a91fb7a",
+        "lib/contracts/work-semantics.mjs": "sha256:880190d2eb5325416c3a488f93140edae6bc1050668b26a6b1f0d41d4abe2f02",
+        "lib/contracts/work.mjs": "sha256:3c267143a7a5801d6ba257b0f7ad2dcedc5029a45231fb425283f308972f311c",
+        "lib/jira/inventory.mjs": "sha256:320e00392c8ee19e31846581486b48948b91f4599d6306ffdfb6793455106a0a",
+        "lib/jira/read.mjs": "sha256:6b4739041cb9bd1b6af3b84bb3bff3337dfac60fe8de6ed9c11f6f6ce7423ede",
+        "lib/jira/write.mjs": "sha256:6b865ea2cdd69b4fe961be0b00bdd9b5389aabab049d1d09a6c925618bcff20f",
+        "lib/manager/apply.mjs": "sha256:278f357b5c921a42d372ad353eedfef59d29a5c7bed5c4602384c2f531962134",
+        "lib/manager/availability.mjs": "sha256:d31f127d719416e943f43b973aeba1eb7aa69f9c2c51807f0171514f47a7024e",
+        "lib/manager/decisions.mjs": "sha256:28a5593eb73e62df04085d95a7c9e9a7da967a4fef1025c9c7eba4d0b0e2d352",
+        "lib/manager/health.mjs": "sha256:5b88cf5f62cd35b9613d05f956f564671302c4694606ff42c5fe8aac04239d54",
+        "lib/manager/lifecycle.mjs": "sha256:5eb620f2f1d991d052deee8a2f790afa63133907f0bd9a24e7707041cc931d02",
+        "lib/manager/repair-policy.mjs": "sha256:862b498989f4f67d5915ed14a11cc4f4c440304ad23d3ec8580338dcc83e0214",
+        "lib/manager/snapshot.mjs": "sha256:3e7c8cd419f5412150c5cdd52559dcf689f0bb4e7e24cc5ec6f7b8715713c249",
+        "lib/state/contract.mjs": "sha256:df58e2bed1470d2fab9a8b4cc5d36e0ec051857654cf76e81411714a1aa60cbb",
+        "package.json": "sha256:ccd116a2865faf81720d2180e7379df5ecea76ebde8c9732a2cef64e3572a4c9",
+        "runtime/aws/package-lock.json": "sha256:fec689d71bfafaf0cfe1267971a8c7cceb99da3c0418eafe2fa1cc5e1d9bc17b",
+        "runtime/aws/package.json": "sha256:ff11a52c36473afe5d7f12b0058194fa23dc555eacd190830f3cb052280836a5",
+        "package-manifest.json": "sha256:2e85080813933b2fa79bb0d71ab4077c6c0f543122d80b5df04623d68f592647",
+        "node_modules/.package-lock.json": "sha256:1a1dcbcea4a000ca749d7028e8a39c88aa662eadf4bc2f7f655aa3ccc3725fa3",
+        "runtime/aws/node_modules/.package-lock.json": "sha256:b533990e8df25631b44b4109c9fdb0fff2afc346084ddd292543cf57cae07d8c"
+      },
+      "commit": "tree 975792942dc64aa53e2b3a0f5591b4ce00984853\nparent 6b2702ab7b087038255a07c201a8f7f23765ee3d\nauthor Joseph Chappell <jdchappe@gmail.com> 1795091998 +0100\ncommitter Joseph Chappell <jdchappe@gmail.com> 1795091998 +0100\n\nVerify the configured schedule and preserve real repeat update evidence\n",
+      "template": "sha256:53f0670bb1604b111fa29018fc722e083741dfb9c1faf7cda2b351f9dc62b114",
+      "dependency_hashes": {
+        "root": "sha256:25bf17a5f4a5a4ae917114cdbb66ebe3e743358cb19427d1337fa2549cc68373",
+        "aws": "sha256:fec689d71bfafaf0cfe1267971a8c7cceb99da3c0418eafe2fa1cc5e1d9bc17b"
+      },
+      "active": {
+        "config": "sha256:a380c0908e16b05eca1fc1717cfed91cb64d335eb690823ab8d1b3eddadeb5fd",
+        "zip": "sha256:c582ded990fc468a46f73d17175ebe4dcbd448e2a34e5ef52438206212a6db33",
+        "manifest": "sha256:679310b92a27888bbc279c63d17fcabec80019347f5c07813b7f55561e545165",
+        "embedded": "sha256:d24ea42cc3e39105812b6cd450a32e4d2eefc4108e78da131f6cf0bcd79cd254",
+        "config_entry": "sha256:0533432198546631e7eb7ef7b4d8058fcc1adf9746dfc7a6a122b9d96ad9c282"
+      }
+    }
   }
 }

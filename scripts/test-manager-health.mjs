@@ -19,6 +19,51 @@ import {synthesizeTemplate} from '../lib/aws/template.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const packet=()=>JSON.parse(fs.readFileSync(new URL('../test/fixtures/manager-health.json',import.meta.url)));
 export function scanFixture(identity,overrides={}){const now=Date.parse(packet().now);return buildScanSummary({...identity,scan_id:'fixture-scan',started_at:new Date(now-20000).toISOString(),ended_at:new Date(now-10000).toISOString(),mode:'preview',result:'complete',elapsed_ms:20,invocation_timeout_seconds:120,project_count:0,selected_count:0,held_count:0,counts_complete:true,counters:{requests_attempted:1,search_pages:1,comment_pages:0,epics:0,streams:0,known_issues:0,comments:0,response_bytes:50,observation_bytes:50,peak_response_bytes:50,peak_request_elapsed_ms:5,elapsed_ms:20},limits:{max_requests:100,max_pages:100,max_epics:100,max_streams:100,max_known_issues:100,max_comments:100,max_total_response_bytes:1000000,max_response_bytes:100000,request_timeout_ms:1000,scan_timeout_ms:10000,page_size:100},...overrides});}
+
+export function runAlarmSignalHistories(rows,{group,previousRevision='sha256:'+'e'.repeat(64)}){
+ const fixture=packet().alarm_histories;
+ const signals=new Map(rows.map(row=>[row.key,row.definition??row.actual??row]));
+ const completion=signals.get('missing_completion');
+ const expression=completion.Metrics.find(query=>query.ReturnData===true).Expression;
+ const match=/^IF\(EPOCH\(TIME_SERIES\(1\)\) <= (\d+), 1, FILL\((\w+), 0\)\)$/.exec(expression);
+ assert(match,'Missing completion expression must implement inclusive deadline and zero fill');
+ const deadline=Number(match[1]),completionMetric=completion.Metrics.find(query=>query.Id===match[2]).MetricStat;
+ assert.equal(completionMetric.Period,fixture.period_seconds);
+ assert.equal(completion.EvaluationPeriods,Math.ceil(fixture.freshness_seconds/fixture.period_seconds));
+ const revision=completionMetric.Metric.Dimensions.find(d=>d.Name==='EvidenceRevision').Value;
+ assert.notEqual(revision,previousRevision);
+ const histories=fixture.groups[group].map(history=>{
+  const definition=signals.get(history.alarm),math=history.alarm==='missing_completion';
+  const {Metric:metric,Period:period,Stat:stat}=math?completionMetric:{
+   Metric:definition,Period:definition.Period,Stat:definition.Statistic
+  };
+  assert(['Maximum','Sum'].includes(stat));
+  assert(['LessThanThreshold','GreaterThanOrEqualToThreshold'].includes(definition.ComparisonOperator));
+  assert(['breaching','notBreaching'].includes(definition.TreatMissingData));
+  const samples=history.points.map(([name,offset,value,series])=>({
+   metric:name,timestamp:deadline+offset,value,evidence_revision:series==='old'?previousRevision:revision
+  }));
+  // A controlled grid relative to the fixture deadline. Test the grace expression
+  // at adjacent seconds separately from whole evaluation periods.
+  const periods=Array.from({length:definition.EvaluationPeriods},(_,i)=>{
+   const end=deadline+history.at-(definition.EvaluationPeriods-1-i)*period;
+   const values=samples.filter(sample=>sample.metric===metric.MetricName&&sample.timestamp>end-period&&sample.timestamp<=end&&
+    (metric.Namespace==='AWS/Lambda'||sample.evidence_revision===metric.Dimensions.find(d=>d.Name==='EvidenceRevision').Value))
+    .map(sample=>sample.value);
+   const measured=values.length?(stat==='Maximum'?Math.max(...values):values.reduce((sum,value)=>sum+value,0)):null;
+   const value=math?(end<=deadline?1:measured??0):measured;
+   const breach=value===null?definition.TreatMissingData==='breaching':
+    definition.ComparisonOperator==='LessThanThreshold'?value<definition.Threshold:value>=definition.Threshold;
+   return {end_at:new Date(end*1000).toISOString(),measured,value,breach};
+  });
+  const state=periods.filter(period=>period.breach).length>=definition.DatapointsToAlarm?'ALARM':'OK';
+  assert.equal(periods.at(-1).measured,history.sample,history.name);
+  if(history.latest_value!==undefined)assert.equal(periods.at(-1).value,history.latest_value,history.name);
+  assert.equal(state,history.state,history.name);
+  return {input:history,samples,periods,state};
+ });
+ return {fixture:fixture.schema,deadline:new Date(deadline*1000).toISOString(),current_revision:revision,previous_revision:previousRevision,histories,clock:'controlled fixture timestamps'};
+}
 async function applyReaderFixture(summary,{denied=false,change=false,changeState=false}={}){
  const config=structuredClone(applyPacket.config),cloud=fixtureCloud(config);cloud.manifest.sender=true;cloud.manifest.source_revision=summary.package_revision;cloud.binding.package_revision=summary.package_revision;
  Object.assign(cloud.environment??cloud.cloud.function.Environment.Variables,{PB_MODE:'apply',PB_WRITES_ENABLED:'true',PB_PACKAGE_REVISION:summary.package_revision});cloud.cloud.schedule.State='ENABLED';cloud.cloud.schedule.Target.Input=JSON.stringify({operation:'apply'});
@@ -44,11 +89,37 @@ function augment(f,options){
   return {destroy:()=>f.destroyed.push({kind,identity:clientOptions.credentials.accessKeyId}),send:async(command,sendOptions)=>{
    const action=command.constructor.name,input=command.input;telemetry.push({kind,identity:clientOptions.credentials.accessKeyId,action,input:structuredClone(input)});assert.equal(clientOptions.maxAttempts,1);assert(sendOptions.abortSignal);
    if(options.denied)throw Error('DUMMY_SECRET_BODY_PROVIDER_ERROR');
+   if(action==='DescribeAlarmsCommand'){
+    if(options.denyAlarmRead)throw Object.assign(Error('DUMMY_SECRET_BODY_PROVIDER_ERROR'),{name:'AccessDeniedException'});
+    const original=f.dependencies.makeClient(kind,clientOptions);
+    try{return await original.send(command,sendOptions);}finally{original.destroy();}
+   }
+   if(options.denyLogs&&action==='FilterLogEventsCommand')throw Object.assign(Error('DUMMY_SECRET_BODY_PROVIDER_ERROR'),{name:'AccessDeniedException'});
    if(action==='FilterLogEventsCommand'){assert.equal(input.logGroupName,f.cloud.function.Environment.Variables.PB_TABLE_NAME.replace(/-state$/,'').replace(/^/,'/aws/lambda/'));assert.equal(input.filterPattern,'{ $.summary.schema = "pigboard-scan-summary/v1" }');if(options.emptyPage&&pages++===0)return {events:[],nextToken:'fixture-next'};if(options.change)f.cloud.schedule.State=f.cloud.schedule.State==='ENABLED'?'DISABLED':'ENABLED';if(options.changeState){const record=f.provider.records()[0];record.revision++;f.provider.seed(record);}const slice=options.pageSize?events.slice(eventOffset,eventOffset+options.pageSize):events;eventOffset+=slice.length;return {events:slice.map(s=>({message:JSON.stringify(embeddedMetricEvent(s)),timestamp:Date.parse(s.ended_at)})),...(eventOffset<events.length?{nextToken:'page-'+eventOffset}:{})};}
-   assert.equal(action,'GetMetricStatisticsCommand');assert.equal(input.Namespace,'Pigboard/Manager');assert.deepEqual(input.Statistics,['Maximum']);assert.deepEqual(input.Dimensions,[{Name:'InstallationId',Value:identity.installation_id},{Name:'EvidenceRevision',Value:evidenceRevision(identity)}]);const values=events.map(embeddedMetricEvent).map(e=>e[input.MetricName]).filter(v=>v!==undefined);return {Label:input.MetricName,Datapoints:values.flatMap(v=>[1,1].map(()=>({Timestamp:new Date(Date.parse(options.observedAt??packet().now)-60000),Maximum:v})))};
+   assert.equal(action,'GetMetricStatisticsCommand');assert.equal(input.Namespace,'Pigboard/Manager');assert.deepEqual(input.Statistics,['Maximum']);assert.deepEqual(input.Dimensions,[{Name:'InstallationId',Value:identity.installation_id},{Name:'EvidenceRevision',Value:evidenceRevision(identity)}]);const values=events.map(embeddedMetricEvent).filter(e=>e.InstallationId===identity.installation_id&&e.EvidenceRevision===evidenceRevision(identity)).map(e=>e[input.MetricName]).filter(v=>v!==undefined);return {Label:input.MetricName,Datapoints:values.flatMap(v=>[1,1].map(()=>({Timestamp:new Date(Date.parse(options.observedAt??packet().now)-60000),Maximum:v})))};
   }};
  }};
  return {...f,identity,telemetry,auditStart,dependencies,input:{configPath:f.configPath,installationPath:f.installationPath,operatorProfile:'operator'}};
+}
+
+export async function readAlarmHealthFixture(f,{configPath,installationPath,now=f.dependencies.now(),events=[],denyAlarmRead=false,denyLogs=false,changeState=false}){
+ const input={...f,configPath,installationPath};
+ const {binding}=JSON.parse(fs.readFileSync(installationPath,'utf8'));
+ const {extensions}=f.provider.records().find(record=>record.kind==='installation');
+ const expectedIdentity={...binding,health_generation:extensions.health_generation??null};
+ const options={events,observedAt:now,denyAlarmRead,denyLogs,changeState,expectedIdentity};
+ const args=['--config',configPath,'--installation',installationPath,'--operator-profile','operator'];
+ const before=f.provider.snapshot(),start=f.audit.length;
+ const humanFixture=augment(input,options),human=await runHealthCommand(args,humanFixture.dependencies);
+ const jsonFixture=augment(input,{...options,changeState:false}),json=await runHealthCommand([...args,'--json'],jsonFixture.dependencies);
+ if(!changeState)assert.equal(f.provider.snapshot(),before);
+ const actions=f.audit.slice(start),telemetry=[...humanFixture.telemetry,...jsonFixture.telemetry];
+ assert(actions.every(row=>!(/^(Update|Put|Create|Execute|Delete|Enable|Disable|TransactWrite)/).test(row.action)));
+ assert(telemetry.every(row=>row.identity==='SELECTED_OPERATOR'));
+ if(!changeState)assert.equal(human.exitCode,json.exitCode);
+ assert.deepEqual(JSON.parse(json.stdout),json.outcome);
+ assert.doesNotMatch(human.stdout+json.stdout,/DUMMY_SECRET_BODY_PROVIDER_ERROR/);
+ return {human,json,telemetry,actions,commands:[['node','scripts/manager-health.mjs',...args],['node','scripts/manager-health.mjs',...args,'--json']]};
 }
 async function emptyWrapper(kind='empty'){const native=ordinaryWireFixture(),config=native.config,f=await preparedCloud(config);try{assert.equal((await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve})).exitCode,0);let script=[{...native.script[0],body:{issues:[],isLast:true}}];
  if(kind==='cap'){

@@ -8,11 +8,11 @@ const dispatch=['deployer-profile','output'];
 const commands={
  bind:{required:['config','manifest','stack','operator-profile','output']},
  bootstrap:{required:[...common,...dispatch]},
- configure:{required:[...common,...target,...dispatch]},
+ configure:{required:[...common,...target,...dispatch],optional:['resume-operation']},
  'upgrade-preview':{required:[...common,...target,'output']},
- upgrade:{required:[...common,...target,...dispatch],oneOf:['preview','protect-rejected']},
- 'maintenance-only':{required:[...common,'original-installation','operation','source-manifest',...target,...dispatch]},
- stop:{required:common},
+ upgrade:{required:[...common,...target,...dispatch],oneOf:['preview','protect-rejected'],optional:['resume-operation']},
+ 'maintenance-only':{required:[...common,'original-installation','operation','source-manifest',...target,...dispatch],optional:['resume-operation']},
+ stop:{required:common,optional:['resume-operation']},
  'remove-preview':{required:[...common,'output']},
  remove:{required:[...common,'preview',...dispatch]},
  'inspect-operation':{required:common,optional:['operation']},
@@ -22,7 +22,7 @@ const help=`Usage:
 ${Object.entries(commands).map(([verb,{required,optional=[],oneOf=[]}])=>' node scripts/manager-installation.mjs '+verb+' '+
  required.map(field=>'--'+field+({stack:' ARN','operator-profile':' NAME','deployer-profile':' NAME',operation:' UUID'}[field]??' FILE')).join(' ')+
  (oneOf.length?' ('+oneOf.map(field=>'--'+field+' FILE').join(' | ')+')':'')+
- optional.map(field=>' [--'+field+(field==='operation'?' UUID':' FILE')+']').join('')+' [--json]').join('\n')}
+ optional.map(field=>' [--'+field+(['operation','resume-operation'].includes(field)?' UUID':' FILE')+']').join('')+' [--json]').join('\n')}
 
 Use the named AWS profiles configured for this installation. Keep the original
 private receipt and the exact manifests, configurations and versioned assets.
@@ -39,6 +39,8 @@ A fully deployed, superseded bootstrap can be acknowledged with operator-only fi
 Preview removal before dispatch. Removal retains the original State table.
 Inspect an operation by UUID before deciding whether to finish it. A configure
 that starts a new enablement window needs its original verified enablement time.
+Use --resume-operation with the original command and current owner ID to finish
+a pending alarm suffix after the host prefix is independently verified.
 Finish applies verified evidence to State and never dispatches another host request.
 `;
 const shellWord=value=>/^[a-zA-Z0-9_./:-]+$/.test(value)?value:"'"+value.replaceAll("'","'\\''")+"'";
@@ -57,7 +59,7 @@ function human(outcome){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+outcome[key]);
  }
  for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',current_observation:'Current removal observation',receipt:'Output document',
-   observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',
+   alarm_window:'CloudWatch evaluation window',alarms:'Alarm evidence',alarm_acknowledgements:'Acknowledged alarm writes',observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',source_verification:'Historical source verification',
    original_operator:'Original operator',original_deployer:'Original deployer',effects:'Host effects'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+JSON.stringify(outcome[key]));
  }
@@ -73,6 +75,7 @@ function human(outcome){
 export async function runInstallationCommand(argv,dependencies={}){
  const jsonRequested=argv.includes('--json');
  let lifecycleOutput=Object.hasOwn(commands,argv[0])&&!['bind','configure','stop'].includes(argv[0]);
+ lifecycleOutput ||= argv.includes('--resume-operation');
  if(argv.length===1&&['--help','-h'].includes(argv[0]))return {exitCode:0,stdout:help};
  let args={},reservation,result;
  const files={openSync,fstatSync,writeFileSync,fsyncSync,closeSync,lstatSync,unlinkSync,ftruncateSync,writeSync,...dependencies.fileOperations};
@@ -98,16 +101,16 @@ export async function runInstallationCommand(argv,dependencies={}){
  }
  const invalidChoice=oneOf.length>0&&oneOf.filter(k=>args[k]).length!==1;
  if(required.some(k=>!args[k])||invalidChoice||command==='finish-operation'&&Boolean(args.manifest)!==Boolean(args['target-config'])||
-   args.operation&&!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(args.operation))throw hostError('INVALID_INPUT');
+   ['operation','resume-operation'].some(key=>args[key]&&!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(args[key])))throw hostError('INVALID_INPUT');
  if(args.output){
   try{const fd=files.openSync(args.output,'wx',0o600);reservation={fd,stat:null};reservation.stat=files.fstatSync(fd);}
   catch{throw hostError('OUTPUT_RESERVATION_FAILED');}
  }
- if(command==='bind'){const receipt=await bindInstallation({configText:readFileSync(args.config,'utf8'),manifest:JSON.parse(readFileSync(args.manifest,'utf8')),stackId:args.stack,operatorProfile:args['operator-profile']},dependencies);result={status:'bound',binding:receipt.binding,receipt};}
+ if(command==='bind'){const receipt=await bindInstallation({configText:readFileSync(args.config,'utf8'),manifest:JSON.parse(readFileSync(args.manifest,'utf8')),manifestPath:args.manifest,stackId:args.stack,operatorProfile:args['operator-profile']},dependencies);result={status:'bound',binding:receipt.binding,receipt};}
  else{
   const input={
    configPath:args.config,installationPath:args.installation,operatorProfile:args['operator-profile'],deployerProfile:args['deployer-profile'],
-   manifestPath:args.manifest,assetPath:args.asset,previewPath:args.preview,protectRejectedPath:args['protect-rejected'],operation:args.operation,
+   manifestPath:args.manifest,assetPath:args.asset,previewPath:args.preview,protectRejectedPath:args['protect-rejected'],operation:args.operation,resumeOperation:args['resume-operation'],
    originalInstallationPath:args['original-installation'],sourceManifestPath:args['source-manifest'],targetConfigPath:args['target-config']
   };
   const call=command==='stop'?stopInstallation:command==='configure'?configureInstallation:(i,d)=>runLifecycle(command,i,d);
@@ -118,7 +121,7 @@ export async function runInstallationCommand(argv,dependencies={}){
   }:undefined;
   result=await call(input,{...dependencies,publishOperation});
  }
- lifecycleOutput ||= result.receipt?.schema==='pigboard-installation-receipt/v2'||Boolean(result.operation);
+ lifecycleOutput ||= result.receipt?.schema==='pigboard-installation-receipt/v2'||Boolean(result.operation||result.alarm_window);
  if(result.receipt&&reservation&&(!['unavailable','partial'].includes(result.status)||result.terminal)){
   try{
    const serialized=JSON.stringify(result.receipt,null,2)+'\n';
@@ -150,7 +153,7 @@ export async function runInstallationCommand(argv,dependencies={}){
  }else if(reservation)result={...result,receipt_publication:'not_written',output_cleanup:cleanup()};
  return answer(result,['bound','configured','stopped','bootstrapped','previewed','upgraded','removed','inspected'].includes(result.status)?0:
   ['partial','superseded'].includes(result.status)?1:2);
- }catch(e){const outcome={status:'unavailable',code:['INVALID_INPUT','OUTPUT_RESERVATION_FAILED'].includes(e.code)?e.code:'INSTALLATION_UNAVAILABLE',...(reservation?{output_cleanup:cleanup()}: {})};return answer(outcome,2);}
+ }catch(e){lifecycleOutput ||= Boolean(e.alarm_window);const outcome={status:'unavailable',code:['INVALID_INPUT','OUTPUT_RESERVATION_FAILED','PACKAGE_ZIP_MISMATCH','PACKAGE_ZIP_UNAVAILABLE','ALARM_OWNERSHIP_UNCONFIRMED','ALARM_READ_DENIED','ALARM_DEFINITION_MISMATCH'].includes(e.code)||e.alarm_window?e.code:'INSTALLATION_UNAVAILABLE',...(e.alarm_window?{alarm_window:e.alarm_window}:{}),...(reservation?{output_cleanup:cleanup()}: {})};return answer(outcome,2);}
 
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const r=await runInstallationCommand(process.argv.slice(2));process.stdout.write(r.stdout);process.exitCode=r.exitCode;}
