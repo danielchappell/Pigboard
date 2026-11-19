@@ -260,8 +260,19 @@ verified AWS operator role session and needs no Jira recovery secret.
 
 Success is `confirmed`/`OK` with exit zero. Keep the original receipt and
 generation. Binding again or updating controls can refresh the receipt, but
-cannot issue an origin record. If initialization was uncertain, inspect the
-same retained table. A replacement or restored table cannot inherit its
+cannot issue an origin record. If the response to fresh lifecycle initialization
+was lost, use the birth receipt to inspect protected State before bootstrap:
+
+```sh
+node scripts/manager-installation.mjs inspect-operation --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --json
+```
+
+An `inspected` result with both `active` and `last` null confirms the original
+initialized installation is idle and has no recorded lifecycle operation.
+Continue with the two-profile bootstrap above. If either field names an
+operation, inspect that UUID with the original receipt before taking action. An
+unavailable or uncertain read leaves initialization unconfirmed. Preserve the
+original receipt and table. A replacement or restored table cannot inherit its
 protected decisions. Ordinary State inspection remains available on supported
 legacy installations. Verified operator decision readback requires matching
 original events, policy and physical table identity. Missing or incomplete
@@ -503,13 +514,38 @@ node scripts/manager-installation.mjs upgrade-preview --config current.json --in
 node scripts/manager-installation.mjs upgrade --config current.json --installation current-receipt.json --manifest upgrade-package/manifest.json --asset upgrade-asset.json --preview upgrade-preview.json --operator-profile customer-operator --deployer-profile customer-deployer --output successor.json --json
 ```
 
-Preview checks the retained inventory. Apply repeats the checks under an
-installation-wide operation and verifies the deployed result. Keep the prior and
+Preview is read-only. Run the ordinary `upgrade --preview` command only
+after preview returns `previewed` and writes the requested file. Apply
+checks the current proposal before reserving the installation and checks
+retained work again while it owns the update. Keep the prior and
 successor receipts. A compatible update preserves pending attempts, members
-and history on the same physical table. Unknown versions, incomplete inventory
-or a restored table keep admission held. Re-enable is a separate, authorized
+and history on the same physical table. A restored table cannot authorize
+updates to the original installation. Re-enabling is a separate, authorized
 configure operation. It requires compatible State and verified outcomes for
 any attempts that required reconciliation.
+
+When preview can verify the original installation and establish that the
+proposed upgrade is incompatible, it returns `refused` with exit code 2.
+If the result confirms receipt publication, the file at the requested
+`--output` path records the specific refusal. Preview leaves the original
+installation's current controls in place, including any active admission.
+If you are authorized to stop admission on the original installation, use
+that same file with `--protect-rejected`. For example, if preview wrote its
+refusal to `upgrade-preview.json`, run:
+
+```sh
+node scripts/manager-installation.mjs upgrade --config current.json --installation current-receipt.json --manifest upgrade-package/manifest.json --asset upgrade-asset.json --protect-rejected upgrade-preview.json --operator-profile customer-operator --deployer-profile customer-deployer --output protection-result.json --json
+```
+
+This action rechecks the original table, package, asset and reason for refusal.
+It attempts to fence State and stop the host, and reports what succeeded.
+Save the command's JSON output, including any operation ID or unconfirmed host
+observation. The protective action keeps the original receipt. It reports
+`not_written` when it releases the unused successor output path.
+The rejected package cannot be deployed by this command. If the proposal or
+installation has changed, run a new read-only preview into a new file. If
+preview could not verify its inputs or publish its result, preserve the
+diagnostic and resolve that issue before using this path.
 
 If an update is interrupted, keep the original receipt and operation ID.
 Use `inspect-operation` for read-only evidence. Use `finish-operation` when the
@@ -517,8 +553,16 @@ provider outcome is confirmed and the CLI can record or re-export the result.
 Do not repeat an uncertain provider action. If an emergency stop superseded a verified upgrade or configure, use
 `finish-operation` with the original receipt, target manifest and target config
 to export the restricted successor receipt. Its reported host controls can
-differ from the disabled admission controls in State. The operator can use
-that receipt for an immediate protective stop. To converge on disabled
+differ from the disabled admission controls in State. While the recovery fence
+is current, the operator can inspect that one protected operation using its
+restricted receipt, successor configuration and exact UUID:
+
+```sh
+node scripts/manager-installation.mjs inspect-operation --config successor-config.json --installation restricted-successor.json --operation ORIGINAL_OPERATION_UUID --operator-profile customer-operator --json
+```
+
+Use the original source receipt for a later `finish-operation`. The operator
+can also use the restricted receipt for an immediate protective stop. To converge on disabled
 maintenance and obtain a measured drain, use `maintenance-only` with both
 profiles while the reported emergency fence is still current. A protective
 stop changes that fence. Choose the maintenance path directly when the goal is

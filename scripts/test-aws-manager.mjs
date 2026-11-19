@@ -713,7 +713,18 @@ export async function lifecycleBirthJourney({config=hostFixture().config,exercis
    assert.equal(original.origin.table_id,f.cloud.table.TableId);
    const initialized=await state(['init',...flags,'--installation',installPath,'--json']);
    assert.equal(initialized.exitCode,0,initialized.stdout);
-   if (exerciseBootstrapRecovery) await bootstrapRecoveryJourney({f,host,flags,source,installPath,evidence});
+   if (exerciseBootstrapRecovery) {
+    const before=readOnlyCheckpoint(f);
+    assert(!f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]);
+    const inspected=await host(['inspect-operation',...flags,'--installation',installPath,'--json']);
+    assert.equal(inspected.exitCode,0,inspected.stdout);
+    const idle=requireStatus(inspected,'inspected');
+    assert.equal(idle.active,null);
+    assert.equal(idle.last,null);
+    requireReadOnly(f,before);
+    assert(!f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]);
+    await bootstrapRecoveryJourney({f,host,flags,source,installPath,evidence});
+   }
    const outputs=path.join(source.temp,'bootstrap-receipt.json');
    const bootstrapped=await host(['bootstrap',...flags,'--installation',installPath,'--deployer-profile','deployer','--output',outputs,'--json']);
    assert.equal(bootstrapped.exitCode,0,JSON.stringify(bootstrapped));
@@ -852,6 +863,22 @@ const installationState=f=>f.provider.records().find(row=>row.kind==='installati
 const noHostWrites=rows=>assert.deepEqual(hostMutations(rows),[]);
 const operatorOnly=rows=>assert(rows.every(row=>row.identity==='SELECTED_OPERATOR'));
 const providerExecutions=rows=>rows.filter(row=>row.action==='ExecuteChangeSetCommand');
+const readOnlyCheckpoint=f=>({
+ state:f.provider.snapshot(),aws:f.audit.length,stateAudit:f.provider.audit.length,
+ schedule:structuredClone(f.cloud.schedule),concurrency:f.cloud.concurrency,
+ function:structuredClone(f.cloud.function),asset:structuredClone(f.cloud.stack.Parameters)
+});
+function requireReadOnly(f,before,{deployer=false}={}){
+ assert.equal(f.provider.snapshot(),before.state);
+ assert.deepEqual(f.cloud.schedule,before.schedule);
+ assert.equal(f.cloud.concurrency,before.concurrency);
+ assert.deepEqual(f.cloud.function,before.function);
+ assert.deepEqual(f.cloud.stack.Parameters,before.asset);
+ const reads=f.audit.slice(before.aws);
+ operatorOnly(reads.filter(row=>!(deployer&&row.identity==='SELECTED_DEPLOYER'&&row.action==='GetCallerIdentityCommand')));
+ assert(reads.every(row=>/^(Get|Describe|List|Scan|Query|TransactGet)/.test(row.action)));
+ assert(f.provider.audit.slice(before.stateAudit).every(row=>/^(Get|Describe|Scan|Query|TransactGet)/.test(row.name)));
+}
 
 async function configureRecoveryJourney(journey,driver,enabled){
  const {f,evidence}=journey;
@@ -1172,13 +1199,6 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
  const unsupported={...successor,manifest:unknown,manifestPath:writeFixtureJSON(source.temp,'unsupported-declarations',unknown)};
  const malformed={...successor,manifestPath:path.join(source.temp,'malformed-manifest.json')};
  fs.writeFileSync(malformed.manifestPath,'{');
- const scopedPreview=(target,name)=>{
-  const manifest=target.manifest;
-  const {bucket,key,version}=JSON.parse(fs.readFileSync(target.assetPath));
-  return writeFixtureJSON(source.temp,name,{...preview,asset:{bucket,key,version},target:{
-    manifest_digest:sha256(canonicalize(manifest)),package_revision:manifest.source_revision,
-    configuration_digest:manifest.configuration_digest,zip_digest:manifest.zip_digest}});
- };
  const ordinary=original;
  const cases=[
   {name:'unsupported protocol',target:legacy,code:'UNSUPPORTED_VERSION'},
@@ -1190,22 +1210,57 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
   {name:'bounded incomplete inventory',target:successor,configureTarget:ordinary,code:'INCOMPLETE_INVENTORY',
    setup:branch=>{branch.cloud.incompleteInventory=true;}}
  ];
- const tested=[];
+ const tested=[],refusals=[];
  for(const [i,{name,target,configureTarget=target,code,setup}] of cases.entries()){
   for(const verb of ['upgrade','configure']){
    const branch=forkLifecycle(f,original,verb+' '+name);
    setup?.(branch);
-   const before=branch.provider.snapshot(),rows=businessRows(branch);
+   const before=readOnlyCheckpoint(branch),rows=businessRows(branch);
    assert.equal(branch.cloud.schedule.State,'ENABLED');
    assert.equal(branch.cloud.concurrency,1);
    assert.equal(installationState(branch).writes_enabled,true);
-   const previewResult=await run('upgrade-preview',original,[...assetFlags(target),'--output',output(`bad-preview-${i}-${verb}`)],{branch});
-   assert.equal(previewResult.outcome.code,code,previewResult.stdout);
-   assert.equal(branch.provider.snapshot(),before);
-   noHostWrites(branch.audit);
+   assert.equal(installationState(branch).schedule_enabled,true);
+   const priorPin=branch.cloud.function.Environment.Variables.PB_PACKAGE_REVISION;
+   const priorAsset=structuredClone(branch.cloud.stack.Parameters);
+   const refusalPath=output(`bad-preview-${i}-${verb}`);
+   const previewResult=await run('upgrade-preview',original,[...assetFlags(target),'--output',refusalPath],{branch});
+   const refusal=requireStatus(previewResult,'refused');
+   assert.equal(previewResult.exitCode,2,previewResult.stdout);
+   assert.equal(refusal.code,code,previewResult.stdout);
+   assert.equal(refusal.state_fenced,false);
+   assert.equal(refusal.host_mutated,false);
+   assert.equal(refusal.receipt_path,refusalPath);
+   assert.equal(refusal.receipt_publication,'written');
+   const protectFlag=refusal.next_command.indexOf('--protect-rejected');
+   assert(protectFlag>=0);
+   assert.equal(refusal.next_command[protectFlag+1],refusalPath);
+   const refusalBytes=fs.readFileSync(refusalPath);
+   const proposal=JSON.parse(refusalBytes);
+   assert.equal(proposal.schema,'pigboard-upgrade-refusal/v1');
+   assert.equal(proposal.disposition,'protect-only');
+   assert.equal(proposal.reason,code);
+   assert.equal(proposal.stack_id,branch.stackId);
+   assert.equal(proposal.table_id,branch.cloud.table.TableId);
+   assert.equal(proposal.installation_generation,original.manifest.installation_generation);
+   assert.equal(Object.hasOwn(proposal,'inventory'),!setup);
+   assert.equal(proposal.source.manifest_digest,sha256(canonicalize(original.manifest)));
+   assert.equal(proposal.target.manifest_digest,sha256(canonicalize(target.manifest)));
+   assert.deepEqual(proposal.current_asset,preview.current_asset);
+   const {bucket,key,version}=JSON.parse(fs.readFileSync(target.assetPath));
+   assert.deepEqual(proposal.asset,{bucket,key,version});
+   const lifecycle=branch.provider.records().find(row=>row.bootstrapped===true);
+   assert.deepEqual(proposal.state,{revision:installationState(branch).revision,lifecycle_revision:lifecycle.revision,fence:lifecycle.fence_id});
+   requireReadOnly(branch,before);
    const next=verb==='upgrade'?target:configureTarget;
-   const extra=verb==='upgrade'?['--preview',scopedPreview(target,'scoped-preview-'+i)]:[];
+   const extra=verb==='upgrade'?['--protect-rejected',refusalPath]:[];
+   if(verb==='upgrade')refusals.push(refusalPath);
+   const protectedStart=branch.audit.length;
    const rejected=await run(verb,original,[...assetFlags(next),...deployment,...extra,'--output',output(`rejected-${i}-${verb}`)],{branch});
+   assert.deepEqual(fs.readFileSync(refusalPath),refusalBytes);
+   const effects=branch.audit.slice(protectedStart);
+   const firstStateWrite=effects.findIndex(row=>row.action==='TransactWriteCommand');
+   const firstHostWrite=effects.findIndex(row=>['UpdateScheduleCommand','PutFunctionConcurrencyCommand'].includes(row.action));
+   assert(firstStateWrite>=0&&firstHostWrite>firstStateWrite,'State must be fenced before host controls are changed');
    assert.equal(rejected.outcome.code,code,rejected.stdout);
    assert.equal(rejected.outcome.status,'partial',rejected.stdout);
    assert.equal(rejected.exitCode,1,rejected.stdout);
@@ -1220,6 +1275,10 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
    assert.equal(installationState(branch).extensions.pb_stop_id,undefined);
    assert.deepEqual(businessRows(branch),rows);
    assert.equal(installationState(branch).package_revision,installationState(f).package_revision);
+   assert.equal(branch.cloud.function.Environment.Variables.PB_PACKAGE_REVISION,priorPin);
+   assert.deepEqual(branch.cloud.stack.Parameters,priorAsset);
+   assert(branch.provider.records().some(row=>row.bootstrapped===true&&row.fence_id&&row.fence_id!==lifecycle.fence_id));
+   operatorOnly(branch.audit.filter(row=>/^(TransactWrite|UpdateSchedule|PutFunctionConcurrency)/.test(row.action)));
    assert.equal(branch.audit.filter(row=>/ChangeSet/.test(row.action)).length,0);
    tested.push({verb,code});
   }
@@ -1258,11 +1317,73 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
  assert(stoppedHeld.effects.some(effect=>effect.name==='disable-schedule'&&effect.state==='claimed'));
  assert.equal(providerExecutions(stoppedState.audit).length,0);
  const unchanged=forkLifecycle(f,original,'stale and malformed requests leave active host untouched');
- const before=unchanged.provider.snapshot();
+ const before=readOnlyCheckpoint(unchanged);
+ const protect=JSON.parse(fs.readFileSync(refusals[0]));
  const stalePreview=writeFixtureJSON(source.temp,'stale-preview',{...preview,current_asset:{...preview.current_asset,version:'stale-version'}});
- const stale=await run('upgrade',original,[...assetFlags(successor),...deployment,'--preview',stalePreview,
-   '--output',output('stale-preview-output')],{branch:unchanged});
- assert.equal(stale.outcome.code,'UPGRADE_PREVIEW_STALE',stale.stdout);
+ const editedPreview=writeFixtureJSON(source.temp,'edited-preview',{...preview,provisional:!preview.provisional});
+ const staleRefusal=writeFixtureJSON(source.temp,'stale-refusal',{...protect,state:{...protect.state,revision:protect.state.revision-1}});
+ const editedRefusal=writeFixtureJSON(source.temp,'edited-refusal',{...protect,unexpected:true});
+ const malformedRefusal=output('malformed-refusal');
+ fs.writeFileSync(malformedRefusal,'{');
+ const guards=[
+  ['stale current asset',successor,'--preview',stalePreview,'UPGRADE_PREVIEW_STALE'],
+  ['edited successful snapshot',successor,'--preview',editedPreview,'UPGRADE_PREVIEW_STALE'],
+  ['last successful preview for another target',legacy,'--preview',previewPath,'UPGRADE_PREVIEW_STALE'],
+  ['refusal used as successful preview',legacy,'--preview',refusals[0],'UPGRADE_PREVIEW_STALE'],
+  ['successful preview used as refusal',successor,'--protect-rejected',previewPath,'UPGRADE_REFUSAL_STALE'],
+  ['stale protected State',legacy,'--protect-rejected',staleRefusal,'UPGRADE_REFUSAL_STALE'],
+  ['extra refusal field',legacy,'--protect-rejected',editedRefusal,'UPGRADE_REFUSAL_STALE'],
+  ['malformed refusal',legacy,'--protect-rejected',malformedRefusal,'INVALID_INPUT'],
+  ['inventory now compatible',successor,'--protect-rejected',refusals[2],'UPGRADE_REFUSAL_STALE']
+ ];
+ for(const [i,[name,target,flag,proposal,code]] of guards.entries()){
+  const rejectedPath=output(`guard-${i}`);
+  const denied=await run('upgrade',original,[...assetFlags(target),...deployment,flag,proposal,'--output',rejectedPath],{branch:unchanged});
+  assert.equal(denied.exitCode,2,name+': '+denied.stdout);
+  assert.equal(denied.outcome.code,code,name+': '+denied.stdout);
+  assert(!fs.existsSync(rejectedPath),name);
+  requireReadOnly(unchanged,before,{deployer:true});
+ }
+ const changed=forkLifecycle(f,original,'supported target since classified as incompatible');
+ cases[2].setup(changed);
+ const beforeChange=readOnlyCheckpoint(changed);
+ const reclassified=await run('upgrade',original,[...assetFlags(successor),...deployment,'--preview',previewPath,
+   '--output',output('reclassified-target')],{branch:changed});
+ assert.equal(reclassified.exitCode,2,reclassified.stdout);
+ assert.equal(reclassified.outcome.code,'UPGRADE_PREVIEW_STALE',reclassified.stdout);
+ requireReadOnly(changed,beforeChange,{deployer:true});
+ const unreadable=forkLifecycle(f,original,'unavailable inventory cannot produce a proposal');
+ unreadable.cloud.fail='QueryCommand';
+ const beforeUnavailable=readOnlyCheckpoint(unreadable),unavailablePath=output('unavailable-inventory');
+ const unavailable=await run('upgrade-preview',original,[...assetFlags(legacy),'--output',unavailablePath],{branch:unreadable});
+ assert.equal(unavailable.exitCode,2,unavailable.stdout);
+ assert.equal(unavailable.outcome.code,'INVENTORY_UNCONFIRMED',unavailable.stdout);
+ assert(!fs.existsSync(unavailablePath));
+ requireReadOnly(unreadable,beforeUnavailable);
+ const publication=forkLifecycle(f,original,'refusal file publication fails');
+ publication.dependencies.fileOperations={fsyncSync:()=>{throw Error('simulated unavailable local output');}};
+ const beforePublication=readOnlyCheckpoint(publication),failedPath=output('failed-refusal-publication');
+ const failed=await run('upgrade-preview',original,[...assetFlags(legacy),'--output',failedPath],{branch:publication});
+ assert.equal(failed.exitCode,2,failed.stdout);
+ assert.equal(failed.outcome.code,'UNSUPPORTED_VERSION',failed.stdout);
+ assert.equal(failed.outcome.receipt_publication,'failed');
+ assert.equal(failed.outcome.publication_code,'RECEIPT_PUBLICATION_FAILED');
+ assert.equal(failed.outcome.next_command,undefined);
+ assert(!fs.existsSync(failedPath));
+ requireReadOnly(publication,beforePublication);
+ const invalidPreview=output('malformed-target-preview');
+ const noProposal=await run('upgrade-preview',original,[...assetFlags(malformed),'--output',invalidPreview],{branch:unchanged});
+ assert.equal(noProposal.exitCode,2,noProposal.stdout);
+ assert.equal(noProposal.outcome.code,'INVALID_INPUT',noProposal.stdout);
+ assert(!fs.existsSync(invalidPreview));
+ const replacement=forkLifecycle(f,original,'physical State table replaced after refusal');
+ replacement.cloud.table.TableId=hostFixture().lifecycle.restored_table_id;
+ const replacementBefore=readOnlyCheckpoint(replacement);
+ const replaced=await run('upgrade',original,[...assetFlags(legacy),...deployment,'--protect-rejected',refusals[0],
+   '--output',output('replacement-target')],{branch:replacement});
+ assert.equal(replaced.exitCode,2,replaced.stdout);
+ assert.equal(replaced.outcome.code,'PHYSICAL_STATE_MISMATCH',replaced.stdout);
+ requireReadOnly(replacement,replacementBefore,{deployer:true});
  const staleSource=await run('configure',initial,[...assetFlags(original),...deployment,'--output',output('stale-enabling-source')],
    {configPath:original.configPath,branch:unchanged});
  assert.equal(staleSource.exitCode,2,staleSource.stdout);
@@ -1272,10 +1393,9 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
    {branch:unchanged});
  assert.equal(invalid.exitCode,2,invalid.stdout);
  assert.equal(invalid.outcome.code,'INVALID_INPUT',invalid.stdout);
- assert.equal(unchanged.provider.snapshot(),before);
+ requireReadOnly(unchanged,before,{deployer:true});
  assert.equal(unchanged.cloud.schedule.State,'ENABLED');
  assert.equal(unchanged.cloud.concurrency,1);
- noHostWrites(unchanged.audit);
  evidence.rejected_updates=tested;
 }
 
@@ -1295,9 +1415,11 @@ async function upgradeJourney(journey){
     assert(retained.some(row=>row.kind==='attempt'&&row.attempt_id===attemptId&&row.outcome==='pending'));
     assert(retained.some(row=>row.SK==='N#'+attemptId));
     const confirmedPreview=output('compatible-preview'), confirmedPath=output('compatible-receipt');
-    const before=f.provider.snapshot();
-    requireStatus(await run('upgrade-preview',original,[...assetFlags(firstSuccessor),'--output',confirmedPreview]),'previewed');
-    assert.equal(f.provider.snapshot(),before);
+    const before=readOnlyCheckpoint(f);
+    const supported=await run('upgrade-preview',original,[...assetFlags(firstSuccessor),'--output',confirmedPreview]);
+    assert.equal(supported.exitCode,0,supported.stdout);
+    assert.equal(requireStatus(supported,'previewed').receipt_path,confirmedPreview);
+    requireReadOnly(f,before);
     await checkIncompatibleUpdates(journey,{initial,run,output,build,assetFlags,deployment},original,firstSuccessor,confirmedPreview);
     const normalStart=f.audit.length;
     requireStatus(await run('upgrade',original,[...assetFlags(firstSuccessor),...deployment,
@@ -1352,6 +1474,35 @@ async function upgradeJourney(journey){
     assert.equal(receipt.origin.table_id,f.cloud.table.TableId);
     assert.equal(f.cloud.schedule.State,'DISABLED');
     assert.equal(f.cloud.concurrency,0);
+    const inspectionStart=readOnlyCheckpoint(f);
+    const restricted=requireStatus(await run('inspect-operation',upgraded,named),'inspected');
+    assert.equal(restricted.operation,id);
+    assert.equal(restricted.outcome,recorded.outcome);
+    assert.deepEqual(restricted.terminal,recorded.terminal);
+    assert.equal(restricted.fence,recorded.fence);
+    for(const operation of [[],['--operation','45fb5364-258e-4f57-86fd-d4e65c398d96']]){
+     const denied=await run('inspect-operation',upgraded,operation);
+     assert.equal(denied.exitCode,2,denied.stdout);
+     assert.equal(denied.outcome.code,'BINDING_MISMATCH',denied.stdout);
+    }
+    const wrongConfig=await run('inspect-operation',upgraded,named,{configPath:initial.configPath});
+    assert.equal(wrongConfig.exitCode,2,wrongConfig.stdout);
+    assert.equal(wrongConfig.outcome.code,'OPERATION_SOURCE_MISMATCH',wrongConfig.stdout);
+    const forbiddenReceipt=output('restricted-finish');
+    const restrictedFinish=await run('finish-operation',upgraded,[...named,'--manifest',successor.manifestPath,
+      '--target-config',successor.configPath,'--output',forbiddenReceipt]);
+    assert.equal(restrictedFinish.exitCode,2,restrictedFinish.stdout);
+    assert.equal(restrictedFinish.outcome.code,'BINDING_MISMATCH',restrictedFinish.stdout);
+    assert(!fs.existsSync(forbiddenReceipt));
+    requireReadOnly(f,inspectionStart);
+    const staleInspection=forkLifecycle(f,upgraded,'restricted operation after newer fence');
+    const [lifecycleKey,lifecycle]=[...staleInspection.provider.rows].find(([,row])=>row.bootstrapped===true);
+    staleInspection.provider.rows.set(lifecycleKey,{...lifecycle,revision:lifecycle.revision+1,fence_id:'45fb5364-258e-4f57-86fd-d4e65c398d96'});
+    const staleInspectionStart=readOnlyCheckpoint(staleInspection);
+    const staleOperation=await run('inspect-operation',upgraded,named,{branch:staleInspection});
+    assert.equal(staleOperation.exitCode,2,staleOperation.stdout);
+    assert.equal(staleOperation.outcome.code,'RECOVERY_RECEIPT_UNVERIFIED',staleOperation.stdout);
+    requireReadOnly(staleInspection,staleInspectionStart);
     const denied=await run('configure',upgraded,[...assetFlags(successor),...deployment,'--output',output('recovery-enable')]);
     assert.equal(denied.outcome.code,'BINDING_MISMATCH',denied.stdout);
     const target=build('successor-maintenance',maintenanceConfig), maintenanceFile=output('successor-maintenance-receipt');
