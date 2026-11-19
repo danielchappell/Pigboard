@@ -142,7 +142,13 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   if(n==='CreateChangeSetCommand'){cloud.changeInput=i;return {Id:'arn:aws:cloudformation:eu-west-1:123456789012:changeSet/pigboard-controls-fixture/id'};}
   if(n==='DescribeChangeSetCommand')return {Status:'CREATE_COMPLETE',Changes:cloud.changes??[{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',Details:[{Target:{Attribute:'Properties',Name:'Code'}}]}}]};
   if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';cloud.executedToken=i.ClientRequestToken;cloud.completionReads=0;cloud.events.unshift({ClientRequestToken:i.ClientRequestToken,StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'});return {};}
-  if(kind==='DynamoDBDocument'){if(n==='TransactWriteCommand'&&cloud.failCommitControls&&cloud.stack.StackStatus==='UPDATE_COMPLETE'&&cloud.schedule.State==='ENABLED'&&cloud.concurrency===1)throw Object.assign(new Error('dummy final commit unavailable'),{name:'TimeoutError'});return provider.send(command,sendOptions);}
+  if(kind==='DynamoDBDocument'){
+   if(n==='TransactWriteCommand'&&cloud.failCommitControls&&cloud.stack.StackStatus==='UPDATE_COMPLETE'&&cloud.schedule.State==='ENABLED'&&cloud.concurrency===1)
+    throw Object.assign(new Error('dummy final commit unavailable'),{name:'TimeoutError'});
+   if(n==='TransactWriteCommand'&&cloud.enablementWriteFault&&i.TransactItems.some(item=>item.Put?.Item?.SK==='CONTROL'&&item.Put.Item.owner?.verified_enablement))
+    provider.fault=cloud.enablementWriteFault;
+   return provider.send(command,sendOptions);
+  }
   throw Error('Unexpected finite fixture command '+n);
  }};};
  const dependencies={sdk:injectedSDK,makeClient,wait:async()=>{}};
@@ -645,7 +651,7 @@ export function templateJourney(){
 }
 export async function runHumanCase(id){if(id==='R1-13-H01'){if(Number(process.versions.node.split('.')[0])!==24)throw Error('SETUP: invoke this copied runtime acceptance packet with prepared Node24');const built=snapshotPackage({config:ordinaryWireFixture().config});try{return {package_manifest:built.manifest,snapshot_revision:built.snapshot_revision,snapshot_tree:built.snapshot_tree,source_parent:built.source_parent,source_dirty:built.source_dirty,node:process.version,resolver:await resolverJourney(),copied_wrapper:await wrapperJourney({snapshotSource:built.source,snapshotRevision:built.snapshot_revision,buildDirectory:built.temp,baselineBuild:built})};}finally{built.cleanup();}}if(id==='R1-13-H02')return {node:process.version,template:templateJourney(),resolver:await resolverJourney(),stop:await stopJourney(),configure:await configureJourney(),partial:await configureJourney({partial:true}),late_recovery:await lateRecoveryJourney(),publication:await publicationJourney()};throw Error('Select R1-13-H01 or R1-13-H02');}
 const legacyCases=['R1-13-H01','R1-13-H02'];
-const lifecycleCases=['R1-16-H01','R1-16-H02'];
+const lifecycleCases=['R1-16-H01','R1-16-H02','R1-23-H02-A'];
 async function main(argv){
  if(argv.length===1&&argv[0]==='--help'){
   console.log('Usage: node scripts/test-aws-manager.mjs --case '+[...legacyCases,...lifecycleCases].join('|')+' --output NEW_DIRECTORY');
@@ -1180,13 +1186,169 @@ async function removalJourney(journey){
    failed:failedRead.terminal,later:later.current_observation};
 }
 
+async function configureEnablementJourney(journey){
+ const {f,evidence,dependencies,state}=journey;
+ const {initial,run,configure,output,build,assetFlags,deployment}=lifecycleDriver(journey);
+ const {recovery_delay_ms:recoveryDelay,configure_log_retention_days:logRetention}=hostFixture().lifecycle.enablement;
+ const config=initial.manifest.canonical_config;
+ const enabledConfig=changedControls(config,{schedule_enabled:true});
+ const target=build('enablement-enabled',enabledConfig);
+ const configureArgs=(proposed,name)=>[...assetFlags(proposed),...deployment,'--output',output(name)];
+ const targetArgs=proposed=>['--manifest',proposed.manifestPath,'--target-config',proposed.configPath];
+ const configureOn=(branch,installed,proposed,name)=>run('configure',installed,configureArgs(proposed,name),
+   {branch,configPath:proposed.configPath});
+ const inspect=(branch,installed,id,human=false)=>run('inspect-operation',installed,['--operation',id],{branch,human});
+ const finish=(branch,installed,proposed,id,name)=>run('finish-operation',installed,
+   ['--operation',id,...targetArgs(proposed),'--output',output(name)],{branch});
+ const epoch=branch=>Object.fromEntries(Object.entries(installationState(branch).extensions).filter(([key])=>
+   ['health_generation','health_enabled_at'].includes(key)));
+ const expectEpoch=(branch,value)=>assert.deepEqual(epoch(branch),value);
+ const verifyHeld=(branch,before)=>{
+  assert.equal(installationState(branch).schedule_enabled,false);
+  assert.equal(installationState(branch).writes_enabled,false);
+  assert.equal(installationState(branch).maintenance,true);
+  requireReadOnly(branch,before);
+ };
+
+ assert.equal(f.cloud.schedule.State,'DISABLED');
+ expectEpoch(f,{});
+ dependencies.beforeLifecycleFinish=async()=>{await dependencies.wait(recoveryDelay);};
+ const firstPath=output('enablement-first');
+ const first=requireStatus(await configureOn(f,initial,target,'enablement-first'),'configured');
+ delete dependencies.beforeLifecycleFinish;
+ const enabled={...target,installationPath:firstPath};
+ const original=first.verified_enablement;
+ assert.equal(original.health_generation,first.operation);
+ assert.equal(Date.parse(dependencies.now())-Date.parse(original.health_enabled_at),recoveryDelay);
+ expectEpoch(f,original);
+ const firstRead=requireStatus(await inspect(f,initial,first.operation),'inspected');
+ assert.deepEqual(firstRead.verified_enablement,original);
+ const readable=await inspect(f,initial,first.operation,true);
+ assert(readable.stdout.includes('Verified schedule enablement — '+original.health_enabled_at));
+ assert(readable.stdout.includes('Enablement generation — '+original.health_generation));
+
+ const unchanged=requireStatus(await configureOn(f,enabled,target,'enablement-same'),'configured');
+ const same={...target,installationPath:output('enablement-same')};
+ expectEpoch(f,original);
+ const unchangedRead=await inspect(f,enabled,unchanged.operation,true);
+ assert.equal(requireStatus(unchangedRead,'inspected').enablement_status,'preserved');
+ assert(unchangedRead.stdout.includes('Schedule enablement — original time preserved'));
+ const unchangedState=await state(['inspect','--config',same.configPath,'--installation',same.installationPath,
+   '--operator-profile','operator','--kind','installation','--json']);
+ assert.equal(unchangedState.exitCode,0,unchangedState.stdout);
+ const {health_generation,health_enabled_at}=unchangedState.outcome.data.records[0].extensions;
+ assert.deepEqual({health_generation,health_enabled_at},original);
+ const protective=requireStatus(await run('stop',same),'stopped');
+ assert.equal(protective.proof,false);
+ expectEpoch(f,original);
+ const maintenance=await configure(same,build('enablement-maintenance',changedControls(config,{maintenance:true})),
+   'enablement-maintenance-receipt');
+ const stopped=requireStatus(await run('stop',maintenance),'stopped');
+ assert.equal(stopped.proof,true);
+ expectEpoch(f,original);
+ const reenabled=await configure(maintenance,target,'enablement-reenabled');
+ const newEpoch=epoch(f);
+ assert.notEqual(newEpoch.health_generation,original.health_generation);
+ assert(Date.parse(newEpoch.health_enabled_at)>Date.parse(original.health_enabled_at));
+
+ const historical=forkLifecycle(f,reenabled,'historical operation receipt');
+ const oldRow=operationRow(historical,first.operation);
+ delete oldRow.owner.verified_enablement;
+ oldRow.owner.phase='settled';
+ const oldBefore=readOnlyCheckpoint(historical);
+ const old=requireStatus(await inspect(historical,initial,first.operation),'inspected');
+ assert.equal(old.outcome,'completed');
+ assert.equal(old.verified_enablement,null);
+ requireReadOnly(historical,oldBefore);
+ const oldExport=requireStatus(await finish(historical,initial,target,first.operation,'enablement-legacy-export'),'configured');
+ assert.equal(oldExport.verified_enablement,null);
+ requireReadOnly(historical,oldBefore);
+
+ const changedConfig=structuredClone(enabledConfig);
+ changedConfig.manager.log_retention_days=logRetention;
+ const changed=build('enablement-config-change',changedConfig);
+ const interrupted=forkLifecycle(f,reenabled,'interrupted after verified enablement was recorded');
+ interrupted.dependencies.beforeLifecycleFinish=()=>{throw Error('simulated interruption before final State commit');};
+ const lost=requireStatus(await configureOn(interrupted,reenabled,changed,'enablement-after-recording'),'partial');
+ assert.equal(interrupted.cloud.schedule.State,'ENABLED');
+ assert.equal(installationState(interrupted).schedule_enabled,false);
+ expectEpoch(interrupted,newEpoch);
+ const stored=operationRow(interrupted,lost.operation);
+ assert.equal(stored,undefined);
+ const active=requireStatus(await inspect(interrupted,reenabled,lost.operation),'inspected');
+ assert.equal(active.outcome,'awaiting_finish');
+ assert.equal(active.phase,'enablement-recorded');
+ const recorded=active.verified_enablement;
+ assert.equal(recorded.health_generation,lost.operation);
+ assert.notEqual(recorded.health_generation,newEpoch.health_generation);
+ assert.equal(recorded.health_enabled_at,interrupted.dependencies.now());
+
+ const proved=forkLifecycle(interrupted,reenabled,'original operation with complete proof');
+ await proved.dependencies.wait(recoveryDelay);
+ const provedStart=proved.audit.length;
+ const recovered=requireStatus(await finish(proved,reenabled,changed,lost.operation,'enablement-finished'),'configured');
+ assert.deepEqual(recovered.verified_enablement,recorded);
+ expectEpoch(proved,recorded);
+ assert.equal(installationState(proved).schedule_enabled,true);
+ assert.notEqual(recovered.terminal.observed_at,recorded.health_enabled_at);
+ noHostWrites(proved.audit.slice(provedStart));
+ operatorOnly(proved.audit.slice(provedStart));
+
+ const unverifiable=forkLifecycle(interrupted,reenabled,'same interrupted operation with changed host');
+ unverifiable.cloud.schedule.State='DISABLED';
+ const unverifiableBefore=readOnlyCheckpoint(unverifiable);
+ const denied=requireStatus(await finish(unverifiable,reenabled,changed,lost.operation,'enablement-host-unconfirmed'),'partial');
+ assert.equal(denied.code,'HOST_UNCONFIRMED');
+ verifyHeld(unverifiable,unverifiableBefore);
+
+ const missing=forkLifecycle(f,reenabled,'interrupted before recording verified enablement');
+ missing.cloud.enablementWriteFault='before';
+ const notRecorded=requireStatus(await configureOn(missing,reenabled,changed,'enablement-before-recording'),'partial');
+ assert.equal(notRecorded.code,'UNCERTAIN_WRITE');
+ assert.equal(notRecorded.phase,'record_enablement');
+ assert.equal(missing.cloud.schedule.State,'ENABLED');
+ const transition=missing.audit.findLastIndex(row=>row.action==='UpdateScheduleCommand'&&row.input.State==='ENABLED');
+ const recordAttempt=missing.audit.findLastIndex(row=>row.action==='TransactWriteCommand'&&
+   row.input.TransactItems.some(item=>item.Put?.Item?.SK==='CONTROL'&&item.Put.Item.owner?.verified_enablement));
+ assert(transition>=0&&recordAttempt>transition);
+ assert(missing.audit.slice(transition+1,recordAttempt).some(row=>row.action==='GetScheduleCommand'));
+ await missing.dependencies.wait(recoveryDelay);
+ const missingBefore=readOnlyCheckpoint(missing);
+ const held=requireStatus(await inspect(missing,reenabled,notRecorded.operation),'inspected');
+ assert.equal(held.outcome,'held');
+ assert.equal(held.code,'ENABLEMENT_UNVERIFIED');
+ assert.equal(held.verified_enablement,null);
+ const blocked=requireStatus(await finish(missing,reenabled,changed,notRecorded.operation,'enablement-missing'),'partial');
+ assert.equal(blocked.code,'ENABLEMENT_UNVERIFIED');
+ expectEpoch(missing,newEpoch);
+ verifyHeld(missing,missingBefore);
+
+ const uncertain=forkLifecycle(f,reenabled,'enablement recorded with lost write response');
+ uncertain.cloud.enablementWriteFault='after';
+ const notAcknowledged=requireStatus(await configureOn(uncertain,reenabled,changed,'enablement-uncertain'),'partial');
+ assert.equal(notAcknowledged.code,'UNCERTAIN_WRITE');
+ assert.equal(installationState(uncertain).schedule_enabled,false);
+ expectEpoch(uncertain,newEpoch);
+ const durable=requireStatus(await inspect(uncertain,reenabled,notAcknowledged.operation),'inspected');
+ assert.equal(durable.outcome,'awaiting_finish');
+ await uncertain.dependencies.wait(recoveryDelay);
+ const confirmed=requireStatus(await finish(uncertain,reenabled,changed,notAcknowledged.operation,'enablement-confirmed'),'configured');
+ assert.deepEqual(confirmed.verified_enablement,durable.verified_enablement);
+ expectEpoch(uncertain,durable.verified_enablement);
+ noHostWrites(uncertain.audit.slice(uncertain.audit.findLastIndex(row=>row.action==='UpdateScheduleCommand')+1));
+
+ evidence.enablement={initial:original,reenabled:newEpoch,recovered:recorded,
+   missing:held.code,host_unconfirmed:denied.code,uncertain_write_recovered:durable.verified_enablement,historical:old.verified_enablement};
+}
+
 export async function runLifecycleFixture(id){
- assert(['R1-16-H01','R1-16-H02'].includes(id));
+ assert(lifecycleCases.includes(id));
  const config=id==='R1-16-H01'?(await import('./test-manager-apply.mjs')).lifecycleSenderConfig():hostFixture().config;
  const journey=await lifecycleBirthJourney({config,exerciseBootstrapRecovery:id==='R1-16-H02'});
  const {source,evidence}=journey;
  try{
   if(id==='R1-16-H02')await removalJourney(journey);
+  else if(id==='R1-23-H02-A')await configureEnablementJourney(journey);
   else await upgradeJourney(journey);
   return evidence;
  }catch(error){error.fixtureEvidence=evidence;throw error;}

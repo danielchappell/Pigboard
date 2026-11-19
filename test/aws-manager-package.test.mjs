@@ -13,6 +13,14 @@ import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
 const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
+test('R1-23-H02-A preserves verified enablement through configure recovery', async () => {
+ const {runLifecycleFixture}=await import('../scripts/test-aws-manager.mjs');
+ const {enablement}=await runLifecycleFixture('R1-23-H02-A');
+ assert.equal(enablement.missing,'ENABLEMENT_UNVERIFIED');
+ assert.equal(enablement.host_unconfirmed,'HOST_UNCONFIRMED');
+ assert.equal(enablement.historical,null);
+});
+
 test('fresh lifecycle package declares isolated resources and a disabled external table pin', async () => {
  const {config} = fixture(), text=JSON.stringify(config);
  const {lifecycleManifestFields,installationResourceMap} = await import('../lib/aws/template.mjs');
