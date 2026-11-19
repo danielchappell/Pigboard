@@ -529,6 +529,9 @@ proposed upgrade is incompatible, it returns `refused` with exit code 2.
 If the result confirms receipt publication, the file at the requested
 `--output` path records the specific refusal. Preview leaves the original
 installation's current controls in place, including any active admission.
+For a refusal or stale proposal, `state_mutated: false` and `host_mutated: false`
+report what this command did. The existing `state_fenced: false` field on
+these outcomes means this command performed no fencing.
 If you are authorized to stop admission on the original installation, use
 that same file with `--protect-rejected`. For example, if preview wrote its
 refusal to `upgrade-preview.json`, run:

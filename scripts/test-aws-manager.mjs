@@ -849,6 +849,11 @@ function lifecycleDriver(journey){
  return {initial,output,build,nextPin,run,configure,assetFlags,deployment};
 }
 
+function assertReadOnlyActionText(stdout){
+ assert.match(stdout,/State mutation performed — false/);
+ assert.doesNotMatch(stdout,/State admission fenced/);
+}
+
 function forkLifecycle(f,installed,name){
  const branch=fixtureCloud(installed.manifest.canonical_config,structuredClone(f.cloud),installed.manifest);
  let elapsed=0;
@@ -1223,12 +1228,15 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
    const priorPin=branch.cloud.function.Environment.Variables.PB_PACKAGE_REVISION;
    const priorAsset=structuredClone(branch.cloud.stack.Parameters);
    const refusalPath=output(`bad-preview-${i}-${verb}`);
-   const previewResult=await run('upgrade-preview',original,[...assetFlags(target),'--output',refusalPath],{branch});
+   const humanPreview=i===0&&verb==='configure';
+   const previewResult=await run('upgrade-preview',original,[...assetFlags(target),'--output',refusalPath],{branch,human:humanPreview});
    const refusal=requireStatus(previewResult,'refused');
    assert.equal(previewResult.exitCode,2,previewResult.stdout);
    assert.equal(refusal.code,code,previewResult.stdout);
    assert.equal(refusal.state_fenced,false);
    assert.equal(refusal.host_mutated,false);
+   if(humanPreview)assertReadOnlyActionText(previewResult.stdout);
+   else assert.equal(JSON.parse(previewResult.stdout).state_mutated,false);
    assert.equal(refusal.receipt_path,refusalPath);
    assert.equal(refusal.receipt_publication,'written');
    const protectFlag=refusal.next_command.indexOf('--protect-rejected');
@@ -1338,7 +1346,13 @@ async function checkIncompatibleUpdates(journey,driver,original,successor,previe
  ];
  for(const [i,[name,target,flag,proposal,code]] of guards.entries()){
   const rejectedPath=output(`guard-${i}`);
-  const denied=await run('upgrade',original,[...assetFlags(target),...deployment,flag,proposal,'--output',rejectedPath],{branch:unchanged});
+  const human=i===0;
+  const denied=await run('upgrade',original,[...assetFlags(target),...deployment,flag,proposal,'--output',rejectedPath],{branch:unchanged,human});
+  if(code==='UPGRADE_PREVIEW_STALE'||code==='UPGRADE_REFUSAL_STALE'){
+   assert.equal(denied.outcome.state_fenced,false);
+   if(human)assertReadOnlyActionText(denied.stdout);
+   else assert.equal(JSON.parse(denied.stdout).state_mutated,false);
+  }
   assert.equal(denied.exitCode,2,name+': '+denied.stdout);
   assert.equal(denied.outcome.code,code,name+': '+denied.stdout);
   assert(!fs.existsSync(rejectedPath),name);

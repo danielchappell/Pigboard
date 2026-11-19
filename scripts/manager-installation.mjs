@@ -49,7 +49,7 @@ function refusalCommand(args,jsonRequested){
 function human(outcome){
  const rows=[outcome.status+(outcome.phase?' ('+outcome.phase+')':'')];
  for(const [key,label] of Object.entries({code:'Result',operation:'Operation',active:'Active operation',last:'Last operation',
-  stack_id:'Stack',table_id:'Physical State',state_fenced:outcome.status==='refused'?'State fencing performed':'State admission fenced',host_mutated:'Host mutation performed',host:'Host protection',protection_code:'Protection result',proof:'Measured drain proof',
+  stack_id:'Stack',table_id:'Physical State',...(outcome.state_mutated===undefined?{state_fenced:'State admission fenced'}:{state_mutated:'State mutation performed'}),host_mutated:'Host mutation performed',host:'Host protection',protection_code:'Protection result',proof:'Measured drain proof',
   outcome:'Operation outcome',receipt_path:'Private output',
   ...(outcome.status==='refused'?{receipt_publication:'Refusal file publication',publication_code:'Publication result'}:{}),
   pending_work:'Retained work',recovery:'Next action'})){
