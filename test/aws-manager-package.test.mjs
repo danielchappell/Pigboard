@@ -75,6 +75,18 @@ test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and repo
  assert.equal(removal.retained_table_checks.state.held.current_observation.state_persistence,'unconfirmed');
 });
 
+test('R1-23-H03-C routes, verifies and retains the optional topic through the normal commands',async()=>{
+ const {case:id,variants,preparation,data}=fixture().routing;
+ const result=await runAlarmLifecycleFixture(id);
+ assert.equal(result.source.source_parent.length,40);
+ assert.deepEqual([result.preparation,result.data],[preparation,data]);
+ assert.deepEqual(Object.keys(result.variants),variants);
+ assert.equal(result.variants.absent.health.routing.status,'console_only');
+ assert.equal(result.variants.permitted.rotation.health.routing.status,'verified');
+ assert.deepEqual(result.variants.denied_or_misconfigured.refusal.mutations,[]);
+ assert.equal(result.variants.denied_or_misconfigured.denied_source_protection.retained.removed.result.terminal.retention_complete,true);
+});
+
 test('alarm readback rejects substituted stack ownership and incomplete or conflicting named results', async () => {
  const {config}=fixture(), {region,account_id}=config.manager.aws;
  const expected=alarmDefinitions({config,function_name:fixtureBase});

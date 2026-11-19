@@ -748,7 +748,9 @@ node scripts/manager-installation.mjs remove --config maintenance.json --install
 Keep the original receipt, operation ID and removal report. Inspect any partial
 result before acting again. The retained State table, customer secrets, versioned
 artifacts and any retained logs can continue to incur charges. An alarm with
-unverified deletion may also continue to incur charges. Check the
+unverified deletion may also continue to incur charges. The report lists a
+configured SNS topic as customer-owned. The topic and subscriptions stay in place
+and may continue to incur charges. Check the
 per-resource results for what was actually retained, deleted or unobservable.
 If evidence was initially incomplete, run `inspect-operation` with the
 original maintenance receipt and removal UUID. It preserves the original
@@ -927,14 +929,14 @@ deployment or adoption. The policies are under `Metadata.Pigboard`.
 
 | Policy | Role and scope |
 | --- | --- |
-| `operator_policy` | The configured operator can describe the four metric alarms and disable their actions. It can enable actions on the two native Lambda alarms and replace definitions on the two custom alarms. Direct adoption uses `ListTagsForResource` to check the four required names. All alarm grants name their exact ARNs. |
+| `operator_policy` | The configured operator can describe the four metric alarms and disable their actions. It can enable actions on the two native Lambda alarms and replace definitions on the two custom alarms. Direct adoption uses `ListTagsForResource` to check the four required names. With an SNS destination, `sns:GetTopicAttributes` names that topic only. |
 | `alarm_execution_policy` | The verified CloudFormation execution role, or the actual deploying identity when the stack has no execution role, can put, describe and delete the same four alarms. |
 | `alarm_tagging_policy` | Give the same execution identity these exact-ARN tag grants if the stack applies tags to the alarms. |
 | `remove_execution_policy` | Use with the existing removal grants on the supported stack execution identity. Keep the deployer's stack-scoped delete permission. |
 
-An operator's successful health read establishes the observed read, while writes
-and deletion depend on their own service responses. Runtime and Scheduler
-continue with their existing grants. Each alarm has empty action destinations.
+Alarm policies name the exact alarm ARNs. With an SNS destination, generated
+`cloudwatch:PutMetricAlarm` grants allow empty actions or actions to the
+configured topic. The runtime and Scheduler require no SNS permissions.
 
 The evaluation window is the schedule period in seconds multiplied by the
 number of periods needed to cover the freshness setting, rounded up to a
@@ -949,6 +951,95 @@ The [health guide](manager-health.md#inspect-the-four-alarms) explains how to
 check the exact definitions, action states and console links after enabling or
 stopping. Health shows raw CloudWatch state with its timestamp when available.
 Allow time for evaluation and ingestion after a definition change.
+
+### Route alarms to an existing SNS topic
+
+With `manager.health.sns_topic_arn` set, each of the four alarms sends its
+`ALARM` action to the exact topic when actions are enabled. `OK` and
+`INSUFFICIENT_DATA` have empty action lists. When the field is omitted, all
+action lists are empty and operators can inspect the alarms in CloudWatch or
+the health command.
+
+Use a routing-capable `--lifecycle` package and keep its `manager.zip` with
+`manifest.json`. For an existing lifecycle installation on an earlier revision,
+enter disabled maintenance and use the supported upgrade with the same
+canonical configuration, original generation and receipt. After the upgrade
+completes, build a same-revision package with the topic and configure it when
+you intend to restore service. An original v1 installation uses its pinned
+console-only workflow. A fresh routed installation uses `--lifecycle` from its
+first package. [Upgrade a lifecycle installation](#upgrade-the-same-installation).
+
+1. Build the target package and read its `template.json` permissions. Have your
+   AWS administrator prepare the named operator and stack execution grants
+   before applying the change. Use the actual CloudFormation service role on
+   the stack, or the effective deployment principal if the stack has no
+   service role. Give the operator `sns:GetTopicAttributes` on the target topic
+   even on the first change from no topic.
+2. Keep the prior topic permissions for rollback until success or rollback is
+   confirmed. Replace overlapping unconditional `cloudwatch:PutMetricAlarm`
+   grants on the managed alarms and keep the other actions as separate
+   statements. Copy the exact four execution alarm ARNs and two operator
+   custom alarm ARNs from the generated policies. For an A-to-B change use
+   the condition below on each respective put grant. Include only B when
+   adding a route and only A when clearing it. Empty actions are allowed
+   during each change. [CloudWatch action conditions](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/iam-cw-condition-keys-alarm-actions.html).
+
+   ```json
+   {
+     "ForAllValues:StringEquals": {
+       "cloudwatch:AlarmActions": [
+         "arn:aws:sns:eu-west-1:123456789012:pigboard-alerts-a",
+         "arn:aws:sns:eu-west-1:123456789012:pigboard-alerts-b"
+       ]
+     }
+   }
+   ```
+
+3. Ask the topic owner to authorize `sns:Publish` for CloudWatch. Add a
+   statement like the one below to the existing policy. Use the target ARN
+   for `Resource` and the exact alarm ARNs from `alarm_execution_policy`.
+   Keep the four alarm names and account in the topic policy in sync with
+   the generated package. For a topic encrypted with AWS KMS, ask the
+   customer key administrator to confirm that CloudWatch can use the key
+   for SNS publication. [CloudWatch topic authorization](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html).
+
+   ```json
+   {
+     "Sid": "AllowPigboardCloudWatchAlarms",
+     "Effect": "Allow",
+     "Principal": { "Service": "cloudwatch.amazonaws.com" },
+     "Action": "sns:Publish",
+     "Resource": "arn:aws:sns:eu-west-1:123456789012:pigboard-alerts-b",
+     "Condition": {
+       "StringEquals": { "AWS:SourceAccount": "123456789012" },
+       "ArnEquals": {
+         "AWS:SourceArn": [
+           "arn:aws:cloudwatch:eu-west-1:123456789012:alarm:pigboard2-0123456789abcdef0123456789abcdef-missing-completion",
+           "arn:aws:cloudwatch:eu-west-1:123456789012:alarm:pigboard2-0123456789abcdef0123456789abcdef-lambda-errors",
+           "arn:aws:cloudwatch:eu-west-1:123456789012:alarm:pigboard2-0123456789abcdef0123456789abcdef-lambda-throttles",
+           "arn:aws:cloudwatch:eu-west-1:123456789012:alarm:pigboard2-0123456789abcdef0123456789abcdef-measured-budget"
+         ]
+       }
+     }
+   }
+   ```
+
+4. For a fresh package, use the disabled build and deployment, bind and
+   bootstrap steps above before enabling scheduling. Configure with the
+   verified operator. An eligible change checks the new destination before reserving the operation or changing the host. If
+   SNS access is denied, correct the grant on the target and retry. For a
+   policy result of `unknown`, have the topic owner check exact alarm
+   coverage and any potentially applicable denial or unsupported statement. Confirm the report before
+   retrying a failure after writes. Disabled same-topic maintenance, stop and
+   removal remain available during a topic read failure.
+5. After terminal success or rollback, narrow the action grants to the settled
+   topic and remove obsolete topic read grants. For a console-only result
+   use `{"Null":{"cloudwatch:AlarmActions":"true"}}` on the put grants to
+   permit empty actions only. Check that health shows the same destination
+   on all four alarms. Confirm the customer subscriptions and actual
+   receipt from a CloudWatch alarm at the intended endpoint. Health verifies
+   the route and recognized topic policy. Subscriber receipt requires an
+   installed customer check. [Health results](manager-health.md#inspect-the-four-alarms).
 
 ## Recorded repair preview configuration
 

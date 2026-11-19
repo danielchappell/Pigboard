@@ -52,11 +52,20 @@ function refusalCommand(args,jsonRequested){
 function human(outcome){
  const rows=[outcome.status+(outcome.phase?' ('+outcome.phase+')':'')];
  for(const [key,label] of Object.entries({code:'Result',operation:'Operation',active:'Active operation',last:'Last operation',
-  stack_id:'Stack',table_id:'Physical State',...(outcome.state_mutated===undefined?{state_fenced:'State admission fenced'}:{state_mutated:'State mutation performed'}),host_mutated:'Host mutation performed',host:'Host protection',protection_code:'Protection result',proof:'Measured drain proof',
+  stack_id:'Stack',table_id:'Physical State',fence:'Operation fence',current_fence:'Current fence',
+  ...(outcome.state_mutated===undefined?{state_fenced:'State admission fenced'}:{state_mutated:'State mutation performed'}),
+  host_mutated:'Host mutation performed',provider_mutated:'Provider mutation performed',operation_reserved:'Operation reserved',
+  host:'Host protection',protection_code:'Protection result',proof:'Measured drain proof',
   outcome:'Operation outcome',receipt_path:'Private output',
   ...(outcome.status==='refused'?{receipt_publication:'Refusal file publication',publication_code:'Publication result'}:{}),
   pending_work:'Retained work',recovery:'Next action'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+outcome[key]);
+ }
+ if(outcome.topic_routing){
+  const {status,code,expected_topic_arn,observed_topic_arn,next_step}=outcome.topic_routing;
+  rows.push(`Target SNS topic — ${expected_topic_arn}`,`Notification routing — ${status} (${code})`,
+   `Observed SNS topic — ${observed_topic_arn??'unknown'}`);
+  if(next_step!==outcome.recovery)rows.push(`Routing next action — ${next_step}`);
  }
  for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',receipt:'Output document',
    alarm_window:'CloudWatch evaluation window',alarms:'Alarm evidence',alarm_acknowledgements:'Acknowledged alarm writes',observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',source_verification:'Historical source verification',
@@ -134,7 +143,8 @@ export async function runInstallationCommand(argv,dependencies={}){
   }:undefined;
   result=await call(input,{...dependencies,publishOperation});
  }
- lifecycleOutput ||= result.receipt?.schema==='pigboard-installation-receipt/v2'||Boolean(result.operation||result.alarm_window);
+ lifecycleOutput ||= result.receipt?.schema==='pigboard-installation-receipt/v2'||Boolean(result.operation||result.alarm_window||result.topic_routing)||
+  result.code==='PACKAGE_ROUTING_UNSUPPORTED';
  if(result.receipt&&reservation&&(!['unavailable','partial'].includes(result.status)||result.terminal)){
   try{
    const serialized=JSON.stringify(result.receipt,null,2)+'\n';
@@ -166,7 +176,17 @@ export async function runInstallationCommand(argv,dependencies={}){
  }else if(reservation)result={...result,receipt_publication:'not_written',output_cleanup:cleanup()};
  return answer(result,['bound','configured','stopped','bootstrapped','previewed','upgraded','removed','inspected'].includes(result.status)?0:
   ['partial','superseded'].includes(result.status)?1:2);
- }catch(e){lifecycleOutput ||= Boolean(e.alarm_window);const outcome={status:'unavailable',code:['INVALID_INPUT','OUTPUT_RESERVATION_FAILED','PACKAGE_ZIP_MISMATCH','PACKAGE_ZIP_UNAVAILABLE','ALARM_OWNERSHIP_UNCONFIRMED','ALARM_READ_DENIED','ALARM_DEFINITION_MISMATCH'].includes(e.code)||e.alarm_window?e.code:'INSTALLATION_UNAVAILABLE',...(e.alarm_window?{alarm_window:e.alarm_window}:{}),...(reservation?{output_cleanup:cleanup()}: {})};return answer(outcome,2);}
+ }catch(e){
+  lifecycleOutput ||= Boolean(e.alarm_window||e.topic_routing)||e.code==='PACKAGE_ROUTING_UNSUPPORTED';
+  const reported=['INVALID_INPUT','OUTPUT_RESERVATION_FAILED','PACKAGE_ZIP_MISMATCH','PACKAGE_ZIP_UNAVAILABLE','PACKAGE_ROUTING_UNSUPPORTED',
+   'ALARM_OWNERSHIP_UNCONFIRMED','ALARM_READ_DENIED','ALARM_DEFINITION_MISMATCH','ALARM_ACTION_DESTINATION_MISMATCH'];
+  const outcome={status:'unavailable',code:reported.includes(e.code)||e.alarm_window||e.topic_routing?e.code:'INSTALLATION_UNAVAILABLE',
+   ...(e.alarm_window?{alarm_window:e.alarm_window}:{}),
+   ...(e.topic_routing?{phase:e.phase,topic_routing:e.topic_routing,state_fenced:e.state_fenced,state_mutated:e.state_mutated,
+    host_mutated:e.host_mutated,provider_mutated:e.provider_mutated,operation_reserved:e.operation_reserved,recovery:e.topic_routing.next_step}:{}),
+   ...(reservation?{output_cleanup:cleanup()}: {})};
+  return answer(outcome,2);
+ }
 
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const r=await runInstallationCommand(process.argv.slice(2));process.stdout.write(r.stdout);process.exitCode=r.exitCode;}

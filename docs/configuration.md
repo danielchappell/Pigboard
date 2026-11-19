@@ -336,9 +336,23 @@ seconds. Equality with retention is allowed: the freshness window must fit the
 retained logs. Correct incompatible settings in the canonical configuration before
 packaging or configuration, choosing supported retention or freshness/cadence
 values. Warning is finite, greater than 0 and at most 100. Explicit settings
-participate in the existing canonical digest; no separate monitoring configuration
-or SNS setting exists. Defaults require deployed acceptance and do not promise
-capacity or detection latency.
+participate in the canonical configuration digest. Defaults require deployed
+acceptance before relying on detection latency or capacity.
+
+Set `manager.health.sns_topic_arn` to route all four CloudWatch alarms to an
+existing customer SNS topic when their actions are enabled. Omit the field for
+CloudWatch console and CLI inspection only.
+
+```json
+"health": { "sns_topic_arn": "arn:aws:sns:eu-west-1:123456789012:pigboard-alerts" }
+```
+
+Use one exact ARN in the `aws` partition and the account and region from
+`manager.aws`. Standard and FIFO topic names are supported. Adding, changing or
+removing the topic changes the canonical digest. When scheduling is enabled
+under the new configuration, the evidence revision changes too. Use a
+routing-capable `--lifecycle` package and prepare the customer grants before
+configure. [Set up alarm notifications](manager-installation.md#route-alarms-to-an-existing-sns-topic).
 
 Detailed preview-scan health measures each scan budget separately and reports the maximum measured
 percentage. Exactly the threshold warns. Page size is a batch size. Missing request

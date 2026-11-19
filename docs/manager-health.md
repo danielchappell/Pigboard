@@ -10,6 +10,8 @@ actions. The command reports the verified applied mode and reads
 binding, applied State, the existing log group and fixed CloudWatch metrics. It
 performs no scan, Jira transition, State write or schedule change. Alarm-capable
 lifecycle packages also show the four CloudWatch alarms and their console links.
+If the applied configuration names an SNS topic, the verified operator reads the
+attributes of that one topic.
 This source check leaves installed AWS permissions, human acceptance and
 activation to their respective acceptance steps.
 
@@ -32,14 +34,14 @@ disabled, 1 for degraded or stale, and 2 for starting, unknown or invalid input.
 
 | State | Meaning and next step |
 | --- | --- |
-| unknown | A required read failed, evidence is invalid, a lifecycle operation is pending, or the host or State changed during inspection. Check access, configuration and the original operation on this installation. |
-| degraded | The host or an alarm differs from the expected controls, the latest attempt failed or was incomplete, or measured budget use reached the warning threshold. Inspect the listed reason. |
+| unknown | A required read failed, evidence is invalid, a lifecycle operation is pending, or the host or State changed during inspection. Check the reason code and follow the recovery action. |
+| degraded | A host control, alarm definition or routing check found a mismatch, the latest attempt failed or was incomplete, or measured budget use reached the warning threshold. Inspect the listed reason. |
 | disabled | Effective intent and the observed schedule agree that scheduled work is off. For a full drain, use the installation stop procedure. |
 | stale | No current completion within freshness. Inspect schedule and logs; a recent failure does not restart the clock. |
 | starting | Enabled within freshness without a current completion. Allow telemetry ingestion and inspect again; this command never launches a scan. |
 | healthy | A fresh current completion exists without an earlier condition. Work holds remain separate. |
 
-Evaluation order is unknown, confirmed control or alarm mismatch, disabled, stale, current degraded,
+Evaluation order is unknown, confirmed control, alarm or routing mismatch, disabled, stale, current degraded,
 starting, healthy. Age equal to freshness is still within the window. A failed
 first scan is degraded before expiry and stale afterward. A recent failure with
 an expired success remains stale and retains the failure as a secondary reason.
@@ -76,9 +78,12 @@ Manual writes-only mode leaves all four actions disabled and the two custom
 definitions dormant while allowing authorized manual work. Intentional disable
 turns off alarm actions.
 
-In JSON, `alarm_evidence` reports the physical stack and function, observation
-interval, expected and actual definitions, action state, raw CloudWatch state,
-and a link for each alarm. `stable_host_and_state` says whether the host and
+Both formats report the physical stack and function, observation interval,
+expected and observed ALARM, OK and INSUFFICIENT_DATA destination lists, action
+state, raw CloudWatch state and a console link for each alarm. An empty list is
+shown as `[]`. An unavailable observation is `unknown` in readable output and
+`null` in JSON. JSON also carries the full definitions in `alarm_evidence`.
+`stable_host_and_state` says whether the host and
 protected State matched at both ends of that inspection. Definition alignment
 and evaluation are separate fields. A raw `ALARM`, `OK`, or
 `INSUFFICIENT_DATA` can persist after the definition is replaced. The reader
@@ -98,11 +103,30 @@ and under `prior_observation` in JSON. Their attribution to the current
 installation is unverified. Check the current receipt and the operator's read
 access, then inspect the same installation again.
 
-All four alarms are console-only. The destination lists are empty. Alarm
-observations leave retries, uncertain Jira effects and capacity under their
-existing controls. When a read is denied, check the named CloudWatch grants in
-the generated template. Retain any available evidence and inspect again using
-the same receipt. See [permissions and lifecycle recovery](manager-installation.md#cloudwatch-alarm-permissions-and-settings).
+## Check SNS routing
+
+With `manager.health.sns_topic_arn` omitted, all four alarms are console-only and
+their expected destination lists are empty. With a topic configured, all four
+ALARM lists should contain its exact ARN. OK and INSUFFICIENT_DATA lists remain
+empty. Intentional disablement suppresses actions and preserves the configured
+destination. When a CloudWatch read is denied, check the named alarm grants in
+the generated template and inspect again with the same receipt.
+
+The routing result is in `alarm_evidence.topic_routing` in JSON and under
+**Notification routing** in readable output. It shows the expected ARN, observed
+ARN when available, reason code and recovery action. A verified result means the
+four destinations and the recognized topic publication policy agree at the time
+of inspection. A known missing or wrong destination or an incompatible policy
+is `misconfigured`. Denied or incomplete reads and topic policies the command
+cannot evaluate are `unknown`. If the closing host or State observation changes
+or fails, the route is `unknown` and the earlier observation is retained with its
+timestamp and unverified attribution.
+
+Ask the topic owner to confirm that the intended subscriptions are active, that
+CloudWatch has the applicable KMS key permissions for encrypted delivery, and
+that the intended subscribers receive a real notification. The reader inspects
+one topic and keeps only the attributed verdict in its report. See the customer
+policy example, access setup and recovery steps in the [installation guide](manager-installation.md#cloudwatch-alarm-permissions-and-settings).
 
 Every finished valid preview or apply invocation constructs one
 `pigboard-scan-summary/v1` summary and attempts one health record. Apply output
@@ -162,7 +186,8 @@ The reader reacquires both actual host and retained State to reject mixed eviden
 The command allows 30 seconds overall, 10 seconds per call, 10 log pages, 1,000
 fetched records and 1 MiB decoded logs. Historical and invalid records count toward
 the same limits. Empty pages with continuation tokens do not mean completion.
-The reader uses one named alarm request and up to five fixed metric requests,
+The reader uses one named alarm request, one SNS attributes request when
+configured, and up to five fixed metric requests,
 each bounded to 1,440 metric points. Failed or partial reads,
 invalid or future points and contradictory duplicate scan records yield unknown.
 
@@ -213,9 +238,11 @@ prepared Node 24 and a new output directory for each:
 ```sh
 node scripts/test-aws-manager.mjs --case R1-23-H01 --output /tmp/new-alarms-h01
 node scripts/test-aws-manager.mjs --case R1-23-H02 --output /tmp/new-alarms-h02
+node scripts/test-aws-manager.mjs --case R1-23-H03-C --output /tmp/new-alarms-h03-c
 ```
 
 These cases cover generated alarm definitions, controlled signal timestamps,
-direct adoption, interrupted operations and removal using simulated providers.
+direct adoption, interrupted operations, removal and routing with absent,
+permitted, and denied or misconfigured topics using simulated providers.
 Retain the reports with their tested revision for human review. The reports
 separate simulated observations from installed AWS evaluation and permissions.

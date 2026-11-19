@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// Finite prescribed H01/H02 simulations; never accepts cloud credentials/endpoints.
+// Finite prescribed AWS simulations; never accepts cloud credentials or endpoints.
 import assert from 'node:assert/strict';
 import canonicalize from 'canonicalize';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import https from 'node:https';
-import {syncBuiltinESMExports} from 'node:module';
+import {gunzipSync} from 'node:zlib';
+import {createRequire,syncBuiltinESMExports} from 'node:module';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {StateProvider,fixture as stateFixture} from '../test/helpers/state-provider.mjs';
@@ -121,11 +122,41 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    }
    return available(changed);
  }
+ function authorizeAlarmWrite(policy, definition, alarm, identity){
+  if(!policy)return;
+  const alarmActions=['AlarmActions','OKActions','InsufficientDataActions'].flatMap(key=>definition[key]??[]);
+  const permitted=policyPermits(policy,'cloudwatch:PutMetricAlarm',alarm.arn,{alarmActions});
+  audit.push({kind:'CloudWatch',identity,action:'PutMetricAlarmAuthorization',resource:alarm.arn,alarm_actions:alarmActions,permitted});
+  if(!permitted)throw denied();
+ }
+ const authorizeStackAlarms=template=>{
+  const executor=cloud.stack.RoleARN??'SELECTED_DEPLOYER';
+  for(const row of descriptors){
+   const definition=template.Resources[row.logical_id]?.Properties;
+   if(definition)authorizeAlarmWrite(cloud.routingExecutionPolicy,definition,row,executor);
+  }
+ };
  const credentials=profile=>({accessKeyId:profile==='operator'?'SELECTED_OPERATOR':profile==='deployer'?'SELECTED_DEPLOYER':'WRONG_AMBIENT',secretAccessKey:'dummy'});
- const injectedSDK={...sdk,fromIni:({profile})=>async()=>credentials(profile)};
+ const injectedSDK={...sdk,fromIni:({profile})=>async()=>credentials(profile),
+  get GetTopicAttributesCommand(){
+   const require=createRequire(new URL('../runtime/aws/package.json',import.meta.url));
+   return require('@aws-sdk/client-sns').GetTopicAttributesCommand;
+  }};
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
   const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n)throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,UserId:`AROAEXAMPLE:${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`};
+  if(n==='GetTopicAttributesCommand'){
+   assert.equal(kind,'SNS');
+   assert.equal(identity,'SELECTED_OPERATOR');
+   assert.equal(options.maxAttempts,1);
+   assert(sendOptions?.abortSignal);
+   assert.deepEqual(i,{TopicArn:i.TopicArn});
+   const topic=cloud.routingTopics?.[i.TopicArn];
+   audit.at(-1).simulated_topic=topic?.status??'missing';
+   if(!policyPermits(cloud.routingOperatorPolicy??{Statement:[]},'sns:GetTopicAttributes',i.TopicArn)||topic?.status==='denied')throw denied();
+   if(!topic)throw Object.assign(new Error('Private fixture topic missing'),{name:'NotFoundException',$metadata:{httpStatusCode:404}});
+   return {Attributes:{TopicArn:topic.arn??i.TopicArn,Policy:JSON.stringify(topic.policy)}};
+  }
   if(n==='ListTagsForResourceCommand'){
    assert.equal(kind,'CloudWatch');
    assert.equal(identity,'SELECTED_OPERATOR');
@@ -161,7 +192,10 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    if(n==='PutMetricAlarmCommand')assert(selected.every(row=>row.custom));
    if(n==='EnableAlarmActionsCommand')assert(selected.every(row=>!row.custom));
    if(cloud.denyAlarmMutation===n)throw denied();
-   if(n==='PutMetricAlarmCommand')putAlarm(i,selected[0]);
+   if(n==='PutMetricAlarmCommand'){
+    authorizeAlarmWrite(cloud.routingOperatorPolicy,i,selected[0],identity);
+    putAlarm(i,selected[0]);
+   }
    else for(const row of selected){
     const actual=cloud.alarms.get(row.name);
     if(actual)actual.ActionsEnabled=n==='EnableAlarmActionsCommand';
@@ -228,18 +262,36 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    assert.equal(i.ChangeSetName,cloud.changeSetId);
    assert.equal(i.ClientRequestToken,cloud.changeInput.ClientToken);
    await cloud.beforeExecute?.(i.ClientRequestToken);
+   const {TemplateBody}=cloud.changeInput;
+   const candidate=TemplateBody?JSON.parse(TemplateBody):null;
+   if(candidate)authorizeStackAlarms(candidate);
    if(cloud.rollbackStatus){
+    if(cloud.routingExecutionPolicy&&candidate){
+     const previous=structuredClone(cloud.alarms);
+     for(const row of descriptors){
+      const definition=candidate.Resources[row.logical_id]?.Properties;
+      if(definition)putAlarm(definition,row);
+     }
+     const candidate_actions=Object.fromEntries([...cloud.alarms].map(([name,alarm])=>[name,alarm.AlarmActions]));
+     authorizeStackAlarms(cloud.template);
+     cloud.alarms=previous;
+     const restored_actions=Object.fromEntries([...cloud.alarms].map(([name,alarm])=>[name,alarm.AlarmActions]));
+     cloud.routingRollback={candidate_actions,restored_actions};
+    }
     cloud.stack.StackStatus=cloud.rollbackStatus;
     cloud.events.unshift(terminalEvent(cloud.rollbackToken??i.ClientRequestToken,cloud.rollbackStatus));
     return {};
    }
-   const {TemplateBody}=cloud.changeInput;
    const params=effectiveParameters(cloud.changeInput);
    cloud.stack.Parameters=Object.entries(params).map(([ParameterKey,ParameterValue])=>({ParameterKey,ParameterValue}));
    if(TemplateBody){
     const previousTemplate=cloud.template;
-    cloud.template=JSON.parse(TemplateBody);
+    cloud.template=candidate;
     deployAlarmResources(previousTemplate);
+    if(cloud.driftNativeAfterApply){
+     const native=descriptors.find(row=>row.key==='lambda_errors');
+     cloud.alarms.get(native.name).AlarmActions=[cloud.driftNativeAfterApply];
+    }
     const {Function,LifecycleSchedule}=cloud.template.Resources;
     delete cloud.function.Environment.Variables.PB_CONFIGURE_OPERATION_ID;
     Object.assign(cloud.function.Environment.Variables,Object.fromEntries(Object.entries(Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string')));
@@ -687,7 +739,7 @@ export async function publicationJourney(){const observations=[];
  }finally{f.cleanup();}}
  return observations;
 }
-export function snapshotPackage({config=hostFixture().config,lifecycle=false,historical=false,historicalRegression=false}={}){
+export function snapshotPackage({config=hostFixture().config,lifecycle=false,historical=false,historicalRegression=false,cli=false}={}){
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pigboard-pinned-')),source=path.join(temp,'source');
  const git=(cwd,...args)=>execFileSync('git',args,{cwd,encoding:'utf8'}).trim();
  const cleanup=()=>fs.rmSync(temp,{recursive:true,force:true});
@@ -730,9 +782,33 @@ export function snapshotPackage({config=hostFixture().config,lifecycle=false,his
   }
   const configPath=writeFixtureJSON(temp,'config',config);
   const build=historicalRegression?legacyLifecycleFixturePackage:packageManager;
-  const built=build({configPath,output:path.join(temp,'build'),source,revision,lifecycle});
+  const input={configPath,output:path.join(temp,'build'),source,revision,lifecycle};
+  const built=cli?buildFixturePackage(input):build(input);
   return {...built,temp,source,snapshot_revision:revision,snapshot_tree:tree,source_parent,source_dirty,historicalRegression,cleanup};
  }catch(error){cleanup();throw error;}
+}
+
+function runFixturePackage({configPath,output,source,revision,lifecycle,generation,compatibleFrom}){
+ const args=['scripts/package-manager.mjs','--config',configPath,'--revision',revision,'--output',output,
+  ...(lifecycle?['--lifecycle']:[]),...(generation?['--generation',generation]:[]),
+  ...(compatibleFrom?['--compatible-from',compatibleFrom]:[])];
+ const result=spawnSync(process.execPath,args,{cwd:source,encoding:'utf8',maxBuffer:4*1024*1024});
+ if(result.error)throw result.error;
+ assert.equal(result.signal,null,result.stderr);
+ return {command:[process.execPath,...args],cwd:source,exit_code:result.status,actual:JSON.parse(result.stdout)};
+}
+
+function buildFixturePackage(input){
+ const {output}=input;
+ const command=runFixturePackage(input);
+ assert.equal(command.exit_code,0,JSON.stringify(command.actual));
+ const {manifest,status}=command.actual;
+ assert.equal(status,'packaged');
+ assert.equal(manifest.source_revision,input.revision);
+ assert.equal(sha256(fs.readFileSync(path.join(output,'manager.zip'))),manifest.zip_digest);
+ return {manifest,output,payload:path.join(output,'payload'),
+  packageEvidence:{...command,expected_status:'packaged',actual:{status,configuration_digest:manifest.configuration_digest,
+    package_revision:manifest.source_revision,zip_digest:manifest.zip_digest,entries:Object.keys(manifest.payload_hashes).length}}};
 }
 
 // Existing pre-alarm operation regressions drive the host with a simulated
@@ -770,14 +846,23 @@ function historicalPackage(source){
    source_revision:h.base_revision,configuration_digest:h.config,installation_id:config.manager.installation_id,
    domain_id:config.manager.domain_id,installation_generation:h.generation,runtime:'nodejs24.x',sender:true,
    canonical_config:canonical.config,dependency_hashes:h.dependency_hashes,payload_hashes:{},zip_digest:h.zip};
- assert.deepEqual(manifest.dependency_hashes,{root:sha256(fs.readFileSync(path.join(root,'package-lock.json'))),
-   aws:sha256(fs.readFileSync(path.join(root,'runtime/aws/package-lock.json')))});
+ const runtimeLock=JSON.parse(fs.readFileSync(path.join(source.source,'runtime/aws/package-lock.json'),'utf8'));
+ const added='@aws-sdk/client-sns',addedPackage='node_modules/'+added;
+ assert(Object.hasOwn(runtimeLock.packages[''].dependencies,added));
+ assert(Object.hasOwn(runtimeLock.packages,addedPackage));
+ delete runtimeLock.packages[''].dependencies[added];
+ delete runtimeLock.packages[addedPackage];
+ const reconstructedLock=sha256(JSON.stringify(runtimeLock,null,2)+'\n');
+ assert.deepEqual(manifest.dependency_hashes,{root:sha256(fs.readFileSync(path.join(source.source,'package-lock.json'))),
+   aws:reconstructedLock});
  const {['package-manifest.json']:self,...entries}=h.source_entries;
  for(const directory of ['node_modules','runtime/aws/node_modules']){
   for(const entry of fs.readdirSync(path.join(source.source,directory),{recursive:true,withFileTypes:true})){
    if(!entry.isFile())continue;
    const file=path.join(entry.parentPath??entry.path,entry.name);
-   entries[path.relative(source.source,file)]??=sha256(fs.readFileSync(file));
+   const relative=path.relative(source.source,file);
+   if(relative.startsWith('runtime/aws/'+addedPackage+'/'))continue;
+   entries[relative]??=sha256(fs.readFileSync(file));
   }
  }
  manifest.payload_hashes=Object.fromEntries(Object.keys(entries).sort().map(name=>[name,entries[name]]));
@@ -791,10 +876,10 @@ function historicalPackage(source){
 }
 // Evaluate the generated statement set for concrete fixture requests, including
 // transaction context as DynamoDB evaluates it per item.
-export function policyPermits(policy, action, resource, { enclosing, leadingKeys } = {}) {
+export function policyPermits(policy, action, resource, { enclosing, leadingKeys, alarmActions } = {}) {
  const glob = (pattern, value, insensitive = false) => typeof pattern === 'string' &&
   new RegExp('^'+pattern.split('*').map(piece=>piece.replace(/[-/\\^$+?.()|[\]{}]/g,'\\$&')).join('.*')+'$', insensitive?'i':'').test(value);
- const context = {'dynamodb:EnclosingOperation': enclosing ? [enclosing] : [], 'dynamodb:LeadingKeys': leadingKeys??[]};
+ const context = {'dynamodb:EnclosingOperation': enclosing ? [enclosing] : [], 'dynamodb:LeadingKeys': leadingKeys??[], 'cloudwatch:AlarmActions': alarmActions??[]};
  const conditions = (condition = {}) => Object.entries(condition).every(([rule, terms]) => Object.entries(terms).every(([key, allowed]) => {
   const actual = context[key]??[], choices = [allowed].flat();
   if (rule==='Null') return choices.includes(String(actual.length===0));
@@ -857,7 +942,7 @@ export function templateJourney(){
 export async function runHumanCase(id){if(id==='R1-13-H01'){if(Number(process.versions.node.split('.')[0])!==24)throw Error('SETUP: invoke this copied runtime acceptance packet with prepared Node24');const built=snapshotPackage({config:ordinaryWireFixture().config});try{return {package_manifest:built.manifest,snapshot_revision:built.snapshot_revision,snapshot_tree:built.snapshot_tree,source_parent:built.source_parent,source_dirty:built.source_dirty,node:process.version,resolver:await resolverJourney(),copied_wrapper:await wrapperJourney({snapshotSource:built.source,snapshotRevision:built.snapshot_revision,buildDirectory:built.temp,baselineBuild:built})};}finally{built.cleanup();}}if(id==='R1-13-H02')return {node:process.version,template:templateJourney(),resolver:await resolverJourney(),stop:await stopJourney(),configure:await configureJourney(),partial:await configureJourney({partial:true}),late_recovery:await lateRecoveryJourney(),publication:await publicationJourney()};throw Error('Select R1-13-H01 or R1-13-H02');}
 const legacyCases=['R1-13-H01','R1-13-H02'];
 const lifecycleCases=['R1-16-H01','R1-16-H02','R1-23-H02-A'];
-const alarmCases=['R1-23-H01','R1-23-H02'];
+const alarmCases=['R1-23-H01','R1-23-H02','R1-23-H03-C'];
 async function main(argv){
  if(argv.length===1&&argv[0]==='--help'){
   console.log('Usage: node scripts/test-aws-manager.mjs --case '+[...legacyCases,...lifecycleCases,...alarmCases].join('|')+' --output NEW_DIRECTORY');
@@ -880,12 +965,14 @@ async function main(argv){
    human_acceptance:'pending',installed_acceptance:'pending',live_iam:'unverified',command:process.argv,...data
   },alarmCases.includes(id)?(key,value)=>key==='payload_hashes'?{entries:Object.keys(value).length}:value:null,2)+'\n',{mode:0o600});
   try{
-   const evidence=alarmCases.includes(id)?await runAlarmLifecycleFixture(id):
+   const routingCase=id===hostFixture().routing.case;
+   const saved=evidence=>write({developer_observation:'confirmed_simulated',cleanup:'disposable fixtures removed',evidence});
+   const evidence=alarmCases.includes(id)?await runAlarmLifecycleFixture(id,routingCase?{save:saved}:undefined):
      lifecycleCases.includes(id)?await runLifecycleFixture(id):await runHumanCase(id);
-   write({developer_observation:'confirmed_simulated',cleanup:'disposable fixtures removed',evidence});
+   if(!routingCase)saved(evidence);
    console.log(id+': developer simulation confirmed; human and installed acceptance pending');
   }catch(error){
-   write({developer_observation:'blocked',blocker:error.message,evidence:error.fixtureEvidence??null,
+   write({developer_observation:'blocked',blocker:error.message,...(id===hostFixture().routing.case&&error.stack?{local_failure_location:error.stack.split('\n').find(line=>line.includes('test-aws-manager.mjs')||line.includes('test-manager-health.mjs'))?.trim()}:{}),evidence:error.fixtureEvidence??null,
      cleanup:'completed fixture paths are disposable'});
    throw error;
   }
@@ -900,8 +987,8 @@ function setLifecycleClock(dependencies, start='2026-11-17T10:00:00Z', elapsed=0
  });
 }
 
-export async function lifecycleBirthJourney({config=hostFixture().config,exerciseBootstrapRecovery=false,historical=false,historicalRegression=false}={}){
- const source=snapshotPackage({config,lifecycle:true,historical,historicalRegression});
+export async function lifecycleBirthJourney({config=hostFixture().config,exerciseBootstrapRecovery=false,historical=false,historicalRegression=false,cli=false}={}){
+ const source=snapshotPackage({config,lifecycle:true,historical,historicalRegression,cli});
  let historicalInput;
  try{historicalInput=historical?historicalPackage(source):null;}catch(error){source.cleanup();throw error;}
  const f=fixtureCloud(config,historicalInput?{template:historicalInput.template}:{},historicalInput?.manifest??source.manifest);
@@ -916,15 +1003,17 @@ export async function lifecycleBirthJourney({config=hostFixture().config,exercis
  async function capture(script,args,run,branch=f){
    const before=branch.provider.snapshot(),start=branch.audit.length;
    const command=['node','scripts/'+script,...args];
-   const record={command,state_before:JSON.parse(before),...(branch===f?{}:{isolated_branch:branch.name})};
+   const stateBefore=cli?routingState(branch):JSON.parse(before);
+   const record={command,state_before:stateBefore,...(branch===f?{}:{isolated_branch:branch.name})};
    evidence.commands.push(record);
    try{
     const outcome=await run();
     Object.assign(record,outcome);
     return outcome;
    }finally{
-    record.state_after=JSON.parse(branch.provider.snapshot());
-    record.aws=branch.audit.slice(start);
+    record.state_after=cli?routingState(branch):JSON.parse(branch.provider.snapshot());
+    const calls=branch.audit.slice(start);
+    record.aws=cli?calls.map(routingAuditEntry):calls;
    }
  }
  try{
@@ -1080,12 +1169,13 @@ export function lifecycleDriver(journey){
   if(compatibleFrom)previousPins.set(revision,compatibleFrom);
   const configPath=writeFixtureJSON(source.temp,name+'-config',config);
   const pack=historicalRegression&&lifecycle?legacyLifecycleFixturePackage:packageManager;
-  const {manifest,output}=pack({configPath,output:path.join(source.temp,name+'-build'),source:source.source,
-    revision,generation:initial.manifest.installation_generation,lifecycle,compatibleFrom:lifecycle?previousPins.get(revision):undefined});
+  const input={configPath,output:path.join(source.temp,name+'-build'),source:source.source,
+    revision,generation:initial.manifest.installation_generation,lifecycle,compatibleFrom:lifecycle?previousPins.get(revision):undefined};
+  const {manifest,output,packageEvidence}=source.packageEvidence?buildFixturePackage(input):pack(input);
   const asset={bucket:'fixture-artifacts',key:name+'.zip',version:name+'-version',zip_digest:manifest.zip_digest};
   f.cloud.assets??=new Map();
   f.cloud.assets.set(asset.version,Buffer.from(asset.zip_digest.slice(7),'hex').toString('base64'));
-  return {configPath,manifest,manifestPath:path.join(output,'manifest.json'),assetPath:writeFixtureJSON(source.temp,name+'-asset',asset)};
+  return {configPath,manifest,manifestPath:path.join(output,'manifest.json'),assetPath:writeFixtureJSON(source.temp,name+'-asset',asset),packageEvidence};
  }
  const context=(installed,configPath=installed.configPath)=>['--config',configPath,'--installation',installed.installationPath,'--operator-profile','operator'];
  const assetFlags=target=>['--manifest',target.manifestPath,'--asset',target.assetPath];
@@ -1143,14 +1233,14 @@ function actualAlarmRows(f){
   definition:structuredClone(f.cloud.alarms.get(base+'-'+row.suffix))}));
 }
 
-function checkAlarmActions(f, enabled){
+function checkAlarmActions(f, enabled, topic){
  const rows=actualAlarmRows(f);
  assert.equal(f.cloud.alarms.size,4);
  assert.equal(f.cloud.alarmResources.length,4);
  for(const {name,definition} of rows){
   assert.equal(definition.AlarmName,name);
   assert.equal(definition.ActionsEnabled,enabled,name);
-  for(const key of ['AlarmActions','OKActions','InsufficientDataActions'])assert.deepEqual(definition[key],[],name);
+  for(const key of ['AlarmActions','OKActions','InsufficientDataActions'])assert.deepEqual(definition[key],key==='AlarmActions'&&topic?[topic]:[],name);
  }
  return rows;
 }
@@ -2116,14 +2206,478 @@ async function alarmReconciliationJourney(){
  finally{source.cleanup();}
 }
 
-export async function runAlarmLifecycleFixture(id){
- assert(hostFixture().alarms.cases.includes(id));
- const journey=await lifecycleBirthJourney({historical:id==='R1-23-H02',exerciseBootstrapRecovery:id==='R1-23-H01'});
+function routingState(f){
+ const installation=installationState(f), lifecycle=lifecycleRow(f);
+ if(!installation)return null;
+ const {revision,configuration_digest,package_revision,schedule_enabled,writes_enabled,maintenance}=installation;
+ return {revision,configuration_digest,package_revision,schedule_enabled,writes_enabled,maintenance,
+  ...alarmEpoch(f),fence:lifecycle?.fence_id??null,operation:lifecycle?.owner?.id??null};
+}
+
+const ROUTING_RESOURCE_KEYS=[
+ 'TopicArn','StackName','ChangeSetName','ClientToken','ClientRequestToken','FunctionName',
+ 'ReservedConcurrentExecutions','Name','State','ResourceARN','AlarmName','AlarmNames',
+ 'AlarmActions','OKActions','InsufficientDataActions','ActionsEnabled','TableName'
+];
+function routingAuditEntry({input,...entry}){
+ const scopedInput=input&&Object.fromEntries(ROUTING_RESOURCE_KEYS
+  .filter(key=>Object.hasOwn(input,key)).map(key=>[key,input[key]]));
+ return {...entry,...(scopedInput?{input:scopedInput}:{})};
+}
+
+const routingReads=rows=>rows.filter(row=>row.kind==='SNS');
+const routingArns=f=>actualAlarmRows(f).map(row=>row.definition.AlarmArn);
+
+function routingConfig(config,topic){
+ const next=structuredClone(config);
+ next.manager.health??={freshness_seconds:900,warning_percent:80};
+ if(topic)next.manager.health.sns_topic_arn=topic;
+ else delete next.manager.health.sns_topic_arn;
+ return next;
+}
+
+function customerTopicPolicy(arn,alarmArns,account){
+ return {Version:'2012-10-17',Statement:[{
+  Effect:'Allow',Principal:{Service:'cloudwatch.amazonaws.com'},Action:'sns:Publish',Resource:arn,
+  Condition:{StringEquals:{'AWS:SourceAccount':account},ArnEquals:{'AWS:SourceArn':alarmArns}}
+ },{
+  Effect:'Allow',Principal:{AWS:'*'},Action:['SNS:GetTopicAttributes','SNS:Publish'],Resource:arn,
+  Condition:{StringEquals:{'AWS:SourceOwner':account}}
+ }]};
+}
+
+function routingPackageTemplate(target,arn){
+ const template=JSON.parse(fs.readFileSync(path.join(path.dirname(target.manifestPath),'template.json')));
+ const metadata=template.Metadata.Pigboard,{region,account_id}=target.manifest.canonical_config.manager.aws;
+ const policies={operator:metadata.operator_policy,execution:metadata.alarm_execution_policy,
+  deployment:metadata.configure_deployer_policy,removal:metadata.remove_execution_policy,
+  runtime:template.Resources.RuntimeRole.Properties.Policies[0].PolicyDocument,
+  scheduler:template.Resources.SchedulerRole.Properties.Policies[0].PolicyDocument};
+ const suffixes=['*',...Object.values(hostFixture().routing.topics)];
+ for(const [role,policy] of Object.entries(policies)){
+  for(const candidate of suffixes){
+   assert.equal(policyPermits(policy,'sns:GetTopicAttributes',candidate),role==='operator'&&candidate===arn);
+   for(const forbidden of ['Publish','ListSubscriptionsByTopic','SetTopicAttributes','DeleteTopic']){
+    assert.equal(policyPermits(policy,'sns:'+forbidden,candidate),false);
+   }
+  }
+  const sns=policy.Statement.filter(statement=>[statement.Action].flat().some(action=>action.startsWith('sns:')));
+  if(role==='operator'&&arn){
+   assert.equal(sns.length,1);
+   assert.deepEqual([sns[0].Action].flat(),['sns:GetTopicAttributes']);
+   assert.deepEqual([sns[0].Resource].flat(),[arn]);
+  }else assert.deepEqual(sns,[]);
+ }
+ const alarms=hostFixture().alarms.expected.map(({logical,key})=>{
+  const actual=template.Resources[logical].Properties;
+  const resource='arn:aws:cloudwatch:'+region+':'+account_id+':alarm:'+actual.AlarmName;
+  const expected={AlarmActions:arn?[arn]:[],OKActions:[],InsufficientDataActions:[],ActionsEnabled:false};
+  for(const [property,value] of Object.entries(expected))assert.deepEqual(actual[property],value,logical);
+  const custom=['missing_completion','measured_budget'].includes(key);
+  for(const [role,allowed] of [['operator',custom],['execution',true]]){
+   for(const action of [[],...(arn?[[arn]]:[])]){
+    assert.equal(policyPermits(policies[role],'cloudwatch:PutMetricAlarm',resource,{alarmActions:action}),allowed);
+   }
+   assert.equal(policyPermits(policies[role],'cloudwatch:PutMetricAlarm',resource+'-outside',{alarmActions:arn?[arn]:[]}),false);
+   for(const other of arn?Object.values(hostFixture().routing.topics).filter(topic=>topic!==arn):[]){
+    assert.equal(policyPermits(policies[role],'cloudwatch:PutMetricAlarm',resource,{alarmActions:[other]}),false);
+   }
+  }
+  return {logical,name:actual.AlarmName,resource,expected,observed:Object.fromEntries(Object.keys(expected).map(property=>[property,actual[property]]))};
+ });
+ const policy=Object.fromEntries(['operator','execution'].map(role=>[role,policies[role]]));
+ return {package:target.packageEvidence,alarms,policies:policy,checked_roles:Object.keys(policies)};
+}
+
+function routingTransition(from,to,role){
+ const source=from.policies[role],target=to.policies[role];
+ const constrain=statement=>[statement.Action].flat().includes('cloudwatch:PutMetricAlarm');
+ const allowed=policy=>policy.Statement.find(constrain)?.Condition?.['ForAllValues:StringEquals']?.['cloudwatch:AlarmActions']??[];
+ const transition=[...new Set([...allowed(source),...allowed(target)])];
+ const writes=target.Statement.filter(constrain);
+ assert.equal(writes.length,1);
+ const destinationCondition=transition.length
+  ?{'ForAllValues:StringEquals':{'cloudwatch:AlarmActions':transition}}
+  :{Null:{'cloudwatch:AlarmActions':'true'}};
+ return {...target,Statement:target.Statement.map(statement=>constrain(statement)?{
+  ...statement,Condition:destinationCondition
+ }:statement)};
+}
+
+function installRoutingFixture(f,from,to,destinations={}){
+ f.cloud.routingOperatorPolicy=routingTransition(from,to,'operator');
+ f.cloud.routingExecutionPolicy=routingTransition(from,to,'execution');
+ Object.assign(f.cloud.routingTopics??={},destinations);
+}
+
+function requireOnlyTopicReads(f,start,topic){
+ const reads=routingReads(f.audit.slice(start));
+ if(topic){
+  assert(reads.length>0,'the verified operator reads the configured topic');
+  assert(reads.every(row=>row.identity==='SELECTED_OPERATOR'&&row.action==='GetTopicAttributesCommand'&&
+    row.input.TopicArn===topic));
+ }else assert.deepEqual(reads,[]);
+ const clients=f.destroyed.filter(row=>row.kind==='SNS');
+ if(topic)assert(clients.length>0);
+ assert(clients.every(row=>row.identity==='SELECTED_OPERATOR'));
+ return reads;
+}
+
+// Local archive containing the frozen historical schema. The surrounding
+// envelope is generated for this adversarial fixture and has its own digest.
+function consoleOnlySchemaArchive(source,target,name){
+ const frozen=hostFixture().routing.frozen_console_only, schemaEntry='contracts/config-v1.schema.json';
+ const schema=gunzipSync(Buffer.from(frozen.schema_gzip_base64,'base64'));
+ assert.equal(sha256(schema),frozen.schema_digest);
+ assert(!Object.hasOwn(JSON.parse(schema).properties.manager.properties.health.properties,'sns_topic_arn'));
+ const directory=path.join(source.temp,name),payload=path.join(directory,'payload');
+ fs.mkdirSync(payload,{recursive:true});
+ const oldPayload=path.join(path.dirname(target.manifestPath),'payload');
+ const manifest=structuredClone(target.manifest);
+ delete manifest.zip_digest;
+ const entries=['lib/aws/alarms.mjs','lib/config/parse.mjs','config/manager.json',schemaEntry];
+ manifest.payload_hashes={};
+ for(const entry of entries){
+  const file=path.join(payload,entry);
+  fs.mkdirSync(path.dirname(file),{recursive:true});
+  const bytes=entry===schemaEntry?schema:fs.readFileSync(path.join(oldPayload,entry));
+  fs.writeFileSync(file,bytes);
+  manifest.payload_hashes[entry]=sha256(bytes);
+ }
+ const encoded=JSON.stringify(manifest,null,2)+'\n';
+ fs.writeFileSync(path.join(payload,'package-manifest.json'),encoded);
+ manifest.payload_hashes['package-manifest.json']=sha256(encoded);
+ const zip=path.join(directory,'manager.zip');
+ execFileSync('/usr/bin/zip',['-X','-q',zip,...entries,'package-manifest.json'],{cwd:payload});
+ manifest.zip_digest=sha256(fs.readFileSync(zip));
+ const asset={bucket:'fixture-artifacts',key:name+'.zip',version:name+'-version',zip_digest:manifest.zip_digest};
+ return {...target,manifest,manifestPath:writeFixtureJSON(directory,'manifest',manifest),
+  assetPath:writeFixtureJSON(directory,'asset',asset),zip};
+}
+
+async function routingRemoval(driver,f,installed,name,topic,{completed=false}={}){
+ const {run,output,deployment}=driver,begin=f.audit.length;
+ const strict=requireStatus(await run('stop',installed,[],{branch:f}),'stopped');
+ assert.equal(strict.proof,true);
+ checkAlarmActions(f,false,topic);
+ const previewFile=output(name+'-preview');
+ const preview=requireStatus(await run('remove-preview',installed,['--output',previewFile],{branch:f}),'previewed');
+ assert.equal(fs.statSync(previewFile).mode&0o777,0o600);
+ const read=rows=>rows.filter(row=>Object.values(hostFixture().routing.topics).includes(row.reference));
+ assert.equal(preview.receipt_publication,'written');
+ assert.equal(preview.receipt_path,previewFile);
+ const receipt=JSON.parse(fs.readFileSync(previewFile));
+ assert.equal(receipt.schema,'pigboard-removal-preview/v1');
+ const topics=read(receipt.inventory.externally_owned);
+ if(topic){
+  assert.equal(topics.length,1);
+  assert.equal(topics[0].reference,topic);
+  assert.match(topics[0].cost,/SNS.*subscription/i);
+ }else assert.deepEqual(topics,[]);
+ const evidence={strict,preview:receipt};
+ if(completed){
+  for(const status of ['removed','partial']){
+   const branch=forkLifecycle(f,installed,name+' '+status);
+   if(status==='partial')branch.cloud.omitDeleteEvent='MeasuredBudgetAlarm';
+   const removal=await run('remove',installed,[...deployment,'--preview',previewFile,
+    '--output',output(name+'-'+status)],{branch,human:status==='partial'});
+   const result=requireStatus(removal,status);
+   assert.deepEqual(read(result.terminal.externally_owned),topics);
+   if(status==='partial')assert(removal.stdout.includes(topic)&&removal.stdout.includes(topics[0].cost));
+   else assert.deepEqual(JSON.parse(removal.stdout),result);
+   const subsequent=requireStatus(await run('inspect-operation',installed,['--operation',result.operation],{branch}),'inspected');
+   if(status==='partial')assert.deepEqual(read(subsequent.current_observation.externally_owned),topics);
+   assert.deepEqual(branch.cloud.routingTopics,f.cloud.routingTopics);
+   assert.equal(requireOnlyTopicReads(branch,0).length,0);
+   evidence[status]={result,display:removal.stdout,subsequent};
+  }
+ }
+ assert.deepEqual(requireOnlyTopicReads(f,begin),[]);
+ return evidence;
+}
+
+async function routingHistoricalGuards(driver,journey,target){
+ const {f,source,host}=journey;
+ const {run,initial,output,assetFlags,deployment}=driver;
+ const before=readOnlyCheckpoint(f);
+ const positiveDisabled=routingConfig(f.config,target.manifest.canonical_config.manager.health.sns_topic_arn);
+ const initialConfigPath=writeFixtureJSON(source.temp,'v1-route-config',positiveDisabled);
+ const defaultV1=runFixturePackage({configPath:initialConfigPath,output:path.join(source.temp,'v1-routed-package'),
+  source:source.source,revision:source.snapshot_revision});
+ assert.equal(defaultV1.exit_code,2);
+ assert.equal(defaultV1.actual.code,'PACKAGE_ROUTING_UNSUPPORTED');
+ assert(!fs.existsSync(path.join(source.temp,'v1-routed-package')));
+ const legacyManifest=driver.build('routing-v1-without-topic',f.config,{lifecycle:false}).manifest;
+ const legacy=await preparedCloud(f.config,legacyManifest);
+ try{
+  const legacyBefore=readOnlyCheckpoint(legacy);
+  const init=await runStateCommand(['init','--config',legacy.configPath,'--installation',legacy.installationPath,'--operator-profile','operator','--json'],
+   {resolveInstallation:legacy.resolve});
+  assert.equal(init.exitCode,0,init.stdout);
+  const initialized=readOnlyCheckpoint(legacy);
+  const result=await run('configure',legacy,[...assetFlags(target),...deployment,'--output',output('v1-routing-refused')],
+   {configPath:target.configPath,branch:legacy});
+  assert.equal(result.outcome.code,'PACKAGE_ROUTING_UNSUPPORTED',result.stdout);
+  assert(!fs.existsSync(output('v1-routing-refused')));
+  requireReadOnly(legacy,initialized);
+  assert.deepEqual(legacy.audit.slice(legacyBefore.aws).filter(row=>row.kind==='SNS'),[]);
+  const preAlarm=legacyLifecycleFixturePackage({configPath:initialConfigPath,output:path.join(source.temp,'pre-alarm-routed'),
+   revision:source.snapshot_revision,generation:initial.manifest.installation_generation});
+  const preAlarmResult=await host(['bind','--config',initialConfigPath,'--manifest',path.join(preAlarm.output,'manifest.json'),
+   '--stack',f.stackId,'--operator-profile','operator','--output',output('pre-alarm-refused'),'--json']);
+  assert.equal(preAlarmResult.outcome.code,'PACKAGE_ROUTING_UNSUPPORTED',preAlarmResult.stdout);
+  assert(!fs.existsSync(output('pre-alarm-refused')));
+  requireReadOnly(f,before);
+  const old=consoleOnlySchemaArchive(source,target,'console-only-schema');
+  const refused=await host(['bind','--config',target.configPath,'--manifest',old.manifestPath,'--stack',f.stackId,
+   '--operator-profile','operator','--output',output('old-schema-refused'),'--json']);
+  assert.equal(refused.outcome.code,'PACKAGE_ROUTING_UNSUPPORTED',refused.stdout);
+  assert(!fs.existsSync(output('old-schema-refused')));
+  requireReadOnly(f,before);
+  const retainedZip=fs.readFileSync(old.zip);
+  fs.appendFileSync(old.zip,'fixture archive tamper');
+  const tampered=await host(['bind','--config',target.configPath,'--manifest',old.manifestPath,'--stack',f.stackId,
+   '--operator-profile','operator','--output',output('tampered-routing-refused'),'--json']);
+  assert.equal(tampered.outcome.code,'PACKAGE_ZIP_MISMATCH',tampered.stdout);
+  assert(!fs.existsSync(output('tampered-routing-refused')));
+  requireReadOnly(f,before);
+  assert.equal(sha256(retainedZip),old.manifest.zip_digest);
+  const {schema_gzip_base64,...historical}=hostFixture().routing.frozen_console_only;
+  return {defaultV1,pre_alarm_v2:preAlarmResult.outcome,legacy_v1:{result:result.outcome,mutations:hostMutations(legacy.audit.slice(initialized.aws))},
+   console_only_archive:{kind:'local archive with historical schema',historical,fixture_archive_digest:old.manifest.zip_digest,
+    refusal:refused.outcome,tampered:tampered.outcome}};
+ }finally{legacy.cleanup();}
+}
+
+async function alarmRoutingJourney(journey){
+ const {f,source,evidence}=journey;
+ const driver=lifecycleDriver(journey),{initial,build,configure,output,run,assetFlags,deployment}=driver;
+ const {assertRoutingHealth,scanFixture}=await import('./test-manager-health.mjs');
+ const {topics:{primary,secondary,outside_transition:outside},stack_execution_role:executionRole}=hostFixture().routing;
+ const enabledConfig=changedControls(f.config,{schedule_enabled:true});
+ const noTopic=build('routing-console-only',enabledConfig);
+ const targetA=build('routing-primary',routingConfig(enabledConfig,primary));
+ const targetB=build('routing-secondary',routingConfig(enabledConfig,secondary));
+ const maintenanceControls={schedule_enabled:false,maintenance:true};
+ const noTopicMaintenance=build('routing-console-maintenance',changedControls(f.config,maintenanceControls));
+ const maintenanceA=build('routing-primary-maintenance',changedControls(targetA.manifest.canonical_config,maintenanceControls));
+ const maintenanceB=build('routing-secondary-maintenance',changedControls(targetB.manifest.canonical_config,maintenanceControls));
+ const packageFor={
+  absent:routingPackageTemplate(noTopic),primary:routingPackageTemplate(targetA,primary),
+  secondary:routingPackageTemplate(targetB,secondary)
+ };
+ const stripTopic=manifest=>routingConfig(manifest.canonical_config);
+ assert.deepEqual(stripTopic(targetA.manifest),stripTopic(targetB.manifest));
+ assert.equal(targetA.manifest.source_revision,targetB.manifest.source_revision);
+ assert.notEqual(targetA.manifest.configuration_digest,targetB.manifest.configuration_digest);
+ evidence.variants={
+  absent:{packages:[source.packageEvidence,packageFor.absent,noTopicMaintenance.packageEvidence]},
+  permitted:{packages:[packageFor.primary,packageFor.secondary,maintenanceB.packageEvidence]},
+  denied_or_misconfigured:{packages:[maintenanceA.packageEvidence]}
+ };
+ const {absent,permitted,denied_or_misconfigured:deniedEvidence}=evidence.variants;
+
+ absent.historical_guards=await routingHistoricalGuards(driver,journey,targetA);
+ const initialDisabled=forkLifecycle(f,initial,'console-only removal preview');
+ const absentReceipt=output('routing-console-maintained');
+ requireStatus(await run('configure',initial,[...assetFlags(noTopicMaintenance),...deployment,'--output',absentReceipt],
+  {configPath:noTopicMaintenance.configPath,branch:initialDisabled}),'configured');
+ absent.removal=await routingRemoval(driver,initialDisabled,{...noTopicMaintenance,installationPath:absentReceipt},'console-only',null);
+ installRoutingFixture(f,packageFor.absent,packageFor.absent);
+ const consoleOnly=await configure(initial,noTopic,'routing-console-only-active');
+ checkAlarmActions(f,true);
+ absent.health=await assertRoutingHealth(f,consoleOnly,{status:'console_only'});
+ assert.deepEqual(requireOnlyTopicReads(f,0),[]);
+ assert(!f.destroyed.some(row=>row.kind==='SNS'));
+
+ const alarmArns=routingArns(f),account=f.config.manager.aws.account_id;
+ const providerTopics={
+  [primary]:{policy:customerTopicPolicy(primary,alarmArns,account)},
+  [secondary]:{policy:customerTopicPolicy(secondary,alarmArns,account)}
+ };
+ installRoutingFixture(f,packageFor.absent,packageFor.primary,providerTopics);
+ let auditStart=f.audit.length;
+ const installedA=await configure(consoleOnly,targetA,'routing-primary-active');
+ checkAlarmActions(f,true,primary);
+ const healthA=await assertRoutingHealth(f,installedA,{status:'verified',topic:primary});
+ const currentA=healthA.json.outcome.current;
+ assert(currentA.evidence_revision);
+ permitted.primary={health:healthA,reads:requireOnlyTopicReads(f,auditStart,primary),revision:currentA.evidence_revision};
+
+ const transition=forkLifecycle(f,installedA,'primary to secondary rollback');
+ transition.cloud.stack.RoleARN=executionRole;
+ installRoutingFixture(transition,packageFor.primary,packageFor.secondary);
+ const transitionPolicy=transition.cloud.routingExecutionPolicy;
+ const policyChecks=[];
+ for(const resource of alarmArns){
+  for(const [alarmActions,expected] of [[[],true],[[primary],true],[[secondary],true],[[primary,secondary],true],[[outside],false],[[secondary,outside],false]]){
+   const observed=policyPermits(transitionPolicy,'cloudwatch:PutMetricAlarm',resource,{alarmActions});
+   assert.equal(observed,expected);
+   policyChecks.push({resource,alarmActions,expected,observed});
+  }
+ }
+ transition.cloud.rollbackStatus='UPDATE_ROLLBACK_COMPLETE';
+ const rollbackArgs=[...assetFlags(targetB),...deployment,'--output',output('routing-rolled-back')];
+ const rollback=await run('configure',installedA,rollbackArgs,{configPath:targetB.configPath,branch:transition});
+ assert.equal(rollback.outcome.status,'partial',rollback.stdout);
+ assert.equal(transition.cloud.stack.StackStatus,'UPDATE_ROLLBACK_COMPLETE');
+ const execution=transition.audit.filter(row=>row.action==='PutMetricAlarmAuthorization'&&row.identity===executionRole);
+ assert.equal(execution.length,8);
+ assert(execution.slice(0,4).every(row=>row.permitted&&canonicalize(row.alarm_actions)===canonicalize([secondary])));
+ assert(execution.slice(4).every(row=>row.permitted&&canonicalize(row.alarm_actions)===canonicalize([primary])));
+ const rollbackAlarmActions=transition.cloud.routingRollback;
+ assert.deepEqual(Object.values(rollbackAlarmActions.candidate_actions),Array(4).fill([secondary]));
+ assert.deepEqual(Object.values(rollbackAlarmActions.restored_actions),Array(4).fill([primary]));
+ for(const {definition} of actualAlarmRows(transition))assert.deepEqual(definition.AlarmActions,[primary]);
+ permitted.transition={stack_execution_role:executionRole,policy:transitionPolicy,policy_checks:policyChecks,
+  rollback:rollback.outcome,alarm_actions:rollbackAlarmActions,authorizations:execution};
+
+ const refusal=forkLifecycle(f,installedA,'denied target while primary is operating');
+ installRoutingFixture(refusal,packageFor.primary,packageFor.secondary,{[secondary]:{status:'denied'}});
+ const deniedBefore=readOnlyCheckpoint(refusal);
+ deniedEvidence.refusal={};
+ for(const [format,human] of [['readable',true],['json',false]]){
+  const file=output('routing-denied-'+format);
+  const refused=await run('configure',installedA,[...assetFlags(targetB),...deployment,'--output',file],
+   {configPath:targetB.configPath,branch:refusal,human});
+  const outcome=requireStatus(refused,'unavailable');
+  assert.equal(refused.exitCode,2,refused.stdout);
+  assert.equal(outcome.phase,'topic_preflight');
+  assert.equal(outcome.code,'SNS_TOPIC_READ_DENIED');
+  assert.equal(outcome.topic_routing.status,'unknown');
+  assert.equal(outcome.topic_routing.expected_topic_arn,secondary);
+  assert.match(outcome.topic_routing.next_step,/operator|GetTopicAttributes/i);
+  for(const field of ['state_fenced','state_mutated','host_mutated','provider_mutated','operation_reserved'])assert.equal(outcome[field],false,field);
+  assert(!fs.existsSync(file));
+  assert(refused.stdout.includes(secondary)&&refused.stdout.includes(outcome.code)&&refused.stdout.includes(outcome.topic_routing.next_step));
+  if(human)assert.match(refused.stdout,/(mutation|reserved|dispatch).*(false|no)/i);
+  else assert.deepEqual(JSON.parse(refused.stdout),outcome);
+  requireReadOnly(refusal,deniedBefore,{deployer:true});
+  deniedEvidence.refusal[format]=refused;
+ }
+ assert.equal(refusal.cloud.schedule.State,'ENABLED');
+ assert.equal(refusal.cloud.concurrency,1);
+ deniedEvidence.refusal.reads=requireOnlyTopicReads(refusal,deniedBefore.aws,secondary);
+ deniedEvidence.refusal.state_unchanged=refusal.provider.snapshot()===deniedBefore.state;
+ deniedEvidence.refusal.mutations=hostMutations(refusal.audit.slice(deniedBefore.aws));
+
+ const drift=forkLifecycle(f,installedA,'native alarm changes after CloudFormation');
+ installRoutingFixture(drift,packageFor.primary,packageFor.secondary);
+ drift.cloud.driftNativeAfterApply=outside;
+ const partial=await run('configure',installedA,[...assetFlags(targetB),...deployment,'--output',output('routing-native-drift')],
+  {configPath:targetB.configPath,branch:drift});
+ requireStatus(partial,'partial');
+ assert(partial.outcome.operation&&partial.outcome.state_fenced);
+ assert.equal(drift.cloud.schedule.State,'DISABLED');
+ assert.equal(drift.cloud.concurrency,0);
+ const mutate=hostMutations(drift.audit);
+ assert.equal(providerExecutions(mutate).length,1);
+ assert(!mutate.some(row=>row.action==='EnableAlarmActionsCommand'||row.action==='UpdateScheduleCommand'&&row.input.State==='ENABLED'||
+  row.action==='PutFunctionConcurrencyCommand'&&row.input.ReservedConcurrentExecutions>0));
+ deniedEvidence.native_drift={result:partial.outcome,mutations:mutate.map(routingAuditEntry),observed:actualAlarmRows(drift)};
+
+ const probe=forkLifecycle(f,installedA,'counted routing and alarm read responses');
+ probe.cloud.routingOperatorPolicy=packageFor.primary.policies.operator;
+ const exactDeny={...providerTopics[primary].policy.Statement[0],Effect:'Deny'};
+ const uncertainDeny={...exactDeny,Condition:{...exactDeny.Condition,IpAddress:{'aws:SourceIp':'192.0.2.0/24'}}};
+ const checks=[
+  ['topic_read_denied',{status:'denied'},'unknown','SNS_TOPIC_READ_DENIED'],
+  ['explicit_policy_denial',{policy:{...providerTopics[primary].policy,Statement:[...providerTopics[primary].policy.Statement,exactDeny]}},'misconfigured','SNS_TOPIC_POLICY_DENIED'],
+  ['indeterminate_policy_denial',{policy:{...providerTopics[primary].policy,Statement:[...providerTopics[primary].policy.Statement,uncertainDeny]}},'unknown','SNS_TOPIC_POLICY_UNKNOWN'],
+  ['wrong_topic_identity',{...providerTopics[primary],arn:outside},'misconfigured','SNS_TOPIC_ARN_MISMATCH'],
+  ['topic_missing',undefined,'misconfigured','SNS_TOPIC_NOT_FOUND']
+ ];
+ for(const [name,response,status,code] of checks){
+  probe.cloud.routingTopics[primary]=response;
+  deniedEvidence[name]=await assertRoutingHealth(probe,installedA,{status,topic:primary,code});
+ }
+ probe.cloud.routingTopics[primary]=providerTopics[primary];
+ const budget=probe.cloud.alarms.get(actualAlarmRows(probe)[3].name);
+ const lambda=probe.cloud.alarms.get(actualAlarmRows(probe)[1].name);
+ budget.AlarmActions=[outside];
+ delete lambda.AlarmActions;
+ deniedEvidence.wrong_or_missing_action=await assertRoutingHealth(probe,installedA,{
+  status:'misconfigured',topic:primary,observedByKey:{measured_budget:[outside],lambda_errors:[]}
+ });
+ budget.AlarmActions=[primary];
+ lambda.AlarmActions=[primary];
+ deniedEvidence.closing_bracket={};
+ for(const [name,options] of [['denied_host',{denyClosingHost:true}],['changed_state',{changeState:true}]]){
+  deniedEvidence.closing_bracket[name]=await assertRoutingHealth(probe,installedA,{
+   status:'unknown',topic:primary,priorStatus:'verified',...options
+  });
+ }
+
+ const deniedA=forkLifecycle(f,installedA,'topic permission disappears while A is scheduled');
+ deniedA.cloud.routingTopics[primary]={status:'denied'};
+ auditStart=deniedA.audit.length;
+ const protective=requireStatus(await run('stop',installedA,[],{branch:deniedA}),'stopped');
+ assert.equal(protective.proof,false);
+ assert.equal(deniedA.cloud.schedule.State,'DISABLED');
+ assert.equal(deniedA.cloud.concurrency,0);
+ assert.equal(installationState(deniedA).maintenance,true);
+ checkAlarmActions(deniedA,true,primary);
+ assert.deepEqual(requireOnlyTopicReads(deniedA,auditStart),[]);
+ auditStart=deniedA.audit.length;
+ const maintained=requireStatus(await run('configure',installedA,[...assetFlags(maintenanceA),...deployment,
+  '--output',output('routing-primary-maintained')],{configPath:maintenanceA.configPath,branch:deniedA}),'configured');
+ checkAlarmActions(deniedA,false,primary);
+ assert.deepEqual(requireOnlyTopicReads(deniedA,auditStart),[]);
+ const stoppedA={...maintenanceA,installationPath:output('routing-primary-maintained')};
+ deniedEvidence.denied_source_protection={protective,maintained,retained:await routingRemoval(driver,deniedA,stoppedA,
+  'routing-retained-while-denied',primary,{completed:true})};
+
+ auditStart=f.audit.length;
+ installRoutingFixture(f,packageFor.primary,packageFor.secondary);
+ const installedB=await configure(installedA,targetB,'routing-secondary-active');
+ checkAlarmActions(f,true,secondary);
+ const oldAt=Date.parse(currentA.health_enabled_at);
+ const oldScan=scanFixture(currentA,{started_at:new Date(oldAt+1000).toISOString(),ended_at:new Date(oldAt+2000).toISOString()});
+ const healthB=await assertRoutingHealth(f,installedB,{status:'verified',topic:secondary,events:[oldScan]});
+ const currentB=healthB.json.outcome.current;
+ assert.notEqual(currentA.configuration_digest,currentB.configuration_digest);
+ assert.notEqual(currentA.evidence_revision,currentB.evidence_revision);
+ assert.equal(healthB.json.outcome.ignored_historical_scans,1);
+ assert.equal(healthB.json.outcome.latest_complete,null);
+ permitted.rotation={health:healthB,reads:requireOnlyTopicReads(f,auditStart,secondary),before:currentA,after:currentB};
+
+ const stoppedB=forkLifecycle(f,installedB,'permitted retained destination');
+ const receiptB=output('routing-secondary-maintained');
+ requireStatus(await run('configure',installedB,[...assetFlags(maintenanceB),...deployment,'--output',receiptB],
+  {configPath:maintenanceB.configPath,branch:stoppedB}),'configured');
+ permitted.removal=await routingRemoval(driver,stoppedB,{...maintenanceB,installationPath:receiptB},'routing-retained-secondary',secondary);
+
+ auditStart=f.audit.length;
+ installRoutingFixture(f,packageFor.secondary,packageFor.absent);
+ const cleared=await configure(installedB,noTopic,'routing-cleared');
+ checkAlarmActions(f,true);
+ installRoutingFixture(f,packageFor.absent,packageFor.absent);
+ const settled=f.cloud.routingExecutionPolicy;
+ const clearedPolicyChecks=alarmArns.map(resource=>{
+  const empty=policyPermits(settled,'cloudwatch:PutMetricAlarm',resource,{alarmActions:[]});
+  const routed=Object.values(hostFixture().routing.topics).map(arn=>({arn,permitted:
+   policyPermits(settled,'cloudwatch:PutMetricAlarm',resource,{alarmActions:[arn]})}));
+  assert(empty&&routed.every(check=>!check.permitted));
+  return {resource,empty,routed};
+ });
+ permitted.cleared={health:await assertRoutingHealth(f,cleared,{status:'console_only'}),reads:requireOnlyTopicReads(f,auditStart),
+  settled_policy:settled,policy_checks:clearedPolicyChecks};
+ permitted.installed_notification_receipt='unconfirmed';
+}
+
+export async function runAlarmLifecycleFixture(id,{save}={}){
+ const routing=hostFixture().routing, routingCase=id===routing.case;
+ assert(routingCase||hostFixture().alarms.cases.includes(id));
+ const journey=await lifecycleBirthJourney({historical:id==='R1-23-H02',exerciseBootstrapRecovery:id==='R1-23-H01',cli:routingCase});
  const {source,evidence,f}=journey;
  Object.assign(evidence,{case:id,fixture:hostFixture().alarms.schema,simulated_account:f.config.manager.aws.account_id,
   simulated_roles:hostFixture().alarms.simulated_roles,omissions:['AWS evaluation and IAM','installed acceptance','human execution and acceptance']});
  try{
-  if(id==='R1-23-H01')await alarmPackageJourney(journey);
+  if(routingCase){
+   Object.assign(evidence,{fixture:routing.schema,preparation:routing.preparation,data:routing.data});
+   await alarmRoutingJourney(journey);
+   save?.(evidence);
+  }else if(id==='R1-23-H01')await alarmPackageJourney(journey);
   else {
    await alarmLifeJourney(journey);
    evidence.reconciliation=await alarmReconciliationJourney();
