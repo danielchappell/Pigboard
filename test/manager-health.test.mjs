@@ -137,6 +137,41 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
  const getHealth=(installed,options={})=>readAlarmHealthFixture(f,{...installed,...options});
  const metricReads=e=>e.telemetry.filter(row=>row.action==='GetMetricStatisticsCommand');
  const alarmReads=e=>e.telemetry.filter(row=>row.action==='DescribeAlarmsCommand');
+ const assertUnverified=(observed,prior)=>{
+  const {human,json}=observed,outcome=json.outcome;
+  assert.equal(json.exitCode,2);
+  assert.deepEqual(human.outcome,outcome);
+  assert.equal(outcome.state,'unknown');
+  assert.equal(outcome.alarm_evidence.stable_host_and_state,false);
+  assert.equal(outcome.alarm_evidence.status,'unknown');
+  assert.equal(outcome.alarm_evidence.current.evidence_revision,null);
+  assert.equal(outcome.alarm_evidence.intent,null);
+  assert(Object.values(outcome.current).every(value=>value===null));
+  assert.equal(outcome.latest_complete,null);
+  assert.equal(outcome.latest_attempt,null);
+  assert.equal(outcome.maximum_budget_utilization,null);
+  assert.equal(outcome.desired_enabled,null);
+  assert.equal(outcome.applied_controls,null);
+  assert.deepEqual(outcome.metric_evidence.metrics,{});
+  assert.deepEqual(outcome.reasons,['HOST_OR_STATE_CHANGED_OR_UNCONFIRMED']);
+  assert.equal(outcome.prior_observation.attribution,'unverified');
+  assert.deepEqual(outcome.prior_observation.binding,prior.current);
+  assert.equal(outcome.alarm_evidence.observed_at,prior.alarm_evidence.observed_at);
+  const alarms=outcome.alarm_evidence.alarms;
+  assert.equal(alarms.length,4);
+  assert(alarms.every(a=>a.status==='unknown'&&a.evaluation==='unverified'));
+  const raw=alarms.find(a=>a.key==='missing_completion'),old=prior.alarm_evidence.alarms.find(a=>a.key===raw.key);
+  assert.deepEqual(raw.actual,old.actual);
+  assert.deepEqual(raw.expected,old.expected);
+  assert.equal(raw.raw_state,'ALARM');
+  assert.equal(raw.raw_state_updated_at,old.raw_state_updated_at);
+  assert.match(human.stdout,/Current package, schedule, completion and budget — unverified/);
+  assert.match(human.stdout,/raw state ALARM at .*current evaluation unverified/);
+  assert.match(human.stdout,/Earlier observations from .*current attribution unverified/);
+  assert.doesNotMatch(human.stdout,/definition aligned|current evaluation dormant|Latest complete:/);
+  assert(human.stdout.includes(raw.link));
+  return outcome.prior_observation;
+ };
  try{
   const fresh=await getHealth(initial),outcome=fresh.json.outcome;
   assert.equal(outcome.state,'disabled');
@@ -195,6 +230,21 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.equal(metricReads(starting).length,10);
   assert.equal(starting.json.outcome.maximum_budget_utilization,null);
 
+  const prior=starting.json.outcome.current,epoch=Date.parse(prior.health_enabled_at),finished=epoch+30000;
+  const measuredScan=scanFixture(prior,{started_at:prior.health_enabled_at,ended_at:new Date(finished).toISOString(),
+   counters:{requests_attempted:81}});
+  const measuredInput={events:[measuredScan],now:new Date(epoch+120000).toISOString()};
+  const measured=await getHealth(enabled,measuredInput);
+  assert.equal(measured.json.outcome.state,'degraded');
+  assert(measured.json.outcome.reasons.includes('CAPACITY_WARNING'));
+  assert.equal(measured.json.outcome.maximum_budget_utilization,81);
+  const closingDenied=await getHealth(enabled,{...measuredInput,denyClosingHost:true});
+  const captured=assertUnverified(closingDenied,measured.json.outcome);
+  assert.deepEqual(captured.latest_complete,measuredScan);
+  assert.equal(captured.maximum_budget_utilization,81);
+  assert.equal(captured.metric_evidence.metrics.MaximumBudgetUtilization.latest_at,new Date(epoch+60000).toISOString());
+  assert.match(closingDenied.human.stdout,/Observed maximum budget use — 81.0% \(latest metric point at /);
+
   f.cloud.schedule.State='DISABLED';
   const unexpected=await getHealth(enabled);
   assert.equal(unexpected.json.exitCode,1);
@@ -205,9 +255,9 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   f.cloud.schedule.State='ENABLED';
 
   const stopped=await configure(enabled,build('health-disabled',config),'health-disabled-receipt');
-  const prior=starting.json.outcome.current,finished=Date.parse(prior.health_enabled_at)+1;
-  const historical=scanFixture(prior,{started_at:prior.health_enabled_at,ended_at:new Date(finished).toISOString()});
-  const dormant=await getHealth(stopped,{events:[historical],now:new Date(Math.max(finished+1,Date.parse(f.dependencies.now()))).toISOString()});
+  const historical=measuredScan;
+  const dormantInput={events:[historical],now:new Date(Math.max(finished+1,Date.parse(f.dependencies.now()))).toISOString()};
+  const dormant=await getHealth(stopped,dormantInput);
   assert.equal(dormant.json.outcome.state,'disabled',dormant.json.stdout);
   assert.equal(dormant.json.outcome.alarm_evidence.current.evidence_revision,null);
   assert.deepEqual(dormant.json.outcome.alarm_evidence.retained_epoch,{
@@ -219,5 +269,9 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.equal(dormant.json.outcome.latest_historical_scan.evidence_revision,prior.evidence_revision);
   assert.equal(dormant.json.outcome.maximum_budget_utilization,null);
   assert.equal(metricReads(dormant).length,0);
+  const closingChanged=await getHealth(stopped,{...dormantInput,changeState:true});
+  const dormantCapture=assertUnverified(closingChanged,dormant.json.outcome);
+  assert.deepEqual(dormantCapture.latest_historical_scan,historical);
+  assert.equal(metricReads(closingChanged).length,0);
  }finally{journey.source.cleanup();}
 });

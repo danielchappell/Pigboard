@@ -16,13 +16,14 @@ const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',
 const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
 
 test('R1-23-H01 checks package alarm signals, scoped roles and health readback', async () => {
- const {template,windows,histories,health}=await runAlarmLifecycleFixture('R1-23-H01');
+ const {template,windows,histories,health,repeat_bootstrap,bootstrap_recovery}=await runAlarmLifecycleFixture('R1-23-H01');
  assert.equal(template.retention_days,14);
  assert.deepEqual(template.alarms.map(alarm=>alarm.logical),[
   'MissingCompletionAlarm','LambdaErrorsAlarm','LambdaThrottlesAlarm','MeasuredBudgetAlarm'
  ]);
  const budgetAlarm=template.alarms.find(alarm=>alarm.logical==='MeasuredBudgetAlarm');
  assert(budgetAlarm.grants.some(grant=>grant.role==='operator'&&grant.action==='PutMetricAlarm'));
+ assert(template.alarms.every(row=>row.grants.filter(grant=>grant.action==='ListTagsForResource').map(grant=>grant.role).join(',')==='operator'));
  assert(!budgetAlarm.grants.some(grant=>['runtime','scheduler'].includes(grant.role)));
  assert.deepEqual(windows.commands.map(command=>command.exit_code),[0,2,0]);
  assert.equal(windows.commands[1].actual.code,'ALARM_WINDOW_UNSUPPORTED');
@@ -37,14 +38,22 @@ test('R1-23-H01 checks package alarm signals, scoped roles and health readback',
  assert.equal(health.starting.json.outcome.maximum_budget_utilization,null);
  assert.equal(health.denied.json.outcome.alarm_evidence.read_code,'ALARM_READ_DENIED');
  assert.equal(health.mismatch.json.outcome.alarm_evidence.alarms[3].code,'ALARM_DEFINITION_MISMATCH');
+ assert.equal(repeat_bootstrap.aligned.status,'bootstrapped');
+ assert.equal(repeat_bootstrap.drift.alarms.status,'mismatch');
+ assert.equal(repeat_bootstrap.denial.alarms.status,'unknown');
+ assert.equal(bootstrap_recovery.initial_package.intent,'disabled');
+ assert.equal(bootstrap_recovery.strict.proof,true);
 });
 
 test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and reports partial deletion', async () => {
- const {adoption,activation,removal}=await runAlarmLifecycleFixture('R1-23-H02');
+ const {adoption,activation,removal,failures}=await runAlarmLifecycleFixture('R1-23-H02');
  assert.equal(adoption.authentic_parent.revision,'75f4efddb6e4fc0a7fcdedd660040842206763a3');
  assert.equal(adoption.authentic_parent.template_sha256,'sha256:53f0670bb1604b111fa29018fc722e083741dfb9c1faf7cda2b351f9dc62b114');
  assert.equal(adoption.authentic_parent.outer_manifest_sha256,'sha256:4bf74fa23151d2fbdd4478382863f8fb23a76db97a99b8ed10eb8e64de3cf76a');
  assert.equal(adoption.added.length,4);
+ assert.equal(adoption.name_checks.absence.length,4);
+ assert.equal(adoption.name_checks.preview.composite.result.code,'ALARM_NAME_COLLISION');
+ assert.equal(adoption.name_checks.upgrade.denied.result.code,'ALARM_NAME_AVAILABILITY_UNCONFIRMED');
  assert(adoption.dormant.every(alarm=>alarm.definition.ActionsEnabled===false));
  assert.equal(adoption.health.json.outcome.alarm_evidence.current.evidence_revision,null);
  assert.equal(activation.externalHealth.json.outcome.state,'degraded');
@@ -59,6 +68,11 @@ test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and repo
  const unresolved=removal['missing alarm delete event'].inspected.current_observation;
  assert.equal(unresolved.status,'partial');
  assert.equal(unresolved.resources.find(row=>row.logical==='MeasuredBudgetAlarm').observation,'unobservable');
+ assert.equal(failures.configureProtection['incompatible inventory'].host,'stopped');
+ assert.equal(failures.configureProtection['ordinary update'].code,'ALARM_OWNERSHIP_UNCONFIRMED');
+ assert.equal(removal.retained_table_checks.denied.storedFinish.current_observation.table_observation.status,'unobservable');
+ assert.equal(removal.retained_table_checks.substituted.held.current_observation.table_observation.code,'PHYSICAL_STATE_MISMATCH');
+ assert.equal(removal.retained_table_checks.state.held.current_observation.state_persistence,'unconfirmed');
 });
 
 test('alarm readback rejects substituted stack ownership and incomplete or conflicting named results', async () => {

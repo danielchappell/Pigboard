@@ -95,6 +95,7 @@ function augment(f,options){
     try{return await original.send(command,sendOptions);}finally{original.destroy();}
    }
    if(options.denyLogs&&action==='FilterLogEventsCommand')throw Object.assign(Error('DUMMY_SECRET_BODY_PROVIDER_ERROR'),{name:'AccessDeniedException'});
+   if(options.denyClosingHost&&action==='FilterLogEventsCommand')f.cloud.fail='DescribeStacksCommand';
    if(action==='FilterLogEventsCommand'){assert.equal(input.logGroupName,f.cloud.function.Environment.Variables.PB_TABLE_NAME.replace(/-state$/,'').replace(/^/,'/aws/lambda/'));assert.equal(input.filterPattern,'{ $.summary.schema = "pigboard-scan-summary/v1" }');if(options.emptyPage&&pages++===0)return {events:[],nextToken:'fixture-next'};if(options.change)f.cloud.schedule.State=f.cloud.schedule.State==='ENABLED'?'DISABLED':'ENABLED';if(options.changeState){const record=f.provider.records()[0];record.revision++;f.provider.seed(record);}const slice=options.pageSize?events.slice(eventOffset,eventOffset+options.pageSize):events;eventOffset+=slice.length;return {events:slice.map(s=>({message:JSON.stringify(embeddedMetricEvent(s)),timestamp:Date.parse(s.ended_at)})),...(eventOffset<events.length?{nextToken:'page-'+eventOffset}:{})};}
    assert.equal(action,'GetMetricStatisticsCommand');assert.equal(input.Namespace,'Pigboard/Manager');assert.deepEqual(input.Statistics,['Maximum']);assert.deepEqual(input.Dimensions,[{Name:'InstallationId',Value:identity.installation_id},{Name:'EvidenceRevision',Value:evidenceRevision(identity)}]);const values=events.map(embeddedMetricEvent).filter(e=>e.InstallationId===identity.installation_id&&e.EvidenceRevision===evidenceRevision(identity)).map(e=>e[input.MetricName]).filter(v=>v!==undefined);return {Label:input.MetricName,Datapoints:values.flatMap(v=>[1,1].map(()=>({Timestamp:new Date(Date.parse(options.observedAt??packet().now)-60000),Maximum:v})))};
   }};
@@ -102,21 +103,34 @@ function augment(f,options){
  return {...f,identity,telemetry,auditStart,dependencies,input:{configPath:f.configPath,installationPath:f.installationPath,operatorProfile:'operator'}};
 }
 
-export async function readAlarmHealthFixture(f,{configPath,installationPath,now=f.dependencies.now(),events=[],denyAlarmRead=false,denyLogs=false,changeState=false}){
+export async function readAlarmHealthFixture(f,{configPath,installationPath,now=f.dependencies.now(),events=[],denyAlarmRead=false,denyLogs=false,changeState=false,denyClosingHost=false}){
  const input={...f,configPath,installationPath};
  const {binding}=JSON.parse(fs.readFileSync(installationPath,'utf8'));
- const {extensions}=f.provider.records().find(record=>record.kind==='installation');
+ const record=f.provider.records().find(record=>record.kind==='installation'),{extensions}=record;
  const expectedIdentity={...binding,health_generation:extensions.health_generation??null};
- const options={events,observedAt:now,denyAlarmRead,denyLogs,changeState,expectedIdentity};
+ const options={events,observedAt:now,denyAlarmRead,denyLogs,changeState,denyClosingHost,expectedIdentity};
  const args=['--config',configPath,'--installation',installationPath,'--operator-profile','operator'];
  const before=f.provider.snapshot(),start=f.audit.length;
- const humanFixture=augment(input,options),human=await runHealthCommand(args,humanFixture.dependencies);
- const jsonFixture=augment(input,{...options,changeState:false}),json=await runHealthCommand([...args,'--json'],jsonFixture.dependencies);
- if(!changeState)assert.equal(f.provider.snapshot(),before);
- const actions=f.audit.slice(start),telemetry=[...humanFixture.telemetry,...jsonFixture.telemetry];
+ const stateBefore=changeState?structuredClone(record):null;
+ const failBefore=f.cloud.fail;
+ const run=async flags=>{
+  const fixture=augment(input,options);
+  try{return {result:await runHealthCommand(flags,fixture.dependencies),telemetry:fixture.telemetry};}
+  finally{
+   if(stateBefore)f.provider.seed(stateBefore);
+   if(denyClosingHost){
+    if(failBefore===undefined)delete f.cloud.fail;
+    else f.cloud.fail=failBefore;
+   }
+  }
+ };
+ const readable=await run(args),structured=await run([...args,'--json']);
+ const {result:human}=readable,{result:json}=structured;
+ assert.equal(f.provider.snapshot(),before);
+ const actions=f.audit.slice(start),telemetry=[...readable.telemetry,...structured.telemetry];
  assert(actions.every(row=>!(/^(Update|Put|Create|Execute|Delete|Enable|Disable|TransactWrite)/).test(row.action)));
  assert(telemetry.every(row=>row.identity==='SELECTED_OPERATOR'));
- if(!changeState)assert.equal(human.exitCode,json.exitCode);
+ assert.equal(human.exitCode,json.exitCode);
  assert.deepEqual(JSON.parse(json.stdout),json.outcome);
  assert.doesNotMatch(human.stdout+json.stdout,/DUMMY_SECRET_BODY_PROVIDER_ERROR/);
  return {human,json,telemetry,actions,commands:[['node','scripts/manager-health.mjs',...args],['node','scripts/manager-health.mjs',...args,'--json']]};

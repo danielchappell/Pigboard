@@ -126,6 +126,25 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
   const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n)throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,UserId:`AROAEXAMPLE:${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`};
+  if(n==='ListTagsForResourceCommand'){
+   assert.equal(kind,'CloudWatch');
+   assert.equal(identity,'SELECTED_OPERATOR');
+   assert(command instanceof sdk.CloudWatchListTagsForResourceCommand);
+   const alarm=descriptors.find(row=>row.arn===i.ResourceARN);
+   assert(alarm);
+   assert.deepEqual(i,{ResourceARN:alarm.arn});
+   const condition=cloud.alarmNameConditions?.[alarm.key]??(cloud.alarms.has(alarm.name)?'metric':'absent');
+   audit.at(-1).simulated_alarm_name=condition;
+   const metadata={httpStatusCode:404,requestId:'fixture-alarm-name'};
+   const message='Private fixture error text';
+   if(condition==='absent')throw new sdk.CloudWatchResourceNotFoundException({$metadata:metadata,message});
+   if(condition==='denied')throw denied();
+   if(condition==='timeout')throw Object.assign(Error(message),{name:'TimeoutError'});
+   if(condition==='untyped_404')throw Object.assign(Error(message),{name:'ResourceNotFoundException',$metadata:metadata});
+   if(condition==='wrong_service_404')throw new sdk.ResourceNotFoundException({$metadata:metadata,message});
+   assert(['metric','composite','log','tagged'].includes(condition));
+   return {Tags:condition==='tagged'?[{Key:'fixture-private-tag',Value:'fixture-private-value'}]:[]};
+  }
   if(n==='DescribeAlarmsCommand'){
    assert.equal(identity,'SELECTED_OPERATOR');
    assert.deepEqual(i.AlarmTypes,['MetricAlarm']);
@@ -171,7 +190,13 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    if(i.State==='ENABLED'&&cloud.loseEnableScheduleReply)throw Object.assign(new Error('simulated lost Scheduler response'),{name:'TimeoutError'});
    return {};
   }
-  if(n==='DescribeTableCommand')return {Table:structuredClone(cloud.describeTable?.(i)??cloud.table)};
+  if(n==='DescribeTableCommand'){
+   const fault=cloud.deletionDispatched?cloud.retainedTableReadFault:undefined;
+   if(fault==='denied')throw denied();
+   const observed=structuredClone(cloud.describeTable?.(i)??cloud.table);
+   if(fault==='substituted')observed.TableId=hostFixture().lifecycle.restored_table_id;
+   return {Table:observed};
+  }
   if(kind==='DynamoDBDocument'&&n==='QueryCommand'&&i.KeyConditionExpression==='PK = :pk'){
    assert(i.ConsistentRead);
    provider.audit.push({name:n,input:structuredClone(i),abortSignal:!!sendOptions?.abortSignal});
@@ -234,6 +259,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    assert.equal(identity,'SELECTED_DEPLOYER');
    assert.equal(i.StackName,stackId);
    const status=cloud.deleteStatus??'DELETE_COMPLETE';
+   cloud.deletionDispatched=true;
    cloud.stack.StackStatus=status;
    cloud.events.unshift(terminalEvent(i.ClientRequestToken,status),...resources().flatMap(resource=>{
     const definition=cloud.template.Resources[resource.LogicalResourceId];
@@ -249,6 +275,12 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   if(n==='DescribeChangeSetCommand')return {Status:'CREATE_COMPLETE',Changes:cloud.changes??[{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',Details:[{Target:{Attribute:'Properties',Name:'Code'}}]}}]};
   if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';cloud.executedToken=i.ClientRequestToken;cloud.completionReads=0;cloud.events.unshift({ClientRequestToken:i.ClientRequestToken,StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'});return {};}
   if(kind==='DynamoDBDocument'){
+   if(n==='TransactGetCommand'&&cloud.deletionDispatched&&cloud.denyProtectedStateAfterDelete)throw denied();
+   if(n==='GetCommand'&&cloud.deletionDispatched&&cloud.faultTableAfterReadOperation&&i.Key?.SK.startsWith('O#')){
+    const response=await provider.send(command,sendOptions);
+    cloud.retainedTableReadFault=cloud.faultTableAfterReadOperation;
+    return response;
+   }
    if(n==='TransactWriteCommand'&&cloud.failCommitControls&&cloud.stack.StackStatus==='UPDATE_COMPLETE'&&cloud.schedule.State==='ENABLED'&&cloud.concurrency===1)
     throw Object.assign(new Error('dummy final commit unavailable'),{name:'TimeoutError'});
    if(n==='TransactWriteCommand'&&cloud.enablementWriteFault&&i.TransactItems.some(item=>item.Put?.Item?.SK==='CONTROL'&&item.Put.Item.owner?.verified_enablement))
@@ -981,6 +1013,35 @@ async function bootstrapRecoveryJourney({f,host,flags,source,installPath,evidenc
  noHostWrites(branch.audit.slice(start));
  assert.equal(providerExecutions(branch.audit).length,1);
  evidence.bootstrap_recovery={terminal:finish.terminal,fence};
+ if(hasAlarmCapability(recovered.manifest)){
+  const bootstrapped=lifecycleRow(branch);
+  assert.equal(bootstrapped.current_alarm_package.intent,'disabled');
+  assert.equal(bootstrapped.current_alarm_package.zip_digest,recovered.manifest.zip_digest);
+  checkAlarmActions(branch,false);
+  const stopped=requireStatus(await command('stop',[],out('bootstrap-recovered')),'stopped');
+  assert.notEqual(stopped.operation,id);
+  assert.equal(lifecycleRow(branch).last_operation_id,stopped.operation);
+  assert.deepEqual(lifecycleRow(branch).current_alarm_package,bootstrapped.current_alarm_package);
+  const maintenanceConfig=changedControls(recovered.manifest.canonical_config,{maintenance:true});
+  const configPath=writeFixtureJSON(source.temp,'acknowledged-bootstrap-maintenance-config',maintenanceConfig);
+  const target=packageManager({configPath,output:path.join(source.temp,'acknowledged-bootstrap-build'),source:source.source,
+   revision:recovered.manifest.source_revision,generation:recovered.manifest.installation_generation,lifecycle:true});
+  const asset={bucket:'fixture-artifacts',key:'acknowledged-bootstrap.zip',version:'acknowledged-bootstrap-version',zip_digest:target.manifest.zip_digest};
+  branch.cloud.assets=new Map([[asset.version,Buffer.from(asset.zip_digest.slice(7),'hex').toString('base64')]]);
+  const flagsForMaintenance=['--config',configPath,'--operator-profile','operator','--json'];
+  const receipt=out('acknowledged-maintenance');
+  const configured=requireStatus(await host(['configure',...flagsForMaintenance,'--installation',out('bootstrap-recovered'),
+   '--manifest',path.join(target.output,'manifest.json'),'--asset',writeFixtureJSON(source.temp,'acknowledged-asset',asset),
+   '--deployer-profile','deployer','--output',receipt],branch),'configured');
+  const maintenancePackage=lifecycleRow(branch).current_alarm_package;
+  const strict=requireStatus(await host(['stop',...flagsForMaintenance,'--installation',receipt],branch),'stopped');
+  assert.equal(strict.proof,true);
+  assert.notEqual(strict.operation,configured.operation);
+  assert.equal(lifecycleRow(branch).last_operation_id,strict.operation);
+  assert.deepEqual(lifecycleRow(branch).current_alarm_package,maintenancePackage);
+  checkAlarmActions(branch,false);
+  Object.assign(evidence.bootstrap_recovery,{initial_package:bootstrapped.current_alarm_package,stopped,configured,strict});
+ }
 }
 
 function snapshotRefForFixture(source){
@@ -1109,9 +1170,9 @@ function inspectAlarmTemplate(journey){
   execution:metadata.alarm_execution_policy,removal:metadata.remove_execution_policy,
   tagging:metadata.alarm_tagging_policy,runtime:Resources.RuntimeRole.Properties.Policies[0].PolicyDocument,
   scheduler:Resources.SchedulerRole.Properties.Policies[0].PolicyDocument};
- const alarmActions=['DescribeAlarms','EnableAlarmActions','DisableAlarmActions','PutMetricAlarm','DeleteAlarms','TagResource','UntagResource','SetAlarmState'];
+ const alarmActions=['DescribeAlarms','EnableAlarmActions','DisableAlarmActions','PutMetricAlarm','DeleteAlarms','TagResource','UntagResource','SetAlarmState','ListTagsForResource'];
  const native=['lambda-errors','lambda-throttles'];
- const permissions={operator:{DescribeAlarms:()=>true,DisableAlarmActions:()=>true,
+ const permissions={operator:{DescribeAlarms:()=>true,DisableAlarmActions:()=>true,ListTagsForResource:()=>true,
   EnableAlarmActions:suffix=>native.includes(suffix),PutMetricAlarm:suffix=>!native.includes(suffix)},
   execution:{DescribeAlarms:()=>true,PutMetricAlarm:()=>true,DeleteAlarms:()=>true},
   removal:{DescribeAlarms:()=>true,DeleteAlarms:()=>true},tagging:{TagResource:()=>true,UntagResource:()=>true}};
@@ -1178,10 +1239,30 @@ function checkAlarmWindows(journey){
 }
 
 async function alarmPackageJourney(journey){
- const {f,evidence}=journey,{initial,build,configure}=lifecycleDriver(journey);
+ const {f,evidence}=journey,{initial,build,configure,run,output,deployment}=lifecycleDriver(journey);
  const {runAlarmSignalHistories,readAlarmHealthFixture}=await import('./test-manager-health.mjs');
  evidence.template=inspectAlarmTemplate(journey);
  evidence.windows=checkAlarmWindows(journey);
+ const repeatBootstrap={};
+ for(const [scenario,code] of [['aligned',null],['drift','ALARM_DEFINITION_MISMATCH'],['denial','ALARM_READ_DENIED']]){
+  const branch=forkLifecycle(f,initial,`repeat bootstrap ${scenario}`),receipt=output(`bootstrap-repeat-${scenario}`);
+  if(scenario==='drift')branch.cloud.alarms.get(actualAlarmRows(branch)[3].name).Threshold=75;
+  if(scenario==='denial')branch.cloud.denyAlarmRead=true;
+  const before=readOnlyCheckpoint(branch);
+  const repeat=await run('bootstrap',initial,[...deployment,'--output',receipt],{branch});
+  assert.equal(repeat.exitCode,code?2:0,repeat.stdout);
+  assert.equal(repeat.outcome.status,code?'unavailable':'bootstrapped');
+  assert.equal(repeat.outcome.code,code??undefined);
+  assert.equal(fs.existsSync(receipt),!code);
+  const reads=branch.audit.filter(row=>row.action==='DescribeAlarmsCommand');
+  assert.equal(reads.length,1);
+  assert.deepEqual(reads[0].input.AlarmNames,actualAlarmRows(branch).map(row=>row.name));
+  if(code)assert.equal(repeat.outcome.alarms.status,scenario==='drift'?'mismatch':'unknown');
+  else assert.deepEqual(JSON.parse(fs.readFileSync(receipt)).manifest,initial.manifest);
+  requireReadOnly(branch,before,{deployer:true});
+  repeatBootstrap[scenario]=repeat.outcome;
+ }
+ evidence.repeat_bootstrap=repeatBootstrap;
  const disabled=await readAlarmHealthFixture(f,initial);
  assert.equal(disabled.json.outcome.state,'disabled');
  assert.equal(disabled.json.outcome.maximum_budget_utilization,null);
@@ -1281,6 +1362,35 @@ async function alarmLifeJourney(journey){
   return preview;
  };
  const preview=await propose(legacyActive,initialTarget,'alarm-adoption');
+ const expectedArns=hostFixture().alarms.expected.map(row=>`arn:aws:cloudwatch:${legacyConfig.manager.aws.region}:${legacyConfig.manager.aws.account_id}:alarm:${f.cloud.schedule.Name}-${row.suffix}`);
+ const nameReads=audit=>audit.filter(row=>row.action==='ListTagsForResourceCommand');
+ const absence=nameReads(f.audit);
+ assert.deepEqual(absence.map(row=>row.input.ResourceARN),expectedArns);
+ assert(absence.every(row=>row.identity==='SELECTED_OPERATOR'&&row.kind==='CloudWatch'&&row.simulated_alarm_name==='absent'));
+ const protection=hostFixture().alarms.adoption_name_checks;
+ const adoptionNameChecks={absence,preview:{},upgrade:{}};
+ const rejectNameCheck=async(scenario,code,verb)=>{
+  const branch=forkLifecycle(f,legacyActive,`adoption ${verb} with ${scenario}`);
+  branch.cloud.alarmNameConditions={measured_budget:scenario};
+  const checkpoint=readOnlyCheckpoint(branch),file=output(`adoption-${verb}-${scenario}`);
+  const extra=verb==='upgrade'?[...deployment,'--preview',preview]:[];
+  const result=await run(verb,legacyActive,[...assetFlags(initialTarget),...extra,'--output',file],{branch,human:scenario==='tagged'});
+  assert.equal(result.exitCode,2,result.stdout);
+  assert.equal(result.outcome.code,code,result.stdout);
+  assert.match(result.outcome.status,/^(unavailable|refused)$/);
+  assert(!fs.existsSync(file));
+  assert.doesNotMatch(result.stdout,/fixture-private-(tag|value)|Private fixture error text/);
+  requireReadOnly(branch,checkpoint,{deployer:verb==='upgrade'});
+  const reads=nameReads(branch.audit);
+  assert.deepEqual(reads.map(row=>row.input.ResourceARN),expectedArns);
+  assert.deepEqual(reads.map(row=>row.simulated_alarm_name),['absent','absent','absent',scenario]);
+  return {result:result.outcome,reads};
+ };
+ for(const [scenarios,code] of [[protection.occupied,'ALARM_NAME_COLLISION'],[protection.unconfirmed,'ALARM_NAME_AVAILABILITY_UNCONFIRMED']]){
+  for(const scenario of scenarios)adoptionNameChecks.preview[scenario]=await rejectNameCheck(scenario,code,'upgrade-preview');
+ }
+ for(const scenario of protection.changes_after_preview)adoptionNameChecks.upgrade[scenario]=await rejectNameCheck(scenario,
+  scenario==='log'?'ALARM_NAME_COLLISION':'ALARM_NAME_AVAILABILITY_UNCONFIRMED','upgrade');
  const ownZip=path.join(path.dirname(initialTarget.manifestPath),'manager.zip');
  const badZipBranch=forkLifecycle(f,legacyActive,'tampered adjacent ZIP');
  const verifiedZip=fs.readFileSync(ownZip);
@@ -1313,11 +1423,12 @@ async function alarmLifeJourney(journey){
  assert.deepEqual(businessRows(f),retained);
  assert(f.audit.slice(adoptionStart).some(row=>row.action==='GetTemplateCommand'&&row.input.TemplateStage==='Original'));
  assert.equal(providerExecutions(f.audit.slice(adoptionStart)).length,1);
+ assert.deepEqual(nameReads(f.audit.slice(adoptionStart)).map(row=>row.input.ResourceARN),expectedArns);
  const added=f.cloud.lastChangeSetDescription.Changes.filter(row=>row.ResourceChange.Action==='Add');
  assert.deepEqual(added.map(row=>row.ResourceChange.LogicalResourceId),hostFixture().alarms.expected.map(row=>row.logical));
  evidence.adoption={authentic_parent:{revision:historical.base_revision,template_sha256:historical.template,
   embedded_manifest_sha256:historical.source_entries['package-manifest.json'],payload_count:historical.payload_entry_count,
-  outer_manifest_sha256:'sha256:'+historical.manifest,zip_digest:historical.zip},preAdoptionTemplate,preview,adoption,health:adoptedHealth,added,dormant};
+  outer_manifest_sha256:'sha256:'+historical.manifest,zip_digest:historical.zip},preAdoptionTemplate,preview,adoption,health:adoptedHealth,added,dormant,name_checks:adoptionNameChecks};
  const maintenanceTarget=build('alarm-adopted-maintenance',maintenanceConfig);
  const maintenance=await configure(adopted,maintenanceTarget,'alarm-adopted-maintenance-receipt');
  const firstDrain=requireStatus(await run('stop',maintenance),'stopped');
@@ -1403,11 +1514,114 @@ async function alarmLifeJourney(journey){
    if(scenario==='denied refreshed events')assert.equal(inspected.current_observation.code,'REMOVAL_OBSERVATION_UNAVAILABLE');
    requireReadOnly(branch,checkpoint);
    assert(!branch.audit.slice(checkpoint.aws).some(row=>['DescribeStacksCommand','GetFunctionCommand','GetScheduleCommand'].includes(row.action)));
-   evidence.removal[scenario]={removed,inspected};
+   const resultPath=output(`${scenario}-finish`);
+   const finishResult=await run('finish-operation',maintenanceAgain,['--operation',removed.operation,'--output',resultPath],{branch,human:true});
+   const finished=requireStatus(finishResult,'partial');
+   assert.equal(finishResult.exitCode,1);
+   assert.deepEqual(finished.terminal,removed.terminal);
+   assert.deepEqual(finished.current_observation.resources,inspected.current_observation.resources);
+   assert.deepEqual(JSON.parse(fs.readFileSync(resultPath)).current_observation,finished.current_observation);
+   assert.match(finishResult.stdout,/CloudWatch alarm charges/);
+   assert(finishResult.stdout.includes(removed.operation));
+   requireReadOnly(branch,checkpoint);
+   evidence.removal[scenario]={removed,inspected,finished};
    continue;
   }
   evidence.removal[scenario]=removed;
  }
+ evidence.removal.retained_table_checks=await verifyLateRemoval(journey,driver,maintenanceAgain,removal,inventory,retained);
+}
+
+async function verifyLateRemoval(journey,driver,installed,preview,inventory,retained){
+ const {f}=journey,{output,run,deployment}=driver;
+ const results={};
+ for(const [scenario,code] of [['denied','RETAINED_TABLE_UNAVAILABLE'],['substituted','PHYSICAL_STATE_MISMATCH'],['state','REMOVAL_STATE_UNCONFIRMED']]){
+  const branch=forkLifecycle(f,installed,`removal late ${scenario}`);
+  branch.cloud.omitDeleteEvent='MeasuredBudgetAlarm';
+  if(scenario==='state')branch.cloud.denyProtectedStateAfterDelete=true;
+  else branch.cloud.retainedTableReadFault=scenario;
+  const file=output(`remove-late-${scenario}`);
+  const remove=await run('remove',installed,[...deployment,'--preview',preview,'--output',file],{branch,human:true});
+  assert.equal(remove.exitCode,1,remove.stdout);
+  const held=requireStatus(remove,'partial'),id=held.operation,named=['--operation',id];
+  assert.equal(held.code,code,remove.stdout);
+  assert.equal(held.receipt_publication,'operation_record_preserved');
+  assert.equal(JSON.parse(fs.readFileSync(file)).original_receipt.binding.table_arn,f.binding.table_arn);
+  assert.equal(JSON.parse(fs.readFileSync(file)).operation,id);
+  assert.equal(operationRow(branch,id),undefined);
+  assert.equal(lifecycleRow(branch).owner.id,id);
+  assert.equal(lifecycleRow(branch).owner.effects[0].state,'claimed');
+  assert.deepEqual(businessRows(branch),retained);
+  const deletedIndex=branch.audit.findIndex(row=>row.action==='DeleteStackCommand');
+  assert(deletedIndex!==-1);
+  assert(!branch.audit.slice(deletedIndex+1).some(row=>row.action==='TransactWriteCommand'));
+  const checkObservation=(observation,tableStatus)=>{
+   assert.equal(observation.status,'partial');
+   assert.equal(observation.provider.status,'DELETE_COMPLETE');
+   assert.deepEqual(observation.externally_owned,inventory.externally_owned);
+   assert.deepEqual(observation.resources.map(({logical,physical,type,disposition})=>({logical,physical,type,disposition})),
+    inventory.resources.map(({logical,physical,type,disposition})=>({logical,physical,type,disposition})));
+   assert.equal(observation.resources.find(row=>row.logical==='StateTable').observation,tableStatus);
+   assert.match(observation.resources.find(row=>row.logical==='StateTable').cost,/DynamoDB storage/);
+   assert.equal(observation.resources.find(row=>row.logical==='LambdaErrorsAlarm').observation,'deleted');
+   const budget=observation.resources.find(row=>row.logical==='MeasuredBudgetAlarm');
+   assert.equal(budget.observation,'unobservable');
+   assert.match(budget.cost,/CloudWatch alarm charges/);
+  };
+  const tableStatus=scenario==='state'?'retained':'unobservable';
+  checkObservation(held.current_observation,tableStatus);
+  assert.equal(held.current_observation.state_persistence,'unconfirmed');
+  assert.equal(held.current_observation.table_observation.status,tableStatus);
+  if(scenario!=='state')assert.equal(held.current_observation.table_observation.code,code);
+  assert.match(remove.stdout,/DynamoDB storage/);
+  assert.match(remove.stdout,/CloudWatch alarm charges/);
+  assert(remove.stdout.includes(id));
+  const unavailable=await run('inspect-operation',installed,named,{branch});
+  assert.equal(unavailable.exitCode,2,unavailable.stdout);
+  assert.equal(unavailable.outcome.current_observation,undefined);
+  delete branch.cloud.retainedTableReadFault;
+  delete branch.cloud.denyProtectedStateAfterDelete;
+  branch.cloud.hideDeletedStack=true;
+  if(scenario!=='state')branch.cloud.faultTableAfterReadOperation=scenario;
+  const checkpoint=readOnlyCheckpoint(branch);
+  const inspected=requireStatus(await run('inspect-operation',installed,named,{branch}),'inspected');
+  assert.equal(inspected.operation,id);
+  checkObservation(inspected.current_observation,tableStatus);
+  delete branch.cloud.retainedTableReadFault;
+  if(scenario!=='state'){
+   const blockedFile=output(`finish-late-${scenario}-blocked`);
+   const blocked=await run('finish-operation',installed,[...named,'--output',blockedFile],{branch});
+   const incomplete=requireStatus(blocked,'partial');
+   assert.equal(blocked.exitCode,1);
+   assert.equal(incomplete.code,code);
+   checkObservation(incomplete.current_observation,'unobservable');
+   assert(!fs.existsSync(blockedFile));
+   requireReadOnly(branch,checkpoint);
+  }
+  delete branch.cloud.faultTableAfterReadOperation;
+  delete branch.cloud.retainedTableReadFault;
+  const reportFile=output(`finish-late-${scenario}-report`);
+  const stored=requireStatus(await run('finish-operation',installed,[...named,'--output',reportFile],{branch}),'partial');
+  assert.equal(operationRow(branch,id).terminal.status,'partial');
+  checkObservation(stored.terminal,'retained');
+  assert.equal(JSON.parse(fs.readFileSync(reportFile)).status,'partial');
+  const history=operationRow(branch,id), storedCheckpoint=readOnlyCheckpoint(branch);
+  if(scenario!=='state')branch.cloud.faultTableAfterReadOperation=scenario;
+  const storedInspect=requireStatus(await run('inspect-operation',installed,named,{branch}),'inspected');
+  checkObservation(storedInspect.current_observation,tableStatus);
+  delete branch.cloud.retainedTableReadFault;
+  const after=await run('finish-operation',installed,[...named,'--output',output(`finish-stored-${scenario}`)],{branch});
+  const storedFinish=requireStatus(after,'partial');
+  assert.equal(after.exitCode,1);
+  assert.deepEqual(storedFinish.terminal,history.terminal);
+  checkObservation(storedFinish.current_observation,tableStatus);
+  assert.deepEqual(operationRow(branch,id),history);
+  assert.equal(branch.audit.filter(row=>row.action==='DeleteStackCommand'&&row.input.ClientRequestToken===id).length,1);
+  requireReadOnly(branch,storedCheckpoint);
+  noHostWrites(branch.audit.slice(deletedIndex+1));
+  results[scenario]={held,inspected,stored,storedInspect,storedFinish};
+ }
+ return results;
 }
 
 async function alarmFailureJourney(journey,driver,active,{changedTarget,maintenanceTarget}){
@@ -1437,6 +1651,48 @@ async function alarmFailureJourney(journey,driver,active,{changedTarget,maintena
   return result;
  };
  const failures=evidence.failures={};
+ const configureProtection={};
+ for(const [scenario,code] of [['incompatible proposal','UNSUPPORTED_VERSION'],['incompatible inventory','MALFORMED_RECORD'],
+  ['ordinary update','ALARM_OWNERSHIP_UNCONFIRMED'],['invalid window','ALARM_WINDOW_UNSUPPORTED']]){
+  const branch=fork(`configure ${scenario}`);
+  branch.cloud.alarmResources[0].PhysicalResourceId='unrelated-alarm';
+  let target=active;
+  if(scenario==='incompatible inventory'){
+   const [key,row]=businessRows(branch).find(([,record])=>record.kind==='member');
+   branch.provider.rows.set(key,{...row,schema:'pigboard-state-record/v99'});
+  }
+  if(scenario==='incompatible proposal'||scenario==='invalid window'){
+   const manifest=structuredClone(active.manifest);
+   const config=manifest.canonical_config;
+   if(scenario==='incompatible proposal')manifest.schema='pigboard-manager-package/v999';
+   else {
+    config.manager.health={freshness_seconds:86401,warning_percent:80};
+    config.manager.log_retention_days=3;
+    manifest.configuration_digest=hostConfig(JSON.stringify(config)).digest;
+   }
+   target={...active,configPath:writeFixtureJSON(journey.source.temp,`configure-${scenario}-config`,config),
+    manifestPath:writeFixtureJSON(journey.source.temp,`configure-${scenario}-manifest`,manifest)};
+  }
+  const protective=scenario.startsWith('incompatible'), checkpoint=readOnlyCheckpoint(branch);
+  const response=await configureOn(branch,target,`configure-${scenario}-outcome`);
+  assert.equal(response.outcome.code,code,response.stdout);
+  assert.equal(response.exitCode,protective?1:2,response.stdout);
+  if(protective){
+   assert.equal(response.outcome.state_fenced,true);
+   assert.equal(response.outcome.host,'stopped');
+   assert.equal(response.outcome.alarms.code,'ALARM_OWNERSHIP_UNCONFIRMED');
+   stoppedHost(branch);
+   const writes=branch.audit.filter(row=>row.action==='TransactWriteCommand'||hostMutations([row]).length);
+   assert.equal(writes[0].action,'TransactWriteCommand');
+   assert.deepEqual(hostMutations(writes).map(row=>row.action),['UpdateScheduleCommand','PutFunctionConcurrencyCommand']);
+  }else{
+   assert(!fs.existsSync(output(`configure-${scenario}-outcome`)));
+   requireReadOnly(branch,checkpoint,{deployer:true});
+  }
+  assert(!branch.audit.some(row=>row.action==='DescribeAlarmsCommand'||JSON.stringify(row.input).includes('unrelated-alarm')));
+  configureProtection[scenario]=response.outcome;
+ }
+ failures.configureProtection=configureProtection;
  const priorPackage=structuredClone(lifecycleRow(f).current_alarm_package);
  const originalReceipt=fs.readFileSync(active.installationPath),table=structuredClone(f.cloud.table);
  for(const scenario of ['missing inventory','substituted membership','denied alarm reads']){
@@ -1862,7 +2118,7 @@ async function alarmReconciliationJourney(){
 
 export async function runAlarmLifecycleFixture(id){
  assert(hostFixture().alarms.cases.includes(id));
- const journey=await lifecycleBirthJourney({historical:id==='R1-23-H02'});
+ const journey=await lifecycleBirthJourney({historical:id==='R1-23-H02',exerciseBootstrapRecovery:id==='R1-23-H01'});
  const {source,evidence,f}=journey;
  Object.assign(evidence,{case:id,fixture:hostFixture().alarms.schema,simulated_account:f.config.manager.aws.account_id,
   simulated_roles:hostFixture().alarms.simulated_roles,omissions:['AWS evaluation and IAM','installed acceptance','human execution and acceptance']});

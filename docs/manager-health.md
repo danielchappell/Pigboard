@@ -89,6 +89,15 @@ without matching current scheduled intent has unknown revision attribution.
 Health can show an earlier valid log
 separately under `latest_historical_scan`.
 
+If the final host or State read changes or fails, health returns `unknown`
+with exit code 2. Current binding, scan and budget fields are unverified.
+The report still shows the raw alarm states, observed actions, timestamps and
+named definitions it received. Prior scan samples, budget measurements and
+the initially observed binding appear as earlier observations in the terminal
+and under `prior_observation` in JSON. Their attribution to the current
+installation is unverified. Check the current receipt and the operator's read
+access, then inspect the same installation again.
+
 All four alarms are console-only. The destination lists are empty. Alarm
 observations leave retries, uncertain Jira effects and capacity under their
 existing controls. When a read is denied, check the named CloudWatch grants in

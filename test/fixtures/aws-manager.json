@@ -303,6 +303,11 @@
     ],
     "freshness_seconds": 900,
     "warning_percent": 80,
+    "adoption_name_checks": {
+      "occupied": ["metric", "composite", "log", "tagged"],
+      "unconfirmed": ["denied", "timeout", "untyped_404", "wrong_service_404"],
+      "changes_after_preview": ["log", "denied"]
+    },
     "expected": [
       {
         "logical": "MissingCompletionAlarm",

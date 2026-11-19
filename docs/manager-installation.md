@@ -474,6 +474,14 @@ finish that operation and save its receipt. Use a fresh output path:
 node scripts/manager-installation.mjs finish-operation --config initial.json --installation birth.json --operation BOOTSTRAP_UUID --operator-profile customer-operator --output bootstrap-result.json --json
 ```
 
+On an alarm-capable installation, a repeat `bootstrap` verifies the stopped
+host, protected State, versioned asset and all four dormant definitions with
+actions off. It is a read-only check. If the result shows drift, check the
+expected and actual definitions for the original stack. If the evidence is
+unavailable, check the operator's access and try a fresh read. Keep the
+original receipt and use `finish-operation` by UUID to recover an eligible
+historical bootstrap output.
+
 To start scheduled preview after initial bootstrap, set the canonical mode to
 preview, enable scheduling and keep writes disabled. Build the same source and
 generation and upload its exact versioned asset. Use the resulting manifest and
@@ -539,6 +547,16 @@ and config. Set `PREVIOUS_COMMIT` to its installed source revision and
 The command compares it with the versioned asset and checks the actual source
 stack. Have the customer administrator apply the alarm permissions from the
 target template before preview.
+
+Preview and upgrade both check the four exact target alarm ARNs with
+`ListTagsForResource`. This detects existing metric, composite or log alarms
+with any of the required names. A successful lookup means the name is occupied
+even if there are no tags. Only CloudWatch's `ResourceNotFoundException` for
+that ARN establishes absence at the time of the read. For
+`ALARM_NAME_COLLISION`, have the customer administrator verify the existing
+alarm's ownership and resolve the conflict before previewing again. For
+`ALARM_NAME_AVAILABILITY_UNCONFIRMED`, check operator access to those exact
+ARNs and run a fresh preview. Tag values stay out of the report.
 
 1. Run `upgrade-preview`, then `upgrade --preview` with its saved output.
    Keep the successor receipt after a verified upgrade. The installation ID,
@@ -640,6 +658,14 @@ Protective stop preserves external detection for a still-scheduled intent.
 When a stop result has unconfirmed alarm state, check the recorded State fence,
 physical host result and individual alarm observations separately.
 
+An incompatible enabling configure can take the protective stop path even
+when alarm ownership is damaged or alarm reads are denied. For that result,
+check the confirmed State fence and host stop first, then inspect the reported
+alarm evidence. An ordinary compatible configure requires verified ownership
+before updating the source. An unsupported evaluation window fails before any
+State or host write. Correct the canonical configuration or repair the verified
+alarm access and ownership before trying the authorized operation again.
+
 If an emergency stop superseded a verified upgrade or configure, use
 `finish-operation` with the original receipt, target manifest and target config
 to export the restricted successor receipt. Its reported host controls can
@@ -731,6 +757,13 @@ provider reads. To save the refreshed report, run `finish-operation` with
 the same inputs and a new output path. Neither command sends another
 deletion request. A failed stack deletion remains partial even if some
 resources were deleted.
+
+If the retained table cannot be read after deletion dispatch or its physical
+identity differs, the partial report marks the table unobservable with
+possible ongoing cost. It retains the preview rows and independently verified
+deletion events. Protect the original table and verify access before trying to
+finish the same operation. An entry check that cannot authenticate the original
+operation returns unavailable. Keep any earlier report and the UUID.
 
 For the original manual removal procedure on an older installation:
 
@@ -894,7 +927,7 @@ deployment or adoption. The policies are under `Metadata.Pigboard`.
 
 | Policy | Role and scope |
 | --- | --- |
-| `operator_policy` | The configured operator can describe the four metric alarms and disable their actions. It can enable actions on the two native Lambda alarms and replace definitions on the two custom alarms. All alarm grants name their exact ARNs. |
+| `operator_policy` | The configured operator can describe the four metric alarms and disable their actions. It can enable actions on the two native Lambda alarms and replace definitions on the two custom alarms. Direct adoption uses `ListTagsForResource` to check the four required names. All alarm grants name their exact ARNs. |
 | `alarm_execution_policy` | The verified CloudFormation execution role, or the actual deploying identity when the stack has no execution role, can put, describe and delete the same four alarms. |
 | `alarm_tagging_policy` | Give the same execution identity these exact-ARN tag grants if the stack applies tags to the alarms. |
 | `remove_execution_policy` | Use with the existing removal grants on the supported stack execution identity. Keep the deployer's stack-scoped delete permission. |

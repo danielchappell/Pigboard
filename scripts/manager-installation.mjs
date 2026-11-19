@@ -58,10 +58,23 @@ function human(outcome){
   pending_work:'Retained work',recovery:'Next action'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+outcome[key]);
  }
- for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',current_observation:'Current removal observation',receipt:'Output document',
+ for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',receipt:'Output document',
    alarm_window:'CloudWatch evaluation window',alarms:'Alarm evidence',alarm_acknowledgements:'Acknowledged alarm writes',observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',source_verification:'Historical source verification',
    original_operator:'Original operator',original_deployer:'Original deployer',effects:'Host effects'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+JSON.stringify(outcome[key]));
+ }
+ const removal=outcome.current_observation;
+ if(removal){
+  rows.push('Current removal observation — '+JSON.stringify({status:removal.status,
+   ...(removal.provider?{stack_status:removal.provider.status}:{})}));
+  if(removal.code)rows.push('Removal observation result — '+removal.code);
+  if(removal.provider_code)rows.push('Stack deletion evidence — '+removal.provider_code);
+  if(removal.table_observation?.code)rows.push('Retained State table observation — '+removal.table_observation.code);
+  if(removal.state_persistence==='unconfirmed')rows.push('Terminal State confirmation unavailable — '+removal.state_code);
+  for(const {logical,physical,observation,cost} of removal.resources)
+   rows.push(logical+' ('+physical+') — '+observation+(cost?' · '+cost:''));
+  for(const {reference,cost} of removal.externally_owned)
+   rows.push('Externally owned — '+(typeof reference==='string'?reference:JSON.stringify(reference))+(cost?' · '+cost:''));
  }
  if(outcome.enablement_status==='preserved')rows.push('Schedule enablement — original time preserved');
  if(outcome.enablement_status==='unavailable')rows.push('Verified schedule enablement — unavailable for this operation');
