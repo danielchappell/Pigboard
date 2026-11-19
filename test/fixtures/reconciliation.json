@@ -1,0 +1,28 @@
+{
+  "schema": "pigboard-reconciliation-fixture/v1",
+  "operator_sessions": {
+    "init": "fixture",
+    "stop": "stop-session",
+    "submit": "submit-session",
+    "readback": "refreshed-session",
+    "restart": "restart-session"
+  },
+  "stop_id": "44444444-4444-4444-8444-444444444444",
+  "bounds": {
+    "scheduler_maximum_event_age_seconds": 60,
+    "scheduler_maximum_retry_attempts": 0,
+    "lambda_maximum_event_age_seconds": 60,
+    "lambda_maximum_retry_attempts": 0,
+    "invocation_timeout_ms": 600000,
+    "request_timeout_ms": 5000
+  },
+  "h02_variants": [
+    { "id": "enabled_runtime", "code": "CONTROL_MISMATCH" },
+    { "id": "in_flight_invocation", "code": "DRAIN_INCOMPLETE" },
+    { "id": "unknown_response", "code": "ORIGINAL_RESPONSE_UNRECORDED" },
+    { "id": "absent_history", "code": "HISTORY_UNAVAILABLE" },
+    { "id": "stale_revision", "code": "REVISION_CONFLICT" },
+    { "id": "wrong_actor", "code": "OPERATOR_UNAUTHORIZED" },
+    { "id": "changed_pointer", "code": "ASSIGNMENT_MISMATCH" }
+  ]
+}

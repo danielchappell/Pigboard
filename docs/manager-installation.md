@@ -120,6 +120,24 @@ not be copied to the operator role. Real customer grants, permission boundaries,
 service control policies, bucket permissions and installed IAM behavior need live
 acceptance. Synthesized allow/deny checks cannot establish them.
 
+For a new protected installation, use the generated runtime role and have the
+customer administrator review and attach the generated operator policy before
+initialization. Keep the policy boundary in force from the original stack
+creation. Runtime reads and writes with item keys use only the normal
+`installation#<installation_id>` partition. The operator can put or update
+normal records in transactions and can put records in the separate
+`operator-decision#<installation_id>` partition only in a transaction. The
+generated policies grant no delete or protected update. The State command
+supplies the insert-if-absent condition for protected entries. IAM constrains the
+partition, item action and transaction context.
+
+The customer administrator must verify effective permissions, including other
+attached policies, boundaries, resource policies and account-level rules. Keep
+broader provisioning rights separate. Pigboard compares the original stack's
+runtime role properties with the generated policy, including trust policy and
+inline grants. That check covers the original CloudFormation properties. The
+administrator verifies the effective permissions throughout the installation.
+
 The operator policy includes a separate `lambda:GetFunctionEventInvokeConfig`
 read grant for only the generated function ARN qualified with `:$LATEST`. Attach
 that reviewed grant to the operator role; it does not extend invocation or
@@ -197,28 +215,35 @@ node scripts/manager-state.mjs init --config /absolute/customer.json --installat
 node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind installation --json
 ```
 
-Fresh initialization requires the original CREATE_COMPLETE stack and a complete,
-nonempty first page of creation events. Both stack CREATE_IN_PROGRESS and
-CREATE_COMPLETE events must identify that exact stack ARN and have valid, ordered
-timestamps. The original StateTable CREATE_COMPLETE event must name the original
-table in that stack and fall between those times. A conflicting StateTable physical
-ID or any UPDATE, DELETE, ROLLBACK, IMPORT or FAILED status refuses initialization.
-Missing, invalid or paginated evidence returns `FRESH_INSTALLATION_REQUIRED` before
-State initialization; an empty table alone cannot establish original creation.
+Fresh initialization requires the original `CREATE_COMPLETE` stack and a complete
+first page of creation events. The original `RuntimeRole` and `StateTable` creation
+events must match that stack, its physical role and table, and its original create
+interval. The role event must include the complete properties for the supported
+generated protected policy or the recognized prior policy. The table must have
+an AWS table ID and a creation time within that original interval. Missing,
+denied, malformed, paginated, or inconsistent evidence returns
+`FRESH_INSTALLATION_REQUIRED` before State initialization. An empty table alone
+cannot establish original creation. An original CREATE change set may have a
+`LastUpdatedTime` equal to the stack's `CREATE_IN_PROGRESS` event.
 
-AWS can populate `LastUpdatedTime` during an original CREATE change set. Init
-accepts it only when it is the same instant as that stack's CREATE_IN_PROGRESS
-event. Direct creation without `LastUpdatedTime` remains supported. This bounded
-proof does not detect every possible manual or out-of-band resource change.
+Keep all three canonical control flags false for initialization. Keep actual
+scheduling disabled and reserved concurrency at one. The original package,
+configuration and resource binding must still match. The State adapter checks
+the active table again, including its physical identity for a protected setup,
+and uses a strongly consistent scan to confirm it is empty. Protected
+initialization conditionally inserts the disabled installation record and an
+immutable origin record in one transaction. A verified prior policy keeps the
+legacy single-record initialization behavior. Initialization uses a freshly
+verified AWS operator role session and needs no Jira recovery secret.
 
-For the preview setup above, keep canonical controls false, actual scheduling
-disabled, writes off and concurrency one. The original package hash, revision,
-configuration, generation and resource binding must still match. The State adapter
-independently checks the exact active table, absence of an installation record and
-complete emptiness, then conditionally creates one disabled installation record.
-Success is `confirmed`/`OK` with exit zero. An empty replacement is never fresh.
-Keep the original receipt and generation; never reset or recreate state to resolve
-an uncertain initialization. Inspect the same retained table instead.
+Success is `confirmed`/`OK` with exit zero. Keep the original receipt and
+generation. Binding again or updating controls can refresh the receipt, but
+cannot issue an origin record. If initialization was uncertain, inspect the
+same retained table. A replacement or restored table cannot inherit its
+protected decisions. Ordinary State inspection remains available on supported
+legacy installations. Verified operator decision readback requires matching
+original events, policy and physical table identity. Missing or incomplete
+historical evidence withholds operator provenance.
 
 Invoke the generated function name from stack outputs, using the operator profile:
 
@@ -380,6 +405,37 @@ changes retained digest/package, generation, extensions or pending work. To conv
 intent later, set desired controls disabled and use the supported control rebuild
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
+
+### Settlement and stop evidence
+
+[Inspect and reconcile a named attempt](manager-state.md) explains the operator
+command. New settlement requires a separately verified, still-current completed
+stop for the original protected installation. The emergency stop above cannot
+supply that proof. The installed settlement command keeps new decisions held
+until the PGB-86 lifecycle producer is available. Keep the installation disabled
+while investigating pending work. A drain cannot cancel an already-issued Jira
+request. Some pending attempts cannot safely be settled with the available facts.
+
+The lifecycle producer must invalidate the completed stop before a supported
+action can break the drain, even when the installation later returns to the
+same settings. A current stop observation binds the installation, AWS stack,
+physical table, completed stop UUID, fence revision, and the configuration,
+package, resource, and bounds digests. Historical decisions can be verified
+without current stop evidence. A verified decision supplies evidence for
+PGB-86 to consume. Enabling still needs its separate lifecycle checks and
+operator authorization.
+
+For PGB-86 implementers, `lib/aws/reconcile-context.mjs` defines the versioned
+digest inputs. The resource hash is SHA-256 over canonical JSON containing the
+resource version tag followed by the bound scope, Scheduler route, Lambda
+route, and configuration/package objects, in that order. The bounds hash uses
+its version tag, the resource digest and the bounds object. On the supported
+direct route, Scheduler and Lambda each have zero retries and a 60-second
+maximum event age. The drain window adds both event ages, the observed Lambda
+timeout and the enforced Jira request timeout, all in milliseconds. The
+[R1-15 test vectors](../test/fixtures/reconciliation.json) and their independent
+[fixture producer](../scripts/test-manager-apply.mjs) reproduce these inputs in
+the local acceptance packet.
 
 Preview-only packages refuse apply mode. A reviewed sender-capable package permits
 ordinary apply only with explicit writes, all three operator confirmations, current

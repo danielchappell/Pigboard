@@ -15,7 +15,9 @@ import {createDynamoState} from '../lib/aws/dynamodb.mjs';
 import {StateProvider,fixture as stateFixture} from '../test/helpers/state-provider.mjs';
 import {runApply,handler} from '../lib/aws/manager-lambda.mjs';
 import {applyOrdinary} from '../lib/manager/apply.mjs';
-import {bindInstallation,resolveInstallation} from '../lib/aws/installation.mjs';
+import {bindInstallation,configureInstallation,resolveInstallation,sha256} from '../lib/aws/installation.mjs';
+import {synthesizeTemplate} from '../lib/aws/template.mjs';
+import {operatorActorId,transitionProof} from '../lib/state/contract.mjs';
 import {runStateCommand} from './manager-state.mjs';
 import {packageManager} from './package-manager.mjs';
 export const packet=JSON.parse(readFileSync(new URL('../test/fixtures/manager-apply.json',import.meta.url),'utf8'));
@@ -24,6 +26,7 @@ const issueRoute = (ticket, suffix) => '/rest/api/3/issue/' + ticket + suffix;
 const pointerSuffix = '/properties/pigboard.work-context';
 const recoveryToken = 'LOCAL_RECOVERY_DUMMY';
 const recoveryArn = 'arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-recovery-abcdef';
+const reconciliationFixture=JSON.parse(readFileSync(new URL('../test/fixtures/reconciliation.json',import.meta.url),'utf8'));
 
 export function repairFixtureConfig(historyId, {optOut = false, missingEdge = false, commentBound = false, readBounds} = {}) {
   const history = packet.recorded_repair_preview.cases.find(item => item.id === historyId);
@@ -216,12 +219,524 @@ async function inspectSenderAttempt(cloud, attemptId) {
     assert.equal(readable.exitCode, 0, readable.stdout);
     assert.equal(json.exitCode, 0, json.stdout);
     const audit = cloud.audit.slice(start).map(({identity,action}) => ({identity,action}));
-    assert(audit.length > 0 && audit.every(call => call.identity === 'SELECTED_OPERATOR' && /^(Get|Query|Describe)/.test(call.action)));
+    assert(audit.length > 0 && audit.every(call => call.identity === 'SELECTED_OPERATOR' && /^(Get|Query|Describe|TransactGet)/.test(call.action)));
     assert(cloud.destroyed.length > disposed);
     return {args, readable: readable.stdout, json: JSON.parse(json.stdout), audit};
   } finally {
     await rm(directory, {recursive: true, force: true});
   }
+}
+
+const operatorProfile='operator';
+const at=(kind,records)=>records.find(record=>record.kind===kind);
+const writes=audit=>audit.filter(({name})=>name==='TransactWriteCommand');
+const roleSession=(account,session,role='pigboard-operator')=>({
+  Account:account,UserId:'AROAEXAMPLE:'+session,Arn:'arn:aws:sts::'+account+':assumed-role/'+role+'/'+session
+});
+
+async function prepareSettlementInstallation(spec){
+  const {fixtureCloud,policyPermits}=await import('./test-aws-manager.mjs');
+  const {originalInstall,sender,stopped,directory}=spec;
+  const cloud=fixtureCloud(originalInstall.canonical_config,{},originalInstall);
+  const template=synthesizeTemplate(JSON.stringify(cloud.config),originalInstall);
+  const operatorPolicy=template.Metadata.Pigboard.operator_policy;
+  const runtimePolicy=template.Resources.RuntimeRole.Properties.Policies[0].PolicyDocument;
+  const fixture={
+    ...cloud, directory, session:reconciliationFixture.operator_sessions.init,
+    configPath:join(directory,'current.json'), installationPath:join(directory,'current-installation.json'),
+    operatorPolicy, runtimePolicy, policyPermits
+  };
+  const {sdk,makeClient}=cloud.dependencies;
+  fixture.dependencies={
+    ...cloud.dependencies,
+    makeClient(kind,options){
+      const client=kind==='SecretsManager'?{destroy(){}}:makeClient(kind,options);
+      fixture.sequence?.push({event:'client',kind,identity:options.credentials.accessKeyId});
+      const identity=options.credentials.accessKeyId;
+      assert(['SELECTED_OPERATOR','SELECTED_DEPLOYER'].includes(identity));
+      assert.equal(options.maxAttempts,1);
+      return {...client,destroy(){fixture.sequence?.push({event:'disposed',kind,identity});client.destroy();},async send(command,sendOptions){
+        const action=command.constructor.name;
+        const entry={event:'aws',identity,kind,action};
+        fixture.sequence?.push(entry);
+        if(action==='GetCallerIdentityCommand'&&identity==='SELECTED_OPERATOR'){
+          // Preserve the actual fixture's STS audit, replacing only the native response.
+          await client.send(command,sendOptions);
+          return roleSession(cloud.config.manager.aws.account_id,fixture.session,fixture.wrongActor?'pigboard-runtime':'pigboard-operator');
+        }
+        if(kind==='SecretsManager'){
+          assert.equal(action,'GetSecretValueCommand');
+          assert.equal(command.input.SecretId,recoveryArn);
+          assert(sendOptions.abortSignal instanceof AbortSignal);
+          entry.selector='recovery ARN';
+          return {ARN:recoveryArn,SecretString:recoveryToken};
+        }
+        if(kind==='DynamoDBDocument'){
+          const items=command.input.TransactItems;
+          const enclosing=action==='TransactWriteCommand'?'TransactWriteItems':action==='TransactGetCommand'?'TransactGetItems':undefined;
+          const accesses=items?items.map(item=>{
+            const [operation,value]=Object.entries(item)[0];
+            return {permission:operation+'Item',key:(value.Key??value.Item).PK};
+          }):['GetCommand','PutCommand','UpdateCommand','DeleteCommand'].includes(action)?
+            [{permission:action.replace('Command','Item'),key:(command.input.Key??command.input.Item).PK}]:
+            action==='QueryCommand'?[{permission:'Query',key:command.input.ExpressionAttributeValues[':pk']}]:[];
+          if(accesses.length){
+            entry.keys=accesses.map(({key})=>key);
+            entry.evaluated_policy=fixture.policy??'operator';
+            const policy=entry.evaluated_policy==='runtime'?runtimePolicy:operatorPolicy;
+            for(const {permission,key} of accesses){
+              const protectedKey=key.startsWith('operator-decision#');
+              if(protectedKey&&fixture.denyProtectedRead&&permission==='GetItem'||
+                  !policyPermits(policy,'dynamodb:'+permission,cloud.binding.table_arn,{enclosing,leadingKeys:[key]})){
+                entry.denied=true;
+                throw Object.assign(Error('Fixture policy denied the operation'),{name:'AccessDeniedException'});
+              }
+            }
+          }
+          if(fixture.beforeState)await fixture.beforeState(command);
+        }
+        return client.send(command,sendOptions);
+      }};
+    },
+    currentStopGeneration:async scope=>{
+      fixture.sequence?.push({event:'stop-generation',scope});
+      return fixture.generation?{status:'confirmed',data:structuredClone(fixture.generation)}:{status:'unavailable'};
+    },
+    wait:async ms=>fixture.waits.push(ms)
+  };
+  fixture.waits=[];
+  const initialText=JSON.stringify(fixture.config);
+  const initial=await bindInstallation({configText:initialText,manifest:originalInstall,stackId:fixture.stackId,operatorProfile},fixture.dependencies);
+  await writeFile(fixture.configPath,initialText);
+  await writeFile(fixture.installationPath,JSON.stringify(initial));
+  fixture.sequence=[];
+  const initBefore=fixture.provider.snapshot(), initFrom=fixture.provider.audit.length;
+  const initArgs=['init','--config',fixture.configPath,'--installation',fixture.installationPath,'--operator-profile',operatorProfile,'--json'];
+  const init=await runStateCommand(initArgs,{resolveInstallation:input=>resolveInstallation(input,fixture.dependencies)});
+  const initAudit=fixture.sequence;
+  fixture.sequence=null;
+  assert.equal(init.exitCode,0,init.stdout);
+  assert(!initAudit.some(call=>call.kind==='SecretsManager'));
+  const initializationWrites=writes(fixture.provider.audit.slice(initFrom));
+  assert.equal(initializationWrites.length,1);
+  assert.equal(initializationWrites[0].input.TransactItems.length,2,'Initialization atomically writes State and original protected origin');
+  fixture.origin=structuredClone([...fixture.provider.rows.values()].find(row=>row.SK==='ORIGIN'));
+  assert(fixture.origin,'Fresh initialization owns the protected origin');
+  fixture.initialization={...init,command:['node','scripts/manager-state.mjs',...initArgs],
+    before:JSON.parse(initBefore),after:JSON.parse(fixture.provider.snapshot()),audit:initAudit};
+  const initializedSnapshot=fixture.provider.snapshot(), initializedAudit=fixture.provider.audit.length;
+  const rebound=await bindInstallation({configText:initialText,manifest:originalInstall,stackId:fixture.stackId,operatorProfile},fixture.dependencies);
+  assert.deepEqual(rebound.original,initial.original);
+  assert.equal(fixture.provider.snapshot(),initializedSnapshot);
+  assert.equal(fixture.provider.audit.length,initializedAudit,'Repeat bind has no State write or scan authority');
+  fixture.carryForward=async manifest=>{
+    const {canonical_config:config}=manifest;
+    const manifestPath=join(directory,'manifest.json'),assetPath=join(directory,'asset.json');
+    await writeFile(fixture.configPath,JSON.stringify(config));
+    await writeFile(manifestPath,JSON.stringify(manifest));
+    await writeFile(assetPath,JSON.stringify({bucket:'fixture-only',key:'package.zip',version:'fixture-version',zip_digest:manifest.zip_digest}));
+    fixture.cloud.nextCodeHash=Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64');
+    const result=await configureInstallation({configPath:fixture.configPath,installationPath:fixture.installationPath,manifestPath,assetPath,
+      operatorProfile,deployerProfile:'deployer'},fixture.dependencies);
+    assert.equal(result.status,'configured',JSON.stringify(result));
+    assert.deepEqual(result.receipt.original,initial.original);
+    assert.deepEqual([...fixture.provider.rows.values()].find(row=>row.SK==='ORIGIN'),fixture.origin);
+    await writeFile(fixture.installationPath,JSON.stringify(result.receipt));
+    return result.receipt;
+  };
+  fixture.senderReceipt=await fixture.carryForward(sender);
+  fixture.senderReceiptPath=join(directory,'sender-receipt.json');
+  await writeFile(fixture.senderReceiptPath,JSON.stringify(fixture.senderReceipt));
+  fixture.binding=fixture.senderReceipt.binding;
+  fixture.stoppedManifest=stopped;
+  return fixture;
+}
+
+function prepareStop(cloud,receipt,{incomplete=false}={}){
+  const {binding}=receipt, {schedule,function:lambda,asyncConfig,table,codeHash}=cloud.cloud;
+  const scope={
+    installation_id:binding.installation_id,domain_id:binding.domain_id,site:binding.site,
+    stack_id:binding.stack_id,table_arn:binding.table_arn,table_id:table.TableId,
+    installation_generation:binding.installation_generation
+  };
+  const bounds=reconciliationFixture.bounds;
+  // This fixture producer spells out its wire commitments independently of the
+  // evaluator. Drift in the canonical contract must break the positive path.
+  assert.equal(schedule.Target.RetryPolicy.MaximumEventAgeInSeconds,bounds.scheduler_maximum_event_age_seconds);
+  assert.equal(asyncConfig.MaximumEventAgeInSeconds,bounds.lambda_maximum_event_age_seconds);
+  assert.equal(lambda.Timeout*1000,bounds.invocation_timeout_ms);
+  assert.equal(receipt.manifest.canonical_config.jira.read_bounds.request_timeout_ms,bounds.request_timeout_ms);
+  const resource_digest=sha256(canonicalize(['pigboard-stop-resources/v1',scope,
+    {arn:schedule.Arn,group:schedule.GroupName,name:schedule.Name,expression:schedule.ScheduleExpression,
+      window_mode:schedule.FlexibleTimeWindow.Mode,target_arn:schedule.Target.Arn,role_arn:schedule.Target.RoleArn,input:schedule.Target.Input},
+    {arn:lambda.FunctionArn,async_arn:asyncConfig.FunctionArn,qualifier:'$LATEST',code_hash:codeHash,
+      role_arn:lambda.Role,handler:lambda.Handler,runtime:lambda.Runtime},
+    {configuration_digest:binding.configuration_digest,package_revision:binding.package_revision}]));
+  const bounds_digest=sha256(canonicalize(['pigboard-stop-bounds/v1',resource_digest,bounds]));
+  const window_ms=1000*(bounds.scheduler_maximum_event_age_seconds+bounds.lambda_maximum_event_age_seconds)+
+    bounds.invocation_timeout_ms+bounds.request_timeout_ms;
+  const installation=at('installation',cloud.provider.records());
+  const {stop_id,operator_sessions}=reconciliationFixture;
+  const stopActor=roleSession(cloud.config.manager.aws.account_id,operator_sessions.stop);
+  const completed=Date.now(),elapsed=incomplete?window_ms-1:window_ms;
+  const fence=installation.revision+1;
+  const stop={
+    pb_stop_version:1,pb_stop_id:stop_id,pb_stop_actor:operatorActorId({account_id:stopActor.Account,user_id:stopActor.UserId}),
+    pb_stop_config_digest:binding.configuration_digest,pb_stop_package_revision:binding.package_revision,
+    pb_stop_resource_digest:resource_digest,pb_stop_bounds_digest:bounds_digest,pb_stop_fence_revision:fence,
+    pb_stop_started_at:new Date(completed-elapsed).toISOString(),pb_stop_window_ms:window_ms,
+    pb_stop_completed_at:new Date(completed).toISOString(),pb_stop_elapsed_ms:elapsed
+  };
+  cloud.provider.seed({...installation,revision:fence,extensions:{...installation.extensions,...stop}});
+  cloud.generation={...scope,producer_generation:'pigboard-stop-producer/v1',stop_id,fence_revision:fence,
+    configuration_digest:binding.configuration_digest,package_revision:binding.package_revision,resource_digest,bounds_digest};
+  cloud.cloud.concurrency=0;
+  return {stop,scope,bounds,generation:structuredClone(cloud.generation)};
+}
+
+async function restartWithNewerAttempt(cloud,original,stopped){
+  const sender=await cloud.carryForward(cloud.senderReceipt.manifest);
+  const {provider}=cloud;
+  const installed=at('installation',provider.records()), stream=at('stream',provider.records()), member=at('member',provider.records());
+  const state=createDynamoState({binding:sender.binding,control:{configuration_digest:sender.binding.configuration_digest,
+    schedule_enabled:true,writes_enabled:true,maintenance:false},client:provider});
+  const newer=await state.begin({expected_installation_revision:installed.revision,expected_stream_revision:stream.revision,
+    stream:{site:stream.site,project_id:stream.project_id,label:stream.label},
+    attempt:{attempt_id:packet.fresh_attempt_id,ticket_id:original.ticket_id,epic_id:original.epic_id,issue_key:original.issue_key,
+      operation:original.operation,source_status_id:original.source_status_id,target_status_id:original.target_status_id,
+      configuration_digest:sender.binding.configuration_digest,cause:[],publication:[]},
+    required_members:[{site:member.site,project_id:member.project_id,label:member.label,ticket_id:member.ticket_id,
+      epic_id:member.epic_id,assignment:member.assignment,expected_revision:member.revision}],
+    now:new Date().toISOString()});
+  assert.equal(newer.status,'confirmed',JSON.stringify(newer));
+  await cloud.carryForward(stopped);
+  cloud.cloud.concurrency=0;
+  // Resume the historical journey with no current completed stop authority.
+  cloud.generation=null;
+}
+
+async function settlementFixture({cloud,evidenceCase,evidenceIO,attemptId,native}){
+  const {provider,stoppedManifest}=cloud;
+  const {id,code,fault}=evidenceCase.settlement;
+  const stopped=await cloud.carryForward(stoppedManifest);
+  const stop=prepareStop(cloud,stopped,{incomplete:id==='in_flight_invocation'});
+  const original=at('attempt',provider.records());
+  const stream=at('stream',provider.records()),installation=at('installation',provider.records());
+  const {operator_sessions:sessions}=reconciliationFixture;
+  const requestPath=join(cloud.directory,'request.json');
+  const scope=['--original-installation',cloud.senderReceiptPath];
+  const flags=['--config',cloud.configPath,'--installation',cloud.installationPath,'--operator-profile',operatorProfile];
+  const inspect=['inspect',...flags,'--kind','attempt','--record-id','attempt:'+attemptId];
+  const reconcileArgs=['reconcile',...flags,'--request',requestPath,...scope];
+  const request={schema:'pigboard-reconciliation-request/v1',attempt_id:attemptId,
+    expected_installation_revision:installation.revision,expected_stream_revision:stream.revision,
+    expected_attempt_revision:id==='stale_revision'?original.revision-1:original.revision,
+    disposition:evidenceCase.sendCase.saved_status===409?'confirmed_not_applied':'confirmed_applied'};
+  await writeFile(requestPath,JSON.stringify(request));
+  const commands=[];
+  async function invoke(args,{productionStop=false,allowExternalChange=false}={}){
+    const before=provider.snapshot(), nativeBefore=native(), start=provider.audit.length;
+    const closedRequest=args[0]==='reconcile'?JSON.parse(readFileSync(requestPath,'utf8')):undefined;
+    const requestStart=evidenceIO.requests.length;
+    const sequence=[];
+    cloud.sequence=evidenceIO.sequence=sequence;
+    evidenceIO.active=true;
+    const dependencies={...cloud.dependencies};
+    if(productionStop)delete dependencies.currentStopGeneration;
+    let answer;
+    try{
+      answer=await runStateCommand(args,{resolveInstallation:input=>resolveInstallation(input,dependencies)});
+    }finally{
+      evidenceIO.active=false;
+      cloud.sequence=evidenceIO.sequence=null;
+    }
+    const after=provider.snapshot(), nativeAfter=native(), audit=provider.audit.slice(start);
+    const stateWrites=writes(audit);
+    assert.deepEqual(nativeAfter,nativeBefore,'Operator paths preserve original issues, comments, pointer and history');
+    assert(evidenceIO.requests.slice(requestStart).every(call=>call.method==='GET'||call.path==='/rest/api/3/search/jql'));
+    assert.equal(sequence.filter(e=>e.event==='client').length,sequence.filter(e=>e.event==='disposed').length);
+    assert(sequence.some(e=>e.action==='GetCallerIdentityCommand'),'Operator dispatch verifies a fresh principal');
+    const entry={...answer,command:['node','scripts/manager-state.mjs',...args],
+      ...(closedRequest?{closed_request:closedRequest}:{}),state_before:JSON.parse(before),state_after:JSON.parse(after),jira_before:nativeBefore,jira_after:nativeAfter,
+      ordered_audit:sequence,state_writes:stateWrites};
+    if(args[0]==='inspect'){
+      assert.equal(stateWrites.length,0);
+      if(!allowExternalChange)assert.equal(before,after,'Inspection is read-only');
+      if(!args.includes('--jira-evidence')){
+        assert(!sequence.some(e=>e.kind==='SecretsManager'||e.event==='jira'||e.event==='stop-generation'));
+      }
+    }
+    if(args.includes('--json'))assert.deepEqual(JSON.parse(answer.stdout),answer.outcome);
+    commands.push(entry);
+    return entry;
+  }
+  const assertPending=answer=>{
+    assert.equal(answer.exitCode,0,answer.stdout);
+    assert.deepEqual(answer.outcome.data.records,[original]);
+    assert.equal(at('stream',provider.records()).pending_attempt_id,attemptId);
+    assert.deepEqual(transitionProof(at('attempt',provider.records())),transitionProof(original));
+  };
+  const assertNoWrite=answer=>{
+    assert.equal(answer.state_writes.length,0);
+    assert.deepEqual(answer.state_before,answer.state_after);
+  };
+  const assertNoJira=answer=>assert(!answer.ordered_audit.some(entry=>entry.event==='jira'||entry.kind==='SecretsManager'));
+  const verifyTerminal=answer=>{
+    assert.equal(answer.exitCode,0,answer.stdout);
+    const stored=at('attempt',provider.records());
+    assert.deepEqual(answer.outcome.data.records,[stored]);
+    assert.equal(answer.outcome.data.operator_decision_provenance.status,'verified');
+    assert.deepEqual(answer.outcome.data.operator_decision,decision);
+    assertNoJira(answer);
+  };
+  let decision,policyAudit;
+  cloud.session=sessions.submit;
+  if(id==='runtime_terminal'){
+    assert.equal(original.outcome,'applied');
+    const ordinary=await invoke([...inspect,'--json']);
+    assert.equal(ordinary.exitCode,0,ordinary.stdout);
+    assert.deepEqual(ordinary.outcome.data.records,[original]);
+    assert.equal(ordinary.outcome.data.operator_decision,undefined);
+    assert.equal(ordinary.outcome.data.operator_decision_provenance.status,'absent');
+    const refused=await invoke([...reconcileArgs,'--json']);
+    assert.equal(refused.outcome.code,'OPERATOR_PROVENANCE_ABSENT',refused.stdout);
+    assertNoWrite(refused);
+    assertNoJira(refused);
+  }else if(code){
+    if(id==='enabled_runtime')cloud.cloud.schedule.State='ENABLED';
+    if(id==='wrong_actor')cloud.wrongActor=true;
+    if(id==='prior_stop')cloud.generation={...cloud.generation,stop_id:packet.fresh_attempt_id};
+    if(id==='wrong_stop_scope')cloud.generation={...cloud.generation,table_id:'00000000-0000-4000-8000-000000000000'};
+    if(id==='missing_stop')cloud.generation=null;
+    if(id==='production_stop')assert(cloud.generation,'A local fixture observation exists but is not supplied by production');
+    const held=await invoke([...reconcileArgs,'--json'],{productionStop:id==='production_stop'});
+    assert.equal(held.outcome.code,code,held.stdout);
+    assert(held.outcome.diagnostics.length>0,held.stdout);
+    assertNoWrite(held);
+    if(id==='enabled_runtime'){
+      const message='Keep admission disabled. Verify that the schedule and admission writes are disabled, maintenance is on, observed Lambda reserved concurrency is zero, and the applied controls and package match the canonical configuration before reconciling.';
+      const readable=await invoke(reconcileArgs);
+      for(const refused of [held,readable]){
+        assert.equal(refused.exitCode,1,refused.stdout);
+        assert.equal(refused.outcome.status,'conflict',refused.stdout);
+        assert.equal(refused.outcome.code,'CONTROL_MISMATCH',refused.stdout);
+        assertNoWrite(refused);
+        assertNoJira(refused);
+      }
+      assert.equal(JSON.parse(held.stdout).diagnostics.find(diagnostic=>diagnostic.code==='CONTROL_MISMATCH')?.message,message);
+      assert(readable.stdout.split('\n').includes(message),readable.stdout);
+      assert(readable.stdout.split('\n').includes('conflict: CONTROL_MISMATCH'),readable.stdout);
+    }
+    if(id==='absent_history'){
+      assert(held.ordered_audit.some(e=>e.event==='jira'&&e.path.includes('/changelog?')&&e.status===403));
+      assert.equal(transitionProof(original).http_status,evidenceCase.sendCase.saved_status);
+    }
+    if(id==='wrong_actor'){
+      assert.deepEqual(held.ordered_audit.filter(e=>e.event==='aws').map(e=>e.action),['GetCallerIdentityCommand']);
+      assert.equal(held.outcome.data,null);
+    }
+    cloud.wrongActor=false;
+    cloud.session=sessions.restart;
+    const read=await invoke([...inspect,...(id==='enabled_runtime'?['--recovery']:[]),'--json']);
+    assertPending(read);
+    assertNoWrite(read);
+    assertNoJira(read);
+  }else{
+    const preflight=await invoke([...inspect,'--jira-evidence',...scope]);
+    assert.equal(preflight.outcome.code,'OK',preflight.stdout);
+    assert.equal(preflight.outcome.data.original_capture.http_status,evidenceCase.sendCase.saved_status);
+    assert.equal(preflight.outcome.data.native_history.status,evidenceCase.history.length?'complete':'complete_empty');
+    if(id==='not_applied'){
+      const originalRequest=readFileSync(requestPath,'utf8');
+      await writeFile(requestPath,JSON.stringify({...request,disposition:'confirmed_applied'}));
+      const incompatible=await invoke([...reconcileArgs,'--json']);
+      assert.equal(incompatible.exitCode,1,incompatible.stdout);
+      assert.equal(incompatible.outcome.status,'conflict',incompatible.stdout);
+      assert.equal(incompatible.outcome.code,'CAPTURE_UNSUPPORTED',incompatible.stdout);
+      assertNoWrite(incompatible);
+      assertNoJira(incompatible);
+      cloud.session=sessions.restart;
+      const pending=await invoke([...inspect,'--json']);
+      assertPending(pending);
+      assertNoWrite(pending);
+      assertNoJira(pending);
+      await writeFile(requestPath,originalRequest);
+      cloud.session=sessions.submit;
+    }
+    const faultHook=cloud.beforeState;
+    if(fault)cloud.beforeState=async command=>{
+      if(command.constructor.name==='TransactWriteCommand'){
+        if(fault==='condition'){
+          const change=command.input.TransactItems.find(item=>item.Update?.Key.SK.startsWith('S#')).Update;
+          const revised={...stream,revision:stream.revision+1};
+          provider.seed(revised);
+          assert.equal(revised.record_id,change.Key.SK.slice(2));
+        }else provider.fault=fault;
+      }
+      await faultHook?.(command);
+    };
+    const submitted=await invoke(fault?reconcileArgs:[...reconcileArgs,'--json']);
+    cloud.beforeState=faultHook;
+    assert.equal(submitted.state_writes.length,1);
+    const tx=submitted.state_writes[0].input.TransactItems;
+    assert.equal(tx.length,4,JSON.stringify(tx));
+    assert.equal(tx.filter(item=>item.Update).length,3);
+    const put=tx.find(item=>item.Put)?.Put;
+    assert.equal(put?.ConditionExpression,'attribute_not_exists(PK)');
+    assert.deepEqual([put.Item.PK,put.Item.SK],['operator-decision#'+stopped.binding.installation_id,'A#'+attemptId]);
+    if(fault==='before'||fault==='condition'){
+      assert.notEqual(submitted.exitCode,0,submitted.stdout);
+      if(fault==='condition')assert.equal(at('stream',provider.records()).revision,stream.revision+1);
+      else assert.deepEqual(submitted.state_after,submitted.state_before);
+      assert(![...provider.rows.values()].some(row=>row.SK==='A#'+attemptId));
+      assertPending(await invoke([...inspect,'--json']));
+    }else{
+      assert.equal(submitted.exitCode,0,submitted.stdout);
+      assert.equal(submitted.outcome.code,fault==='after'?'ALREADY_SETTLED':'OPERATOR_SETTLED',submitted.stdout);
+      decision=submitted.outcome.data.operator_decision;
+      const final=at('attempt',provider.records());
+      assert.equal(final.outcome,evidenceCase.sendCase.saved_status===409?'not_applied':'applied');
+      assert.equal(final.revision,original.revision+1);
+      assert.deepEqual(transitionProof(final),transitionProof(original));
+      assert.deepEqual(final.publication,original.publication);
+      assert.equal(at('stream',provider.records()).pending_attempt_id,null);
+      const originalActor=roleSession(cloud.config.manager.aws.account_id,sessions.submit);
+      assert.deepEqual(decision.actor,{account_id:originalActor.Account,user_id:originalActor.UserId,arn:originalActor.Arn});
+      assert.deepEqual({...decision,PK:put.Item.PK,SK:put.Item.SK},put.Item);
+      const before=new Map(submitted.state_before),after=new Map(submitted.state_after);
+      const changed=[...after].filter(([key,row])=>!before.has(key)||canonicalize(before.get(key))!==canonicalize(row)).map(([,row])=>row);
+      assert.deepEqual(changed.map(row=>row.kind??row.schema).sort(),['attempt','installation','pigboard-operator-decision/v1','stream']);
+      assert.equal(decision.request_digest,transitionProof(original).request_digest);
+      assert.equal(decision.publication_digest,original.extensions.pb_capture_publication_digest);
+      assert.equal(decision.operator_request_digest,sha256(canonicalize({schema:'pigboard-operator-request-digest/v1',
+        installation_id:stopped.binding.installation_id,installation_generation:stopped.binding.installation_generation,request})));
+      verifyTerminal(await invoke(inspect));
+      verifyTerminal(await invoke([...inspect,'--json']));
+      if(fault==='after'){
+        for(const session of [sessions.submit,sessions.readback]){
+          cloud.session=session;
+          const repeated=await invoke([...reconcileArgs,'--json']);
+          assert.equal(repeated.outcome.code,'ALREADY_SETTLED',repeated.stdout);
+          assert.deepEqual(repeated.outcome.data.operator_decision,decision);
+          assertNoWrite(repeated);
+          assertNoJira(repeated);
+        }
+        await writeFile(requestPath,JSON.stringify({...request,disposition:'confirmed_not_applied'}));
+        const different=await invoke([...reconcileArgs,'--json']);
+        assert.equal(different.outcome.code,'ALREADY_SETTLED_CONFLICT',different.stdout);
+        assertNoWrite(different);
+        assertNoJira(different);
+      }
+      if(id==='coherent_readback'){
+        const pending=new Map(submitted.state_before),settled=new Map(submitted.state_after);
+        for(const json of [false,true]){
+          provider.rows=new Map(structuredClone(pending));
+          cloud.beforeState=async command=>{
+            if(command.constructor.name==='GetCommand'&&command.input.Key.SK==='A#'+attemptId){
+              assert.equal(at('attempt',provider.records()).revision,original.revision);
+              provider.rows=new Map(structuredClone(settled));
+              cloud.beforeState=null;
+            }
+          };
+          verifyTerminal(await invoke([...inspect,...(json?['--json']:[])],{allowExternalChange:true}));
+          assert.equal(cloud.beforeState,null);
+        }
+        provider.rows=new Map(structuredClone(pending));
+        cloud.denyProtectedRead=true;
+        const unavailable=await invoke([...inspect,'--json']);
+        assertPending(unavailable);
+        assert.equal(unavailable.outcome.data.operator_decision,undefined);
+        assert.equal(unavailable.outcome.data.operator_decision_provenance.status,'unavailable');
+      }else if(id==='applied'){
+        await restartWithNewerAttempt(cloud,final,stoppedManifest);
+        cloud.session=sessions.restart;
+        verifyTerminal(await invoke(inspect));
+        verifyTerminal(await invoke([...inspect,'--json']));
+        assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
+        assert(at('attempt',provider.records()).attempt_id===attemptId);
+        const {fixtureCloud}=await import('./test-aws-manager.mjs');
+        const observed=cloud.cloud;
+        const tableId=observed.table.TableId, eventPage=observed.eventPage;
+        const originalRequest=readFileSync(requestPath,'utf8');
+        const legacyRole=fixtureCloud(stoppedManifest.canonical_config,{birth:'legacy'},stoppedManifest)
+          .cloud.events.find(event=>event.LogicalResourceId==='RuntimeRole');
+        const legacyEvents=observed.events.map(event=>event.LogicalResourceId==='RuntimeRole'
+          ? {...event,ResourceProperties:legacyRole.ResourceProperties} : event);
+        for(const observation of ['different_table_id','missing_original_history','legacy_birth']){
+          cloud.policy=null;
+          await writeFile(requestPath,originalRequest);
+          if(observation==='different_table_id')observed.table.TableId='00000000-0000-4000-8000-000000000000';
+          if(observation==='missing_original_history')observed.eventPage=()=>({StackEvents:[]});
+          if(observation==='legacy_birth')observed.eventPage=()=>({StackEvents:legacyEvents});
+          try{
+            const inspected=await invoke([...inspect,'--json']);
+            const refused=await invoke([...reconcileArgs,'--json']);
+            inspected.fixture_observation=refused.fixture_observation=observation;
+            assert.equal(inspected.exitCode,0,inspected.stdout);
+            assert.deepEqual(inspected.outcome.data.records,[final]);
+            assert.equal(inspected.outcome.data.operator_decision,undefined);
+            const provenance=inspected.outcome.data.operator_decision_provenance;
+            assert.equal(provenance.status,observation==='legacy_birth'?'absent':'unavailable',inspected.stdout);
+            if(observation==='legacy_birth'){
+              assert.equal(provenance.code,'OPERATOR_PROVENANCE_ABSENT',inspected.stdout);
+              assert.equal(refused.outcome.code,'ORIGIN_UNVERIFIED',refused.stdout);
+            }
+            assert.notEqual(refused.exitCode,0,refused.stdout);
+            assert.equal(refused.outcome.data,null,refused.stdout);
+            for(const answer of [inspected,refused]){
+              assertNoWrite(answer);
+              assertNoJira(answer);
+              assert(answer.ordered_audit.some(entry=>entry.action===(observation==='different_table_id'
+                ? 'DescribeTableCommand' : 'DescribeStackEventsCommand')));
+            }
+            assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
+          }finally{
+            observed.table.TableId=tableId;
+            observed.eventPage=eventPage;
+          }
+        }
+        const restored=await invoke([...reconcileArgs,'--json']);
+        assert.equal(restored.exitCode,0,restored.stdout);
+        assert.equal(restored.outcome.code,'ALREADY_SETTLED',restored.stdout);
+        assert.deepEqual(restored.outcome.data,{attempt:final,operator_decision:decision});
+        assert.equal(at('stream',provider.records()).pending_attempt_id,packet.fresh_attempt_id);
+        assertNoWrite(restored);
+        assertNoJira(restored);
+        cloud.policy='runtime';
+        const denied=await invoke([...inspect,'--json']);
+        assert.equal(denied.exitCode,0,denied.stdout);
+        assert.deepEqual(denied.outcome.data.records,[final]);
+        assert.equal(denied.outcome.data.operator_decision,undefined);
+        assert.equal(denied.outcome.data.operator_decision_provenance.status,'unavailable');
+        assert(denied.ordered_audit.some(entry=>entry.denied&&entry.keys.includes(put.Item.PK)));
+        const {policyPermits,operatorPolicy,runtimePolicy}=cloud;
+        const permits=(policy,permission,enclosing)=>policyPermits(policy,'dynamodb:'+permission,stopped.binding.table_arn,
+          {enclosing,leadingKeys:[put.Item.PK]});
+        assert(permits(operatorPolicy,'PutItem','TransactWriteItems'));
+        assert(!permits(operatorPolicy,'PutItem'));
+        assert(!permits(runtimePolicy,'PutItem','TransactWriteItems'));
+        assert(!permits(runtimePolicy,'GetItem'));
+        const {sdk,makeClient}=cloud.dependencies;
+        policyAudit=[];
+        cloud.sequence=policyAudit;
+        const client=makeClient('DynamoDBDocument',{region:stopped.binding.region,maxAttempts:1,
+          credentials:{accessKeyId:'SELECTED_OPERATOR',secretAccessKey:'dummy'}});
+        try{
+          const started=provider.audit.length, snapshot=provider.snapshot();
+          await assert.rejects(client.send(new sdk.TransactWriteCommand({TransactItems:tx})),{name:'AccessDeniedException'});
+          cloud.policy=null;
+          await assert.rejects(client.send(new sdk.PutCommand({TableName:stopped.binding.table_name,Item:put.Item})),{name:'AccessDeniedException'});
+          assert.equal(provider.audit.length,started);
+          assert.equal(provider.snapshot(),snapshot);
+        }finally{client.destroy();cloud.policy=null;cloud.sequence=null;}
+      }
+    }
+  }
+  const report={id,request,original_capture:transitionProof(original),installation:cloud.initialization,
+    stopped_binding:stopped.binding,stop,commands,simulated_waits_ms:cloud.waits,...(policyAudit?{policy_audit:policyAudit}:{})};
+  for(const marker of [recoveryToken,'LOCAL_APPLY_DUMMY',packet.sender_evidence.private_reply_marker,packet.sender_evidence.private_header_marker])
+    assert(!JSON.stringify(report).includes(marker),'Operator evidence must omit provider-private values');
+  return report;
 }
 
 async function inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId}) {
@@ -360,7 +875,9 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(runtime){assert(repair);assert.deepEqual(JSON.parse(runtime.configText),config);assert.equal(runtime.manifest.configuration_digest,parsed.configuration_digest);}
  const control={configuration_digest:parsed.configuration_digest,schedule_enabled:enabled,writes_enabled:enabled,maintenance:false};
  let cloud;
- if (inspectSend || evidenceCase) {
+ if(evidenceCase?.settlement){
+   cloud=await prepareSettlementInstallation(evidenceCase);
+ }else if (inspectSend || evidenceCase) {
    const {fixtureCloud} = await import('./test-aws-manager.mjs');
    const base = fixtureCloud(config);
    cloud = fixtureCloud(config, {}, evidenceCase?.sender ?? {...base.manifest, sender: true});
@@ -372,7 +889,10 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(runtime)Object.assign(binding,{package_revision:runtime.manifest.source_revision,installation_generation:runtime.manifest.installation_generation});
  const adapter=runtime?.createDynamoState??createDynamoState;
  const provider=cloud?.provider??new StateProvider(binding),disabled=adapter({binding,control:{...control,schedule_enabled:false,writes_enabled:false},client:provider});
- assert.equal((await disabled.initialize({fresh_installation:{...stateFixture.fresh,installation_id:binding.installation_id,domain_id:binding.domain_id,site:binding.site,configuration_digest:binding.configuration_digest,installation_generation:binding.installation_generation,observed_at:p.time},now:p.time})).status,'confirmed');if(enabled)provider.enable();
+ if(!evidenceCase?.settlement){
+   assert.equal((await disabled.initialize({fresh_installation:{...stateFixture.fresh,installation_id:binding.installation_id,domain_id:binding.domain_id,site:binding.site,configuration_digest:binding.configuration_digest,installation_generation:binding.installation_generation,observed_at:p.time},now:p.time})).status,'confirmed');
+   if(enabled)provider.enable();
+ }
  if(health){const row=provider.records().find(r=>r.kind==='installation');provider.seed({...row,extensions:{...row.extensions,health_generation:'apply-fixture-epoch',health_enabled_at:p.time}});}
  const healthLogs=[],timingLogs=[];
  const real=adapter({binding,control,client:provider});
@@ -434,7 +954,9 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  const server=https.createServer({key:tls.key,cert:tls.cert},async(req,res)=>{try{
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):null;const path=req.url;
   if(evidenceIO.active){
-   evidenceIO.requests.push({method:req.method,path,...(body?.maxResults?{page_size:body.maxResults}:{}),credential:'operator recovery'});
+   const call={method:req.method,path,...(body?.maxResults?{page_size:body.maxResults}:{}),credential:'operator recovery'};
+   evidenceIO.requests.push(call);
+   if(evidenceIO.sequence){call.event='jira';evidenceIO.sequence.push(call);}
    assert(req.headers.authorization === 'Bearer '+recoveryToken,'Inspection must use the separate recovery credential');
    assert(req.method==='GET'||req.method==='POST'&&path==='/rest/api/3/search/jql','Inspection cannot mutate Jira');
   }else{
@@ -539,6 +1061,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
       const incomplete = sendCase.fault === 'transition:incomplete';
       const responseBody = incomplete || sendCase.error_body ? private_reply_marker : '';
       sender.provider_reply = {http_status: status, complete: !incomplete, body_bytes: Buffer.byteLength(responseBody)};
+      if(mutation&&evidenceCase?.settlement)assert.equal(sender.transition_starts,1,'The exact original transition is sent once');
       if (incomplete) {
         injected = true;
         res.writeHead(status, {...headers, 'content-length': 500});
@@ -614,7 +1137,11 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
         comments.get('1001').push(comment);
         pointers.set('1001',pointer);
       }
-      sender.evidence_inspection=await inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId:p.attempt_id});
+      if(evidenceCase.settlement){
+        crypto.randomUUID=uuid;syncBuiltinESMExports();
+        const native=()=>structuredClone({issues,comments:Object.fromEntries(comments),pointers:Object.fromEntries(pointers),history:evidenceCase.history});
+        sender.settlement=await settlementFixture({cloud,evidenceCase,evidenceIO,attemptId:p.attempt_id,native});
+      }else sender.evidence_inspection=await inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId:p.attempt_id});
     }else assert.deepEqual(snapshot(), sender.after, 'inspection only reads the original attempt');
   }
   if(repeat)second=await invoke();
@@ -1164,6 +1691,69 @@ export async function runInspectionGroup(group){
         worker_calls:observed.worker_calls,inspection});
     }
     return {package_source:{checkout_revision:source.source_parent,snapshot_revision:source.snapshot_revision,tree:source.snapshot_tree},runs};
+  }finally{source.cleanup();}
+}
+
+export async function runReconciliationGroup(group,{regressions=[]}={}){
+  assert(['R1-15-H01','R1-15-H02'].includes(group));
+  const {snapshotPackage}=await import('./test-aws-manager.mjs');
+  const senderConfig=structuredClone(packet.config);
+  senderConfig.manager.aws.recovery_jira_secret_arn=recoveryArn;
+  const initialConfig=structuredClone(senderConfig);
+  Object.assign(initialConfig.manager.controls,{schedule_enabled:false,writes_enabled:false});
+  const stoppedConfig=structuredClone(initialConfig);
+  stoppedConfig.manager.controls.maintenance=true;
+  const source=snapshotPackage({config:initialConfig});
+  try{
+    const build=async(name,config)=>{
+      const configPath=join(source.temp,name+'.json');
+      await writeFile(configPath,JSON.stringify(config));
+      return packageManager({configPath,output:join(source.temp,name),source:source.source,revision:source.snapshot_revision,
+        generation:source.manifest.installation_generation}).manifest;
+    };
+    const sender=await build('sender',senderConfig),stopped=await build('stopped',stoppedConfig);
+    const [applied,rejected]=packet.sender_evidence.groups['SEND-H01'];
+    const incomplete=packet.sender_evidence.groups['SEND-H02'].find(item=>item.id==='incomplete-response');
+    const pendingApplied={...applied,fault:'finalize:before'};
+    const positive=[
+      {id:'applied',sendCase:pendingApplied},
+      {id:'not_applied',sendCase:rejected,history:[]},
+      {id:'lost_acknowledgement',sendCase:pendingApplied,fault:'after'},
+      {id:'runtime_terminal',sendCase:applied}
+    ];
+    const developer=[
+      {id:'write_before_commit',fault:'before'},{id:'conditional_race',fault:'condition'},{id:'coherent_readback'},
+      {id:'prior_stop',code:'DRAIN_INCOMPLETE'},{id:'wrong_stop_scope',code:'DRAIN_INCOMPLETE'},
+      {id:'missing_stop',code:'DRAIN_INCOMPLETE'},{id:'production_stop',code:'DRAIN_INCOMPLETE'}
+    ];
+    const prescribed=group==='R1-15-H01'?positive:reconciliationFixture.h02_variants;
+    const variants=regressions.length?regressions.map(id=>{
+      const selected=developer.find(testcase=>testcase.id===id);
+      assert(selected,'Select a supported developer regression.');
+      return selected;
+    }):prescribed;
+    const runs=[];
+    for(const variant of variants){
+      const directory=await mkdtemp(join(source.temp,'attempt-'));
+      try{
+        const sendCase=variant.sendCase??(variant.id==='unknown_response'?incomplete:pendingApplied);
+        const spec={originalInstall:source.manifest,sender,stopped,directory,sendCase,history:variant.history??[laterEdge],
+          denyHistory:variant.id==='absent_history',changedAssignment:variant.id==='changed_pointer',settlement:variant};
+        const observed=await runApplyFixture({host:'handler',sendCase,evidenceCase:spec});
+        assert.equal(observed.worker_calls,0);
+        assert.equal(observed.sender.transition_starts,1);
+        assert.deepEqual(observed.mutations.map(({method,path})=>({method,path})),packet.oracle.mutations.map(({method,path})=>({method,path})));
+        assert.equal(observed.sender.provider_reply.http_status,sendCase.wire_status);
+        assert.equal(observed.sender.settlement.original_capture.http_status,sendCase.saved_status);
+        runs.push({...observed.sender.settlement,worker_calls:observed.worker_calls,sender_reply:observed.sender.provider_reply,
+          sender_requests:observed.trace.map(({method,path})=>({method,path})),sender_mutations:observed.mutations});
+      }finally{await rm(directory,{recursive:true,force:true});}
+    }
+    return {developer_observation:'confirmed_local_cli_fixture',human_acceptance:'pending',installed_acceptance:'pending',
+      package_source:{checkout_revision:source.source_parent,snapshot_revision:source.snapshot_revision,tree:source.snapshot_tree,dirty:source.source_dirty.length!==0},
+      limitations:['Disposable loopback Jira and simulated AWS providers. No cloud calls, credentials or live IAM verification.',
+        'A test-only lifecycle producer supplies the completed stop record and generation. The installed command has no PGB-86 producer.'],
+      cleanup:'Disposable fixtures and builds removed. This transcript retains the observed State and provider audit.',runs};
   }finally{source.cleanup();}
 }
 
