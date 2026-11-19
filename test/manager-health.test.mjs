@@ -167,9 +167,18 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.equal(raw.raw_state_updated_at,old.raw_state_updated_at);
   assert.match(human.stdout,/Current package, schedule, completion and budget — unverified/);
   assert.match(human.stdout,/raw state ALARM at .*current evaluation unverified/);
-  assert.match(human.stdout,/Earlier observations from .*current attribution unverified/);
   assert.doesNotMatch(human.stdout,/definition aligned|current evaluation dormant|Latest complete:/);
-  assert(human.stdout.includes(raw.link));
+  const lines=human.stdout.split('\n');
+  const earlierHeader=`Earlier observations from ${outcome.prior_observation.observed_at} — current attribution unverified`;
+  const earlierIndex=lines.indexOf(earlierHeader);
+  assert(earlierIndex>=0);
+  const {links}=JSON.parse(json.stdout);
+  assert.deepEqual(Object.keys(links).sort(),['function','logs','metrics','schedule']);
+  for(const [label,url] of Object.entries(links)){
+   assert(url.startsWith('https://'));
+   assert(lines.indexOf(`${label} — ${url}`)>earlierIndex,label);
+  }
+  for(const alarm of alarms)assert(lines.includes(alarm.link),alarm.key);
   return outcome.prior_observation;
  };
  try{
@@ -187,6 +196,7 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert(alarms.every(a=>a.status==='aligned'&&a.actions_enabled===false));
   assert.deepEqual(alarms.filter(a=>a.evaluation==='dormant').map(a=>a.key),['missing_completion','measured_budget']);
   for(const alarm of alarms)assert(fresh.human.stdout.includes(alarm.link));
+  for(const [label,url] of Object.entries(outcome.links))assert(fresh.human.stdout.split('\n').includes(`${label}: ${url}`));
   assert.equal(alarmReads(fresh).length,2);
   for(const request of alarmReads(fresh))assert.deepEqual(request.input,{AlarmNames:alarms.map(a=>a.name),AlarmTypes:['MetricAlarm']});
   const denied=await getHealth(initial,{denyAlarmRead:true});

@@ -38,6 +38,7 @@ function formatUnverifiedHealth(result){
   `Observed evidence revision — ${binding.evidence_revision??'unavailable'}`,
   `Observed maximum budget use — ${budget}${budgetAt?' (latest metric point at '+budgetAt+')':''}`,
   ...scans.map(([label,scan])=>`${label} — ${scan.ended_at} (${scan.result})`),
+  ...Object.entries(result.links).map(([label,url])=>`${label} — ${url}`),
   ...result.omissions,result.next_step,'Use --json for the captured definitions, controls and telemetry.'
  ].join('\n')+'\n';
 }
