@@ -27,10 +27,14 @@ the original State table and record which operation may change the host.
 An older installation keeps its original inspection and protective stop
 procedures. It stays held when the operator cannot verify drain.
 
-For installed acceptance, provision a separate, fresh installation with the
-safeguards. Record its canonical configuration, retained history and pending
-attempts. Upgrade that same installation in place and verify all three are preserved. Leave the older AWS test stack disabled with its
-original PGBT-6 and PGBT-7 admissions in place. [Owner decision](https://scubapig.atlassian.net/browse/PGB-86?focusedCommentId=11337)
+For installed acceptance case AT-01.6, provision a separate, fresh installation
+with the safeguards. Record its stack and State table IDs. On that same
+installation, record the canonical configuration digest, retained history and
+pending attempts immediately before and after the in-place upgrade. Compare
+all three and include the results in the case evidence. [PGB-91 installed acceptance](https://scubapig.atlassian.net/browse/PGB-91)
+
+Leave the older AWS test stack disabled with its original PGBT-6 and PGBT-7
+admissions in place. [Owner decision](https://scubapig.atlassian.net/browse/PGB-86?focusedCommentId=11337)
 
 The [state contract](../architecture/manager-state.md) and
 [release design](../architecture/manager-release-one.md) own the technical detail.
