@@ -283,6 +283,14 @@ test('C01 distinguishes explicit malformed manager roots from omitted and valid 
   assert.equal(check(falseInstallation, 'C04_PACKAGE').status, 'PASS');
   assert.equal(falseInstallation.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
 
+  const malformedHealth = managerInputs(base);
+  malformedHealth.health = { ...malformedHealth.health, current: 'invalid fixture field' };
+  const malformedReport = await checkReadiness(malformedHealth);
+  assert.deepEqual([malformedReport.status, malformedReport.exit_code], ['input_error', 2]);
+  assert.equal(check(malformedReport, 'C04_INSTALLATION').status, 'PASS');
+  assert.equal(check(malformedReport, 'C05_HEALTH').status, 'ERROR');
+  assert.equal(check(malformedReport, 'C05_HEALTH').code, 'HEALTH_INPUT_INVALID');
+
   const omitted = managerInputs(base);
   delete omitted.packageManifest;
   delete omitted.installation;

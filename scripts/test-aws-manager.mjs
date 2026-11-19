@@ -3009,8 +3009,11 @@ async function savedAlarmOutcomes(journey,{compare,readHealth}){
  const budgetRow=contradictory.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
  assert.equal(budgetRow.actual.Threshold,80);
  budgetRow.actual.Threshold=81;
+ const malformed=structuredClone(original);
+ const malformedBudget=malformed.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+ malformedBudget.actual.Dimensions[0].Name={toString:null};
  evidence.health={matching,inaccessible};
- const inputs={matching:original,contradictory,inaccessible:inaccessible.json.outcome,malformed:{...original,current:'invalid fixture field'}};
+ const inputs={matching:original,contradictory,inaccessible:inaccessible.json.outcome,malformed};
  for(const [variant,health] of Object.entries(inputs))await compare(variant,initial,health,{explicit:variant!=='matching'});
 }
 
@@ -3140,6 +3143,8 @@ async function alarmRecoveryJourney(journey,{compare,readHealth,scanFixture,comp
  const healthGuide=guides[0].replaceAll(/\s+/g,' ');
  assert.match(healthGuide,/Do not raise reserved concurrency or run a second manager for this installation\./);
  assert.match(healthGuide,/Do not replay an uncertain Jira write\. Inspect the original attempt and preserve retained holds\./);
+ assert.match(healthGuide,/For ordinary State inspection, use the currently verified configuration and receipt for this installation with the original `attempt:ORIGINAL_ATTEMPT_UUID`\..*?node scripts\/manager-state\.mjs inspect --config current-config\.json --installation current-receipt\.json .*?--record-id attempt:ORIGINAL_ATTEMPT_UUID/);
+ assert.match(healthGuide,/For lifecycle inspection, use the recorded operation UUID and the original inputs matching that operation\..*?node scripts\/manager-installation\.mjs inspect-operation --config original\.json --installation original-receipt\.json .*?--operation ORIGINAL_UUID/);
  assert.match(guides[2],/--record-id/);
  assert.match(helpCommands[0].stdout,/inspect-operation/);
  assert.match(helpCommands[1].stdout,/inspect/);
@@ -3147,7 +3152,9 @@ async function alarmRecoveryJourney(journey,{compare,readHealth,scanFixture,comp
  evidence.guide_exercise={guides:guidePaths.map((file,index)=>({file,sha256:sha256(guides[index])})),help_commands:helpCommands,
   guide_section:'Restore inactive readiness after an unhealthy observation',
   declined:['Increase concurrency or overlap a second manager.','Replay an uncertain Jira write.'],
-  supported:['Keep reserved concurrency and one manager.','Inspect the original attempt by record ID or the named lifecycle operation by original operation ID.'],
+  supported:['Keep reserved concurrency and one manager.',
+   'Inspect the original attempt by record ID using the currently verified configuration and receipt.',
+   'Inspect the lifecycle operation by its recorded ID using the original inputs matching that operation.'],
   actual_uncertain_attempt_inspection:'not_exercised_in_D; see R1-23-H02',
   state_sha256_before:sha256(beforeGuide.state),state_sha256_after:sha256(f.provider.snapshot()),
   provider_calls:f.audit.slice(beforeGuide.aws),state_calls:f.provider.audit.slice(beforeGuide.stateAudit)};

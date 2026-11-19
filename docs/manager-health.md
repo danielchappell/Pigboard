@@ -234,14 +234,15 @@ write client or permission.
 4. **Resolve the recorded prerequisite.** Keep one manager at its supported
    concurrency. Do not raise reserved concurrency or run a second manager for
    this installation. Do not replay an uncertain Jira write. Inspect the original
-   attempt and preserve retained holds. Use read-only State inspection for an
-   existing attempt, with the sender's `apply.attempt_id` after the `attempt:` prefix.
-   Use `manager-installation.mjs inspect-operation --operation ORIGINAL_UUID` for
-   an interrupted lifecycle operation. For either, supply the original matching
-   configuration and receipt and the verified operator profile. A denied read,
-   new operation owner or unconfirmed effect calls for the named access or
-   operation recovery procedure. Avoid reinitializing State or repeating an
-   uncertain request.
+   attempt and preserve retained holds. Use read-only State inspection with the
+   currently verified configuration and receipt for this installation and the
+   sender's `apply.attempt_id` after the `attempt:` prefix. For an interrupted
+   lifecycle operation, supply the recorded operation UUID and the original inputs
+   matching that operation. Follow the [installation recovery procedure](manager-installation.md#upgrade-the-same-installation)
+   for the operation and use the verified operator profile for either inspection.
+   A denied read, new operation owner or unconfirmed effect calls for the named
+   access or operation recovery procedure. Avoid reinitializing State or repeating
+   an uncertain request.
 5. **Configure inactive maintenance and verify drain.** After resolving any
    operation that still owns the host, use the current verified receipt to
    configure the same source and installation generation with schedule and writes
@@ -274,12 +275,17 @@ node scripts/manager-installation.mjs stop --config maintenance.json --installat
 node scripts/manager-health.mjs --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --json
 ```
 
-For State inspection, use the matching configuration and verified receipt for
-the same installation. For lifecycle inspection, use the original operation's
-configuration and receipt.
+For ordinary State inspection, use the currently verified configuration and
+receipt for this installation with the original `attempt:ORIGINAL_ATTEMPT_UUID`.
+See [Jira evidence for one pending attempt](manager-state.md#inspect-jira-evidence-for-one-pending-attempt)
+when you also need the current applied receipt and historical sending receipt.
+For lifecycle inspection, use the recorded operation UUID and the original inputs
+matching that operation. The example shows the operation's original configuration
+and receipt. The [installation recovery procedure](manager-installation.md#upgrade-the-same-installation)
+gives the inputs for a restricted successor.
 
 ```sh
-node scripts/manager-state.mjs inspect --config active.json --installation current-receipt.json --operator-profile customer-operator --kind attempt --record-id attempt:ORIGINAL_ATTEMPT_UUID --json
+node scripts/manager-state.mjs inspect --config current-config.json --installation current-receipt.json --operator-profile customer-operator --kind attempt --record-id attempt:ORIGINAL_ATTEMPT_UUID --json
 node scripts/manager-installation.mjs inspect-operation --config original.json --installation original-receipt.json --operator-profile customer-operator --operation ORIGINAL_UUID --json
 ```
 

@@ -282,8 +282,9 @@ Open the recorded argv and run or inspect both formats of the offline command
 for each input. C04 passes for those four package and receipt pairs. C05 passes
 for the never-enabled, bootstrapped console-only snapshot with the embedded
 manifest. With the explicit manifest, a saved budget threshold of 81 against
-the canonical 80 fails, a denied alarm read is unverified, and a string in
-place of the outer `current` object is an input error. Expect aggregate exit 1
+the canonical 80 fails, a denied alarm read is unverified, and a non-string
+dimension name in the saved measured-budget definition gives
+`C05_HEALTH/ERROR/HEALTH_INPUT_INVALID`. Expect aggregate exit 1
 for the matching and denied variants when installed acceptance is absent,
 exit 1 incompatible for the contradictory threshold, and exit 2 for malformed
 input. Check the actual named result in each saved format. For the operator's
@@ -294,6 +295,32 @@ outputs, and cleanup record before removing the owned disposable directories.
 These are simulated provider observations and local checker results. Record the
 designated humans' execution, installed AWS permissions and subscription
 delivery independently.
+
+## Supply saved observations
+
+`--observations` is the checker's local input notes format,
+`pigboard-readiness-observations/v1`; no provider is required to emit it. Its top
+level contains `schema`, `revision`, `configuration_digest`, `installation_id` and
+optional `expected_site`, `application_path`, `application_inspection`, `artifacts`,
+`routes`, `workers`, `acceptance`, `reviewers`. Unknown keys and wrong types are
+input errors. Use the original producer's `observed_at`; do not invent a current
+observation time when copying saved evidence.
+
+| Field | Shape and interpretation |
+| --- | --- |
+| `artifacts` | `{id,path,sha256,kind,observed_at}` entries; absolute regular-file path, lowercase hex SHA256, kind `original_observation` or `simulated_fixture`. The checker hashes bytes without executing files. An original label remains the caller's claim. |
+| `application_inspection` | `{no_skill_copies,evidence_ids}`. Original saved app diff/inspection must support no app-local skill copies. External bundle placement alone does not establish this. |
+| `routes` | `{project_id,full_label,role,story_type_id,bug_type_id,stage_id,jira_rule_enabled,cursor_automation_enabled,evidence_ids}`. Roles are `implementer`, `reviewer`, `qa`; include all configured projects. |
+| `workers` | `{role,profile_sha256,prompt_sha256,model,effort,fast,phase_bindings,capabilities,evidence_ids}`. Hash exact pinned bytes. `capabilities` is `{status,evidence_ids}`, with `reported_complete`, `partial` or `missing`; completeness describes the pinned profile within the ordinary boundary. |
+| `phase_bindings` | Implementer review/execution entries `{phase,subagent_type,model,machine,foreground,fresh_context,accepted_agent_id,setup_evidence_ids,telemetry}`. `machine` is `same_machine`; telemetry is `not_returned` or actual `{model,effort}`. Review and execution have distinct accepted IDs. |
+| `acceptance` | Optional `installed_package` and `pgb58` records `{result,execution,revision,configuration_digest,installation_id,evidence_ids}`. Results: `passed`, `failed`, `partial`, `not_run`; execution: `actual_installed`, `simulated`, `local_only`. Only matching actual-installed original evidence can be supplied-compatible. |
+| `reviewers` | Optional `{developer,human_qa}` display names for the two designated humans; missing identities are shown explicitly. |
+
+Every `evidence_ids` reference must name an artifact above. Simulated fixtures can
+pass diagnostic assertions while actual installed and PGB-58 acceptance remain
+unverified. Keep local compatibility, installation binding, installed-package
+acceptance, saved health, PGB-58, human review and explicit activation separate.
+The checker does not capture new provider evidence or sign receipts.
 
 ## Human Review and recovery
 

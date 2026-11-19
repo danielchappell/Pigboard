@@ -70,6 +70,17 @@ export async function checkSavedAlarmSnapshot({ directory, checkout, revision, r
   }
   const saved = namedCheck(report, 'C05_HEALTH');
   if (expected.health_code) assert.equal(saved.code, expected.health_code);
+  if (variant === 'malformed') {
+    assert.equal(report.status, 'input_error');
+    assert.equal(report.exit_code, 2);
+    assert.equal(namedCheck(report, 'C03_CONFIGURATION')?.status, 'PASS', json.stdout);
+    assert.equal(namedCheck(report, 'C01_INTERNAL'), undefined, json.stdout);
+    assert.deepEqual(saved.observed, { alarm: 'measured_budget', source: 'actual', field: 'Dimensions' });
+    assert.match(human.stdout, /Pig Boss release readiness: input_error \(exit 2\)/);
+    assert.match(human.stdout, /PASS C03_CONFIGURATION:/);
+    assert.match(human.stdout, /ERROR C05_HEALTH: HEALTH_INPUT_INVALID\./);
+    if (release) assert.match(human.stdout, /PASS C02_RELEASE:/);
+  }
   if (expected.alarm_code) {
     const row = saved.observed.alarm_evidence.alarms.find(alarm => alarm.key === 'measured_budget');
     assert.equal(row.code, expected.alarm_code);
