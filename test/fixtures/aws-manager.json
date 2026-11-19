@@ -1,6 +1,10 @@
 {
   "lifecycle": {
-    "restored_table_id": "00000000-0000-4000-8000-000000000099"
+    "restored_table_id": "00000000-0000-4000-8000-000000000099",
+    "enablement": {
+      "recovery_delay_ms": 300000,
+      "configure_log_retention_days": 7
+    }
   },
   "config": {
     "schema": "pigboard-config/v1",

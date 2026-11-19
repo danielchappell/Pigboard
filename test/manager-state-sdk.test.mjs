@@ -435,7 +435,28 @@ test('lifecycle configure protects its pre-reservation health epoch through fini
     return observed.data;
   };
   const change = async action => state.mutate({ expected: await read(), now, ...action });
-  const reserve = (number, kind, details) => change({ type: 'reserve', kind, id: id(number), effects: [], details });
+  const effects = ['create-change-set', 'execute-change-set', 'enable-concurrency', 'enable-schedule'];
+  const reserve = (number, kind, details) => change({
+    type: 'reserve', kind, id: id(number), effects: kind === 'configure' ? effects : [], details
+  });
+  const settleEnable = async number => {
+    const operationId = id(number);
+    const changeSet = fixture.binding.stack_id.split(':stack/')[0] + ':changeSet/pigboard-lifecycle-' + operationId + '/' + id(99);
+    for (const effect of effects) {
+      const attributes = effect === 'execute-change-set' ? { change_set_id: changeSet } : {};
+      if (effect === 'execute-change-set') {
+        assert.equal((await change({ type: 'record-change-set', id: operationId, ...attributes })).status, 'confirmed');
+      }
+      if (effect === 'enable-schedule') {
+        assert.equal((await change({ type: 'skip', id: operationId, effect })).code, 'REVISION_CONFLICT');
+      }
+      assert.equal((await change({ type: 'claim', id: operationId, effect, ...attributes })).status, 'confirmed');
+      assert.equal((await change({ type: 'settle', id: operationId, effect })).status, 'confirmed');
+    }
+  };
+  const recordEnablement = (number, now, attributes = {}) => change({
+    type: 'record-enablement', id: id(number), now, ...attributes
+  });
   const finish = (number, action = {}) => change({ type: 'finish', id: id(number),
     outcome: 'completed', terminal: { status: 'configured' }, ...action });
   assert.equal((await reserve(1, 'bootstrap', {})).status, 'confirmed');
@@ -451,13 +472,30 @@ test('lifecycle configure protects its pre-reservation health epoch through fini
   assert.equal(first.status, 'confirmed');
   assert.equal(first.data.lifecycle.owner.details.rotate_health_epoch, true);
   assert.deepEqual(first.data.installation.extensions, original);
+  assert.equal((await recordEnablement(2, now)).code, 'REVISION_CONFLICT');
+  await settleEnable(2);
+  assert.equal((await finish(2, { controls: enabled, now: later })).code, 'ENABLEMENT_UNVERIFIED');
+  assert.deepEqual((await read()).installation.extensions, original);
+  const stale = await read();
+  const otherOperator = createDynamoLifecycleState({ ...options,
+    identity: { ...options.identity, UserId: 'AROAOTHER:fixture' } });
+  assert.equal((await otherOperator.mutate({ type: 'record-enablement', id: id(2), now, expected: stale })).code, 'REVISION_CONFLICT');
+  assert.equal((await recordEnablement(2, now)).status, 'confirmed');
+  const verified = { health_generation: id(2), health_enabled_at: now };
+  assert.deepEqual((await state.readOperation(id(2))).data.verified_enablement, verified);
+  assert.equal((await recordEnablement(2, later, { expected: stale })).code, 'REVISION_CONFLICT');
+  assert.equal((await recordEnablement(2, later)).code, 'REVISION_CONFLICT');
+  assert.deepEqual((await read()).installation.extensions, original);
   assert.equal((await finish(2, { controls: enabled, now: later })).status, 'confirmed');
-  const firstEpoch = { ...original, health_generation: id(2), health_enabled_at: later };
+  const firstEpoch = { ...original, ...verified };
+  assert.deepEqual((await state.readOperation(id(2))).data.owner.verified_enablement, verified);
   assert.deepEqual((await read()).installation.extensions, firstEpoch);
 
   const unchanged = await reserve(3, 'configure', details(enabled));
   assert.equal(unchanged.status, 'confirmed');
   assert.equal(unchanged.data.lifecycle.owner.details.rotate_health_epoch, false);
+  await settleEnable(3);
+  assert.equal((await recordEnablement(3, later)).code, 'REVISION_CONFLICT');
   provider.fault = 'after';
   assert.equal((await finish(3, { controls: enabled })).status, 'uncertain');
   const recovered = await read();
@@ -471,8 +509,12 @@ test('lifecycle configure protects its pre-reservation health epoch through fini
   assert.equal(changed.status, 'confirmed');
   assert.equal(changed.data.lifecycle.owner.details.rotate_health_epoch, true);
   assert.deepEqual(changed.data.installation.extensions, firstEpoch);
+  await settleEnable(4);
+  const beforeEmergency = await read();
   const emergency = await change({ type: 'emergency', kind: 'stop', id: id(5), effects: [], details: {} });
   assert.equal(emergency.status, 'confirmed');
+  assert.equal((await recordEnablement(4, later, { expected: beforeEmergency })).code, 'REVISION_CONFLICT');
+  assert.equal((await recordEnablement(4, later)).code, 'REVISION_CONFLICT');
   assert.equal((await finish(4, { controls: newDigest })).code, 'REVISION_CONFLICT');
   assert.equal((await finish(4, { outcome: 'superseded' })).status, 'confirmed');
   assert.deepEqual((await read()).installation.extensions, firstEpoch);
@@ -483,6 +525,8 @@ test('lifecycle configure protects its pre-reservation health epoch through fini
   const invalidEpoch = await reserve(6, 'configure', details(enabled));
   assert.equal(invalidEpoch.status, 'confirmed');
   assert.equal(invalidEpoch.data.lifecycle.owner.details.rotate_health_epoch, true);
+  await settleEnable(6);
+  assert.equal((await recordEnablement(6, now)).status, 'confirmed');
   assert.equal((await finish(6, { controls: enabled })).status, 'confirmed');
   assert.deepEqual((await read()).installation.extensions, { ...original, health_generation: id(6), health_enabled_at: now });
 

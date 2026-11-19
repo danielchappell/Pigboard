@@ -37,8 +37,9 @@ against matching disabled maintenance intent. Prior sends and workers may contin
 After a superseded upgrade or configure, use maintenance-only with its verified recovery receipt.
 A fully deployed, superseded bootstrap can be acknowledged with operator-only finish-operation.
 Preview removal before dispatch. Removal retains the original State table.
-Inspect an operation by UUID before deciding whether to finish it. Finish applies
-verified evidence to State and never dispatches another host request.
+Inspect an operation by UUID before deciding whether to finish it. A configure
+that starts a new enablement window needs its original verified enablement time.
+Finish applies verified evidence to State and never dispatches another host request.
 `;
 const shellWord=value=>/^[a-zA-Z0-9_./:-]+$/.test(value)?value:"'"+value.replaceAll("'","'\\''")+"'";
 function refusalCommand(args,jsonRequested){
@@ -59,6 +60,12 @@ function human(outcome){
    observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',
    original_operator:'Original operator',original_deployer:'Original deployer',effects:'Host effects'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+JSON.stringify(outcome[key]));
+ }
+ if(outcome.enablement_status==='preserved')rows.push('Schedule enablement — original time preserved');
+ if(outcome.enablement_status==='unavailable')rows.push('Verified schedule enablement — unavailable for this operation');
+ if(outcome.verified_enablement){
+  rows.push('Verified schedule enablement — '+outcome.verified_enablement.health_enabled_at);
+  rows.push('Enablement generation — '+outcome.verified_enablement.health_generation);
  }
  if(outcome.next_command)rows.push('Protect original installation — '+outcome.next_command.map(shellWord).join(' '));
  return rows.join('\n')+'\n';

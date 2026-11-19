@@ -553,7 +553,34 @@ diagnostic and resolve that issue before using this path.
 If an update is interrupted, keep the original receipt and operation ID.
 Use `inspect-operation` for read-only evidence. Use `finish-operation` when the
 provider outcome is confirmed and the CLI can record or re-export the result.
-Do not repeat an uncertain provider action. If an emergency stop superseded a verified upgrade or configure, use
+An inspection result of `awaiting_finish` reports the recorded operation and
+provider evidence. Finish rechecks the supplied target and the current host,
+including the expected schedule cadence, before restoring admission.
+Use the configuration and receipt from before the change, and keep the exact
+target manifest and configuration for finish:
+
+```sh
+node scripts/manager-installation.mjs inspect-operation --config source.json --installation source-receipt.json --operation CONFIGURE_UUID --operator-profile customer-operator --json
+node scripts/manager-installation.mjs finish-operation --config source.json --installation source-receipt.json --operation CONFIGURE_UUID --manifest target-manifest.json --target-config target.json --operator-profile customer-operator --output finished-receipt.json --json
+```
+
+For a configure that starts a new schedule enablement window, inspection shows
+the verified time and generation when the operation recorded them. JSON returns
+`enablement_status` and `verified_enablement`. If inspection reports
+`ENABLEMENT_UNVERIFIED`, the operation stays held even if Scheduler is now
+enabled. Keep the original files and operation ID for inspection or protective
+stop. Check host protection in the stop result if the original operation still
+owns host effects. Do not repeat an uncertain provider action.
+
+For a configure that preserves the existing epoch, inspection reports
+`enablement_status: preserved`. Use the current receipt and configuration to
+read the original time and generation in the installation record:
+
+```sh
+node scripts/manager-state.mjs inspect --config current.json --installation current-receipt.json --operator-profile customer-operator --kind installation --json
+```
+
+If an emergency stop superseded a verified upgrade or configure, use
 `finish-operation` with the original receipt, target manifest and target config
 to export the restricted successor receipt. Its reported host controls can
 differ from the disabled admission controls in State. While the recovery fence
@@ -663,10 +690,20 @@ case with a new output directory:
 ```sh
 node scripts/test-aws-manager.mjs --case R1-16-H01 --output /absolute/new-upgrade-evidence
 node scripts/test-aws-manager.mjs --case R1-16-H02 --output /absolute/new-removal-evidence
+node scripts/test-aws-manager.mjs --case R1-23-H02-A --output /absolute/new-enablement-evidence
 ```
 
 H01 exercises an upgrade with pending work, recovery and a guarded restart.
-H02 exercises stop, drain and removal. Each packet records the tested revision,
+H02 exercises stop, drain and removal. R1-23-H02-A uses a controlled clock to
+exercise unchanged configure, explicit re-enable and a configuration change.
+In `R1-23-H02-A.json`, review readable and JSON inspection and the AWS call
+log. Compare the saved enablement time to the later finish time. Check that
+proof missing before recording or a changed host leaves admission fenced, and
+that the historical receipt remains readable without a recorded time. The
+harness removes temporary packages and fixtures. Retain the report before
+removing its disposable output directory.
+
+Each packet records the tested revision,
 commands, simulated provider observations and outcome. Keep the packet for human
 review. The simulations use dummy credentials and local fixtures. Live AWS
 permissions and designated-human acceptance require separate verification.
@@ -737,15 +774,25 @@ its exact root and runtime/AWS lockfile dependencies before delivery; health add
 matching pinned CloudWatch and CloudWatch Logs read clients. Do not fetch or repair
 dependencies inside a delivery invocation.
 
-The existing final conditional configure update owns two generated installation
-extension scalars: `health_generation` and `health_enabled_at`. It writes them only
-after host readiness when enabling from stopped, changing an enabled canonical
-configuration, or explicitly establishing a missing epoch. Compare the original
-applied record before the temporary disable fence: an unchanged enabled configure
-preserves its epoch. Stop preserves historical epoch; explicit re-enable rotates it.
-Unrelated extension fields, the 16-key/32-KiB limits and revision fencing remain.
-An extension capacity failure refuses the final write; inspect partial lifecycle
-state using the same receipt rather than replaying an uncertain update.
+Lifecycle configure records a new enablement time and generation on the protected
+operation as soon as it verifies the updated host with Scheduler enabled. While
+that write settles, admission stays fenced. The final conditional write
+copies the recorded pair to installation extensions `health_generation` and
+`health_enabled_at`. Finishing an interrupted operation also requires the
+original provider effect evidence, matching host readback and the current fence.
+The time remains the one recorded before interruption even when the finish runs later.
+
+Enabling from stopped, changing an enabled canonical configuration or establishing
+a missing epoch starts a new window. An unchanged enabled configure keeps the
+pair from before its temporary disable fence. Each configure records its own AWS
+update by placing its operation ID in the function environment. Repeating the
+same inputs keeps the existing enablement time. To establish a new window after
+a protective stop, configure disabled maintenance, run a measured stop, then
+configure the intended enabled settings again. Stop preserves historical epoch.
+The existing extension limits and unrelated fields are preserved. A completed
+older operation remains readable even when it has no per-operation enablement
+record. A rotating configure interrupted before it recorded its time cannot
+recover that time from a later host read.
 
 Scans, failures, retries and health reads never create or rotate an epoch. Disabled
 initial installation can have none. Enabled installation without valid current
