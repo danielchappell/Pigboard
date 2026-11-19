@@ -7,7 +7,7 @@ import { cp, mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createDynamoState, createDynamoClient, createDynamoOperatorState } from '../lib/aws/dynamodb.mjs';
+import { createDynamoState, createDynamoClient, createDynamoOperatorState, createDynamoLifecycleState } from '../lib/aws/dynamodb.mjs';
 import { StateProvider, fixture, beginInput } from './helpers/state-provider.mjs';
 import { parse } from 'yaml';
 import { proofFixture, expectedCommitment } from '../scripts/test-transition-proof.mjs';
@@ -325,4 +325,171 @@ test('CI prepares root and isolated locked runtime before mandatory root test gl
   const tests = steps.findIndex(s => s.run === 'npm test');
   assert(root >= 0 && runtime > root && tests > runtime);
   assert.deepEqual(steps.find(s => s.uses?.startsWith('actions/setup-node')).with['cache-dependency-path'].trim().split('\n'), ['package-lock.json', 'runtime/aws/package-lock.json']);
+});
+
+test('lifecycle State fences a participating owner, accounts for dispatch, and reads back immutable outcomes', async () => {
+  const provider = new StateProvider();
+  const table = { ...protectedTable, TableName: fixture.binding.table_name,
+    KeySchema: [{ AttributeName: 'PK', KeyType: 'HASH' }, { AttributeName: 'SK', KeyType: 'RANGE' }],
+    AttributeDefinitions: [{ AttributeName: 'PK', AttributeType: 'S' }, { AttributeName: 'SK', AttributeType: 'S' }] };
+  const client = withTable(provider, table);
+  const options = { ...operatorOptions(client), lifecycle: true };
+  const state = createDynamoLifecycleState(options);
+  const init = await createDynamoOperatorState(options, 'initialize').initialize(protectedInit);
+  assert.equal(init.status, 'confirmed');
+  const initialTransaction = provider.audit.find(entry => entry.name === 'TransactWriteCommand').input.TransactItems;
+  assert.equal(initialTransaction.length, 3);
+  assert.equal(initialTransaction[2].Put.Item.PK, 'operator-lifecycle#' + fixture.binding.installation_id);
+  assert.equal(initialTransaction[2].Put.ConditionExpression, 'attribute_not_exists(PK)');
+
+  const read = async () => {
+    const result = await state.read();
+    assert.equal(result.status, 'confirmed');
+    return result.data;
+  };
+  const bootstrap = '11ff2f17-a1f3-4e1b-b736-d165bba1b523';
+  const stopId = '22ff2f17-a1f3-4e1b-b736-d165bba1b523';
+  const finishingId = '33ff2f17-a1f3-4e1b-b736-d165bba1b523';
+  const now = fixture.now;
+  const bornId = '44ff2f17-a1f3-4e1b-b736-d165bba1b523';
+  const born = await state.mutate({ type: 'reserve', expected: await read(), now, id: bornId,
+    kind: 'bootstrap', effects: [], details: {} });
+  assert.equal((await state.mutate({ type: 'finish', expected: born.data, now, id: bornId,
+    outcome: 'completed', terminal: {} })).status, 'confirmed');
+  const initial = await read();
+  const reserved = await state.mutate({ type: 'reserve', expected: initial, now, id: bootstrap,
+    kind: 'upgrade', effects: ['create-change-set', 'execute-change-set'], details: { token: bootstrap } });
+  assert.equal(reserved.status, 'confirmed');
+  const changeSet = fixture.binding.stack_id.split(':stack/')[0] + ':changeSet/pigboard-lifecycle-' + bootstrap + '/' + finishingId;
+  const create = { type: 'claim', now, id: bootstrap, effect: 'create-change-set' };
+  const record = { type: 'record-change-set', now, id: bootstrap, change_set_id: changeSet };
+  const execute = { type: 'claim', now, id: bootstrap, effect: 'execute-change-set', change_set_id: changeSet };
+  assert.equal((await state.mutate({ ...create, expected: initial })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ ...record, expected: reserved.data })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ ...create, expected: reserved.data })).status, 'confirmed');
+  const created = await state.mutate({ ...create, type: 'settle', expected: await read() });
+  assert.equal(created.status, 'confirmed');
+  assert.equal((await state.mutate({ ...execute, expected: created.data })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ ...record, expected: created.data, change_set_id: changeSet.replace('123456789012', '000000000000') })).code, 'REVISION_CONFLICT');
+  const alternateIdentity = { ...operatorIdentity, UserId: 'AROAEXAMPLE:alternate', Arn: operatorIdentity.Arn.replace('/fixture', '/alternate') };
+  const alternate = createDynamoLifecycleState({ ...options, identity: alternateIdentity });
+  assert.equal((await alternate.mutate({ ...record, expected: created.data })).code, 'REVISION_CONFLICT');
+  const selected = await state.mutate({ ...record, expected: created.data });
+  assert.equal(selected.status, 'confirmed');
+  assert.equal(selected.data.lifecycle.owner.details.change_set_id, changeSet);
+  assert.equal((await state.mutate({ ...record, expected: selected.data })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ ...execute, expected: selected.data, change_set_id: changeSet + '-other' })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ ...execute, expected: selected.data })).status, 'confirmed');
+
+  provider.fault = 'after';
+  const emergency = await state.mutate({ type: 'emergency', expected: await read(), now, id: stopId,
+    kind: 'stop', effects: [], details: {} });
+  assert.equal(emergency.status, 'uncertain');
+  const observed = await read();
+  assert.equal(observed.lifecycle.fence_id, stopId);
+  assert.equal(observed.lifecycle.owner.id, bootstrap);
+  assert.equal(observed.installation.writes_enabled, false);
+  assert.equal(observed.installation.schedule_enabled, false);
+  assert.equal(observed.installation.maintenance, true);
+  const finish = { type: 'finish', id: bootstrap, now, outcome: 'superseded', terminal: { provider_token: bootstrap } };
+  assert.equal((await state.mutate({ ...finish, expected: observed })).code, 'REVISION_CONFLICT');
+  assert.equal((await state.mutate({ type: 'settle', expected: observed, now, id: bootstrap, effect: 'execute-change-set' })).status, 'confirmed');
+  assert.equal((await state.mutate({ ...finish, expected: await read() })).status, 'confirmed');
+  const stored = (await state.readOperation(bootstrap)).data;
+  assert.equal(stored.outcome, 'superseded');
+  assert.equal(stored.fence_id, stopId);
+  assert.equal(stored.owner.details.change_set_id, changeSet);
+  assert.deepEqual(stored.owner.actor, operatorActor);
+  assert.deepEqual((await state.readOperation(bootstrap)).data, stored);
+
+  const stopped = await state.mutate({ type: 'reserve', expected: await read(), now, id: finishingId,
+    kind: 'stop', effects: [], details: {} });
+  const stop = { pb_stop_version: 1, pb_stop_id: finishingId, pb_stop_actor: operatorActorId(operatorActor),
+    pb_stop_config_digest: fixture.binding.configuration_digest, pb_stop_package_revision: fixture.binding.package_revision,
+    pb_stop_resource_digest: 'sha256:' + 'a'.repeat(64), pb_stop_bounds_digest: 'sha256:' + 'b'.repeat(64),
+    pb_stop_fence_revision: stopped.data.lifecycle.owner.installation_revision, pb_stop_started_at: now, pb_stop_window_ms: 121000,
+    pb_stop_completed_at: new Date(Date.parse(now) + 121000).toISOString(), pb_stop_elapsed_ms: 121000 };
+  const completed = await state.mutate({ type: 'finish', expected: stopped.data, now: stop.pb_stop_completed_at, id: finishingId,
+    outcome: 'completed', stop, terminal: { status: 'drained' } });
+  assert.equal(completed.status, 'confirmed');
+  const scope = { ...Object.fromEntries(birthScope.map(field => [field, fixture.binding[field]])), table_id: originEvidence.table_id };
+  assert.equal((await state.readGeneration(scope)).data.stop_id, finishingId);
+  const replacement = createDynamoLifecycleState({ ...options, client: withTable(provider, { ...table, TableId: bootstrap }) });
+  assert.equal((await replacement.readGeneration(scope)).code, 'ORIGIN_UNVERIFIED');
+  assert.deepEqual((await state.readOperation(bootstrap)).data, stored);
+});
+
+test('lifecycle configure protects its pre-reservation health epoch through finished and superseded updates', async () => {
+  const provider = new StateProvider();
+  const table = { ...protectedTable, TableName: fixture.binding.table_name,
+    KeySchema: [{ AttributeName: 'PK', KeyType: 'HASH' }, { AttributeName: 'SK', KeyType: 'RANGE' }],
+    AttributeDefinitions: [{ AttributeName: 'PK', AttributeType: 'S' }, { AttributeName: 'SK', AttributeType: 'S' }] };
+  const options = { ...operatorOptions(withTable(provider, table)), lifecycle: true };
+  const state = createDynamoLifecycleState(options);
+  assert.equal((await createDynamoOperatorState(options, 'initialize').initialize(protectedInit)).status, 'confirmed');
+  const now = fixture.now;
+  const id = number => '11ff2f17-a1f3-4e1b-b736-' + String(number).padStart(12, '0');
+  const read = async () => {
+    const observed = await state.read();
+    assert.equal(observed.status, 'confirmed');
+    return observed.data;
+  };
+  const change = async action => state.mutate({ expected: await read(), now, ...action });
+  const reserve = (number, kind, details) => change({ type: 'reserve', kind, id: id(number), effects: [], details });
+  const finish = (number, action = {}) => change({ type: 'finish', id: id(number),
+    outcome: 'completed', terminal: { status: 'configured' }, ...action });
+  assert.equal((await reserve(1, 'bootstrap', {})).status, 'confirmed');
+  assert.equal((await finish(1)).status, 'confirmed');
+
+  const enabled = { ...fixture.control, schedule_enabled: true, writes_enabled: false, maintenance: false,
+    package_revision: fixture.binding.package_revision };
+  const later = new Date(Date.parse(now) + 60000).toISOString();
+  const details = desired => ({ enabling: true, schedule_enabled: desired.schedule_enabled,
+    target: { configuration_digest: desired.configuration_digest, package_revision: desired.package_revision } });
+  const original = (await read()).installation.extensions;
+  const first = await reserve(2, 'configure', details(enabled));
+  assert.equal(first.status, 'confirmed');
+  assert.equal(first.data.lifecycle.owner.details.rotate_health_epoch, true);
+  assert.deepEqual(first.data.installation.extensions, original);
+  assert.equal((await finish(2, { controls: enabled, now: later })).status, 'confirmed');
+  const firstEpoch = { ...original, health_generation: id(2), health_enabled_at: later };
+  assert.deepEqual((await read()).installation.extensions, firstEpoch);
+
+  const unchanged = await reserve(3, 'configure', details(enabled));
+  assert.equal(unchanged.status, 'confirmed');
+  assert.equal(unchanged.data.lifecycle.owner.details.rotate_health_epoch, false);
+  provider.fault = 'after';
+  assert.equal((await finish(3, { controls: enabled })).status, 'uncertain');
+  const recovered = await read();
+  assert.equal(recovered.installation.schedule_enabled, true);
+  assert.deepEqual(recovered.installation.extensions, firstEpoch);
+  assert.equal((await state.readOperation(id(3))).data.owner.details.rotate_health_epoch, false);
+
+  const newDigest = { ...enabled, configuration_digest: 'sha256:' + 'b'.repeat(64) };
+  assert.notEqual(newDigest.configuration_digest, enabled.configuration_digest);
+  const changed = await reserve(4, 'configure', details(newDigest));
+  assert.equal(changed.status, 'confirmed');
+  assert.equal(changed.data.lifecycle.owner.details.rotate_health_epoch, true);
+  assert.deepEqual(changed.data.installation.extensions, firstEpoch);
+  const emergency = await change({ type: 'emergency', kind: 'stop', id: id(5), effects: [], details: {} });
+  assert.equal(emergency.status, 'confirmed');
+  assert.equal((await finish(4, { controls: newDigest })).code, 'REVISION_CONFLICT');
+  assert.equal((await finish(4, { outcome: 'superseded' })).status, 'confirmed');
+  assert.deepEqual((await read()).installation.extensions, firstEpoch);
+
+  const malformed = { ...(await read()).installation, ...enabled,
+    extensions: { ...firstEpoch, health_enabled_at: 'invalid' } };
+  provider.seed(malformed);
+  const invalidEpoch = await reserve(6, 'configure', details(enabled));
+  assert.equal(invalidEpoch.status, 'confirmed');
+  assert.equal(invalidEpoch.data.lifecycle.owner.details.rotate_health_epoch, true);
+  assert.equal((await finish(6, { controls: enabled })).status, 'confirmed');
+  assert.deepEqual((await read()).installation.extensions, { ...original, health_generation: id(6), health_enabled_at: now });
+
+  const extensions = Object.fromEntries(Array.from({ length: 16 }, (_, index) => ['retained_' + index, true]));
+  provider.seed({ ...(await read()).installation, extensions });
+  const beforeCapacityCheck = provider.snapshot();
+  const capacity = await reserve(7, 'configure', details(enabled));
+  assert.equal(capacity.code, 'MALFORMED_RECORD');
+  assert.equal(provider.snapshot(), beforeCapacityCheck);
 });

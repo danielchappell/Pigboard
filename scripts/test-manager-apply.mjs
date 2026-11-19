@@ -860,6 +860,36 @@ async function inspectTransitionFixture({cloud,evidenceCase,evidenceIO,attemptId
   }finally{await rm(directory,{recursive:true,force:true});}
 }
 
+export function lifecycleSenderConfig({disabled=true}={}){
+ const config=structuredClone(packet.config);
+ config.manager.aws.recovery_jira_secret_arn=recoveryArn;
+ if(disabled)Object.assign(config.manager.controls,{schedule_enabled:false,writes_enabled:false});
+ return config;
+}
+
+export async function runLifecycleSender(cloud,sender,afterSender){
+ const sendCase={...packet.sender_evidence.groups['SEND-H01'][0],fault:'finalize:before'};
+ const make=cloud.dependencies.makeClient;
+ cloud.dependencies.makeClient=(kind,options)=>{
+  if(kind!=='SecretsManager')return make(kind,options);
+  assert.equal(options.credentials.accessKeyId,'SELECTED_OPERATOR');
+  return {destroy(){},async send(command,sendOptions){
+   assert.equal(command.constructor.name,'GetSecretValueCommand');
+   assert.equal(command.input.SecretId,recoveryArn);
+   assert(sendOptions.abortSignal instanceof AbortSignal);
+   return {ARN:recoveryArn,SecretString:recoveryToken};
+  }};
+ };
+ try{
+  const evidenceCase={cloud,sender,history:[laterEdge],afterSender};
+  const result=await runApplyFixture({host:'handler',health:false,sendCase,evidenceCase});
+  assert.equal(result.sender.transition_starts,1);
+  assert.equal(result.sender.provider_reply.http_status,204);
+  assert.equal(result.worker_calls,0);
+  return result;
+ }finally{cloud.dependencies.makeClient=make;}
+}
+
 /** Disposable providers only. No live URL, credential or transport option. */
 export async function runApplyFixture({fault=null,global=false,repeat=false,hold=null,host=false,enabled=true,twoStreams=false,bug=false,variant=null,health=true,empty=false,logFailure=false,timeout=false,setupFailure=false,repairCase=null,runtime=null,sendCase=null,inspectSend=false,evidenceCase=null}={}){
  const p=structuredClone(packet),repair=repairCase?prepareRepairFixture(p,repairCase):null;
@@ -875,7 +905,9 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(runtime){assert(repair);assert.deepEqual(JSON.parse(runtime.configText),config);assert.equal(runtime.manifest.configuration_digest,parsed.configuration_digest);}
  const control={configuration_digest:parsed.configuration_digest,schedule_enabled:enabled,writes_enabled:enabled,maintenance:false};
  let cloud;
- if(evidenceCase?.settlement){
+ if(evidenceCase?.cloud){
+   cloud=evidenceCase.cloud;
+ }else if(evidenceCase?.settlement){
    cloud=await prepareSettlementInstallation(evidenceCase);
  }else if (inspectSend || evidenceCase) {
    const {fixtureCloud} = await import('./test-aws-manager.mjs');
@@ -889,7 +921,7 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  if(runtime)Object.assign(binding,{package_revision:runtime.manifest.source_revision,installation_generation:runtime.manifest.installation_generation});
  const adapter=runtime?.createDynamoState??createDynamoState;
  const provider=cloud?.provider??new StateProvider(binding),disabled=adapter({binding,control:{...control,schedule_enabled:false,writes_enabled:false},client:provider});
- if(!evidenceCase?.settlement){
+ if(!evidenceCase?.settlement&&!evidenceCase?.cloud){
    assert.equal((await disabled.initialize({fresh_installation:{...stateFixture.fresh,installation_id:binding.installation_id,domain_id:binding.domain_id,site:binding.site,configuration_digest:binding.configuration_digest,installation_generation:binding.installation_generation,observed_at:p.time},now:p.time})).status,'confirmed');
    if(enabled)provider.enable();
  }
@@ -1101,10 +1133,11 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
  let result,second,first;const stdout=process.stdout.write,info=console.info;if(host==='handler'){process.stdout.write=function(chunk,...args){if(typeof chunk!=='string'||!chunk.startsWith('{"summary":'))return stdout.call(this,chunk,...args);if(logFailure)throw Error('DUMMY_SECRET_LOG');healthLogs.push(JSON.parse(chunk));return true;};console.info=()=>{if(logFailure)throw Error('DUMMY_SECRET_LOG');};}try{
   const configText=JSON.stringify(config);
   const manifest=evidenceCase?.sender??{schema:'pigboard-manager-package/v1',runtime:'nodejs24.x',canonical_config:config,sender:true,source_revision:binding.package_revision,configuration_digest:binding.configuration_digest,installation_id:binding.installation_id,domain_id:binding.domain_id,installation_generation:binding.installation_generation};
-  const environment={PB_STACK_ID:binding.stack_id,PB_TABLE_NAME:binding.table_name,PB_TABLE_ARN:binding.table_arn,PB_INSTALLATION_ID:binding.installation_id,PB_DOMAIN_ID:binding.domain_id,PB_INSTALLATION_GENERATION:binding.installation_generation,PB_PACKAGE_REVISION:binding.package_revision,PB_CONFIGURATION_DIGEST:binding.configuration_digest,PB_MODE:'apply',PB_WRITES_ENABLED:String(enabled)};
+  const environment=evidenceCase?.cloud?structuredClone(cloud.cloud.function.Environment.Variables):{PB_STACK_ID:binding.stack_id,PB_TABLE_NAME:binding.table_name,PB_TABLE_ARN:binding.table_arn,PB_INSTALLATION_ID:binding.installation_id,PB_DOMAIN_ID:binding.domain_id,PB_INSTALLATION_GENERATION:binding.installation_generation,PB_PACKAGE_REVISION:binding.package_revision,PB_CONFIGURATION_DIGEST:binding.configuration_digest,PB_MODE:'apply',PB_WRITES_ENABLED:String(enabled)};
   const hostInvoke=runtime?.runApply??(host==='handler'?((event,dependencies)=>handler(event,{awsRequestId:p.producer_invocation_id},dependencies)):runApply);
   const invoke=()=>host||runtime?hostInvoke({operation:'apply'},{
     ...(runtime?{}:{configText,manifest}),environment,
+    ...(evidenceCase?.cloud?{describeTable:async()=>structuredClone(cloud.cloud.table)}:{}),
     createState: supplied=>{
       if(runtime){assert.deepEqual(supplied.binding,binding);assert.deepEqual(supplied.control,control);}
       return {...state,close(){}};
@@ -1137,7 +1170,18 @@ export async function runApplyFixture({fault=null,global=false,repeat=false,hold
         comments.get('1001').push(comment);
         pointers.set('1001',pointer);
       }
-      if(evidenceCase.settlement){
+      if(evidenceCase.afterSender){
+        crypto.randomUUID=uuid;syncBuiltinESMExports();
+        const native=()=>structuredClone({issues,comments:Object.fromEntries(comments),pointers:Object.fromEntries(pointers),history:evidenceCase.history});
+        evidenceIO.active=true;
+        try{
+          const before=native();
+          sender.lifecycle=await evidenceCase.afterSender({provider,native,attemptId:p.attempt_id});
+          assert.deepEqual(native(),before);
+          assert(evidenceIO.requests.every(call=>call.method==='GET'||call.path==='/rest/api/3/search/jql'));
+          sender.lifecycle_jira_reads=evidenceIO.requests;
+        }finally{evidenceIO.active=false;}
+      }else if(evidenceCase.settlement){
         crypto.randomUUID=uuid;syncBuiltinESMExports();
         const native=()=>structuredClone({issues,comments:Object.fromEntries(comments),pointers:Object.fromEntries(pointers),history:evidenceCase.history});
         sender.settlement=await settlementFixture({cloud,evidenceCase,evidenceIO,attemptId:p.attempt_id,native});
@@ -1752,7 +1796,7 @@ export async function runReconciliationGroup(group,{regressions=[]}={}){
     return {developer_observation:'confirmed_local_cli_fixture',human_acceptance:'pending',installed_acceptance:'pending',
       package_source:{checkout_revision:source.source_parent,snapshot_revision:source.snapshot_revision,tree:source.snapshot_tree,dirty:source.source_dirty.length!==0},
       limitations:['Disposable loopback Jira and simulated AWS providers. No cloud calls, credentials or live IAM verification.',
-        'A test-only lifecycle producer supplies the completed stop record and generation. The installed command has no PGB-86 producer.'],
+        'This PGB-85 fixture supplies a test-only completed stop record and generation. R1-16-H01 exercises the protected stop producer and the reconciliation consumer together.'],
       cleanup:'Disposable fixtures and builds removed. This transcript retains the observed State and provider audit.',runs};
   }finally{source.cleanup();}
 }

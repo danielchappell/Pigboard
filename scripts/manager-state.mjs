@@ -35,8 +35,7 @@ For evidence inspection, exit 0 means complete, 1 means partial, and 2 means
 invalid input or an unavailable operator, installation or named snapshot.
 For reconcile, use the closed request in docs/manager-state.md. A saved 204 or
 409 supports only its matching disposition. New decisions require original
-protected installation history and trusted stop evidence. New installed decisions
-remain held until the PGB-86 stop producer can verify a completed stop.
+protected installation history and a completed strict stop on the current installation.
 To confirm an uncertain write, inspect the named attempt or repeat the same request.
 Ordinary named State inspection can show a verified original operator decision
 without reading Jira. For settlement, 0 confirms the decision, 1 holds with a
@@ -197,7 +196,8 @@ async function readRequestFile(path) {
 
 function operatorOptions(resolved) {
   return { binding: resolved.binding, control: { ...resolved.control, configuration_digest: resolved.binding.configuration_digest },
-    client: resolved.client, originEvidence: resolved.originEvidence, identity: resolved.session?.operator?.identity };
+    client: resolved.client, originEvidence: resolved.originEvidence, identity: resolved.session?.operator?.identity,
+    ...(resolved.lifecycleInit ? { lifecycle: true } : {}) };
 }
 
 async function addOperatorDecision(outcome, binding, resolution, attemptId, resolveInstallation, createOperatorState) {

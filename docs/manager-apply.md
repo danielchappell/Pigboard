@@ -130,8 +130,7 @@ and current Jira evidence for the pending attempt. See
 [Inspect Jira evidence for one pending attempt](manager-state.md#inspect-jira-evidence-for-one-pending-attempt).
 Disable the installation when intervention is needed. Stop preserves pending
 evidence. See [Reconcile one named attempt](manager-state.md#reconcile-one-named-attempt)
-for supported responses and readback. New installed settlement remains held
-until the PGB-86 producer can verify the completed stop. The prepared local
+for supported responses and readback. Settlement requires a [verified drain](manager-installation.md#verify-drain-on-a-lifecycle-installation) on the original lifecycle installation. A protective stop leaves the hold in place. The prepared local
 reconciliation fixture exercises the actual evaluator and State write.
 Real installation acceptance is pending.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Finite prescribed H01/H02 simulations; never accepts cloud credentials/endpoints.
 import assert from 'node:assert/strict';
+import canonicalize from 'canonicalize';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,44 +16,129 @@ import {runStateCommand} from './manager-state.mjs';
 import {runInstallationCommand} from './manager-installation.mjs';
 import {runPreview} from '../lib/aws/manager-lambda.mjs';
 import {packageManager} from './package-manager.mjs';
-import {synthesizeTemplate,runtimeRoleProperties} from '../lib/aws/template.mjs';
+import {synthesizeTemplate,runtimeRoleProperties,installationResourceMap,LIFECYCLE_TABLE_ID_ENV,LIFECYCLE_TABLE_ID_PARAMETER} from '../lib/aws/template.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const hostFixture=()=>JSON.parse(fs.readFileSync(path.join(root,'test/fixtures/aws-manager.json')));
 const inventoryPacket=()=>JSON.parse(fs.readFileSync(path.join(root,'test/fixtures/jira-inventory-cases.json')));
 export function fixtureCloud(config=hostFixture().config,overrides={},packageManifest){
  const sdk=loadHostSDK(),m=config.manager,a=m.aws,{digest,config:canonical}=hostConfig(JSON.stringify(config));
  const manifest=packageManifest??{schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:m.installation_id,domain_id:m.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),runtime:'nodejs24.x',canonical_config:config,dependency_hashes:{root:'r',aws:'a'},payload_hashes:{'lib/aws/manager-lambda.mjs':'source','config/manager.json':digest}};
- const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,name=installationResourceBase(m.installation_id),tableName=name+'-state',tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`,scheduleArn=`arn:aws:scheduler:${a.region}:${a.account_id}:schedule/default/${name}`;
+ const stackId=`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/fixture-stack`,map=installationResourceMap(m.installation_id,manifest),name=map.physical.function_name,tableName=map.physical.table_name,tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`,functionArn=`arn:aws:lambda:${a.region}:${a.account_id}:function:${name}`,scheduleArn=`arn:aws:scheduler:${a.region}:${a.account_id}:schedule/default/${name}`;
  const binding={schema:'pigboard-aws-installation/v1',installation_id:m.installation_id,domain_id:m.domain_id,site:config.jira.site,configuration_digest:digest,package_revision:manifest.source_revision,region:a.region,stack_id:stackId,table_name:tableName,table_arn:tableArn,installation_generation:manifest.installation_generation};
- const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableArn:tableArn,TableId:'45fb5364-258e-4f57-86fd-d4e65c398d96',CreationDateTime:new Date('2026-11-17T08:00:22.410Z'),TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
+ const provider=new StateProvider(binding),audit=[],destroyed=[],table={TableName:tableName,TableArn:tableArn,TableId:'45fb5364-258e-4f57-86fd-d4e65c398d96',CreationDateTime:new Date('2026-11-17T08:00:22.410Z'),TableStatus:'ACTIVE',KeySchema:[{AttributeName:'PK',KeyType:'HASH'},{AttributeName:'SK',KeyType:'RANGE'}],AttributeDefinitions:[{AttributeName:'PK',AttributeType:'S'},{AttributeName:'SK',AttributeType:'S'}]};
  const env={PB_INSTALLATION_ID:m.installation_id,PB_DOMAIN_ID:m.domain_id,PB_INSTALLATION_GENERATION:manifest.installation_generation,PB_PACKAGE_REVISION:manifest.source_revision,PB_CONFIGURATION_DIGEST:digest,PB_MODE:m.controls.mode,PB_WRITES_ENABLED:String(m.controls.writes_enabled),PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:stackId};
  const created='2026-11-17T08:00:09.731Z',tableCreated='2026-11-17T08:00:24.908Z',completed='2026-11-17T08:00:45.078Z';
  const stackEvent=(ResourceStatus,Timestamp)=>({StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus,Timestamp});
  const createEvent=(LogicalResourceId,ResourceType,PhysicalResourceId,EventId,Timestamp,ResourceProperties)=>({
    StackId:stackId,LogicalResourceId,ResourceType,PhysicalResourceId,EventId,Timestamp,ResourceStatus:'CREATE_COMPLETE',ResourceProperties
  });
- const roleProperties=JSON.stringify(runtimeRoleProperties(canonical,manifest.sender===true,{legacy:overrides.birth==='legacy'}));
+ const roleProperties=JSON.stringify(runtimeRoleProperties(canonical,manifest.sender===true,{legacy:overrides.birth==='legacy',manifest}));
  const events=[stackEvent('CREATE_COMPLETE',completed),
    createEvent('RuntimeRole','AWS::IAM::Role',name+'-runtime','RuntimeRole-CREATE_COMPLETE-fixture','2026-11-17T08:00:32.000Z',roleProperties),
    createEvent('StateTable','AWS::DynamoDB::Table',tableName,'StateTable-CREATE_COMPLETE-fixture',tableCreated),
    stackEvent('CREATE_IN_PROGRESS',created)];
  const cloud={stack:{StackId:stackId,StackStatus:'CREATE_COMPLETE',CreationTime:created,Outputs:[{OutputKey:'FunctionArn',OutputValue:functionArn}]},events,function:{FunctionArn:functionArn,Version:'$LATEST',Environment:{Variables:env},Role:`arn:aws:iam::${a.account_id}:role/${name}-runtime`,Runtime:'nodejs24.x',Handler:'lib/aws/manager-lambda.handler',Timeout:m.invocation_timeout_seconds,LastUpdateStatus:'Successful',State:'Active'},asyncConfig:{FunctionArn:functionArn+':$LATEST',MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60},codeHash:Buffer.from(manifest.zip_digest.slice(7),'hex').toString('base64'),concurrency:1,table,schedule:{Arn:scheduleArn,GroupName:'default',Name:name,State:'DISABLED',ScheduleExpression:`rate(${m.schedule_minutes} minutes)`,FlexibleTimeWindow:{Mode:'OFF'},Target:{Arn:functionArn,RoleArn:`arn:aws:iam::${a.account_id}:role/${name}-scheduler`,Input:JSON.stringify({operation:m.controls.mode}),RetryPolicy:{MaximumRetryAttempts:0,MaximumEventAgeInSeconds:60}}},...overrides};
+ const lifecycle=manifest.schema==='pigboard-manager-package/v2';
+ const resources=()=>[
+   ...Object.entries(map.logical).map(([key,LogicalResourceId])=>({
+   LogicalResourceId,PhysicalResourceId:map.physical[key],ResourceType:cloud.template?.Resources[LogicalResourceId]?.Type,StackId:stackId
+   })),...(lifecycle?[{LogicalResourceId:'AsyncInvocation',PhysicalResourceId:name+'|$LATEST',
+     ResourceType:'AWS::Lambda::EventInvokeConfig',StackId:stackId}]:[])
+ ];
+ if(lifecycle&&!overrides.template){
+   cloud.template=synthesizeTemplate(JSON.stringify(config),manifest,{initial:overrides.initial!==false});
+   cloud.stack.Parameters=Object.entries({AssetBucket:'fixture-artifacts',AssetKey:'birth.zip',AssetVersion:'fixture-birth-version',[LIFECYCLE_TABLE_ID_PARAMETER]:'',QuiescenceConcurrency:'1'})
+     .map(([ParameterKey,ParameterValue])=>({ParameterKey,ParameterValue}));
+ }
+ const terminalEvent=(token,status)=>({...stackEvent(status,new Date('2026-11-17T09:00:00Z')),
+   ClientRequestToken:token,EventId:status+'-'+token});
  const credentials=profile=>({accessKeyId:profile==='operator'?'SELECTED_OPERATOR':profile==='deployer'?'SELECTED_DEPLOYER':'WRONG_AMBIENT',secretAccessKey:'dummy'});
  const injectedSDK={...sdk,fromIni:({profile})=>async()=>credentials(profile)};
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
   const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n)throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,UserId:'AROAEXAMPLE:fixture',Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/fixture`};
   if(n==='DescribeStacksCommand')return {Stacks:[cloud.stack]};
-  if(n==='DescribeStackResourcesCommand')return {StackResources:Object.entries({Function:name,Schedule:name,StateTable:tableName,RuntimeRole:name+'-runtime',SchedulerRole:name+'-scheduler',LogGroup:'/aws/lambda/'+name}).map(([LogicalResourceId,PhysicalResourceId])=>({LogicalResourceId,PhysicalResourceId}))};
+  if(n==='DescribeStackResourcesCommand')return {StackResources:resources()};
+  if(n==='GetTemplateCommand'&&lifecycle)return {TemplateBody:JSON.stringify(cloud.template)};
   if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);if(cloud.eventPage)return cloud.eventPage(i);return {StackEvents:cloud.events,...(cloud.eventsNextToken===undefined?{}:{NextToken:cloud.eventsNextToken})};}
+  if(lifecycle&&cloud.stack.StackStatus==='DELETE_COMPLETE'&&['GetFunctionCommand','GetFunctionConfigurationCommand','GetFunctionConcurrencyCommand','GetFunctionEventInvokeConfigCommand','GetScheduleCommand'].includes(n))
+   throw Object.assign(new Error('Fixture resource deleted'),{name:'ResourceNotFoundException'});
   if(n==='GetFunctionCommand')return {Configuration:{FunctionArn:functionArn,...(cloud.codeHash===undefined?{}:{CodeSha256:cloud.codeHash})},Code:{Location:'https://unused.example.invalid/fixture'}};
   if(n==='GetFunctionConfigurationCommand')return structuredClone(cloud.function);
   if(n==='GetFunctionEventInvokeConfigCommand'){if(!cloud.asyncConfig)throw Object.assign(new Error('dummy missing async config'),{name:'ResourceNotFoundException'});return structuredClone(cloud.asyncConfig);}
   if(n==='GetFunctionConcurrencyCommand')return {ReservedConcurrentExecutions:cloud.concurrency};
   if(n==='PutFunctionConcurrencyCommand'){cloud.concurrency=i.ReservedConcurrentExecutions;return {};}
   if(n==='GetScheduleCommand')return structuredClone(cloud.schedule);
-  if(n==='UpdateScheduleCommand'){cloud.schedule={...structuredClone(i),Arn:scheduleArn,GroupName:i.GroupName??'default'};return {};}
+  if(n==='UpdateScheduleCommand'){
+   if(i.State==='DISABLED'&&cloud.rejectDisableSchedule)throw Object.assign(new Error('simulated denied Scheduler request'),{name:'AccessDeniedException'});
+   cloud.schedule={...structuredClone(i),Arn:scheduleArn,GroupName:i.GroupName??'default'};
+   if(i.State==='ENABLED'&&cloud.loseEnableScheduleReply)throw Object.assign(new Error('simulated lost Scheduler response'),{name:'TimeoutError'});
+   return {};
+  }
   if(n==='DescribeTableCommand')return {Table:structuredClone(cloud.describeTable?.(i)??cloud.table)};
+  if(kind==='DynamoDBDocument'&&n==='QueryCommand'&&i.KeyConditionExpression==='PK = :pk'){
+   assert(i.ConsistentRead);
+   provider.audit.push({name:n,input:structuredClone(i),abortSignal:!!sendOptions?.abortSignal});
+   if(cloud.incompleteInventory){
+    const next=Number(i.ExclusiveStartKey?.SK??0)+1;
+    return {Items:[],LastEvaluatedKey:{PK:i.ExpressionAttributeValues[':pk'],SK:String(next)}};
+   }
+   const rows=[...provider.rows.values()].filter(row=>row.PK===i.ExpressionAttributeValues[':pk']&&
+     (!i.ExclusiveStartKey||row.SK>i.ExclusiveStartKey.SK)).sort((a,b)=>a.SK<b.SK?-1:a.SK>b.SK?1:0);
+   const page=rows.slice(0,Math.min(i.Limit,provider.pageSize));
+   return structuredClone({Items:page,...(rows.length>page.length?{LastEvaluatedKey:{PK:page.at(-1).PK,SK:page.at(-1).SK}}:{})});
+  }
+  if(lifecycle&&n==='CreateChangeSetCommand'){
+   assert.equal(identity,'SELECTED_DEPLOYER');
+   assert.equal(i.StackName,stackId);
+   cloud.changeInput=structuredClone(i);
+   cloud.changeSetId=`arn:aws:cloudformation:${a.region}:${a.account_id}:changeSet/${i.ChangeSetName}/00000000-0000-4000-8000-000000000005`;
+   return {Id:cloud.changeSetId,StackId:stackId};
+  }
+  if(lifecycle&&n==='DescribeChangeSetCommand'){
+   assert.equal(i.ChangeSetName,cloud.changeSetId);
+   return {StackId:stackId,ChangeSetId:cloud.changeSetId,ChangeSetName:cloud.changeInput.ChangeSetName,Status:'CREATE_COMPLETE',ExecutionStatus:'AVAILABLE',Changes:cloud.changes??
+     [{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',
+       Details:[{Target:{Attribute:'Properties',Name:cloud.changeInput.UsePreviousTemplate?'Environment':'Code'}}]}}]};
+  }
+  if(lifecycle&&n==='ExecuteChangeSetCommand'){
+   assert.equal(identity,'SELECTED_DEPLOYER');
+   assert.equal(i.StackName,stackId);
+   assert.equal(i.ChangeSetName,cloud.changeSetId);
+   assert.equal(i.ClientRequestToken,cloud.changeInput.ClientToken);
+   await cloud.beforeExecute?.(i.ClientRequestToken);
+   const {Parameters,TemplateBody}=cloud.changeInput;
+   const params=new Map(cloud.stack.Parameters.map(({ParameterKey,ParameterValue})=>[ParameterKey,ParameterValue]));
+   for(const {ParameterKey,ParameterValue,UsePreviousValue} of Parameters)if(!UsePreviousValue)params.set(ParameterKey,ParameterValue);
+   cloud.stack.Parameters=[...params].map(([ParameterKey,ParameterValue])=>({ParameterKey,ParameterValue}));
+   if(TemplateBody){
+    cloud.template=JSON.parse(TemplateBody);
+    const {Function,LifecycleSchedule}=cloud.template.Resources;
+    Object.assign(cloud.function.Environment.Variables,Object.fromEntries(Object.entries(Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string')));
+    cloud.function.Timeout=Function.Properties.Timeout;
+    cloud.schedule.ScheduleExpression=LifecycleSchedule.Properties.ScheduleExpression;
+    cloud.schedule.Target.Input=LifecycleSchedule.Properties.Target.Input;
+    cloud.codeHash=cloud.assets?.get(params.get('AssetVersion'))??cloud.codeHash;
+   }
+   cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]=params.get(LIFECYCLE_TABLE_ID_PARAMETER);
+   cloud.concurrency=Number(params.get('QuiescenceConcurrency'));
+   cloud.schedule.State='DISABLED';
+   cloud.stack.StackStatus='UPDATE_COMPLETE';
+   cloud.events.unshift(terminalEvent(i.ClientRequestToken,'UPDATE_COMPLETE'));
+   return {};
+  }
+  if(lifecycle&&n==='DeleteStackCommand'){
+   assert.equal(identity,'SELECTED_DEPLOYER');
+   assert.equal(i.StackName,stackId);
+   const status=cloud.deleteStatus??'DELETE_COMPLETE';
+   cloud.stack.StackStatus=status;
+   cloud.events.unshift(terminalEvent(i.ClientRequestToken,status),...resources().flatMap(resource=>{
+    const definition=cloud.template.Resources[resource.LogicalResourceId];
+    return definition.DeletionPolicy==='Retain'||cloud.omitDeleteEvent===resource.LogicalResourceId?[]:
+      [{...resource,ClientRequestToken:i.ClientRequestToken,ResourceStatus:'DELETE_COMPLETE'}];
+   }));
+   return {};
+  }
   if(n==='CreateChangeSetCommand'){cloud.changeInput=i;return {Id:'arn:aws:cloudformation:eu-west-1:123456789012:changeSet/pigboard-controls-fixture/id'};}
   if(n==='DescribeChangeSetCommand')return {Status:'CREATE_COMPLETE',Changes:cloud.changes??[{ResourceChange:{Action:'Modify',LogicalResourceId:'Function',Replacement:'False',Details:[{Target:{Attribute:'Properties',Name:'Code'}}]}}]};
   if(n==='ExecuteChangeSetCommand'){const t=JSON.parse(cloud.changeInput.TemplateBody);cloud.function.Environment.Variables={...cloud.function.Environment.Variables,...Object.fromEntries(Object.entries(t.Resources.Function.Properties.Environment.Variables).filter(([,v])=>typeof v==='string'))};cloud.function.Timeout=t.Resources.Function.Properties.Timeout;cloud.codeHash=cloud.nextCodeHash??cloud.codeHash;cloud.stack.StackStatus='UPDATE_COMPLETE';cloud.executedToken=i.ClientRequestToken;cloud.completionReads=0;cloud.events.unshift({ClientRequestToken:i.ClientRequestToken,StackId:stackId,PhysicalResourceId:stackId,ResourceType:'AWS::CloudFormation::Stack',ResourceStatus:'UPDATE_COMPLETE'});return {};}
@@ -454,7 +540,44 @@ export async function publicationJourney(){const observations=[];
  }finally{f.cleanup();}}
  return observations;
 }
-export function snapshotPackage({config=hostFixture().config}={}){const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pgb83-pinned-')),source=path.join(temp,'source');fs.mkdirSync(source);const tracked=execFileSync('git',['ls-files','--cached','--others','--exclude-standard'],{cwd:root,encoding:'utf8'}).trim().split('\n');for(const p of tracked){if(!p||!fs.existsSync(path.join(root,p)))continue;fs.mkdirSync(path.dirname(path.join(source,p)),{recursive:true});fs.cpSync(path.join(root,p),path.join(source,p));}for(const p of ['node_modules','runtime/aws/node_modules'])fs.cpSync(path.join(root,p),path.join(source,p),{recursive:true});for(const args of [['init','-q'],['add','.'],['-c','user.name=Pigboard Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Disposable exact working source snapshot']])execFileSync('git',args,{cwd:source});const revision=execFileSync('git',['rev-parse','HEAD'],{cwd:source,encoding:'utf8'}).trim(),configPath=path.join(temp,'config.json');fs.writeFileSync(configPath,JSON.stringify(config));const built=packageManager({configPath,output:path.join(temp,'build'),source,revision});return {...built,temp,source,snapshot_revision:revision,snapshot_tree:execFileSync('git',['rev-parse','HEAD^{tree}'],{cwd:source,encoding:'utf8'}).trim(),source_parent:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),source_dirty:execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}),cleanup:()=>fs.rmSync(temp,{recursive:true,force:true})};}
+export function snapshotPackage({config=hostFixture().config,lifecycle=false}={}){
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'pigboard-pinned-')),source=path.join(temp,'source');
+ const git=(cwd,...args)=>execFileSync('git',args,{cwd,encoding:'utf8'}).trim();
+ const cleanup=()=>fs.rmSync(temp,{recursive:true,force:true});
+ try{
+  const source_parent=git(root,'rev-parse','HEAD');
+  const source_dirty=git(root,'status','--porcelain','--untracked-files=normal');
+  const exactCheckout=lifecycle&&source_dirty.length===0;
+  if(exactCheckout){
+   git(root,'clone','--quiet','--shared','--no-checkout','--',root,source);
+   git(source,'checkout','--quiet','--detach',source_parent);
+  }else{
+   fs.mkdirSync(source);
+   const tracked=git(root,'ls-files','--cached','--others','--exclude-standard').split('\n');
+   for(const file of tracked){
+    if(!file||!fs.existsSync(path.join(root,file)))continue;
+    fs.mkdirSync(path.dirname(path.join(source,file)),{recursive:true});
+    fs.cpSync(path.join(root,file),path.join(source,file));
+   }
+  }
+  for(const file of ['node_modules','runtime/aws/node_modules']){
+   fs.cpSync(path.join(root,file),path.join(source,file),{recursive:true});
+  }
+  if(!exactCheckout){
+   git(source,'init','-q');
+   git(source,'add','.');
+   git(source,'-c','user.name=Pigboard Fixture','-c','user.email=fixture@example.invalid','commit','-qm','Disposable exact working source snapshot');
+  }
+  const revision=git(source,'rev-parse','HEAD'),tree=git(source,'rev-parse','HEAD^{tree}');
+  if(exactCheckout){
+   assert.equal(revision,source_parent);
+   assert.equal(tree,git(root,'rev-parse',source_parent+'^{tree}'));
+  }
+  const configPath=writeFixtureJSON(temp,'config',config);
+  const built=packageManager({configPath,output:path.join(temp,'build'),source,revision,lifecycle});
+  return {...built,temp,source,snapshot_revision:revision,snapshot_tree:tree,source_parent,source_dirty,cleanup};
+ }catch(error){cleanup();throw error;}
+}
 // Evaluate the generated statement set for concrete fixture requests, including
 // transaction context as DynamoDB evaluates it per item.
 export function policyPermits(policy, action, resource, { enclosing, leadingKeys } = {}) {
@@ -521,5 +644,938 @@ export function templateJourney(){
  return {template,checks,installed_iam:'unverified'};
 }
 export async function runHumanCase(id){if(id==='R1-13-H01'){if(Number(process.versions.node.split('.')[0])!==24)throw Error('SETUP: invoke this copied runtime acceptance packet with prepared Node24');const built=snapshotPackage({config:ordinaryWireFixture().config});try{return {package_manifest:built.manifest,snapshot_revision:built.snapshot_revision,snapshot_tree:built.snapshot_tree,source_parent:built.source_parent,source_dirty:built.source_dirty,node:process.version,resolver:await resolverJourney(),copied_wrapper:await wrapperJourney({snapshotSource:built.source,snapshotRevision:built.snapshot_revision,buildDirectory:built.temp,baselineBuild:built})};}finally{built.cleanup();}}if(id==='R1-13-H02')return {node:process.version,template:templateJourney(),resolver:await resolverJourney(),stop:await stopJourney(),configure:await configureJourney(),partial:await configureJourney({partial:true}),late_recovery:await lateRecoveryJourney(),publication:await publicationJourney()};throw Error('Select R1-13-H01 or R1-13-H02');}
-async function main(argv){if(argv.length===1&&argv[0]==='--help'){console.log('Usage: node scripts/test-aws-manager.mjs --case R1-13-H01|R1-13-H02|--all --output NEW_DIRECTORY');return;}const args={};for(let i=0;i<argv.length;i++){if(!['--all','--case','--output'].includes(argv[i])||args[argv[i]])throw Error('Use the prescribed flags once.');args[argv[i]]=argv[i]==='--all'?true:argv[++i];}if(!args['--output']||!!args['--all']===!!args['--case'])throw Error('Select one case or --all and new output.');const output=path.resolve(args['--output']);fs.mkdirSync(output);for(const id of args['--all']?['R1-13-H01','R1-13-H02']:[args['--case']]){const evidence=await runHumanCase(id);fs.writeFileSync(path.join(output,id+'.json'),JSON.stringify({developer_observation:'confirmed_simulated',human_acceptance:'pending',live_iam:'unverified',cleanup:'disposable fixtures removed',command:process.argv,evidence},null,2)+'\n');console.log(id+': developer simulation confirmed; human/live acceptance pending');}}
+const legacyCases=['R1-13-H01','R1-13-H02'];
+const lifecycleCases=['R1-16-H01','R1-16-H02'];
+async function main(argv){
+ if(argv.length===1&&argv[0]==='--help'){
+  console.log('Usage: node scripts/test-aws-manager.mjs --case '+[...legacyCases,...lifecycleCases].join('|')+' --output NEW_DIRECTORY');
+  console.log('       node scripts/test-aws-manager.mjs --all --output NEW_DIRECTORY');
+  return;
+ }
+ const args={};
+ for(let i=0;i<argv.length;i++){
+  if(!['--all','--case','--output'].includes(argv[i])||Object.hasOwn(args,argv[i]))throw Error('Use the prescribed flags once.');
+  const flag=argv[i];
+  if(flag!=='--all'&&(!argv[i+1]||argv[i+1].startsWith('--')))throw Error('Missing flag value.');
+  args[flag]=flag==='--all'?true:argv[++i];
+ }
+ if(!args['--output']||!!args['--all']===!!args['--case'])throw Error('Select one case or --all and new output.');
+ if(args['--case']&&![...legacyCases,...lifecycleCases].includes(args['--case']))throw Error('Select a listed case.');
+ const output=path.resolve(args['--output']);
+ fs.mkdirSync(output,{mode:0o700});
+ for(const id of args['--all']?legacyCases:[args['--case']]){
+  const write=data=>fs.writeFileSync(path.join(output,id+'.json'),JSON.stringify({
+   human_acceptance:'pending',installed_acceptance:'pending',live_iam:'unverified',command:process.argv,...data
+  },null,2)+'\n',{mode:0o600});
+  try{
+   const evidence=lifecycleCases.includes(id)?await runLifecycleFixture(id):await runHumanCase(id);
+   write({developer_observation:'confirmed_simulated',cleanup:'disposable fixtures removed',evidence});
+   console.log(id+': developer simulation confirmed; human and installed acceptance pending');
+  }catch(error){
+   write({developer_observation:'blocked',blocker:error.message,evidence:error.fixtureEvidence??null,
+     cleanup:'completed fixture paths are disposable'});
+   throw error;
+  }
+ }
+}
+
+export async function lifecycleBirthJourney({config=hostFixture().config,exerciseBootstrapRecovery=false}={}){
+ const source=snapshotPackage({config,lifecycle:true});
+ const f=fixtureCloud(config,{},source.manifest);
+ const evidence = {source:snapshotRefForFixture(source),node:process.version,commands:[],waits:[]};
+ const installPath=path.join(source.temp,'original-receipt.json');
+ const configPath=path.join(source.temp,'config.json');
+ let clock=Date.parse('2026-11-17T10:00:00Z'),monotonic=0;
+ const dependencies={...f.dependencies,now:()=>new Date(clock).toISOString(),monotonic:()=>monotonic,
+   wait:async ms=>{evidence.waits.push(ms);clock+=ms;monotonic+=ms;}};
+ const host=(args,branch=f)=>capture('manager-installation.mjs',args,
+  ()=>runInstallationCommand(args,branch===f?dependencies:branch.dependencies),branch);
+ const state=args=>capture('manager-state.mjs',args,()=>runStateCommand(args,{resolveInstallation:input=>resolveInstallation(input,dependencies)}));
+ async function capture(script,args,run,branch=f){
+   const before=branch.provider.snapshot(),start=branch.audit.length;
+   const command=['node','scripts/'+script,...args];
+   const record={command,state_before:JSON.parse(before),...(branch===f?{}:{isolated_branch:branch.name})};
+   evidence.commands.push(record);
+   try{
+    const outcome=await run();
+    Object.assign(record,outcome);
+    return outcome;
+   }finally{
+    record.state_after=JSON.parse(branch.provider.snapshot());
+    record.aws=branch.audit.slice(start);
+   }
+ }
+ try{
+   const flags=['--config',configPath,'--operator-profile','operator'],manifestPath=path.join(source.output,'manifest.json');
+   const bound=await host(['bind',...flags,'--manifest',manifestPath,'--stack',f.stackId,'--output',installPath,'--json']);
+   assert.equal(bound.exitCode,0,JSON.stringify(bound));
+   const original=JSON.parse(fs.readFileSync(installPath));
+   assert.equal(original.origin.table_id,f.cloud.table.TableId);
+   const initialized=await state(['init',...flags,'--installation',installPath,'--json']);
+   assert.equal(initialized.exitCode,0,initialized.stdout);
+   if (exerciseBootstrapRecovery) {
+    const before=readOnlyCheckpoint(f);
+    assert(!f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]);
+    const inspected=await host(['inspect-operation',...flags,'--installation',installPath,'--json']);
+    assert.equal(inspected.exitCode,0,inspected.stdout);
+    const idle=requireStatus(inspected,'inspected');
+    assert.equal(idle.active,null);
+    assert.equal(idle.last,null);
+    requireReadOnly(f,before);
+    assert(!f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]);
+    await bootstrapRecoveryJourney({f,host,flags,source,installPath,evidence});
+   }
+   const outputs=path.join(source.temp,'bootstrap-receipt.json');
+   const bootstrapped=await host(['bootstrap',...flags,'--installation',installPath,'--deployer-profile','deployer','--output',outputs,'--json']);
+   assert.equal(bootstrapped.exitCode,0,JSON.stringify(bootstrapped));
+   const observed=await state(['inspect',...flags,'--installation',outputs,'--kind','installation','--record-id',config.manager.installation_id,'--json']);
+   assert.equal(observed.exitCode,0,observed.stdout);
+   assert.equal(f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV],original.origin.table_id);
+   assert.equal(f.cloud.schedule.State,'DISABLED');
+   assert.equal(f.cloud.concurrency,0);
+   assert.equal(f.audit.filter(row=>row.action==='ExecuteChangeSetCommand').length,1);
+   return {source,f,evidence,dependencies,host,state,flags,original,installationPath:outputs,configPath};
+ }catch(error){source.cleanup();error.fixtureEvidence=evidence;throw error;}
+}
+async function bootstrapRecoveryJourney({f,host,flags,source,installPath,evidence}){
+ const branch=forkLifecycle(f,{manifest:source.manifest},'superseded bootstrap');
+ const command=(verb,extra=[],receipt=installPath)=>host([verb,...flags,'--installation',receipt,...extra,'--json'],branch);
+ const out=name=>path.join(source.temp,name+'.json');
+ branch.dependencies.beforeLifecycleFinish=async()=>{
+  const stopped=await command('stop');
+  assert.equal(stopped.outcome.code,'HOST_OWNER_ACTIVE',stopped.stdout);
+  assert.equal(branch.cloud.schedule.State,'DISABLED');
+  assert.equal(branch.cloud.concurrency,0);
+ };
+ const interrupted=await command('bootstrap',['--deployer-profile','deployer','--output',out('interrupted-bootstrap')]);
+ delete branch.dependencies.beforeLifecycleFinish;
+ assert.equal(interrupted.outcome.status,'partial',interrupted.stdout);
+ assert.equal(providerExecutions(branch.audit).length,1);
+ const id=interrupted.outcome.operation,named=['--operation',id];
+ const observed=requireStatus(await command('inspect-operation',named),'inspected');
+ assert.equal(observed.outcome,'awaiting_finish');
+ assert.equal(observed.superseded,true);
+ const held=JSON.parse(branch.provider.snapshot()).find(([,row])=>row.owner?.id===id)[1];
+ const fence=held.fence_id;
+ const finishArgs=[...named,'--output',out('bootstrap-recovered')];
+ const start=branch.audit.length;
+ const before=branch.provider.snapshot();
+ const externalPin=branch.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV];
+ branch.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]=hostFixture().lifecycle.restored_table_id;
+ const unverified=await command('finish-operation',[...named,'--output',out('unverified-bootstrap-pin')]);
+ assert.notEqual(unverified.exitCode,0,unverified.stdout);
+ assert.equal(branch.provider.snapshot(),before);
+ assert.equal(operationRow(branch,id),undefined);
+ branch.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV]=externalPin;
+ const finish=requireStatus(await command('finish-operation',finishArgs),'superseded');
+ assert.equal(finish.terminal.bootstrap_acknowledged,true);
+ const saved=operationRow(branch,id);
+ assert.equal(saved.fence_id,fence);
+ assert.equal(finish.fence,fence);
+ assert(JSON.parse(branch.provider.snapshot()).some(([,row])=>row.bootstrapped===true&&row.fence_id===fence));
+ assert.equal(branch.cloud.schedule.State,'DISABLED');
+ assert.equal(branch.cloud.concurrency,0);
+ assert.equal(installationState(branch).writes_enabled,false);
+ assert.equal(installationState(branch).schedule_enabled,false);
+ assert.equal(installationState(branch).extensions.pb_stop_id,undefined);
+ const recovered=JSON.parse(fs.readFileSync(out('bootstrap-recovered')));
+ assert.deepEqual(recovered.origin,JSON.parse(fs.readFileSync(installPath)).origin);
+ assert.equal(recovered.recovery_only,undefined);
+ fs.unlinkSync(out('bootstrap-recovered'));
+ const history=branch.provider.snapshot();
+ const repeat=requireStatus(await command('finish-operation',finishArgs),'superseded');
+ assert.deepEqual(repeat.terminal,finish.terminal);
+ assert.deepEqual(JSON.parse(fs.readFileSync(out('bootstrap-recovered'))),recovered);
+ assert.equal(branch.provider.snapshot(),history);
+ operatorOnly(branch.audit.slice(start));
+ noHostWrites(branch.audit.slice(start));
+ assert.equal(providerExecutions(branch.audit).length,1);
+ evidence.bootstrap_recovery={terminal:finish.terminal,fence};
+}
+
+function snapshotRefForFixture(source){
+ return {snapshot_revision:source.snapshot_revision,snapshot_tree:source.snapshot_tree,source_parent:source.source_parent,source_dirty:source.source_dirty};
+}
+
+function requireStatus(result,status){
+ assert.equal(result.outcome.status,status,result.stdout);
+ return result.outcome;
+}
+const writeFixtureJSON=(directory,name,data)=>{
+ const file=path.join(directory,name+'.json');
+ fs.writeFileSync(file,JSON.stringify(data));
+ return file;
+};
+const changedControls=(config,changes)=>{
+ const changed=structuredClone(config);
+ Object.assign(changed.manager.controls,changes);
+ return changed;
+};
+const hostMutations=rows=>rows.filter(row=>/^(Update|PutFunction|Create|Execute|Delete)/.test(row.action));
+const businessRows=f=>JSON.parse(f.provider.snapshot()).filter(([,row])=>/^[SMAN]#/.test(row.SK));
+const operationRow=(f,id)=>[...f.provider.rows.values()].find(row=>row.owner?.id===id&&row.terminal);
+
+function lifecycleDriver(journey){
+ const {source,f,host}=journey;
+ const output=name=>path.join(source.temp,name+'.json');
+ const initial={configPath:journey.configPath,installationPath:journey.installationPath,manifest:source.manifest};
+ const previousPins=new Map();
+ const currentRevision=()=>execFileSync('git',['rev-parse','HEAD'],{cwd:source.source,encoding:'utf8'}).trim();
+ function nextPin(){
+  execFileSync('git',['-c','user.name=Pigboard Fixture','-c','user.email=fixture@example.invalid','commit','--allow-empty','-qm','Disposable compatible successor pin'],{cwd:source.source});
+  return currentRevision();
+ }
+ function build(name,config,{revision=currentRevision(),compatibleFrom,lifecycle=true}={}){
+  if(compatibleFrom)previousPins.set(revision,compatibleFrom);
+  const configPath=writeFixtureJSON(source.temp,name+'-config',config);
+  const {manifest,output}=packageManager({configPath,output:path.join(source.temp,name+'-build'),source:source.source,
+    revision,generation:source.manifest.installation_generation,lifecycle,compatibleFrom:lifecycle?previousPins.get(revision):undefined});
+  const asset={bucket:'fixture-artifacts',key:name+'.zip',version:name+'-version',zip_digest:manifest.zip_digest};
+  f.cloud.assets??=new Map();
+  f.cloud.assets.set(asset.version,Buffer.from(asset.zip_digest.slice(7),'hex').toString('base64'));
+  return {configPath,manifest,manifestPath:path.join(output,'manifest.json'),assetPath:writeFixtureJSON(source.temp,name+'-asset',asset)};
+ }
+ const context=(installed,configPath=installed.configPath)=>['--config',configPath,'--installation',installed.installationPath,'--operator-profile','operator'];
+ const assetFlags=target=>['--manifest',target.manifestPath,'--asset',target.assetPath];
+ const deployment=['--deployer-profile','deployer'];
+ const run=(verb,installed,extra=[],{configPath,human=false,branch}={})=>
+  host([verb,...context(installed,configPath),...extra,...(human?[]:['--json'])],branch);
+ async function configure(installed,target,name){
+  const installationPath=output(name);
+  requireStatus(await run('configure',installed,[...assetFlags(target),...deployment,'--output',installationPath],
+    {configPath:target.configPath}),'configured');
+  return {...target,installationPath};
+ }
+ return {initial,output,build,nextPin,run,configure,assetFlags,deployment};
+}
+
+function assertReadOnlyActionText(stdout){
+ assert.match(stdout,/State mutation performed — false/);
+ assert.doesNotMatch(stdout,/State admission fenced/);
+}
+
+function forkLifecycle(f,installed,name){
+ const branch=fixtureCloud(installed.manifest.canonical_config,structuredClone(f.cloud),installed.manifest);
+ let elapsed=0;
+ branch.dependencies.now=()=>new Date(Date.parse('2026-11-17T10:00:00Z')+elapsed).toISOString();
+ branch.dependencies.monotonic=()=>elapsed;
+ branch.dependencies.wait=async ms=>{elapsed+=ms;};
+ branch.name=name;
+ branch.provider.rows=new Map(JSON.parse(f.provider.snapshot()));
+ return branch;
+}
+const installationState=f=>f.provider.records().find(row=>row.kind==='installation');
+const noHostWrites=rows=>assert.deepEqual(hostMutations(rows),[]);
+const operatorOnly=rows=>assert(rows.every(row=>row.identity==='SELECTED_OPERATOR'));
+const providerExecutions=rows=>rows.filter(row=>row.action==='ExecuteChangeSetCommand');
+const readOnlyCheckpoint=f=>({
+ state:f.provider.snapshot(),aws:f.audit.length,stateAudit:f.provider.audit.length,
+ schedule:structuredClone(f.cloud.schedule),concurrency:f.cloud.concurrency,
+ function:structuredClone(f.cloud.function),asset:structuredClone(f.cloud.stack.Parameters)
+});
+function requireReadOnly(f,before,{deployer=false}={}){
+ assert.equal(f.provider.snapshot(),before.state);
+ assert.deepEqual(f.cloud.schedule,before.schedule);
+ assert.equal(f.cloud.concurrency,before.concurrency);
+ assert.deepEqual(f.cloud.function,before.function);
+ assert.deepEqual(f.cloud.stack.Parameters,before.asset);
+ const reads=f.audit.slice(before.aws);
+ operatorOnly(reads.filter(row=>!(deployer&&row.identity==='SELECTED_DEPLOYER'&&row.action==='GetCallerIdentityCommand')));
+ assert(reads.every(row=>/^(Get|Describe|List|Scan|Query|TransactGet)/.test(row.action)));
+ assert(f.provider.audit.slice(before.stateAudit).every(row=>/^(Get|Describe|Scan|Query|TransactGet)/.test(row.name)));
+}
+
+async function configureRecoveryJourney(journey,driver,enabled){
+ const {f,evidence}=journey;
+ const {run,output,build,assetFlags,deployment}=driver;
+ const epoch=branch=>{
+  const {health_generation,health_enabled_at}=installationState(branch).extensions;
+  assert(health_generation&&health_enabled_at);
+  return {health_generation,health_enabled_at};
+ };
+ const initialEpoch=epoch(f);
+ const configureArgs=name=>[...assetFlags(enabled),...deployment,'--output',output(name)];
+ const targetArgs=['--manifest',enabled.manifestPath,'--target-config',enabled.configPath];
+ const regular=forkLifecycle(f,enabled,'identical enabled configure preserves health observations');
+ requireStatus(await run('configure',enabled,configureArgs('same-epoch'),{branch:regular}),'configured');
+ assert.deepEqual(epoch(regular),initialEpoch);
+ const lost=forkLifecycle(f,enabled,'lost enabled configure response preserves health observations');
+ lost.dependencies.beforeLifecycleFinish=()=>{throw Error('simulated interruption before final State commit');};
+ const lostResult=requireStatus(await run('configure',enabled,configureArgs('lost-epoch'),{branch:lost}),'partial');
+ delete lost.dependencies.beforeLifecycleFinish;
+ assert.equal(installationState(lost).schedule_enabled,false);
+ assert.deepEqual(epoch(lost),initialEpoch);
+ const lostStart=lost.audit.length;
+ requireStatus(await run('finish-operation',enabled,['--operation',lostResult.operation,...targetArgs,
+   '--output',output('recovered-epoch')],{branch:lost}),'configured');
+ assert.deepEqual(epoch(lost),initialEpoch);
+ assert.equal(installationState(lost).schedule_enabled,true);
+ operatorOnly(lost.audit.slice(lostStart));
+ noHostWrites(lost.audit.slice(lostStart));
+ assert.equal(providerExecutions(lost.audit).length,1);
+ const unknown=forkLifecycle(f,enabled,'unresolved claimed enabling Scheduler call');
+ unknown.cloud.loseEnableScheduleReply=true;
+ const lostSchedule=requireStatus(await run('configure',enabled,configureArgs('lost-scheduler-reply'),{branch:unknown}),'partial');
+ const lostNamed=['--operation',lostSchedule.operation];
+ assert.equal(unknown.cloud.schedule.State,'ENABLED');
+ assert.equal((await run('stop',enabled,[],{branch:unknown})).outcome.code,'HOST_OWNER_ACTIVE');
+ const uncertainStart=unknown.audit.length;
+ const heldUnknown=requireStatus(await run('inspect-operation',enabled,lostNamed,{branch:unknown}),'inspected');
+ assert.equal(heldUnknown.outcome,'held');
+ assert(heldUnknown.effects.some(effect=>effect.name==='enable-schedule'&&effect.state==='claimed'));
+ const denied=await run('finish-operation',enabled,[...lostNamed,...targetArgs,'--output',output('unresolved-scheduler')],
+   {branch:unknown});
+ assert.equal(denied.outcome.code,'HOST_DISPATCH_UNACCOUNTED',denied.stdout);
+ assert.equal(operationRow(unknown,lostSchedule.operation),undefined);
+ noHostWrites(unknown.audit.slice(uncertainStart));
+ assert.equal(providerExecutions(unknown.audit).length,1);
+ const branch=forkLifecycle(f,enabled,'superseded enabling configure');
+ const options={branch};
+ branch.dependencies.beforeLifecycleFinish=async()=>{
+  assert.equal(branch.cloud.schedule.State,'ENABLED');
+  assert.equal(branch.cloud.concurrency,1);
+  const start=branch.audit.length;
+  const stopped=await run('stop',enabled,[],options);
+  assert.equal(stopped.outcome.code,'HOST_OWNER_ACTIVE',stopped.stdout);
+  noHostWrites(branch.audit.slice(start));
+ };
+ const interrupted=await run('configure',enabled,[...assetFlags(enabled),...deployment,
+   '--output',output('interrupted-enable')],options);
+ delete branch.dependencies.beforeLifecycleFinish;
+ assert.equal(interrupted.outcome.status,'partial',interrupted.stdout);
+ const id=interrupted.outcome.operation,named=['--operation',id];
+ const start=branch.audit.length;
+ const held=requireStatus(await run('inspect-operation',enabled,named,options),'inspected');
+ assert.equal(held.outcome,'awaiting_finish');
+ for(const name of ['execute-change-set','enable-concurrency','enable-schedule'])
+  assert.equal(held.effects.find(effect=>effect.name===name)?.state,'settled',name);
+ const recoveryPath=output('enabling-recovery');
+ const finish=requireStatus(await run('finish-operation',enabled,[...named,'--manifest',enabled.manifestPath,
+   '--target-config',enabled.configPath,'--output',recoveryPath],options),'superseded');
+ assert.equal(finish.terminal.observed.schedule,'ENABLED');
+ assert.equal(finish.terminal.observed.concurrency,1);
+ operatorOnly(branch.audit.slice(start));
+ noHostWrites(branch.audit.slice(start));
+ assert.equal(installationState(branch).schedule_enabled,false);
+ const recovery=JSON.parse(fs.readFileSync(recoveryPath));
+ assert.equal(recovery.recovery_only.kind,'configure');
+ const installed={...enabled,installationPath:recoveryPath};
+ const protective=forkLifecycle(branch,enabled,'operator protective stop on configure successor');
+ const stopped=requireStatus(await run('stop',installed,[],{branch:protective}),'stopped');
+ assert.equal(stopped.proof,false);
+ assert.equal(protective.cloud.schedule.State,'DISABLED');
+ assert.equal(protective.cloud.concurrency,0);
+ operatorOnly(protective.audit);
+ const maintenance=build('configure-recovery-maintenance',changedControls(enabled.manifest.canonical_config,
+   {schedule_enabled:false,writes_enabled:false,maintenance:true}));
+ // The build adapter publishes the asset before calling the isolated host.
+ branch.cloud.assets.set(JSON.parse(fs.readFileSync(maintenance.assetPath)).version,
+   Buffer.from(maintenance.manifest.zip_digest.slice(7),'hex').toString('base64'));
+ const maintenancePath=output('configure-recovery-maintenance-receipt');
+ const bridge=['--original-installation',enabled.installationPath,...named,
+   '--source-manifest',enabled.manifestPath,...assetFlags(maintenance),...deployment];
+ const rejected=await run('maintenance-only',installed,[...bridge,'--output',output('stale-configure-recovery')],
+   {configPath:maintenance.configPath,branch:protective});
+ assert.equal(rejected.exitCode,2,rejected.stdout);
+ assert.equal(rejected.outcome.code,'MAINTENANCE_HANDOFF_STALE',rejected.stdout);
+ assert.equal(providerExecutions(protective.audit).length,0);
+ const bridgeStart=branch.audit.length;
+ requireStatus(await run('maintenance-only',installed,[...bridge,'--output',maintenancePath],
+   {...options,configPath:maintenance.configPath}),'configured');
+ const bridgeAudit=branch.audit.slice(bridgeStart);
+ assert(bridgeAudit.some(row=>row.action==='UpdateScheduleCommand'&&row.input.State==='DISABLED'));
+ assert(bridgeAudit.some(row=>row.action==='PutFunctionConcurrencyCommand'&&row.input.ReservedConcurrentExecutions===0));
+ assert(!bridgeAudit.some(row=>row.action==='UpdateScheduleCommand'&&row.input.State==='ENABLED'||
+   row.action==='PutFunctionConcurrencyCommand'&&row.input.ReservedConcurrentExecutions!==0));
+ assert.equal(providerExecutions(branch.audit).filter(row=>row.input.ClientRequestToken===id).length,1);
+ const strict=requireStatus(await run('stop',{...maintenance,installationPath:maintenancePath},[],options),'stopped');
+ assert.equal(strict.proof,true);
+ evidence.configure_recovery={terminal:finish.terminal,protective_proof:stopped.proof,strict_proof:strict.proof};
+}
+
+async function removalJourney(journey){
+ const {f,evidence,dependencies}=journey;
+ const driver=lifecycleDriver(journey),{initial,run,configure,output,deployment,build}=driver;
+ const config=initial.manifest.canonical_config;
+ const enabled=await configure(initial,build('removal-enabled',changedControls(config,{schedule_enabled:true})), 'removal-enabled-receipt');
+ assert.equal(f.cloud.schedule.State,'ENABLED');
+ await configureRecoveryJourney(journey,driver,enabled);
+ // No provider cancellation is modeled. The active invocation ages through
+ // the same Lambda/Scheduler bounds used by the production stop producer.
+ f.cloud.activeInvocation=true;
+ const wait=dependencies.wait;
+ dependencies.wait=async ms=>{await wait(ms);if(ms>=f.cloud.function.Timeout*1000)f.cloud.activeInvocation=false;};
+ const beforeUnverified=f.provider.snapshot();
+ const tableIdBefore=f.cloud.table.TableId;
+ f.cloud.table.TableId=hostFixture().lifecycle.restored_table_id;
+ try{
+  const rejected=await run('stop',enabled);
+  assert.equal(rejected.outcome.state_fenced,'unconfirmed',rejected.stdout);
+  assert.equal(rejected.outcome.code,'PHYSICAL_STATE_MISMATCH');
+  assert.equal(f.provider.snapshot(),beforeUnverified);
+ }finally{f.cloud.table.TableId=tableIdBefore;}
+ f.cloud.fail='GetScheduleCommand';
+ let schedulerUnavailable;
+ try{schedulerUnavailable=await run('stop',enabled);}finally{delete f.cloud.fail;}
+ assert.equal(schedulerUnavailable.outcome.status,'partial',schedulerUnavailable.stdout);
+ assert.equal(schedulerUnavailable.outcome.state_fenced,'confirmed');
+ assert.equal(f.cloud.schedule.State,'ENABLED','Remote scheduler may still be active when unavailable');
+ const superseding=await run('stop',enabled);
+ assert.equal(superseding.outcome.code,'HOST_OWNER_ACTIVE',superseding.stdout);
+ const abandoned=await run('finish-operation',enabled,['--operation',schedulerUnavailable.outcome.operation,'--output',output('unissued-stop')]);
+ assert.equal(abandoned.outcome.status,'superseded',abandoned.stdout);
+ const protective=requireStatus(await run('stop',enabled),'stopped');
+ assert.equal(protective.proof,false);
+ assert.equal(f.cloud.schedule.State,'DISABLED');
+ assert.equal(f.cloud.concurrency,0);
+ const maintenance=await configure(enabled,build('removal-maintenance',changedControls(config,{maintenance:true})), 'removal-maintenance-receipt');
+ const {assetFlags}=driver;
+ f.cloud.beforeExecute=async id=>{
+  const before=f.audit.length;
+  const emergency=await run('stop',maintenance);
+  assert.equal(emergency.outcome.code,'HOST_OWNER_ACTIVE',emergency.stdout);
+  assert.equal(hostMutations(f.audit.slice(before)).length,0);
+  const named=['--operation',id];
+  const held=requireStatus(await run('inspect-operation',maintenance,named),'inspected');
+  assert.equal(held.outcome,'held');
+  assert(held.effects.some(effect=>effect.name==='execute-change-set'&&effect.state==='claimed'));
+  const unfinished=await run('finish-operation',maintenance,[...named,'--manifest',maintenance.manifestPath,
+    '--target-config',maintenance.configPath,'--output',output('paused-owner-finish')]);
+  assert.equal(unfinished.outcome.code,'PROVIDER_TERMINAL_UNCONFIRMED',unfinished.stdout);
+  assert.equal(hostMutations(f.audit.slice(before)).length,0);
+ };
+ let incumbent;
+ try{
+  incumbent=await run('configure',maintenance,[...assetFlags(maintenance),...deployment,'--output',output('paused-owner')]);
+ }finally{delete f.cloud.beforeExecute;}
+ assert.equal(incumbent.outcome.status,'partial',incumbent.stdout);
+ const finishConfigure=await run('finish-operation',maintenance,['--operation',incumbent.outcome.operation,
+   '--manifest',maintenance.manifestPath,'--target-config',maintenance.configPath,'--output',output('settled-owner')]);
+ assert.equal(finishConfigure.outcome.status,'superseded',finishConfigure.stdout);
+ f.cloud.activeInvocation=true;
+ const drained=requireStatus(await run('stop',maintenance),'stopped');
+ assert.equal(drained.proof,true);
+ assert.equal(f.cloud.activeInvocation,false);
+ assert(drained.stop.pb_stop_elapsed_ms>=drained.stop.pb_stop_window_ms);
+ const preview=output('removal-preview');
+ const before=f.provider.snapshot();
+ f.cloud.template.Resources.StateTable.DeletionPolicy='Delete';
+ const badRetention=await run('remove-preview',maintenance,['--output',output('bad-retention')]);
+ assert.equal(badRetention.outcome.code,'RETENTION_UNVERIFIED',badRetention.stdout);
+ f.cloud.template.Resources.StateTable.DeletionPolicy='Retain';
+ requireStatus(await run('remove-preview',maintenance,['--output',preview]),'previewed');
+ assert.equal(f.provider.snapshot(),before);
+ const inventory=JSON.parse(fs.readFileSync(preview)).inventory;
+ assert.equal(inventory.resources.find(row=>row.logical==='StateTable').disposition,'retained');
+ assert(inventory.externally_owned.some(row=>row.cost?.includes('Secrets Manager')));
+ const wrongProfile=await run('remove',maintenance,['--deployer-profile','ambient','--preview',preview,'--output',output('wrong-deployer')]);
+ assert.equal(wrongProfile.outcome.code,'IDENTITY_MISMATCH',wrongProfile.stdout);
+ assert.equal(f.provider.snapshot(),before);
+ const completeBranch=forkLifecycle(f,maintenance,'complete provider deletion');
+ const completeFile=output('complete-removal');
+ const complete=requireStatus(await run('remove',maintenance,[...deployment,'--preview',preview,'--output',completeFile],
+   {branch:completeBranch}),'removed');
+ assert.equal(complete.terminal.retention_complete,true);
+ assert(complete.terminal.resources.every(resource=>resource.disposition===resource.observation));
+ assert.equal(completeBranch.cloud.table.TableId,f.cloud.table.TableId);
+ assert.equal(completeBranch.audit.filter(row=>row.action==='DeleteStackCommand'&&row.identity==='SELECTED_DEPLOYER').length,1);
+ const failedBranch=forkLifecycle(f,maintenance,'correlated DELETE_FAILED');
+ failedBranch.cloud.deleteStatus='DELETE_FAILED';
+ const failed=requireStatus(await run('remove',maintenance,[...deployment,'--preview',preview,'--output',output('failed-removal')],
+   {branch:failedBranch}),'partial');
+ const failedRead=requireStatus(await run('inspect-operation',maintenance,['--operation',failed.operation],
+   {branch:failedBranch}),'inspected');
+ assert.equal(failedRead.outcome,'partial');
+ assert.equal(failedRead.terminal.provider.status,'DELETE_FAILED');
+ assert.equal(failedRead.current_observation.status,'partial');
+ const failedHistory=failedBranch.provider.snapshot();
+ const failedFinish=await run('finish-operation',maintenance,['--operation',failed.operation,'--output',output('failed-report')],
+   {branch:failedBranch,human:true});
+ assert.equal(failedFinish.exitCode,1,failedFinish.stdout);
+ assert.match(failedFinish.stdout,/^partial \(terminal\)/);
+ assert.match(failedFinish.stdout,/Current removal observation.*DELETE_FAILED/);
+ assert.deepEqual(failedFinish.outcome.terminal,failedRead.terminal);
+ assert.equal(failedBranch.provider.snapshot(),failedHistory);
+ assert.equal(failedBranch.audit.filter(row=>row.action==='DeleteStackCommand').length,1);
+ const lateBranch=forkLifecycle(f,maintenance,'delayed exact log deletion evidence');
+ lateBranch.cloud.omitDeleteEvent='LogGroup';
+ const early=requireStatus(await run('remove',maintenance,[...deployment,'--preview',preview,'--output',output('early-removal')],
+   {branch:lateBranch}),'partial');
+ const lateNamed=['--operation',early.operation];
+ const log=inventory.resources.find(row=>row.logical==='LogGroup');
+ const logEvent={StackId:f.stackId,LogicalResourceId:log.logical,PhysicalResourceId:log.physical,
+   ResourceType:log.type,ResourceStatus:'DELETE_COMPLETE',ClientRequestToken:early.operation};
+ lateBranch.cloud.events.unshift({...logEvent,ClientRequestToken:complete.operation});
+ const lateRead=async()=>requireStatus(await run('inspect-operation',maintenance,lateNamed,{branch:lateBranch}),'inspected');
+ const history=lateBranch.provider.snapshot();
+ const wrong=await lateRead();
+ assert.equal(wrong.outcome,'partial');
+ assert.equal(wrong.current_observation.status,'partial');
+ assert.equal(wrong.current_observation.resources.find(row=>row.logical==='LogGroup').observation,'unobservable');
+ assert.match(wrong.current_observation.resources.find(row=>row.logical==='LogGroup').cost,/CloudWatch Logs storage/i);
+ lateBranch.cloud.events.unshift(logEvent);
+ const later=await lateRead();
+ assert.deepEqual(later.terminal,wrong.terminal);
+ assert.equal(later.terminal.retention_complete,false);
+ assert.equal(later.current_observation.status,'removed');
+ assert.equal(later.current_observation.resources.find(row=>row.logical==='LogGroup').observation,'deleted');
+ const laterFile=output('later-removal');
+ const laterStart=lateBranch.audit.length;
+ const laterResult=await run('finish-operation',maintenance,[...lateNamed,'--output',laterFile],{branch:lateBranch});
+ const laterReport=requireStatus(laterResult,'removed');
+ assert.equal(laterResult.exitCode,0,laterResult.stdout);
+ assert.deepEqual(laterReport.current_observation,later.current_observation);
+ assert.deepEqual(laterReport.terminal,wrong.terminal);
+ assert.equal(JSON.parse(fs.readFileSync(laterFile)).current_observation.status,'removed');
+ assert.deepEqual(await lateRead(),later);
+ const laterHuman=await run('finish-operation',maintenance,[...lateNamed,'--output',output('later-removal-reexport')],
+   {branch:lateBranch,human:true});
+ assert.equal(laterHuman.exitCode,0);
+ assert.match(laterHuman.stdout,/Current removal observation.*"status":"removed"/);
+ assert.deepEqual(laterHuman.outcome.terminal,later.terminal);
+ assert.deepEqual(laterHuman.outcome.current_observation,later.current_observation);
+ assert.equal(lateBranch.provider.snapshot(),history);
+ operatorOnly(lateBranch.audit.slice(laterStart));
+ noHostWrites(lateBranch.audit.slice(laterStart));
+ assert.equal(lateBranch.audit.filter(row=>row.action==='DeleteStackCommand').length,1);
+ const start=f.audit.length,tableId=f.cloud.table.TableId;
+ f.cloud.omitDeleteEvent='LogGroup';
+ // Model the operator losing the first response after CloudFormation completed.
+ // The concurrent emergency may fence State while this owner is held.
+ dependencies.beforeLifecycleFinish=async()=>{
+  const auditStart=f.audit.length;
+  const emergency=await run('stop',maintenance);
+  assert.equal(emergency.outcome.code,'HOST_OWNER_ACTIVE',emergency.stdout);
+  assert.equal(hostMutations(f.audit.slice(auditStart)).length,0);
+ };
+ const removed=await run('remove',maintenance,[...deployment,'--preview',preview,'--output',output('remove-operation')]);
+ assert.equal(removed.outcome.code,'OPERATION_SUPERSEDED',removed.stdout);
+ delete dependencies.beforeLifecycleFinish;
+ const id=removed.outcome.operation, named=['--operation',id];
+ const inspect1=requireStatus(await run('inspect-operation',maintenance,named),'inspected');
+ const inspect2=requireStatus(await run('inspect-operation',maintenance,named),'inspected');
+ assert.deepEqual(inspect1,inspect2);
+ assert.equal(inspect1.outcome,'awaiting_finish');
+ const finish=await run('finish-operation',maintenance,[...named,'--output',output('removal-report')]);
+ assert.equal(finish.outcome.outcome,'superseded',finish.stdout);
+ const terminal=finish.outcome.terminal;
+ assert.equal(terminal.resources.find(row=>row.logical==='StateTable').observation,'retained');
+ const unknownLog=terminal.resources.find(row=>row.logical==='LogGroup');
+ assert.equal(unknownLog.observation,'unobservable');
+ assert.match(unknownLog.cost,/CloudWatch Logs storage/i);
+ assert.equal(terminal.retention_complete,false);
+ assert.equal(f.cloud.table.TableId,tableId);
+ const read1=requireStatus(await run('inspect-operation',maintenance,named,{human:true}),'inspected');
+ const read2=requireStatus(await run('inspect-operation',maintenance,named),'inspected');
+ assert.deepEqual(read1,read2);
+ assert.deepEqual(read2.terminal,terminal);
+ assert.deepEqual(read2.original_operator,inspect1.original_operator);
+ assert.deepEqual(read2.original_deployer,inspect1.original_deployer);
+ assert.equal(operationRow(f,id)?.outcome,'superseded');
+ const deletes=f.audit.slice(start).filter(row=>row.action==='DeleteStackCommand');
+ assert.equal(deletes.length,1);
+ assert.equal(deletes[0].identity,'SELECTED_DEPLOYER');
+ assert.equal(deletes[0].input.ClientRequestToken,id);
+ evidence.removal={inventory,complete:complete.terminal,terminal,table_id:tableId,
+   failed:failedRead.terminal,later:later.current_observation};
+}
+
+export async function runLifecycleFixture(id){
+ assert(['R1-16-H01','R1-16-H02'].includes(id));
+ const config=id==='R1-16-H01'?(await import('./test-manager-apply.mjs')).lifecycleSenderConfig():hostFixture().config;
+ const journey=await lifecycleBirthJourney({config,exerciseBootstrapRecovery:id==='R1-16-H02'});
+ const {source,evidence}=journey;
+ try{
+  if(id==='R1-16-H02')await removalJourney(journey);
+  else await upgradeJourney(journey);
+  return evidence;
+ }catch(error){error.fixtureEvidence=evidence;throw error;}
+ finally{source.cleanup();}
+}
+
+async function checkIncompatibleUpdates(journey,driver,original,successor,previewPath){
+ const {f,source,evidence}=journey;
+ const {initial,run,output,build,assetFlags,deployment}=driver;
+ const preview=JSON.parse(fs.readFileSync(previewPath));
+ const legacy=build('protocol-v1',original.manifest.canonical_config,{lifecycle:false});
+ const unknown=structuredClone(successor.manifest);
+ unknown.compatibility.write.work.push('pigboard-ticket/v99');
+ unknown.compatibility.write.state.envelope=99;
+ const unsupported={...successor,manifest:unknown,manifestPath:writeFixtureJSON(source.temp,'unsupported-declarations',unknown)};
+ const malformed={...successor,manifestPath:path.join(source.temp,'malformed-manifest.json')};
+ fs.writeFileSync(malformed.manifestPath,'{');
+ const ordinary=original;
+ const cases=[
+  {name:'unsupported protocol',target:legacy,code:'UNSUPPORTED_VERSION'},
+  {name:'unsupported declarations',target:unsupported,code:'UNSUPPORTED_PACKAGE'},
+  {name:'unsupported retained record',target:successor,configureTarget:ordinary,code:'MALFORMED_RECORD',setup:branch=>{
+    const [key,record]=businessRows(branch).find(([,row])=>row.kind==='member');
+    branch.provider.rows.set(key,{...record,schema:'pigboard-state-record/v99'});
+  }},
+  {name:'bounded incomplete inventory',target:successor,configureTarget:ordinary,code:'INCOMPLETE_INVENTORY',
+   setup:branch=>{branch.cloud.incompleteInventory=true;}}
+ ];
+ const tested=[],refusals=[];
+ for(const [i,{name,target,configureTarget=target,code,setup}] of cases.entries()){
+  for(const verb of ['upgrade','configure']){
+   const branch=forkLifecycle(f,original,verb+' '+name);
+   setup?.(branch);
+   const before=readOnlyCheckpoint(branch),rows=businessRows(branch);
+   assert.equal(branch.cloud.schedule.State,'ENABLED');
+   assert.equal(branch.cloud.concurrency,1);
+   assert.equal(installationState(branch).writes_enabled,true);
+   assert.equal(installationState(branch).schedule_enabled,true);
+   const priorPin=branch.cloud.function.Environment.Variables.PB_PACKAGE_REVISION;
+   const priorAsset=structuredClone(branch.cloud.stack.Parameters);
+   const refusalPath=output(`bad-preview-${i}-${verb}`);
+   const humanPreview=i===0&&verb==='configure';
+   const previewResult=await run('upgrade-preview',original,[...assetFlags(target),'--output',refusalPath],{branch,human:humanPreview});
+   const refusal=requireStatus(previewResult,'refused');
+   assert.equal(previewResult.exitCode,2,previewResult.stdout);
+   assert.equal(refusal.code,code,previewResult.stdout);
+   assert.equal(refusal.state_fenced,false);
+   assert.equal(refusal.host_mutated,false);
+   if(humanPreview)assertReadOnlyActionText(previewResult.stdout);
+   else assert.equal(JSON.parse(previewResult.stdout).state_mutated,false);
+   assert.equal(refusal.receipt_path,refusalPath);
+   assert.equal(refusal.receipt_publication,'written');
+   const protectFlag=refusal.next_command.indexOf('--protect-rejected');
+   assert(protectFlag>=0);
+   assert.equal(refusal.next_command[protectFlag+1],refusalPath);
+   const refusalBytes=fs.readFileSync(refusalPath);
+   const proposal=JSON.parse(refusalBytes);
+   assert.equal(proposal.schema,'pigboard-upgrade-refusal/v1');
+   assert.equal(proposal.disposition,'protect-only');
+   assert.equal(proposal.reason,code);
+   assert.equal(proposal.stack_id,branch.stackId);
+   assert.equal(proposal.table_id,branch.cloud.table.TableId);
+   assert.equal(proposal.installation_generation,original.manifest.installation_generation);
+   assert.equal(Object.hasOwn(proposal,'inventory'),!setup);
+   assert.equal(proposal.source.manifest_digest,sha256(canonicalize(original.manifest)));
+   assert.equal(proposal.target.manifest_digest,sha256(canonicalize(target.manifest)));
+   assert.deepEqual(proposal.current_asset,preview.current_asset);
+   const {bucket,key,version}=JSON.parse(fs.readFileSync(target.assetPath));
+   assert.deepEqual(proposal.asset,{bucket,key,version});
+   const lifecycle=branch.provider.records().find(row=>row.bootstrapped===true);
+   assert.deepEqual(proposal.state,{revision:installationState(branch).revision,lifecycle_revision:lifecycle.revision,fence:lifecycle.fence_id});
+   requireReadOnly(branch,before);
+   const next=verb==='upgrade'?target:configureTarget;
+   const extra=verb==='upgrade'?['--protect-rejected',refusalPath]:[];
+   if(verb==='upgrade')refusals.push(refusalPath);
+   const protectedStart=branch.audit.length;
+   const rejected=await run(verb,original,[...assetFlags(next),...deployment,...extra,'--output',output(`rejected-${i}-${verb}`)],{branch});
+   assert.deepEqual(fs.readFileSync(refusalPath),refusalBytes);
+   const effects=branch.audit.slice(protectedStart);
+   const firstStateWrite=effects.findIndex(row=>row.action==='TransactWriteCommand');
+   const firstHostWrite=effects.findIndex(row=>['UpdateScheduleCommand','PutFunctionConcurrencyCommand'].includes(row.action));
+   assert(firstStateWrite>=0&&firstHostWrite>firstStateWrite,'State must be fenced before host controls are changed');
+   assert.equal(rejected.outcome.code,code,rejected.stdout);
+   assert.equal(rejected.outcome.status,'partial',rejected.stdout);
+   assert.equal(rejected.exitCode,1,rejected.stdout);
+   assert.equal(rejected.outcome.state_fenced,true);
+   assert.equal(rejected.outcome.host,'stopped');
+   assert.equal(rejected.outcome.observed.schedule,'DISABLED');
+   assert.equal(rejected.outcome.observed.concurrency,0);
+   assert.equal(branch.cloud.schedule.State,'DISABLED');
+   assert.equal(branch.cloud.concurrency,0);
+   assert.equal(installationState(branch).writes_enabled,false);
+   assert.equal(installationState(branch).schedule_enabled,false);
+   assert.equal(installationState(branch).extensions.pb_stop_id,undefined);
+   assert.deepEqual(businessRows(branch),rows);
+   assert.equal(installationState(branch).package_revision,installationState(f).package_revision);
+   assert.equal(branch.cloud.function.Environment.Variables.PB_PACKAGE_REVISION,priorPin);
+   assert.deepEqual(branch.cloud.stack.Parameters,priorAsset);
+   assert(branch.provider.records().some(row=>row.bootstrapped===true&&row.fence_id&&row.fence_id!==lifecycle.fence_id));
+   operatorOnly(branch.audit.filter(row=>/^(TransactWrite|UpdateSchedule|PutFunctionConcurrency)/.test(row.action)));
+   assert.equal(branch.audit.filter(row=>/ChangeSet/.test(row.action)).length,0);
+   tested.push({verb,code});
+  }
+ }
+ const late=forkLifecycle(f,original,'incompatible inventory after upgrade reservation');
+ const originalWait=late.dependencies.wait;
+ late.dependencies.wait=async ms=>{
+  await originalWait(ms);
+  late.cloud.incompleteInventory=true;
+ };
+ const lateResult=await run('upgrade',original,[...assetFlags(successor),...deployment,'--preview',previewPath,
+   '--output',output('late-inventory-rejected')],{branch:late});
+ assert.equal(lateResult.outcome.code,'INCOMPLETE_INVENTORY',lateResult.stdout);
+ assert.equal(lateResult.outcome.host,'stopped');
+ assert.equal(lateResult.outcome.state_fenced,true);
+ const lateOperation=operationRow(late,lateResult.outcome.operation);
+ assert.equal(lateOperation.owner.kind,'upgrade');
+ assert.equal(lateOperation.terminal.status,'update_rejected');
+ assert.equal(late.audit.filter(row=>row.action==='UpdateScheduleCommand').length,1);
+ assert.equal(late.audit.filter(row=>row.action==='PutFunctionConcurrencyCommand').length,1);
+ assert.equal(providerExecutions(late.audit).length,0);
+ assert.deepEqual(businessRows(late),businessRows(f));
+ const stoppedState=forkLifecycle(f,original,'rejected target with unconfirmed protective host stop');
+ stoppedState.cloud.rejectDisableSchedule=true;
+ const stopped=await run('configure',original,[...assetFlags(legacy),...deployment,'--output',output('incompatible-protection-unconfirmed')],
+   {branch:stoppedState});
+ assert.equal(stopped.outcome.code,'UNSUPPORTED_VERSION',stopped.stdout);
+ assert.equal(stopped.outcome.state_fenced,true);
+ assert.equal(stopped.outcome.host,'unconfirmed');
+ assert(stopped.outcome.protection_code&&stopped.outcome.protection_code!=='UNSUPPORTED_VERSION');
+ assert.equal(installationState(stoppedState).schedule_enabled,false);
+ assert.equal(stoppedState.cloud.schedule.State,'ENABLED');
+ const stoppedHeld=requireStatus(await run('inspect-operation',original,['--operation',stopped.outcome.operation],
+   {branch:stoppedState}),'inspected');
+ assert.equal(stoppedHeld.outcome,'held');
+ assert(stoppedHeld.effects.some(effect=>effect.name==='disable-schedule'&&effect.state==='claimed'));
+ assert.equal(providerExecutions(stoppedState.audit).length,0);
+ const unchanged=forkLifecycle(f,original,'stale and malformed requests leave active host untouched');
+ const before=readOnlyCheckpoint(unchanged);
+ const protect=JSON.parse(fs.readFileSync(refusals[0]));
+ const stalePreview=writeFixtureJSON(source.temp,'stale-preview',{...preview,current_asset:{...preview.current_asset,version:'stale-version'}});
+ const editedPreview=writeFixtureJSON(source.temp,'edited-preview',{...preview,provisional:!preview.provisional});
+ const staleRefusal=writeFixtureJSON(source.temp,'stale-refusal',{...protect,state:{...protect.state,revision:protect.state.revision-1}});
+ const editedRefusal=writeFixtureJSON(source.temp,'edited-refusal',{...protect,unexpected:true});
+ const malformedRefusal=output('malformed-refusal');
+ fs.writeFileSync(malformedRefusal,'{');
+ const guards=[
+  ['stale current asset',successor,'--preview',stalePreview,'UPGRADE_PREVIEW_STALE'],
+  ['edited successful snapshot',successor,'--preview',editedPreview,'UPGRADE_PREVIEW_STALE'],
+  ['last successful preview for another target',legacy,'--preview',previewPath,'UPGRADE_PREVIEW_STALE'],
+  ['refusal used as successful preview',legacy,'--preview',refusals[0],'UPGRADE_PREVIEW_STALE'],
+  ['successful preview used as refusal',successor,'--protect-rejected',previewPath,'UPGRADE_REFUSAL_STALE'],
+  ['stale protected State',legacy,'--protect-rejected',staleRefusal,'UPGRADE_REFUSAL_STALE'],
+  ['extra refusal field',legacy,'--protect-rejected',editedRefusal,'UPGRADE_REFUSAL_STALE'],
+  ['malformed refusal',legacy,'--protect-rejected',malformedRefusal,'INVALID_INPUT'],
+  ['inventory now compatible',successor,'--protect-rejected',refusals[2],'UPGRADE_REFUSAL_STALE']
+ ];
+ for(const [i,[name,target,flag,proposal,code]] of guards.entries()){
+  const rejectedPath=output(`guard-${i}`);
+  const human=i===0;
+  const denied=await run('upgrade',original,[...assetFlags(target),...deployment,flag,proposal,'--output',rejectedPath],{branch:unchanged,human});
+  if(code==='UPGRADE_PREVIEW_STALE'||code==='UPGRADE_REFUSAL_STALE'){
+   assert.equal(denied.outcome.state_fenced,false);
+   if(human)assertReadOnlyActionText(denied.stdout);
+   else assert.equal(JSON.parse(denied.stdout).state_mutated,false);
+  }
+  assert.equal(denied.exitCode,2,name+': '+denied.stdout);
+  assert.equal(denied.outcome.code,code,name+': '+denied.stdout);
+  assert(!fs.existsSync(rejectedPath),name);
+  requireReadOnly(unchanged,before,{deployer:true});
+ }
+ const changed=forkLifecycle(f,original,'supported target since classified as incompatible');
+ cases[2].setup(changed);
+ const beforeChange=readOnlyCheckpoint(changed);
+ const reclassified=await run('upgrade',original,[...assetFlags(successor),...deployment,'--preview',previewPath,
+   '--output',output('reclassified-target')],{branch:changed});
+ assert.equal(reclassified.exitCode,2,reclassified.stdout);
+ assert.equal(reclassified.outcome.code,'UPGRADE_PREVIEW_STALE',reclassified.stdout);
+ requireReadOnly(changed,beforeChange,{deployer:true});
+ const unreadable=forkLifecycle(f,original,'unavailable inventory cannot produce a proposal');
+ unreadable.cloud.fail='QueryCommand';
+ const beforeUnavailable=readOnlyCheckpoint(unreadable),unavailablePath=output('unavailable-inventory');
+ const unavailable=await run('upgrade-preview',original,[...assetFlags(legacy),'--output',unavailablePath],{branch:unreadable});
+ assert.equal(unavailable.exitCode,2,unavailable.stdout);
+ assert.equal(unavailable.outcome.code,'INVENTORY_UNCONFIRMED',unavailable.stdout);
+ assert(!fs.existsSync(unavailablePath));
+ requireReadOnly(unreadable,beforeUnavailable);
+ const publication=forkLifecycle(f,original,'refusal file publication fails');
+ publication.dependencies.fileOperations={fsyncSync:()=>{throw Error('simulated unavailable local output');}};
+ const beforePublication=readOnlyCheckpoint(publication),failedPath=output('failed-refusal-publication');
+ const failed=await run('upgrade-preview',original,[...assetFlags(legacy),'--output',failedPath],{branch:publication});
+ assert.equal(failed.exitCode,2,failed.stdout);
+ assert.equal(failed.outcome.code,'UNSUPPORTED_VERSION',failed.stdout);
+ assert.equal(failed.outcome.receipt_publication,'failed');
+ assert.equal(failed.outcome.publication_code,'RECEIPT_PUBLICATION_FAILED');
+ assert.equal(failed.outcome.next_command,undefined);
+ assert(!fs.existsSync(failedPath));
+ requireReadOnly(publication,beforePublication);
+ const invalidPreview=output('malformed-target-preview');
+ const noProposal=await run('upgrade-preview',original,[...assetFlags(malformed),'--output',invalidPreview],{branch:unchanged});
+ assert.equal(noProposal.exitCode,2,noProposal.stdout);
+ assert.equal(noProposal.outcome.code,'INVALID_INPUT',noProposal.stdout);
+ assert(!fs.existsSync(invalidPreview));
+ const replacement=forkLifecycle(f,original,'physical State table replaced after refusal');
+ replacement.cloud.table.TableId=hostFixture().lifecycle.restored_table_id;
+ const replacementBefore=readOnlyCheckpoint(replacement);
+ const replaced=await run('upgrade',original,[...assetFlags(legacy),...deployment,'--protect-rejected',refusals[0],
+   '--output',output('replacement-target')],{branch:replacement});
+ assert.equal(replaced.exitCode,2,replaced.stdout);
+ assert.equal(replaced.outcome.code,'PHYSICAL_STATE_MISMATCH',replaced.stdout);
+ requireReadOnly(replacement,replacementBefore,{deployer:true});
+ const staleSource=await run('configure',initial,[...assetFlags(original),...deployment,'--output',output('stale-enabling-source')],
+   {configPath:original.configPath,branch:unchanged});
+ assert.equal(staleSource.exitCode,2,staleSource.stdout);
+ assert.equal(staleSource.outcome.code,'UPDATE_PRECONDITION',staleSource.stdout);
+ assert.notEqual(staleSource.outcome.status,'partial',staleSource.stdout);
+ const invalid=await run('configure',original,[...assetFlags(malformed),...deployment,'--output',output('malformed-target')],
+   {branch:unchanged});
+ assert.equal(invalid.exitCode,2,invalid.stdout);
+ assert.equal(invalid.outcome.code,'INVALID_INPUT',invalid.stdout);
+ requireReadOnly(unchanged,before,{deployer:true});
+ assert.equal(unchanged.cloud.schedule.State,'ENABLED');
+ assert.equal(unchanged.cloud.concurrency,1);
+ evidence.rejected_updates=tested;
+}
+
+async function upgradeJourney(journey){
+ const {lifecycleSenderConfig,runLifecycleSender}=await import('./test-manager-apply.mjs');
+ const {f,source,evidence,state,dependencies}=journey;
+ const {initial,run,configure,output,deployment,build,nextPin,assetFlags}=lifecycleDriver(journey);
+ const enabledConfig=lifecycleSenderConfig({disabled:false});
+ const original=await configure(initial,build('sender-enabled',enabledConfig),'sender-original-receipt');
+ const maintenanceConfig=changedControls(enabledConfig,{schedule_enabled:false,writes_enabled:false,maintenance:true});
+ const oldMaintenance=build('old-incompatible-maintenance',maintenanceConfig);
+ const firstSuccessor=build('compatible-successor',enabledConfig,{revision:nextPin(),compatibleFrom:original.manifest.source_revision});
+ const sender=await runLifecycleSender({...f,binding:JSON.parse(fs.readFileSync(original.installationPath)).binding,dependencies},
+   original.manifest,async({provider,attemptId})=>{
+    const work=businessRows(f), retained=work.map(([,row])=>row);
+    assert(retained.some(row=>row.kind==='member'));
+    assert(retained.some(row=>row.kind==='attempt'&&row.attempt_id===attemptId&&row.outcome==='pending'));
+    assert(retained.some(row=>row.SK==='N#'+attemptId));
+    const confirmedPreview=output('compatible-preview'), confirmedPath=output('compatible-receipt');
+    const before=readOnlyCheckpoint(f);
+    const supported=await run('upgrade-preview',original,[...assetFlags(firstSuccessor),'--output',confirmedPreview]);
+    assert.equal(supported.exitCode,0,supported.stdout);
+    assert.equal(requireStatus(supported,'previewed').receipt_path,confirmedPreview);
+    requireReadOnly(f,before);
+    await checkIncompatibleUpdates(journey,{initial,run,output,build,assetFlags,deployment},original,firstSuccessor,confirmedPreview);
+    const normalStart=f.audit.length;
+    requireStatus(await run('upgrade',original,[...assetFlags(firstSuccessor),...deployment,
+      '--preview',confirmedPreview,'--output',confirmedPath]),'upgraded');
+    assert.equal(f.audit.slice(normalStart).filter(row=>row.action==='ExecuteChangeSetCommand').length,1);
+    assert.deepEqual(businessRows(f),work);
+    const regularReceipt=JSON.parse(fs.readFileSync(confirmedPath));
+    const attemptReceipt=JSON.parse(fs.readFileSync(original.installationPath));
+    assert.deepEqual(regularReceipt.manifest.canonical_config,attemptReceipt.manifest.canonical_config);
+    assert.equal(regularReceipt.origin.table_id,attemptReceipt.origin.table_id);
+    assert.equal(regularReceipt.binding.package_revision,firstSuccessor.manifest.source_revision);
+    assert.equal(regularReceipt.recovery_only,undefined);
+    const prior={...firstSuccessor,installationPath:confirmedPath};
+    const successor=build('interrupted-successor',enabledConfig,{revision:nextPin(),compatibleFrom:prior.manifest.source_revision});
+    const preview=output('upgrade-preview');
+    const beforeInterrupted=f.provider.snapshot();
+    requireStatus(await run('upgrade-preview',prior,[...assetFlags(successor),'--output',preview]),'previewed');
+    assert.equal(f.provider.snapshot(),beforeInterrupted);
+    const changeStart=f.audit.length;
+    const upgradedFile=output('upgraded');
+    // Simulate a local process interruption after the actual provider's
+    // terminal update event, before its operation can be committed to State.
+    dependencies.beforeLifecycleFinish=async()=>{
+     const start=f.audit.length;
+     const emergency=await run('stop',prior);
+     assert.equal(emergency.outcome.code,'HOST_OWNER_ACTIVE',emergency.stdout);
+     assert.equal(hostMutations(f.audit.slice(start)).length,0);
+    };
+    const interrupted=await run('upgrade',prior,[...assetFlags(successor),...deployment,'--preview',preview,'--output',upgradedFile]);
+    delete dependencies.beforeLifecycleFinish;
+    assert.equal(interrupted.outcome.status,'partial',interrupted.stdout);
+    assert.equal(interrupted.outcome.receipt_publication,'operation_record_preserved');
+    const id=interrupted.outcome.operation,named=['--operation',id];
+    const first=requireStatus(await run('inspect-operation',prior,named),'inspected');
+    const second=requireStatus(await run('inspect-operation',prior,named),'inspected');
+    assert.deepEqual(first,second);
+    assert.equal(first.outcome,'awaiting_finish');
+    const finishedFile=output('successor-receipt');
+    requireStatus(await run('finish-operation',prior,[...named,'--manifest',successor.manifestPath,'--target-config',successor.configPath,
+      '--output',finishedFile]),'superseded');
+    const recorded=requireStatus(await run('inspect-operation',prior,named,{human:true}),'inspected');
+    assert.deepEqual(requireStatus(await run('inspect-operation',prior,named),'inspected'),recorded);
+    assert.equal(recorded.outcome,'superseded');
+    assert.equal(recorded.terminal.status,'host_updated_admission_fenced');
+    assert.deepEqual(recorded.original_operator,first.original_operator);
+    assert.deepEqual(recorded.original_deployer,first.original_deployer);
+    assert.equal(f.audit.slice(changeStart).filter(row=>row.action==='ExecuteChangeSetCommand').length,1);
+    assert.deepEqual(businessRows(f),work);
+    const upgraded={...successor,installationPath:finishedFile};
+    const receipt=JSON.parse(fs.readFileSync(finishedFile));
+    assert.deepEqual(receipt.manifest.canonical_config,JSON.parse(JSON.stringify(original.manifest.canonical_config)));
+    assert.equal(receipt.origin.table_id,f.cloud.table.TableId);
+    assert.equal(f.cloud.schedule.State,'DISABLED');
+    assert.equal(f.cloud.concurrency,0);
+    const inspectionStart=readOnlyCheckpoint(f);
+    const restricted=requireStatus(await run('inspect-operation',upgraded,named),'inspected');
+    assert.equal(restricted.operation,id);
+    assert.equal(restricted.outcome,recorded.outcome);
+    assert.deepEqual(restricted.terminal,recorded.terminal);
+    assert.equal(restricted.fence,recorded.fence);
+    for(const operation of [[],['--operation','45fb5364-258e-4f57-86fd-d4e65c398d96']]){
+     const denied=await run('inspect-operation',upgraded,operation);
+     assert.equal(denied.exitCode,2,denied.stdout);
+     assert.equal(denied.outcome.code,'BINDING_MISMATCH',denied.stdout);
+    }
+    const wrongConfig=await run('inspect-operation',upgraded,named,{configPath:initial.configPath});
+    assert.equal(wrongConfig.exitCode,2,wrongConfig.stdout);
+    assert.equal(wrongConfig.outcome.code,'OPERATION_SOURCE_MISMATCH',wrongConfig.stdout);
+    const forbiddenReceipt=output('restricted-finish');
+    const restrictedFinish=await run('finish-operation',upgraded,[...named,'--manifest',successor.manifestPath,
+      '--target-config',successor.configPath,'--output',forbiddenReceipt]);
+    assert.equal(restrictedFinish.exitCode,2,restrictedFinish.stdout);
+    assert.equal(restrictedFinish.outcome.code,'BINDING_MISMATCH',restrictedFinish.stdout);
+    assert(!fs.existsSync(forbiddenReceipt));
+    requireReadOnly(f,inspectionStart);
+    const staleInspection=forkLifecycle(f,upgraded,'restricted operation after newer fence');
+    const [lifecycleKey,lifecycle]=[...staleInspection.provider.rows].find(([,row])=>row.bootstrapped===true);
+    staleInspection.provider.rows.set(lifecycleKey,{...lifecycle,revision:lifecycle.revision+1,fence_id:'45fb5364-258e-4f57-86fd-d4e65c398d96'});
+    const staleInspectionStart=readOnlyCheckpoint(staleInspection);
+    const staleOperation=await run('inspect-operation',upgraded,named,{branch:staleInspection});
+    assert.equal(staleOperation.exitCode,2,staleOperation.stdout);
+    assert.equal(staleOperation.outcome.code,'RECOVERY_RECEIPT_UNVERIFIED',staleOperation.stdout);
+    requireReadOnly(staleInspection,staleInspectionStart);
+    const denied=await run('configure',upgraded,[...assetFlags(successor),...deployment,'--output',output('recovery-enable')]);
+    assert.equal(denied.outcome.code,'BINDING_MISMATCH',denied.stdout);
+    const target=build('successor-maintenance',maintenanceConfig), maintenanceFile=output('successor-maintenance-receipt');
+    const bridgeStart=f.audit.length;
+    requireStatus(await run('maintenance-only',upgraded,['--original-installation',prior.installationPath,...named,
+      '--source-manifest',successor.manifestPath,...assetFlags(target),...deployment,'--output',maintenanceFile],
+      {configPath:target.configPath}),'configured');
+    assert.equal(f.audit.slice(bridgeStart).some(row=>row.action==='PutFunctionConcurrencyCommand'&&row.input.ReservedConcurrentExecutions!==0),false);
+    assert.deepEqual(businessRows(f),work);
+    const maintenance={...target,installationPath:maintenanceFile};
+    const fenced=f.provider.snapshot();
+    const fork=(name,changes={})=>{
+     const cloud=structuredClone(f.cloud);
+     Object.assign(cloud.table,changes);
+     const branch=fixtureCloud(maintenanceConfig,cloud,maintenance.manifest);
+     branch.name=name;
+     branch.provider.rows=new Map(JSON.parse(fenced));
+     return branch;
+    };
+    const rollbackBranch=fork('incompatible rollback');
+    const rollback=await run('upgrade-preview',maintenance,[...assetFlags(oldMaintenance),'--output',output('incompatible-rollback')],
+      {branch:rollbackBranch});
+    assert.equal(rollback.outcome.code,'UNSUPPORTED_UPGRADE',rollback.stdout);
+    assert.equal(hostMutations(rollbackBranch.audit).length,0);
+    assert.equal(rollbackBranch.provider.snapshot(),fenced);
+    const restoredBranch=fork('restored physical table',{TableId:hostFixture().lifecycle.restored_table_id});
+    const restored=await run('configure',maintenance,[...assetFlags(successor),...deployment,'--output',output('restored-enable')],
+      {configPath:successor.configPath,branch:restoredBranch});
+    assert.equal(restored.outcome.code,'PHYSICAL_STATE_MISMATCH',restored.stdout);
+    assert.equal(hostMutations(restoredBranch.audit).length,0);
+    assert.equal(restoredBranch.provider.snapshot(),fenced);
+    assert.equal(f.provider.snapshot(),fenced);
+    const unsafe=await run('configure',maintenance,[...assetFlags(successor),...deployment,'--output',output('pending-enable')],{configPath:successor.configPath});
+    assert.equal(unsafe.outcome.code,'PENDING_RECONCILIATION',unsafe.stdout);
+    assert.equal(f.provider.snapshot(),fenced);
+    const stop=requireStatus(await run('stop',maintenance),'stopped');
+    assert.equal(stop.proof,true);
+    const records=provider.records();
+    const decisionInput={schema:'pigboard-reconciliation-request/v1',attempt_id:attemptId,disposition:'confirmed_applied',
+      expected_installation_revision:records.find(row=>row.kind==='installation').revision,
+      expected_stream_revision:records.find(row=>row.kind==='stream').revision,
+      expected_attempt_revision:records.find(row=>row.kind==='attempt'&&row.attempt_id===attemptId).revision};
+    const request=writeFixtureJSON(source.temp,'reconciliation-request',decisionInput);
+    const reconciliation=await state(['reconcile','--config',maintenance.configPath,'--installation',maintenance.installationPath,
+      '--original-installation',original.installationPath,'--operator-profile','operator','--request',request,'--json']);
+    assert.equal(reconciliation.exitCode,0,reconciliation.stdout);
+    assert.equal(provider.records().find(row=>row.attempt_id===attemptId).outcome,'applied');
+    const restarted=await configure(maintenance,successor,'restart-receipt');
+    assert.equal(f.cloud.schedule.State,'ENABLED');
+    assert.equal(f.cloud.concurrency,1);
+    const installed=provider.records().find(row=>row.kind==='installation');
+    assert.equal(installed.writes_enabled,true);
+    assert.equal(installed.extensions.pb_stop_id,undefined);
+    return {original_receipt:attemptReceipt,compatible_receipt:regularReceipt,recovery_receipt:receipt,
+      restart_receipt:JSON.parse(fs.readFileSync(restarted.installationPath)),retained_work:work,
+      deployment_changes:f.audit.slice(changeStart).filter(row=>row.action==='CreateChangeSetCommand'),decision_input:decisionInput};
+   });
+ evidence.sender={writes:sender.result.writes,reply:sender.sender.provider_reply,original_aws_writes:sender.sender.first_transactions,
+   jira_mutations:sender.mutations,jira_reconciliation_reads:sender.sender.lifecycle_jira_reads,...sender.sender.lifecycle};
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)main(process.argv.slice(2)).catch(e=>{console.error(e.message);process.exitCode=2;});
