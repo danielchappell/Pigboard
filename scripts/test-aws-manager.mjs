@@ -181,7 +181,10 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    assert.deepEqual(i.AlarmTypes,['MetricAlarm']);
    assert.deepEqual(i.AlarmNames,descriptors.map(row=>row.name));
    if(cloud.denyAlarmRead)throw denied();
-   return {MetricAlarms:i.AlarmNames.flatMap(name=>cloud.alarms.has(name)?[structuredClone(cloud.alarms.get(name))]:[]),
+   const MetricAlarms=i.AlarmNames.flatMap(name=>cloud.alarms.has(name)?[structuredClone(cloud.alarms.get(name))]:[]);
+   if(cloud.extraAlarmRead==='metric')MetricAlarms.push({AlarmName:'fixture-unrequested-metric'});
+   return {MetricAlarms,
+     ...(cloud.extraAlarmRead==='composite'?{CompositeAlarms:[{AlarmName:'fixture-unrequested-composite'}]}:{}),
      ...(cloud.incompleteAlarmRead?{NextToken:'fixture-incomplete'}:{})};
   }
   if(['PutMetricAlarmCommand','EnableAlarmActionsCommand','DisableAlarmActionsCommand'].includes(n)){
@@ -1718,8 +1721,8 @@ async function alarmFailureJourney(journey,driver,active,{changedTarget,maintena
  const {f,evidence}=journey,{run,output,assetFlags,deployment,build}=driver;
  const fork=name=>forkLifecycle(f,active,name);
  const finishArgs=(target,id,name)=>['--operation',id,'--manifest',target.manifestPath,'--target-config',target.configPath,'--output',output(name)];
- const configureOn=(branch,target,name,extra=[])=>run('configure',active,[...assetFlags(target),...deployment,'--output',output(name),...extra],
-  {branch,configPath:target.configPath});
+ const configureOn=(branch,target,name,extra=[],human=false)=>run('configure',active,[...assetFlags(target),...deployment,'--output',output(name),...extra],
+  {branch,configPath:target.configPath,human});
  const stoppedHost=branch=>{
   assert.equal(branch.cloud.schedule.State,'DISABLED');
   assert.equal(branch.cloud.concurrency,0);
@@ -1896,16 +1899,47 @@ async function alarmConfigureRecovery(driver,active,changedTarget,target,{fork,f
  requireReadOnly(pending,laterCheckpoint);
  failures.resumedCustom={held,owner,resumed,exported};
 
- const missing=fork('first stamp unavailable');
- missing.cloud.enablementWriteFault='before';
- const missingResult=await partial(missing,target,'missing-stamp');
- assert.equal(lifecycleRow(missing).owner.verified_enablement,undefined);
- assert.equal(hostMutations(missing.audit).filter(row=>row.action==='PutMetricAlarmCommand').length,0);
- const missingBefore=readOnlyCheckpoint(missing);
- const noStamp=await run('finish-operation',active,finishArgs(target,missingResult.operation,'missing-stamp-finish'),{branch:missing});
- assert.equal(noStamp.outcome.code,'ENABLEMENT_UNVERIFIED',noStamp.stdout);
- requireReadOnly(missing,missingBefore);
- failures.missingStamp={missingResult,noStamp};
+ const missingStamp={};
+ for(const [format,human] of [['readable',true],['json',false]]){
+  const missing=fork('first stamp unavailable ('+format+')');
+  missing.cloud.enablementWriteFault='before';
+  const name='missing-stamp-'+format;
+  const failure=await configureOn(missing,target,name,[],human);
+  const result=requireStatus(failure,'partial'),{owner,fence_id}=lifecycleRow(missing);
+  assert.equal(failure.exitCode,1,failure.stdout);
+  assert.equal(result.phase,'record_enablement',failure.stdout);
+  assert.equal(result.state_fenced,'confirmed');
+  assert.equal(result.operation,owner.id);
+  const retained=JSON.parse(fs.readFileSync(output(name)));
+  assert.equal(result.receipt_publication,'operation_record_preserved');
+  assert.equal(result.operation,retained.operation);
+  assert.equal(retained.original_receipt.manifest.zip_digest,active.manifest.zip_digest);
+  assert.equal(result.fence,owner.fence_id);
+  assert.equal(result.current_fence,fence_id);
+  assert.deepEqual(result.effects,owner.effects);
+  assert.deepEqual(result.effects.filter(effect=>['enable-concurrency','enable-schedule'].includes(effect.name))
+   .map(({name,state})=>[name,state]),[['enable-concurrency','settled'],['enable-schedule','settled']]);
+  assert.equal(result.observed.schedule,missing.cloud.schedule.State);
+  assert.equal(result.observed.concurrency,missing.cloud.concurrency);
+  assert.equal(result.observed.schedule,'ENABLED');
+  assert.equal(result.observed.concurrency,1);
+  assert.notEqual(result.host,'stopped');
+  assert.equal(installationState(missing).schedule_enabled,false);
+  assert.equal(installationState(missing).writes_enabled,false);
+  assert.equal(owner.verified_enablement,undefined);
+  assert.equal(hostMutations(missing.audit).filter(row=>row.action==='PutMetricAlarmCommand').length,0);
+  if(human){
+   assert.match(failure.stdout,/partial \(record_enablement\)/);
+   assert(failure.stdout.includes(result.operation)&&failure.stdout.includes(JSON.stringify(result.effects)));
+   assert(failure.stdout.includes('Observed host controls — '+JSON.stringify(result.observed)));
+  }else assert.deepEqual(JSON.parse(failure.stdout),result);
+  const missingBefore=readOnlyCheckpoint(missing);
+  const noStamp=await run('finish-operation',active,finishArgs(target,result.operation,name+'-finish'),{branch:missing});
+  assert.equal(noStamp.outcome.code,'ENABLEMENT_UNVERIFIED',noStamp.stdout);
+  requireReadOnly(missing,missingBefore);
+  missingStamp[format]={failure,noStamp};
+ }
+ failures.missingStamp={missingResult:missingStamp.json.failure.outcome,noStamp:missingStamp.json.noStamp,readable:missingStamp.readable};
 
  const lost=fork('lost custom request response');
  lost.cloud.loseAlarmReply='PutMetricAlarmCommand';
@@ -2449,10 +2483,61 @@ async function routingHistoricalGuards(driver,journey,target){
  }finally{legacy.cleanup();}
 }
 
+async function assertRoutingHealth(readAlarmHealthFixture,f,installed,{status,topic=null,code,observedByKey={},priorStatus,...options}){
+ const health=await readAlarmHealthFixture(f,{...installed,...options});
+ const {json,human}=health,{alarm_evidence:evidence,prior_observation:prior}=json.outcome;
+ const routing=evidence.topic_routing;
+ assert.equal(routing.status,status,human.stdout);
+ assert.equal(routing.expected_topic_arn,topic);
+ assert.doesNotMatch(human.stdout+json.stdout,/AWS:SourceOwner|AWS:SourceAccount|Private fixture topic missing/);
+ if(code)assert.equal(routing.code,code,human.stdout);
+ if(priorStatus){
+  assert.equal(json.exitCode,2);
+  assert.equal(evidence.stable_host_and_state,false);
+  assert.equal(prior.alarm_diagnostics.topic_routing.status,priorStatus);
+  assert(prior.alarm_diagnostics.topic_routing.observed_at);
+  assert.equal(new Set([...Object.values(json.outcome.links),...evidence.alarms.map(alarm=>alarm.link)]).size,8);
+ }
+ if(topic)assert(human.stdout.includes(topic));
+ if(code)assert(human.stdout.includes(code));
+ if(status==='console_only')assert.match(human.stdout,/console[– -]+only/i);
+ if(status==='verified')assert.match(human.stdout,/subscription|confirm.*delivery/i);
+ if(['unknown','misconfigured'].includes(status)){
+  assert(json.exitCode>0);
+  assert(routing.next_step&&human.stdout.includes(routing.next_step));
+ }
+ assert.equal(evidence.alarms.length,4);
+ const actionRows=evidence.alarms.map(alarm=>{
+  assert(alarm.raw_state&&alarm.raw_state_updated_at);
+  assert(human.stdout.includes(alarm.name)&&human.stdout.includes(alarm.raw_state_updated_at)&&human.stdout.includes(alarm.link));
+  if(priorStatus)assert.equal(alarm.evaluation,'unverified');
+  const fields=['AlarmActions','OKActions','InsufficientDataActions'];
+  const expected=Object.fromEntries(fields.map(field=>[field,field==='AlarmActions'&&topic?[topic]:[]]));
+  const observed=Object.fromEntries(fields.map(field=>[field,
+   field==='AlarmActions'&&Object.hasOwn(observedByKey,alarm.key)?observedByKey[alarm.key]:expected[field]]));
+  const labels=['ALARM','OK','INSUFFICIENT_DATA'];
+  for(const [i,field] of fields.entries()){
+   assert.deepEqual(alarm.expected_actions[field],expected[field],alarm.name+' expected '+field);
+   assert.deepEqual(alarm.observed_actions[field],observed[field],alarm.name+' observed '+field);
+   assert(human.stdout.includes(labels[i]+' destinations — expected '+JSON.stringify(expected[field])+', observed '+JSON.stringify(observed[field])));
+  }
+  if(Object.hasOwn(observedByKey,alarm.key)){
+   assert.equal(alarm.status,'mismatch');
+   for(const arn of observed[fields[0]])assert(human.stdout.includes(arn));
+  }else if(!priorStatus)assert.equal(alarm.status,'aligned');
+  return {name:alarm.name,expected,observed,actions_enabled:alarm.actions_enabled,raw_state:alarm.raw_state,
+   raw_state_updated_at:alarm.raw_state_updated_at,alignment:alarm.status,attribution:alarm.evaluation,link:alarm.link};
+ });
+ if(priorStatus)for(const url of Object.values(json.outcome.links))assert(human.stdout.includes(url));
+ assert.deepEqual(human.outcome,json.outcome);
+ return {expected:{status,topic,code},routing,alarm_destinations:actionRows,...health};
+}
+
 async function alarmRoutingJourney(journey){
  const {f,source,evidence}=journey;
  const driver=lifecycleDriver(journey),{initial,build,configure,output,run,assetFlags,deployment}=driver;
- const {assertRoutingHealth,scanFixture}=await import('./test-manager-health.mjs');
+ const {readAlarmHealthFixture,scanFixture}=await import('./test-manager-health.mjs');
+ const inspectRouting=assertRoutingHealth.bind(null,readAlarmHealthFixture);
  const {topics:{primary,secondary,outside_transition:outside},stack_execution_role:executionRole}=hostFixture().routing;
  const enabledConfig=changedControls(f.config,{schedule_enabled:true});
  const noTopic=build('routing-console-only',enabledConfig);
@@ -2486,7 +2571,20 @@ async function alarmRoutingJourney(journey){
  installRoutingFixture(f,packageFor.absent,packageFor.absent);
  const consoleOnly=await configure(initial,noTopic,'routing-console-only-active');
  checkAlarmActions(f,true);
- absent.health=await assertRoutingHealth(f,consoleOnly,{status:'console_only'});
+ absent.health=await inspectRouting(f,consoleOnly,{status:'console_only'});
+ const deniedCloudWatch=await readAlarmHealthFixture(f,{...consoleOnly,denyAlarmRead:true});
+ const deniedAlarmEvidence=deniedCloudWatch.json.outcome.alarm_evidence;
+ assert.equal(deniedCloudWatch.json.exitCode,2);
+ assert.equal(deniedAlarmEvidence.read_code,'ALARM_READ_DENIED');
+ assert.equal(deniedAlarmEvidence.topic_routing.status,'console_only');
+ assert.equal(deniedAlarmEvidence.alarms.length,4);
+ for(const alarm of deniedAlarmEvidence.alarms){
+  assert.deepEqual(alarm.expected_actions,{AlarmActions:[],OKActions:[],InsufficientDataActions:[]});
+  assert.deepEqual(alarm.observed_actions,{AlarmActions:null,OKActions:null,InsufficientDataActions:null});
+ }
+ assert.match(deniedCloudWatch.human.stdout,/ALARM destinations — expected \[\], observed unknown/);
+ assert.deepEqual(JSON.parse(deniedCloudWatch.json.stdout),deniedCloudWatch.human.outcome);
+ absent.denied_cloudwatch=deniedCloudWatch;
  assert.deepEqual(requireOnlyTopicReads(f,0),[]);
  assert(!f.destroyed.some(row=>row.kind==='SNS'));
 
@@ -2499,7 +2597,7 @@ async function alarmRoutingJourney(journey){
  let auditStart=f.audit.length;
  const installedA=await configure(consoleOnly,targetA,'routing-primary-active');
  checkAlarmActions(f,true,primary);
- const healthA=await assertRoutingHealth(f,installedA,{status:'verified',topic:primary});
+ const healthA=await inspectRouting(f,installedA,{status:'verified',topic:primary});
  const currentA=healthA.json.outcome.current;
  assert(currentA.evidence_revision);
  permitted.primary={health:healthA,reads:requireOnlyTopicReads(f,auditStart,primary),revision:currentA.evidence_revision};
@@ -2568,6 +2666,10 @@ async function alarmRoutingJourney(journey){
   {configPath:targetB.configPath,branch:drift});
  requireStatus(partial,'partial');
  assert(partial.outcome.operation&&partial.outcome.state_fenced);
+ assert.equal(partial.outcome.phase,'verify_native_alarms',partial.stdout);
+ assert.equal(partial.outcome.host,'stopped',partial.stdout);
+ assert.equal(partial.outcome.observed.schedule,'DISABLED');
+ assert.equal(partial.outcome.observed.concurrency,0);
  assert.equal(drift.cloud.schedule.State,'DISABLED');
  assert.equal(drift.cloud.concurrency,0);
  const mutate=hostMutations(drift.audit);
@@ -2575,6 +2677,42 @@ async function alarmRoutingJourney(journey){
  assert(!mutate.some(row=>row.action==='EnableAlarmActionsCommand'||row.action==='UpdateScheduleCommand'&&row.input.State==='ENABLED'||
   row.action==='PutFunctionConcurrencyCommand'&&row.input.ReservedConcurrentExecutions>0));
  deniedEvidence.native_drift={result:partial.outcome,mutations:mutate.map(routingAuditEntry),observed:actualAlarmRows(drift)};
+
+ deniedEvidence.lost_enable_schedule={};
+ for(const [format,human] of [['readable',true],['json',false]]){
+  const branch=forkLifecycle(f,installedA,'lost routed Scheduler enable reply ('+format+')');
+  installRoutingFixture(branch,packageFor.primary,packageFor.secondary);
+  branch.cloud.loseEnableScheduleReply=true;
+  const file=output('routing-enable-scheduler-lost-'+format);
+  const lost=await run('configure',installedA,[...assetFlags(targetB),...deployment,'--output',file],
+   {configPath:targetB.configPath,branch,human});
+  const result=requireStatus(lost,'partial'),{owner,fence_id}=lifecycleRow(branch);
+  assert.equal(lost.exitCode,1,lost.stdout);
+  assert.equal(result.phase,'enable_schedule',lost.stdout);
+  assert.equal(result.host,'unconfirmed',lost.stdout);
+  assert.equal(result.observed,undefined);
+  assert.equal(result.operation,owner.id);
+  assert.equal(result.operation,JSON.parse(fs.readFileSync(file)).operation);
+  assert.equal(result.fence,owner.fence_id);
+  assert.equal(result.current_fence,fence_id);
+  assert.equal(result.state_fenced,'confirmed');
+  assert.deepEqual(result.effects,owner.effects);
+  assert.deepEqual(result.effects.filter(effect=>effect.name.startsWith('enable-')).map(({name,state})=>[name,state]),
+   [['enable-native-alarm-actions','settled'],['enable-concurrency','settled'],['enable-schedule','claimed']]);
+  assert.equal(branch.cloud.schedule.State,'ENABLED');
+  assert.equal(branch.cloud.concurrency,1);
+  assert.equal(installationState(branch).schedule_enabled,false);
+  const writes=hostMutations(branch.audit);
+  assert.equal(writes.filter(row=>row.action==='UpdateScheduleCommand'&&row.input.State==='ENABLED').length,1);
+  assert.equal(writes.filter(row=>row.action==='PutMetricAlarmCommand').length,0);
+  if(human){
+   assert.match(lost.stdout,/partial \(enable_schedule\)/);
+   assert.match(lost.stdout,/Host protection — unconfirmed/);
+   assert.doesNotMatch(lost.stdout,/Observed host controls/);
+   assert(lost.stdout.includes(result.operation)&&lost.stdout.includes(JSON.stringify(result.effects)));
+  }else assert.deepEqual(JSON.parse(lost.stdout),result);
+  deniedEvidence.lost_enable_schedule[format]=lost;
+ }
 
  const probe=forkLifecycle(f,installedA,'counted routing and alarm read responses');
  probe.cloud.routingOperatorPolicy=packageFor.primary.policies.operator;
@@ -2589,21 +2727,39 @@ async function alarmRoutingJourney(journey){
  ];
  for(const [name,response,status,code] of checks){
   probe.cloud.routingTopics[primary]=response;
-  deniedEvidence[name]=await assertRoutingHealth(probe,installedA,{status,topic:primary,code});
+  deniedEvidence[name]=await inspectRouting(probe,installedA,{status,topic:primary,code});
  }
  probe.cloud.routingTopics[primary]=providerTopics[primary];
+ deniedEvidence.unexpected_alarm_response={};
+ for(const type of ['metric','composite']){
+  probe.cloud.extraAlarmRead=type;
+  const start=probe.audit.length;
+  const health=await inspectRouting(probe,installedA,{status:'unknown',topic:primary,code:'ALARM_ROUTING_UNVERIFIED'});
+  const alarmEvidence=health.json.outcome.alarm_evidence;
+  assert.equal(alarmEvidence.read_status,'mismatch');
+  assert.equal(alarmEvidence.read_code,'ALARM_QUARTET_MISMATCH');
+  assert.equal(alarmEvidence.topic_routing.topic_read_status,'verified');
+  assert.equal(alarmEvidence.topic_routing.topic_read_code,healthA.routing.code);
+  assert.match(health.human.stdout,/Alarm inspection — mismatch \(ALARM_QUARTET_MISMATCH\)/);
+  const reads=probe.audit.slice(start).filter(row=>row.action==='DescribeAlarmsCommand');
+  assert.equal(reads.length,2);
+  for(const read of reads)assert.deepEqual(read.input,{AlarmNames:actualAlarmRows(probe).map(row=>row.name),AlarmTypes:['MetricAlarm']});
+  requireOnlyTopicReads(probe,start,primary);
+  deniedEvidence.unexpected_alarm_response[type]=health;
+ }
+ delete probe.cloud.extraAlarmRead;
  const budget=probe.cloud.alarms.get(actualAlarmRows(probe)[3].name);
  const lambda=probe.cloud.alarms.get(actualAlarmRows(probe)[1].name);
  budget.AlarmActions=[outside];
  delete lambda.AlarmActions;
- deniedEvidence.wrong_or_missing_action=await assertRoutingHealth(probe,installedA,{
+ deniedEvidence.wrong_or_missing_action=await inspectRouting(probe,installedA,{
   status:'misconfigured',topic:primary,observedByKey:{measured_budget:[outside],lambda_errors:[]}
  });
  budget.AlarmActions=[primary];
  lambda.AlarmActions=[primary];
  deniedEvidence.closing_bracket={};
  for(const [name,options] of [['denied_host',{denyClosingHost:true}],['changed_state',{changeState:true}]]){
-  deniedEvidence.closing_bracket[name]=await assertRoutingHealth(probe,installedA,{
+  deniedEvidence.closing_bracket[name]=await inspectRouting(probe,installedA,{
    status:'unknown',topic:primary,priorStatus:'verified',...options
   });
  }
@@ -2633,7 +2789,7 @@ async function alarmRoutingJourney(journey){
  checkAlarmActions(f,true,secondary);
  const oldAt=Date.parse(currentA.health_enabled_at);
  const oldScan=scanFixture(currentA,{started_at:new Date(oldAt+1000).toISOString(),ended_at:new Date(oldAt+2000).toISOString()});
- const healthB=await assertRoutingHealth(f,installedB,{status:'verified',topic:secondary,events:[oldScan]});
+ const healthB=await inspectRouting(f,installedB,{status:'verified',topic:secondary,events:[oldScan]});
  const currentB=healthB.json.outcome.current;
  assert.notEqual(currentA.configuration_digest,currentB.configuration_digest);
  assert.notEqual(currentA.evidence_revision,currentB.evidence_revision);
@@ -2660,7 +2816,7 @@ async function alarmRoutingJourney(journey){
   assert(empty&&routed.every(check=>!check.permitted));
   return {resource,empty,routed};
  });
- permitted.cleared={health:await assertRoutingHealth(f,cleared,{status:'console_only'}),reads:requireOnlyTopicReads(f,auditStart),
+ permitted.cleared={health:await inspectRouting(f,cleared,{status:'console_only'}),reads:requireOnlyTopicReads(f,auditStart),
   settled_policy:settled,policy_checks:clearedPolicyChecks};
  permitted.installed_notification_receipt='unconfirmed';
 }

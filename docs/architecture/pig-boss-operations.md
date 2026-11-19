@@ -129,7 +129,7 @@ The boundary uses `age > freshness`; equality is still within the window. Thus a
 intentional stop with old success is disabled; expired success plus recent failure
 is stale with the failure also reported; a failed first scan is degraded before
 expiry and stale afterward. The CLI, JSON output and acceptance fixtures share this
-ordered decision table. Alarm/SNS provisioning, reads, conditions and links are deferred in the reduced release.
+ordered decision table. The alarm inspection reports below use the same health command.
 
 Report evidence timestamps, desired/actual schedule state, last complete and latest
 attempt, scan duration, maximum budget utilization, held-work counts and direct
@@ -168,8 +168,16 @@ budget use. Their console links and fixed physical names follow the original
 installation generation. The compatible upgrade from pre-alarm v2 starts in
 disabled maintenance. Protected State records the last committed scheduling
 intent. Intentional disable suppresses actions, while unexpected Scheduler loss
-leaves detection armed. Only missing completion gets startup grace. Customer
-routing remains follow-on work.
+leaves detection armed. Only missing completion gets startup grace.
+
+The default is console and CLI alarm inspection. For optional notifications,
+set `manager.health.sns_topic_arn` to an existing topic in the customer's AWS
+account and Region. Each of the four alarms uses that exact ARN as its sole
+ALARM destination. The OK and INSUFFICIENT_DATA lists stay empty. Health uses the
+configured operator to read the four named alarms and the configured topic.
+The customer manages topic access and subscriptions and confirms actual delivery.
+See [SNS routing checks](../manager-health.md#check-sns-routing) and
+[alarm permissions and settings](../manager-installation.md#cloudwatch-alarm-permissions-and-settings).
 
 Disabled initial installation can have no epoch. Its successfully read logs and
 coherent stopped controls permit disabled; epoch-dependent metrics are explicitly
@@ -198,7 +206,8 @@ acceptance baseline `1af6f9387fa9e762530294012ec015f3c580aa32`, whose detailed
 completion coverage is preview-only. That package's apply outcome logs and retained
 attempt evidence remain the record of its effects; they do not supply apply
 completion summaries. Current source fixtures use simulated providers. Customer
-deployment, activation, worker monitoring and routing have separate gates.
+deployment, activation, worker monitoring and live notification delivery have
+separate gates.
 
 ## Capacity and the path to 50 projects
 

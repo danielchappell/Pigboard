@@ -135,56 +135,6 @@ export async function readAlarmHealthFixture(f,{configPath,installationPath,now=
  assert.doesNotMatch(human.stdout+json.stdout,/DUMMY_SECRET_BODY_PROVIDER_ERROR/);
  return {human,json,telemetry,actions,commands:[['node','scripts/manager-health.mjs',...args],['node','scripts/manager-health.mjs',...args,'--json']]};
 }
-export async function assertRoutingHealth(f,installed,{status,topic=null,code,observedByKey={},priorStatus,...options}){
- const health=await readAlarmHealthFixture(f,{...installed,...options});
- const {json,human}=health,{alarm_evidence:evidence,prior_observation:prior}=json.outcome;
- const routing=evidence.topic_routing;
- assert.equal(routing.status,status,human.stdout);
- assert.equal(routing.expected_topic_arn,topic);
- assert.doesNotMatch(human.stdout+json.stdout,/AWS:SourceOwner|AWS:SourceAccount|Private fixture topic missing/);
- if(code)assert.equal(routing.code,code,human.stdout);
- if(priorStatus){
-  assert.equal(json.exitCode,2);
-  assert.equal(evidence.stable_host_and_state,false);
-  assert.equal(prior.alarm_diagnostics.topic_routing.status,priorStatus);
-  assert(prior.alarm_diagnostics.topic_routing.observed_at);
-  assert.equal(new Set([...Object.values(json.outcome.links),...evidence.alarms.map(alarm=>alarm.link)]).size,8);
- }
- if(topic)assert(human.stdout.includes(topic));
- if(code)assert(human.stdout.includes(code));
- if(status==='console_only')assert.match(human.stdout,/console[– -]+only/i);
- if(status==='verified')assert.match(human.stdout,/subscription|confirm.*delivery/i);
- if(['unknown','misconfigured'].includes(status)){
-  assert(json.exitCode>0);
-  assert(routing.next_step&&human.stdout.includes(routing.next_step));
- }
- assert.equal(evidence.alarms.length,4);
- const actionRows=evidence.alarms.map(alarm=>{
-  assert(alarm.raw_state&&alarm.raw_state_updated_at);
-  assert(human.stdout.includes(alarm.name)&&human.stdout.includes(alarm.raw_state_updated_at)&&human.stdout.includes(alarm.link));
-  if(priorStatus)assert.equal(alarm.evaluation,'unverified');
-  const fields=['AlarmActions','OKActions','InsufficientDataActions'];
-  const expected=Object.fromEntries(fields.map(field=>[field,field==='AlarmActions'&&topic?[topic]:[]]));
-  const observed=Object.fromEntries(fields.map(field=>[field,
-   field==='AlarmActions'&&Object.hasOwn(observedByKey,alarm.key)?observedByKey[alarm.key]:expected[field]]));
-  const labels=['ALARM','OK','INSUFFICIENT_DATA'];
-  for(const [i,field] of fields.entries()){
-   assert.deepEqual(alarm.expected_actions[field],expected[field],alarm.name+' expected '+field);
-   assert.deepEqual(alarm.observed_actions[field],observed[field],alarm.name+' observed '+field);
-   assert(human.stdout.includes(labels[i]+' destinations — expected '+JSON.stringify(expected[field])+', observed '+JSON.stringify(observed[field])));
-  }
-  if(Object.hasOwn(observedByKey,alarm.key)){
-   assert.equal(alarm.status,'mismatch');
-   for(const arn of observed[fields[0]])assert(human.stdout.includes(arn));
-  }else if(!priorStatus)assert.equal(alarm.status,'aligned');
-  return {name:alarm.name,expected,observed,actions_enabled:alarm.actions_enabled,raw_state:alarm.raw_state,
-   raw_state_updated_at:alarm.raw_state_updated_at,alignment:alarm.status,attribution:alarm.evaluation,link:alarm.link};
- });
- if(priorStatus)for(const url of Object.values(json.outcome.links))assert(human.stdout.includes(url));
- assert.deepEqual(human.outcome,json.outcome);
- return {expected:{status,topic,code},routing,alarm_destinations:actionRows,...health};
-}
-
 async function emptyWrapper(kind='empty'){const native=ordinaryWireFixture(),config=native.config,f=await preparedCloud(config);try{assert.equal((await runStateCommand(['init','--config',f.configPath,'--installation',f.installationPath,'--operator-profile','operator','--json'],{resolveInstallation:f.resolve})).exitCode,0);let script=[{...native.script[0],body:{issues:[],isLast:true}}];
  if(kind==='cap'){
   const epic=structuredClone(native.script[1].body),ticket=native.script[5].body,tickets=[ticket,...Array.from({length:5},(_,i)=>{const row=structuredClone(ticket);row.id=String(1002+i);row.key='EX-'+(3+i);row.fields.status.id=config.defaults.stages['Human Review'];return row;})];const body=JSON.parse(epic.fields.description.content[0].content[0].text);body.workstreams[0].story_order=tickets.map(t=>t.key);epic.fields.description.content[0].content[0].text=JSON.stringify(body);

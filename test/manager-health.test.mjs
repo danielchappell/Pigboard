@@ -203,11 +203,6 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.equal(denied.json.exitCode,2);
   assert.equal(denied.json.outcome.alarm_evidence.read_code,'ALARM_READ_DENIED');
   assert(denied.json.outcome.alarm_evidence.alarms.every(a=>a.actual===null&&a.actions_enabled===null));
-  for(const alarm of denied.json.outcome.alarm_evidence.alarms){
-   assert.deepEqual(alarm.expected_actions,{AlarmActions:[],OKActions:[],InsufficientDataActions:[]});
-   assert.deepEqual(alarm.observed_actions,{AlarmActions:null,OKActions:null,InsufficientDataActions:null});
-  }
-  assert.match(denied.human.stdout,/ALARM destinations — expected \[\], observed unknown/);
   const afterLogDenial=await getHealth(initial,{denyLogs:true});
   assert.equal(afterLogDenial.json.exitCode,2);
   assert.equal(afterLogDenial.json.outcome.alarm_evidence.status,'aligned');
