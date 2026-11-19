@@ -1155,5 +1155,527 @@
       "SchedulerRole": "pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78-scheduler",
       "LogGroup": "/aws/lambda/pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78"
     }
+  },
+  "saved_alarm_readiness": {
+    "variants": {
+      "matching": {
+        "health": "PASS",
+        "overall": "unverified",
+        "exit": 1
+      },
+      "contradictory": {
+        "health": "FAIL",
+        "overall": "incompatible",
+        "exit": 1,
+        "alarm_code": "ALARM_DEFINITION_MISMATCH"
+      },
+      "inaccessible": {
+        "health": "UNVERIFIED",
+        "overall": "unverified",
+        "exit": 1,
+        "alarm_code": "ALARM_READ_DENIED"
+      },
+      "malformed": {
+        "health": "ERROR",
+        "overall": "input_error",
+        "exit": 2,
+        "health_code": "HEALTH_INPUT_INVALID"
+      },
+      "restored": {
+        "health": "PASS",
+        "overall": "unverified",
+        "exit": 1
+      }
+    },
+    "removal": [
+      {
+        "case": "R1-23-H02",
+        "packet_sha256": "sha256:ba2156e040002fb0dd2fc5364f3f61890b2d101497a50acf1ca0745d3bb475d0",
+        "source": {
+          "snapshot_revision": "646950ea1298b042e831d70ea617ab733abc601d",
+          "snapshot_tree": "849175c3f6fa83aa0345b8ce31df913bb765766a",
+          "source_parent": "484405ed8f50977f1593d071a438c3de97af15cd",
+          "source_dirty": ""
+        },
+        "original_table": {
+          "id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+          "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard2-e76c0737888e1d891f94de5669596fc9-state",
+          "name": "pigboard2-e76c0737888e1d891f94de5669596fc9-state"
+        },
+        "preview": {
+          "binding": {
+            "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+            "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+            "installation_generation": "6c029eee-2dc0-41ca-a6a3-b910f554946c",
+            "source": {
+              "manifest_digest": "sha256:cf79743ec0e7e30cd1b7a4d0569670a90390506dfcc53389ceea82b9b368d70a",
+              "package_revision": "646950ea1298b042e831d70ea617ab733abc601d",
+              "configuration_digest": "sha256:a0508f431569dea19473f4fb38e8c7c17d9468ca5b3e56aadfd88f3080e1a47f",
+              "zip_digest": "sha256:38efe46bd03fedc06b690d488052cd2dc57c3d1ac863b12050f551d612d01ee7"
+            }
+          },
+          "stop_id": "6d04f69b-e22e-469f-bec8-95b86b92e505",
+          "resources": [
+            {"logical": "AsyncInvocation", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9|$LATEST", "type": "AWS::Lambda::EventInvokeConfig", "disposition": "deleted"},
+            {"logical": "Function", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "type": "AWS::Lambda::Function", "disposition": "deleted"},
+            {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-errors", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-throttles", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "LifecycleSchedule", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "type": "AWS::Scheduler::Schedule", "disposition": "deleted"},
+            {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-e76c0737888e1d891f94de5669596fc9", "type": "AWS::Logs::LogGroup", "disposition": "deleted"},
+            {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-measured-budget", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "MissingCompletionAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-missing-completion", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "RuntimeRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-runtime", "type": "AWS::IAM::Role", "disposition": "deleted"},
+            {"logical": "SchedulerRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-scheduler", "type": "AWS::IAM::Role", "disposition": "deleted"},
+            {"logical": "StateTable", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-state", "type": "AWS::DynamoDB::Table", "disposition": "retained", "cost": "DynamoDB storage and applicable backups"}
+          ],
+          "externally_owned": [
+            {
+              "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+              "cost": "Secrets Manager storage and API use"
+            },
+            {
+              "reference": {
+                "bucket": "fixture-artifacts",
+                "key": "alarm-adopted-maintenance.zip",
+                "version": "alarm-adopted-maintenance-version"
+              },
+              "cost": "Artifact object storage and applicable versions"
+            },
+            {
+              "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+            },
+            {
+              "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+            }
+          ]
+        },
+        "results": [
+          {
+            "operation": "311f1219-26f2-4f49-9f6d-c100a36daabd",
+            "binding": {
+              "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+              "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+              "installation_generation": "6c029eee-2dc0-41ca-a6a3-b910f554946c",
+              "source": {
+                "manifest_digest": "sha256:cf79743ec0e7e30cd1b7a4d0569670a90390506dfcc53389ceea82b9b368d70a",
+                "package_revision": "646950ea1298b042e831d70ea617ab733abc601d",
+                "configuration_digest": "sha256:a0508f431569dea19473f4fb38e8c7c17d9468ca5b3e56aadfd88f3080e1a47f",
+                "zip_digest": "sha256:38efe46bd03fedc06b690d488052cd2dc57c3d1ac863b12050f551d612d01ee7"
+              }
+            },
+            "terminal": {
+              "status": "removed",
+              "observed_at": "2026-11-17T10:36:45.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-311f1219-26f2-4f49-9f6d-c100a36daabd",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:36:45.000Z"
+              },
+              "retention_complete": true,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-measured-budget", "observation": "deleted"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "alarm-adopted-maintenance.zip",
+                    "version": "alarm-adopted-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            }
+          },
+          {
+            "operation": "0473ec1b-d5bc-4bad-a899-790ca87a987b",
+            "binding": {
+              "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+              "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+              "installation_generation": "6c029eee-2dc0-41ca-a6a3-b910f554946c",
+              "source": {
+                "manifest_digest": "sha256:cf79743ec0e7e30cd1b7a4d0569670a90390506dfcc53389ceea82b9b368d70a",
+                "package_revision": "646950ea1298b042e831d70ea617ab733abc601d",
+                "configuration_digest": "sha256:a0508f431569dea19473f4fb38e8c7c17d9468ca5b3e56aadfd88f3080e1a47f",
+                "zip_digest": "sha256:38efe46bd03fedc06b690d488052cd2dc57c3d1ac863b12050f551d612d01ee7"
+              }
+            },
+            "terminal": {
+              "status": "partial",
+              "observed_at": "2026-11-17T10:36:45.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-0473ec1b-d5bc-4bad-a899-790ca87a987b",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:36:45.000Z"
+              },
+              "retention_complete": false,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-measured-budget", "observation": "unobservable", "cost": "CloudWatch alarm charges if the alarm remains"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "alarm-adopted-maintenance.zip",
+                    "version": "alarm-adopted-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            },
+            "current_observation": {
+              "operation": "0473ec1b-d5bc-4bad-a899-790ca87a987b",
+              "binding": {
+                "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+                "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+                "installation_generation": "6c029eee-2dc0-41ca-a6a3-b910f554946c",
+                "source": {
+                  "manifest_digest": "sha256:cf79743ec0e7e30cd1b7a4d0569670a90390506dfcc53389ceea82b9b368d70a",
+                  "package_revision": "646950ea1298b042e831d70ea617ab733abc601d",
+                  "configuration_digest": "sha256:a0508f431569dea19473f4fb38e8c7c17d9468ca5b3e56aadfd88f3080e1a47f",
+                  "zip_digest": "sha256:38efe46bd03fedc06b690d488052cd2dc57c3d1ac863b12050f551d612d01ee7"
+                }
+              },
+              "status": "partial",
+              "observed_at": "2026-11-17T10:36:45.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-0473ec1b-d5bc-4bad-a899-790ca87a987b",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:36:45.000Z"
+              },
+              "retention_complete": false,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-e76c0737888e1d891f94de5669596fc9", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-measured-budget", "observation": "unobservable", "cost": "CloudWatch alarm charges if the alarm remains"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-e76c0737888e1d891f94de5669596fc9-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "alarm-adopted-maintenance.zip",
+                    "version": "alarm-adopted-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "case": "R1-23-H03-C",
+        "packet_sha256": "sha256:6ea21b253af6bfbf8243c8ddac9c52f4e02c0bcc2337f7f5e22346d5274cf66c",
+        "source": {
+          "snapshot_revision": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+          "snapshot_tree": "f6caa8fae25504cca3f652eeca3e6bf980db1e28",
+          "source_parent": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+          "source_dirty": ""
+        },
+        "original_table": {
+          "id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+          "arn": "arn:aws:dynamodb:eu-west-1:123456789012:table/pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state",
+          "name": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state"
+        },
+        "preview": {
+          "binding": {
+            "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+            "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+            "installation_generation": "6d19583d-5edd-4a16-844a-8165ae6b93db",
+            "source": {
+              "manifest_digest": "sha256:ec57215291d7c7e4e1888201a6f4482bc685220f90db040f3b0329dfcd9cc6cc",
+              "package_revision": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+              "configuration_digest": "sha256:79ea91a10cdefa0ef225d1f2c13c3553a9fbc93507f74454ca502e0cd83916ff",
+              "zip_digest": "sha256:f1353278ee9307ec58f544039247c567fd5b3f6627cc32fe693b78bdaee807ad"
+            }
+          },
+          "stop_id": "038e4751-03b0-4d3f-a04d-9d81927d7fc9",
+          "resources": [
+            {"logical": "AsyncInvocation", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3|$LATEST", "type": "AWS::Lambda::EventInvokeConfig", "disposition": "deleted"},
+            {"logical": "Function", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "type": "AWS::Lambda::Function", "disposition": "deleted"},
+            {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-errors", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-throttles", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "LifecycleSchedule", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "type": "AWS::Scheduler::Schedule", "disposition": "deleted"},
+            {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "type": "AWS::Logs::LogGroup", "disposition": "deleted"},
+            {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-measured-budget", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "MissingCompletionAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-missing-completion", "type": "AWS::CloudWatch::Alarm", "disposition": "deleted"},
+            {"logical": "RuntimeRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-runtime", "type": "AWS::IAM::Role", "disposition": "deleted"},
+            {"logical": "SchedulerRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-scheduler", "type": "AWS::IAM::Role", "disposition": "deleted"},
+            {"logical": "StateTable", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state", "type": "AWS::DynamoDB::Table", "disposition": "retained", "cost": "DynamoDB storage and applicable backups"}
+          ],
+          "externally_owned": [
+            {
+              "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+              "cost": "Secrets Manager storage and API use"
+            },
+            {
+              "reference": "arn:aws:sns:eu-west-1:123456789012:pigboard-fixture-primary",
+              "cost": "SNS requests and subscription delivery charges may continue"
+            },
+            {
+              "reference": {
+                "bucket": "fixture-artifacts",
+                "key": "routing-primary-maintenance.zip",
+                "version": "routing-primary-maintenance-version"
+              },
+              "cost": "Artifact object storage and applicable versions"
+            },
+            {
+              "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+            },
+            {
+              "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+            }
+          ]
+        },
+        "results": [
+          {
+            "operation": "1282aa88-169f-4491-b322-78744b5eaa0f",
+            "binding": {
+              "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+              "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+              "installation_generation": "6d19583d-5edd-4a16-844a-8165ae6b93db",
+              "source": {
+                "manifest_digest": "sha256:ec57215291d7c7e4e1888201a6f4482bc685220f90db040f3b0329dfcd9cc6cc",
+                "package_revision": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+                "configuration_digest": "sha256:79ea91a10cdefa0ef225d1f2c13c3553a9fbc93507f74454ca502e0cd83916ff",
+                "zip_digest": "sha256:f1353278ee9307ec58f544039247c567fd5b3f6627cc32fe693b78bdaee807ad"
+              }
+            },
+            "terminal": {
+              "status": "removed",
+              "observed_at": "2026-11-17T10:16:20.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-1282aa88-169f-4491-b322-78744b5eaa0f",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:16:20.000Z"
+              },
+              "retention_complete": true,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-measured-budget", "observation": "deleted"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": "arn:aws:sns:eu-west-1:123456789012:pigboard-fixture-primary",
+                  "cost": "SNS requests and subscription delivery charges may continue"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "routing-primary-maintenance.zip",
+                    "version": "routing-primary-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            }
+          },
+          {
+            "operation": "24ddd47e-deb7-486f-8e51-f172fb1af797",
+            "binding": {
+              "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+              "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+              "installation_generation": "6d19583d-5edd-4a16-844a-8165ae6b93db",
+              "source": {
+                "manifest_digest": "sha256:ec57215291d7c7e4e1888201a6f4482bc685220f90db040f3b0329dfcd9cc6cc",
+                "package_revision": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+                "configuration_digest": "sha256:79ea91a10cdefa0ef225d1f2c13c3553a9fbc93507f74454ca502e0cd83916ff",
+                "zip_digest": "sha256:f1353278ee9307ec58f544039247c567fd5b3f6627cc32fe693b78bdaee807ad"
+              }
+            },
+            "terminal": {
+              "status": "partial",
+              "observed_at": "2026-11-17T10:16:20.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-24ddd47e-deb7-486f-8e51-f172fb1af797",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:16:20.000Z"
+              },
+              "retention_complete": false,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-measured-budget", "observation": "unobservable", "cost": "CloudWatch alarm charges if the alarm remains"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": "arn:aws:sns:eu-west-1:123456789012:pigboard-fixture-primary",
+                  "cost": "SNS requests and subscription delivery charges may continue"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "routing-primary-maintenance.zip",
+                    "version": "routing-primary-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            },
+            "current_observation": {
+              "operation": "24ddd47e-deb7-486f-8e51-f172fb1af797",
+              "binding": {
+                "stack_id": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+                "table_id": "45fb5364-258e-4f57-86fd-d4e65c398d96",
+                "installation_generation": "6d19583d-5edd-4a16-844a-8165ae6b93db",
+                "source": {
+                  "manifest_digest": "sha256:ec57215291d7c7e4e1888201a6f4482bc685220f90db040f3b0329dfcd9cc6cc",
+                  "package_revision": "0deb5d4c375f9bc525f45840c29aaf41c3efad2b",
+                  "configuration_digest": "sha256:79ea91a10cdefa0ef225d1f2c13c3553a9fbc93507f74454ca502e0cd83916ff",
+                  "zip_digest": "sha256:f1353278ee9307ec58f544039247c567fd5b3f6627cc32fe693b78bdaee807ad"
+                }
+              },
+              "status": "partial",
+              "observed_at": "2026-11-17T10:16:20.000Z",
+              "provider": {
+                "event_id": "DELETE_COMPLETE-24ddd47e-deb7-486f-8e51-f172fb1af797",
+                "status": "DELETE_COMPLETE",
+                "recorded_at": "2026-11-17T10:16:20.000Z"
+              },
+              "retention_complete": false,
+              "table_status": "retained",
+              "resources": [
+                {"logical": "AsyncInvocation", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3|$LATEST", "observation": "deleted"},
+                {"logical": "Function", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LambdaErrorsAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-errors", "observation": "deleted"},
+                {"logical": "LambdaThrottlesAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-lambda-throttles", "observation": "deleted"},
+                {"logical": "LifecycleSchedule", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "LogGroup", "physical": "/aws/lambda/pigboard2-f56fad1b2c81ebefe3b97539b80626c3", "observation": "deleted"},
+                {"logical": "MeasuredBudgetAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-measured-budget", "observation": "unobservable", "cost": "CloudWatch alarm charges if the alarm remains"},
+                {"logical": "MissingCompletionAlarm", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-missing-completion", "observation": "deleted"},
+                {"logical": "RuntimeRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-runtime", "observation": "deleted"},
+                {"logical": "SchedulerRole", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-scheduler", "observation": "deleted"},
+                {"logical": "StateTable", "physical": "pigboard2-f56fad1b2c81ebefe3b97539b80626c3-state", "observation": "retained", "cost": "DynamoDB storage and applicable backups"}
+              ],
+              "externally_owned": [
+                {
+                  "reference": "arn:aws:secretsmanager:eu-west-1:123456789012:secret:pigboard-fixture-abcdef",
+                  "cost": "Secrets Manager storage and API use"
+                },
+                {
+                  "reference": "arn:aws:sns:eu-west-1:123456789012:pigboard-fixture-primary",
+                  "cost": "SNS requests and subscription delivery charges may continue"
+                },
+                {
+                  "reference": {
+                    "bucket": "fixture-artifacts",
+                    "key": "routing-primary-maintenance.zip",
+                    "version": "routing-primary-maintenance-version"
+                  },
+                  "cost": "Artifact object storage and applicable versions"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-operator"
+                },
+                {
+                  "reference": "arn:aws:iam::123456789012:role/pigboard-deployer"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
   }
 }

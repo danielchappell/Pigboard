@@ -15,6 +15,9 @@ function formatTopic(routing,label='Notification routing'){
   (routing.topic_read_next_step?routing.topic_read_next_step+'\n':'')+
   `${routing.next_step}\n`;
 }
+function formatAlarmIdentity({operator_account_id,operator_role_arn,table_id}){
+ return `Operator account — ${operator_account_id??'unverified'}\nOperator role — ${operator_role_arn??'unverified'}\nState table ID — ${table_id??'unverified'}\n`;
+}
 function formatAlarms(evidence){
  if(!evidence)return '';
  const {intent,maintenance_reason,status,code,alarms,retained_epoch,region,stack_id,function_name,installation_generation,concurrency}=evidence;
@@ -29,6 +32,7 @@ function formatAlarms(evidence){
    `${destinations}\n${alarm.link}\n${alarm.next_step??''}`;
  });
  return `${hostLabel} — ${stack_id} / ${function_name} / ${region}\nInstallation generation — ${installation_generation}, reserved concurrency ${concurrency}\n`+
+  (evidence.stable_host_and_state===false?'':formatAlarmIdentity(evidence))+
   `Protected scheduling intent — ${intent??'unverified'}${maintenance_reason?' ('+maintenance_reason+')':''}\n`+
   (evidence.pending_operation?`Pending ${evidence.pending_operation.kind} operation — ${evidence.pending_operation.id} (${evidence.pending_operation.phase})\nLast committed intent — ${evidence.previous_intent??'unknown'}\n`:'')+
   `Alarm inspection — ${status}${code?' ('+code+')':''}, observed from ${evidence.observed_from} to ${evidence.observed_to}\n`+
@@ -52,6 +56,7 @@ function formatUnverifiedHealth(result){
   `Schedule requested in config — ${result.requested_enabled??'unknown'}`,
   formatAlarms(result.alarm_evidence).trimEnd(),
   `Earlier observations from ${earlier.observed_at} — current attribution unverified`,
+  formatAlarmIdentity(earlier.alarm_diagnostics).trimEnd(),
   ...(earlier.alarm_diagnostics.topic_routing?[formatTopic(earlier.alarm_diagnostics.topic_routing,'Earlier notification routing').trimEnd()]:[]),
   `Observed package — ${binding.package_revision??'unavailable'}`,
   `Observed evidence revision — ${binding.evidence_revision??'unavailable'}`,

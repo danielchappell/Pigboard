@@ -13,6 +13,7 @@ Exit 0: compatible supplied evidence; 1: incompatible or unverified; 2: input/se
 Missing optional evidence remains UNVERIFIED. Human cases always remain NOT_RUN.
 See docs/release-readiness.md for prerequisites, evidence qualifications and recovery.
 `;
+const lifecycleInputs = new Set(['packageManifest', 'installation']);
 const values = new Map([['--config', 'configText'], ['--release', 'release'], ['--revision', 'revision'], ['--package-manifest', 'packageManifest'], ['--installation', 'installation'], ['--health', 'health'], ['--observations', 'observations']]);
 
 export async function runReadinessCommand(argv) {
@@ -44,9 +45,10 @@ export async function runReadinessCommand(argv) {
   for (const [key, filename] of Object.entries(inputs)) {
     if (key === 'revision') continue;
     try {
-      const bytes = await readLocalInput(filename, 'bytes');
+      const kind = lifecycleInputs.has(key) ? key : undefined;
+      const bytes = await readLocalInput(filename, 'bytes', kind);
       inputFiles.push({ input: key, path: filename, sha256: createHash('sha256').update(bytes).digest('hex') });
-      inputs[key] = key === 'configText' ? bytes.toString('utf8') : parseLocalJSON(bytes);
+      inputs[key] = key === 'configText' ? bytes.toString('utf8') : parseLocalJSON(bytes, kind);
     }
     catch { delete inputs[key]; inputErrors.push(key); }
   }

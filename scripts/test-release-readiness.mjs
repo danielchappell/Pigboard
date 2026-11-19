@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import { cp, lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { execFile } from 'node:child_process';
+import { execFile, spawnSync } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { humanCaseIds, parseLocalJSON, readLocalInput, workerSources } from '../lib/release/readiness.mjs';
 import { runReadinessCommand } from './check-readiness.mjs';
 
@@ -21,6 +22,121 @@ Use an already-prepared external release; this command never discovers, fetches 
 Developer assertions and actual readiness results are retained separately; human cases remain NOT_RUN.
 --help alone displays this text. No live mode, provider calls, scans or activation.
 `;
+
+// Exercise the production subprocess against the same pin as the package.
+// With no external bundle (normal CI), C02 deliberately reports missing setup.
+export async function checkSavedAlarmSnapshot({ directory, checkout, revision, release, configPath,
+  installationPath, manifestPath, health, variant, commands }) {
+  const expected = fixture.saved_alarm_readiness.variants[variant];
+  await mkdir(directory, { mode: 0o700 });
+  const inputs = {};
+  for (const [name, filename] of Object.entries({ config: configPath, installation: installationPath, 'package-manifest': manifestPath })) {
+    if (!filename) continue;
+    const target = path.join(directory, `${name}.json`);
+    await writeFile(target, await readFile(filename), { mode: 0o600, flag: 'wx' });
+    inputs[name] = target;
+  }
+  inputs.health = path.join(directory, 'health.json');
+  await writeFile(inputs.health, JSON.stringify(health) + '\n', { mode: 0o600, flag: 'wx' });
+  const ciRelease = path.join(directory, 'unavailable-ci-release.json');
+  if (!release) await writeFile(ciRelease, '{}\n', { mode: 0o600, flag: 'wx' });
+  const entry = 'scripts/check-readiness.mjs';
+  const args = [entry, '--revision', revision, '--release', release ?? ciRelease,
+    ...Object.entries(inputs).flatMap(([name, filename]) => [`--${name}`, filename])];
+  const record = { variant, expected, release: release ? 'prepared_external' : 'not_supplied_in_ci', inputs, invocations: {} };
+  commands.push(record);
+  for (const mode of ['human', 'json']) {
+    const argv = mode === 'json' ? [...args, '--json'] : args;
+    const { error, status, stdout, stderr, signal } = spawnSync(process.execPath, argv,
+      { cwd: checkout, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 });
+    if (error) throw error;
+    record.invocations[mode] = { command: [process.execPath, ...argv], cwd: checkout, exit_code: status, stdout, stderr };
+    assert.equal(signal, null, stderr);
+    assert.equal(stderr, '');
+  }
+  const { human, json } = record.invocations;
+  const report = JSON.parse(json.stdout);
+  assert.equal(report.revision, revision);
+  assert.equal(report.exit_code, json.exit_code);
+  assert.equal(human.exit_code, json.exit_code);
+  assert.equal(namedCheck(report, 'C02_RELEASE').status, release ? 'PASS' : 'ERROR', json.stdout);
+  if (release) {
+    assert.equal(report.status, expected.overall, json.stdout);
+    assert.equal(json.exit_code, expected.exit, json.stdout);
+  }
+  for (const [id, status] of Object.entries({ C04_PACKAGE: 'PASS', C04_INSTALLATION: 'PASS', C05_HEALTH: expected.health })) {
+    assert.equal(namedCheck(report, id)?.status, status, `${variant} ${id}: ${json.stdout}`);
+    assert(human.stdout.includes(`${status} ${id}:`), human.stdout);
+  }
+  const saved = namedCheck(report, 'C05_HEALTH');
+  if (expected.health_code) assert.equal(saved.code, expected.health_code);
+  if (expected.alarm_code) {
+    const row = saved.observed.alarm_evidence.alarms.find(alarm => alarm.key === 'measured_budget');
+    assert.equal(row.code, expected.alarm_code);
+    assert(human.stdout.includes(row.name) && human.stdout.includes(expected.alarm_code), human.stdout);
+  }
+  if (variant === 'matching' || variant === 'inaccessible') {
+    const names = health.alarm_evidence.alarms.map(row => row.name).sort();
+    assert.equal(names.length, 4);
+    assert.deepEqual(saved.observed.alarm_evidence.alarms.map(row => row.name).sort(), names);
+    for (const name of names) assert(human.stdout.includes(name), human.stdout);
+  }
+  assert.deepEqual(report.activation, fixture.expected.activation);
+  return report;
+}
+
+export async function checkSavedFixtureEvidence({ checkout, revision, configPath, installationPath, health, changes = {} }) {
+  // Use the snapshot's comparator so historical and working-tree fixture
+  // revisions are resolved against that snapshot's own local Git objects.
+  const { checkReadiness } = await import(pathToFileURL(path.join(checkout, 'lib/release/readiness.mjs')).href);
+  const [configText, installation] = await Promise.all([
+    readFile(configPath, 'utf8'), readFile(installationPath, 'utf8').then(JSON.parse),
+  ]);
+  return checkReadiness({ revision, configText, installation, health, ...changes });
+}
+
+export function compareRetainedAlarmRemoval() {
+  return fixture.saved_alarm_readiness.removal.map(packet => {
+    const { preview, original_table: table } = packet;
+    assert.equal(preview.resources.length, 11);
+    assert.equal(preview.resources.filter(row => row.type === 'AWS::CloudWatch::Alarm').length, 4);
+    const tableResource = preview.resources.find(row => row.logical === 'StateTable');
+    assert.equal(preview.binding.table_id, table.id);
+    assert.equal(tableResource.physical, table.name);
+    assert.equal(table.arn.split('/').at(-1), table.name);
+    assert.equal(tableResource.disposition, 'retained');
+    const results = packet.results.map(result => {
+      const { terminal, current_observation: current } = result;
+      assert.deepEqual(result.binding, preview.binding);
+      assert.equal(terminal.observed_at, new Date(terminal.observed_at).toISOString());
+      if (current) {
+        assert.equal(current.operation, result.operation);
+        assert.deepEqual(current.binding, preview.binding);
+        assert.equal(current.observed_at, new Date(current.observed_at).toISOString());
+        assert(Date.parse(current.observed_at) >= Date.parse(terminal.observed_at));
+      }
+      const compare = observed => {
+        assert.equal(observed.resources.length, preview.resources.length);
+        const rows = preview.resources.map(expected => {
+          const actual = observed.resources.find(row => row.logical === expected.logical);
+          assert.equal(actual?.physical, expected.physical, expected.logical);
+          const want = observed.status === 'partial' && expected.logical === 'MeasuredBudgetAlarm'
+            ? 'unobservable' : expected.disposition;
+          assert.equal(actual.observation, want, expected.logical);
+          return { ...expected, observation: actual.observation, cost: actual.cost ?? expected.cost };
+        });
+        assert.deepEqual(observed.externally_owned, preview.externally_owned);
+        assert.equal(observed.table_status, 'retained');
+        assert.equal(observed.retention_complete, observed.status === 'removed');
+        return { ...observed, resources: rows };
+      };
+      return { ...result, terminal: compare(terminal), ...(current ? { current_observation: compare(current) } : {}) };
+    });
+    assert.deepEqual(results.map(result => result.terminal.status), ['removed', 'partial']);
+    assert.equal(results[1].current_observation.status, 'partial');
+    return { ...packet, results };
+  });
+}
 
 function optionsFor(argv) {
   const options = {}, seen = new Set();
