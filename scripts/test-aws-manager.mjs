@@ -143,7 +143,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    return require('@aws-sdk/client-sns').GetTopicAttributesCommand;
   }};
  const makeClient=(kind,options)=>{const identity=options.credentials.accessKeyId;return {destroy:()=>destroyed.push({kind,identity}),send:async(command,sendOptions)=>{
-  const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n)throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
+  const n=command.constructor.name,i=command.input;audit.push({kind,identity,action:n,input:structuredClone(i)});if(cloud.fail===n&&n!=='GetTopicAttributesCommand')throw Object.assign(new Error('dummy denied'),{name:'AccessDeniedException'});
   if(n==='GetCallerIdentityCommand')return {Account:a.account_id,UserId:`AROAEXAMPLE:${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`,Arn:`arn:aws:sts::${a.account_id}:assumed-role/${identity==='SELECTED_OPERATOR'?'pigboard-operator':identity==='SELECTED_DEPLOYER'?'pigboard-deployer':'wrong'}/${identity==='SELECTED_OPERATOR'?(cloud.operatorSession??'fixture'):'fixture'}`};
   if(n==='GetTopicAttributesCommand'){
    assert.equal(kind,'SNS');
@@ -152,8 +152,10 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    assert(sendOptions?.abortSignal);
    assert.deepEqual(i,{TopicArn:i.TopicArn});
    const topic=cloud.routingTopics?.[i.TopicArn];
-   audit.at(-1).simulated_topic=topic?.status??'missing';
-   if(!policyPermits(cloud.routingOperatorPolicy??{Statement:[]},'sns:GetTopicAttributes',i.TopicArn)||topic?.status==='denied')throw denied();
+   const readable=cloud.fail!==n&&topic?.status!=='denied'&&
+     policyPermits(cloud.routingOperatorPolicy??{Statement:[]},'sns:GetTopicAttributes',i.TopicArn);
+   audit.at(-1).simulated_topic=!readable?'denied':topic?'present':'missing';
+   if(!readable)throw denied();
    if(!topic)throw Object.assign(new Error('Private fixture topic missing'),{name:'NotFoundException',$metadata:{httpStatusCode:404}});
    return {Attributes:{TopicArn:topic.arn??i.TopicArn,Policy:JSON.stringify(topic.policy)}};
   }
@@ -1002,7 +1004,8 @@ export async function lifecycleBirthJourney({config=hostFixture().config,exercis
  setLifecycleClock(dependencies,undefined,0,ms=>evidence.waits.push(ms));
  const host=(args,branch=f)=>capture('manager-installation.mjs',args,
   ()=>runInstallationCommand(args,branch.dependencies),branch);
- const state=args=>capture('manager-state.mjs',args,()=>runStateCommand(args,{resolveInstallation:input=>resolveInstallation(input,dependencies)}));
+ const state=(args,branch=f)=>capture('manager-state.mjs',args,
+  ()=>runStateCommand(args,{resolveInstallation:input=>resolveInstallation(input,branch.dependencies)}),branch);
  async function capture(script,args,run,branch=f){
    const before=branch.provider.snapshot(),start=branch.audit.length;
    const command=['node','scripts/'+script,...args];
@@ -2344,12 +2347,13 @@ function installRoutingFixture(f,from,to,destinations={}){
  Object.assign(f.cloud.routingTopics??={},destinations);
 }
 
-function requireOnlyTopicReads(f,start,topic){
+function requireOnlyTopicReads(f,start,topic,simulatedStatus){
  const reads=routingReads(f.audit.slice(start));
  if(topic){
   assert(reads.length>0,'the verified operator reads the configured topic');
   assert(reads.every(row=>row.identity==='SELECTED_OPERATOR'&&row.action==='GetTopicAttributesCommand'&&
     row.input.TopicArn===topic));
+  if(simulatedStatus)assert(reads.every(row=>row.simulated_topic===simulatedStatus),simulatedStatus);
  }else assert.deepEqual(reads,[]);
  const clients=f.destroyed.filter(row=>row.kind==='SNS');
  if(topic)assert(clients.length>0);
@@ -2533,6 +2537,50 @@ async function assertRoutingHealth(readAlarmHealthFixture,f,installed,{status,to
  return {expected:{status,topic,code},routing,alarm_destinations:actionRows,...health};
 }
 
+function assertHeldRoutingOperation(branch,response,file,kind,phase){
+ const result=requireStatus(response,'partial');
+ const {owner,fence_id}=[...branch.provider.rows.values()].find(row=>row.SK==='CONTROL');
+ assert.equal(response.exitCode,1,response.stdout);
+ assert.equal(result.phase,phase,response.stdout);
+ assert.equal(owner.kind,kind);
+ assert.equal(result.operation,owner.id);
+ assert.equal(result.operation,JSON.parse(fs.readFileSync(file)).operation);
+ assert.equal(result.fence,owner.fence_id);
+ assert.equal(result.current_fence,fence_id);
+ assert.equal(result.state_fenced,'confirmed');
+ assert.deepEqual(result.effects,owner.effects);
+ assert.equal(installationState(branch).schedule_enabled,false);
+ assert.equal(installationState(branch).writes_enabled,false);
+ assert.equal(operationRow(branch,owner.id),undefined);
+ assert.equal(providerExecutions(branch.audit).length,1);
+ return result;
+}
+
+async function interruptedRoutingBootstrap(journey,driver,topic){
+ const {f,host,state}=journey,{build,output,deployment}=driver;
+ const target=build('routing-birth',routingConfig(f.config,topic));
+ const branch=fixtureCloud(target.manifest.canonical_config,{},target.manifest);
+ branch.name='routed bootstrap interrupted before committing controls';
+ setLifecycleClock(branch.dependencies,f.dependencies.now(),f.dependencies.monotonic());
+ const policy=routingPackageTemplate(target,topic);
+ const {account_id}=branch.config.manager.aws;
+ installRoutingFixture(branch,policy,policy,{[topic]:{policy:customerTopicPolicy(topic,routingArns(branch),account_id)}});
+ const flags=['--config',target.configPath,'--operator-profile','operator','--json'];
+ const receipt=output('routing-birth-receipt');
+ requireStatus(await host(['bind',...flags,'--manifest',target.manifestPath,'--stack',branch.stackId,'--output',receipt],branch),'bound');
+ assert.equal((await state(['init',...flags,'--installation',receipt],branch)).exitCode,0);
+ const start=branch.audit.length,file=output('routing-birth-held');
+ branch.dependencies.beforeLifecycleFinish=()=>{throw Error('fixture interruption before committing bootstrap');};
+ const interrupted=await host(['bootstrap',...flags,'--installation',receipt,...deployment,'--output',file],branch);
+ const result=assertHeldRoutingOperation(branch,interrupted,file,'bootstrap','commit_controls');
+ assert.equal(result.host,'stopped');
+ assert.equal(result.observed.schedule,'DISABLED');
+ assert.equal(result.observed.concurrency,0);
+ assert(result.effects.every(effect=>effect.state==='settled'));
+ assert.deepEqual(JSON.parse(interrupted.stdout),result);
+ return {package:policy.package,result:interrupted,reads:requireOnlyTopicReads(branch,start,topic,'present').map(routingAuditEntry)};
+}
+
 async function alarmRoutingJourney(journey){
  const {f,source,evidence}=journey;
  const driver=lifecycleDriver(journey),{initial,build,configure,output,run,assetFlags,deployment}=driver;
@@ -2600,7 +2648,8 @@ async function alarmRoutingJourney(journey){
  const healthA=await inspectRouting(f,installedA,{status:'verified',topic:primary});
  const currentA=healthA.json.outcome.current;
  assert(currentA.evidence_revision);
- permitted.primary={health:healthA,reads:requireOnlyTopicReads(f,auditStart,primary),revision:currentA.evidence_revision};
+ permitted.primary={health:healthA,reads:requireOnlyTopicReads(f,auditStart,primary,'present'),revision:currentA.evidence_revision};
+ deniedEvidence.interrupted_bootstrap=await interruptedRoutingBootstrap(journey,driver,primary);
 
  const transition=forkLifecycle(f,installedA,'primary to secondary rollback');
  transition.cloud.stack.RoleARN=executionRole;
@@ -2655,7 +2704,7 @@ async function alarmRoutingJourney(journey){
  }
  assert.equal(refusal.cloud.schedule.State,'ENABLED');
  assert.equal(refusal.cloud.concurrency,1);
- deniedEvidence.refusal.reads=requireOnlyTopicReads(refusal,deniedBefore.aws,secondary);
+ deniedEvidence.refusal.reads=requireOnlyTopicReads(refusal,deniedBefore.aws,secondary,'denied');
  deniedEvidence.refusal.state_unchanged=refusal.provider.snapshot()===deniedBefore.state;
  deniedEvidence.refusal.mutations=hostMutations(refusal.audit.slice(deniedBefore.aws));
 
@@ -2714,6 +2763,41 @@ async function alarmRoutingJourney(journey){
   deniedEvidence.lost_enable_schedule[format]=lost;
  }
 
+ const late=forkLifecycle(f,installedA,'Scheduler drift after stamped enablement');
+ installRoutingFixture(late,packageFor.primary,packageFor.secondary);
+ const createClient=late.dependencies.makeClient;
+ let driftedAt=null;
+ late.dependencies.makeClient=(kind,options)=>{
+  const client=createClient(kind,options);
+  if(kind!=='Scheduler')return client;
+  return {...client,send(command,sendOptions){
+   if(command.constructor.name==='GetScheduleCommand'&&lifecycleRow(late).owner?.verified_enablement&&!driftedAt){
+    assert.equal(late.cloud.schedule.State,'ENABLED');
+    driftedAt=late.audit.length;
+    late.cloud.schedule.State='DISABLED';
+   }
+   return client.send(command,sendOptions);
+  }};
+ };
+ const lateFile=output('routing-drift-after-enablement');
+ const lateRead=await run('configure',installedA,[...assetFlags(targetB),...deployment,'--output',lateFile],
+  {configPath:targetB.configPath,branch:late,human:true});
+ const lateResult=assertHeldRoutingOperation(late,lateRead,lateFile,'configure','verify_target');
+ assert.equal(lateResult.code,'HOST_UNCONFIRMED');
+ assert.equal(lateResult.host,'unconfirmed');
+ assert.equal(lateResult.observed,undefined);
+ assert(driftedAt!==null);
+ assert.equal(late.cloud.schedule.State,'DISABLED');
+ assert.equal(late.cloud.concurrency,1);
+ assert(lateResult.effects.filter(effect=>effect.name.startsWith('enable-')).every(effect=>effect.state==='settled'));
+ assert(!hostMutations(late.audit).some(row=>row.action==='PutMetricAlarmCommand'));
+ assert.match(lateRead.stdout,/partial \(verify_target\)/);
+ assert.match(lateRead.stdout,/Host protection — unconfirmed/);
+ assert.doesNotMatch(lateRead.stdout,/Observed host controls/);
+ assert(lateRead.stdout.includes(lateResult.operation)&&lateRead.stdout.includes(JSON.stringify(lateResult.effects)));
+ deniedEvidence.late_target_drift={result:lateRead,schedule_read:late.audit[driftedAt].action,
+  reads:requireOnlyTopicReads(late,0,secondary,'present').map(routingAuditEntry)};
+
  const probe=forkLifecycle(f,installedA,'counted routing and alarm read responses');
  probe.cloud.routingOperatorPolicy=packageFor.primary.policies.operator;
  const exactDeny={...providerTopics[primary].policy.Statement[0],Effect:'Deny'};
@@ -2727,7 +2811,9 @@ async function alarmRoutingJourney(journey){
  ];
  for(const [name,response,status,code] of checks){
   probe.cloud.routingTopics[primary]=response;
+  const start=probe.audit.length;
   deniedEvidence[name]=await inspectRouting(probe,installedA,{status,topic:primary,code});
+  requireOnlyTopicReads(probe,start,primary,response?.status??(response?'present':'missing'));
  }
  probe.cloud.routingTopics[primary]=providerTopics[primary];
  deniedEvidence.unexpected_alarm_response={};
