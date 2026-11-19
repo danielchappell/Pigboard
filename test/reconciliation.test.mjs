@@ -35,3 +35,17 @@ test('conditional writes preserve all four actions and require current verified 
     assert.equal(commands.at(-1).outcome.data.records[0].outcome,'pending',id);
   }
 });
+
+test('verified lifecycle maintenance stop authorizes the original named decision before a separate restart',async()=>{
+  const {runLifecycleFixture}=await import('../scripts/test-aws-manager.mjs');
+  const {commands,sender}=await runLifecycleFixture('R1-16-H01');
+  const stop=commands.find(({outcome})=>outcome?.proof===true);
+  const reconcile=commands.find(({command})=>command[2]==='reconcile');
+  assert.equal(reconcile.exitCode,0,reconcile.stdout);
+  assert(commands.indexOf(stop)<commands.indexOf(reconcile));
+  assert.equal(reconcile.state_before.find(([,row])=>row.kind==='installation')[1].writes_enabled,false);
+  const decision=reconcile.state_after.find(([,row])=>row.schema==='pigboard-operator-decision/v1')?.[1];
+  assert(decision);
+  assert.equal(decision.attempt_id,sender.decision_input.attempt_id);
+  assert.equal(commands.at(-1).outcome.status,'configured');
+});

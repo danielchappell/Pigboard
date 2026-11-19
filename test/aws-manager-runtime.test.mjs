@@ -89,3 +89,34 @@ test('PGB-88 ordinary apply host reports confirmed same-PR repair processing',as
  assert.equal(state_calls.find(call=>call.name==='finalize').result.status,'confirmed');
  assert.equal(worker_calls,0);
 });
+
+test('lifecycle runtime rejects a same-name replacement before State or Jira acquisition',async()=>{
+ const {packet}=await import('../scripts/test-manager-apply.mjs');
+ const {fixtureCloud}=await import('../scripts/test-aws-manager.mjs');
+ const {runApply}=await import('../lib/aws/manager-lambda.mjs');
+ const {hostConfig,sha256}=await import('../lib/aws/installation.mjs');
+ const {lifecycleManifestFields,LIFECYCLE_TABLE_ID_ENV}=await import('../lib/aws/template.mjs');
+ const config=packet.config,configText=JSON.stringify(config);
+ const generation='00000000-0000-4000-8000-000000000003';
+ const manifest={...lifecycleManifestFields({installationId:config.manager.installation_id,generation}),
+  runtime:'nodejs24.x',sender:true,canonical_config:config,configuration_digest:hostConfig(configText).digest,
+  source_revision:'a'.repeat(40),installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,
+  installation_generation:generation,zip_digest:sha256('lifecycle runtime fixture')};
+ const f=fixtureCloud(config,{initial:false},manifest);
+ const environment={...f.environment,[LIFECYCLE_TABLE_ID_ENV]:f.cloud.table.TableId};
+ let describes=0,acquisitions=0;
+ const result=await runApply({operation:'apply'},{configText,manifest,environment,
+  describeTable:async()=>{describes++;return {...f.cloud.table,TableId:'00000000-0000-4000-8000-000000000099'};},
+  createState:()=>{acquisitions++;},secretFactory:()=>{acquisitions++;}});
+ assert.equal(result.code,'TABLE_CONTINUITY_UNVERIFIED');
+ assert.equal(result.writes,0);
+ assert.equal(describes,1);
+ assert.equal(acquisitions,0);
+});
+
+test('lifecycle removal preserves the original table and reports unobserved resource outcomes',async()=>{
+ const {runLifecycleFixture}=await import('../scripts/test-aws-manager.mjs');
+ const {removal}=await runLifecycleFixture('R1-16-H02');
+ assert.equal(removal.terminal.resources.find(row=>row.logical==='StateTable').observation,'retained');
+ assert.equal(removal.terminal.retention_complete,false);
+});

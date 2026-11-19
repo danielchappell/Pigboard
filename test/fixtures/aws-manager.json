@@ -1,4 +1,7 @@
 {
+  "lifecycle": {
+    "restored_table_id": "00000000-0000-4000-8000-000000000099"
+  },
   "config": {
     "schema": "pigboard-config/v1",
     "jira": {

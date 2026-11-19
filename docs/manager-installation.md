@@ -68,10 +68,16 @@ See [named State inspection](manager-state.md) for the command and safe outcomes
 
 ## Build and deploy
 
-Run from the pinned checkout with initial controls all disabled:
+For a new installation that needs verified drain, upgrades and removal, use
+`--lifecycle` when you build the first package and each later package for
+that installation. Start with scheduling and writes disabled. Keep the
+original manifest and receipt. They identify the installation across later
+package changes. Use the original pinned tooling for an older installation.
+
+Run from the pinned checkout:
 
 ```sh
-node scripts/package-manager.mjs --config /absolute/customer.json --revision FULL_COMMIT --output /absolute/new-package
+node scripts/package-manager.mjs --lifecycle --config /absolute/customer.json --revision FULL_COMMIT --output /absolute/new-package
 ```
 
 The new directory contains `manager.zip`, `manifest.json`, `manifest.sha256` and
@@ -82,7 +88,9 @@ No source branch is resolved later. Packaging rejects dirty source, missing pinn
 dependencies and existing output directories. JSON results name the output or a
 safe failure code.
 
-Generated physical names use `pigboard-`, up to 12 readable characters from the
+Lifecycle packages derive names from the installation ID and its original generation. Read the names from the generated package and stack.
+
+For packages built without `--lifecycle`, generated physical names use `pigboard-`, up to 12 readable characters from the
 installation ID, then a hyphen and the first 32 hexadecimal SHA256 characters of
 the complete unchanged ID. The base is at most 54 characters; the longest role
 name is at most 64. All six resources and their scoped policy targets use this
@@ -90,14 +98,14 @@ same derivation. It is deterministic and collision-resistant, not proof of AWS
 resource availability. Read actual names from generated outputs and receipts;
 do not reconstruct or copy them into canonical configuration.
 
-This pre-release correction changes every generated physical name, including
+An earlier resource-naming change affected every generated physical name, including
 short IDs. It applies to newly generated packages. For an existing installation,
 keep its original pinned package, receipt and matching source/tooling together
 for inspection and stop. New strict tooling rejects old named resources; it has
 no legacy-name fallback or migration path. Do not apply the new template to an
 old stack to make it match: it could request replacements. Do not rewrite receipts,
 reinitialize or delete retained State. No deployed-installation inventory has
-been performed, and the controller still rejects source migration/replacement.
+been performed by these local checks. An older installation keeps its original table and records.
 The [reviewed host-tooling repair](#reviewed-host-tooling-repair) below is limited
 to compatible original resources; it cannot make legacy names compatible.
 
@@ -308,6 +316,10 @@ Live acceptance of this continuation remains separate from local simulations.
 
 ## Deliberate scheduling and stop
 
+The commands below describe the original package format. For an installation
+created with `--lifecycle`, follow the lifecycle procedure below and preserve its
+package family and compatible predecessor on every same-pin rebuild.
+
 To schedule preview, change only canonical `manager.controls.schedule_enabled`,
 keep mode preview and writes false, then rebuild the same clean source with the
 original generation using `--generation ORIGINAL_GENERATION`. Upload that exact
@@ -406,13 +418,76 @@ intent later, set desired controls disabled and use the supported control rebuil
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
 
+### Verify drain on a lifecycle installation
+
+After the first bind and State initialization, bootstrap the disabled installation
+using both configured profiles. The operator records the operation. The deployer
+pins the original physical table ID in the Lambda configuration. Keep the birth
+receipt for inspection and use the new receipt after bootstrap succeeds.
+
+```sh
+node scripts/manager-installation.mjs bootstrap --config initial.json --installation birth.json --operator-profile customer-operator --deployer-profile customer-deployer --output bootstrapped.json --json
+```
+
+An emergency stop fences admission. When another operation owns the host, inspect
+that operation before attempting a finishing stop. The result distinguishes the
+State fence from the observed schedule and concurrency. An uncertain host
+request can leave the installation held. Stop cannot cancel a Jira request that
+has already been sent or a worker that has already started.
+
+To obtain a verified drain, use the current source pin and original generation
+to build a lifecycle package from the requested maintenance configuration. Set
+scheduling and writes off and maintenance on. Preserve its lineage on each
+same-pin rebuild: if the current package declares a previous revision, pass
+that same commit as `--compatible-from`. This also applies to later restart
+packages. Upload the exact versioned maintenance asset. Apply the control change,
+then use its new receipt to stop:
+
+```sh
+node scripts/manager-installation.mjs configure --config maintenance.json --installation current-receipt.json --manifest maintenance-package/manifest.json --asset maintenance-asset.json --operator-profile customer-operator --deployer-profile customer-deployer --output maintenance-receipt.json --json
+node scripts/manager-installation.mjs stop --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --json
+```
+
+A completed drain requires a disabled schedule, zero Lambda reserved concurrency,
+the full measured drain interval, and a fresh check of the same physical resources
+and controls. A protective stop alone leaves settlement held. Keep the returned
+operation ID. A later host change invalidates the recorded drain.
+
+### Upgrade the same installation
+
+Build the new package at its exact reviewed commit, with the current canonical
+config, the generation from its installation receipt, and the reviewed predecessor
+commit. Upload its versioned asset using the customer’s existing process.
+
+```sh
+node scripts/package-manager.mjs --lifecycle --config current.json --revision NEW_COMMIT --generation ORIGINAL_GENERATION --compatible-from PREVIOUS_COMMIT --output upgrade-package
+node scripts/manager-installation.mjs upgrade-preview --config current.json --installation current-receipt.json --manifest upgrade-package/manifest.json --asset upgrade-asset.json --operator-profile customer-operator --output upgrade-preview.json --json
+node scripts/manager-installation.mjs upgrade --config current.json --installation current-receipt.json --manifest upgrade-package/manifest.json --asset upgrade-asset.json --preview upgrade-preview.json --operator-profile customer-operator --deployer-profile customer-deployer --output successor.json --json
+```
+
+Preview checks the retained inventory. Apply repeats the checks under an
+installation-wide operation and verifies the deployed result. Keep the prior and
+successor receipts. A compatible update preserves pending attempts, members
+and history on the same physical table. Unknown versions, incomplete inventory
+or a restored table keep admission held. Re-enable is a separate, authorized
+configure operation. It requires compatible State and verified outcomes for
+any attempts that required reconciliation.
+
+If an update is interrupted, keep the original receipt and operation ID.
+Use `inspect-operation` for read-only evidence. Use `finish-operation` when the
+provider outcome is confirmed and the CLI can record or re-export the result.
+Do not repeat an uncertain provider action. If an emergency stop superseded a
+verified update, its restricted successor receipt permits `maintenance-only`
+with both profiles. This can establish matching disabled controls on the actual
+successor. Run a fresh strict stop with the resulting maintenance receipt before
+reconciling. Run `node scripts/manager-installation.mjs --help` for the required
+files and flags for these commands.
+
 ### Settlement and stop evidence
 
 [Inspect and reconcile a named attempt](manager-state.md) explains the operator
 command. New settlement requires a separately verified, still-current completed
-stop for the original protected installation. The emergency stop above cannot
-supply that proof. The installed settlement command keeps new decisions held
-until the PGB-86 lifecycle producer is available. Keep the installation disabled
+stop for the original protected installation. Use the verified drain procedure on an installation originally provisioned with lifecycle safeguards. An older installation can report protective stop observations and retains its holds. Keep the installation disabled
 while investigating pending work. A drain cannot cancel an already-issued Jira
 request. Some pending attempts cannot safely be settled with the available facts.
 
@@ -422,10 +497,10 @@ same settings. A current stop observation binds the installation, AWS stack,
 physical table, completed stop UUID, fence revision, and the configuration,
 package, resource, and bounds digests. Historical decisions can be verified
 without current stop evidence. A verified decision supplies evidence for
-PGB-86 to consume. Enabling still needs its separate lifecycle checks and
+a later safe restart. Enabling still needs its separate lifecycle checks and
 operator authorization.
 
-For PGB-86 implementers, `lib/aws/reconcile-context.mjs` defines the versioned
+For implementers, `lib/aws/reconcile-context.mjs` defines the versioned
 digest inputs. The resource hash is SHA-256 over canonical JSON containing the
 resource version tag followed by the bound scope, Scheduler route, Lambda
 route, and configuration/package objects, in that order. The bounds hash uses
@@ -449,6 +524,22 @@ credential or workflow changes. Customer grants can be broader than requested.
 
 ## Remove and recover
 
+On a lifecycle installation, first obtain a verified drain with the current
+maintenance receipt. Review what the deployed template will retain and what
+the customer owns separately. If removal is authorized, use the saved preview:
+
+```sh
+node scripts/manager-installation.mjs remove-preview --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --output removal-preview.json --json
+node scripts/manager-installation.mjs remove --config maintenance.json --installation maintenance-receipt.json --preview removal-preview.json --operator-profile customer-operator --deployer-profile customer-deployer --output removal-result.json --json
+```
+
+Keep the original receipt, operation ID and removal report. Inspect any partial
+result before acting again. The retained State table, customer secrets, versioned
+artifacts and any retained logs can continue to incur charges. Check the
+per-resource results for what was actually retained, deleted or unobservable.
+
+For the original manual removal procedure on an older installation:
+
 Stop and inspect first. Stack deletion retains the original operational table;
 replacement also retains it. Do not delete retained state with unresolved attempts
 or use a replacement to bypass it. Log, secret and artifact ownership and their
@@ -458,11 +549,22 @@ cleanup, automatic repair, migration or rollback engine. Keep writes off and use
 inspection for incompatible configuration/state until the authorized release or
 operator recovery decision is established.
 
-For a source-only simulation, prepare Node 24 and run
-`node scripts/test-aws-manager.mjs --all --output /absolute/new-evidence`.
-It executes exactly H01/H02 with dummy providers and loopback HTTPS, records the
-source/snapshot pins, outputs, commands and audits, then removes disposable fixtures.
-Human acceptance and live IAM remain pending; no cloud resource is deployed.
+### Run the local lifecycle cases
+
+From the reviewed checkout with its prepared dependencies and Node 24, run each
+case with a new output directory:
+
+```sh
+node scripts/test-aws-manager.mjs --case R1-16-H01 --output /absolute/new-upgrade-evidence
+node scripts/test-aws-manager.mjs --case R1-16-H02 --output /absolute/new-removal-evidence
+```
+
+H01 exercises an upgrade with pending work, recovery and a guarded restart.
+H02 exercises stop, drain and removal. Each packet records the tested revision,
+commands, simulated provider observations and outcome. Keep the packet for human
+review. The simulations use dummy credentials and local fixtures. Live AWS
+permissions and designated-human acceptance require separate verification.
+The existing `--all` flag runs the two original R1-13 installation cases.
 
 ## Complete disabled manager example
 

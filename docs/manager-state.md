@@ -48,8 +48,7 @@ adapter uses `installation#<installation_id>` as the business partition key and 
 `M#`, `A#` sort-key prefixes for the four business records. New transition
 preparations also retain a native publication item at `N#<attempt_uuid>`. Inventory
 and ordinary record listings select business record prefixes. Protected operator
-origin and decisions use a separate partition. Installation inventory work under
-PGB-86 must recognize and preserve the native publication and protected records.
+origin and decisions use a separate partition. Lifecycle inventory includes native publication and protected records. The lifecycle operator uses a separate protected partition for the current operation and its readback.
 The PGB-83 host generates and verifies this layout, retains the table on stack
 deletion or replacement and refuses an empty replacement as authority. This API provisions
 nothing. It rechecks the table ARN, active state and emptiness before a conditional
@@ -350,9 +349,7 @@ Keep the original sending receipt when config or package changes. See
 
 New decisions require a fresh installation with protection verified from its
 original creation, disabled scheduling and writes, maintenance on, zero Lambda
-reserved concurrency and independently verified completed stop evidence. **This
-package holds new installed decisions while the PGB-86 stop producer is
-unavailable.** A matching current setting, an emergency stop or elapsed wall time
+reserved concurrency and independently verified completed stop evidence. Use the [verified drain procedure](manager-installation.md#verify-drain-on-a-lifecycle-installation) for a lifecycle installation. Earlier installations stay held. A matching current setting, an emergency stop or elapsed wall time
 alone cannot establish the stop. Draining cannot cancel a Jira request already
 sent. Ambiguous attempts may remain held.
 
@@ -436,7 +433,7 @@ entire closed request. The original Jira request and publication have separate
 digests. Readback requires a coherent origin, decision and attempt from the same
 physical table and keeps the original actor distinct from the current session.
 
-PGB-86 owns creating and invalidating completed stops. Its producer can use the
+The installation CLI creates and invalidates completed stops. It uses the
 [versioned projection](../lib/aws/reconcile-context.mjs) to generate its stop
 commitments. The resources digest hashes a canonical array containing the
 `pigboard-stop-resources/v1` tag, physical installation scope, Scheduler routing

@@ -13,6 +13,95 @@ import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
 const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
+test('fresh lifecycle package declares isolated resources and a disabled external table pin', async () => {
+ const {config} = fixture(), text=JSON.stringify(config);
+ const {lifecycleManifestFields,installationResourceMap} = await import('../lib/aws/template.mjs');
+ const generation='33ce7473-f8b5-4cdd-aeba-f2e907235014';
+ const revision='a'.repeat(40), previousRevision='b'.repeat(40);
+ const fields=lifecycleManifestFields({installationId:'fixture',generation,previousRevision});
+ const manifest={...fields,source_revision:revision,configuration_digest:hostConfig(text).digest,installation_id:'fixture',domain_id:'fixture-domain',installation_generation:generation,zip_digest:sha256('zip'),runtime:'nodejs24.x',sender:true,canonical_config:config};
+ const template=synthesizeTemplate(text,manifest), {Resources:r,Parameters:p}=template;
+ const map=installationResourceMap('fixture',manifest), base=map.physical.function_name;
+ assert.deepEqual(manifest.resource_map,map);
+ assert.equal(manifest.compatibility.previous_revision,previousRevision);
+ assert.equal(manifest.compatibility.read.config,'pigboard-config/v1');
+ assert.deepEqual(manifest.compatibility.read,manifest.compatibility.write);
+ assert.deepEqual(Object.keys(r).filter(key=>key!=='AsyncInvocation').sort(),[...manifest.logical_resources].sort());
+ assert.equal(r.Function.Properties.FunctionName,base);
+ assert.equal(r.StateTable.Properties.TableName,map.physical.table_name);
+ assert.equal(r.RuntimeRole.Properties.RoleName,map.physical.runtime_role);
+ assert.equal(r.SchedulerRole.Properties.RoleName,map.physical.scheduler_role);
+ assert.equal(r.LogGroup.Properties.LogGroupName,map.physical.log_group);
+ assert.notEqual(base,installationResourceBase('fixture'));
+ assert.notEqual(base,installationResourceMap('fixture',{...manifest,installation_generation:'b72ea154-320d-4af4-93ad-8fd3892edf28'}).physical.function_name);
+ assert(!Object.hasOwn(r,'Schedule'));
+ assert.equal(r.LifecycleSchedule.Properties.Name,map.physical.schedule_name);
+ assert.equal(r.LifecycleSchedule.Properties.State,'DISABLED');
+ assert.equal(r.Function.Properties.Environment.Variables.PB_WRITES_ENABLED,'false');
+ assert.deepEqual(r.Function.Properties.Environment.Variables.PB_ORIGINAL_TABLE_ID,{Ref:'OriginalTableId'});
+ assert.equal(p.OriginalTableId.Default,'');
+ assert.equal(p.QuiescenceConcurrency.Default,1);
+ assert.equal(r.StateTable.DeletionPolicy,'Retain');
+ assert.equal(r.StateTable.UpdateReplacePolicy,'Retain');
+ assert.equal(r.LogGroup.DeletionPolicy,'Delete');
+ const table='arn:aws:dynamodb:eu-west-1:123456789012:table/'+map.physical.table_name;
+ const {operator_policy:operator,configure_deployer_policy:deployer}=template.Metadata.Pigboard;
+ const runtime=r.RuntimeRole.Properties.Policies[0].PolicyDocument;
+ const lifecycle={leadingKeys:['operator-lifecycle#fixture']};
+ assert(policyPermits(operator,'dynamodb:GetItem',table,lifecycle));
+ assert(policyPermits(operator,'dynamodb:PutItem',table,{...lifecycle,enclosing:'TransactWriteItems'}));
+ assert(!policyPermits(operator,'dynamodb:PutItem',table,lifecycle));
+ assert(!policyPermits(runtime,'dynamodb:GetItem',table,lifecycle));
+ assert(!policyPermits(deployer,'dynamodb:GetItem',table,lifecycle));
+ assert(!JSON.stringify(template).includes('dynamodb:DeleteTable'));
+ assert.throws(()=>synthesizeTemplate(text,{...manifest,resource_map:{...map,physical:{...map.physical,table_name:'other-table'}}}),{code:'PACKAGE_MISMATCH'});
+ assert.throws(()=>synthesizeTemplate(text,{...manifest,compatibility:{...manifest.compatibility,read:{...manifest.compatibility.read,work:['pigboard-epic/v2']}}}),{code:'PACKAGE_MISMATCH'});
+});
+
+test('copied fresh lifecycle package refuses a direct apply before original table continuity', async () => {
+ const {snapshotPackage}=await import('../scripts/test-aws-manager.mjs');
+ const {runPackageCommand}=await import('../scripts/package-manager.mjs');
+ const {packet}=await import('../scripts/test-manager-apply.mjs');
+ const config=structuredClone(packet.config);
+ config.manager.controls.schedule_enabled=false;
+ config.manager.controls.writes_enabled=false;
+ const pinned=snapshotPackage({config});
+ try{
+  const output=join(pinned.temp,'lifecycle-build');
+  // Use the snapshotted command entry point exactly as a pinned operator would.
+  execFileSync(process.execPath,[join(pinned.source,'scripts/package-manager.mjs'),'--lifecycle','--config',join(pinned.temp,'config.json'),'--revision',pinned.snapshot_revision,'--output',output],{stdio:['ignore','ignore','inherit']});
+  const manifest=JSON.parse(readFileSync(join(output,'manifest.json'),'utf8')), payload=join(output,'payload');
+  const invalid=runPackageCommand(['--lifecycle','--lifecycle']);
+  assert.equal(JSON.parse(invalid.stdout).code,'INVALID_INPUT');
+  assert.equal(manifest.schema,'pigboard-manager-package/v2');
+  assert.equal(manifest.compatibility.previous_revision,null);
+  const text=readFileSync(join(payload,'config/manager.json'),'utf8'), embeddedText=readFileSync(join(payload,'package-manifest.json'),'utf8'), embedded=JSON.parse(embeddedText);
+  assert.deepEqual(embedded.resource_map,manifest.resource_map);
+  assert.deepEqual(embedded.compatibility,manifest.compatibility);
+  assert.equal(sha256(embeddedText),manifest.payload_hashes['package-manifest.json']);
+  assert.equal(sha256(readFileSync(join(output,'manager.zip'))),manifest.zip_digest);
+  const template=JSON.parse(readFileSync(join(output,'template.json'),'utf8'));
+  const a=config.manager.aws, tableName=manifest.resource_map.physical.table_name, tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`;
+  const env={...template.Resources.Function.Properties.Environment.Variables,PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/example`};
+  delete env.PB_ORIGINAL_TABLE_ID;
+  const {runApply}=await import(pathToFileURL(join(payload,'lib/aws/manager-lambda.mjs')).href);
+  const original='33ce7473-f8b5-4cdd-aeba-f2e907235014';
+  for(const testCase of [
+   {name:'missing pin',pin:undefined,observed:original,reads:0,state:0},
+   {name:'restored table',pin:original,observed:'b72ea154-320d-4af4-93ad-8fd3892edf28',reads:1,state:0},
+   {name:'original table',pin:original,observed:original,reads:1,state:1}
+  ]){
+   let reads=0, state=0, secrets=0;
+   const result=await runApply({operation:'apply'},{configText:text,manifest:embedded,environment:{...env,PB_ORIGINAL_TABLE_ID:testCase.pin},
+    describeTable:async binding=>{reads++;assert.equal(binding.table_arn,tableArn);return {TableArn:tableArn,TableId:testCase.observed,TableStatus:'ACTIVE'};},
+    createState:()=>{state++;throw new Error('End simulated state setup');},
+    secretFactory:()=>{secrets++;throw new Error('Unexpected secret access');}});
+   assert.equal(result.code,testCase.state?'APPLY_UNAVAILABLE':'TABLE_CONTINUITY_UNVERIFIED',testCase.name);
+   assert.equal(result.writes,0,testCase.name);
+   assert.deepEqual({reads,state,secrets},{reads:testCase.reads,state:testCase.state,secrets:0},testCase.name);
+  }
+ }finally{pinned.cleanup();}
+});
 test('disabled package synthesizes scoped read-only runtime and retained bounded host',()=>{
  const {config}=fixture(),text=JSON.stringify(config),{digest}=hostConfig(text),manifest={schema:'pigboard-manager-package/v1',source_revision:'a'.repeat(40),configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:'fixture-generation',zip_digest:sha256('zip'),canonical_config:config};
  const t=synthesizeTemplate(text,manifest),r=t.Resources;assert.equal(r.Schedule.Properties.State,'DISABLED');assert.equal(r.Function.Properties.ReservedConcurrentExecutions.Ref,'QuiescenceConcurrency');assert.equal(t.Parameters.QuiescenceConcurrency.Default,1);assert.equal(r.Function.Properties.Runtime,'nodejs24.x');assert.equal(r.AsyncInvocation.Properties.Qualifier,'$LATEST');assert.equal(r.AsyncInvocation.Properties.MaximumRetryAttempts,0);assert.equal(r.AsyncInvocation.Properties.MaximumEventAgeInSeconds,60);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumRetryAttempts,0);assert.equal(r.Schedule.Properties.Target.RetryPolicy.MaximumEventAgeInSeconds,60);assert.equal(r.StateTable.DeletionPolicy,'Retain');assert.equal(r.StateTable.UpdateReplacePolicy,'Retain');assert.equal(r.LogGroup.Properties.RetentionInDays,14);
