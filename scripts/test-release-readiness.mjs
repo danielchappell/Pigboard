@@ -26,7 +26,7 @@ Developer assertions and actual readiness results are retained separately; human
 // Exercise the production subprocess against the same pin as the package.
 // With no external bundle (normal CI), C02 deliberately reports missing setup.
 export async function checkSavedAlarmSnapshot({ directory, checkout, revision, release, configPath,
-  installationPath, manifestPath, health, variant, commands }) {
+  installationPath, manifestPath, health, variant, diagnostic, commands }) {
   const expected = fixture.saved_alarm_readiness.variants[variant];
   await mkdir(directory, { mode: 0o700 });
   const inputs = {};
@@ -44,6 +44,7 @@ export async function checkSavedAlarmSnapshot({ directory, checkout, revision, r
   const args = [entry, '--revision', revision, '--release', release ?? ciRelease,
     ...Object.entries(inputs).flatMap(([name, filename]) => [`--${name}`, filename])];
   const record = { variant, expected, release: release ? 'prepared_external' : 'not_supplied_in_ci', inputs, invocations: {} };
+  if (diagnostic) record.diagnostic = diagnostic;
   commands.push(record);
   for (const mode of ['human', 'json']) {
     const argv = mode === 'json' ? [...args, '--json'] : args;
@@ -75,11 +76,18 @@ export async function checkSavedAlarmSnapshot({ directory, checkout, revision, r
     assert.equal(report.exit_code, 2);
     assert.equal(namedCheck(report, 'C03_CONFIGURATION')?.status, 'PASS', json.stdout);
     assert.equal(namedCheck(report, 'C01_INTERNAL'), undefined, json.stdout);
-    assert.deepEqual(saved.observed, { alarm: 'measured_budget', source: 'actual', field: 'Dimensions' });
+    assert.equal(report.checks.filter(check => check.id === 'C05_HEALTH').length, 1);
+    assert.equal(namedCheck(report, 'C06_OBSERVATIONS')?.status, 'UNVERIFIED');
+    const location = diagnostic ?? { alarm: 'measured_budget', source: 'actual', field: 'Dimensions' };
+    assert.deepEqual(saved.observed, location);
     assert.match(human.stdout, /Pig Boss release readiness: input_error \(exit 2\)/);
     assert.match(human.stdout, /PASS C03_CONFIGURATION:/);
     assert.match(human.stdout, /ERROR C05_HEALTH: HEALTH_INPUT_INVALID\./);
+    assert(human.stdout.includes(JSON.stringify(location)), human.stdout);
     if (release) assert.match(human.stdout, /PASS C02_RELEASE:/);
+    if (diagnostic) for (const { stdout } of [human, json]) {
+      assert(!stdout.includes('\\ud800') && !stdout.includes('\ud800'), stdout);
+    }
   }
   if (expected.alarm_code) {
     const row = saved.observed.alarm_evidence.alarms.find(alarm => alarm.key === 'measured_budget');

@@ -3015,6 +3015,11 @@ async function savedAlarmOutcomes(journey,{compare,readHealth}){
  evidence.health={matching,inaccessible};
  const inputs={matching:original,contradictory,inaccessible:inaccessible.json.outcome,malformed};
  for(const [variant,health] of Object.entries(inputs))await compare(variant,initial,health,{explicit:variant!=='matching'});
+ const malformedActions=structuredClone(original);
+ const actionRow=malformedActions.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+ actionRow.observed_actions.AlarmActions=['\ud800'];
+ await compare('malformed',initial,malformedActions,{explicit:true,
+  diagnostic:{alarm:'measured_budget',source:'observed_actions',field:'AlarmActions'}});
 }
 
 async function checkSavedAlarmLineage(journey,check){
@@ -3196,10 +3201,21 @@ export async function runSavedAlarmFixture(id,{directory,release}={}){
   if(release)assert.equal(source.source_dirty,'','Use a clean checkout for release-bound contributor evidence.');
   const [{checkSavedAlarmSnapshot,compareRetainedAlarmRemoval,checkSavedFixtureEvidence},{readAlarmHealthFixture,scanFixture}]=await Promise.all([
    import('./test-release-readiness.mjs'),import('./test-manager-health.mjs')]);
-  const compare=(variant,installed,health,{explicit})=>checkSavedAlarmSnapshot({variant,health,release,
-   directory:path.join(directory??source.temp,variant),checkout:source.source,revision:source.snapshot_revision,
-   configPath:installed.configPath,installationPath:installed.installationPath,
-   manifestPath:explicit?installed.manifestPath:undefined,commands:evidence.ready_comparisons});
+  const compare=(variant,installed,health,{explicit,diagnostic})=>{
+   let target=path.join(directory??source.temp,variant),commands=evidence.ready_comparisons;
+   if(variant==='malformed'){
+    if(!diagnostic)fs.mkdirSync(target,{mode:0o700});
+    else {
+     const malformed=commands.find(row=>row.variant===variant);
+     malformed.additional_diagnostics=[];
+     commands=malformed.additional_diagnostics;
+    }
+    target=path.join(target,diagnostic?'observed-action-list':'definition-dimension');
+   }
+   return checkSavedAlarmSnapshot({variant,health,release,diagnostic,directory:target,
+    checkout:source.source,revision:source.snapshot_revision,configPath:installed.configPath,
+    installationPath:installed.installationPath,manifestPath:explicit?installed.manifestPath:undefined,commands});
+  };
   if(id==='R1-23-H03'){
    await savedAlarmOutcomes(journey,{compare,readHealth:readAlarmHealthFixture});
    if(!release)await checkSavedAlarmLineage(journey,checkSavedFixtureEvidence);
