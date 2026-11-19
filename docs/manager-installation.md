@@ -135,7 +135,9 @@ creation. Runtime reads and writes with item keys use only the normal
 `installation#<installation_id>` partition. The operator can put or update
 normal records in transactions and can put records in the separate
 `operator-decision#<installation_id>` partition only in a transaction. The
-generated policies grant no delete or protected update. The State command
+generated runtime and decision-record grants exclude delete and protected update.
+Lifecycle packages also give the operator scoped transactional access to the
+separate lifecycle partition for dispatch ownership and immutable outcomes. The State command
 supplies the insert-if-absent condition for protected entries. IAM constrains the
 partition, item action and transaction context.
 
@@ -220,8 +222,20 @@ commands:
 ```sh
 node scripts/manager-installation.mjs bind --config /absolute/customer.json --manifest /absolute/new-package/manifest.json --stack EXACT_STACK_ARN --operator-profile customer-operator --output /absolute/installation.json --json
 node scripts/manager-state.mjs init --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --json
-node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --kind installation --json
 ```
+
+For a new `--lifecycle` package, keep that first receipt as the birth receipt.
+After confirmed initialization, bootstrap with the two configured roles, then
+inspect using the resulting receipt:
+
+```sh
+node scripts/manager-installation.mjs bootstrap --config /absolute/customer.json --installation /absolute/installation.json --operator-profile customer-operator --deployer-profile customer-deployer --output /absolute/bootstrapped.json --json
+node scripts/manager-state.mjs inspect --config /absolute/customer.json --installation /absolute/bootstrapped.json --operator-profile customer-operator --kind installation --json
+```
+
+Bootstrap pins the original physical table ID. It leaves the schedule disabled
+and Lambda concurrency at zero. On the original package format, ordinary
+inspection instead uses the birth receipt directly after initialization.
 
 Fresh initialization requires the original `CREATE_COMPLETE` stack and a complete
 first page of creation events. The original `RuntimeRole` and `StateTable` creation
@@ -253,7 +267,14 @@ legacy installations. Verified operator decision readback requires matching
 original events, policy and physical table identity. Missing or incomplete
 historical evidence withholds operator provenance.
 
-Invoke the generated function name from stack outputs, using the operator profile:
+For an authorized write-free preview, invoke the generated function name from
+stack outputs with the operator profile. On a fresh lifecycle package the direct
+preview can run immediately after confirmed init, while birth concurrency is
+one, *before* the bootstrap step above. After bootstrap, the function is
+stopped. To schedule preview later, use preview mode, enable scheduling, keep
+writes disabled and explicitly configure the same pinned lifecycle package as shown under
+[Verify drain on a lifecycle installation](#verify-drain-on-a-lifecycle-installation).
+For a direct preview while the function has available concurrency, run:
 
 ```sh
 aws lambda invoke --profile customer-operator --function-name GENERATED_FUNCTION_NAME --cli-binary-format raw-in-base64-out --payload '{"operation":"preview"}' /absolute/preview.json
@@ -278,6 +299,8 @@ two before output reservation or service access. Preserve partial results and in
 installation; do not repeat an uncertain write to make output look complete.
 
 ### Reviewed host-tooling repair
+
+This historical procedure applies to the original package format.
 
 A reviewed correction to the local init tool can use the original deployed package
 and receipt when resource names, binding/schema and locked dependency contracts
@@ -370,6 +393,9 @@ untrusted/incomplete. A replacement path is left untouched.
 
 ### Partial configure recovery
 
+This procedure applies to the original package format. For a lifecycle
+installation, inspect the protected operation by UUID as described below.
+
 Partial/uncertain configure output includes `recovery_receipt` with its explicit
 original-authority role. It is not a successful new-package receipt and is never
 published to `--output` as one. Preserve the result, original receipt and desired
@@ -420,13 +446,25 @@ alone does not establish that prerequisite. Do not initialize again or clear hol
 
 ### Verify drain on a lifecycle installation
 
-After the first bind and State initialization, bootstrap the disabled installation
-using both configured profiles. The operator records the operation. The deployer
-pins the original physical table ID in the Lambda configuration. Keep the birth
-receipt for inspection and use the new receipt after bootstrap succeeds.
+The [initial setup](#bind-initialize-and-preview) bootstraps the installation once.
+In the examples below, `birth.json` is the original bind receipt and
+`bootstrapped.json` is its successor. If bootstrap was interrupted, inspect
+the original operation. If AWS completed its verified disabled update and an
+emergency stop superseded it before State recorded the result, the operator can
+finish that operation and save its receipt. Use a fresh output path:
 
 ```sh
-node scripts/manager-installation.mjs bootstrap --config initial.json --installation birth.json --operator-profile customer-operator --deployer-profile customer-deployer --output bootstrapped.json --json
+node scripts/manager-installation.mjs finish-operation --config initial.json --installation birth.json --operation BOOTSTRAP_UUID --operator-profile customer-operator --output bootstrap-result.json --json
+```
+
+To start scheduled preview after initial bootstrap, set the canonical mode to
+preview, enable scheduling and keep writes disabled. Build the same source and
+generation and upload its exact versioned asset. Use the resulting manifest and
+the current bootstrap receipt:
+
+```sh
+node scripts/package-manager.mjs --lifecycle --config preview.json --revision SAME_FULL_COMMIT --generation ORIGINAL_GENERATION --output preview-package
+node scripts/manager-installation.mjs configure --config preview.json --installation bootstrapped.json --manifest preview-package/manifest.json --asset preview-asset.json --operator-profile customer-operator --deployer-profile customer-deployer --output preview-receipt.json --json
 ```
 
 An emergency stop fences admission. When another operation owns the host, inspect
@@ -476,10 +514,15 @@ any attempts that required reconciliation.
 If an update is interrupted, keep the original receipt and operation ID.
 Use `inspect-operation` for read-only evidence. Use `finish-operation` when the
 provider outcome is confirmed and the CLI can record or re-export the result.
-Do not repeat an uncertain provider action. If an emergency stop superseded a
-verified update, its restricted successor receipt permits `maintenance-only`
-with both profiles. This can establish matching disabled controls on the actual
-successor. Run a fresh strict stop with the resulting maintenance receipt before
+Do not repeat an uncertain provider action. If an emergency stop superseded a verified upgrade or configure, use
+`finish-operation` with the original receipt, target manifest and target config
+to export the restricted successor receipt. Its reported host controls can
+differ from the disabled admission controls in State. The operator can use
+that receipt for an immediate protective stop. To converge on disabled
+maintenance and obtain a measured drain, use `maintenance-only` with both
+profiles while the reported emergency fence is still current. A protective
+stop changes that fence. Choose the maintenance path directly when the goal is
+reconciliation or removal. Run a fresh strict stop with the resulting maintenance receipt before
 reconciling. Run `node scripts/manager-installation.mjs --help` for the required
 files and flags for these commands.
 
@@ -526,7 +569,16 @@ credential or workflow changes. Customer grants can be broader than requested.
 
 On a lifecycle installation, first obtain a verified drain with the current
 maintenance receipt. Review what the deployed template will retain and what
-the customer owns separately. If removal is authorized, use the saved preview:
+the customer owns separately. The generated template retains the State table
+on deletion and replacement and requests deletion of its log group. Preview
+uses the deployed policies. Before removal, the customer administrator reviews
+`Metadata.Pigboard.remove_execution_policy` for the stack execution role and
+the stack-scoped delete permission in `configure_deployer_policy`. The
+supported execution identity is the configured deployer. The administrator
+applies the necessary grants separately. Profile and role checks establish
+who will act. Actual service responses establish which actions succeeded.
+
+If removal is authorized, use the saved preview:
 
 ```sh
 node scripts/manager-installation.mjs remove-preview --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --output removal-preview.json --json
@@ -537,6 +589,13 @@ Keep the original receipt, operation ID and removal report. Inspect any partial
 result before acting again. The retained State table, customer secrets, versioned
 artifacts and any retained logs can continue to incur charges. Check the
 per-resource results for what was actually retained, deleted or unobservable.
+If evidence was initially incomplete, run `inspect-operation` with the
+original maintenance receipt and removal UUID. It preserves the original
+terminal report and returns a separate `current_observation` from bounded
+provider reads. To save the refreshed report, run `finish-operation` with
+the same inputs and a new output path. Neither command sends another
+deletion request. A failed stack deletion remains partial even if some
+resources were deleted.
 
 For the original manual removal procedure on an older installation:
 
@@ -644,8 +703,8 @@ state using the same receipt rather than replaying an uncertain update.
 Scans, failures, retries and health reads never create or rotate an epoch. Disabled
 initial installation can have none. Enabled installation without valid current
 code/configuration/generation evidence is unknown, and old completion cannot grant
-health. General source upgrades/removal remain deferred; configure does not expand
-its existing supported-change boundary. Health settings may change with the same
+health. Configure changes only supported settings at the same pin. A fresh
+lifecycle installation uses the separate upgrade and removal procedures above. Health settings may change with the same
 bounded canonical configuration package update.
 
 The operator health grants add only exact-log-group FilterLogEvents and regional

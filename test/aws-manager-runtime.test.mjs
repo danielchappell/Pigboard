@@ -116,7 +116,15 @@ test('lifecycle runtime rejects a same-name replacement before State or Jira acq
 
 test('lifecycle removal preserves the original table and reports unobserved resource outcomes',async()=>{
  const {runLifecycleFixture}=await import('../scripts/test-aws-manager.mjs');
- const {removal}=await runLifecycleFixture('R1-16-H02');
+ const {removal,bootstrap_recovery:bootstrap,configure_recovery:configure}=await runLifecycleFixture('R1-16-H02');
  assert.equal(removal.terminal.resources.find(row=>row.logical==='StateTable').observation,'retained');
  assert.equal(removal.terminal.retention_complete,false);
+ assert.equal(removal.failed.provider.status,'DELETE_FAILED');
+ assert.equal(removal.failed.status,'partial');
+ assert.equal(removal.later.status,'removed');
+ assert.equal(removal.later.resources.find(row=>row.logical==='LogGroup').observation,'deleted');
+ assert.equal(bootstrap.terminal.bootstrap_acknowledged,true);
+ assert.equal(configure.terminal.observed.schedule,'ENABLED');
+ assert.equal(configure.protective_proof,false);
+ assert.equal(configure.strict_proof,true);
 });

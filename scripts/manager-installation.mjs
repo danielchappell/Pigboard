@@ -30,7 +30,8 @@ using a separately authorized disabled update. Configure is a same-pin change.
 Upgrade requires a compatible pinned package and leaves admission fenced.
 A protective stop fences State. A strict stop also measures a fresh drain
 against matching disabled maintenance intent. Prior sends and workers may continue.
-After a superseded upgrade, use maintenance-only with its verified recovery receipt.
+After a superseded upgrade or configure, use maintenance-only with its verified recovery receipt.
+A fully deployed, superseded bootstrap can be acknowledged with operator-only finish-operation.
 Preview removal before dispatch. Removal retains the original State table.
 Inspect an operation by UUID before deciding whether to finish it. Finish applies
 verified evidence to State and never dispatches another host request.
@@ -38,11 +39,11 @@ verified evidence to State and never dispatches another host request.
 function human(outcome){
  const rows=[outcome.status+(outcome.phase?' ('+outcome.phase+')':'')];
  for(const [key,label] of Object.entries({code:'Result',operation:'Operation',active:'Active operation',last:'Last operation',
-  stack_id:'Stack',table_id:'Physical State',state_fenced:'State admission fenced',proof:'Measured drain proof',
+  stack_id:'Stack',table_id:'Physical State',state_fenced:'State admission fenced',host:'Host protection',protection_code:'Protection result',proof:'Measured drain proof',
   outcome:'Operation outcome',receipt_path:'Private output',pending_work:'Retained work',recovery:'Next action'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+outcome[key]);
  }
- for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',receipt:'Output document',
+ for(const [key,label] of Object.entries({provider:'Provider evidence',terminal:'Terminal evidence',current_observation:'Current removal observation',receipt:'Output document',
    observed:'Observed host controls',observed_source:'Source package',observed_target:'Target package',
    original_operator:'Original operator',original_deployer:'Original deployer',effects:'Host effects'})){
   if(outcome[key]!==undefined&&outcome[key]!==null)rows.push(label+' — '+JSON.stringify(outcome[key]));
