@@ -553,6 +553,9 @@ diagnostic and resolve that issue before using this path.
 If an update is interrupted, keep the original receipt and operation ID.
 Use `inspect-operation` for read-only evidence. Use `finish-operation` when the
 provider outcome is confirmed and the CLI can record or re-export the result.
+An inspection result of `awaiting_finish` reports the recorded operation and
+provider evidence. Finish rechecks the supplied target and the current host,
+including the expected schedule cadence, before restoring admission.
 Use the configuration and receipt from before the change, and keep the exact
 target manifest and configuration for finish:
 
@@ -781,7 +784,11 @@ The time remains the one recorded before interruption even when the finish runs 
 
 Enabling from stopped, changing an enabled canonical configuration or establishing
 a missing epoch starts a new window. An unchanged enabled configure keeps the
-pair from before its temporary disable fence. Stop preserves historical epoch.
+pair from before its temporary disable fence. Each configure records its own AWS
+update by placing its operation ID in the function environment. Repeating the
+same inputs keeps the existing enablement time. To establish a new window after
+a protective stop, configure disabled maintenance, run a measured stop, then
+configure the intended enabled settings again. Stop preserves historical epoch.
 The existing extension limits and unrelated fields are preserved. A completed
 older operation remains readable even when it has no per-operation enablement
 record. A rotating configure interrupted before it recorded its time cannot

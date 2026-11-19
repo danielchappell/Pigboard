@@ -18,6 +18,9 @@ test('R1-23-H02-A preserves verified enablement through configure recovery', asy
  const {enablement}=await runLifecycleFixture('R1-23-H02-A');
  assert.equal(enablement.missing,'ENABLEMENT_UNVERIFIED');
  assert.equal(enablement.host_unconfirmed,'HOST_UNCONFIRMED');
+ assert.equal(enablement.capture_host_unconfirmed,'HOST_UNCONFIRMED');
+ assert.equal(enablement.empty_change.code,'UNSUPPORTED_CHANGE_SET');
+ assert.equal(enablement.copies.proved.operation,enablement.copies.changed_cadence.operation);
  assert.equal(enablement.historical,null);
 });
 
