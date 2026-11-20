@@ -3,6 +3,18 @@ import {fileURLToPath} from 'node:url';
 import {readManagerHealth} from '../lib/aws/health.mjs';
 export const usage='Usage: node scripts/manager-health.mjs --config FILE --installation FILE --operator-profile NAME [--json]';
 const alarmNames={missing_completion:'Missing completion',lambda_errors:'Lambda errors',lambda_throttles:'Lambda throttles',measured_budget:'Measured budget'};
+const actionLabels={AlarmActions:'ALARM',OKActions:'OK',InsufficientDataActions:'INSUFFICIENT_DATA'};
+const actionList=value=>Array.isArray(value)?JSON.stringify(value):'unknown';
+function formatTopic(routing,label='Notification routing'){
+ if(!routing)return '';
+ const status=routing.status==='console_only'?'console-only (console and CLI)':routing.status;
+ return `${label} — ${status} (${routing.code})\nExpected SNS topic — ${routing.expected_topic_arn??'none configured'}\n`+
+  (routing.expected_topic_arn?`Observed SNS topic — ${routing.observed_topic_arn??'unknown'}${routing.observed_at?' at '+routing.observed_at:''}\n`:'')+
+  (routing.topic_read_code&&routing.topic_read_code!==routing.code?
+   `Topic attributes — ${routing.topic_read_status} (${routing.topic_read_code})\n`:'')+
+  (routing.topic_read_next_step?routing.topic_read_next_step+'\n':'')+
+  `${routing.next_step}\n`;
+}
 function formatAlarms(evidence){
  if(!evidence)return '';
  const {intent,maintenance_reason,status,code,alarms,retained_epoch,region,stack_id,function_name,installation_generation,concurrency}=evidence;
@@ -11,12 +23,18 @@ function formatAlarms(evidence){
   const actions=alarm.actions_enabled==null?'unknown':alarm.actions_enabled?'enabled':'disabled';
   const when=alarm.raw_state_updated_at?` at ${alarm.raw_state_updated_at}`:'';
   const actionsLabel=evidence.stable_host_and_state===false?'observed actions':'actions';
-  return `${alarmNames[alarm.key]} (${alarm.name}) — definition ${alarm.status}, ${actionsLabel} ${actions}, raw state ${alarm.raw_state??'unknown'}${when}, current evaluation ${alarm.evaluation}${alarm.code&&alarm.code!=='OK'?' ('+alarm.code+')':''}\n${alarm.link}`;
+  const destinations=Object.entries(actionLabels).map(([key,label])=>
+   `${label} destinations — expected ${actionList(alarm.expected_actions?.[key])}, observed ${actionList(alarm.observed_actions?.[key])}`).join('\n');
+  return `${alarmNames[alarm.key]} (${alarm.name}) — definition ${alarm.status}, ${actionsLabel} ${actions}, raw state ${alarm.raw_state??'unknown'}${when}, current evaluation ${alarm.evaluation}${alarm.code&&alarm.code!=='OK'?' ('+alarm.code+')':''}\n`+
+   `${destinations}\n${alarm.link}\n${alarm.next_step??''}`;
  });
  return `${hostLabel} — ${stack_id} / ${function_name} / ${region}\nInstallation generation — ${installation_generation}, reserved concurrency ${concurrency}\n`+
   `Protected scheduling intent — ${intent??'unverified'}${maintenance_reason?' ('+maintenance_reason+')':''}\n`+
   (evidence.pending_operation?`Pending ${evidence.pending_operation.kind} operation — ${evidence.pending_operation.id} (${evidence.pending_operation.phase})\nLast committed intent — ${evidence.previous_intent??'unknown'}\n`:'')+
-  `Alarm inspection — ${status}${code?' ('+code+')':''}, console-only, observed from ${evidence.observed_from} to ${evidence.observed_to}\n`+
+  `Alarm inspection — ${status}${code?' ('+code+')':''}, observed from ${evidence.observed_from} to ${evidence.observed_to}\n`+
+  formatTopic(evidence.topic_routing)+
+  (evidence.delivery==='customer_confirmation_required'&&evidence.topic_routing?.status!=='verified'?
+   'Confirm subscription status, any encryption key permissions and actual notification receipt with the customer.\n':'')+
   (retained_epoch?`Retained epoch — ${retained_epoch.health_generation??'unknown'}, enabled at ${retained_epoch.health_enabled_at??'unknown'}, revision attribution unknown\n`:'')+
   rows.join('\n')+'\n';
 }
@@ -34,6 +52,7 @@ function formatUnverifiedHealth(result){
   `Schedule requested in config — ${result.requested_enabled??'unknown'}`,
   formatAlarms(result.alarm_evidence).trimEnd(),
   `Earlier observations from ${earlier.observed_at} — current attribution unverified`,
+  ...(earlier.alarm_diagnostics.topic_routing?[formatTopic(earlier.alarm_diagnostics.topic_routing,'Earlier notification routing').trimEnd()]:[]),
   `Observed package — ${binding.package_revision??'unavailable'}`,
   `Observed evidence revision — ${binding.evidence_revision??'unavailable'}`,
   `Observed maximum budget use — ${budget}${budgetAt?' (latest metric point at '+budgetAt+')':''}`,

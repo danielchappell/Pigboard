@@ -380,6 +380,10 @@
               "type": "number",
               "exclusiveMinimum": 0,
               "maximum": 100
+            },
+            "sns_topic_arn": {
+              "type": "string",
+              "pattern": "^arn:aws:sns:[a-z]{2}(?:-[a-z0-9]+)+-[0-9]+:[0-9]{12}:(?:[A-Za-z0-9_-]{1,256}|[A-Za-z0-9_-]{1,251}\\.fifo)$"
             }
           }
         }

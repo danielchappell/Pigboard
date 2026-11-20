@@ -4,10 +4,13 @@
 
 The current source [health command](docs/manager-health.md) inspects preview and
 ordinary apply processing with readable or JSON results. New lifecycle packages
-include four console-only CloudWatch alarms for missing completion, Lambda errors,
-throttles and measured budget use. Health shows their definitions and action state
-alongside scan evidence. Source checks leave deployed acceptance and activation
-to the customer's release process.
+include four CloudWatch alarms for missing completion, Lambda errors, throttles
+and measured budget use. The default is console and CLI inspection. Customers can
+configure an existing SNS topic in their AWS account as the ALARM destination for
+all four. The operator can inspect the four destinations and the configured topic
+in the health command. The customer confirms subscriber delivery in their deployed
+installation. Deployment acceptance and activation follow the customer's release
+process. See the [installation guide](docs/manager-installation.md#cloudwatch-alarm-permissions-and-settings).
 
 
 Pigboard helps agents deliver scoped Jira work through implementation, independent

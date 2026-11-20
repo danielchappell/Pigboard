@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {hostConfig,sha256,loadHostSDK,hostError} from '../lib/aws/installation.mjs';
 import {lifecycleManifestFields,synthesizeTemplate} from '../lib/aws/template.mjs';
-import {assertAlarmWindow} from '../lib/aws/alarms.mjs';
+import {assertAlarmWindow,supportsTopicRoutingSchema} from '../lib/aws/alarms.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const hashFile=p=>sha256(readFileSync(p));
 function walk(base,prefix=''){let files=[];for(const e of readdirSync(join(base,prefix),{withFileTypes:true})){const p=prefix?prefix+'/'+e.name:e.name;if(e.isDirectory())files.push(...walk(base,p));else if(e.isFile())files.push(p);else if(!e.isSymbolicLink())throw hostError('PAYLOAD_TYPE');}return files.sort();}
@@ -26,6 +26,13 @@ export function packageManager({configPath,output,source=root,revision,generatio
  const installationGeneration=generation??randomUUID();
  const payloadSources=closure(source,'lib/aws/manager-lambda.mjs');
  const alarmCapability=lifecycle&&payloadSources.has('lib/aws/alarms.mjs');
+ if(config.manager.health?.sns_topic_arn){
+  const schemaPath='contracts/config-v1.schema.json';
+  if(!alarmCapability||!payloadSources.has(schemaPath)||!payloadSources.has('lib/config/parse.mjs')||
+    !supportsTopicRoutingSchema(JSON.parse(readFileSync(join(source,schemaPath),'utf8')))){
+   throw hostError('PACKAGE_ROUTING_UNSUPPORTED');
+  }
+ }
  if(alarmCapability)assertAlarmWindow(config);
  const fields=lifecycle
   ? lifecycleManifestFields({installationId:config.manager.installation_id,generation:installationGeneration,previousRevision:compatibleFrom,alarmCapability})
@@ -45,7 +52,7 @@ export function packageManager({configPath,output,source=root,revision,generatio
 }
 export function runPackageCommand(argv){
  try{
-  if(argv.length===1&&argv[0]==='--help')return {exitCode:0,stdout:'Usage: node scripts/package-manager.mjs --config FILE --revision COMMIT --output NEW_DIRECTORY [--lifecycle] [--generation ORIGINAL_GENERATION] [--compatible-from REVIEWED_PREVIOUS_COMMIT]\nPrepare pinned root/runtime AWS dependencies and zip first. No download or deployment occurs.\nKeep manager.zip next to manifest.json for upgrade checks. The lifecycle template includes alarm links and required permissions.\n'};
+  if(argv.length===1&&argv[0]==='--help')return {exitCode:0,stdout:'Usage: node scripts/package-manager.mjs --config FILE --revision COMMIT --output NEW_DIRECTORY [--lifecycle] [--generation ORIGINAL_GENERATION] [--compatible-from REVIEWED_PREVIOUS_COMMIT]\nPrepare pinned root/runtime AWS dependencies and zip first. No download or deployment occurs.\nKeep manager.zip next to manifest.json for upgrade checks. The lifecycle template includes alarm links and required permissions. SNS routing requires --lifecycle at a reviewed routing-capable revision.\n'};
   const args={};
   for(let i=0;i<argv.length;i++){
    const flag=argv[i];
@@ -63,6 +70,8 @@ export function runPackageCommand(argv){
   const detail=window?{
    alarm_window:window,
    message:`The alarm evaluation window is ${window.window_seconds} seconds with a limit of ${window.limit_seconds}. For example, use a 300-second cadence and 900-second freshness.`
+  }:e.code==='PACKAGE_ROUTING_UNSUPPORTED'?{
+   message:'Build with --lifecycle from a reviewed revision that supports manager.health.sns_topic_arn.'
   }:{};
   return {exitCode:2,stdout:JSON.stringify({status:'unavailable',code:e.code??'PACKAGE_SETUP',...detail})+'\n'};
  }
