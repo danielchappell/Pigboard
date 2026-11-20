@@ -1,0 +1,40 @@
+--- a/service.mjs
++++ b/service.mjs
+@@ -13,7 +13,10 @@
+       return (await repository.queryAdmin({ pageSize, cursor: null })).records;
+     },
+     async exportActive({ tenantId, pageSize }) {
+-      throw new ServiceError('NOT_IMPLEMENTED', 501, 'Export is not implemented');
++      validatePageSize(pageSize);
++      if (typeof tenantId !== 'string' || !tenantId) throw new ValidationError('Tenant required');
++      const rows = await collectPages(cursor => repository.queryTenant({ tenantId, pageSize, cursor }));
++      return rows.filter(row => row.active).sort((a,b) => a.id-b.id);
+     },
+   };
+ }
+--- a/server.mjs
++++ b/server.mjs
+@@ -16,7 +16,8 @@
+       validatePageSize(pageSize);
+       let records;
+       if (url.pathname === '/records/export') {
+-        throw new ServiceError('NOT_IMPLEMENTED', 501, 'Export route is not implemented');
++        if (url.searchParams.has('tenantId')) throw new ValidationError('Tenant override is not allowed');
++        records = await service.exportActive({ tenantId: context.tenantId, pageSize });
+       } else if (url.pathname === '/records') {
+         records = await service.listRecords({ tenantId: context.tenantId, pageSize });
+       } else {
+--- a/README.md
++++ b/README.md
+@@ -41,3 +41,11 @@
+ After implementation, run the complete relevant final checks and document a short
+ verification recipe including export, identity rejection and source-error retry.
+ Report failures honestly. Automated examples do not exhaust the requirements.
++
++## Final verification recipe
++
++Run `npm test` and `npm run task-test` on the final source. Run `npm start`, then
++request `/records/export?pageSize=1` with `Authorization: Bearer demo-alpha` and
++expect IDs 3 and 4. Without identity expect 401; adding `tenantId=beta` with an
++identity expects 400. The task test injects a second-query failure; construct a
++fresh export after the one-shot failure and confirm the complete active result.
