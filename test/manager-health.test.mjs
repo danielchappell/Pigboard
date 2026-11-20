@@ -137,6 +137,10 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
  const getHealth=(installed,options={})=>readAlarmHealthFixture(f,{...installed,...options});
  const metricReads=e=>e.telemetry.filter(row=>row.action==='GetMetricStatisticsCommand');
  const alarmReads=e=>e.telemetry.filter(row=>row.action==='DescribeAlarmsCommand');
+ const alarmIdentity={operator_account_id:config.manager.aws.account_id,
+  operator_role_arn:config.manager.aws.operator_role_arn,table_id:journey.original.origin.table_id};
+ const identityLines=[`Operator account — ${alarmIdentity.operator_account_id}`,
+  `Operator role — ${alarmIdentity.operator_role_arn}`,`State table ID — ${alarmIdentity.table_id}`];
  const assertUnverified=(observed,prior)=>{
   const {human,json}=observed,outcome=json.outcome;
   assert.equal(json.exitCode,2);
@@ -156,6 +160,10 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.deepEqual(outcome.reasons,['HOST_OR_STATE_CHANGED_OR_UNCONFIRMED']);
   assert.equal(outcome.prior_observation.attribution,'unverified');
   assert.deepEqual(outcome.prior_observation.binding,prior.current);
+  for(const [key,value] of Object.entries(alarmIdentity)){
+   assert.equal(outcome.alarm_evidence[key],null,key);
+   assert.equal(outcome.prior_observation.alarm_diagnostics[key],value,key);
+  }
   assert.equal(outcome.alarm_evidence.observed_at,prior.alarm_evidence.observed_at);
   const alarms=outcome.alarm_evidence.alarms;
   assert.equal(alarms.length,4);
@@ -172,6 +180,7 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   const earlierHeader=`Earlier observations from ${outcome.prior_observation.observed_at} — current attribution unverified`;
   const earlierIndex=lines.indexOf(earlierHeader);
   assert(earlierIndex>=0);
+  for(const line of identityLines)assert(lines.indexOf(line)>earlierIndex,line);
   const {links}=JSON.parse(json.stdout);
   assert.deepEqual(Object.keys(links).sort(),['function','logs','metrics','schedule']);
   for(const [label,url] of Object.entries(links)){
@@ -187,6 +196,9 @@ test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metri
   assert.equal(fresh.json.exitCode,0);
   assert.equal(outcome.alarm_evidence.status,'aligned');
   assert.equal(outcome.alarm_evidence.stable_host_and_state,true);
+  for(const [key,value] of Object.entries(alarmIdentity))assert.equal(outcome.alarm_evidence[key],value,key);
+  for(const line of identityLines)assert(fresh.human.stdout.split('\n').includes(line),line);
+  for(const report of [fresh.human.stdout,fresh.json.stdout])assert.doesNotMatch(report,/assumed-role|AROAEXAMPLE/);
   assert.deepEqual(outcome.alarm_evidence.current,{health_generation:null,health_enabled_at:null,evidence_revision:null});
   assert.equal(outcome.metric_evidence.status,'not_applicable');
   assert.equal(outcome.maximum_budget_utilization,null);

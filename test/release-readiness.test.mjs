@@ -8,13 +8,30 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkReadiness, readLocalInput } from '../lib/release/readiness.mjs';
 import { runReadinessCommand } from '../scripts/check-readiness.mjs';
-import { runFixtureCommand } from '../scripts/test-release-readiness.mjs';
+import { compareRetainedAlarmRemoval, runFixtureCommand } from '../scripts/test-release-readiness.mjs';
 import { evidenceRevision } from '../lib/manager/health.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const fixture = JSON.parse(await readFile(new URL('./fixtures/release-readiness.json', import.meta.url)));
 const revision = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
 const check = (report, id) => report.checks.find(value => value.id === id);
+
+test('R1-23-H04 reconciles retained removal receipts and preserves the original partial outcomes', () => {
+  const packets = compareRetainedAlarmRemoval();
+  assert.deepEqual(packets.map(({ case: id }) => id), ['R1-23-H02', 'R1-23-H03-C']);
+  for (const packet of packets) {
+    const [complete, partial] = packet.results;
+    assert.equal(complete.terminal.resources.find(row => row.logical === 'LogGroup').observation, 'deleted');
+    assert.equal(complete.terminal.resources.find(row => row.logical === 'StateTable').observation, 'retained');
+    assert.equal(partial.terminal.status, 'partial');
+    assert.equal(partial.current_observation.operation, partial.operation);
+    const missing = partial.current_observation.resources.find(row => row.logical === 'MeasuredBudgetAlarm');
+    assert.equal(missing.observation, 'unobservable');
+    assert.match(missing.cost, /CloudWatch alarm charges/);
+  }
+  assert.equal(packets[0].preview.externally_owned.filter(row => typeof row.reference === 'string' && row.reference.startsWith('arn:aws:sns:')).length, 0);
+  assert.equal(packets[1].preview.externally_owned.filter(row => typeof row.reference === 'string' && row.reference.startsWith('arn:aws:sns:')).length, 1);
+});
 async function inputs(t) {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'pgb90-readiness-'));
   t.after(() => rm(directory, { recursive: true, force: true }));
@@ -116,6 +133,27 @@ test('CLI rejects undeclared/duplicate flags, relative inputs, malformed revisio
   assert.ok(!result.stdout.includes('PRIVATE_SENTINEL'));
   await writeFile(malformed, ' '.repeat(1048577));
   await assert.rejects(readLocalInput(malformed));
+
+  const mib = 1024 * 1024;
+  const config = path.join(input.directory, 'config.json');
+  const release = path.join(input.directory, 'unavailable-release.json');
+  const manifest = path.join(input.directory, 'manifest.json');
+  const installation = path.join(input.directory, 'installation.json');
+  const packageEnvelope = { schema: 'pigboard-manager-package/v2' };
+  const receiptEnvelope = { schema: 'pigboard-installation-receipt/v2' };
+  await writeFile(config, input.configText);
+  await writeFile(release, '{}');
+  await writeFile(manifest, JSON.stringify({ ...packageEnvelope, padding: 'x'.repeat(4 * mib) }));
+  await writeFile(installation, JSON.stringify({ ...receiptEnvelope, manifest: { ...packageEnvelope, padding: 'x'.repeat(4 * mib) } }));
+  const common = ['--config', config, '--release', release, '--revision', revision, '--package-manifest', manifest, '--installation', installation, '--json'];
+  const oversized = await runReadinessCommand(common);
+  assert.equal(oversized.exitCode, 2);
+  assert.deepEqual(check(oversized.outcome, 'C01_INPUT').observed.fields, ['installation', 'packageManifest']);
+  await writeFile(manifest, JSON.stringify({ schema: 'pigboard-manager-package/v1', padding: 'x'.repeat(mib) }));
+  await writeFile(installation, JSON.stringify({ ...receiptEnvelope, padding: 'x'.repeat(8 * mib) }));
+  const otherEnvelopeAndWholeReceipt = await runReadinessCommand(common);
+  assert.equal(otherEnvelopeAndWholeReceipt.exitCode, 2);
+  assert.deepEqual(check(otherEnvelopeAndWholeReceipt.outcome, 'C01_INPUT').observed.fields, ['installation', 'packageManifest']);
 });
 
 test('explicitly unreadable optional evidence preserves independent CLI configuration results', async t => {
@@ -244,6 +282,14 @@ test('C01 distinguishes explicit malformed manager roots from omitted and valid 
   assert.equal(check(falseInstallation, 'C03_CONFIGURATION').status, 'PASS');
   assert.equal(check(falseInstallation, 'C04_PACKAGE').status, 'PASS');
   assert.equal(falseInstallation.evidence_layers.supplied_installation_binding.status, 'UNVERIFIED');
+
+  const malformedHealth = managerInputs(base);
+  malformedHealth.health = { ...malformedHealth.health, current: 'invalid fixture field' };
+  const malformedReport = await checkReadiness(malformedHealth);
+  assert.deepEqual([malformedReport.status, malformedReport.exit_code], ['input_error', 2]);
+  assert.equal(check(malformedReport, 'C04_INSTALLATION').status, 'PASS');
+  assert.equal(check(malformedReport, 'C05_HEALTH').status, 'ERROR');
+  assert.equal(check(malformedReport, 'C05_HEALTH').code, 'HEALTH_INPUT_INVALID');
 
   const omitted = managerInputs(base);
   delete omitted.packageManifest;

@@ -948,31 +948,38 @@ export async function runHumanCase(id){if(id==='R1-13-H01'){if(Number(process.ve
 const legacyCases=['R1-13-H01','R1-13-H02'];
 const lifecycleCases=['R1-16-H01','R1-16-H02','R1-23-H02-A'];
 const alarmCases=['R1-23-H01','R1-23-H02','R1-23-H03-C'];
+const savedAlarmCases=['R1-23-H03','R1-23-H04'];
 async function main(argv){
  if(argv.length===1&&argv[0]==='--help'){
   console.log('Usage: node scripts/test-aws-manager.mjs --case '+[...legacyCases,...lifecycleCases,...alarmCases].join('|')+' --output NEW_DIRECTORY');
+  console.log('       node scripts/test-aws-manager.mjs --case '+savedAlarmCases.join('|')+' --output /absolute/NEW_DIRECTORY --release /absolute/skill-receipt.json');
   console.log('       node scripts/test-aws-manager.mjs --all --output NEW_DIRECTORY');
   return;
  }
  const args={};
  for(let i=0;i<argv.length;i++){
-  if(!['--all','--case','--output'].includes(argv[i])||Object.hasOwn(args,argv[i]))throw Error('Use the prescribed flags once.');
+  if(!['--all','--case','--output','--release'].includes(argv[i])||Object.hasOwn(args,argv[i]))throw Error('Use the prescribed flags once.');
   const flag=argv[i];
   if(flag!=='--all'&&(!argv[i+1]||argv[i+1].startsWith('--')))throw Error('Missing flag value.');
   args[flag]=flag==='--all'?true:argv[++i];
  }
  if(!args['--output']||!!args['--all']===!!args['--case'])throw Error('Select one case or --all and new output.');
- if(args['--case']&&![...legacyCases,...lifecycleCases,...alarmCases].includes(args['--case']))throw Error('Select a listed case.');
+ if(args['--case']&&![...legacyCases,...lifecycleCases,...alarmCases,...savedAlarmCases].includes(args['--case']))throw Error('Select a listed case.');
+ const savedAlarmCase=savedAlarmCases.includes(args['--case']);
+ if(savedAlarmCase&&(!args['--release']||!path.isAbsolute(args['--release'])||!path.isAbsolute(args['--output'])))
+  throw Error('Saved alarm cases require an absolute --output and the absolute --release receipt for this exact clean checkout.');
+ if(!savedAlarmCase&&args['--release'])throw Error('--release is used only by R1-23-H03 and R1-23-H04.');
  const output=path.resolve(args['--output']);
  fs.mkdirSync(output,{mode:0o700});
  for(const id of args['--all']?[...legacyCases,...alarmCases]:[args['--case']]){
   const write=data=>fs.writeFileSync(path.join(output,id+'.json'),JSON.stringify({
    human_acceptance:'pending',installed_acceptance:'pending',live_iam:'unverified',command:process.argv,...data
-  },alarmCases.includes(id)?(key,value)=>key==='payload_hashes'?{entries:Object.keys(value).length}:value:null,2)+'\n',{mode:0o600});
+  },alarmCases.includes(id)||savedAlarmCase?(key,value)=>key==='payload_hashes'?{entries:Object.keys(value).length}:value:null,2)+'\n',{mode:0o600});
   try{
    const routingCase=id===hostFixture().routing.case;
    const saved=evidence=>write({developer_observation:'confirmed_simulated',cleanup:'disposable fixtures removed',evidence});
-   const evidence=alarmCases.includes(id)?await runAlarmLifecycleFixture(id,routingCase?{save:saved}:undefined):
+   const evidence=savedAlarmCase?await runSavedAlarmFixture(id,{directory:output,release:args['--release']}):
+     alarmCases.includes(id)?await runAlarmLifecycleFixture(id,routingCase?{save:saved}:undefined):
      lifecycleCases.includes(id)?await runLifecycleFixture(id):await runHumanCase(id);
    if(!routingCase)saved(evidence);
    console.log(id+': developer simulation confirmed; human and installed acceptance pending');
@@ -1392,7 +1399,7 @@ async function alarmPackageJourney(journey){
  evidence.health={disabled,starting,denied,mismatch};
 }
 
-async function alarmLifeJourney(journey){
+async function alarmLifeJourney(journey,{savedReadinessAssertions}={}){
  const {f,source,evidence}=journey;
  const driver=lifecycleDriver(journey),{initial,output,run,build,nextPin,configure,assetFlags,deployment}=driver;
  const {runAlarmSignalHistories,readAlarmHealthFixture}=await import('./test-manager-health.mjs');
@@ -1401,6 +1408,29 @@ async function alarmLifeJourney(journey){
  assert.equal(f.cloud.alarms.size,0);
  assert.equal(Object.keys(f.cloud.template.Resources).length,7);
  const originalTable=structuredClone(f.cloud.table),originalPhysical=structuredClone(initial.manifest.resource_map.physical);
+ if(savedReadinessAssertions){
+  const {checkSavedFixtureEvidence}=await import('./test-release-readiness.mjs');
+  // H02 embeds the original commit object for shallow CI. When its genuine
+  // tree is locally available, use it too. Otherwise prove the missing-tree
+  // result, preserving the difference between an absent alarm and unreadable history.
+  const probe=spawnSync('git',['ls-tree',historical.base_revision,'--','lib/aws/alarms.mjs'],{cwd:root,encoding:'utf8'});
+  if(probe.error)throw probe.error;
+  assert.equal(probe.signal,null);
+  const historicalTreeAvailable=probe.status===0;
+  if(historicalTreeAvailable){
+   assert.equal(probe.stdout,'');
+   const gitCommon=execFileSync('git',['rev-parse','--git-common-dir'],{cwd:root,encoding:'utf8'}).trim();
+   fs.writeFileSync(path.join(source.source,'.git','objects','info','alternates'),path.resolve(root,gitCommon,'objects')+'\n');
+  }else assert.match(probe.stderr,/not a tree object|tree object|bad object|Not a valid object name|invalid object name/i);
+  const historicalHealth=await readAlarmHealthFixture(f,initial);
+  const report=await checkSavedFixtureEvidence({...initial,checkout:source.source,revision:historical.base_revision,
+   health:historicalHealth.json.outcome});
+  const named=id=>report.checks.find(check=>check.id===id);
+  const status=historicalTreeAvailable?'PASS':'UNVERIFIED';
+  assert.equal(named('C04_PACKAGE').observed.capability,historicalTreeAvailable?'historical':'unverified');
+  assert.equal(named('C04_PACKAGE').code,historicalTreeAvailable?'APPROVED_LIFECYCLE_PACKAGE_MATCHED':'PINNED_ALARM_CAPABILITY_UNVERIFIED');
+  for(const id of ['C04_PACKAGE','C04_INSTALLATION','C05_HEALTH'])assert.equal(named(id).status,status,JSON.stringify(named(id)));
+ }
  const legacyConfig=initial.manifest.canonical_config;
  const enabledConfig=changedControls(legacyConfig,{schedule_enabled:true});
  const maintenanceConfig=changedControls(legacyConfig,{maintenance:true});
@@ -2581,7 +2611,7 @@ async function interruptedRoutingBootstrap(journey,driver,topic){
  return {package:policy.package,result:interrupted,reads:requireOnlyTopicReads(branch,start,topic,'present').map(routingAuditEntry)};
 }
 
-async function alarmRoutingJourney(journey){
+async function alarmRoutingJourney(journey,{savedReadinessAssertions}={}){
  const {f,source,evidence}=journey;
  const driver=lifecycleDriver(journey),{initial,build,configure,output,run,assetFlags,deployment}=driver;
  const {readAlarmHealthFixture,scanFixture}=await import('./test-manager-health.mjs');
@@ -2888,6 +2918,27 @@ async function alarmRoutingJourney(journey){
  requireStatus(await run('configure',installedB,[...assetFlags(maintenanceB),...deployment,'--output',receiptB],
   {configPath:maintenanceB.configPath,branch:stoppedB}),'configured');
  permitted.removal=await routingRemoval(driver,stoppedB,{...maintenanceB,installationPath:receiptB},'routing-retained-secondary',secondary);
+ if(savedReadinessAssertions){
+  const installed={...maintenanceB,installationPath:receiptB};
+  const {checkSavedFixtureEvidence}=await import('./test-release-readiness.mjs');
+  const verified=(await inspectRouting(stoppedB,installed,{status:'verified',topic:secondary})).json.outcome;
+  const compare=health=>checkSavedFixtureEvidence({...installed,checkout:source.source,revision:source.snapshot_revision,health});
+  const matched=await compare(verified);
+  for(const id of ['C04_PACKAGE','C04_INSTALLATION','C05_HEALTH']){
+   const check=matched.checks.find(row=>row.id===id);
+   assert.equal(check.status,'PASS',JSON.stringify(check));
+  }
+  for(const row of verified.alarm_evidence.alarms){
+   assert.equal(row.actions_enabled,false);
+   assert.deepEqual(row.observed_actions,{AlarmActions:[secondary],OKActions:[],InsufficientDataActions:[]});
+  }
+  const mismatch=structuredClone(verified);
+  const budget=mismatch.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+  budget.actual.AlarmActions=[primary];
+  budget.observed_actions.AlarmActions=[primary];
+  const fail=await compare(mismatch);
+  assert.equal(fail.checks.find(row=>row.id==='C05_HEALTH').status,'FAIL');
+ }
 
  auditStart=f.audit.length;
  installRoutingFixture(f,packageFor.secondary,packageFor.absent);
@@ -2907,7 +2958,7 @@ async function alarmRoutingJourney(journey){
  permitted.installed_notification_receipt='unconfirmed';
 }
 
-export async function runAlarmLifecycleFixture(id,{save}={}){
+export async function runAlarmLifecycleFixture(id,{save,savedReadinessAssertions=false}={}){
  const routing=hostFixture().routing, routingCase=id===routing.case;
  assert(routingCase||hostFixture().alarms.cases.includes(id));
  const journey=await lifecycleBirthJourney({historical:id==='R1-23-H02',exerciseBootstrapRecovery:id==='R1-23-H01',cli:routingCase});
@@ -2917,11 +2968,11 @@ export async function runAlarmLifecycleFixture(id,{save}={}){
  try{
   if(routingCase){
    Object.assign(evidence,{fixture:routing.schema,preparation:routing.preparation,data:routing.data});
-   await alarmRoutingJourney(journey);
+   await alarmRoutingJourney(journey,{savedReadinessAssertions});
    save?.(evidence);
   }else if(id==='R1-23-H01')await alarmPackageJourney(journey);
   else {
-   await alarmLifeJourney(journey);
+   await alarmLifeJourney(journey,{savedReadinessAssertions});
    evidence.reconciliation=await alarmReconciliationJourney();
   }
   return evidence;
@@ -2930,6 +2981,248 @@ export async function runAlarmLifecycleFixture(id,{save}={}){
   error.fixtureEvidence=evidence;
   throw error;
  }
+ finally{source.cleanup();}
+}
+
+async function savedAlarmOutcomes(journey,{compare,readHealth}){
+ const {f,evidence}=journey;
+ const {initial}=lifecycleDriver(journey);
+ const matching=await readHealth(f,initial);
+ const inaccessible=await readHealth(f,{...initial,denyAlarmRead:true});
+ const original=matching.json.outcome, alarms=original.alarm_evidence;
+ assert.equal(matching.json.exitCode,0);
+ assert.equal(original.state,'disabled');
+ assert.equal(alarms.topic_routing.status,'console_only');
+ assert.equal(alarms.stable_host_and_state,true);
+ assert.equal(alarms.alarms.length,4);
+ assert(alarms.alarms.every(row=>row.status==='aligned'&&row.actions_enabled===false));
+ for(const key of ['missing_completion','measured_budget']){
+  const definition=alarms.alarms.find(row=>row.key===key).actual;
+  assert(definition.Dimensions.some(row=>row.Name==='EvidenceRevision'&&row.Value==='pigboard-unbound-v1'));
+  assert.equal(definition.TreatMissingData,'notBreaching');
+ }
+ assert.deepEqual([original.current.health_generation,original.current.health_enabled_at,original.current.evidence_revision],[null,null,null]);
+ assert.deepEqual(original.metric_evidence.metrics,{});
+ assert.equal(inaccessible.json.outcome.alarm_evidence.read_code,'ALARM_READ_DENIED');
+ assert(inaccessible.json.outcome.alarm_evidence.alarms.every(row=>Object.values(row.observed_actions).every(value=>value===null)));
+ const contradictory=structuredClone(original);
+ const budgetRow=contradictory.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+ assert.equal(budgetRow.actual.Threshold,80);
+ budgetRow.actual.Threshold=81;
+ const malformed=structuredClone(original);
+ const malformedBudget=malformed.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+ malformedBudget.actual.Dimensions[0].Name={toString:null};
+ evidence.health={matching,inaccessible};
+ const inputs={matching:original,contradictory,inaccessible:inaccessible.json.outcome,malformed};
+ for(const [variant,health] of Object.entries(inputs))await compare(variant,initial,health,{explicit:variant!=='matching'});
+ const malformedActions=structuredClone(original);
+ const actionRow=malformedActions.alarm_evidence.alarms.find(row=>row.key==='measured_budget');
+ actionRow.observed_actions.AlarmActions=['\ud800'];
+ await compare('malformed',initial,malformedActions,{explicit:true,
+  diagnostic:{alarm:'measured_budget',source:'observed_actions',field:'AlarmActions'}});
+}
+
+async function checkSavedAlarmLineage(journey,check){
+ const {initial}=lifecycleDriver(journey),{source}=journey;
+ const installation=JSON.parse(fs.readFileSync(initial.installationPath));
+ const manifest=installation.manifest;
+ const compare=async(changes,id,status,code)=>{
+  const report=await check({...initial,checkout:source.source,revision:source.snapshot_revision,changes});
+  const actual=report.checks.find(row=>row.id===id);
+  assert.equal(actual.status,status,JSON.stringify(actual));
+  if(code)assert.equal(actual.code,code,JSON.stringify(actual));
+ };
+ const different={...manifest,zip_digest:sha256('different correct-shape zip digest')};
+ await compare({packageManifest:different},'C04_PACKAGE','PASS');
+ await compare({packageManifest:different},'C04_INSTALLATION','FAIL','INSTALLATION_BINDING_MISMATCH');
+ const stripped=structuredClone(manifest);
+ delete stripped.alarm_capability;
+ delete stripped.payload_hashes['lib/aws/alarms.mjs'];
+ delete stripped.payload_hashes['package-manifest.json'];
+ await compare({installation:{...installation,manifest:stripped}},'C04_PACKAGE','FAIL','ALARM_CAPABILITY_MISMATCH');
+ await compare({installation:{...installation,recovery_only:true}},'C04_INSTALLATION','FAIL','SUCCESSFUL_RECEIPT_REQUIRED');
+ await compare({installation:{...installation,origin:{...installation.origin,table_arn:installation.origin.table_arn+'-substitute'}}},
+  'C04_INSTALLATION','FAIL','INSTALLATION_BINDING_MISMATCH');
+}
+
+function checkAlarmRecoveryLinks(health){
+ const {region,operator_account_id:account,stack_id:stack,function_name:name,alarms}=health.alarm_evidence;
+ assert(stack.startsWith(`arn:aws:cloudformation:${region}:${account}:stack/`));
+ const destinations={logs:['/cloudwatch/home',`#logsV2:log-groups/log-group//aws/lambda/${name}`],
+  metrics:['/cloudwatch/home','#metricsV2:namespace=Pigboard/Manager'],function:['/lambda/home',`#/functions/${name}`],
+  schedule:['/scheduler/home',`#schedules/default/${name}`]};
+ const verify=(link,[pathname,hash])=>{
+  const url=new URL(link);
+  assert.equal(url.origin,`https://${region}.console.aws.amazon.com`);
+  assert.equal(url.searchParams.get('region'),region);
+  assert.equal(url.pathname,pathname);
+  assert.equal(decodeURIComponent(url.hash),hash);
+ };
+ for(const [key,destination] of Object.entries(destinations))verify(health.links[key],destination);
+ assert.equal(alarms.length,4);
+ for(const alarm of alarms){
+  assert.equal(alarm.actual_arn,`arn:aws:cloudwatch:${region}:${account}:alarm:${alarm.name}`);
+  verify(alarm.link,['/cloudwatch/home',`#alarmsV2:alarm/${alarm.name}`]);
+ }
+}
+
+async function alarmRecoveryJourney(journey,{compare,readHealth,scanFixture,compareRemoval,config}){
+ const {source,f,evidence}=journey;
+ const {initial,build,configure,run}=lifecycleDriver(journey);
+ const active=await configure(initial,build('ready-active',changedControls(config,{schedule_enabled:true})),'ready-active-receipt');
+ const {binding,origin}=JSON.parse(fs.readFileSync(active.installationPath));
+ const {health_generation,health_enabled_at}=installationState(f).extensions;
+ const enabled=Date.parse(health_enabled_at);
+ const stamp=ms=>new Date(ms).toISOString();
+ const scan=scanFixture({installation_id:binding.installation_id,package_revision:binding.package_revision,
+  configuration_digest:binding.configuration_digest,health_generation,health_enabled_at},{
+  started_at:stamp(enabled+59980),ended_at:stamp(enabled+60000),limits:config.jira.read_bounds,
+  invocation_timeout_seconds:config.manager.invocation_timeout_seconds,
+  counters:{requests_attempted:80,search_pages:1,comment_pages:0,epics:0,streams:0,known_issues:0,comments:0,
+   response_bytes:50,observation_bytes:50,peak_response_bytes:50,peak_request_elapsed_ms:5,elapsed_ms:20}
+ });
+ assert(scan.evidence_revision);
+ assert.deepEqual(scan.budgets.requests,{used:80,limit:100,percent:80,status:'observed'});
+ assert(Object.entries(scan.budgets).every(([key,budget])=>key==='requests'||budget.percent<80));
+ await f.dependencies.wait(Math.max(0,enabled+120000-Date.parse(f.dependencies.now())));
+ const beforeRead=readOnlyCheckpoint(f);
+ const diagnosis=await readHealth(f,{...active,events:[scan]});
+ requireReadOnly(f,beforeRead);
+ evidence.diagnosis={scan,health:diagnosis};
+ const unhealthy=diagnosis.json.outcome;
+ assert.equal(diagnosis.json.exitCode,1);
+ assert.equal(unhealthy.state,'degraded');
+ assert.equal(unhealthy.current.evidence_revision,scan.evidence_revision);
+ assert.equal(unhealthy.current.configuration_digest,binding.configuration_digest);
+ assert.equal(unhealthy.alarm_evidence.table_id,origin.table_id);
+ assert.equal(unhealthy.latest_complete.ended_at,scan.ended_at);
+ assert.equal(unhealthy.maximum_budget_utilization,80);
+ assert(unhealthy.reasons.includes('CAPACITY_WARNING'));
+ assert.equal(unhealthy.metric_evidence.metrics.CompletePresence.maximum,1);
+ assert.equal(unhealthy.metric_evidence.metrics.MaximumBudgetUtilization.maximum,80);
+ assert(enabled<Date.parse(scan.started_at)&&Date.parse(scan.ended_at)<Date.parse(unhealthy.observed_at));
+ assert(Date.parse(unhealthy.observed_at)-Date.parse(scan.ended_at)<=unhealthy.settings.freshness_seconds*1000);
+ assert.match(diagnosis.human.stdout,/degraded \(exit 1\)/);
+ assert.match(diagnosis.human.stdout,/Maximum budget use: 80\.0%/);
+ for(const [key,metric] of [['lambda_errors','Errors'],['lambda_throttles','Throttles']]){
+  const alarm=unhealthy.alarm_evidence.alarms.find(row=>row.key===key);
+  assert.equal(alarm.actual.Namespace,'AWS/Lambda');
+  assert.equal(alarm.actual.MetricName,metric);
+  assert.equal(alarm.actual.TreatMissingData,'notBreaching');
+  assert.equal(alarm.raw_state,'INSUFFICIENT_DATA');
+  assert(alarm.raw_state_updated_at);
+ }
+ checkAlarmRecoveryLinks(unhealthy);
+
+ const retained=businessRows(f);
+ const protective=requireStatus(await run('stop',active),'stopped');
+ evidence.stops={protective};
+ assert.equal(protective.proof,false);
+ assert.equal(f.cloud.concurrency,0);
+ assert.equal(f.cloud.schedule.State,'DISABLED');
+ checkAlarmActions(f,true);
+ assert.deepEqual(businessRows(f),retained);
+
+ const maintenance=await configure(active,build('ready-maintenance',changedControls(config,{maintenance:true})),'ready-maintenance-receipt');
+ const strict=requireStatus(await run('stop',maintenance),'stopped');
+ evidence.stops.strict=strict;
+ assert.equal(strict.proof,true);
+ assert.equal(strict.stop.pb_stop_id,strict.operation);
+ assert.equal(strict.stack_id,origin.stack_id);
+ assert.equal(strict.table_id,origin.table_id);
+ assert.equal(f.cloud.concurrency,0);
+ assert.equal(f.cloud.schedule.State,'DISABLED');
+ checkAlarmActions(f,false);
+ assert.deepEqual(businessRows(f),retained);
+ evidence.retained_work={records_before_stop:retained.length,records_after_drain:businessRows(f).length,
+  uncertain_attempt:'none_in_this_fixture'};
+
+ const beforeGuide=readOnlyCheckpoint(f);
+ const guidePaths=['docs/manager-health.md','docs/manager-installation.md','docs/manager-state.md'];
+ const guides=guidePaths.map(file=>fs.readFileSync(path.join(source.source,file),'utf8'));
+ const helpCommands=['scripts/manager-installation.mjs','scripts/manager-state.mjs'].map(entry=>{
+  const argv=[process.execPath,entry,'--help'];
+  const stdout=execFileSync(process.execPath,argv.slice(1),{cwd:source.source,encoding:'utf8'});
+  return {argv,stdout};
+ });
+ const healthGuide=guides[0].replaceAll(/\s+/g,' ');
+ assert.match(healthGuide,/Do not raise reserved concurrency or run a second manager for this installation\./);
+ assert.match(healthGuide,/Do not replay an uncertain Jira write\. Inspect the original attempt and preserve retained holds\./);
+ assert.match(healthGuide,/For ordinary State inspection, use the currently verified configuration and receipt for this installation with the original `attempt:ORIGINAL_ATTEMPT_UUID`\..*?node scripts\/manager-state\.mjs inspect --config current-config\.json --installation current-receipt\.json .*?--record-id attempt:ORIGINAL_ATTEMPT_UUID/);
+ assert.match(healthGuide,/For lifecycle inspection, use the recorded operation UUID and the original inputs matching that operation\..*?node scripts\/manager-installation\.mjs inspect-operation --config original\.json --installation original-receipt\.json .*?--operation ORIGINAL_UUID/);
+ assert.match(guides[2],/--record-id/);
+ assert.match(helpCommands[0].stdout,/inspect-operation/);
+ assert.match(helpCommands[1].stdout,/inspect/);
+ requireReadOnly(f,beforeGuide);
+ evidence.guide_exercise={guides:guidePaths.map((file,index)=>({file,sha256:sha256(guides[index])})),help_commands:helpCommands,
+  guide_section:'Restore inactive readiness after an unhealthy observation',
+  declined:['Increase concurrency or overlap a second manager.','Replay an uncertain Jira write.'],
+  supported:['Keep reserved concurrency and one manager.',
+   'Inspect the original attempt by record ID using the currently verified configuration and receipt.',
+   'Inspect the lifecycle operation by its recorded ID using the original inputs matching that operation.'],
+  actual_uncertain_attempt_inspection:'not_exercised_in_D; see R1-23-H02',
+  state_sha256_before:sha256(beforeGuide.state),state_sha256_after:sha256(f.provider.snapshot()),
+  provider_calls:f.audit.slice(beforeGuide.aws),state_calls:f.provider.audit.slice(beforeGuide.stateAudit)};
+
+ const restored=await readHealth(f,{...maintenance,events:[scan]});
+ const savedHealth=restored.json.outcome;
+ evidence.restored_health=restored;
+ assert.equal(restored.json.exitCode,0);
+ assert.equal(savedHealth.state,'disabled');
+ assert.equal(savedHealth.latest_complete,null);
+ assert.equal(savedHealth.latest_historical_scan.ended_at,scan.ended_at);
+ assert.equal(savedHealth.alarm_evidence.stable_host_and_state,true);
+ assert.equal(savedHealth.alarm_evidence.table_id,origin.table_id);
+ assert.equal(savedHealth.alarm_evidence.concurrency,0);
+ assert.deepEqual([savedHealth.current.health_generation,savedHealth.current.health_enabled_at,savedHealth.current.evidence_revision],[null,null,null]);
+ assert.equal(savedHealth.alarm_evidence.retained_epoch.health_generation,health_generation);
+ assert.equal(savedHealth.alarm_evidence.retained_epoch.health_enabled_at,health_enabled_at);
+ assert.equal(savedHealth.alarm_evidence.retained_epoch.evidence_revision,null);
+ assert.equal(savedHealth.alarm_evidence.topic_routing.status,'console_only');
+ await compare('restored',maintenance,savedHealth,{explicit:true});
+ evidence.removal=compareRemoval();
+ evidence.deletion_calls=f.audit.filter(row=>row.action.startsWith('Delete'));
+ assert.deepEqual(evidence.deletion_calls,[]);
+}
+
+export async function runSavedAlarmFixture(id,{directory,release}={}){
+ assert(savedAlarmCases.includes(id));
+ const config=hostFixture().config;
+ if(id==='R1-23-H04'){
+  config.jira.read_bounds.max_requests=100;
+  config.manager.health={...config.manager.health,warning_percent:80};
+ }
+ const journey=await lifecycleBirthJourney({config,cli:true});
+ const {source,evidence}=journey;
+ Object.assign(evidence,{case:id,preparation:'PREP-01',data:'DATA-01',ready_comparisons:[],birth_package:source.packageEvidence,
+  simulated_account:config.manager.aws.account_id,simulated_roles:hostFixture().alarms.simulated_roles,
+  omissions:['AWS evaluation and IAM','actual notification delivery','installed acceptance','human execution and acceptance']});
+ try{
+  if(release)assert.equal(source.source_dirty,'','Use a clean checkout for release-bound contributor evidence.');
+  const [{checkSavedAlarmSnapshot,compareRetainedAlarmRemoval,checkSavedFixtureEvidence},{readAlarmHealthFixture,scanFixture}]=await Promise.all([
+   import('./test-release-readiness.mjs'),import('./test-manager-health.mjs')]);
+  const compare=(variant,installed,health,{explicit,diagnostic})=>{
+   let target=path.join(directory??source.temp,variant),commands=evidence.ready_comparisons;
+   if(variant==='malformed'){
+    if(!diagnostic)fs.mkdirSync(target,{mode:0o700});
+    else {
+     const malformed=commands.find(row=>row.variant===variant);
+     malformed.additional_diagnostics=[];
+     commands=malformed.additional_diagnostics;
+    }
+    target=path.join(target,diagnostic?'observed-action-list':'definition-dimension');
+   }
+   return checkSavedAlarmSnapshot({variant,health,release,diagnostic,directory:target,
+    checkout:source.source,revision:source.snapshot_revision,configPath:installed.configPath,
+    installationPath:installed.installationPath,manifestPath:explicit?installed.manifestPath:undefined,commands});
+  };
+  if(id==='R1-23-H03'){
+   await savedAlarmOutcomes(journey,{compare,readHealth:readAlarmHealthFixture});
+   if(!release)await checkSavedAlarmLineage(journey,checkSavedFixtureEvidence);
+  }
+  else await alarmRecoveryJourney(journey,{compare,readHealth:readAlarmHealthFixture,scanFixture,compareRemoval:compareRetainedAlarmRemoval,config});
+  return evidence;
+ }catch(error){error.fixtureEvidence=evidence;throw error;}
  finally{source.cleanup();}
 }
 

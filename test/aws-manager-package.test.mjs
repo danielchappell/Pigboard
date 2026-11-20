@@ -9,7 +9,7 @@ import {hostConfig,deriveHostControls,sha256,installationResourceBase,resolveIns
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
 import {alarmDefinitions,alarmStackMatches,readAlarms,verifyAlarmPackage} from '../lib/aws/alarms.mjs';
 import {parseConfig} from '../lib/config/parse.mjs';
-import {fixtureCloud,preparedCloud,policyPermits,runAlarmLifecycleFixture,templateJourney} from '../scripts/test-aws-manager.mjs';
+import {fixtureCloud,preparedCloud,policyPermits,runAlarmLifecycleFixture,runSavedAlarmFixture,templateJourney} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
@@ -46,7 +46,7 @@ test('R1-23-H01 checks package alarm signals, scoped roles and health readback',
 });
 
 test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and reports partial deletion', async () => {
- const {adoption,activation,removal,failures}=await runAlarmLifecycleFixture('R1-23-H02');
+ const {adoption,activation,removal,failures}=await runAlarmLifecycleFixture('R1-23-H02',{savedReadinessAssertions:true});
  assert.equal(adoption.authentic_parent.revision,'75f4efddb6e4fc0a7fcdedd660040842206763a3');
  assert.equal(adoption.authentic_parent.template_sha256,'sha256:53f0670bb1604b111fa29018fc722e083741dfb9c1faf7cda2b351f9dc62b114');
  assert.equal(adoption.authentic_parent.outer_manifest_sha256,'sha256:4bf74fa23151d2fbdd4478382863f8fb23a76db97a99b8ed10eb8e64de3cf76a');
@@ -77,7 +77,7 @@ test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and repo
 
 test('R1-23-H03-C routes, verifies and retains the optional topic through the normal commands',async()=>{
  const {case:id,variants,preparation,data}=fixture().routing;
- const result=await runAlarmLifecycleFixture(id);
+ const result=await runAlarmLifecycleFixture(id,{savedReadinessAssertions:true});
  assert.equal(result.source.source_parent.length,40);
  assert.deepEqual([result.preparation,result.data],[preparation,data]);
  assert.deepEqual(Object.keys(result.variants),variants);
@@ -85,6 +85,22 @@ test('R1-23-H03-C routes, verifies and retains the optional topic through the no
  assert.equal(result.variants.permitted.rotation.health.routing.status,'verified');
  assert.deepEqual(result.variants.denied_or_misconfigured.refusal.mutations,[]);
  assert.equal(result.variants.denied_or_misconfigured.denied_source_protection.retained.removed.result.terminal.retention_complete,true);
+});
+
+test('R1-23-H03 runs the four prescribed saved comparisons through the readiness CLI',async()=>{
+ const evidence=await runSavedAlarmFixture('R1-23-H03');
+ assert.deepEqual(evidence.ready_comparisons.map(({variant})=>variant),['matching','contradictory','inaccessible','malformed']);
+ assert(!Object.hasOwn(evidence.ready_comparisons[0].inputs,'package-manifest'));
+ assert(evidence.ready_comparisons.slice(1).every(({inputs})=>Object.hasOwn(inputs,'package-manifest')));
+});
+
+test('R1-23-H04 follows the warning, protective stop, strict drain and restored readiness',async()=>{
+ const evidence=await runSavedAlarmFixture('R1-23-H04');
+ assert.equal(evidence.diagnosis.health.json.outcome.maximum_budget_utilization,80);
+ assert.equal(evidence.stops.protective.proof,false);
+ assert.equal(evidence.stops.strict.proof,true);
+ assert.deepEqual(evidence.ready_comparisons.map(({variant})=>variant),['restored']);
+ assert.deepEqual(evidence.deletion_calls,[]);
 });
 
 test('alarm readback rejects substituted stack ownership and incomplete or conflicting named results', async () => {

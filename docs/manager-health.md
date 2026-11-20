@@ -83,8 +83,10 @@ expected and observed ALARM, OK and INSUFFICIENT_DATA destination lists, action
 state, raw CloudWatch state and a console link for each alarm. An empty list is
 shown as `[]`. An unavailable observation is `unknown` in readable output and
 `null` in JSON. JSON also carries the full definitions in `alarm_evidence`.
-`stable_host_and_state` says whether the host and
-protected State matched at both ends of that inspection. Definition alignment
+`stable_host_and_state` says whether the host and protected State matched at both
+ends of that inspection. The same snapshot reports `operator_account_id` from the
+verified session, `operator_role_arn` after matching that session to the canonical
+IAM role, and `table_id` from the physical State table. Definition alignment
 and evaluation are separate fields. A raw `ALARM`, `OK`, or
 `INSUFFICIENT_DATA` can persist after the definition is replaced. The reader
 reports that provider state and its timestamp with current evaluation marked
@@ -99,8 +101,9 @@ with exit code 2. Current binding, scan and budget fields are unverified.
 The report still shows the raw alarm states, observed actions, timestamps and
 named definitions it received. Prior scan samples, budget measurements and
 the initially observed binding appear as earlier observations in the terminal
-and under `prior_observation` in JSON. Their attribution to the current
-installation is unverified. Check the current receipt and the operator's read
+and under `prior_observation` in JSON. The current operator account, role and table
+ID fields are null. Any earlier values are under
+`prior_observation.alarm_diagnostics` with unverified attribution. Check the current receipt and the operator's read
 access, then inspect the same installation again.
 
 ## Check SNS routing
@@ -199,10 +202,150 @@ retains its existing lifecycle powers. “Read-only health” describes the comm
 and its additive grants. Runtime keeps existing log writes and needs no metric
 write client or permission.
 
-For uncertainty, inspect the same installation and original pending attempt. An
-existing authorized stop remains a separate command. Never replay an uncertain
-mutation to make a health result green. Repair access or config only within your
-existing authority, then perform a new inspection; health does not repair anything.
+## Restore inactive readiness after an unhealthy observation
+
+1. **Inspect the same installation.** Run the readable and JSON health commands
+   above with the canonical configuration, verified receipt and prepared operator
+   profile. Keep both outputs. Follow the generated AWS links for the named
+   alarms, logs, metrics, Lambda and Scheduler. Check the account, Region, stack,
+   function, table ID and generation. Compare requested configuration, protected
+   intent, actual schedule and applied controls. Read each alarm's raw state and
+   timestamp alongside its definition verdict and the observation interval.
+2. **Protect admission when stopping is authorized.** Use the active configuration
+   and its current successful receipt. A protective stop may confirm the State
+   fence, disabled schedule and zero reserved concurrency while leaving drain
+   proof unconfirmed. It preserves external detection while intent is still
+   scheduled. Record the operation UUID, actual fence and host checks, action
+   observations, proof, pending work and any unknown effect. Keep a partial result
+   even if a fence succeeded. A Jira request already sent or a Cursor worker
+   already started may continue.
+3. **Diagnose from the saved pre-stop observation.** Compare `CompletePresence`
+   against cadence and freshness for the reported evidence revision. Check the
+   native sparse Lambda Errors and Throttles metrics for the same function.
+   CloudWatch ingestion and evaluation can lag the log and the current alarm
+   definition. Use the scan's measured numerator, configured bound, unit and
+   interval if supplied. In the H04 preview, a complete scan used 80 Jira
+   requests against a bound of 100 during the saved scan's start/end interval.
+   That is 80%, equal to the configured warning threshold, so health is
+   `degraded` with exit 1 even with a fresh complete scan. Use
+   `latest_complete.budgets.requests` and the scan's timestamps in JSON to verify
+   the example. Keep missing measures unobserved. Measured usage describes that
+   workload and its bounds only.
+4. **Resolve the recorded prerequisite.** Keep one manager at its supported
+   concurrency. Do not raise reserved concurrency or run a second manager for
+   this installation. Do not replay an uncertain Jira write. Inspect the original
+   attempt and preserve retained holds. Use read-only State inspection with the
+   currently verified configuration and receipt for this installation and the
+   sender's `apply.attempt_id` after the `attempt:` prefix. For an interrupted
+   lifecycle operation, supply the recorded operation UUID and the original inputs
+   matching that operation. Follow the [installation recovery procedure](manager-installation.md#upgrade-the-same-installation)
+   for the operation and use the verified operator profile for either inspection.
+   A denied read, new operation owner or unconfirmed effect calls for the named
+   access or operation recovery procedure. Avoid reinitializing State or repeating
+   an uncertain request.
+5. **Configure inactive maintenance and verify drain.** After resolving any
+   operation that still owns the host, use the current verified receipt to
+   configure the same source and installation generation with schedule and writes
+   off and maintenance on. Prepare its exact versioned asset and preserve
+   package lineage as described in [verify drain](manager-installation.md#verify-drain-on-a-lifecycle-installation).
+   Run strict stop using the returned successful receipt. Confirm the disabled
+   schedule, zero reserved concurrency, matching physical resources, the measured
+   drain interval and verified proof. Record the State fence and verify the four
+   alarm actions are off. Preserve retained work and any unconfirmed result.
+6. **Save and compare.** Rerun health with the maintenance configuration and
+   successful receipt. Save the stable `disabled` result with the current epoch
+   cleared and any retained epoch or earlier scan recorded as history. Confirm
+   the two dormant definitions and all four disabled actions. Use that config,
+   receipt and saved health with the matching source and skill receipt in
+   [offline readiness](release-readiness.md#run-the-local-comparison). Keep the
+   package and health verdicts, aggregate exit and independent outstanding layers.
+   For console-only routing, use the console or CLI. For a configured topic, check
+   all four exact ALARM destinations and follow the [customer delivery checks](#check-sns-routing).
+   Inactive readiness ends here. Any later enablement requires separate operator
+   authority.
+
+Use these commands from the prepared checkout. Save each result with its exit
+code. Resolve any held operation or unconfirmed prerequisite before moving from
+the initial stop to configure. Use a fresh output path for the receipt.
+
+```sh
+node scripts/manager-installation.mjs stop --config active.json --installation current-receipt.json --operator-profile customer-operator --json
+node scripts/manager-installation.mjs configure --config maintenance.json --installation current-receipt.json --manifest maintenance-package/manifest.json --asset maintenance-asset.json --operator-profile customer-operator --deployer-profile customer-deployer --output maintenance-receipt.json --json
+node scripts/manager-installation.mjs stop --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --json
+node scripts/manager-health.mjs --config maintenance.json --installation maintenance-receipt.json --operator-profile customer-operator --json
+```
+
+For ordinary State inspection, use the currently verified configuration and
+receipt for this installation with the original `attempt:ORIGINAL_ATTEMPT_UUID`.
+See [Jira evidence for one pending attempt](manager-state.md#inspect-jira-evidence-for-one-pending-attempt)
+when you also need the current applied receipt and historical sending receipt.
+For lifecycle inspection, use the recorded operation UUID and the original inputs
+matching that operation. The example shows the operation's original configuration
+and receipt. The [installation recovery procedure](manager-installation.md#upgrade-the-same-installation)
+gives the inputs for a restricted successor.
+
+```sh
+node scripts/manager-state.mjs inspect --config current-config.json --installation current-receipt.json --operator-profile customer-operator --kind attempt --record-id attempt:ORIGINAL_ATTEMPT_UUID --json
+node scripts/manager-installation.mjs inspect-operation --config original.json --installation original-receipt.json --operator-profile customer-operator --operation ORIGINAL_UUID --json
+```
+
+## Review retained resources and costs
+
+Use the original [removal preview and result](manager-installation.md#remove-and-recover).
+For each preview row, compare its logical name and physical identity against
+the result. Verify the original State table ID and ARN as well as its retained
+status. Keep the terminal report and its original status. If later inspection
+returned a separate `current_observation`, record its timestamp, match it to
+the same preview and removal UUID, and state what that observation established.
+Keep partial removal marked partial even when individual deletions are verified.
+
+| Preview row | Evidence and possible ongoing charges |
+| --- | --- |
+| AsyncInvocation, Function, LifecycleSchedule, RuntimeRole, SchedulerRole | Record each physical identity and whether its deletion was verified or is unobservable. |
+| LogGroup | Check its disposition in the deployed preview and the result. The generated template requests deletion. Retained logs can incur storage charges. |
+| StateTable | Verify the exact original physical ID and ARN. A retained table can incur DynamoDB charges. Record an unreadable or mismatched table as unobservable and protect the original State. |
+| MissingCompletionAlarm, LambdaErrorsAlarm, LambdaThrottlesAlarm, MeasuredBudgetAlarm | Check each named alarm individually. Unconfirmed deletion can leave a continuing CloudWatch charge. |
+| Customer-owned Secrets Manager secrets, versioned artifacts and IAM roles | Mark each resource that appears in the preview as external. Secrets and stored artifact versions may continue to incur charges. |
+| Customer-owned SNS topic and subscriptions, when configured | Record the exact topic ARN as external. The topic and subscriptions remain customer-managed and may incur charges. |
+
+Record a cost amount and unit only when the preview supplies them. For an
+unobservable row, use read-only inspection of the original removal operation.
+
+```sh
+node scripts/manager-installation.mjs inspect-operation --config maintenance.json --installation maintenance-receipt.json --operation ORIGINAL_REMOVAL_UUID --operator-profile customer-operator --json
+```
+
+For the H04 walkthrough, use the retained H02 complete and partial removal
+branches and the H03-C configured-topic removal evidence supplied with the
+exercise. Match every row and original table. In the partial observations,
+missing deletion proof for `MeasuredBudgetAlarm` leaves possible CloudWatch
+cost. H03-C also identifies the external SNS topic. Retain the original revisions
+and digests with your comparison. The walkthrough uses saved removal evidence
+and sends zero deletion requests.
+
+### R1-23-H04 operator walkthrough
+
+Use a disposable fixture from a clean checkout at the reviewed revision, with
+prepared Node 24 dependencies and the external skill receipt for that revision.
+
+```sh
+node scripts/test-aws-manager.mjs --case R1-23-H04 \
+  --output /absolute/private/NEW-alarms-h04 \
+  --release /absolute/private/skill-receipt.json
+```
+
+Follow the steps above with the generated unhealthy outputs and saved removal
+inventory. Check the supported commands with their `--help` output open.
+For the concurrency and replay questions, record the guide's refusal and the
+supported inspection route. These are decisions about the documented commands.
+The fixture has no pending attempt. Keep unchanged State and provider audit
+evidence for those decisions. Read and retain the final inactive offline result
+along with the pre-stop measurement, both stop results and the matching receipt.
+
+Retain the tested revision, exact argv, sanitized reports, original removal
+evidence references and cleanup record, then remove the owned disposable fixture
+and build outputs. Record fresh human execution and deployed notification
+delivery independently from the simulated walkthrough.
 
 The finite developer fixture packet is:
 

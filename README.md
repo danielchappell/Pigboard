@@ -61,6 +61,7 @@ and [the verification recipe](docs/using-pigboard.md#verify-implementer-preparat
 | Inspect requested Jira issues from a reviewed source or prepared installed validator | [Named-issue library and finite HTTPS packet](docs/manager-preview.md#inspect-named-jira-issues) |
 | Use the conditional State API or bound init/inspect CLI | [State API, prerequisites and recovery](docs/manager-state.md) |
 | Package the disabled customer-owned runtime | [AWS package, installation, preview and stop](docs/manager-installation.md) |
+| Investigate manager health and check saved inactive evidence | [Health and operator recovery](docs/manager-health.md) and [offline readiness](docs/release-readiness.md) |
 | Validate or preview multi-project configuration | [Local scope checker and configuration guide](docs/configuration.md) |
 | Configure the existing delivery workflow | [Workflow contract](docs/workflow.md), [Jira setup](docs/jira-setup.md) and [Cursor matrix](config/cursor/automations.md) |
 

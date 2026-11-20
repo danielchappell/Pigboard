@@ -70,8 +70,12 @@ Omit `--json` for readable output. `--help` alone displays usage. Supply absolut
 paths and a lowercase forty-character commit. Required inputs are configuration,
 skill receipt and revision. Omitted optional evidence is UNVERIFIED; an explicitly
 supplied unreadable or malformed file is an ERROR. Each JSON input is limited to
-1 MiB, depth16 and arrays of1,000. The existing skill-release manifest keeps the
-verifier's own catalogue format rather than being truncated to those input limits.
+1 MiB, with depth at most 16 and at most 1,000 items per array. A v2 lifecycle
+package manifest can be up to 4 MiB. A v2 installation receipt can be up to 8 MiB,
+including an embedded manifest that still has a 4 MiB limit. The embedded limit
+applies even with an explicit manifest. These limits also apply when the receipt
+is the only source of the manifest. The verifier uses its own format for the
+skill-release catalogue.
 
 | Exit | Meaning | Next action |
 | --- | --- | --- |
@@ -158,28 +162,33 @@ inside delivery. Missing prerequisites stop locally and retain completed work.
 
 ## Describe saved evidence
 
-The [manager installation guide](manager-installation.md) owns package preparation,
-disabled installation and successful receipt publication. Supply its actual
-`pigboard-manager-package/v1` manifest and
-`pigboard-installation-receipt/v1` receipt. Without a separate manifest, readiness
-uses the receipt's embedded manifest. Both routes require
-`manifest.source_revision === binding.package_revision === --revision`.
-`MANAGER_REVISION_MISMATCH` remains a failure even when an older package, receipt
-and health report agree with one another. Package support requires `sender:true`,
-Node24 runtime and the six existing logical resources. Package hashes are saved
-metadata. Readiness requires valid `dependency_hashes.root` and
-`dependency_hashes.aws` digests, at least one `payload_hashes` entry, and valid
-digests for every supplied entry. These are minimum declared metadata checks;
-they do not prove that every payload file is listed or that deployed Lambda bytes
-match. Supply the complete original saved manifest when metadata is missing.
+The [manager installation guide](manager-installation.md) explains how to obtain
+the package manifest and successful installation receipt. Use the matching pair
+for your revision.
 
-The successful receipt's site, installation/domain, region, configuration digest,
-generation and original stack/table binding must agree with canonical controls.
-Desired schedule and writes must be false. Maintenance is shown as supplied; an
-already-stopped installation does not have to clear it. Activation confirmations
-in configuration remain declarations, not proof or permission.
+| Package | Manifest and successful receipt |
+| --- | --- |
+| Legacy v1 | `pigboard-manager-package/v1` and `pigboard-installation-receipt/v1` |
+| Lifecycle v2 | `pigboard-manager-package/v2` and `pigboard-installation-receipt/v2` |
 
-The [basic health guide](manager-health.md) owns the separately authorized AWS read:
+You can omit `--package-manifest` to use the manifest embedded in the receipt.
+When you supply both, they must agree. The manifest's source revision and the
+receipt's package revision must equal `--revision`. Use the complete saved
+manifest including dependency, payload and, for v2, zip digests. A confirmed
+package comparison covers the declared metadata. Verifying deployed Lambda bytes
+belongs to installation.
+
+The checker compares the six core resources and canonical binding. For v2 it
+also compares the protected origin, original physical table ID and role. An
+upgrade can legitimately have a different birth revision. The ready-to-review
+controls have schedule and writes off. Maintenance is allowed. A partial result
+or recovery-only receipt cannot establish a successful installation. Use any
+recovery result with its own installation procedure and preserve the original
+receipt and operation ID.
+
+Save an authorized observation from the same installation and revision. The
+[health command](manager-health.md) reads the provider. Readiness uses its
+complete JSON output without invoking it.
 
 ```sh
 node /absolute/pigboard-setup/scripts/manager-health.mjs \
@@ -188,21 +197,33 @@ node /absolute/pigboard-setup/scripts/manager-health.mjs \
   --operator-profile PREPARED_PROFILE --json
 ```
 
-Retain that complete original output as the `--health` file; readiness never
-invokes the reader. It compares installation/revision/configuration identity and
-the producer's health-generation digest. A compatible inactive observation is
-`disabled`, exit 0, with desired/observed schedule and applied writes/schedule
-false, zero writes and worker health `not_observed`. Unknown, healthy, starting,
-stale or degraded observations remain unverified for this inactive comparison.
-The producer observes the existing Function, Schedule, LogGroup, StateTable and
-roles before health queries; readiness does not repeat those reads or invent an
-alarm inventory.
+A matching inactive snapshot reports `disabled` with health exit 0, inactive
+applied controls, zero writes and `worker_health: not_observed`. For an
+alarm-capable package, check that the stable closing observation matches the
+installation's stack, function, region, generation, physical table ID and verified
+operator account and role. The saved intent is `disabled` or
+`upgrade-maintenance`, with zero reserved concurrency. The four saved alarm
+identities, normalized definitions and destination lists must match the generated
+inactive definitions. All actions are disabled. The two custom alarms use dormant
+definitions. Raw CloudWatch state and its timestamp can reflect earlier
+evaluation. Earlier observations from a failed closing read have unverified
+attribution.
+
+With no configured SNS topic, all three destination lists per alarm are empty.
+Use the console and CLI for inspection. With a configured topic,
+each alarm has the exact same ALARM ARN and empty OK and INSUFFICIENT_DATA lists.
+Look for separate confirmation of the alarm reads, the topic read and their
+combined routing. Confirm subscriptions, any encryption permissions and actual
+notification receipt through [customer delivery acceptance](manager-health.md#check-sns-routing).
 
 The saved `observed_at`, query `start`/`end` and retained `health_enabled_at` must
 be canonical ISO timestamps, such as `2026-11-16T12:00:00.000Z`. The query starts
 before it ends, and its end equals `observed_at`. Retained enablement must be no
 later than that saved observation; it may predate the query. Readiness checks
 these saved relationships without deriving a lookback or using today's clock.
+For the quartet, the alarm read begins at or after that query end. The saved
+alarm observation, topic observation and end of the alarm interval follow in
+that order. Equal timestamps are allowed for those boundaries.
 Coverage must be complete, with integer `pages` from 1 through 10,
 `fetched_events` from 0 through 1000 and `decoded_bytes` from 0 through 1048576.
 Zero events require zero bytes; positive events require at least one byte per
@@ -210,35 +231,72 @@ event. `last_complete_absence` must be `within_query_window_only`: absence is
 bounded to the saved query window. The checker does not reconstruct logs or
 certify their exact byte totals.
 
-An initially disabled installation uses explicit null health generation,
-enabled time and evidence revision, with metric `status:'not_applicable'`,
-`statistics:'Maximum'` and an empty `metrics` map. A retained epoch needs a valid
-generation and matching non-null evidence digest, with metric `status:'observed'`,
-`statistics:'Maximum'` and all five metric entries. Each record needs `points`,
-`maximum` and `latest_at`. Points must be an integer from 0 through 1440. Zero
-points use `maximum:null` and `latest_at:null`; mixed zero and observed records
-are valid. Positive points need a finite nonnegative maximum and a canonical
-timestamp from the query start rounded down to a minute, through but excluding
-the query end. Presence maxima cannot exceed 1. Zero datapoints alone do not
-prove a resource missing.
+A fresh disabled installation has explicit null health generation, enabled time
+and evidence revision. The metric status is `not_applicable` with `Maximum`
+statistics and an empty metrics map. On a previously enabled alarm-capable
+installation that is now deliberately disabled, those current fields are also
+null. A retained generation and enablement time can appear in
+`alarm_evidence.retained_epoch` with unknown revision attribution. Treat the
+retained epoch and earlier log samples as history.
 
-Missing or inconsistent comparison fields remain UNVERIFIED. A malformed outer
-report (schema, object `current`, declared state or exit code) is ERROR; explicit
-identity/digest mismatches or active controls remain FAIL even when other fields
-are incomplete. Supply the complete original saved health output to recover;
-do not repeat configure, query providers or enable anything to fill a gap.
-Readiness preserves supplied reasons, omissions, links, extra applied controls
-and metric reason text as information. It does not certify their meaning or
-resource authenticity. Other producer fields are outside this inactive
-comparison. A match does not certify the complete producer report, current
-freshness, provenance, delivery or activation.
+A legacy target without the quartet can still have a retained epoch and current
+metric evidence. That path requires a matching generation digest and all five
+`Maximum` metric records with status `observed`. Each record has `points`,
+`maximum` and `latest_at`. Zero points use null maximum and time. A positive
+point count, up to 1,440, requires a finite nonnegative maximum and a canonical
+timestamp within the window from the query start rounded down to a minute up to,
+but excluding, the query end. Presence maxima are at most 1.
 
-Versioned detailed scan-health summaries currently cover preview execution.
-Ordinary apply keeps its existing outcome logs and native metrics. Missing apply
-summary evidence stays unverified; readiness cannot infer healthy or complete
-apply execution. A current package/configuration/mode identity must agree before
-using any saved health evidence. The existing evaluator can show starting or stale
-when completion is absent; this checker does not invent an unsupported-apply state.
+### Interpret saved alarm outcomes
+
+| Check outcome | What you can do with the result |
+| --- | --- |
+| PASS | Retain the matching package, installation and health checks with the snapshot interval and revision. The saved scoped reads support what the operator observed at that time. |
+| FAIL | Follow the named contradiction, such as an altered alarm threshold, a wrong ARN or enabled controls. Correct the evidence or use its owning setup procedure before saving a new observation. |
+| UNVERIFIED | Obtain the named missing observation. A denied alarm read, absent row or failed closing read leaves current attribution unverified. Preserve any definite independent mismatch. |
+| ERROR | Correct the malformed input, unreadable file or checker prerequisite. Retain other completed checks. |
+
+Read the individual checks with the aggregate exit.
+An ERROR takes precedence at exit 2, followed by FAIL (incompatible, exit 1)
+and UNVERIFIED (unverified, exit 1). Complete compatible supplied evidence returns
+exit 0. The separately reported PGB-58 check is outside that aggregate. For
+example, C04 and C05 can pass while the overall result is unverified because
+installed acceptance evidence is absent.
+
+### R1-23-H03 saved evidence walkthrough
+
+Use the clean tested source, prepared Node 24 dependencies and a skill receipt
+prepared externally at the same full revision. Start with the original
+R1-23-H03-C evidence at its own revision. Review the absent, permitted and
+denied or misconfigured SNS outcomes. Check the four named destinations, exact
+topic ARN and the original scoped permission evidence. Use the current pinned
+source for the separate saved comparison.
+
+```sh
+node scripts/test-aws-manager.mjs --case R1-23-H03 \
+  --output /absolute/private/NEW-alarms-h03 \
+  --release /absolute/private/skill-receipt.json
+```
+
+Open the recorded argv and run or inspect both formats of the offline command
+for each input. C04 passes for those four package and receipt pairs. C05 passes
+for the never-enabled, bootstrapped console-only snapshot with the embedded
+manifest. With the explicit manifest, a saved budget threshold of 81 against
+the canonical 80 fails, a denied alarm read is unverified, and a non-string
+dimension name in the saved measured-budget definition gives
+`C05_HEALTH/ERROR/HEALTH_INPUT_INVALID`. Expect aggregate exit 1
+for the matching and denied variants when installed acceptance is absent,
+exit 1 incompatible for the contradictory threshold, and exit 2 for malformed
+input. Check the actual named result in each saved format. For the operator's
+separate recovery walkthrough, use [R1-23-H04](manager-health.md#r1-23-h04-operator-walkthrough).
+
+Retain the command lines, both revisions, input digests, readable and JSON
+outputs, and cleanup record before removing the owned disposable directories.
+These are simulated provider observations and local checker results. Record the
+designated humans' execution, installed AWS permissions and subscription
+delivery independently.
+
+## Supply saved observations
 
 `--observations` is the checker's local input notes format,
 `pigboard-readiness-observations/v1`; no provider is required to emit it. Its top
