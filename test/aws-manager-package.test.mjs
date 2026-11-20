@@ -7,12 +7,109 @@ import {join} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {hostConfig,deriveHostControls,sha256,installationResourceBase,resolveInstallation} from '../lib/aws/installation.mjs';
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
+import {alarmDefinitions,alarmStackMatches,readAlarms,verifyAlarmPackage} from '../lib/aws/alarms.mjs';
 import {parseConfig} from '../lib/config/parse.mjs';
-import {fixtureCloud,preparedCloud,policyPermits,templateJourney} from '../scripts/test-aws-manager.mjs';
+import {fixtureCloud,preparedCloud,policyPermits,runAlarmLifecycleFixture,templateJourney} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
 const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
+
+test('R1-23-H01 checks package alarm signals, scoped roles and health readback', async () => {
+ const {template,windows,histories,health,repeat_bootstrap,bootstrap_recovery}=await runAlarmLifecycleFixture('R1-23-H01');
+ assert.equal(template.retention_days,14);
+ assert.deepEqual(template.alarms.map(alarm=>alarm.logical),[
+  'MissingCompletionAlarm','LambdaErrorsAlarm','LambdaThrottlesAlarm','MeasuredBudgetAlarm'
+ ]);
+ const budgetAlarm=template.alarms.find(alarm=>alarm.logical==='MeasuredBudgetAlarm');
+ assert(budgetAlarm.grants.some(grant=>grant.role==='operator'&&grant.action==='PutMetricAlarm'));
+ assert(template.alarms.every(row=>row.grants.filter(grant=>grant.action==='ListTagsForResource').map(grant=>grant.role).join(',')==='operator'));
+ assert(!budgetAlarm.grants.some(grant=>['runtime','scheduler'].includes(grant.role)));
+ assert.deepEqual(windows.commands.map(command=>command.exit_code),[0,2,0]);
+ assert.equal(windows.commands[1].actual.code,'ALARM_WINDOW_UNSUPPORTED');
+ const samples=new Map(histories.histories.map(history=>[history.input.name,history]));
+ assert.equal(samples.get('duplicate completion').periods.at(-1).measured,1);
+ assert.equal(samples.get('errors during grace').state,'ALARM');
+ assert.equal(samples.get('throttles during grace').state,'ALARM');
+ assert.equal(samples.get('budget below warning').state,'OK');
+ assert.equal(samples.get('budget equals warning').state,'ALARM');
+ assert.equal(samples.get('budget absent').periods.at(-1).measured,null);
+ assert.equal(health.starting.json.outcome.state,'starting');
+ assert.equal(health.starting.json.outcome.maximum_budget_utilization,null);
+ assert.equal(health.denied.json.outcome.alarm_evidence.read_code,'ALARM_READ_DENIED');
+ assert.equal(health.mismatch.json.outcome.alarm_evidence.alarms[3].code,'ALARM_DEFINITION_MISMATCH');
+ assert.equal(repeat_bootstrap.aligned.status,'bootstrapped');
+ assert.equal(repeat_bootstrap.drift.alarms.status,'mismatch');
+ assert.equal(repeat_bootstrap.denial.alarms.status,'unknown');
+ assert.equal(bootstrap_recovery.initial_package.intent,'disabled');
+ assert.equal(bootstrap_recovery.strict.proof,true);
+});
+
+test('R1-23-H02 adopts genuine pre-alarm v2, detects a stopped schedule and reports partial deletion', async () => {
+ const {adoption,activation,removal,failures}=await runAlarmLifecycleFixture('R1-23-H02');
+ assert.equal(adoption.authentic_parent.revision,'75f4efddb6e4fc0a7fcdedd660040842206763a3');
+ assert.equal(adoption.authentic_parent.template_sha256,'sha256:53f0670bb1604b111fa29018fc722e083741dfb9c1faf7cda2b351f9dc62b114');
+ assert.equal(adoption.authentic_parent.outer_manifest_sha256,'sha256:4bf74fa23151d2fbdd4478382863f8fb23a76db97a99b8ed10eb8e64de3cf76a');
+ assert.equal(adoption.added.length,4);
+ assert.equal(adoption.name_checks.absence.length,4);
+ assert.equal(adoption.name_checks.preview.composite.result.code,'ALARM_NAME_COLLISION');
+ assert.equal(adoption.name_checks.upgrade.denied.result.code,'ALARM_NAME_AVAILABILITY_UNCONFIRMED');
+ assert(adoption.dormant.every(alarm=>alarm.definition.ActionsEnabled===false));
+ assert.equal(adoption.health.json.outcome.alarm_evidence.current.evidence_revision,null);
+ assert.equal(activation.externalHealth.json.outcome.state,'degraded');
+ assert(activation.externalHealth.json.outcome.alarm_evidence.alarms.every(alarm=>alarm.actions_enabled===true));
+ const histories=new Map(activation.histories.histories.map(history=>[history.input.name,history.state]));
+ assert.equal(histories.get('inclusive freshness deadline'),'OK');
+ assert.equal(histories.get('never started'),'ALARM');
+ assert.equal(histories.get('external stop followed by three empty periods'),'ALARM');
+ assert.equal(histories.get('old revision after rotate'),'ALARM');
+ assert.equal(removal.inventory.resources.find(row=>row.logical==='StateTable').disposition,'retained');
+ assert.equal(removal.complete.terminal.retention_complete,true);
+ const unresolved=removal['missing alarm delete event'].inspected.current_observation;
+ assert.equal(unresolved.status,'partial');
+ assert.equal(unresolved.resources.find(row=>row.logical==='MeasuredBudgetAlarm').observation,'unobservable');
+ assert.equal(failures.configureProtection['incompatible inventory'].host,'stopped');
+ assert.equal(failures.configureProtection['ordinary update'].code,'ALARM_OWNERSHIP_UNCONFIRMED');
+ assert.equal(removal.retained_table_checks.denied.storedFinish.current_observation.table_observation.status,'unobservable');
+ assert.equal(removal.retained_table_checks.substituted.held.current_observation.table_observation.code,'PHYSICAL_STATE_MISMATCH');
+ assert.equal(removal.retained_table_checks.state.held.current_observation.state_persistence,'unconfirmed');
+});
+
+test('alarm readback rejects substituted stack ownership and incomplete or conflicting named results', async () => {
+ const {config}=fixture(), {region,account_id}=config.manager.aws;
+ const expected=alarmDefinitions({config,function_name:fixtureBase});
+ const stackId=`arn:aws:cloudformation:${region}:${account_id}:stack/fixture/id`;
+ const resources=expected.map(alarm=>({LogicalResourceId:alarm.logical_id,PhysicalResourceId:alarm.name,
+  ResourceType:'AWS::CloudWatch::Alarm',StackId:stackId}));
+ const outputs=Object.fromEntries(expected.map(alarm=>[alarm.output_id,alarm.link]));
+ const stack={descriptors:expected,resources,outputs,stackId};
+ assert(alarmStackMatches(stack));
+ assert(!alarmStackMatches({...stack,resources:[{...resources[0],StackId:stackId+'-other'},...resources.slice(1)]}));
+ assert(!alarmStackMatches({...stack,resources:[...resources,{ResourceType:'AWS::CloudWatch::CompositeAlarm'}]}));
+ assert(!alarmStackMatches({...stack,outputs:{...outputs,[expected[0].output_id]:expected[1].link}}));
+
+ const metricAlarms=expected.map(alarm=>({...alarm.definition,AlarmArn:alarm.arn,StateValue:'OK'}));
+ const read=response=>readAlarms({descriptors:expected,expected,describe:async request=>{
+  assert.deepEqual(request,{AlarmNames:expected.map(alarm=>alarm.name),AlarmTypes:['MetricAlarm']});
+  return response;
+ }});
+ assert.equal((await read({MetricAlarms:metricAlarms})).status,'aligned');
+ const incomplete=await read({MetricAlarms:metricAlarms.slice(0,2),NextToken:'fixture-next'});
+ assert.equal(incomplete.status,'unknown');
+ assert.equal(incomplete.code,'ALARM_READ_INCOMPLETE');
+ assert.equal(incomplete.alarms[1].raw_state,'OK');
+ assert.equal(incomplete.alarms[2].actions_enabled,null);
+ const conflict=await read({MetricAlarms:[
+  metricAlarms[0],metricAlarms[0],{...metricAlarms[1],AlarmArn:expected[1].arn+'-other'},
+  {...metricAlarms[2],AlarmActions:['arn:aws:sns:eu-west-1:123456789012:outside']}
+ ]});
+ assert.equal(conflict.status,'mismatch');
+ assert.deepEqual(conflict.alarms.map(alarm=>alarm.code),[
+  'ALARM_DUPLICATE','ALARM_IDENTITY_MISMATCH','ALARM_ACTION_DESTINATION_MISMATCH','ALARM_MISSING'
+ ]);
+ assert.equal(conflict.alarms[1].raw_state,null);
+});
+
 test('R1-23-H02-A preserves verified enablement through configure recovery', async () => {
  const {runLifecycleFixture}=await import('../scripts/test-aws-manager.mjs');
  const {enablement}=await runLifecycleFixture('R1-23-H02-A');
@@ -91,6 +188,20 @@ test('copied fresh lifecycle package refuses a direct apply before original tabl
   assert.deepEqual(embedded.compatibility,manifest.compatibility);
   assert.equal(sha256(embeddedText),manifest.payload_hashes['package-manifest.json']);
   assert.equal(sha256(readFileSync(join(output,'manager.zip'))),manifest.zip_digest);
+  assert.deepEqual(embedded.alarm_capability,manifest.alarm_capability);
+  assert.equal(manifest.alarm_capability.schema,'pigboard-manager-alarms/v1');
+  assert.equal(manifest.payload_hashes['lib/aws/alarms.mjs'],sha256(readFileSync(join(payload,'lib/aws/alarms.mjs'))));
+  const manifestPath=join(output,'manifest.json'), zipDigest=manifest.zip_digest;
+  assert.deepEqual(verifyAlarmPackage({manifest,manifestPath,zipDigest}),{zip_digest:zipDigest});
+  const stripped=structuredClone(manifest);
+  delete stripped.alarm_capability;
+  assert.throws(()=>verifyAlarmPackage({manifest:stripped,manifestPath,zipDigest}),{code:'PACKAGE_MISMATCH'});
+  delete stripped.payload_hashes['lib/aws/alarms.mjs'];
+  const strippedEmbedded=structuredClone(stripped);
+  delete strippedEmbedded.zip_digest;
+  delete strippedEmbedded.payload_hashes['package-manifest.json'];
+  stripped.payload_hashes['package-manifest.json']=sha256(JSON.stringify(strippedEmbedded,null,2)+'\n');
+  assert.throws(()=>verifyAlarmPackage({manifest:stripped,manifestPath,zipDigest}),{code:'PACKAGE_ZIP_MISMATCH'});
   const template=JSON.parse(readFileSync(join(output,'template.json'),'utf8'));
   const a=config.manager.aws, tableName=manifest.resource_map.physical.table_name, tableArn=`arn:aws:dynamodb:${a.region}:${a.account_id}:table/${tableName}`;
   const env={...template.Resources.Function.Properties.Environment.Variables,PB_TABLE_NAME:tableName,PB_TABLE_ARN:tableArn,PB_STACK_ID:`arn:aws:cloudformation:${a.region}:${a.account_id}:stack/${a.stack_name}/example`};

@@ -90,6 +90,12 @@ safe failure code.
 
 Lifecycle packages derive names from the installation ID and its original generation. Read the names from the generated package and stack.
 
+Current lifecycle packages create four CloudWatch metric alarms with actions
+disabled. Their names follow the physical function, and the stack outputs link
+to them. The custom alarms use dormant definitions until the operator deliberately
+enables scheduling. See the [alarm permissions](#cloudwatch-alarm-permissions-and-settings)
+before deployment.
+
 For packages built without `--lifecycle`, generated physical names use `pigboard-`, up to 12 readable characters from the
 installation ID, then a hyphen and the first 32 hexadecimal SHA256 characters of
 the complete unchanged ID. The base is at most 54 characters; the longest role
@@ -468,6 +474,14 @@ finish that operation and save its receipt. Use a fresh output path:
 node scripts/manager-installation.mjs finish-operation --config initial.json --installation birth.json --operation BOOTSTRAP_UUID --operator-profile customer-operator --output bootstrap-result.json --json
 ```
 
+On an alarm-capable installation, a repeat `bootstrap` verifies the stopped
+host, protected State, versioned asset and all four dormant definitions with
+actions off. It is a read-only check. If the result shows drift, check the
+expected and actual definitions for the original stack. If the evidence is
+unavailable, check the operator's access and try a fresh read. Keep the
+original receipt and use `finish-operation` by UUID to recover an eligible
+historical bootstrap output.
+
 To start scheduled preview after initial bootstrap, set the canonical mode to
 preview, enable scheduling and keep writes disabled. Build the same source and
 generation and upload its exact versioned asset. Use the resulting manifest and
@@ -524,6 +538,53 @@ updates to the original installation. Re-enabling is a separate, authorized
 configure operation. It requires compatible State and verified outcomes for
 any attempts that required reconciliation.
 
+#### Adopt alarms from pre-alarm v2
+
+Use the upgrade commands above with the running installation's current receipt
+and config. Set `PREVIOUS_COMMIT` to its installed source revision and
+`ORIGINAL_GENERATION` to the generation in that receipt. Keep the generated
+`manager.zip` beside the target `manifest.json` through preview and upgrade.
+The command compares it with the versioned asset and checks the actual source
+stack. Have the customer administrator apply the alarm permissions from the
+target template before preview.
+
+Preview and upgrade both check the four exact target alarm ARNs with
+`ListTagsForResource`. This detects existing metric, composite or log alarms
+with any of the required names. A successful lookup means the name is occupied
+even if there are no tags. Only CloudWatch's `ResourceNotFoundException` for
+that ARN establishes absence at the time of the read. For
+`ALARM_NAME_COLLISION`, have the customer administrator verify the existing
+alarm's ownership and resolve the conflict before previewing again. For
+`ALARM_NAME_AVAILABILITY_UNCONFIRMED`, check operator access to those exact
+ARNs and run a fresh preview. Tag values stay out of the report.
+
+1. Run `upgrade-preview`, then `upgrade --preview` with its saved output.
+   Keep the successor receipt after a verified upgrade. The installation ID,
+   physical State table and retained work continue through adoption.
+2. Run [health](manager-health.md) against the successor and the same canonical
+   config. Look for `UPGRADE_MAINTENANCE`, Scheduler off and all four actions
+   off. The config can still request scheduling. The two custom alarms have
+   dormant definitions and health reports no current metric revision.
+3. For any same-pin build at `NEW_COMMIT`, keep the original generation and
+   carry forward `compatibility.previous_revision` from the successor manifest.
+   In the example that means `--compatible-from PREVIOUS_COMMIT` even after
+   adoption. Omit the flag if the manifest's previous revision is null. Build a
+   disabled maintenance package with scheduling and writes off and maintenance
+   on. Upload its versioned asset and use the configure and strict stop commands
+   in the drain procedure above, starting with the successor receipt.
+4. Complete the required reconciliation for held attempts using the existing
+   lifecycle procedure. Once the installation can restart, build the explicitly
+   enabled configuration at the same pin with the same generation and
+   predecessor. Use `configure` with the current maintenance receipt and the
+   new target manifest and asset. Check the returned receipt with health.
+   Verify the new enablement time and evidence revision, Scheduler on, the
+   same four alarm names, aligned definitions and actions enabled.
+
+From a verified disabled and drained installation, use the removal procedure
+below if you are retiring it. An alarm-capable update keeps the four physical
+alarm identities. A missing alarm on an existing alarm-capable source is drift
+to investigate with the same installation and receipt.
+
 When preview can verify the original installation and establish that the
 proposed upgrade is incompatible, it returns `refused` with exit code 2.
 If the result confirms receipt publication, the file at the requested
@@ -579,6 +640,31 @@ read the original time and generation in the installation record:
 ```sh
 node scripts/manager-state.mjs inspect --config current.json --installation current-receipt.json --operator-profile customer-operator --kind installation --json
 ```
+
+On an alarm-capable operation, look at the effects in `inspect-operation`. If a
+required alarm step is still pending and the host portion can be verified, run
+the original `configure`, `upgrade`, `stop` or `maintenance-only` command with
+the same inputs and `--resume-operation CURRENT_OWNER_ID`. Use the original
+operator and a fresh output path where the command requires one. For
+`maintenance-only`, also retain the original `--operation SUPERSEDED_UPDATE_ID`
+and its inputs. A claimed call with a lost reply stays held. Record the actual
+provider and action observations and use the original operation's recovery
+procedure. `finish-operation` can commit independently verified results or
+re-export a saved eligible receipt. The current installation still needs a
+matching current receipt for a new mutation.
+
+Intentional strict stop suppresses actions after protecting the stopped host.
+Protective stop preserves external detection for a still-scheduled intent.
+When a stop result has unconfirmed alarm state, check the recorded State fence,
+physical host result and individual alarm observations separately.
+
+An incompatible enabling configure can take the protective stop path even
+when alarm ownership is damaged or alarm reads are denied. For that result,
+check the confirmed State fence and host stop first, then inspect the reported
+alarm evidence. An ordinary compatible configure requires verified ownership
+before updating the source. An unsupported evaluation window fails before any
+State or host write. Correct the canonical configuration or repair the verified
+alarm access and ownership before trying the authorized operation again.
 
 If an emergency stop superseded a verified upgrade or configure, use
 `finish-operation` with the original receipt, target manifest and target config
@@ -661,7 +747,8 @@ node scripts/manager-installation.mjs remove --config maintenance.json --install
 
 Keep the original receipt, operation ID and removal report. Inspect any partial
 result before acting again. The retained State table, customer secrets, versioned
-artifacts and any retained logs can continue to incur charges. Check the
+artifacts and any retained logs can continue to incur charges. An alarm with
+unverified deletion may also continue to incur charges. Check the
 per-resource results for what was actually retained, deleted or unobservable.
 If evidence was initially incomplete, run `inspect-operation` with the
 original maintenance receipt and removal UUID. It preserves the original
@@ -670,6 +757,13 @@ provider reads. To save the refreshed report, run `finish-operation` with
 the same inputs and a new output path. Neither command sends another
 deletion request. A failed stack deletion remains partial even if some
 resources were deleted.
+
+If the retained table cannot be read after deletion dispatch or its physical
+identity differs, the partial report marks the table unobservable with
+possible ongoing cost. It retains the preview rows and independently verified
+deletion events. Protect the original table and verify access before trying to
+finish the same operation. An entry check that cannot authenticate the original
+operation returns unavailable. Keep any earlier report and the UUID.
 
 For the original manual removal procedure on an older installation:
 
@@ -801,11 +895,11 @@ health. Configure changes only supported settings at the same pin. A fresh
 lifecycle installation uses the separate upgrade and removal procedures above. Health settings may change with the same
 bounded canonical configuration package update.
 
-The operator health grants add only exact-log-group FilterLogEvents and regional
-GetMetricStatistics. The latter requires Resource `*`; AWS IAM does not enforce
-per-installation metric dimensions, so the reader fixes requests in code. Existing
-operator lifecycle permissions remain. No new resource, alarm, SNS action, runtime
-metric-write permission, second State store or activation is installed by health.
+Base telemetry grants cover the exact log group for `FilterLogEvents` and the
+configured region for `GetMetricStatistics`. The metric action uses Resource
+`*`, so the reader fixes installation dimensions in the requests. The health
+command uses read permissions. Alarm lifecycle operations use the additional
+grants below.
 
 Current source detailed health covers preview and ordinary apply processing through
 [the same health command](manager-health.md). Apply completion requires complete
@@ -825,6 +919,36 @@ do not establish installed/live acceptance, upgrade a package or authorize activ
 general source upgrades remain outside configure's supported-change boundary.
 A saved preview success never proves current apply completion: mode, package,
 configuration and retained enablement identity must match.
+
+## CloudWatch alarm permissions and settings
+
+Have the customer administrator review the generated `template.json` before
+deployment or adoption. The policies are under `Metadata.Pigboard`.
+
+| Policy | Role and scope |
+| --- | --- |
+| `operator_policy` | The configured operator can describe the four metric alarms and disable their actions. It can enable actions on the two native Lambda alarms and replace definitions on the two custom alarms. Direct adoption uses `ListTagsForResource` to check the four required names. All alarm grants name their exact ARNs. |
+| `alarm_execution_policy` | The verified CloudFormation execution role, or the actual deploying identity when the stack has no execution role, can put, describe and delete the same four alarms. |
+| `alarm_tagging_policy` | Give the same execution identity these exact-ARN tag grants if the stack applies tags to the alarms. |
+| `remove_execution_policy` | Use with the existing removal grants on the supported stack execution identity. Keep the deployer's stack-scoped delete permission. |
+
+An operator's successful health read establishes the observed read, while writes
+and deletion depend on their own service responses. Runtime and Scheduler
+continue with their existing grants. Each alarm has empty action destinations.
+
+The evaluation window is the schedule period in seconds multiplied by the
+number of periods needed to cover the freshness setting, rounded up to a
+whole number of periods. With a period below one hour it can be at most
+86,400 seconds. At one hour or above it can be at most 604,800 seconds.
+The package and lifecycle commands report `ALARM_WINDOW_UNSUPPORTED` with the
+calculated window and limit before making a change. Use the canonical
+configuration to choose a valid pair such as a 300-second period and 900-second
+freshness, then build and review the new package.
+
+The [health guide](manager-health.md#inspect-the-four-alarms) explains how to
+check the exact definitions, action states and console links after enabling or
+stopping. Health shows raw CloudWatch state with its timestamp when available.
+Allow time for evaluation and ingestion after a definition change.
 
 ## Recorded repair preview configuration
 

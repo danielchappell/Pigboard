@@ -6,9 +6,11 @@ import path from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {buildScanSummary,validScanSummary,evaluateHealth,evidenceRevision} from '../lib/manager/health.mjs';
 import {embeddedMetricEvent} from '../lib/aws/health.mjs';
+import {alarmDefinitions} from '../lib/aws/alarms.mjs';
 import {runPreview,handler,emitHealthRecord} from '../lib/aws/manager-lambda.mjs';
 import {openHostSession,awsSend,loadHostSDK} from '../lib/aws/installation.mjs';
-import {wrapperJourney,configureJourney,preparedCloud,ordinaryWireFixture,withJira} from '../scripts/test-aws-manager.mjs';
+import {wrapperJourney,configureJourney,preparedCloud,ordinaryWireFixture,withJira,lifecycleBirthJourney,lifecycleDriver,hostFixture} from '../scripts/test-aws-manager.mjs';
+import {runAlarmSignalHistories,readAlarmHealthFixture,scanFixture} from '../scripts/test-manager-health.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 import {createDynamoState} from '../lib/aws/dynamodb.mjs';
 const fixture=JSON.parse(fs.readFileSync(new URL('./fixtures/manager-health.json',import.meta.url))),now=Date.parse(fixture.now);
@@ -39,7 +41,7 @@ test('invalid runtime events emit no fabricated scan summary',async()=>{const lo
 test('health document client shares the absolute acquisition deadline',async t=>{
  const real=loadHostSDK(),config=JSON.parse(fs.readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url))).config,rows=[];
  for(const route of ['sdk','injected']){
-  const calls=[],credentials={accessKeyId:'AKIDEXAMPLE',secretAccessKey:'dummy-local-only'},destroyed=[];let raw,session;
+  const calls=[],credentials={accessKeyId:'AKIDEXAMPLE',secretAccessKey:'dummy-local-only',$source:{CREDENTIALS_PROFILE:'n'}},destroyed=[];let raw,session;
   const waitForAbort=(signal,action)=>new Promise((resolve,reject)=>{
    assert(signal);assert.equal(signal.aborted,false);assert.equal(action,'DescribeTableCommand');
    const call={action,signal_received:true,aborted:false,watchdog:false,network:false};calls.push(call);
@@ -53,14 +55,16 @@ test('health document client shares the absolute acquisition deadline',async t=>
    assert.deepEqual(JSON.parse(request.body),{TableName:'pigboard-deadline-fixture-state'});
    return waitForAbort(abortSignal,'DescribeTableCommand');
   },destroy:()=>destroyed.push('sdk-transport')};
+  const account=config.manager.aws.account_id,role=config.manager.aws.operator_role_arn.split(':role/')[1];
+  const identity={Account:account,Arn:`arn:aws:sts::${account}:assumed-role/${role}/fixture`,UserId:'AROAEXAMPLE:fixture'};
   const sdk={...real,fromIni:({profile})=>{assert.equal(profile,'operator');return async()=>credentials;},
-   STSClient:class{constructor(options){assert.equal(options.maxAttempts,1);}async send(command,{abortSignal}){assert.equal(command.constructor.name,'GetCallerIdentityCommand');assert(abortSignal);return {Account:config.manager.aws.account_id,Arn:config.manager.aws.operator_role_arn};}destroy(){destroyed.push('sts');}},
+   STSClient:class{constructor(options){assert.equal(options.maxAttempts,1);}async send(command,{abortSignal}){assert.equal(command.constructor.name,'GetCallerIdentityCommand');assert(abortSignal);return identity;}destroy(){destroyed.push('sts');}},
    DynamoDBClient:class extends real.DynamoDBClient{constructor(options){super({...options,requestHandler});raw=this;}}
   };
   const makeClient=route==='injected'?(kind,options)=>{
-   assert.equal(options.maxAttempts,1);assert.equal(options.credentials,credentials);
+   assert.equal(options.maxAttempts,1);assert.deepEqual(options.credentials,credentials);assert(Object.isFrozen(options.credentials));
    const client={destroy:()=>destroyed.push(kind),send:async(command,{abortSignal})=>{
-    if(kind==='STS'){assert.equal(command.constructor.name,'GetCallerIdentityCommand');return {Account:config.manager.aws.account_id,Arn:config.manager.aws.operator_role_arn};}
+    if(kind==='STS'){assert.equal(command.constructor.name,'GetCallerIdentityCommand');return identity;}
     assert.equal(kind,'DynamoDBDocument');assert.deepEqual(command.input,{TableName:'pigboard-deadline-fixture-state'});
     return waitForAbort(abortSignal,command.constructor.name);
    }};if(kind==='DynamoDB')raw=client;return client;
@@ -114,3 +118,170 @@ test('production health emission is one raw JSON line consumable by the health r
 
 for(const id of fixture.apply_groups.map(g=>g.id))test(id+' prescribed apply completion group',async(t)=>{const {runApplyHealthCase}=await import('../scripts/test-manager-health.mjs');const result=await runApplyHealthCase(id);const directory=path.join(os.tmpdir(),'pgb178-evidence');fs.mkdirSync(directory,{recursive:true});fs.writeFileSync(path.join(directory,id+'.json'),JSON.stringify({local_result:'PASS',...result},null,2));t.diagnostic('Saved '+path.join(directory,id+'.json')+'; human acceptance NOT_RUN');});
 test('apply closed summary rejects forged workload totals and absent-mode cannot admit apply',()=>{const s=summary({mode:'apply'});assert(validScanSummary(s));assert.equal(s.counts.jira_requests,null);const forged=structuredClone(s);forged.counts.jira_requests=0;assert(!validScanSummary(forged));assert.equal(evaluateHealth(observation({events:[event(s)]})).state,'starting');assert.equal(evaluateHealth(observation({current:{...current,mode:'invalid'}})).state,'unknown');});
+
+test('R1-23-H01 and H02 generated definitions respect the controlled signal histories',()=>{
+ const {config}=hostFixture(),epoch={health_generation:'alarm-fixture',health_enabled_at:'2026-11-17T10:00:00.000Z'};
+ config.manager.schedule_minutes=5;
+ config.manager.health={freshness_seconds:900,warning_percent:80};
+ const definitions=alarmDefinitions({config,function_name:'pigboard-controlled-fixture',...current,epoch,actions_enabled:true});
+ for(const group of Object.keys(fixture.alarm_histories.groups)){
+  const result=runAlarmSignalHistories(definitions,{group});
+  assert.equal(result.deadline,'2026-11-17T10:15:00.000Z');
+  assert.equal(result.histories.length,fixture.alarm_histories.groups[group].length);
+ }
+});
+
+test('R1-23-H01 and H02 health CLI distinguishes observed alarms, inactive metrics, and unexpected stop',async()=>{
+ const {config}=hostFixture(),journey=await lifecycleBirthJourney({config});
+ const {f}=journey,{initial,build,configure}=lifecycleDriver(journey);
+ const getHealth=(installed,options={})=>readAlarmHealthFixture(f,{...installed,...options});
+ const metricReads=e=>e.telemetry.filter(row=>row.action==='GetMetricStatisticsCommand');
+ const alarmReads=e=>e.telemetry.filter(row=>row.action==='DescribeAlarmsCommand');
+ const assertUnverified=(observed,prior)=>{
+  const {human,json}=observed,outcome=json.outcome;
+  assert.equal(json.exitCode,2);
+  assert.deepEqual(human.outcome,outcome);
+  assert.equal(outcome.state,'unknown');
+  assert.equal(outcome.alarm_evidence.stable_host_and_state,false);
+  assert.equal(outcome.alarm_evidence.status,'unknown');
+  assert.equal(outcome.alarm_evidence.current.evidence_revision,null);
+  assert.equal(outcome.alarm_evidence.intent,null);
+  assert(Object.values(outcome.current).every(value=>value===null));
+  assert.equal(outcome.latest_complete,null);
+  assert.equal(outcome.latest_attempt,null);
+  assert.equal(outcome.maximum_budget_utilization,null);
+  assert.equal(outcome.desired_enabled,null);
+  assert.equal(outcome.applied_controls,null);
+  assert.deepEqual(outcome.metric_evidence.metrics,{});
+  assert.deepEqual(outcome.reasons,['HOST_OR_STATE_CHANGED_OR_UNCONFIRMED']);
+  assert.equal(outcome.prior_observation.attribution,'unverified');
+  assert.deepEqual(outcome.prior_observation.binding,prior.current);
+  assert.equal(outcome.alarm_evidence.observed_at,prior.alarm_evidence.observed_at);
+  const alarms=outcome.alarm_evidence.alarms;
+  assert.equal(alarms.length,4);
+  assert(alarms.every(a=>a.status==='unknown'&&a.evaluation==='unverified'));
+  const raw=alarms.find(a=>a.key==='missing_completion'),old=prior.alarm_evidence.alarms.find(a=>a.key===raw.key);
+  assert.deepEqual(raw.actual,old.actual);
+  assert.deepEqual(raw.expected,old.expected);
+  assert.equal(raw.raw_state,'ALARM');
+  assert.equal(raw.raw_state_updated_at,old.raw_state_updated_at);
+  assert.match(human.stdout,/Current package, schedule, completion and budget — unverified/);
+  assert.match(human.stdout,/raw state ALARM at .*current evaluation unverified/);
+  assert.doesNotMatch(human.stdout,/definition aligned|current evaluation dormant|Latest complete:/);
+  const lines=human.stdout.split('\n');
+  const earlierHeader=`Earlier observations from ${outcome.prior_observation.observed_at} — current attribution unverified`;
+  const earlierIndex=lines.indexOf(earlierHeader);
+  assert(earlierIndex>=0);
+  const {links}=JSON.parse(json.stdout);
+  assert.deepEqual(Object.keys(links).sort(),['function','logs','metrics','schedule']);
+  for(const [label,url] of Object.entries(links)){
+   assert(url.startsWith('https://'));
+   assert(lines.indexOf(`${label} — ${url}`)>earlierIndex,label);
+  }
+  for(const alarm of alarms)assert(lines.includes(alarm.link),alarm.key);
+  return outcome.prior_observation;
+ };
+ try{
+  const fresh=await getHealth(initial),outcome=fresh.json.outcome;
+  assert.equal(outcome.state,'disabled');
+  assert.equal(fresh.json.exitCode,0);
+  assert.equal(outcome.alarm_evidence.status,'aligned');
+  assert.equal(outcome.alarm_evidence.stable_host_and_state,true);
+  assert.deepEqual(outcome.alarm_evidence.current,{health_generation:null,health_enabled_at:null,evidence_revision:null});
+  assert.equal(outcome.metric_evidence.status,'not_applicable');
+  assert.equal(outcome.maximum_budget_utilization,null);
+  assert.equal(metricReads(fresh).length,0);
+  const alarms=outcome.alarm_evidence.alarms;
+  assert.equal(alarms.length,4);
+  assert(alarms.every(a=>a.status==='aligned'&&a.actions_enabled===false));
+  assert.deepEqual(alarms.filter(a=>a.evaluation==='dormant').map(a=>a.key),['missing_completion','measured_budget']);
+  for(const alarm of alarms)assert(fresh.human.stdout.includes(alarm.link));
+  for(const [label,url] of Object.entries(outcome.links))assert(fresh.human.stdout.split('\n').includes(`${label}: ${url}`));
+  assert.equal(alarmReads(fresh).length,2);
+  for(const request of alarmReads(fresh))assert.deepEqual(request.input,{AlarmNames:alarms.map(a=>a.name),AlarmTypes:['MetricAlarm']});
+  const denied=await getHealth(initial,{denyAlarmRead:true});
+  assert.equal(denied.json.exitCode,2);
+  assert.equal(denied.json.outcome.alarm_evidence.read_code,'ALARM_READ_DENIED');
+  assert(denied.json.outcome.alarm_evidence.alarms.every(a=>a.actual===null&&a.actions_enabled===null));
+  const afterLogDenial=await getHealth(initial,{denyLogs:true});
+  assert.equal(afterLogDenial.json.exitCode,2);
+  assert.equal(afterLogDenial.json.outcome.alarm_evidence.status,'aligned');
+  assert.equal(afterLogDenial.json.outcome.alarm_evidence.alarms.length,4);
+
+  const completion=alarms.find(a=>a.key==='missing_completion');
+  const definition=f.cloud.alarms.get(completion.name);
+  definition.Threshold=2;
+  const mismatch=await getHealth(initial);
+  assert.equal(mismatch.json.exitCode,1);
+  assert(mismatch.json.outcome.reasons.includes('ALARM_DEFINITION_MISMATCH'));
+  const observed=mismatch.json.outcome.alarm_evidence.alarms.find(a=>a.key==='missing_completion');
+  assert.equal(observed.expected.Threshold,1);
+  assert.equal(observed.actual.Threshold,2);
+  definition.Threshold=1;
+  f.cloud.omitStackAlarm=completion.logical_id;
+  const ownership=await getHealth(initial);
+  assert.equal(ownership.json.exitCode,1);
+  assert.equal(ownership.json.outcome.alarm_evidence.inventory_code,'ALARM_OWNERSHIP_UNCONFIRMED');
+  assert.equal(ownership.json.outcome.alarm_evidence.read_status,'aligned');
+  delete f.cloud.omitStackAlarm;
+  definition.StateValue='ALARM';
+  definition.StateUpdatedTimestamp=new Date('2026-11-17T09:59:00.000Z');
+
+  const enabledConfig=structuredClone(config);
+  enabledConfig.manager.controls.schedule_enabled=true;
+  const enabled=await configure(initial,build('health-enabled',enabledConfig),'health-enabled-receipt');
+  const starting=await getHealth(enabled);
+  assert.equal(starting.json.outcome.state,'starting',starting.json.stdout);
+  assert.equal(starting.json.outcome.alarm_evidence.status,'aligned');
+  const enabledCompletion=starting.json.outcome.alarm_evidence.alarms.find(a=>a.key==='missing_completion');
+  assert.equal(enabledCompletion.raw_state,'ALARM');
+  assert.equal(enabledCompletion.evaluation,'unverified');
+  assert.match(starting.human.stdout,/raw state ALARM.*current evaluation unverified/);
+  assert.equal(metricReads(starting).length,10);
+  assert.equal(starting.json.outcome.maximum_budget_utilization,null);
+
+  const prior=starting.json.outcome.current,epoch=Date.parse(prior.health_enabled_at),finished=epoch+30000;
+  const measuredScan=scanFixture(prior,{started_at:prior.health_enabled_at,ended_at:new Date(finished).toISOString(),
+   counters:{requests_attempted:81}});
+  const measuredInput={events:[measuredScan],now:new Date(epoch+120000).toISOString()};
+  const measured=await getHealth(enabled,measuredInput);
+  assert.equal(measured.json.outcome.state,'degraded');
+  assert(measured.json.outcome.reasons.includes('CAPACITY_WARNING'));
+  assert.equal(measured.json.outcome.maximum_budget_utilization,81);
+  const closingDenied=await getHealth(enabled,{...measuredInput,denyClosingHost:true});
+  const captured=assertUnverified(closingDenied,measured.json.outcome);
+  assert.deepEqual(captured.latest_complete,measuredScan);
+  assert.equal(captured.maximum_budget_utilization,81);
+  assert.equal(captured.metric_evidence.metrics.MaximumBudgetUtilization.latest_at,new Date(epoch+60000).toISOString());
+  assert.match(closingDenied.human.stdout,/Observed maximum budget use — 81.0% \(latest metric point at /);
+
+  f.cloud.schedule.State='DISABLED';
+  const unexpected=await getHealth(enabled);
+  assert.equal(unexpected.json.exitCode,1);
+  assert(unexpected.json.outcome.reasons.includes('SCHEDULE_MISMATCH'));
+  assert.equal(unexpected.json.outcome.desired_enabled,true);
+  assert.equal(unexpected.json.outcome.observed_enabled,false);
+  assert(unexpected.json.outcome.alarm_evidence.alarms.every(a=>a.actions_enabled===true));
+  f.cloud.schedule.State='ENABLED';
+
+  const stopped=await configure(enabled,build('health-disabled',config),'health-disabled-receipt');
+  const historical=measuredScan;
+  const dormantInput={events:[historical],now:new Date(Math.max(finished+1,Date.parse(f.dependencies.now()))).toISOString()};
+  const dormant=await getHealth(stopped,dormantInput);
+  assert.equal(dormant.json.outcome.state,'disabled',dormant.json.stdout);
+  assert.equal(dormant.json.outcome.alarm_evidence.current.evidence_revision,null);
+  assert.deepEqual(dormant.json.outcome.alarm_evidence.retained_epoch,{
+   health_generation:prior.health_generation,health_enabled_at:prior.health_enabled_at,
+   evidence_revision:null,attribution:'unknown'
+  });
+  assert.equal(dormant.json.outcome.current.health_generation,null);
+  assert.equal(dormant.json.outcome.latest_complete,null);
+  assert.equal(dormant.json.outcome.latest_historical_scan.evidence_revision,prior.evidence_revision);
+  assert.equal(dormant.json.outcome.maximum_budget_utilization,null);
+  assert.equal(metricReads(dormant).length,0);
+  const closingChanged=await getHealth(stopped,{...dormantInput,changeState:true});
+  const dormantCapture=assertUnverified(closingChanged,dormant.json.outcome);
+  assert.deepEqual(dormantCapture.latest_historical_scan,historical);
+  assert.equal(metricReads(closingChanged).length,0);
+ }finally{journey.source.cleanup();}
+});

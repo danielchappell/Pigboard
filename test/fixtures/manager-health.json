@@ -4,6 +4,41 @@
   "now": "2026-11-16T23:00:00.000Z",
   "enabled_at": "2026-11-16T22:50:00.000Z",
   "freshness_seconds": 900,
+  "alarm_histories": {
+    "schema": "pigboard-controlled-alarm-histories/v1",
+    "period_seconds": 300,
+    "freshness_seconds": 900,
+    "warning_percent": 80,
+    "groups": {
+      "R1-23-H01": [
+        {"name":"present","alarm":"missing_completion","at":900,"points":[["CompletePresence",900,1]],"sample":1,"state":"OK"},
+        {"name":"duplicate completion","alarm":"missing_completion","at":900,"points":[["CompletePresence",900,1],["CompletePresence",900,1]],"sample":1,"state":"OK"},
+        {"name":"no completion","alarm":"missing_completion","at":900,"points":[],"sample":null,"state":"ALARM"},
+        {"name":"failures are separate","alarm":"missing_completion","at":900,"points":[["FailurePresence",300,1],["FailurePresence",600,1],["FailurePresence",900,1]],"sample":null,"state":"ALARM"},
+        {"name":"idle errors","alarm":"lambda_errors","at":0,"points":[],"sample":null,"state":"OK"},
+        {"name":"idle throttles","alarm":"lambda_throttles","at":0,"points":[],"sample":null,"state":"OK"},
+        {"name":"errors during grace","alarm":"lambda_errors","at":-300,"points":[["Errors",-310,2],["Errors",-300,3]],"sample":5,"state":"ALARM"},
+        {"name":"throttles during grace","alarm":"lambda_throttles","at":-300,"points":[["Throttles",-300,1]],"sample":1,"state":"ALARM"},
+        {"name":"throttle stays clear on error only","alarm":"lambda_throttles","at":-300,"points":[["Errors",-300,1]],"sample":null,"state":"OK"},
+        {"name":"budget below warning","alarm":"measured_budget","at":0,"points":[["MaximumBudgetUtilization",0,79.9]],"sample":79.9,"state":"OK"},
+        {"name":"budget equals warning","alarm":"measured_budget","at":0,"points":[["MaximumBudgetUtilization",0,80]],"sample":80,"state":"ALARM"},
+        {"name":"budget exceeds warning","alarm":"measured_budget","at":0,"points":[["MaximumBudgetUtilization",0,81]],"sample":81,"state":"ALARM"},
+        {"name":"budget absent","alarm":"measured_budget","at":0,"points":[],"sample":null,"state":"OK"}
+      ],
+      "R1-23-H02": [
+        {"name":"just before freshness deadline","alarm":"missing_completion","at":-1,"points":[],"sample":null,"latest_value":1,"state":"OK"},
+        {"name":"inclusive freshness deadline","alarm":"missing_completion","at":0,"points":[],"sample":null,"latest_value":1,"state":"OK"},
+        {"name":"just after freshness deadline","alarm":"missing_completion","at":1,"points":[],"sample":null,"latest_value":0,"state":"OK"},
+        {"name":"first full absent period","alarm":"missing_completion","at":300,"points":[],"sample":null,"latest_value":0,"state":"OK"},
+        {"name":"second full absent period","alarm":"missing_completion","at":600,"points":[],"sample":null,"latest_value":0,"state":"OK"},
+        {"name":"never started","alarm":"missing_completion","at":900,"points":[],"sample":null,"latest_value":0,"state":"ALARM"},
+        {"name":"recent complete before external stop","alarm":"missing_completion","at":900,"points":[["CompletePresence",600,1]],"sample":null,"state":"OK"},
+        {"name":"external stop followed by three empty periods","alarm":"missing_completion","at":1500,"points":[["CompletePresence",600,1]],"sample":null,"state":"ALARM"},
+        {"name":"old revision after rotate","alarm":"missing_completion","at":900,"points":[["CompletePresence",600,1,"old"],["CompletePresence",900,1,"old"]],"sample":null,"state":"ALARM"},
+        {"name":"failures and invocation retries do not extend grace","alarm":"missing_completion","at":900,"points":[["FailurePresence",300,1],["AttemptPresence",600,1],["FailurePresence",900,1]],"sample":null,"state":"ALARM"}
+      ]
+    }
+  },
   "groups": [
     {
       "id": "R1-22-H01",

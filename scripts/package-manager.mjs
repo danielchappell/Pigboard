@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {randomUUID} from 'node:crypto';
 import {hostConfig,sha256,loadHostSDK,hostError} from '../lib/aws/installation.mjs';
 import {lifecycleManifestFields,synthesizeTemplate} from '../lib/aws/template.mjs';
+import {assertAlarmWindow} from '../lib/aws/alarms.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const hashFile=p=>sha256(readFileSync(p));
 function walk(base,prefix=''){let files=[];for(const e of readdirSync(join(base,prefix),{withFileTypes:true})){const p=prefix?prefix+'/'+e.name:e.name;if(e.isDirectory())files.push(...walk(base,p));else if(e.isFile())files.push(p);else if(!e.isSymbolicLink())throw hostError('PAYLOAD_TYPE');}return files.sort();}
@@ -23,12 +24,15 @@ export function packageManager({configPath,output,source=root,revision,generatio
  }
  loadHostSDK();const text=readFileSync(configPath,'utf8'),{config,digest}=hostConfig(text);if(!generation&&(config.manager.controls.schedule_enabled||config.manager.controls.writes_enabled||config.manager.controls.maintenance))throw hostError('INITIAL_DISABLED_REQUIRED');
  const installationGeneration=generation??randomUUID();
+ const payloadSources=closure(source,'lib/aws/manager-lambda.mjs');
+ const alarmCapability=lifecycle&&payloadSources.has('lib/aws/alarms.mjs');
+ if(alarmCapability)assertAlarmWindow(config);
  const fields=lifecycle
-  ? lifecycleManifestFields({installationId:config.manager.installation_id,generation:installationGeneration,previousRevision:compatibleFrom})
+  ? lifecycleManifestFields({installationId:config.manager.installation_id,generation:installationGeneration,previousRevision:compatibleFrom,alarmCapability})
   : {schema:'pigboard-manager-package/v1',logical_resources:['Function','Schedule','LogGroup','StateTable','RuntimeRole','SchedulerRole']};
  const manifest={...fields,source_revision:revision,configuration_digest:digest,installation_id:config.manager.installation_id,domain_id:config.manager.domain_id,installation_generation:installationGeneration,runtime:'nodejs24.x',sender:true,canonical_config:config,dependency_hashes:{root:hashFile(join(source,'package-lock.json')),aws:hashFile(join(source,'runtime/aws/package-lock.json'))},payload_hashes:{}};
  const payload=join(output,'payload');mkdirSync(payload,{recursive:true});
- for(const p of new Set([...closure(source,'lib/aws/manager-lambda.mjs'),'contracts/epic-v1.schema.json','contracts/ticket-v1.schema.json'])){mkdirSync(dirname(join(payload,p)),{recursive:true});cpSync(join(source,p),join(payload,p));}
+ for(const p of new Set([...payloadSources,'contracts/epic-v1.schema.json','contracts/ticket-v1.schema.json'])){mkdirSync(dirname(join(payload,p)),{recursive:true});cpSync(join(source,p),join(payload,p));}
  for(const p of ['node_modules','runtime/aws/node_modules','runtime/aws/package.json','runtime/aws/package-lock.json','package.json']){mkdirSync(dirname(join(payload,p)),{recursive:true});cpSync(join(source,p),join(payload,p),{recursive:true,dereference:false});}
  mkdirSync(join(payload,'config'),{recursive:true});writeFileSync(join(payload,'config/manager.json'),JSON.stringify(config,null,2)+'\n');
  for(const p of walk(payload))manifest.payload_hashes[p]=hashFile(join(payload,p));
@@ -41,7 +45,7 @@ export function packageManager({configPath,output,source=root,revision,generatio
 }
 export function runPackageCommand(argv){
  try{
-  if(argv.length===1&&argv[0]==='--help')return {exitCode:0,stdout:'Usage: node scripts/package-manager.mjs --config FILE --revision COMMIT --output NEW_DIRECTORY [--lifecycle] [--generation ORIGINAL_GENERATION] [--compatible-from REVIEWED_PREVIOUS_COMMIT]\nPrepare pinned root/runtime AWS dependencies and zip first. No download or deployment occurs.\n'};
+  if(argv.length===1&&argv[0]==='--help')return {exitCode:0,stdout:'Usage: node scripts/package-manager.mjs --config FILE --revision COMMIT --output NEW_DIRECTORY [--lifecycle] [--generation ORIGINAL_GENERATION] [--compatible-from REVIEWED_PREVIOUS_COMMIT]\nPrepare pinned root/runtime AWS dependencies and zip first. No download or deployment occurs.\nKeep manager.zip next to manifest.json for upgrade checks. The lifecycle template includes alarm links and required permissions.\n'};
   const args={};
   for(let i=0;i<argv.length;i++){
    const flag=argv[i];
@@ -54,6 +58,13 @@ export function runPackageCommand(argv){
   if(!args['--config']||!args['--revision']||!args['--output'])throw hostError('INVALID_INPUT');
   const result=packageManager({configPath:args['--config'],revision:args['--revision'],output:args['--output'],generation:args['--generation'],lifecycle:args['--lifecycle'],compatibleFrom:args['--compatible-from']});
   return {exitCode:0,stdout:JSON.stringify({status:'packaged',output:result.output,manifest:result.manifest})+'\n'};
- }catch(e){return {exitCode:2,stdout:JSON.stringify({status:'unavailable',code:e.code??'PACKAGE_SETUP'})+'\n'};}
+ }catch(e){
+  const window=e.alarm_window;
+  const detail=window?{
+   alarm_window:window,
+   message:`The alarm evaluation window is ${window.window_seconds} seconds with a limit of ${window.limit_seconds}. For example, use a 300-second cadence and 900-second freshness.`
+  }:{};
+  return {exitCode:2,stdout:JSON.stringify({status:'unavailable',code:e.code??'PACKAGE_SETUP',...detail})+'\n'};
+ }
 }
 if(process.argv[1]&&existsSync(process.argv[1])&&import.meta.url===pathToFileURL(realpathSync(process.argv[1])).href){const r=runPackageCommand(process.argv.slice(2));process.stdout.write(r.stdout);process.exitCode=r.exitCode;}

@@ -145,9 +145,8 @@ freshness three cadences, and warning at 80% of any configured scan bound. The
 installer validates positive bounds and freshness longer than a full scan plus
 cadence. Default values require installed acceptance; they are not capacity claims.
 
-The reduced release uses the existing log group and embedded metrics only. No
-alarm or SNS resource, read, state condition or link is part of PGB-100. Runtime
-keeps its existing log-write grants; it does not call PutMetricData. Namespace
+PGB-100 uses the existing log group and embedded metrics. Runtime keeps its
+existing log-write grants and emits its metrics through those logs. Namespace
 `Pigboard/Manager` has exactly `InstallationId` and `EvidenceRevision` dimensions.
 Metrics are CompletePresence, AttemptPresence, FailurePresence,
 MaximumBudgetUtilization and DurationMilliseconds. Presence and utilization use
@@ -161,7 +160,16 @@ verified host readiness when enabling, changing enabled configuration or establi
 a missing epoch. An unchanged enabled configure preserves its epoch. Stop retains
 it; explicit re-enable rotates it. Scans, failures and health reads never rotate
 it. These are two scalars in the existing bounded installation extensions, with
-no second State store. General source upgrades remain outside this release.
+no second State store.
+
+Current source lifecycle packages add the PGB-188 stack-managed CloudWatch
+alarms for missing completion, Lambda errors, Lambda throttles and measured
+budget use. Their console links and fixed physical names follow the original
+installation generation. The compatible upgrade from pre-alarm v2 starts in
+disabled maintenance. Protected State records the last committed scheduling
+intent. Intentional disable suppresses actions, while unexpected Scheduler loss
+leaves detection armed. Only missing completion gets startup grace. Customer
+routing remains follow-on work.
 
 Disabled initial installation can have no epoch. Its successfully read logs and
 coherent stopped controls permit disabled; epoch-dependent metrics are explicitly
@@ -189,9 +197,8 @@ This apply-completion source addition is separate from the historical installed
 acceptance baseline `1af6f9387fa9e762530294012ec015f3c580aa32`, whose detailed
 completion coverage is preview-only. That package's apply outcome logs and retained
 attempt evidence remain the record of its effects; they do not supply apply
-completion summaries. Current source fixtures neither upgrade nor activate an
-installation or establish installed/live acceptance. Worker monitoring, alarms and
-SNS remain deferred.
+completion summaries. Current source fixtures use simulated providers. Customer
+deployment, activation, worker monitoring and routing have separate gates.
 
 ## Capacity and the path to 50 projects
 
@@ -224,8 +231,8 @@ Stories for owner approval, not an automatic expansion of the MVP.
 Add cases for equal labels across projects, different mappings, key rename, project
 move/removal, cross-project prerequisites, isolated versus shared read failure,
 complete empty scans, business holds, failed/stale/unknown health, missing telemetry,
-disabled/start/re-enable and safe capacity warnings. General upgrades, alarms and
-SNS routing are deferred. Local fixtures do not prove installed AWS behavior. Installed acceptance covers both projects
+disabled/start/re-enable and safe capacity warnings. PGB-188 adds controlled
+signal, adoption, operation and removal cases for the alarms. Installed acceptance covers both projects
 and the health lifecycle with delivery automations inactive.
 
 Author assessment: intuitive—one installation and familiar health states;
