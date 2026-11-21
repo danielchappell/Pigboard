@@ -20,6 +20,8 @@ const here=path.dirname(fileURLToPath(import.meta.url));
 export const fixtureCases=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-cases.json'),'utf8'));
 const tls=JSON.parse(fs.readFileSync(path.join(here,'jira-preview-tls.json'),'utf8'));
 const digest=b=>createHash('sha256').update(b).digest('hex');
+// Only errors from the selected check can carry a stage into the CLI.
+const failureStages = new WeakMap();
 const fixedPrefix='/ex/jira/00000000-0000-0000-0000-000000000001';
 const jiraSourcePaths=['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json'];
 const inventoryPacketPath = 'test/fixtures/jira-inventory-cases.json';
@@ -422,6 +424,16 @@ export async function runFixture(caseId,variant,runtime,{control=false,privatePr
 }
 
 async function executeFixture(caseId, variant, root, {control=false,privateProjection=false,authoredFixture=null,selection,selected,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
+ const lateResolverCase = caseId === 'R1-33-H02' && variant === 'resolver-late';
+ const recordStage = (error, stage) => {
+  if (lateResolverCase && error instanceof Error) failureStages.set(error, stage);
+  return error;
+ };
+ const verify = (stage, check) => {
+  if (!lateResolverCase) return check();
+  try { return check(); }
+  catch (error) { throw recordStage(error, stage); }
+ };
  const receipt=receiptCase(caseId),guarded=!!selection||receipt;
  const inventory = guarded || caseId.startsWith('R1-45-');
  const packetPath = selection ? path.join(root, inventoryPacketPath) : path.join(here,'jira-inventory-cases.json');
@@ -463,8 +475,10 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
  const snapshotServer = () => digest(JSON.stringify({script:v.script, history:history.rows}));
  const serverBefore = history ? snapshotServer() : null;
  const scanClock = caseId === 'R1-33-H03' && variant === 'scan-time-limit' ? createScanClock() : null;
+ const resolverClock = lateResolverCase ? createScanClock() : null;
+ const resolverDeadline = resolverClock ? v.config.jira.read_bounds.scan_timeout_ms : null;
  const pointerPath = scanClock ? v.oracle.trace[1].path : null;
- let pointerClient, scanTimerError;
+ let pointerClient, scanTimerError, resolverTimerError;
  let historyAccesses = 0;
  const sockets=new Set(),timers=new Set();let scriptIndex=0,serverError=null,redirectRequests=0;
  const redirect=https.createServer({key:tls.key,cert:tls.cert},(req,res)=>{redirectRequests++;res.end('{}');});
@@ -554,12 +568,45 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   return client;
  };
  let acquired;
- async function acknowledgeLate(check){
-  const snapshot=check?JSON.stringify({report:acquired.report,observations:acquired.observations}):null,requestsBefore=trace.length;
-  if(check){assert(lateSignal.aborted);assert.equal(lateDelivered,0);assert.equal(lateSettled,0);assert.equal(requestsBefore,0);}
-  if(lateDelivered===0){lateDelivered++;lateResolve(fixtureCases.token);}
-  await lateAck;await new Promise(resolve=>setImmediate(resolve));
-  if(check){assert.equal(JSON.stringify({report:acquired.report,observations:acquired.observations}),snapshot);lateEvidence={delivered:lateDelivered,settled:lateSettled,signal_aborted:lateSignal.aborted,requests_before:requestsBefore,requests_after:trace.length};assert.deepEqual(lateEvidence,{delivered:1,settled:1,signal_aborted:true,requests_before:0,requests_after:0});assert.equal(acquired.report.cleanup.resolver,'cancel_unconfirmed');}
+ async function acknowledgeLate(check) {
+  let snapshot, requestsBefore;
+  if (check) {
+   if (lateResolverCase) verify('resolver_entry', () => {
+    assert(lateSignal && typeof lateResolve === 'function' && lateAck,
+     'Expected the late resolver to register its signal, delivery and acknowledgement.');
+   });
+   verify('resolver_at_return', () => {
+    if (resolverTimerError) throw resolverTimerError;
+    snapshot = JSON.stringify({report: acquired.report, observations: acquired.observations});
+    requestsBefore = trace.length;
+    assert(lateSignal.aborted);
+    assert.equal(lateDelivered, 0);
+    assert.equal(lateSettled, 0);
+    assert.equal(requestsBefore, 0);
+   });
+  }
+  try {
+   if (lateDelivered === 0) {
+    lateDelivered++;
+    lateResolve(fixtureCases.token);
+   }
+   await lateAck;
+   await new Promise(resolve => setImmediate(resolve));
+  } catch (error) {
+   if (check) recordStage(error, 'resolver_settlement');
+   throw error;
+  }
+  if (check) verify('resolver_after_settlement', () => {
+   assert.equal(JSON.stringify({report: acquired.report, observations: acquired.observations}), snapshot);
+   lateEvidence = {
+    delivered: lateDelivered, settled: lateSettled, signal_aborted: lateSignal.aborted,
+    requests_before: requestsBefore, requests_after: trace.length
+   };
+   assert.deepEqual(lateEvidence, {
+    delivered: 1, settled: 1, signal_aborted: true, requests_before: 0, requests_after: 0
+   });
+   assert.equal(acquired.report.cleanup.resolver, 'cancel_unconfirmed');
+  });
  }
  try{
   const fileMutations = ['writeFile','appendFile','mkdir','rm','rmdir','unlink','rename','copyFile','cp','symlink','link','chmod','chown','truncate','write','writev','createWriteStream'];
@@ -629,13 +676,57 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    https.request = redirectRequest;
    syncBuiltinESMExports();
   }
-  if (scanClock) scanClock.install(restore);
-  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}
+  (scanClock ?? resolverClock)?.install(restore);
+  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));
+   if (v.resolver === 'late') {
+    lateSignal = signal;
+    const deferred = new Promise(resolve => { lateResolve = resolve; });
+    lateAck = deferred.then(() => { lateSettled++; });
+    if (!resolverClock) return deferred;
+
+    const abortedAtEntry = signal.aborted;
+    let abortedAt;
+    const recordAbort = () => { abortedAt = performance.now(); };
+    // The reader has armed its timer and is waiting on this resolver promise.
+    return Promise.resolve().then(() => {
+     try {
+      assert.equal(abortedAtEntry, false, 'Expected a live resolver signal at entry.');
+      signal.addEventListener('abort', recordAbort, {once: true});
+      resolverClock.advance(resolverDeadline - 1);
+      assert.equal(signal.aborted, false, 'Expected a live resolver signal before the scan deadline.');
+      resolverClock.advance(1);
+      assert.equal(signal.aborted, true, 'Expected the reader to abort at the scan deadline.');
+      assert.equal(abortedAt, resolverDeadline, 'The reader must abort exactly at the scan deadline.');
+     } catch (error) {
+      resolverTimerError = error;
+      throw error;
+     } finally {
+      signal.removeEventListener('abort', recordAbort);
+     }
+     return deferred;
+    });
+   }
    if (scanClock) scanClock.advance(v.resolver_delay_ms ?? 0);
    else if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});
    return fixtureCases.token;
   }});
-  acquired=await invoke();
+  if (resolverClock) {
+   const invocation = invoke();
+   const checkpoint = Symbol('resolver entry checkpoint');
+   let immediate;
+   try {
+    const outcome = await Promise.race([invocation, new Promise(resolve => {
+     immediate = setImmediate(resolve, checkpoint);
+    })]);
+    if (outcome === checkpoint) {
+     // An armed reader timer can unwind a read that never called the resolver.
+     if (!lateSignal) resolverClock.advance(resolverDeadline);
+     acquired = await invocation;
+    } else acquired = outcome;
+   } finally {
+    clearImmediate(immediate);
+   }
+  } else acquired = await invoke();
   if(repeatReceipt){
    assert.equal(acquired.status,'complete');
    const original=JSON.stringify(acquired.data);
@@ -657,8 +748,10 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   clearTimeout(resolverTimer);for(const timer of timers)clearTimeout(timer);const closing=[...sockets].map(socket=>new Promise(resolve=>socket.once('close',resolve)));for(const socket of sockets)socket.destroy();await Promise.all([...closing,new Promise(resolve=>server.close(resolve)),new Promise(resolve=>redirect.close(resolve))]);
   }
  }
- assert.equal(effects, 0, 'Unexpected fixture effects.');
- assert.equal(sockets.size,0);
+ verify('fixture_verification', () => {
+  assert.equal(effects, 0, 'Unexpected fixture effects.');
+  assert.equal(sockets.size, 0);
+ });
  if (scanClock) {
   if (scanTimerError) throw scanTimerError;
   assert.deepEqual(scanClock.pointerAbort, v.oracle.pointer_abort,
@@ -779,12 +872,50 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    runtime_hashes:{before:runtimeBefore,after:runtimeAfter},observed,history:history??null,publication:publication??null,
    effects,resolver_calls:resolverCalls,cleanup_complete:sockets.size===0,oracle_matched:true,evidence_execution:'simulated-local-tls'};
  }
- const report=acquired.report;oracleCheck(report,v.oracle,trace);if(v.oracle.issue_rows)assert.deepEqual(report.issues,v.oracle.issue_rows);let privateComparison=null;if(v.oracle.issue_ids)assert.deepEqual(acquired.observations.issues.map(v=>v.id).sort(),v.oracle.issue_ids);if(v.oracle.pointers)for(const [id,pointer]of Object.entries(v.oracle.pointers))assert.deepEqual(acquired.observations.issues.find(v=>v.id===id)?.pointer,pointer);if(v.oracle.reference_count!==undefined)assert.equal(acquired.observations.references.length,v.oracle.reference_count);if(v.oracle.raw_bodies)for(const [id,body]of Object.entries(v.oracle.raw_bodies))assert.equal(acquired.observations.issues.find(v=>v.id===id)?.body,body);if(v.oracle.acquisition){assert.deepEqual(acquired.observations,v.oracle.acquisition);privateComparison={algorithm:'sha256',actual_sha256:digest(JSON.stringify(acquired.observations)),expected_sha256:digest(JSON.stringify(v.oracle.acquisition)),matched:true};}assert.equal(effects,0);assert.equal(redirectRequests,0);assert.equal(serverError,null);assert.equal(report.counters.requests_completed+report.counters.requests_failed,report.counters.requests_attempted);assert.equal(JSON.stringify(acquired),JSON.stringify({report}));
- for(const canary of [fixtureCases.token,'ERROR-CANARY',v.config.jira.connection.secret_reference])assert(!JSON.stringify(acquired).includes(canary));
- assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-cases.json'))),before.cases);assert.equal(digest(fs.readFileSync(path.join(here,'jira-preview-tls.json'))),before.tls);
+ const report = acquired.report;
+ let privateComparison = null;
+ verify('report_oracle', () => {
+  oracleCheck(report, v.oracle, trace);
+  if (resolverClock) {
+   assert.equal(report.counters.elapsed_ms, resolverDeadline);
+   assert.equal(report.limits.scan_timeout_ms, resolverDeadline);
+   assert.equal(report.limits.request_timeout_ms, v.config.jira.read_bounds.request_timeout_ms);
+   assert(report.diagnostics.some(d => d.code === 'LIMIT_REACHED' && d.bound === 'scan_timeout_ms'));
+  }
+  if (v.oracle.issue_rows) assert.deepEqual(report.issues, v.oracle.issue_rows);
+  if (v.oracle.issue_ids) assert.deepEqual(acquired.observations.issues.map(row => row.id).sort(), v.oracle.issue_ids);
+  if (v.oracle.pointers) for (const [id, pointer] of Object.entries(v.oracle.pointers))
+   assert.deepEqual(acquired.observations.issues.find(row => row.id === id)?.pointer, pointer);
+  if (v.oracle.reference_count !== undefined)
+   assert.equal(acquired.observations.references.length, v.oracle.reference_count);
+  if (v.oracle.raw_bodies) for (const [id, body] of Object.entries(v.oracle.raw_bodies))
+   assert.equal(acquired.observations.issues.find(row => row.id === id)?.body, body);
+  if (v.oracle.acquisition) assert.deepEqual(acquired.observations, v.oracle.acquisition);
+ });
+ if (v.oracle.acquisition) privateComparison = {
+  algorithm: 'sha256', actual_sha256: digest(JSON.stringify(acquired.observations)),
+  expected_sha256: digest(JSON.stringify(v.oracle.acquisition)), matched: true
+ };
+ verify('fixture_verification', () => {
+  assert.equal(effects, 0);
+  assert.equal(redirectRequests, 0);
+  assert.equal(serverError, null);
+  assert.equal(report.counters.requests_completed + report.counters.requests_failed, report.counters.requests_attempted);
+  assert.equal(JSON.stringify(acquired), JSON.stringify({report}));
+  for (const canary of [fixtureCases.token, 'ERROR-CANARY', v.config.jira.connection.secret_reference])
+   assert(!JSON.stringify(acquired).includes(canary));
+ });
+ const casesAfter = digest(fs.readFileSync(path.join(here, 'jira-preview-cases.json')));
+ verify('fixture_verification', () => assert.equal(casesAfter, before.cases));
+ const tlsAfter = digest(fs.readFileSync(path.join(here, 'jira-preview-tls.json')));
+ verify('fixture_verification', () => assert.equal(tlsAfter, before.tls));
  if(inventory&&!receipt)assert.equal(digest(fs.readFileSync(packetPath)),before.inventory);
  if (selection) assert.equal(digest(fs.readFileSync(path.join(root, scopedInventoryPacketPath))), before.scoped_inventory);
- const inputAfter=inputSnapshot(v),runtimeAfter=await runtimeSnapshot(moduleRoot,missing,inventory);assert.deepEqual(inputAfter,inputBefore);assert.deepEqual(runtimeAfter,runtimeBefore);
+ const inputAfter = inputSnapshot(v), runtimeAfter = await runtimeSnapshot(moduleRoot, missing, inventory);
+ verify('fixture_verification', () => {
+  assert.deepEqual(inputAfter, inputBefore);
+  assert.deepEqual(runtimeAfter, runtimeBefore);
+ });
  const inventoryEvidence = {};
  if (selection) {
   const callerRequestAfter = digest(JSON.stringify(callerRequest));
@@ -874,7 +1005,11 @@ if(isMain){
    :setupFailed
     ?{code:'SETUP_MISSING',message:'A required runtime file or module is unavailable. Prepare the complete explicit runtime; no fallback or repair was attempted. Completed runs are retained.'}
     :{code:'FIXTURE_RUN_FAILED',message:'The fixture run did not verify. Retain completed runs and inspect the prescribed check; do not treat this as missing setup or a passing observation.'};
-  console.log(JSON.stringify({status,inspection_scope:selectedInventory?'configured_inventory':'requested_issues',diagnostics:[diagnostic],case:selected?.case??null,variant:selected?.variant??null,runs,run_roles:runRoles,failed_run:failedRole?{role:failedRole,observations:'unavailable',cleanup:'not_reported'}:null,domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'}));
+  const stage = status === 'fixture_failed' ? failureStages.get(error) : undefined;
+  const failedRun = failedRole ? {
+   role: failedRole, observations: 'unavailable', cleanup: 'not_reported', ...(stage ? {stage} : {})
+  } : null;
+  console.log(JSON.stringify({status,inspection_scope:selectedInventory?'configured_inventory':'requested_issues',diagnostics:[diagnostic],case:selected?.case??null,variant:selected?.variant??null,runs,run_roles:runRoles,failed_run:failedRun,domain_complete:false,admission:'not_evaluated',receipt_proof:'not_evaluated'}));
   process.exitCode=2;
  }
 }

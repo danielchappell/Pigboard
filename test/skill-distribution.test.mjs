@@ -105,19 +105,111 @@ test('real copied configuration runtime works independently with prepared depend
  const damaged=path.join(root,'damaged');await cp(runtime,damaged,{recursive:true});await rm(path.join(damaged,'lib/config/projects.mjs'));const result=run(path.join(damaged,'scripts/check-config.mjs'),['--input',input,'--json']);assert.equal(result.status,2);assert.equal(JSON.parse(result.stdout).diagnostics[0].code,'SETUP');assert.match(result.stderr,/AUDIT attempts=0/);assert.equal(run(entry,['--help']).status,0);assert.equal((await lstat(path.join(runtime,'lib/config/projects.mjs'))).isFile(),true);
 });
 
+async function prepareCopiedJiraFixture(t) {
+ const o = await fixture(t), root = path.dirname(o.source);
+ const dependencyRoot = new URL('../node_modules/', import.meta.url);
+ const a = await prepare(o, async dir => {
+  if (path.basename(dir) === 'work-validator')
+   await cp(dependencyRoot, path.join(dir, 'node_modules'), {recursive: true, dereference: true});
+  else await install(dir);
+ });
+ const runtime = path.join(a.skills, 'work-validator'), cwd = path.join(root, 'unrelated-jira');
+ await mkdir(cwd);
+ const env = {...process.env};
+ delete env.NODE_PATH;
+ const run = (runtimeRoot, v, json = true) => spawnSync(process.execPath, [
+  path.join(runtimeRoot, 'test/fixtures/jira-preview-harness.mjs'),
+  '--case', v.case, '--variant', v.variant, '--runtime', runtimeRoot, ...(json ? ['--json'] : [])
+ ], {cwd, env, encoding: 'utf8', timeout: 10000});
+ return {root, source: o.source, runtime, run};
+}
+
+const jiraPreviewPacket = 'test/fixtures/jira-preview-cases.json';
+const isLateResolverCase = v => v.case === 'R1-33-H02' && v.variant === 'resolver-late';
+
 test('real copied named-issue inspection uses its complete payload and TLS packet from unrelated cwd',async t=>{
- const {spawnSync}=await import('node:child_process');const {createHash}=await import('node:crypto');
- const o=await fixture(t),root=path.dirname(o.source),dependencyRoot=new URL('../node_modules/',import.meta.url);
- const a=await prepare(o,async dir=>{if(path.basename(dir)==='work-validator')await cp(dependencyRoot,path.join(dir,'node_modules'),{recursive:true,dereference:true});else await install(dir);});
- const runtime=path.join(a.skills,'work-validator'),cwd=path.join(root,'unrelated-jira');await mkdir(cwd);const env={...process.env};delete env.NODE_PATH;
- const cases=JSON.parse(await readFile(path.join(runtime,'test/fixtures/jira-preview-cases.json')));
+ const {root, runtime, run} = await prepareCopiedJiraFixture(t);
+ const cases=JSON.parse(await readFile(path.join(runtime,jiraPreviewPacket)));
  const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
  for(const relative of ['lib/jira/read.mjs','test/fixtures/jira-preview-harness.mjs','test/fixtures/jira-preview-cases.json','test/fixtures/jira-preview-tls.json','lib/config/projects.mjs','node_modules/yaml/package.json','node_modules/ajv/package.json'])assert.equal(hash(await readFile(path.join(runtime,relative))),hash(await readFile(new URL('../'+relative,import.meta.url))));
- const run=(runtimeRoot,v,json=true)=>spawnSync(process.execPath,[path.join(runtimeRoot,'test/fixtures/jira-preview-harness.mjs'),'--case',v.case,'--variant',v.variant,'--runtime',runtimeRoot,...(json?['--json']:[])],{cwd,env,encoding:'utf8',timeout:10000});
  // Every named variant includes its literal paired controls and L06 private projection.
- for(const v of cases.variants){const copied=run(runtime,v);assert.equal(copied.status,0,v.variant+' '+copied.stdout+' '+copied.stderr);const packet=JSON.parse(copied.stdout);assert.equal(packet.case,v.case);assert.equal(packet.variant,v.variant);assert(packet.runs.every(r=>r.oracle_matched&&r.effects===0));}
+ for (const v of cases.variants) {
+  const copied = run(runtime, v);
+  assert.equal(copied.status, 0, v.variant + ' ' + copied.stdout + ' ' + copied.stderr);
+  const packet = JSON.parse(copied.stdout);
+  assert.equal(packet.case, v.case);
+  assert.equal(packet.variant, v.variant);
+  assert(packet.runs.every(r => r.oracle_matched && r.effects === 0));
+  if (isLateResolverCase(v)) {
+   assert.equal(packet.runs.length, 1);
+   const [verified] = packet.runs;
+   const {scan_timeout_ms, request_timeout_ms} = v.config.jira.read_bounds;
+   assert.equal(verified.report.status, 'incomplete');
+   assert(verified.report.diagnostics.some(d => d.code === 'LIMIT_REACHED' && d.bound === 'scan_timeout_ms'));
+   assert.equal(verified.report.counters.elapsed_ms, scan_timeout_ms);
+   assert.equal(verified.report.limits.scan_timeout_ms, scan_timeout_ms);
+   assert.equal(verified.report.limits.request_timeout_ms, request_timeout_ms);
+   assert.equal(verified.report.cleanup.resolver, 'cancel_unconfirmed');
+   assert.equal(verified.report.counters.requests_attempted, 0);
+   assert.equal(verified.resolver_calls, 1);
+   assert.deepEqual(verified.trace, []);
+   assert.deepEqual(verified.server_trace, []);
+   assert.deepEqual(verified.late_resolver, {
+    delivered: 1, settled: 1, signal_aborted: true, requests_before: 0, requests_after: 0
+   });
+   assert.equal(verified.cleanup_complete, true);
+  }
+ }
  const guide=cases.variants.find(v=>v.variant==='guide-and-install'),human=run(runtime,guide,false),json=run(runtime,guide);assert.equal(human.status,0);const humanReport=JSON.parse(human.stdout.slice(human.stdout.indexOf('\n')+1)),jsonReport=JSON.parse(json.stdout).runs[0].report;const durationFields=['elapsed_ms','peak_request_elapsed_ms'];for(const report of [humanReport,jsonReport])for(const field of durationFields){assert(Number.isFinite(report.counters[field]),field+' must be finite');assert(report.counters[field]>=0,field+' must be nonnegative');}const humanComparison=structuredClone(humanReport),jsonComparison=structuredClone(jsonReport);for(const field of durationFields){humanComparison.counters[field]=0;jsonComparison.counters[field]=0;}assert.deepEqual(humanComparison,jsonComparison);assert.match(human.stdout,/Human acceptance remains a separate review/);
  const damaged=path.join(root,'damaged-jira');await cp(runtime,damaged,{recursive:true});await rm(path.join(damaged,'lib/jira/read.mjs'));const failed=run(damaged,guide);assert.equal(failed.status,2);assert.equal(JSON.parse(failed.stdout).diagnostics[0].code,'SETUP_MISSING');assert.equal(JSON.parse(failed.stdout).inspection_scope,'requested_issues');assert.equal(await readFile(path.join(runtime,'lib/jira/read.mjs'),'utf8'),await readFile(new URL('../lib/jira/read.mjs',import.meta.url),'utf8'));
+});
+
+test('copied fixture CLI identifies missing late resolver entry', async t => {
+ const {root, source, runtime, run} = await prepareCopiedJiraFixture(t);
+ const mutated = path.join(root, 'mutated-late-resolver');
+ await cp(runtime, mutated, {recursive: true});
+
+ const originalFiles = [
+  path.join(runtime, jiraPreviewPacket),
+  path.join(source, jiraPreviewPacket),
+  new URL('./fixtures/jira-preview-cases.json', import.meta.url)
+ ];
+ const raw = await readFile(originalFiles[0]);
+ const original = JSON.parse(raw);
+ const originalCase = original.variants.find(isLateResolverCase);
+ assert.deepEqual(originalCase.request.issue_ids, ['1000']);
+ const expected = structuredClone(original);
+ expected.variants.find(isLateResolverCase).request.issue_ids = [];
+ const mutatedFile = path.join(mutated, jiraPreviewPacket);
+ await writeFile(mutatedFile, JSON.stringify(expected, null, 2) + '\n');
+ const changed = JSON.parse(await readFile(mutatedFile));
+ assert.deepEqual(changed, expected);
+
+ const result = run(mutated, originalCase);
+ assert.equal(result.status, 2);
+ assert.equal(result.stderr, '');
+ for (const forbidden of [
+  original.token, originalCase.config.jira.connection.secret_reference, 'ERROR-CANARY',
+  '"body":', '"request":', '"stack":', '"actual":', '"expected":', 'AssertionError',
+  '-----BEGIN CERTIFICATE-----', '-----BEGIN PRIVATE KEY-----', 'https://', root
+ ]) assert(!result.stdout.includes(forbidden), 'The failure output contains private fixture details.');
+ assert.deepEqual(JSON.parse(result.stdout), {
+  status: 'fixture_failed',
+  inspection_scope: 'requested_issues',
+  diagnostics: [{
+   code: 'FIXTURE_RUN_FAILED',
+   message: 'The fixture run did not verify. Retain completed runs and inspect the prescribed check; do not treat this as missing setup or a passing observation.'
+  }],
+  case: 'R1-33-H02',
+  variant: 'resolver-late',
+  runs: [],
+  run_roles: [],
+  failed_run: {role: 'main', observations: 'unavailable', cleanup: 'not_reported', stage: 'resolver_entry'},
+  domain_complete: false,
+  admission: 'not_evaluated',
+  receipt_proof: 'not_evaluated'
+ });
+ for (const file of originalFiles) assert.deepEqual(await readFile(file), raw);
 });
 
 test('copied fixture CLI retains completed runs when a private oracle fails',async t=>{
