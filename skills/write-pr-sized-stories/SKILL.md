@@ -33,6 +33,12 @@ amendments: one repository/PR, at most 20 files, less than two working days, exp
 ownership and all acceptance cases with named QA skills. Pigboard owns this copy;
 upstream's shorter human-only test strategy does not override those decisions.
 
+The fresh-reader guidance in human-writing and its integration below are a
+selective content port from
+[ai-working-kit PR #1](https://github.com/danielchappell/ai-working-kit/pull/1),
+reviewed commit `af7b1e1eb95c5bf3561042fe28dc5102280c7d54`.
+Pigboard retains ownership of its authoring formats and delivery contracts.
+
 The four [structured QA helpers](../qa-api/references/structured-steps.md) consume
 complete exact AI steps with separately trusted start facts. Helpers require
 complete structured inputs independently of the selected entrypoint's contract.
@@ -43,7 +49,27 @@ prose helper inputs or imply activation.
 
 Before drafting or revising a work item, read and apply the [human-writing skill](../human-writing/SKILL.md). Use it to write for the intended reader, cut unnecessary content, and preserve meaning and the owner's perspective. Keep this skill's required structure, scope, sizing rules, and verification requirements.
 
-Apply human-writing's final cutting pass before delivering each item, then complete the audit below.
+Apply human-writing's whole-draft fresh-reader process to every new or substantially
+rewritten Pigboard Epic, Story or Bug, and to generic PR Stories. Give the reader
+only the complete current draft, intended audience and purpose, without inherited
+conversation or earlier feedback. Follow any reading prerequisites explicitly
+declared in the draft. Include technical criteria, explanations inside YAML,
+examples and the full testing strategy, not only the opening.
+
+After fixing a material comprehension gap, send the complete revision to a
+different fresh reader. Evaluate its actual explanation, inferences, exact gaps
+and section coverage; fixes alone are not a pass. Follow human-writing's finding
+classification and stopping rules to avoid bloat, stylistic churn and scope
+expansion. If an independent reader is unavailable, report the check as incomplete.
+Keep the reviewed version, coverage and finding dispositions in working notes,
+not as process text in the work item.
+
+Preserve the required YAML fields, IDs, requirements and every prescribed QA case.
+Clarify their meaning without creating a second authoritative prose body or
+changing the accepted work. Comprehension review does not replace technical
+review, validation, sizing checks or owner approval, and grants no readiness,
+implementation or publication authority. Apply human-writing's final cutting pass
+before delivering each item, then complete the audit below.
 
 ## Use simple words and short sentences
 

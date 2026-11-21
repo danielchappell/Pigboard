@@ -59,6 +59,18 @@ when one helper delegates a step to another.
 
 ## Authoring and direct reuse
 
+For substantial new or rewritten drafts, use human-writing's
+[fresh-reader review](../skills/human-writing/SKILL.md#required-fresh-reader-review)
+before presenting the writing as ready. The reader gets the whole draft, its
+audience and purpose, with no inherited project history or author explanation.
+It must explain its understanding, locate gaps, distinguish inferences and report
+coverage of every section, including YAML explanations and prescribed tests.
+After material clarity fixes, a different fresh reader checks the complete revision.
+Keep findings in working notes and preserve the required fields and QA cases.
+If independent review is unavailable, keep the draft and report the check as
+incomplete. This check does not establish technical correctness, delivery readiness
+or owner approval.
+
 An agent that can read Markdown can use the writing/authoring instructions with
 supplied context. For example, after preparation, substitute the actual `skills`
 path returned by the installer:

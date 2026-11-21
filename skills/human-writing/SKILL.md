@@ -49,6 +49,42 @@ Keep facts distinct from assumptions, proposals, and unknowns when the differenc
 
 Include technical detail only when requested or essential to the reader's task. Explain the main point directly; use supporting links for detail the reader need not read to understand it.
 
+## Required fresh-reader review
+
+For a new or substantially rewritten Story, product document, technical design, RFC, decision record or discovery report, review the complete draft with an independent reader before presenting it as ready. Include technical criteria, tables, examples and appendices, not only the opening. A small correction does not require a new full review unless it changes meaning or exposes a wider comprehension problem.
+
+### Give the reader no project history
+
+Use a fresh agent with no inherited conversation. Give it only the exact draft and the intended audience and purpose. Do not supply the author's explanation, expected interpretation, previous reviews or suspected defects. For a document that must stand alone, have it read that document alone; if a reading prerequisite is intentional, name it explicitly in the document and review that reading path.
+
+Match the reader to the real audience. No project context does not mean no technical knowledge, and a developer's ability to reconstruct the design does not prove that a manager can understand the writing. If independent review is unavailable, report the check as incomplete rather than call self-review independent.
+
+### Require evidence of understanding
+
+The reader must cover every section and report:
+
+- In its own words, what the reader can understand, decide or do. For a Story, what exists before and after, what this slice delivers, what comes later and why the prerequisite work is needed.
+- Each undefined term, unexplained relationship, purpose or responsibility, missing transition and sentence that required guessing. Quote or locate the exact wording.
+- What the draft explicitly says versus what the reader inferred from technical familiarity. List the inferred meanings even when they seem likely correct.
+- Any place where it cannot explain why a field, component or step exists, or whether behavior already exists or is being added.
+- Which sections it examined, with an examined/total count, and any parts it could not assess.
+
+“I understand it,” a polished paraphrase, or a CLEAN verdict without that evidence is insufficient. Do not lead the reader toward agreement or treat absence of criticism as proof of clarity.
+
+### Evaluate findings and revise
+
+Read the actual feedback; do not rely on its headline verdict. Check every inference and question against the text and the audience's expected knowledge. If correct understanding requires unstated project facts or guessing, fix the explanation. If the reader misunderstood, find the wording that allowed that interpretation. If a finding is invalid, record the exact text that already resolves it and why the intended audience can understand it.
+
+Preserve the full meaning and technical requirements. Add the shortest useful definition, relationship, example or reason; split unrelated ideas when needed. Do not hide confusion by deleting required contracts, adding jargon, or expanding product scope. If the answer requires an unresolved product decision or unavailable evidence, expose that specific gap rather than invent an explanation.
+
+After changing a draft to address a reader's unclear meaning, missing context or incorrect interpretation, a different fresh agent must read the complete revised draft. Give that agent no inherited conversation, old draft or earlier feedback. Never reuse a reader from an earlier round: it now has context the intended reader will not have. This is mandatory for PR Stories as well as other substantial drafts. Making the requested fixes alone does not complete the check.
+
+Keep the loop focused on comprehension. Classify every finding as a material understanding gap, an optional writing preference, a technical question requiring separate evidence, or a request outside the agreed scope. Fix material gaps with the shortest useful explanation. Do not add background merely to satisfy a reader's curiosity, duplicate whole linked contracts, or adopt new requirements. Record why rejected findings do not prevent the intended reader from understanding and acting. Before another pass, cut repetition introduced by the fixes.
+
+Finish when a fresh reader has covered the whole current draft and no material comprehension gaps remain after author evaluation. A preference or scope request alone does not require another round. If successive rounds revisit the same point without improving understanding, inspect the underlying source or ask the precise missing question rather than keep expanding the text. Do not declare a pass to meet an iteration limit. Review remains incomplete while a real gap is unresolved.
+
+Record the reviewed version, audience, coverage, findings and how they were addressed in the existing working notes. State review limits honestly: comprehension review does not establish technical correctness, product approval or implementation readiness. If the owner still finds a passage confusing, reopen it even when a reviewer passed it; the owner's difficulty is new evidence about the intended audience.
+
 ## Check before delivering
 
 Make a final cutting pass. Delete every sentence or list item that adds no necessary information. Then check that the reader can understand and act without jargon, missing essential context, or changed meaning.
