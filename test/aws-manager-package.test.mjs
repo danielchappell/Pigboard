@@ -9,11 +9,19 @@ import {hostConfig,deriveHostControls,sha256,installationResourceBase,resolveIns
 import {synthesizeTemplate} from '../lib/aws/template.mjs';
 import {alarmDefinitions,alarmStackMatches,readAlarms,verifyAlarmPackage} from '../lib/aws/alarms.mjs';
 import {parseConfig} from '../lib/config/parse.mjs';
-import {fixtureCloud,preparedCloud,policyPermits,runAlarmLifecycleFixture,runSavedAlarmFixture,templateJourney} from '../scripts/test-aws-manager.mjs';
+import {fixtureCloud,preparedCloud,policyPermits,runAlarmLifecycleFixture,runBootstrapSchedulerReferenceFixture,runSavedAlarmFixture,templateJourney} from '../scripts/test-aws-manager.mjs';
 import {runStateCommand} from '../scripts/manager-state.mjs';
 const fixtureBase='pigboard-fixture-f16d05ec6b29248d2c61adb1e9263f78';
 const fixture=()=>JSON.parse(readFileSync(new URL('./fixtures/aws-manager.json',import.meta.url)));
 const recoveryArn='arn:aws:secretsmanager:eu-west-1:123456789012:secret:team/pigboard-evidence-aB23Z9';
+
+test('PGB-190 recovers a held pre-alarm bootstrap with the captured Scheduler dependency',async()=>{
+ const {held,closed,bootstrapped,stopped}=await runBootstrapSchedulerReferenceFixture();
+ assert.equal(held.operation,closed.operation);
+ assert.notEqual(closed.operation,bootstrapped.operation);
+ assert.equal(bootstrapped.stack_id,stopped.stack_id);
+ assert.equal(bootstrapped.table_id,stopped.table_id);
+});
 
 test('R1-23-H01 checks package alarm signals, scoped roles and health readback', async () => {
  const {template,windows,histories,health,repeat_bootstrap,bootstrap_recovery}=await runAlarmLifecycleFixture('R1-23-H01');

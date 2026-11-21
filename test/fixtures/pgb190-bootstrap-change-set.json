@@ -1,0 +1,111 @@
+{
+  "ChangeSetId": "arn:aws:cloudformation:eu-west-1:123456789012:changeSet/pigboard-lifecycle-00000000-0000-4000-8000-000000000004/00000000-0000-4000-8000-000000000005",
+  "ChangeSetName": "pigboard-lifecycle-00000000-0000-4000-8000-000000000004",
+  "StackId": "arn:aws:cloudformation:eu-west-1:123456789012:stack/pigboard-fixture/fixture-stack",
+  "Status": "CREATE_COMPLETE",
+  "ExecutionStatus": "AVAILABLE",
+  "CreationTime": "2026-11-21T08:32:42.011000+00:00",
+  "NextToken": null,
+  "Changes": [
+    {
+      "Type": "Resource",
+      "ResourceChange": {
+        "Action": "Modify",
+        "LogicalResourceId": "Function",
+        "ResourceType": "AWS::Lambda::Function",
+        "Replacement": "False",
+        "Scope": [
+          "Properties"
+        ],
+        "Details": [
+          {
+            "Target": {
+              "Attribute": "Properties",
+              "Name": "Environment",
+              "RequiresRecreation": "Never"
+            },
+            "Evaluation": "Static",
+            "ChangeSource": "ParameterReference",
+            "CausingEntity": "OriginalTableId"
+          },
+          {
+            "Target": {
+              "Attribute": "Properties",
+              "Name": "Environment",
+              "RequiresRecreation": "Never"
+            },
+            "Evaluation": "Dynamic",
+            "ChangeSource": "DirectModification",
+            "CausingEntity": null
+          },
+          {
+            "Target": {
+              "Attribute": "Properties",
+              "Name": "ReservedConcurrentExecutions",
+              "RequiresRecreation": "Never"
+            },
+            "Evaluation": "Dynamic",
+            "ChangeSource": "DirectModification",
+            "CausingEntity": null
+          },
+          {
+            "Target": {
+              "Attribute": "Properties",
+              "Name": "ReservedConcurrentExecutions",
+              "RequiresRecreation": "Never"
+            },
+            "Evaluation": "Static",
+            "ChangeSource": "ParameterReference",
+            "CausingEntity": "QuiescenceConcurrency"
+          }
+        ]
+      }
+    },
+    {
+      "Type": "Resource",
+      "ResourceChange": {
+        "Action": "Modify",
+        "LogicalResourceId": "LifecycleSchedule",
+        "ResourceType": "AWS::Scheduler::Schedule",
+        "Replacement": "False",
+        "Scope": [
+          "Properties"
+        ],
+        "Details": [
+          {
+            "Target": {
+              "Attribute": "Properties",
+              "Name": "Target",
+              "RequiresRecreation": "Never"
+            },
+            "Evaluation": "Dynamic",
+            "ChangeSource": "ResourceAttribute",
+            "CausingEntity": "Function.Arn"
+          }
+        ]
+      }
+    }
+  ],
+  "Parameters": [
+    {
+      "ParameterKey": "AssetVersion",
+      "ParameterValue": "fixture-birth-version"
+    },
+    {
+      "ParameterKey": "QuiescenceConcurrency",
+      "ParameterValue": "0"
+    },
+    {
+      "ParameterKey": "AssetKey",
+      "ParameterValue": "birth.zip"
+    },
+    {
+      "ParameterKey": "OriginalTableId",
+      "ParameterValue": "45fb5364-258e-4f57-86fd-d4e65c398d96"
+    },
+    {
+      "ParameterKey": "AssetBucket",
+      "ParameterValue": "fixture-artifacts"
+    }
+  ]
+}
