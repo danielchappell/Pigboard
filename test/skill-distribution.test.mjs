@@ -143,8 +143,12 @@ test('real copied named-issue inspection uses its complete payload and TLS packe
   if (isLateResolverCase(v)) {
    assert.equal(packet.runs.length, 1);
    const [verified] = packet.runs;
+   const {scan_timeout_ms, request_timeout_ms} = v.config.jira.read_bounds;
    assert.equal(verified.report.status, 'incomplete');
-   assert(verified.report.diagnostics.some(d => d.code === 'LIMIT_REACHED'));
+   assert(verified.report.diagnostics.some(d => d.code === 'LIMIT_REACHED' && d.bound === 'scan_timeout_ms'));
+   assert.equal(verified.report.counters.elapsed_ms, scan_timeout_ms);
+   assert.equal(verified.report.limits.scan_timeout_ms, scan_timeout_ms);
+   assert.equal(verified.report.limits.request_timeout_ms, request_timeout_ms);
    assert.equal(verified.report.cleanup.resolver, 'cancel_unconfirmed');
    assert.equal(verified.report.counters.requests_attempted, 0);
    assert.equal(verified.resolver_calls, 1);

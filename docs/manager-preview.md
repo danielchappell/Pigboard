@@ -694,14 +694,20 @@ For `R1-33-H02 / resolver-late`, a failure at an identified check includes
 `test/fixtures/jira-preview-harness.mjs` in the reviewed source or prepared
 validator.
 
-| Stage | What the check verifies |
+In the healthy `resolver-late` case, the fixture starts the dummy lookup before
+advancing its test clock. It checks the pending signal one millisecond before the
+configured scan deadline and observes the reader's own timer abort it at that
+deadline. The report's `elapsed_ms` measures scripted milliseconds. The fixture
+delivers the dummy token after the read returns.
+
+| Stage | Check the fixture attempts |
 | --- | --- |
-| `resolver_entry` | The dummy resolver registered its signal, token delivery callback and acknowledgement. |
-| `resolver_at_return` | The harness captured the returned report and observations. The signal was aborted, and there were zero token deliveries, settlements and Jira requests. |
-| `resolver_settlement` | The harness delivered the dummy token and waited for its acknowledgement and the existing checkpoint. |
-| `resolver_after_settlement` | The report and observations stayed unchanged. The signal stayed aborted, exactly one token was delivered and settled, no Jira requests occurred, and resolver cleanup reported `cancel_unconfirmed`. |
-| `report_oracle` | The report and private observations matched the authored expectations, including `incomplete`, `LIMIT_REACHED`, zero calls, empty rows and observations, and the resolver cleanup status. |
-| `fixture_verification` | The remaining checks covered effects, sockets, redirect and server activity, report counters, public serialization, canaries, and fixture, input and runtime integrity. |
+| `resolver_entry` | Check that the dummy resolver registered its signal, token delivery callback and acknowledgement. |
+| `resolver_at_return` | Check for a captured boundary failure: the signal must be live at entry and just before the deadline, then aborted at the deadline. Next, capture the returned report and observations and check for an aborted signal and zero token deliveries, settlements and Jira requests. |
+| `resolver_settlement` | Deliver the dummy token, wait for acknowledgement, then wait for the next event-loop checkpoint. |
+| `resolver_after_settlement` | Check that the report and observations stayed unchanged, the signal stayed aborted, exactly one token was delivered and settled, no Jira requests occurred, and resolver cleanup reports `cancel_unconfirmed`. |
+| `report_oracle` | Compare the report and private observations with the authored expectations, including `incomplete`, `LIMIT_REACHED` with the `scan_timeout_ms` bound, elapsed milliseconds equal to the scan limit, both configured time limits, zero calls, empty rows and observations, and the resolver cleanup status. |
+| `fixture_verification` | Check effects, sockets, redirect and server activity, report counters, public serialization, canaries, and fixture, input and runtime integrity. |
 
 The stage identifies where verification failed. A missing resolver registration
 alone leaves the cause unknown, and a stage leaves failed-run observations and
