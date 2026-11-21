@@ -1351,7 +1351,8 @@ export async function runBootstrapSchedulerReferenceFixture(){
   describeCapture(f);
   f.cloud.denyChangeSetTemplate=true;
   const abandoned=output('abandoned-bootstrap');
-  const prior=refused(f,await bootstrap(f,abandoned),abandoned);
+  const seeded=await bootstrap(f,abandoned);
+  const prior=refused(f,seeded,abandoned);
   delete f.cloud.denyChangeSetTemplate;
   const priorProposal=structuredClone(f.cloud.lastChangeSetDescription);
   assert.equal(priorProposal.ExecutionStatus,'AVAILABLE');
@@ -1422,6 +1423,7 @@ export async function runBootstrapSchedulerReferenceFixture(){
 
   const start=f.audit.length,success=output('bootstrapped');
   const bootstrapped=verifySuccessfulBootstrap(f,await bootstrap(f,success),success);
+  assert.equal(seeded.outcome.code,'BOOTSTRAP_TEMPLATE_UNVERIFIED',seeded.stdout);
   assert.notEqual(bootstrapped.operation,prior);
   const audit=f.audit.slice(start);
   const creation=audit.find(row=>row.action==='CreateChangeSetCommand');
@@ -1483,6 +1485,8 @@ export async function runBootstrapSchedulerReferenceFixture(){
    ['static-target',shape,change=>{targetDetail(change).Evaluation='Static';}],
    ['wrong-cause',shape,change=>{targetDetail(change).CausingEntity='OtherFunction.Arn';}],
    ['extra-target-detail',shape,change=>{scheduleChange(change).Details.push({...targetDetail(change)});}],
+   ['contradictory-target-path',shape,change=>{targetDetail(change).Target.Path='/Properties/Target/RoleArn';}],
+   ['unexpected-scope',shape,change=>{scheduleChange(change).Scope.push('Metadata');}],
    ['unrelated-logical-resource',shape,change=>{scheduleChange(change).LogicalResourceId='OtherSchedule';}],
    ['wrong-resource-type',shape,change=>{scheduleChange(change).ResourceType='AWS::Lambda::Function';}],
    ['wrong-physical-resource',shape,change=>{scheduleChange(change).PhysicalResourceId='other-schedule';}],
