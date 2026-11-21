@@ -689,6 +689,26 @@ prescribed check. A failure retains completed safe `runs` and `run_roles`; the
 `failed_run` names the role but marks its observations unavailable and cleanup
 unreported. Do not treat missing failed-run details as a passing observation.
 Completed reports and safe failure envelopes identify `inspection_scope: requested_issues`; failed-run measurements remain unavailable unless retained from a completed run.
+For `R1-33-H02 / resolver-late`, a failure at an identified check includes
+`failed_run.stage`. Use the value to find the check in
+`test/fixtures/jira-preview-harness.mjs` in the reviewed source or prepared
+validator.
+
+| Stage | What the check verifies |
+| --- | --- |
+| `resolver_entry` | The dummy resolver registered its signal, token delivery callback and acknowledgement. |
+| `resolver_at_return` | The harness captured the returned report and observations. The signal was aborted, and there were zero token deliveries, settlements and Jira requests. |
+| `resolver_settlement` | The harness delivered the dummy token and waited for its acknowledgement and the existing checkpoint. |
+| `resolver_after_settlement` | The report and observations stayed unchanged. The signal stayed aborted, exactly one token was delivered and settled, no Jira requests occurred, and resolver cleanup reported `cancel_unconfirmed`. |
+| `report_oracle` | The report and private observations matched the authored expectations, including `incomplete`, `LIMIT_REACHED`, zero calls, empty rows and observations, and the resolver cleanup status. |
+| `fixture_verification` | The remaining checks covered effects, sockets, redirect and server activity, report counters, public serialization, canaries, and fixture, input and runtime integrity. |
+
+The stage identifies where verification failed. A missing resolver registration
+alone leaves the cause unknown, and a stage leaves failed-run observations and
+cleanup unreported. If the field is absent, use the same diagnostic and inspect
+the prescribed case. Other case variants and failures outside an identified
+check keep their existing output.
+
 The command uses only dummy local HTTPS data; it cannot inspect a live tenant.
 
 The designated human executes the prescribed source or installed-root fixture
