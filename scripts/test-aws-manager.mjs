@@ -212,7 +212,16 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
   }
   if(n==='DescribeStacksCommand')return {Stacks:cloud.hideDeletedStack&&cloud.stack.StackStatus==='DELETE_COMPLETE'?[]:[cloud.stack]};
   if(n==='DescribeStackResourcesCommand')return {StackResources:resources()};
-  if(n==='GetTemplateCommand'&&lifecycle)return {TemplateBody:JSON.stringify(cloud.template)};
+  if(n==='GetTemplateCommand'&&lifecycle){
+   if(!i.ChangeSetName)return {TemplateBody:JSON.stringify(cloud.template)};
+   assert.equal(identity,'SELECTED_DEPLOYER');
+   assert.equal(i.StackName,stackId);
+   assert.equal(i.TemplateStage,'Original');
+   if(cloud.denyChangeSetTemplate)throw denied();
+   const template=cloud.changeSetTemplates?.get(i.ChangeSetName);
+   assert(template,'GetTemplate must name a created change set');
+   return {TemplateBody:JSON.stringify(template)};
+  }
   if(n==='DescribeStackEventsCommand'){if(cloud.executedToken&&cloud.completionPage)return cloud.completionPage(++cloud.completionReads);if(cloud.eventPage)return cloud.eventPage(i);return {StackEvents:cloud.events,...(cloud.eventsNextToken===undefined?{}:{NextToken:cloud.eventsNextToken})};}
   if(lifecycle&&cloud.stack.StackStatus==='DELETE_COMPLETE'&&['GetFunctionCommand','GetFunctionConfigurationCommand','GetFunctionConcurrencyCommand','GetFunctionEventInvokeConfigCommand','GetScheduleCommand'].includes(n))
    throw Object.assign(new Error('Fixture resource deleted'),{name:'ResourceNotFoundException'});
@@ -253,11 +262,14 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    assert.equal(i.StackName,stackId);
    cloud.changeInput=structuredClone(i);
    cloud.changeSetId=`arn:aws:cloudformation:${a.region}:${a.account_id}:changeSet/${i.ChangeSetName}/00000000-0000-4000-8000-000000000005`;
+   cloud.changeSetTemplates??=new Map();
+   cloud.changeSetTemplates.set(cloud.changeSetId,i.UsePreviousTemplate?structuredClone(cloud.template):JSON.parse(i.TemplateBody));
    return {Id:cloud.changeSetId,StackId:stackId};
   }
   if(lifecycle&&n==='DescribeChangeSetCommand'){
    assert.equal(i.ChangeSetName,cloud.changeSetId);
-   const description=changeSetDescription();
+   const description=cloud.describeLifecycleChangeSet&&cloud.changeInput.UsePreviousTemplate?
+     cloud.describeLifecycleChangeSet(cloud.changeInput,cloud.changeSetId):changeSetDescription();
    cloud.lastChangeSetDescription=description;
    return description;
   }
@@ -310,6 +322,7 @@ export function fixtureCloud(config=hostFixture().config,overrides={},packageMan
    cloud.schedule.State='DISABLED';
    cloud.stack.StackStatus='UPDATE_COMPLETE';
    cloud.events.unshift(terminalEvent(i.ClientRequestToken,'UPDATE_COMPLETE'));
+   cloud.afterLifecycleExecute?.();
    return {};
   }
   if(lifecycle&&n==='DeleteStackCommand'){
@@ -1238,6 +1251,359 @@ function requireReadOnly(f,before,{deployer=false}={}){
  operatorOnly(reads.filter(row=>!(deployer&&row.identity==='SELECTED_DEPLOYER'&&row.action==='GetCallerIdentityCommand')));
  assert(reads.every(row=>/^(Get|Describe|List|Scan|Query|TransactGet)/.test(row.action)));
  assert(f.provider.audit.slice(before.stateAudit).every(row=>/^(Get|Describe|Scan|Query|TransactGet)/.test(row.name)));
+}
+
+export async function runBootstrapSchedulerReferenceFixture(){
+ // The AT-01.6 default DescribeChangeSet projection contained both resource
+ // rows. IncludePropertyValues returned only the Lambda row. The fixture
+ // combines the default projection with the separate five-parameter read of
+ // the same change set, replacing installation and operation identities.
+ const recorded=JSON.parse(fs.readFileSync(path.join(root,'test/fixtures/pgb190-bootstrap-change-set.json')));
+ const config=hostFixture().config;
+ config.manager.schedule_minutes=11;
+ config.manager.invocation_timeout_seconds=600;
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'pgb190-bootstrap-'));
+ const birthReceipt=path.join(directory,'birth-receipt.json');
+ const flags=['--operator-profile','operator','--json'];
+ const deployer=['--deployer-profile','deployer'];
+ const revision='8eade817f63918ca5f27213aa094d551d1935c63';
+ const generation='31d20000-dead-4bad-8cad-0123456789ab';
+ function build(name,config){
+  const configPath=writeFixtureJSON(directory,name+'-config',config);
+  const {output}=legacyLifecycleFixturePackage({configPath,output:path.join(directory,name),revision,generation});
+  const manifestPath=path.join(output,'manifest.json');
+  const manifest=JSON.parse(fs.readFileSync(manifestPath));
+  const asset={bucket:'fixture-artifacts',key:name+'.zip',version:'fixture-'+name+'-version',zip_digest:manifest.zip_digest};
+  return {configPath,manifest,manifestPath,asset,
+   assetPath:writeFixtureJSON(directory,name+'-asset',asset)};
+ }
+ const output=name=>path.join(directory,name+'.json');
+ const host=(f,verb,args)=>runInstallationCommand([verb,...flags,...args],f.dependencies);
+ const bound=(f,verb,source,receipt,extra=[])=>host(f,verb,['--config',source.configPath,'--installation',receipt,...extra]);
+ const creationOnly=rows=>assert.deepEqual(hostMutations(rows).map(row=>row.action),['CreateChangeSetCommand']);
+ const heldOwner=f=>[...f.provider.rows.values()].find(row=>row.owner&&!row.terminal)?.owner;
+ const stackParams=f=>Object.fromEntries(f.cloud.stack.Parameters.map(({ParameterKey,ParameterValue})=>[ParameterKey,ParameterValue]));
+ const checkFence=f=>{
+  const state=installationState(f);
+  assert.equal(state.schedule_enabled,false);
+  assert.equal(state.writes_enabled,false);
+  assert.equal(state.maintenance,true);
+ };
+ const checkPin=(f,receipt)=>{
+  assert.equal(f.cloud.table.TableId,receipt.origin.table_id);
+  assert.equal(stackParams(f).OriginalTableId,receipt.origin.table_id);
+  assert.equal(f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV],receipt.origin.table_id);
+ };
+ function describeCapture(f,amend=()=>{}){
+  f.cloud.describeLifecycleChangeSet=(request,id)=>{
+   const described=structuredClone(recorded);
+   assert.equal(described.StackId,f.stackId);
+   described.ChangeSetName=request.ChangeSetName;
+   described.ChangeSetId=id;
+   amend(described,f.cloud.changeSetTemplates.get(id),f.cloud.schedule);
+   return described;
+  };
+ }
+ try{
+  const birth=build('birth',config);
+  const f=fixtureCloud(config,{},birth.manifest);
+  setLifecycleClock(f.dependencies);
+  f.cloud.schedule.ActionAfterCompletion='NONE';
+  f.cloud.schedule.ScheduleExpressionTimezone='UTC';
+  requireStatus(await host(f,'bind',['--config',birth.configPath,'--manifest',birth.manifestPath,
+   '--stack',f.stackId,'--output',birthReceipt]),'bound');
+  const receiptBytes=fs.readFileSync(birthReceipt);
+  const original=JSON.parse(receiptBytes);
+  assert.deepEqual(original.manifest,birth.manifest);
+  assert.equal(hasAlarmCapability(original.manifest),false);
+  assert.equal(original.manifest.source_revision,revision);
+  const initialized=await runStateCommand(['init','--config',birth.configPath,'--installation',birthReceipt,...flags],
+   {resolveInstallation:input=>resolveInstallation(input,f.dependencies)});
+  assert.equal(initialized.exitCode,0,initialized.stdout);
+  seedRetained(f,{retained_members:ordinaryWireFixture('rename').request.retained_members,pending_intents:[]});
+  const originalBusiness=businessRows(f);
+  assert(originalBusiness.length>0);
+  const matrixBase=forkLifecycle(f,birth,'fresh bound installation');
+  const branch=name=>forkLifecycle(matrixBase,birth,name);
+  const bootstrap=(f,file)=>bound(f,'bootstrap',birth,birthReceipt,[...deployer,'--output',file]);
+  const finish=(f,id,file)=>bound(f,'finish-operation',birth,birthReceipt,['--operation',id,'--output',file]);
+  const inspect=(f,id)=>bound(f,'inspect-operation',birth,birthReceipt,['--operation',id]);
+  const refused=(f,result,file,code)=>{
+   assert.equal(result.exitCode,1,result.stdout);
+   const failure=requireStatus(result,'partial');
+   if(code)assert.equal(failure.code,code,result.stdout);
+   assert.equal(failure.state_fenced,'confirmed',result.stdout);
+   assert.equal(failure.receipt,undefined);
+   assert.equal(failure.receipt_publication,'operation_record_preserved',result.stdout);
+   const record=JSON.parse(fs.readFileSync(file));
+   assert.equal(record.operation,failure.operation);
+   assert.equal(record.schema,undefined);
+   assert.equal(heldOwner(f).id,failure.operation);
+   assert.equal(operationRow(f,failure.operation),undefined);
+   assert.equal(lifecycleRow(f),undefined);
+   checkFence(f);
+   return failure.operation;
+  };
+
+  // Seed the captured ownership/effect snapshot through the same CLI, withholding
+  // only the proposed template read. Runtime and AWS assets stay on the pre-alarm
+  // fixture package throughout this recovery.
+  describeCapture(f);
+  f.cloud.denyChangeSetTemplate=true;
+  const abandoned=output('abandoned-bootstrap');
+  const seeded=await bootstrap(f,abandoned);
+  const prior=refused(f,seeded,abandoned);
+  delete f.cloud.denyChangeSetTemplate;
+  const priorProposal=structuredClone(f.cloud.lastChangeSetDescription);
+  assert.equal(priorProposal.ExecutionStatus,'AVAILABLE');
+  assert.equal(priorProposal.Status,'CREATE_COMPLETE');
+  assert.equal(f.cloud.stack.StackStatus,'CREATE_COMPLETE');
+  const beforeClose=readOnlyCheckpoint(f);
+  const held=requireStatus(await inspect(f,prior),'inspected');
+  requireReadOnly(f,beforeClose);
+  assert.equal(held.outcome,'held');
+  assert.equal(held.superseded,false);
+  assert.equal(held.change_set_id,null);
+  assert.deepEqual(held.effects.map(({name,state})=>[name,state]),[
+   ['create-change-set','settled'],['execute-change-set','pending']
+  ]);
+  assert.equal(held.source.package_revision,revision);
+  assert.equal(held.source.zip_digest,birth.manifest.zip_digest);
+  const closedFile=output('closed-before-dispatch');
+  const closedResult=await finish(f,prior,closedFile);
+  assert.equal(closedResult.exitCode,1,closedResult.stdout);
+  const closed=requireStatus(closedResult,'partial');
+  assert.equal(closed.terminal.status,'closed_before_final_dispatch');
+  assert.equal(closed.state_fenced,true);
+  assert.equal(closed.receipt,undefined);
+  assert.equal(fs.existsSync(closedFile),false);
+  const terminal=requireStatus(await inspect(f,prior),'inspected');
+  assert.deepEqual(terminal.terminal,closed.terminal);
+  assert.equal(heldOwner(f),undefined);
+  assert.deepEqual(f.cloud.lastChangeSetDescription,priorProposal);
+  assert.equal(f.cloud.schedule.State,'DISABLED');
+  assert.equal(f.cloud.concurrency,1);
+  assert.equal(stackParams(f).OriginalTableId,'');
+  assert.equal(f.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV],undefined);
+  checkFence(f);
+  assert.deepEqual(businessRows(f),originalBusiness);
+  operatorOnly(f.audit.slice(beforeClose.aws));
+  noHostWrites(f.audit.slice(beforeClose.aws));
+  assert.equal(providerExecutions(f.audit).length,0);
+
+  function verifySuccessfulBootstrap(f,result,file){
+   assert.equal(result.exitCode,0,result.stdout);
+   const outcome=requireStatus(result,'bootstrapped');
+   checkPin(f,original);
+   assert.equal(f.cloud.concurrency,0);
+   assert.equal(f.cloud.schedule.State,'DISABLED');
+   assert.deepEqual(f.cloud.schedule.Target,beforeClose.schedule.Target);
+   assert.equal(f.cloud.function.FunctionArn,beforeClose.function.FunctionArn);
+   assert.equal(f.cloud.function.Environment.Variables.PB_MODE,'preview');
+   assert.equal(f.cloud.function.Environment.Variables.PB_WRITES_ENABLED,'false');
+   assert.equal(f.cloud.codeHash,Buffer.from(birth.manifest.zip_digest.slice(7),'hex').toString('base64'));
+   assert.deepEqual(installationState(f).configuration_digest,original.binding.configuration_digest);
+   assert.equal(installationState(f).package_revision,revision);
+   assert.equal(installationState(f).schedule_enabled,false);
+   assert.equal(installationState(f).writes_enabled,false);
+   assert.equal(lifecycleRow(f).last_operation_id,outcome.operation);
+   assert.equal(heldOwner(f),undefined);
+   const terminal=operationRow(f,outcome.operation);
+   assert.equal(terminal.outcome,'completed');
+   assert.equal(terminal.terminal.provider.status,'UPDATE_COMPLETE');
+   assert.equal(fs.statSync(file).mode&0o777,0o600);
+   const successor=JSON.parse(fs.readFileSync(file));
+   assert.equal(outcome.receipt_publication,'written');
+   for(const key of ['binding','manifest','origin','birth_manifest_digest'])assert.deepEqual(successor[key],original[key]);
+   assert.equal(successor.recovery_only,undefined);
+   assert.deepEqual(fs.readFileSync(birthReceipt),receiptBytes);
+   assert.deepEqual(businessRows(f),originalBusiness);
+   return outcome;
+  }
+
+  const start=f.audit.length,success=output('bootstrapped');
+  const bootstrapped=verifySuccessfulBootstrap(f,await bootstrap(f,success),success);
+  assert.equal(seeded.outcome.code,'BOOTSTRAP_TEMPLATE_UNVERIFIED',seeded.stdout);
+  assert.notEqual(bootstrapped.operation,prior);
+  const audit=f.audit.slice(start);
+  const creation=audit.find(row=>row.action==='CreateChangeSetCommand');
+  assert.deepEqual(creation.input,{
+   StackName:f.stackId,ChangeSetName:'pigboard-lifecycle-'+bootstrapped.operation,
+   ChangeSetType:'UPDATE',ClientToken:bootstrapped.operation,UsePreviousTemplate:true,
+   Parameters:[
+    ...['AssetBucket','AssetKey','AssetVersion'].map(ParameterKey=>({ParameterKey,UsePreviousValue:true})),
+    {ParameterKey:'OriginalTableId',ParameterValue:original.origin.table_id},
+    {ParameterKey:'QuiescenceConcurrency',ParameterValue:'0'}
+   ],Capabilities:['CAPABILITY_NAMED_IAM']
+  });
+  assert.deepEqual(audit.filter(row=>row.action==='DescribeChangeSetCommand').map(row=>row.input),
+   [{StackName:f.stackId,ChangeSetName:f.cloud.changeSetId}]);
+  const candidateReads=audit.filter(row=>row.action==='GetTemplateCommand'&&row.input.ChangeSetName);
+  assert.deepEqual(candidateReads,[{kind:'CloudFormation',identity:'SELECTED_DEPLOYER',action:'GetTemplateCommand',
+   input:{StackName:f.stackId,ChangeSetName:f.cloud.changeSetId,TemplateStage:'Original'}}]);
+  const orderedProof=audit.slice(audit.indexOf(candidateReads[0])+1,audit.findIndex(row=>row.action==='ExecuteChangeSetCommand'));
+  assert.deepEqual(orderedProof.filter(row=>row.action==='GetScheduleCommand'),[
+   {kind:'Scheduler',identity:'SELECTED_OPERATOR',action:'GetScheduleCommand',
+    input:{Name:f.cloud.schedule.Name,GroupName:'default'}}
+  ]);
+  assert.deepEqual(providerExecutions(f.audit),[{kind:'CloudFormation',identity:'SELECTED_DEPLOYER',action:'ExecuteChangeSetCommand',
+   input:{StackName:f.stackId,ChangeSetName:f.cloud.changeSetId,ClientRequestToken:bootstrapped.operation}}]);
+  assert.deepEqual(hostMutations(audit).map(row=>row.action),['CreateChangeSetCommand','ExecuteChangeSetCommand']);
+  assert.deepEqual(f.cloud.changeSetTemplates.get(priorProposal.ChangeSetId),f.cloud.template);
+  assert.equal(stackParams(f).AssetVersion,birth.asset.version);
+  assert.equal(stackParams(f).AssetKey,birth.asset.key);
+  assert.equal(stackParams(f).AssetBucket,birth.asset.bucket);
+
+  const scheduleChange=description=>description.Changes[1].ResourceChange;
+  const targetDetail=description=>scheduleChange(description).Details[0];
+  const functionChange=description=>description.Changes[0].ResourceChange;
+  const parameter=(description,key)=>description.Parameters.find(row=>row.ParameterKey===key);
+  const scheduleTemplate=template=>template.Resources.LifecycleSchedule.Properties;
+  const shape='UNSUPPORTED_CHANGE_SET',parameters='BOOTSTRAP_PARAMETERS_UNVERIFIED';
+  const template='BOOTSTRAP_TEMPLATE_UNVERIFIED',scheduler='BOOTSTRAP_SCHEDULE_UNVERIFIED';
+  const guards=[
+   ['candidate-target',template,(_change,proposed)=>{scheduleTemplate(proposed).Target.Arn=f.cloud.function.FunctionArn+'-other';}],
+   ['candidate-role',template,(_change,proposed)=>{scheduleTemplate(proposed).Target.RoleArn=f.cloud.schedule.Target.RoleArn+'-other';}],
+   ['candidate-cadence',template,(_change,proposed)=>{scheduleTemplate(proposed).ScheduleExpression='rate(12 minutes)';}],
+   ['candidate-function-property',template,(_change,proposed)=>{proposed.Resources.Function.Properties.Timeout=601;}],
+   ['late-enabled-schedule',scheduler,(_change,_template,current)=>{current.State='ENABLED';}],
+   ['unrelated-schedule',scheduler,(_change,_template,current)=>{current.Arn+='-other';}],
+   ['late-target-role',scheduler,(_change,_template,current)=>{current.Target.RoleArn+='-other';}],
+   ['late-target-retry',scheduler,(_change,_template,current)=>{current.Target.RetryPolicy.MaximumRetryAttempts=1;}],
+   ['late-schedule-window',scheduler,(_change,_template,current)=>{current.EndDate=new Date('2027-01-01T00:00:00Z');}],
+   ['wrong-asset',parameters,change=>{parameter(change,'AssetVersion').ParameterValue+='-other';}],
+   ['wrong-pin',parameters,change=>{parameter(change,'OriginalTableId').ParameterValue+='-other';}],
+   ['wrong-concurrency',parameters,change=>{parameter(change,'QuiescenceConcurrency').ParameterValue='1';}],
+   ['unresolved-asset',parameters,change=>{
+    const asset=parameter(change,'AssetKey');
+    delete asset.ParameterValue;
+    asset.UsePreviousValue=true;
+   }],
+   ['missing-parameter',parameters,change=>{change.Parameters.pop();}],
+   ['duplicate-parameter',parameters,change=>{
+    Object.assign(parameter(change,'AssetBucket'),parameter(change,'AssetVersion'));
+   }],
+   ['unexpected-parameter',parameters,change=>{parameter(change,'AssetBucket').ParameterKey='UnexpectedParameter';}],
+   ['direct-target',shape,change=>{targetDetail(change).ChangeSource='DirectModification';}],
+   ['static-target',shape,change=>{targetDetail(change).Evaluation='Static';}],
+   ['wrong-cause',shape,change=>{targetDetail(change).CausingEntity='OtherFunction.Arn';}],
+   ['extra-target-detail',shape,change=>{scheduleChange(change).Details.push({...targetDetail(change)});}],
+   ['contradictory-target-path',shape,change=>{targetDetail(change).Target.Path='/Properties/Target/RoleArn';}],
+   ['unexpected-scope',shape,change=>{scheduleChange(change).Scope.push('Metadata');}],
+   ['unrelated-logical-resource',shape,change=>{scheduleChange(change).LogicalResourceId='OtherSchedule';}],
+   ['wrong-resource-type',shape,change=>{scheduleChange(change).ResourceType='AWS::Lambda::Function';}],
+   ['wrong-physical-resource',shape,change=>{scheduleChange(change).PhysicalResourceId='other-schedule';}],
+   ['unrelated-function-property',shape,change=>{functionChange(change).Details[0].Target.Name='Code';}],
+   ['missing-function',shape,change=>{change.Changes.shift();}],
+   ['replacement',shape,change=>{scheduleChange(change).Replacement='Conditional';}],
+   ['conditional-recreation',shape,change=>{functionChange(change).Details[0].Target.RequiresRecreation='Conditionally';}],
+   ['continuation',shape,change=>{change.NextToken='extra-page';}]
+  ];
+  for(const [name,code,amend] of guards){
+   const sample=branch(name),file=output(name);
+   describeCapture(sample,amend);
+   const id=refused(sample,await bootstrap(sample,file),file,code);
+   assert.equal(heldOwner(sample).details.change_set_id,undefined,name);
+   const start=readOnlyCheckpoint(sample);
+   const checked=requireStatus(await inspect(sample,id),'inspected');
+   assert.equal(checked.outcome,'held',name);
+   assert.equal(checked.effects.find(row=>row.name==='execute-change-set').state,'pending',name);
+   requireReadOnly(sample,start);
+   creationOnly(sample.audit);
+   assert.equal(sample.cloud.stack.StackStatus,'CREATE_COMPLETE',name);
+   assert.deepEqual(businessRows(sample),originalBusiness,name);
+  }
+
+  const changePin=f=>f.cloud.stack.Parameters.find(row=>row.ParameterKey==='OriginalTableId');
+  const postDispatchFaults=[
+   ['wrong-final-pin','PHYSICAL_STATE_MISMATCH',f=>{changePin(f).ParameterValue='44fb5364-258e-4f57-86fd-d4e65c398d96';}],
+   ['missing-final-pin','PHYSICAL_STATE_MISMATCH',f=>{delete changePin(f).ParameterValue;}],
+   ['wrong-final-schedule',scheduler,f=>{f.cloud.schedule.ActionAfterCompletion='DELETE';}]
+  ];
+  for(const [name,code,amend] of postDispatchFaults){
+   const sample=branch(name),file=output(name);
+   describeCapture(sample);
+   sample.cloud.afterLifecycleExecute=()=>amend(sample);
+   const id=refused(sample,await bootstrap(sample,file),file,code);
+   assert.equal(sample.cloud.stack.StackStatus,'UPDATE_COMPLETE',name);
+   assert.equal(sample.cloud.table.TableId,original.origin.table_id,name);
+   assert.equal(sample.cloud.function.Environment.Variables[LIFECYCLE_TABLE_ID_ENV],original.origin.table_id,name);
+   assert.equal(heldOwner(sample).effects.find(row=>row.name==='execute-change-set').state,'settled',name);
+   const before=readOnlyCheckpoint(sample),finishFile=output(name+'-finish');
+   const attempt=await finish(sample,id,finishFile);
+   assert.notEqual(attempt.exitCode,0,attempt.stdout);
+   assert.equal(attempt.outcome.code,code,attempt.stdout);
+   assert.equal(attempt.outcome.receipt,undefined,name);
+   assert.equal(fs.existsSync(finishFile),false,name);
+   assert.equal(lifecycleRow(sample),undefined,name);
+   assert.equal(operationRow(sample,id),undefined,name);
+   checkFence(sample);
+   requireReadOnly(sample,before);
+   assert.equal(providerExecutions(sample.audit).length,1,name);
+  }
+  const interrupted=branch('terminal-readback');
+  delete interrupted.cloud.schedule.ActionAfterCompletion;
+  delete interrupted.cloud.schedule.ScheduleExpressionTimezone;
+  describeCapture(interrupted);
+  interrupted.dependencies.beforeLifecycleFinish=()=>{throw new Error('Fixture interrupted before State commit');};
+  const interruptedFile=output('terminal-readback-operation');
+  const pending=refused(interrupted,await bootstrap(interrupted,interruptedFile),interruptedFile);
+  delete interrupted.dependencies.beforeLifecycleFinish;
+  const finishStart=interrupted.audit.length;
+  const finishFile=output('terminal-readback-receipt');
+  const finished=verifySuccessfulBootstrap(interrupted,await finish(interrupted,pending,finishFile),finishFile);
+  assert.equal(finished.operation,pending);
+  assert.equal(providerExecutions(interrupted.audit).length,1);
+  operatorOnly(interrupted.audit.slice(finishStart));
+  noHostWrites(interrupted.audit.slice(finishStart));
+
+  const applyConfig=changedControls(config,{mode:'apply',schedule_enabled:true,writes_enabled:true});
+  for(const key of Object.keys(applyConfig.manager.activation))applyConfig.manager.activation[key]=true;
+  const apply=build('apply',applyConfig);
+  const maintenance=build('maintenance',changedControls(config,{maintenance:true}));
+  f.cloud.assets=new Map([birth,apply,maintenance].map(({asset})=>
+   [asset.version,Buffer.from(asset.zip_digest.slice(7),'hex').toString('base64')]));
+  async function configure(target,previous,name){
+   const file=output(name),start=f.audit.length;
+   const result=await bound(f,'configure',target,previous,[
+    '--manifest',target.manifestPath,'--asset',target.assetPath,...deployer,'--output',file
+   ]);
+   assert.equal(result.exitCode,0,result.stdout);
+   requireStatus(result,'configured');
+   const reads=f.audit.slice(start);
+   const executions=providerExecutions(reads);
+   assert.equal(executions.length,1);
+   assert.equal(executions[0].identity,'SELECTED_DEPLOYER');
+   assert.equal(executions[0].input.ClientRequestToken,result.outcome.operation);
+   operatorOnly(reads.filter(row=>row.kind!=='CloudFormation'&&row.kind!=='STS'));
+   checkPin(f,original);
+   const successor=JSON.parse(fs.readFileSync(file));
+   assert.deepEqual(successor.origin,original.origin);
+   assert.deepEqual(successor.manifest,target.manifest);
+   assert.equal(stackParams(f).AssetVersion,target.asset.version);
+   assert.equal(f.cloud.codeHash,f.cloud.assets.get(target.asset.version));
+   assert.equal(f.cloud.schedule.State,target.manifest.canonical_config.manager.controls.schedule_enabled?'ENABLED':'DISABLED');
+   assert.equal(installationState(f).writes_enabled,target.manifest.canonical_config.manager.controls.writes_enabled);
+   return file;
+  }
+  const enabled=await configure(apply,success,'applied');
+  const configured=await configure(maintenance,enabled,'maintenance-receipt');
+  const stopStart=f.audit.length;
+  const stopped=await bound(f,'stop',maintenance,configured);
+  assert.equal(stopped.exitCode,0,stopped.stdout);
+  requireStatus(stopped,'stopped');
+  operatorOnly(f.audit.slice(stopStart));
+  assert.equal(providerExecutions(f.audit).length,3);
+  checkFence(f);
+  checkPin(f,original);
+  assert.equal(f.cloud.schedule.State,'DISABLED');
+  assert.equal(f.cloud.function.Environment.Variables.PB_WRITES_ENABLED,'false');
+  assert.equal(f.cloud.concurrency,0);
+  assert.deepEqual(businessRows(f),originalBusiness);
+  assert.deepEqual(fs.readFileSync(birthReceipt),receiptBytes);
+
+  return {held,closed,bootstrapped,stopped:stopped.outcome};
+ }finally{fs.rmSync(directory,{recursive:true,force:true});}
 }
 
 function actualAlarmRows(f){

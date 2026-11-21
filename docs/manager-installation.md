@@ -240,8 +240,10 @@ node scripts/manager-state.mjs inspect --config /absolute/customer.json --instal
 ```
 
 Bootstrap pins the original physical table ID. It leaves the schedule disabled
-and Lambda concurrency at zero. On the original package format, ordinary
-inspection instead uses the birth receipt directly after initialization.
+and Lambda concurrency at zero. If the original pre-alarm v2 bootstrap stopped
+before executing its change set, see [Recover a held bootstrap](#recover-a-held-bootstrap).
+On the original package format, ordinary inspection uses the birth receipt
+directly after initialization.
 
 Fresh initialization requires the original `CREATE_COMPLETE` stack and a complete
 first page of creation events. The original `RuntimeRole` and `StateTable` creation
@@ -460,6 +462,87 @@ changes retained digest/package, generation, extensions or pending work. To conv
 intent later, set desired controls disabled and use the supported control rebuild
 only when a strictly verified current receipt/package is available. Recovery stop
 alone does not establish that prerequisite. Do not initialize again or clear holds.
+
+### Recover a held bootstrap
+
+Use this procedure for an authorized recovery of a pre-alarm lifecycle v2
+installation when bootstrap refused a change set because CloudFormation reported
+the generated schedule target's reference to the Lambda ARN. The repaired host
+checks the proposed template and parameters and rereads the disabled schedule before
+execution. A changed target, role or schedule setting, or missing proof, keeps
+the operation fenced for inspection.
+
+Prepare a separate clean checkout at the exact reviewed repair revision with
+Node 24 and dependencies installed from its own root and `runtime/aws` lockfiles.
+Record the host commit and both lockfile SHA-256 hashes. Preserve the unaltered
+birth receipt and canonical config, the original manifest and ZIP, and the
+immutable S3 object version. Verify the original revision, generation, manifest
+and config digests, ZIP SHA-256, and bucket, key and version against the saved
+installation evidence. Keep the original stack, physical table and named AWS
+profiles. The host repair uses the already deployed package and existing
+permissions.
+
+1. From the repaired checkout, inspect the saved bootstrap UUID. Set
+   `held_operation` to that exact UUID. In these examples `initial.json` and
+   `birth.json` are the saved birth config and receipt. Use the original operator
+   and deployer profile names for this installation.
+
+   ```sh
+   node scripts/manager-installation.mjs inspect-operation --config initial.json --installation birth.json --operation "$held_operation" --operator-profile customer-operator --json
+   ```
+
+   Check that the result names the original stack, physical table and package,
+   with `outcome` equal to `held` and `superseded` equal to `false`. Creation must
+   be settled, execution pending and all dispatches accounted for. Check the saved
+   change set separately in CloudFormation for `CREATE_COMPLETE` and `AVAILABLE`.
+   Verify that State is in maintenance with scheduling and writes off. Verify
+   that the actual schedule is disabled, Lambda is in no-write preview with
+   concurrency one, and the table pin is unset. If any of this evidence differs
+   or is unavailable, preserve it and stop the recovery here.
+
+2. Close the held operation using only the operator profile and a fresh output path.
+
+   ```sh
+   node scripts/manager-installation.mjs finish-operation --config initial.json --installation birth.json --operation "$held_operation" --operator-profile customer-operator --output closed-bootstrap.json --json
+   ```
+
+   Expect exit 1 with `status` equal to `partial`, `terminal.status` equal to
+   `closed_before_final_dispatch`, and `state_fenced` equal to `true`. Save the
+   JSON response. `receipt_publication` is `not_written` and there is no successor
+   receipt. Reinspect the UUID for the terminal record and inspect without
+   `--operation` to confirm `active` is null. Verify the old change set was never
+   executed and the disabled host and unset pin still match step 1. Preserve that
+   change set as evidence.
+
+3. Run bootstrap once from the repaired checkout with the same birth config and
+   receipt, both verified profiles and a fresh output path. The command creates
+   a new operation UUID and change set.
+
+   ```sh
+   node scripts/manager-installation.mjs bootstrap --config initial.json --installation birth.json --operator-profile customer-operator --deployer-profile customer-deployer --output bootstrapped.json --json
+   ```
+
+   Confirm exit zero, `bootstrapped` status and publication of the private
+   successor receipt. Verify one execution of the new change set, the original
+   code and versioned asset, and the same physical table. Check that the stack's
+   `OriginalTableId` and Lambda's `PB_ORIGINAL_TABLE_ID` both match the table's
+   physical ID. Check the same schedule and target with scheduling disabled, and
+   Lambda in no-write preview at concurrency zero. Inspect the new operation and
+   current installation with the successor receipt to confirm a completed
+   operation, released owner and disabled admission in strongly consistent State
+   reads. Keep the old and new operation evidence.
+
+If a bootstrap has already dispatched an update, keep its UUID and original
+receipt and use inspection and the operator-only finish procedure below. A
+provider success alone cannot complete bootstrap. A mismatched pin or schedule
+readback leaves State fenced without a success receipt. Finish can record a
+verified result without dispatching the update again.
+
+This recovery ends at disabled bootstrap. Later authorized configure and stop
+use the current receipt and the original approved same-source configuration,
+manifests and versioned assets. Installed verification and Jira activation are
+separate. Before an authorized Jira run, verify the actual service account's Jira
+visibility and that the deadline stop works.
 
 ### Verify drain on a lifecycle installation
 
