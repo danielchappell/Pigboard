@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
 import os from 'node:os';
 import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
 import canonicalize from 'canonicalize';
 
 const here=path.dirname(fileURLToPath(import.meta.url));
@@ -362,6 +363,54 @@ async function runtimeSnapshot(root, missing = [], inventory=false) {
 }
 const inputSnapshot=v=>Object.fromEntries(['config','request','script'].map(k=>[k,digest(JSON.stringify(v[k]))]));
 
+// Real TLS traffic still runs asynchronously. Only the fixture's scripted
+// resolver and response delays consume the reader's scan budget.
+function createScanClock() {
+ let now = 0;
+ let pointerAbort = null;
+ const timers = new Map();
+ return {
+  install(restore) {
+   const replace = (target, name, value) => {
+    const descriptor = Object.getOwnPropertyDescriptor(target, name);
+    restore.push(() => {
+     if (descriptor) Object.defineProperty(target, name, descriptor);
+     else delete target[name];
+    });
+    Object.defineProperty(target, name, {
+     configurable: true, writable: true, enumerable: descriptor?.enumerable ?? false, value
+    });
+   };
+   restore.push(() => timers.clear());
+   replace(performance, 'now', () => now);
+   replace(globalThis, 'setTimeout', (callback, delay, ...args) => {
+    const handle = {};
+    timers.set(handle, {callback, args, delay, armedAt: now, dueAt: now + delay});
+    return handle;
+   });
+   replace(globalThis, 'clearTimeout', handle => { timers.delete(handle); });
+  },
+  advance(delay, pointerClient) {
+   const target = now + delay;
+   while (timers.size) {
+    const [handle, timer] = [...timers].reduce((first, next) =>
+     next[1].dueAt < first[1].dueAt ? next : first);
+    if (timer.dueAt > target) break;
+    timers.delete(handle);
+    now = timer.dueAt;
+    const socket = pointerClient?.socket;
+    const livePointer = socket?.authorized && !socket.destroyed && !pointerClient.destroyed;
+    timer.callback(...timer.args);
+    if (livePointer && pointerClient.destroyed && socket.destroyed) {
+     pointerAbort = {armed_at_ms: timer.armedAt, delay_ms: timer.delay, fired_at_ms: now};
+    }
+   }
+   now = target;
+  },
+  get pointerAbort() { return pointerAbort; }
+ };
+}
+
 export async function runFixture(caseId,variant,runtime,{control=false,privateProjection=false,authoredFixture=null,repeatReceipt=false,ownershipConflict=false,receiptComparison=null}={}) {
  const selection = inventorySelection(caseId, variant);
  if (caseId.startsWith('R1-34-') && !selection) throw Error('Use a prescribed case and variant.');
@@ -413,6 +462,9 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
  const history = selection ? mountHistory(v, variant === 'unrelated-history') : null;
  const snapshotServer = () => digest(JSON.stringify({script:v.script, history:history.rows}));
  const serverBefore = history ? snapshotServer() : null;
+ const scanClock = caseId === 'R1-33-H03' && variant === 'scan-time-limit' ? createScanClock() : null;
+ const pointerPath = scanClock ? v.oracle.trace[1].path : null;
+ let pointerClient, scanTimerError;
  let historyAccesses = 0;
  const sockets=new Set(),timers=new Set();let scriptIndex=0,serverError=null,redirectRequests=0;
  const redirect=https.createServer({key:tls.key,cert:tls.cert},(req,res)=>{redirectRequests++;res.end('{}');});
@@ -441,8 +493,17 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
     });
    }
   }
-  const later=(fn,delay)=>{if(delay){const t=setTimeout(()=>{timers.delete(t);fn();},delay);timers.add(t);}else fn();};
-  later(()=>{if(res.destroyed)return;res.writeHead(step.status,{'content-type':'application/json',...(step.encoding?{'content-encoding':step.encoding}:{}),...(step.status===302?{location:`https://localhost:${redirect.address().port}/leak`}:{})});if(step.body_delay_ms)res.flushHeaders();later(()=>{if(!res.destroyed)res.end((step.wire_prefix??'')+JSON.stringify(step.body));},step.body_delay_ms);},step.header_delay_ms);
+  const later = (fn, delay, client) => {
+   if (scanClock && delay) {
+    try { scanClock.advance(delay, client); }
+    catch (error) { scanTimerError ??= error; }
+    if (!client?.destroyed) fn();
+   } else if (delay) {
+    const timer = setTimeout(() => { timers.delete(timer); fn(); }, delay);
+    timers.add(timer);
+   } else fn();
+  };
+  later(()=>{if(res.destroyed)return;res.writeHead(step.status,{'content-type':'application/json',...(step.encoding?{'content-encoding':step.encoding}:{}),...(step.status===302?{location:`https://localhost:${redirect.address().port}/leak`}:{})});if(step.body_delay_ms)res.flushHeaders();later(()=>{if(!res.destroyed)res.end((step.wire_prefix??'')+JSON.stringify(step.body));},step.body_delay_ms);},step.header_delay_ms,req.url === pointerPath ? pointerClient : undefined);
  });server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));if(v.tls==='connection-reset-control')socket.destroy();});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const originalRequest=https.request,restore=[];let effects=0,resolverCalls=0,resolverTimer=null,lateResolve=null,lateAck=null,lateSignal=null,lateDelivered=0,lateSettled=0,lateEvidence=null,mutations=0,getterCalls=0,tlsObservation=null;
@@ -483,6 +544,7 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
   } finally {
    fixtureConnectPort = null;
   }
+  if (operation === pointerPath) pointerClient = client;
   if(v.case==='R1-42-H04'){
    assert.equal(tlsObservation,null);
    tlsObservation={socket_observed:false,request_error_observed:false,secure_connect_observed:false,authorized:null,authorization_error_present:null};
@@ -567,7 +629,12 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
    https.request = redirectRequest;
    syncBuiltinESMExports();
   }
-  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});return fixtureCases.token;}});
+  if (scanClock) scanClock.install(restore);
+  const invoke=()=>inspect(JSON.stringify(v.config),callerRequest,{resolveSecret(reference,signal){resolverCalls++;assert.equal(reference,v.config.jira.connection.secret_reference);if(v.resolver==='mutate-values'||v.resolver==='replace-accessors')return Promise.resolve().then(()=>{mutations++;if(v.resolver==='mutate-values'){callerRequest.issue_ids[0]='1001';callerRequest.comment_targets[0].ticket_id='1001';callerRequest.comment_targets[0].comment_id='2002';}else for(const name of ['issue_ids','comment_targets'])Object.defineProperty(callerRequest,name,{get(){getterCalls++;throw Error('ERROR-CANARY');}});return fixtureCases.token;});if(v.resolver==='reject')throw Error('ERROR-CANARY '+fixtureCases.token);if(v.resolver==='abort')return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('ERROR-CANARY')),{once:true}));if(v.resolver==='late'){lateSignal=signal;const deferred=new Promise(resolve=>{lateResolve=resolve;});lateAck=deferred.then(()=>{lateSettled++;});return deferred;}
+   if (scanClock) scanClock.advance(v.resolver_delay_ms ?? 0);
+   else if(v.resolver_delay_ms)return new Promise(resolve=>{resolverTimer=setTimeout(()=>resolve(fixtureCases.token),v.resolver_delay_ms);});
+   return fixtureCases.token;
+  }});
   acquired=await invoke();
   if(repeatReceipt){
    assert.equal(acquired.status,'complete');
@@ -592,6 +659,17 @@ async function executeFixture(caseId, variant, root, {control=false,privateProje
  }
  assert.equal(effects, 0, 'Unexpected fixture effects.');
  assert.equal(sockets.size,0);
+ if (scanClock) {
+  if (scanTimerError) throw scanTimerError;
+  assert.deepEqual(scanClock.pointerAbort, v.oracle.pointer_abort,
+   'The reader timer must destroy the pending pointer TLS request before its response.');
+  assert.deepEqual(serverTrace, v.oracle.trace);
+  assert.equal(resolverCalls, 1);
+  assert.deepEqual(acquired.report.cleanup, v.oracle.cleanup);
+  for (const [name, value] of Object.entries(v.oracle.time_limits)) {
+   assert.equal(acquired.report.limits[name], value, name);
+  }
+ }
  if(receipt){
   const report=JSON.parse(JSON.stringify(acquired));
   assert.equal(effects,0);assert.equal(serverError,null);assert.equal(redirectRequests,0);

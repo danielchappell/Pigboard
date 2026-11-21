@@ -8886,6 +8886,43 @@
         "status": "incomplete",
         "code": "LIMIT_REACHED",
         "calls": 2,
+        "diagnostic": {
+          "code": "LIMIT_REACHED",
+          "operation": "pointer",
+          "issue_id": "1000",
+          "bound": "scan_timeout_ms"
+        },
+        "trace": [
+          {
+            "method": "GET",
+            "path": "/rest/api/3/issue/1000?fields=project,issuetype,status,parent,labels,description"
+          },
+          {
+            "method": "GET",
+            "path": "/rest/api/3/issue/1000/properties/pigboard.work-context"
+          }
+        ],
+        "counters": {
+          "requests_completed": 1,
+          "requests_failed": 1,
+          "comment_pages": 0,
+          "comments": 0,
+          "elapsed_ms": 110,
+          "peak_request_elapsed_ms": 40
+        },
+        "time_limits": {
+          "request_timeout_ms": 80,
+          "scan_timeout_ms": 100
+        },
+        "cleanup": {
+          "jira": "complete",
+          "resolver": "settled"
+        },
+        "pointer_abort": {
+          "armed_at_ms": 70,
+          "delay_ms": 30,
+          "fired_at_ms": 100
+        },
         "issue_rows": [
           {
             "id": "1000",
@@ -8940,6 +8977,39 @@
           "status": "complete",
           "code": null,
           "calls": 4,
+          "trace": [
+            {
+              "method": "GET",
+              "path": "/rest/api/3/issue/1000?fields=project,issuetype,status,parent,labels,description"
+            },
+            {
+              "method": "GET",
+              "path": "/rest/api/3/issue/1000/properties/pigboard.work-context"
+            },
+            {
+              "method": "GET",
+              "path": "/rest/api/3/issue/1000/comment?startAt=0&maxResults=1&orderBy=created"
+            },
+            {
+              "method": "GET",
+              "path": "/rest/api/3/issue/1000/comment/2001"
+            }
+          ],
+          "counters": {
+            "requests_completed": 4,
+            "requests_failed": 0,
+            "elapsed_ms": 0,
+            "peak_request_elapsed_ms": 0
+          },
+          "time_limits": {
+            "request_timeout_ms": 80,
+            "scan_timeout_ms": 100
+          },
+          "cleanup": {
+            "jira": "complete",
+            "resolver": "settled"
+          },
+          "pointer_abort": null,
           "issue_rows": [
             {
               "id": "1000",
