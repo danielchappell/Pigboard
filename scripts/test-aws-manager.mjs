@@ -1480,7 +1480,10 @@ export async function runBootstrapSchedulerReferenceFixture(){
     asset.UsePreviousValue=true;
    }],
    ['missing-parameter',parameters,change=>{change.Parameters.pop();}],
-   ['duplicate-parameter',parameters,change=>{change.Parameters.push({...change.Parameters[0]});}],
+   ['duplicate-parameter',parameters,change=>{
+    Object.assign(parameter(change,'AssetBucket'),parameter(change,'AssetVersion'));
+   }],
+   ['unexpected-parameter',parameters,change=>{parameter(change,'AssetBucket').ParameterKey='UnexpectedParameter';}],
    ['direct-target',shape,change=>{targetDetail(change).ChangeSource='DirectModification';}],
    ['static-target',shape,change=>{targetDetail(change).Evaluation='Static';}],
    ['wrong-cause',shape,change=>{targetDetail(change).CausingEntity='OtherFunction.Arn';}],
